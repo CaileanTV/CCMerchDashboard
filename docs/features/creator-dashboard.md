@@ -7,6 +7,7 @@ Et selvstændigt, moderne og responsivt dashboard, hvor den enkelte creator ser 
 **MVP ✅ (fase 15).** Route og sikker shell (12), frontend-fundament (13), `/me` og Profile (14), Overview, sektion-registry og dansk oversættelse (15). **Fase 19 ✅:** Products og Orders (kun med WooCommerce, ADR-039). **Fase 20 ✅:** salgsnøgletal på Overview og sektionen Sales (kun med WooCommerce, ADR-040/041).
 
 ## User-facing functionality (MVP)
+- **Produkter → "Dine produkter":** et kryds på et legacy-produkt sender en anmodning om sletning til manuel behandling, når creatoren har skrevet SLET ([ADR-083](../DECISIONS.md)). Produktet bliver i butikken, indtil admin har handlet, og listen viser "Sletning afventer behandling". Designer-produkter har deres egen sletning i "Dine designs".
 - Adgang via `/creator-dashboard/` (slug kan konfigureres) efter login.
 - Layout: sidebar (desktop) / off-canvas (mobil), topbar med navn/avatar og log ud.
 - **Overview ✅ (fase 15):** velkomst med navn og status, profil-resumé (kategoriens beskrivelse og sociale links fra 28.3, ellers link til Profile) og nøgletal (fase 20): "Nettosalg (ekskl. moms)", enheder og ordrer for de seneste 30 dage pr. valuta fra `GET /me/sales`, ellers en empty state.

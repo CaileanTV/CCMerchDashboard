@@ -43,6 +43,8 @@ use MerchBoard\Modules\WooCommerce\Rest\MeDiscountCodeController;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryActions;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryEraser;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryPage;
+use MerchBoard\Modules\WooCommerce\Admin\ProductRemovalActions;
+use MerchBoard\Modules\WooCommerce\Admin\ProductRemovalsPage;
 use MerchBoard\Modules\WooCommerce\Admin\OrderStatusLookup;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutActions;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutRecalculationActions;
@@ -114,6 +116,10 @@ use MerchBoard\Modules\WooCommerce\Pricing\SalesProfit;
 use MerchBoard\Modules\WooCommerce\Pricing\WooCommercePricingProductStore;
 use MerchBoard\Modules\WooCommerce\Rest\MeOrdersController;
 use MerchBoard\Modules\WooCommerce\Rest\MePayoutsController;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
+use MerchBoard\Modules\WooCommerce\ProductRemovals\ProductRemovalRepository;
+use MerchBoard\Modules\WooCommerce\ProductRemovals\ProductRemovals;
+use MerchBoard\Modules\WooCommerce\ProductRemovals\ProductRemovalsCleanup;
 use MerchBoard\Modules\WooCommerce\Rest\MeProductsController;
 use MerchBoard\Modules\WooCommerce\Rest\MeSalesController;
 use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
@@ -342,6 +348,26 @@ final class WooCommerceModule implements Module {
 				$c->get( AuditTrail::class ),
 				$c->get( SalesCache::class )
 			)
+		);
+		$container->set( ProductRemovalRepository::class, static fn( Container $c ): ProductRemovalRepository => new ProductRemovalRepository( $c->get( wpdb::class ) ) );
+		$container->set(
+			ProductRemovals::class,
+			static fn( Container $c ): ProductRemovals => new ProductRemovals(
+				$c->get( ProductRemovalRepository::class ),
+				$c->get( CreatorProducts::class ),
+				$c->get( Transaction::class ),
+				$c->get( AuditTrail::class ),
+				static fn( int $product ): bool => $c->has( DesignerProductGuard::class ) && null !== $c->get( DesignerProductGuard::class )->guard( $product )
+			)
+		);
+		$container->set( ProductRemovalsCleanup::class, static fn( Container $c ): ProductRemovalsCleanup => new ProductRemovalsCleanup( $c->get( ProductRemovalRepository::class ) ) );
+		$container->set( ProductRemovalsPage::class, static fn( Container $c ): ProductRemovalsPage => new ProductRemovalsPage( $c->get( ProductRemovalRepository::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );
+		$container->set( ProductRemovalActions::class, static fn( Container $c ): ProductRemovalActions => new ProductRemovalActions( $c->get( ProductRemovals::class ), $c->get( Logger::class ) ) );
+		add_filter(
+			'merchboard_creator_data_cleaners',
+			static function ( mixed $cleaners ) use ( $container ): array {
+				return array_merge( is_array( $cleaners ) ? $cleaners : array(), array( $container->get( ProductRemovalsCleanup::class ) ) );
+			}
 		);
 		$container->set(
 			CreatorCodeSection::class,
@@ -852,7 +878,9 @@ final class WooCommerceModule implements Module {
 				$c->get( CreatorProducts::class ),
 				$c->get( ProductDetails::class ),
 				$c->get( Logger::class ),
-				$c->get( CreatorProfits::class )
+				$c->get( CreatorProfits::class ),
+				$c->get( ProductRemovalRepository::class ),
+				$c->get( ProductRemovals::class )
 			)
 		);
 		$container->set(
@@ -942,6 +970,13 @@ final class WooCommerceModule implements Module {
 		add_action(
 			'admin_menu',
 			static function () use ( $container ): void {
+				$container->get( ProductRemovalsPage::class )->add_menu();
+			},
+			ProductRemovalsPage::PRIORITY
+		);
+		add_action(
+			'admin_menu',
+			static function () use ( $container ): void {
 				$container->get( PayoutsPage::class )->add_menu();
 			},
 			PayoutsPage::PRIORITY
@@ -973,6 +1008,7 @@ final class WooCommerceModule implements Module {
 				$container->get( CreatorPricingActions::class )->register();
 				$container->get( CreatorPricingSection::class )->register();
 				$container->get( CreatorCodeActions::class )->register();
+				$container->get( ProductRemovalActions::class )->register();
 				$container->get( CreatorCodeSection::class )->register();
 				$container->get( CreatorSalesSection::class )->register();
 				$container->get( OrderHistoryActions::class )->register();

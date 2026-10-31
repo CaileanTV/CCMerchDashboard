@@ -1,7 +1,7 @@
 /**
- * `GET /me/products`: the creator's products, a page at a time. The creator is
- * the one the server resolves for the logged-in user; nothing here takes or
- * sends a creator id.
+ * `GET /me/products`: the creator's products, a page at a time, and a request
+ * to remove one. The creator is the one the server resolves for the logged-in
+ * user; nothing here takes or sends a creator id.
  */
 import type { PageLoader } from '../hooks/usePagedApi';
 import type {
@@ -11,7 +11,8 @@ import type {
 	ProductStatus,
 	StockStatus,
 } from '../types/products';
-import { requestList } from './client';
+import { request, requestList } from './client';
+import type { ApiResult } from './client';
 import { parseProfitList } from './profit';
 import { isRecord, readSameOriginUrl } from './validate';
 
@@ -119,7 +120,40 @@ export function parseProduct( body: unknown ): Product | null {
 		stockStatus: stock as StockStatus | null,
 		image,
 		profit,
+		designer: body.designer === true,
+		removalPending: body.removal_pending === true,
 	};
+}
+
+/**
+ * Validates `{ removal_pending: true }`.
+ *
+ * @param body Response body.
+ */
+export function parseRemovalRequest(
+	body: unknown
+): { removalPending: true } | null {
+	return isRecord( body ) && body.removal_pending === true
+		? { removalPending: true }
+		: null;
+}
+
+/**
+ * `POST /me/products/{id}/removal-request` (ADR-083): asks us to remove a
+ * legacy product. Nothing happens to the product until we have dealt with it.
+ *
+ * @param id Product id.
+ */
+export function requestProductRemoval(
+	id: number
+): Promise< ApiResult< { removalPending: true } > > {
+	return request(
+		{
+			path: `/merchboard/v1/me/products/${ id }/removal-request`,
+			method: 'POST',
+		},
+		parseRemovalRequest
+	);
 }
 
 /**

@@ -1,6 +1,7 @@
 /**
- * The confirmation before a designer product is deleted: a typed word, so it
- * cannot happen by a slip of the hand.
+ * The confirmation before a designer product is deleted, or a legacy product
+ * is sent for removal by hand: a typed word, so it cannot happen by a slip of
+ * the hand.
  */
 import { useId, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -16,6 +17,8 @@ export interface ConfirmDeleteProps {
 	readonly inShop: boolean;
 	/** Whether a deleted design is deleted for good. */
 	readonly permanent?: boolean;
+	/** Whether this only asks us to remove a legacy product. */
+	readonly request?: boolean;
 	/** Resolves to whether it was deleted; the dialog stays open if not. */
 	readonly onConfirm: () => Promise< boolean >;
 	readonly onClose: () => void;
@@ -58,14 +61,21 @@ function message( inShop: boolean, permanent: boolean ): string {
  * @param props.title     The product's title.
  * @param props.inShop    Whether it has been in the shop.
  * @param props.permanent Whether it is deleted for good.
+ * @param props.request   Whether this only asks us to remove it.
  * @param props.onConfirm Deletes it.
  * @param props.onClose   Closes the dialog.
  */
 export function ConfirmDelete( props: ConfirmDeleteProps ) {
 	const word = __( 'DELETE', 'merchboard' );
-	const label = props.permanent
-		? __( 'Delete for good', 'merchboard' )
-		: __( 'Delete product', 'merchboard' );
+	const request = props.request === true;
+	let label: string = __( 'Delete product', 'merchboard' );
+
+	if ( request ) {
+		label = __( 'Send request', 'merchboard' );
+	} else if ( props.permanent ) {
+		label = __( 'Delete for good', 'merchboard' );
+	}
+
 	const [ typed, setTyped ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
 	const [ failed, setFailed ] = useState( false );
@@ -101,13 +111,25 @@ export function ConfirmDelete( props: ConfirmDeleteProps ) {
 				</Button>
 			}
 		>
-			<p>{ message( props.inShop, props.permanent === true ) }</p>
+			<p>
+				{ request
+					? __(
+							'We do not delete the product automatically. The request goes to manual handling, and the product stays in the shop until we have dealt with it.',
+							'merchboard'
+						)
+					: message( props.inShop, props.permanent === true ) }
+			</p>
 			{ failed ? (
 				<Alert tone="danger">
-					{ __(
-						'The product could not be deleted. If it is on its way to the shop, try again in a minute.',
-						'merchboard'
-					) }
+					{ request
+						? __(
+								'The request could not be sent. Try again in a minute.',
+								'merchboard'
+							)
+						: __(
+								'The product could not be deleted. If it is on its way to the shop, try again in a minute.',
+								'merchboard'
+							) }
 				</Alert>
 			) : null }
 			<div className="merchboard-field">

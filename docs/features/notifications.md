@@ -37,6 +37,8 @@ I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog
 | Udbetaling | Regulering af en tidligere afregning | udført regulering | M+D | ✓ |
 | Profil | Kategoriforslag godkendt | administratorens godkendelse | M+D | |
 | Profil | Kategoriforslag afvist (med note) | administratorens afvisning | M+D | |
+| Konto | Sletteanmodning behandlet | administratoren lukker sagen (ADR-083) | M+D | |
+| Konto | Sletteanmodning afvist (med note) | administratorens afvisning (ADR-083) | M+D | |
 | Rabatkode | Din rabatkode er oprettet (koden ses i dashboardet) | administratorens første kode | M+D | ✓ |
 | Rabatkode | Din rabatkode er nulstillet | ny kode (creatoren, "Se som creator" eller admin) | M+D | ✓ |
 | Rabatkode | Din rabatkode er afsluttet | administratorens afslutning | M+D | ✓ |

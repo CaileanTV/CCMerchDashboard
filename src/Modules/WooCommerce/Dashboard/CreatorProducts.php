@@ -108,6 +108,33 @@ final class CreatorProducts {
 	}
 
 	/**
+	 * Whether the product is one of the creator's listed products.
+	 *
+	 * @param int $creator_id Creator id.
+	 * @param int $product_id Parent product.
+	 * @throws DatabaseException When the query fails.
+	 */
+	public function owns( int $creator_id, int $product_id ): bool {
+		if ( $creator_id < 1 || $product_id < 1 ) {
+			return false;
+		}
+
+		$wpdb  = $this->wpdb;
+		$found = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read model of the creator's products; no caching in phase 19 (ADR-039 P12).
+			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- FROM_WHERE's six placeholders come from selection_args(), then the product.
+				'SELECT p.ID ' . self::FROM_WHERE . ' AND p.ID = %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- FROM_WHERE is a constant with placeholders only.
+				...array_merge( $this->selection_args( $creator_id ), array( $product_id ) )
+			)
+		);
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the creator\'s product.' );
+		}
+
+		return null !== $found;
+	}
+
+	/**
 	 * Values for the placeholders of FROM_WHERE.
 	 *
 	 * @param int $creator_id Creator id.

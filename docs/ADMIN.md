@@ -16,6 +16,7 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 ├── Creators                   ✅ fase 6: liste (WP_List_Table: status-filter, sortering, paginering)
 │   ├── (Add/Edit creator)     ✅ fase 6: visningsnavn, status, WordPress-bruger; fase 17 (WooCommerce): afsnittene "Product category" og "Products"
 │   └── (Category reconciliation) fase 17 (WooCommerce): tørkørsel, bekræftelse og "Needs attention" (action=category-sync)
+├── Removal requests           ✅ ADR-083 (WooCommerce): creatorernes anmodninger om at få slettet et legacy-produkt; antal ventende i menuen; kræver merchboard_manage_creators
 ├── Category proposals         ✅ fase 28, trin 28.4 (ADR-077): creatorernes forslag til deres kategori; antal ventende i menuen; kræver merchboard_manage_creators
 ├── Settings                   ✅ fase 9: "Data on uninstall" (opt-in for permanent sletning); ✅ fase 12: "Creator dashboard" (URL-slug); ✅ fase 18, trin 6: "Sales ledger" (tællende ordrestatusser, kun med WooCommerce); ✅ fase 21: "Branding" (logo); ✅ fase 25, trin 25.2: "Alerts" (kill switch for købs-alerts, kun med WooCommerce, ADR-065). Tabs General · Access · Advanced kommer, når de får indhold
 ├── Notifikationer (Notifications) ✅ fase 29, trin 29.3 (ADR-079): til/fra pr. notifikation og kanal, eksempel på mailen og dashboardteksten, testmail til dig selv og log over de seneste mails; kræver merchboard_manage_settings
@@ -48,6 +49,8 @@ Merch Dashboard                       ✅ fase 10: menu-capability merchboard_ma
 Row actions: **Rediger** og **Aktivér/Deaktivér** (GET-link til `admin-post.php` med nonce, der er bundet til creator-ID'et). Fra trin 27.3 også **Slet** (ADR-076; samme som knappen "Slet creator" under redigeringsformularen): bekræftelsessiden viser, om creatoren slettes helt eller bevares anonymt, hvad der fjernes, og hvad der blokerer (en ventende udbetaling; koblede produkter uden WooCommerce). Sletningen kræver creatorens navn skrevet præcist og sendes som POST med nonce. Slettede creators med historik vises kun i visningen **Slettede (n)** og kan ikke redigeres. Fra trin 27.2 også **Se som creator** for aktive creators med en bruger (ADR-075; samme knap øverst på redigeringssiden): åbner creator-dashboardet som creatoren i højst en time; "Stop med at se som creatoren" i dashboardet fører tilbage til creatorens side med beskeden "Du ser ikke længere som creatoren." Ingen bulk actions og **ingen Delete** (se DATABASE.md). E-mails, passwords og andre brugerdata vises aldrig.
 
 ### Kategoriforslag ✅ (fase 28, trin 28.4, ADR-077)
+
+"Merch Dashboard → Removal requests" (`ProductRemovalsPage`, slug `merchboard-product-removals`, `merchboard_manage_creators`, ADR-083) viser åbne sager med creator, produkt, tidspunkt og link til produktet i WooCommerce, og de seneste 50 behandlede. Pluginet sletter aldrig produktet: admin sletter det selv i WooCommerce og vælger "Mark as handled", eller vælger "Decline" med en påkrævet note, som creatoren får. Findes produktet stadig, når sagen lukkes, vises en advarsel.
 
 "Merch Dashboard → Category proposals" (`CategoryProposalsPage`, slug `merchboard-category-proposals`, `merchboard_manage_creators`). Menupunktet viser antallet af ventende forslag.
 

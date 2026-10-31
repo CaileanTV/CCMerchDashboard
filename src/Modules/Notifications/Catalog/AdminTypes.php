@@ -34,6 +34,7 @@ final class AdminTypes {
 		return array(
 			self::payout_requested(),
 			self::proposal_submitted(),
+			self::product_removal_requested(),
 			self::order_decision(),
 			self::sync_failed(),
 			self::reconciliation_failed(),
@@ -148,6 +149,36 @@ final class AdminTypes {
 					array( __( 'Method', 'merchboard' ), self::method( $d ) ),
 				),
 				__( 'Open Payouts', 'merchboard' )
+			)
+		);
+	}
+
+	/**
+	 * A creator asked to have a legacy product removed (ADR-083).
+	 */
+	private static function product_removal_requested(): NotificationType {
+		return self::type(
+			'product_removal_requested',
+			static fn(): string => __( 'Product removal requested', 'merchboard' ),
+			static fn(): string => __( 'When a creator asks to have a product removed that was not made in the product designer.', 'merchboard' ),
+			true,
+			'merchboard-product-removals',
+			array(
+				'creator' => 'Nova',
+				'product' => 'Logo Hoodie',
+			),
+			/* translators: 1: creator name, 2: product name. */
+			static fn( NotificationData $d ): string => sprintf( __( '%1$s asked to have %2$s removed.', 'merchboard' ), $d->text( 'creator' ), $d->text( 'product' ) ),
+			static fn( NotificationData $d ): EmailMessage => self::message(
+				/* translators: %s: creator name. */
+				sprintf( __( 'Product removal requested by %s', 'merchboard' ), $d->text( 'creator' ) ),
+				__( 'Product removal requested', 'merchboard' ),
+				__( 'A creator asked to have a product removed. Nothing happens to the product until you have dealt with it in WooCommerce.', 'merchboard' ),
+				array(
+					array( __( 'Creator', 'merchboard' ), $d->text( 'creator' ) ),
+					array( __( 'Product', 'merchboard' ), $d->text( 'product' ) ),
+				),
+				__( 'Open Removal requests', 'merchboard' )
 			)
 		);
 	}

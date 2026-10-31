@@ -80,9 +80,9 @@ final class NotificationsTest extends IntegrationTestCase {
 	public function test_every_type_renders_its_sample_escaped(): void {
 		$sender = $this->sender();
 
-		self::assertCount( 36, $this->types->all(), '27 creator and 9 administrator notifications (features/notifications.md).' );
+		self::assertCount( 39, $this->types->all(), '29 creator and 10 administrator notifications (features/notifications.md).' );
 		self::assertSame(
-			array( 'admin_payout_requested', 'admin_proposal_submitted', 'admin_order_decision', 'admin_sync_failed', 'admin_reconciliation_failed', 'admin_adjustment_failed', 'admin_gift_card_coupon', 'admin_code_reset', 'admin_payout_cancelled' ),
+			array( 'admin_payout_requested', 'admin_proposal_submitted', 'admin_product_removal_requested', 'admin_order_decision', 'admin_sync_failed', 'admin_reconciliation_failed', 'admin_adjustment_failed', 'admin_gift_card_coupon', 'admin_code_reset', 'admin_payout_cancelled' ),
 			array_values( array_filter( array_keys( $this->types->all() ), static fn( string $key ): bool => str_starts_with( $key, 'admin_' ) ) ),
 			'No "new order" e-mail to the administrator: WooCommerce sends it (owner 2026-10-28).'
 		);

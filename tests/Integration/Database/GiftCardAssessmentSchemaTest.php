@@ -49,7 +49,7 @@ final class GiftCardAssessmentSchemaTest extends IntegrationTestCase {
 	public function test_a_fresh_install_creates_the_tables_and_one_inactive_activation_row(): void {
 		$this->install();
 
-		self::assertSame( '39', (string) get_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( '40', (string) get_option( Migrator::VERSION_OPTION ) );
 
 		foreach ( self::G1_TABLES as $table ) {
 			self::assertSame( 'InnoDB', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s', $this->table( $table ) ) ), $table );
@@ -96,7 +96,7 @@ final class GiftCardAssessmentSchemaTest extends IntegrationTestCase {
 
 	public function test_a_failing_table_keeps_the_schema_version_at_11(): void {
 		$migrations = Schema::migrations();
-		unset( $migrations[12], $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19], $migrations[20], $migrations[21], $migrations[22], $migrations[23], $migrations[24], $migrations[25], $migrations[26], $migrations[27], $migrations[28], $migrations[29], $migrations[30], $migrations[31], $migrations[32], $migrations[33], $migrations[34], $migrations[35], $migrations[36], $migrations[37], $migrations[38], $migrations[39] );
+		unset( $migrations[12], $migrations[13], $migrations[14], $migrations[15], $migrations[16], $migrations[17], $migrations[18], $migrations[19], $migrations[20], $migrations[21], $migrations[22], $migrations[23], $migrations[24], $migrations[25], $migrations[26], $migrations[27], $migrations[28], $migrations[29], $migrations[30], $migrations[31], $migrations[32], $migrations[33], $migrations[34], $migrations[35], $migrations[36], $migrations[37], $migrations[38], $migrations[39], $migrations[40] );
 		( new Migrator( $this->wpdb, $migrations ) )->migrate();
 		self::assertSame( '11', (string) get_option( Migrator::VERSION_OPTION ) );
 
@@ -150,7 +150,7 @@ final class GiftCardAssessmentSchemaTest extends IntegrationTestCase {
 
 		$this->install();
 
-		self::assertSame( '39', (string) get_option( Migrator::VERSION_OPTION ), 'Every migration ran again.' );
+		self::assertSame( '40', (string) get_option( Migrator::VERSION_OPTION ), 'Every migration ran again.' );
 		self::assertSame( $before, $this->all_rows(), 'Migration 12 changed no kept row, not even the activation.' );
 	}
 

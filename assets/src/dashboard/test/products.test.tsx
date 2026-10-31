@@ -7,6 +7,8 @@ import {
 	jest,
 } from '@jest/globals';
 
+import { act } from 'react';
+
 import { parseProduct } from '../api/products';
 import { App } from '../app/App';
 import { ConfigContext } from '../app/config-context';
@@ -134,6 +136,8 @@ describe( 'parseProduct', () => {
 			profit: [
 				{ currency: 'DKK', status: 'complete', amount: '29.8000' },
 			],
+			designer: false,
+			removalPending: false,
 		} );
 		expect( parseProduct( CAP )?.price ).toBeNull();
 		expect(
@@ -191,7 +195,14 @@ describe( 'Products section', () => {
 			Array.from( container.querySelectorAll( 'thead th' ) ).map(
 				( th ) => th.textContent
 			)
-		).toEqual( [ 'Product', 'Status', 'Price', 'Stock', 'Profit' ] );
+		).toEqual( [
+			'Product',
+			'Status',
+			'Price',
+			'Stock',
+			'Profit',
+			'Delete',
+		] );
 		expect( rows( container ) ).toEqual( [
 			[
 				'Tour tee',
@@ -199,6 +210,7 @@ describe( 'Products section', () => {
 				'149.00 DKK',
 				'In stock',
 				money( '29.8000' ),
+				'✕',
 			],
 			[
 				'Hoodie',
@@ -206,8 +218,9 @@ describe( 'Products section', () => {
 				'199.50–300 DKK',
 				'On backorder',
 				'Incomplete',
+				'✕',
 			],
-			[ 'Cap', 'Published', 'No price', 'Out of stock', 'No sales' ],
+			[ 'Cap', 'Published', 'No price', 'Out of stock', 'No sales', '✕' ],
 		] );
 	} );
 
@@ -266,7 +279,7 @@ describe( 'Products section', () => {
 
 		expect( paths() ).toEqual( [ FIRST, SECOND ] );
 		expect( rows( container ) ).toEqual( [
-			[ 'Cap', 'Published', 'No price', 'Out of stock', 'No sales' ],
+			[ 'Cap', 'Published', 'No price', 'Out of stock', 'No sales', '✕' ],
 		] );
 		expect(
 			container.querySelector( '.merchboard-pagination__status' )
@@ -336,6 +349,89 @@ describe( 'Products section', () => {
 
 		expect( container.textContent ).toContain( 'Something went wrong.' );
 		expect( container.querySelector( 'table' ) ).toBeNull();
+	} );
+} );
+
+describe( 'A request to remove a product', () => {
+	const REQUEST = 'POST /merchboard/v1/me/products/12/removal-request';
+	const cross = ( container: HTMLElement ) =>
+		container.querySelector< HTMLButtonElement >(
+			'button[aria-label="Delete Tour tee"]'
+		);
+
+	it( 'is offered on a legacy product only', async () => {
+		const { container } = await show( {
+			[ `GET ${ FIRST }` ]: () =>
+				listResponse( [ TEE, { ...HOODIE, designer: true } ], 2, 1 ),
+		} );
+
+		expect(
+			container.querySelectorAll( 'button[title="Delete product"]' )
+		).toHaveLength( 1 );
+		expect( cross( container ) ).not.toBeNull();
+	} );
+
+	it( 'shows that a request is waiting', async () => {
+		const { container } = await show( {
+			[ `GET ${ FIRST }` ]: () =>
+				listResponse( [ { ...TEE, removal_pending: true } ], 1, 1 ),
+		} );
+
+		expect( cross( container ) ).toBeNull();
+		expect( container.textContent ).toContain(
+			'Deletion awaiting handling'
+		);
+	} );
+
+	it( 'is sent after the confirmation and the list follows', async () => {
+		let sent = false;
+		const { container, paths } = await show( {
+			[ `GET ${ FIRST }` ]: () =>
+				listResponse( [ { ...TEE, removal_pending: sent } ], 1, 1 ),
+			[ REQUEST ]: () => {
+				sent = true;
+
+				return response( 200, { removal_pending: true } );
+			},
+		} );
+
+		click( cross( container ) );
+		await flush();
+
+		expect( document.body.textContent ).toContain(
+			'We do not delete the product automatically.'
+		);
+		expect(
+			paths().filter( ( path ) => path.includes( 'removal-request' ) )
+		).toHaveLength( 0 );
+
+		const field = document.querySelector< HTMLInputElement >(
+			'.merchboard-dialog input'
+		);
+
+		act( () => {
+			Object.getOwnPropertyDescriptor(
+				HTMLInputElement.prototype,
+				'value'
+			)?.set?.call( field, 'delete' );
+			field?.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+		} );
+
+		const send = Array.from( document.querySelectorAll( 'button' ) ).find(
+			( button ) => button.textContent === 'Send request'
+		);
+
+		click( send ?? null );
+		await flush();
+		await flush();
+
+		expect(
+			paths().filter( ( path ) => path.includes( 'removal-request' ) )
+		).toHaveLength( 1 );
+		expect( document.querySelector( '.merchboard-dialog' ) ).toBeNull();
+		expect( container.textContent ).toContain(
+			'Deletion awaiting handling'
+		);
 	} );
 } );
 

@@ -175,6 +175,9 @@ final class AuditLogFormatter {
 			AuditAction::CategoryProposalApproved => __( 'Category proposal approved', 'merchboard' ),
 			AuditAction::CategoryProposalRejected => __( 'Category proposal rejected', 'merchboard' ),
 			AuditAction::CategoryProposalWithdrawn => __( 'Creator withdrew a category proposal', 'merchboard' ),
+			AuditAction::ProductRemovalRequested => __( 'Creator asked to have a product removed', 'merchboard' ),
+			AuditAction::ProductRemovalCompleted => __( 'Product removal request handled', 'merchboard' ),
+			AuditAction::ProductRemovalDeclined => __( 'Product removal request declined', 'merchboard' ),
 			AuditAction::DesignerCampaignCreated => __( 'Campaign created', 'merchboard' ),
 			AuditAction::DesignerCampaignChanged => __( 'Campaign changed', 'merchboard' ),
 			AuditAction::DesignerCampaignDeleted => __( 'Campaign deleted', 'merchboard' ),
@@ -357,6 +360,9 @@ final class AuditLogFormatter {
 			case 'former_name':
 				/* translators: %s: the creator's former name. */
 				return self::text( __( 'Former name: %s', 'merchboard' ), self::scalar( $value ) );
+			case 'removal_id':
+				/* translators: %s: removal request id. */
+				return self::text( __( 'Removal request: #%s', 'merchboard' ), self::scalar( $value ) );
 			case 'proposal_id':
 				/* translators: %s: proposal id. */
 				return self::text( __( 'Proposal: #%s', 'merchboard' ), self::scalar( $value ) );

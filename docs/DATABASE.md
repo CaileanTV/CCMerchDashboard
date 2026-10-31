@@ -689,6 +689,24 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
 
 **Kill switches** i `merchboard_settings`: `designer_enabled`, `printful_enabled` og `gelato_enabled` (alle fra som standard).
 
+### Sletteanmodninger ✅ (schema-version 40, ADR-083)
+
+**`merchboard_product_removal_requests`**: creatorens anmodninger om at få slettet et legacy-produkt. Pluginet ændrer aldrig selve produktet.
+
+| Kolonne | Type | Beskrivelse |
+| --- | --- | --- |
+| `id` | bigint unsigned, PK | |
+| `creator_id` | bigint unsigned | Creatoren |
+| `wc_product_id` | bigint unsigned | Produktet |
+| `active_product_id` | bigint unsigned NULL, UNIQUE | Produktet, mens sagen er åben; giver højst én åben sag pr. produkt |
+| `product_name` | varchar(191) | Kopi af navnet, for produktet kan være væk senere |
+| `status` | varchar(16) | `pending`, `completed` eller `declined` |
+| `note` | varchar(500) NULL | Admins note til creatoren |
+| `requested_at`, `requested_by` | datetime, bigint unsigned NULL | Hvornår og hvem (UTC) |
+| `handled_at`, `handled_by` | datetime NULL, bigint unsigned NULL | Hvornår og hvem lukkede sagen (UTC) |
+
+Indeks: `creator_status` og `status_requested`. Sagerne slettes med creatoren og ved opt-in-afinstallation.
+
 ### Fremtidige (ikke designet i detaljer)
 
 - `merchboard_creator_members` – hvis flere brugere (fx en manager) skal have adgang til samme creator. Erstatter `user_id`-kolonnen. Ændringen bliver lokal, fordi al opslag af "nuværende creator" går gennem `CreatorContext`.

@@ -56,6 +56,8 @@ final class CreatorTypes {
 			self::vat_changed(),
 			self::billing_details_changed(),
 			self::product_linked(),
+			self::product_removal_completed(),
+			self::product_removal_declined(),
 			self::impersonation_started(),
 			self::news_published(),
 			self::chatbot_lost_access(),
@@ -867,6 +869,72 @@ final class CreatorTypes {
 				null,
 				null,
 				__( 'See your payouts', 'merchboard' ),
+				'',
+				self::closing()
+			)
+		);
+	}
+
+	/**
+	 * A request to remove a legacy product was handled (ADR-083).
+	 */
+	private static function product_removal_completed(): NotificationType {
+		return self::type(
+			'product_removal_completed',
+			'account',
+			static fn(): string => __( 'Product removal request handled', 'merchboard' ),
+			static fn(): string => __( 'When an administrator has handled a request to remove a product.', 'merchboard' ),
+			true,
+			true,
+			false,
+			'products',
+			array( 'product' => 'Logo Hoodie' ),
+			/* translators: %s: product name. */
+			static fn( NotificationData $d ): string => sprintf( __( 'We have handled your request to remove %s.', 'merchboard' ), $d->text( 'product' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: product name. */
+				sprintf( __( 'Your request to remove %s is handled', 'merchboard' ), $d->text( 'product' ) ),
+				__( 'Your request is handled', 'merchboard' ),
+				/* translators: %s: product name. */
+				array( sprintf( __( 'We have handled your request to remove %s.', 'merchboard' ), $d->text( 'product' ) ) ),
+				array(),
+				null,
+				null,
+				__( 'See your products', 'merchboard' ),
+				'',
+				self::closing()
+			)
+		);
+	}
+
+	/**
+	 * A request to remove a legacy product was declined, with the note (ADR-083).
+	 */
+	private static function product_removal_declined(): NotificationType {
+		return self::type(
+			'product_removal_declined',
+			'account',
+			static fn(): string => __( 'Product removal request declined', 'merchboard' ),
+			static fn(): string => __( 'When an administrator declines a request to remove a product, with the note.', 'merchboard' ),
+			true,
+			true,
+			false,
+			'products',
+			array(
+				'product' => 'Logo Hoodie',
+				'note'    => 'The product is part of a running campaign.',
+			),
+			/* translators: %s: product name. */
+			static fn( NotificationData $d ): string => sprintf( __( 'We could not remove %s.', 'merchboard' ), $d->text( 'product' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: product name. */
+				sprintf( __( 'We could not remove %s', 'merchboard' ), $d->text( 'product' ) ),
+				__( 'Your request was not approved', 'merchboard' ),
+				array( __( 'The product stays in the shop. You are welcome to ask again.', 'merchboard' ) ),
+				array( array( __( 'Product', 'merchboard' ), $d->text( 'product' ) ) ),
+				null,
+				'' === $d->text( 'note' ) ? null : array( __( 'Note from us', 'merchboard' ), $d->text( 'note' ) ),
+				__( 'See your products', 'merchboard' ),
 				'',
 				self::closing()
 			)

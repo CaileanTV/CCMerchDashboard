@@ -33,6 +33,8 @@ final class CreatorEmailTexts {
 			'proposal_approved'     => array( __( 'Category proposal approved', 'merchboard' ), __( 'When we approve a change you proposed for your category.', 'merchboard' ) ),
 			'proposal_rejected'     => array( __( 'Category proposal not approved', 'merchboard' ), __( 'When we cannot approve a change you proposed, with the reason.', 'merchboard' ) ),
 			'product_linked'        => array( __( 'New product in your shop', 'merchboard' ), __( 'When a product is added to your shop.', 'merchboard' ) ),
+			'product_removal_completed' => array( __( 'Removal request handled', 'merchboard' ), __( 'When we have handled your request to remove a product.', 'merchboard' ) ),
+			'product_removal_declined' => array( __( 'Removal request not approved', 'merchboard' ), __( 'When we cannot remove a product you asked us to, with the reason.', 'merchboard' ) ),
 			'impersonation_started' => array( __( 'We looked at your dashboard', 'merchboard' ), __( 'When our team opens your dashboard to help you.', 'merchboard' ) ),
 			'news_published'        => array( __( 'News', 'merchboard' ), __( 'When we have news for you.', 'merchboard' ) ),
 			'chatbot_lost_access'   => array( __( 'Your chatbot lost access', 'merchboard' ), __( 'When a platform stops your chatbot from reaching your channel. You get one e-mail until it is connected again.', 'merchboard' ) ),

@@ -261,6 +261,11 @@ final class Tables {
 	public const DESIGNER_BASES = 'merchboard_designer_bases';
 
 	/**
+	 * Creators' requests to remove a legacy product, handled by hand (ADR-083).
+	 */
+	public const PRODUCT_REMOVAL_REQUESTS = 'merchboard_product_removal_requests';
+
+	/**
 	 * Creators' designer products and their WooCommerce product (ADR-080).
 	 */
 	public const DESIGNER_PRODUCTS = 'merchboard_designer_products';
@@ -335,6 +340,7 @@ final class Tables {
 		self::DESIGNER_ASSETS,
 		self::DESIGNER_PROVIDER_TASKS,
 		self::DESIGNER_CAMPAIGNS,
+		self::PRODUCT_REMOVAL_REQUESTS,
 	);
 
 	/**

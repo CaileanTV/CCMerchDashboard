@@ -760,4 +760,19 @@ enum AuditAction: string {
 	 * A designer product was taken out of the shop (system, ADR-080 pkt. 10). Context: design_product_id, product_id, reason.
 	 */
 	case DesignerProductUnpublished = 'designer_product_unpublished';
+
+	/**
+	 * A creator asked to have a legacy product removed (ADR-083). Context: removal_id, product_id.
+	 */
+	case ProductRemovalRequested = 'product_removal_requested';
+
+	/**
+	 * An administrator marked a removal request as handled (ADR-083). Context: removal_id, product_id.
+	 */
+	case ProductRemovalCompleted = 'product_removal_completed';
+
+	/**
+	 * An administrator declined a removal request (ADR-083). Context: removal_id, product_id, decision_note.
+	 */
+	case ProductRemovalDeclined = 'product_removal_declined';
 }

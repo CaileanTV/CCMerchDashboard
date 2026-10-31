@@ -4857,3 +4857,44 @@ Gelato-produkter får Gelatos professionelle mockups, mens designet laves i vore
 
 ## Related
 ADR-016, ADR-080, ADR-081. Kilder: Gelatos guide "Creating Products From Template" og API-referencen (Get template, Create product from template, Get product).
+
+# ADR-083: Creatoren anmoder om sletning af legacy-produkter, og admin behandler dem manuelt
+
+## Date
+2026-10-31
+
+## Status
+Accepteret af projektejeren 2026-10-31 (plan godkendt). Eksperimentel: testet automatisk.
+
+## Context
+Projektejeren vil give creatorne mulighed for at slippe af med et legacy-produkt, altså et produkt i creatorens bibliotek, der er lavet uden for produktdesigneren. Sådan et produkt kan ikke genskabes, og ADR-080 siger, at pluginet aldrig må berøre det. Indtil nu kunne creatoren intet gøre, for "Dine produkter" er skrivebeskyttet.
+
+## Decision
+1. **Pluginet sletter aldrig produktet.** En anmodning er kun en sag. Admin sletter selv produktet i WooCommerce og markerer sagen som behandlet. At lukke en sag ændrer intet ved produktet.
+2. **Legacy** er ethvert produkt i creatorens liste, som `DesignerProductGuard::guard()` ikke godkender. Kan guarden ikke læses, afvises anmodningen. Designer-produkter har deres egen sletning og afvises med `designer_product`.
+3. **Mens sagen er åben,** er produktet uændret og kan købes.
+4. **Bekræftelse:** samme dialog som for designer-produkter, hvor ordet SLET skrives, men teksten og knappen siger, at det er en anmodning.
+5. **Afvisning:** admin afviser med en påkrævet note, som creatoren får. Creatoren kan derefter anmode igen.
+6. **Ingen tilbagetrækning:** har creatoren fortrudt, afviser admin sagen.
+7. **Rettighed:** `merchboard_manage_creators`, som kategoriforslag. Under "Se som creator" kan en administrator anmode på creatorens vegne.
+8. **Sletning af en creator** sletter creatorens sager, ikke produkterne.
+
+## Alternatives considered
+- **Kun en mail til admin:** fravalgt; ingen status til creatoren og intet værn mod dubletter.
+- **Sletning med WooCommerce-papirkurven ved godkendelse:** fravalgt; papirkurven tømmes automatisk, og pluginet må ikke berøre legacy-produkter.
+
+## Reason
+Et forkert klik må ikke kunne fjerne noget, der ikke kan genskabes. Admin ser produktet, inden det slettes.
+
+## Security
+- Creatoren kommer altid fra `CreatorContext` (ADR-007), og produktet skal være i creatorens egen liste. Andres produkter svarer 404.
+- Admin-handlingerne kræver rettighed og en nonce bundet til sagen. Noten renses, og serverens tekst vises aldrig i dashboardet.
+- Alt auditeres i samme transaktion. Sager og notifikationer holder kun produktets navn og noten.
+
+## Migration/data implications
+Schema-version 40: tabellen `merchboard_product_removal_requests`. Tabellen slettes ved opt-in-afinstallation.
+
+## Consequences
+- Fanen "Removal requests" er en ny manuel opgave for admin.
+- En lukket sag betyder, at admin har behandlet den, ikke at produktet er væk. Findes produktet stadig, får admin en advarsel, men sagen lukkes.
+- En sag kan blive stående, hvis admin sletter produktet uden at lukke den. Køen viser, at produktet ikke længere findes.

@@ -40,4 +40,8 @@ export interface Product {
 	 * time, one entry per currency; null when the creator has no sales of it.
 	 */
 	readonly profit: readonly Profit[] | null;
+	/** Made in the designer, which has its own deletion. */
+	readonly designer: boolean;
+	/** A request to remove it is waiting for us (ADR-083). */
+	readonly removalPending: boolean;
 }

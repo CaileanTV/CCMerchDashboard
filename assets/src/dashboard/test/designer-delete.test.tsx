@@ -78,6 +78,39 @@ describe( 'the confirmation of a deletion', () => {
 		document.body.replaceChildren();
 	} );
 
+	it( 'says that a request is only a request', async () => {
+		const onConfirm = jest.fn( () => Promise.resolve( true ) );
+
+		const container = document.createElement( 'div' );
+
+		document.body.append( container );
+		act( () => {
+			createRoot( container ).render(
+				<ConfirmDelete
+					title="Logo Hoodie"
+					inShop
+					request
+					onConfirm={ onConfirm }
+					onClose={ jest.fn() }
+				/>
+			);
+		} );
+
+		const button = Array.from( document.querySelectorAll( 'button' ) ).find(
+			( candidate ) => candidate.className.includes( 'danger' )
+		) as HTMLButtonElement;
+
+		expect( document.body.textContent ).toContain(
+			'We do not delete the product automatically.'
+		);
+		expect( button.textContent ).toContain( 'Send request' );
+		expect( button.disabled ).toBe( true );
+
+		type( 'delete' );
+		expect( button.disabled ).toBe( false );
+		document.body.replaceChildren();
+	} );
+
 	it( 'says that for good is for good', () => {
 		render( () => Promise.resolve( true ), true );
 

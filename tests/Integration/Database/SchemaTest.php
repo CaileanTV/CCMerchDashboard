@@ -200,6 +200,37 @@ final class SchemaTest extends IntegrationTestCase {
 		);
 	}
 
+	public function test_product_removal_requests_table_matches_the_documented_schema(): void {
+		$this->install();
+
+		self::assertSame(
+			array(
+				'id'                => array( 'bigint', 'unsigned', 'NO', 'auto_increment' ),
+				'creator_id'        => array( 'bigint', 'unsigned', 'NO', '' ),
+				'wc_product_id'     => array( 'bigint', 'unsigned', 'NO', '' ),
+				'active_product_id' => array( 'bigint', 'unsigned', 'YES', '' ),
+				'product_name'      => array( 'varchar(191)', '', 'NO', '' ),
+				'status'            => array( 'varchar(16)', '', 'NO', '' ),
+				'note'              => array( 'varchar(500)', '', 'YES', '' ),
+				'requested_at'      => array( 'datetime', '', 'NO', '' ),
+				'requested_by'      => array( 'bigint', 'unsigned', 'YES', '' ),
+				'handled_at'        => array( 'datetime', '', 'YES', '' ),
+				'handled_by'        => array( 'bigint', 'unsigned', 'YES', '' ),
+			),
+			$this->columns( Tables::PRODUCT_REMOVAL_REQUESTS )
+		);
+		self::assertSame(
+			array(
+				'PRIMARY'           => array( 'unique', 'id' ),
+				'active_product_id' => array( 'unique', 'active_product_id' ),
+				'creator_status'    => array( 'non-unique', 'creator_id,status' ),
+				'status_requested'  => array( 'non-unique', 'status,requested_at' ),
+			),
+			$this->indexes( Tables::PRODUCT_REMOVAL_REQUESTS ),
+			'At most one pending request per product (ADR-083).'
+		);
+	}
+
 	public function test_the_retired_item_pricing_table_does_not_exist(): void {
 		$this->install();
 

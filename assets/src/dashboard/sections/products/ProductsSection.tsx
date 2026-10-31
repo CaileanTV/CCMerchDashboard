@@ -1,8 +1,9 @@
 import { useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { getProducts } from '../../api/products';
+import { getProducts, requestProductRemoval } from '../../api/products';
 import { ApiErrorState } from '../../components/ApiErrorState';
+import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { EmptyState } from '../../components/EmptyState';
 import { Pagination } from '../../components/Pagination';
@@ -10,6 +11,7 @@ import { ProfitLegend, ProfitValue } from '../../components/ProfitValue';
 import { Table } from '../../components/Table';
 import type { TableColumn } from '../../components/Table';
 import { usePagedApi } from '../../hooks/usePagedApi';
+import { ConfirmDelete } from '../designer/ConfirmDelete';
 import { DesignerProductsCard } from './DesignerProductsCard';
 import type {
 	Product,
@@ -88,7 +90,51 @@ function ProductCell( { product }: { readonly product: Product } ) {
 	);
 }
 
-const columns = (): readonly TableColumn< Product >[] => [
+/**
+ * A cross on a legacy product, which asks us to remove it; a designer product
+ * has its own deletion below.
+ *
+ * @param props           Props.
+ * @param props.product   The product.
+ * @param props.onRequest Opens the confirmation.
+ */
+function RemovalCell( {
+	product,
+	onRequest,
+}: {
+	readonly product: Product;
+	readonly onRequest: ( product: Product ) => void;
+} ) {
+	if ( product.designer ) {
+		return null;
+	}
+
+	if ( product.removalPending ) {
+		return <>{ __( 'Deletion awaiting handling', 'merchboard' ) }</>;
+	}
+
+	return (
+		<Button
+			size="sm"
+			variant="ghost"
+			onClick={ () => onRequest( product ) }
+			aria-label={ sprintf(
+				/* translators: %s: product name. */ __(
+					'Delete %s',
+					'merchboard'
+				),
+				product.name
+			) }
+			title={ __( 'Delete product', 'merchboard' ) }
+		>
+			✕
+		</Button>
+	);
+}
+
+const columns = (
+	onRequest: ( product: Product ) => void
+): readonly TableColumn< Product >[] => [
 	{
 		key: 'product',
 		header: __( 'Product', 'merchboard' ),
@@ -114,6 +160,14 @@ const columns = (): readonly TableColumn< Product >[] => [
 		key: 'profit',
 		header: __( 'Profit', 'merchboard' ),
 		render: ( product ) => <ProductProfit product={ product } />,
+		align: 'end',
+	},
+	{
+		key: 'delete',
+		header: __( 'Delete', 'merchboard' ),
+		render: ( product ) => (
+			<RemovalCell product={ product } onRequest={ onRequest } />
+		),
 		align: 'end',
 	},
 ];
@@ -142,15 +196,17 @@ function ProductProfit( { product }: { readonly product: Product } ) {
 }
 
 /**
- * Products (ADR-039): the creator's products from `GET /me/products`, read
- * only, a page at a time. Status and stock are text, not colour. While a page
- * loads the pagination stays (disabled) with the last known number of pages,
- * so keyboard focus is not lost. While the designer is on, the creator's
- * designs follow (step 30.14).
+ * Products (ADR-039): the creator's products from `GET /me/products`, a page
+ * at a time. Status and stock are text, not colour. While a page loads the
+ * pagination stays (disabled) with the last known number of pages, so
+ * keyboard focus is not lost. While the designer is on, the creator's designs
+ * follow (step 30.14). A legacy product is never deleted from here: the cross
+ * asks us to do it by hand (ADR-083).
  */
 export function ProductsSection() {
 	const { state, page, setPage, retry } = usePagedApi( getProducts );
 	const [ knownPages, setKnownPages ] = useState( 0 );
+	const [ removing, setRemoving ] = useState< Product | null >( null );
 
 	useEffect( () => {
 		if ( state.status === 'success' ) {
@@ -175,7 +231,7 @@ export function ProductsSection() {
 				<Table
 					caption={ title }
 					captionHidden
-					columns={ columns() }
+					columns={ columns( setRemoving ) }
 					rows={ state.status === 'success' ? state.data.items : [] }
 					rowKey={ ( product ) => product.id }
 					loading={ state.status === 'loading' }
@@ -216,6 +272,26 @@ export function ProductsSection() {
 					label={ __( 'Product pages', 'merchboard' ) }
 					disabled={ state.status === 'loading' }
 				/>
+				{ removing === null ? null : (
+					<ConfirmDelete
+						title={ removing.name }
+						inShop
+						request
+						onConfirm={ async () => {
+							const result = await requestProductRemoval(
+								removing.id
+							);
+
+							if ( result.ok ) {
+								setRemoving( null );
+								retry();
+							}
+
+							return result.ok;
+						} }
+						onClose={ () => setRemoving( null ) }
+					/>
+				) }
 			</Card>
 			<DesignerProductsCard />
 		</>

@@ -33,7 +33,8 @@ Permission: `CreatorContext::current()` (✅ fase 8) skal returnere en creator. 
 | `GET` | `/me/profile/files/{id}` | ✅ Et af creatorens egne foreslåede billeder, der venter (selve billedet, `no-store`, `nosniff`) | 28 |
 | `DELETE` | `/me/profile/proposals/{field}` | ✅ Træk et ventende forslag tilbage | 28 |
 | `PATCH` | `/me/preferences` | ✅ Brugerens dashboard-tema (`theme`; `null` = følg systemet). Ingen `GET` | 21 |
-| `GET` | `/me/products` | ✅ Creator'ens produkter (pagineret, se nedenfor) | 19 |
+| `GET` | `/me/products` | ✅ Creator'ens produkter (pagineret, se nedenfor), med `designer` og `removal_pending` | 19 |
+| `POST` | `/me/products/{id}/removal-request` | ✅ Anmoder om sletning af et legacy-produkt (ADR-083): `{ "removal_pending": true }`. Admin behandler den manuelt, og produktet berøres ikke. En anmodning til, mens en er åben, ændrer intet. Andres produkter: 404. Et designer-produkt: 400 `merchboard_removal_refused` med `data.reason` `designer_product`. Kun med WooCommerce | kommende |
 | `GET` | `/me/orders` | ✅ Ordrelinjer med creator'ens produkter **uden kunde-PII** (se nedenfor) | 19 |
 | `GET` | `/me/sales?from=&to=&interval=` | ✅ Salgsstatistik pr. valuta: totaler, tæt serie og produkter (se nedenfor) | 20 |
 | `GET` | `/me/payouts` | ✅ Creatorens egne payouts, nyeste først, pagineret (`page`, `per_page`, `X-WP-Total`): `id`, `status`, `currency`, `amount`, `method`, `destination_hint` (kun maskeret), `requested_at`, `decided_at`, `rejection_reason` (kun ved `rejected`), `gift_card` (true, når et gavekort er registreret og kan vises), `settlement_document` (bilagsnummer eller null, ADR-060). Aldrig dekrypterede oplysninger eller gavekortkoder | 23 |

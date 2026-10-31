@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-31T07:50:24+00:00\n"
+"POT-Creation-Date: 2026-10-31T08:16:07+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -126,6 +126,9 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:111
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:242
 #: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:331
+#: src/Modules/WooCommerce/Admin/ProductRemovalActions.php:81
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:94
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:122
 msgid "Sorry, you are not allowed to manage creators."
 msgstr ""
 
@@ -163,6 +166,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationActions.php:111
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationExportDownload.php:115
 #: src/Modules/WooCommerce/Admin/PayoutSettingsActions.php:310
+#: src/Modules/WooCommerce/Admin/ProductRemovalActions.php:89
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsActions.php:99
 #: src/Modules/WooCommerce/Admin/SettlementPdfDownload.php:117
 msgid "The link you followed has expired. Please try again."
@@ -254,7 +258,7 @@ msgid "Fixed profit removed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:91
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:819
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:821
 msgid "VAT status changed"
 msgstr ""
 
@@ -291,7 +295,7 @@ msgid "Payout rejected"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:100
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:342
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:344
 msgid "Payout completed"
 msgstr ""
 
@@ -316,7 +320,7 @@ msgid "Settlement document issued"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:106
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:454
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:456
 msgid "Settlement document corrected"
 msgstr ""
 
@@ -594,12 +598,12 @@ msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:175
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:33
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:542
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:544
 msgid "Category proposal approved"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:176
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:573
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:575
 msgid "Category proposal rejected"
 msgstr ""
 
@@ -608,455 +612,475 @@ msgid "Creator withdrew a category proposal"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:178
-msgid "Campaign created"
+msgid "Creator asked to have a product removed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:179
-msgid "Campaign changed"
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:885
+msgid "Product removal request handled"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:180
-msgid "Campaign deleted"
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:917
+msgid "Product removal request declined"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:181
-msgid "Base product created"
+msgid "Campaign created"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:182
-msgid "Base product changed"
+msgid "Campaign changed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:183
-msgid "Base product deleted"
+msgid "Campaign deleted"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:184
-msgid "Clipart added"
+msgid "Base product created"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:185
-msgid "Clipart deleted"
+msgid "Base product changed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:186
-msgid "Creator started a designer product"
+msgid "Base product deleted"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:187
-msgid "Creator deleted a designer draft"
+msgid "Clipart added"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:188
-msgid "Creator submitted a design for approval"
+msgid "Clipart deleted"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:189
-msgid "Creator withdrew a design from approval"
+msgid "Creator started a designer product"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:190
-msgid "Design approved"
+msgid "Creator deleted a designer draft"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:191
+msgid "Creator submitted a design for approval"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:192
+msgid "Creator withdrew a design from approval"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:193
+msgid "Design approved"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:194
 #: src/Modules/ProductDesigner/DesignerNotifications.php:205
 msgid "Design rejected"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:192
+#: src/Modules/Admin/AuditLogFormatter.php:195
 msgid "Design put in the shop"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:193
+#: src/Modules/Admin/AuditLogFormatter.php:196
 msgid "Design queued for the shop again"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:194
+#: src/Modules/Admin/AuditLogFormatter.php:197
 msgid "Creator discarded a change of a designer product"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:195
+#: src/Modules/Admin/AuditLogFormatter.php:198
 msgid "Creator put a designer product in the shop"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:196
+#: src/Modules/Admin/AuditLogFormatter.php:199
 msgid "Creator took a designer product out of the shop"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:197
+#: src/Modules/Admin/AuditLogFormatter.php:200
 msgid "Creator moved a designer product to the deleted designs"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:198
+#: src/Modules/Admin/AuditLogFormatter.php:201
 msgid "Creator deleted a design for good"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:199
+#: src/Modules/Admin/AuditLogFormatter.php:202
 msgid "Creator started a change of a designer product"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:200
+#: src/Modules/Admin/AuditLogFormatter.php:203
 msgid "Base product retired"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:201
+#: src/Modules/Admin/AuditLogFormatter.php:204
 msgid "Designer product repriced"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:202
+#: src/Modules/Admin/AuditLogFormatter.php:205
 #: src/Modules/ProductDesigner/DesignerNotifications.php:274
 msgid "Designer product taken out of the shop"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:293
+#: src/Modules/Admin/AuditLogFormatter.php:296
 msgid "WordPress user: none"
-msgstr ""
-
-#. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:295
-#, php-format
-msgid "WordPress user: %s"
 msgstr ""
 
 #. translators: %s: user label or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:298
 #, php-format
-msgid "Triggered by: %s"
+msgid "WordPress user: %s"
 msgstr ""
 
-#. translators: %s: creator status.
+#. translators: %s: user label or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:301
 #, php-format
-msgid "Status: %s"
+msgid "Triggered by: %s"
 msgstr ""
 
 #. translators: %s: creator status.
 #: src/Modules/Admin/AuditLogFormatter.php:304
 #, php-format
+msgid "Status: %s"
+msgstr ""
+
+#. translators: %s: creator status.
+#: src/Modules/Admin/AuditLogFormatter.php:307
+#, php-format
 msgid "Previous status: %s"
 msgstr ""
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:307
+#: src/Modules/Admin/AuditLogFormatter.php:310
 #, php-format
 msgid "Changed: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:310
+#: src/Modules/Admin/AuditLogFormatter.php:313
 msgid "Reason: the WordPress user was deleted"
 msgstr ""
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:312
+#: src/Modules/Admin/AuditLogFormatter.php:315
 #, php-format
 msgid "Reason: %s"
 msgstr ""
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:315
+#: src/Modules/Admin/AuditLogFormatter.php:318
 #, php-format
 msgid "Trigger: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:318
+#: src/Modules/Admin/AuditLogFormatter.php:321
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:319
+#: src/Modules/Admin/AuditLogFormatter.php:322
 msgid "Setting: creator dashboard URL slug"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:320
+#: src/Modules/Admin/AuditLogFormatter.php:323
 msgid "Setting: counted order statuses"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:321
+#: src/Modules/Admin/AuditLogFormatter.php:324
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr ""
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:323
+#: src/Modules/Admin/AuditLogFormatter.php:326
 #, php-format
 msgid "Setting: %s"
 msgstr ""
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:327
+#: src/Modules/Admin/AuditLogFormatter.php:330
 #, php-format
 msgid "Previous value: %s"
 msgstr ""
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:330
+#: src/Modules/Admin/AuditLogFormatter.php:333
 #, php-format
 msgid "New value: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:332
+#: src/Modules/Admin/AuditLogFormatter.php:335
 msgid "New value: enabled"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:332
+#: src/Modules/Admin/AuditLogFormatter.php:335
 msgid "New value: disabled"
 msgstr ""
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:335
+#: src/Modules/Admin/AuditLogFormatter.php:338
 #, php-format
 msgid "Product: %s"
 msgstr ""
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:338
+#: src/Modules/Admin/AuditLogFormatter.php:341
 #, php-format
 msgid "Product category: %s"
 msgstr ""
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:341
+#: src/Modules/Admin/AuditLogFormatter.php:344
 #, php-format
 msgid "Product categories: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:344
+#: src/Modules/Admin/AuditLogFormatter.php:347
 msgid "Previous creator: none"
-msgstr ""
-
-#. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:346
-#, php-format
-msgid "Previous creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:349
 #, php-format
-msgid "Creator: %s"
+msgid "Previous creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:352
 #, php-format
+msgid "Creator: %s"
+msgstr ""
+
+#. translators: %s: creator name or "#id".
+#: src/Modules/Admin/AuditLogFormatter.php:355
+#, php-format
 msgid "Done by an administrator viewing as %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:355
+#: src/Modules/Admin/AuditLogFormatter.php:358
 msgid "Kept anonymized for its sales, payouts and settlement documents"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:356
+#: src/Modules/Admin/AuditLogFormatter.php:359
 msgid "Deleted completely (no sales, payouts or settlement documents)"
 msgstr ""
 
 #. translators: %s: the creator's former name.
-#: src/Modules/Admin/AuditLogFormatter.php:359
+#: src/Modules/Admin/AuditLogFormatter.php:362
 #, php-format
 msgid "Former name: %s"
 msgstr ""
 
+#. translators: %s: removal request id.
+#: src/Modules/Admin/AuditLogFormatter.php:365
+#, php-format
+msgid "Removal request: #%s"
+msgstr ""
+
 #. translators: %s: proposal id.
-#: src/Modules/Admin/AuditLogFormatter.php:362
+#: src/Modules/Admin/AuditLogFormatter.php:368
 #, php-format
 msgid "Proposal: #%s"
 msgstr ""
 
 #. translators: %s: what the proposal changes, e.g. "banner".
-#: src/Modules/Admin/AuditLogFormatter.php:365
+#: src/Modules/Admin/AuditLogFormatter.php:371
 #, php-format
 msgid "Proposed change: %s"
 msgstr ""
 
 #. translators: %s: the administrator's note.
-#: src/Modules/Admin/AuditLogFormatter.php:368
+#: src/Modules/Admin/AuditLogFormatter.php:374
 #, php-format
 msgid "Note to the creator: %s"
 msgstr ""
 
 #. translators: %s: campaign id.
-#: src/Modules/Admin/AuditLogFormatter.php:371
+#: src/Modules/Admin/AuditLogFormatter.php:377
 #, php-format
 msgid "Campaign: #%s"
 msgstr ""
 
 #. translators: %s: campaign name.
-#: src/Modules/Admin/AuditLogFormatter.php:374
+#: src/Modules/Admin/AuditLogFormatter.php:380
 #, php-format
 msgid "Campaign name: %s"
 msgstr ""
 
 #. translators: %s: start and end in UTC.
-#: src/Modules/Admin/AuditLogFormatter.php:377
+#: src/Modules/Admin/AuditLogFormatter.php:383
 #, php-format
 msgid "Period (UTC): %s"
 msgstr ""
 
 #. translators: %s: comma-separated coupon codes.
-#: src/Modules/Admin/AuditLogFormatter.php:380
+#: src/Modules/Admin/AuditLogFormatter.php:386
 #, php-format
 msgid "Coupon codes: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:382
+#: src/Modules/Admin/AuditLogFormatter.php:388
 msgid "Covers sale prices: yes"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:382
+#: src/Modules/Admin/AuditLogFormatter.php:388
 msgid "Covers sale prices: no"
 msgstr ""
 
 #. translators: %d: minutes.
-#: src/Modules/Admin/AuditLogFormatter.php:385
+#: src/Modules/Admin/AuditLogFormatter.php:391
 #, php-format
 msgid "Session length: %d minutes"
 msgstr ""
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:388
+#: src/Modules/Admin/AuditLogFormatter.php:394
 #, php-format
 msgid "Origin: %s"
 msgstr ""
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:391
+#: src/Modules/Admin/AuditLogFormatter.php:397
 #, php-format
 msgid "Previous origin: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:394
+#: src/Modules/Admin/AuditLogFormatter.php:400
 msgid "Previous link: invalid"
 msgstr ""
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:396
+#: src/Modules/Admin/AuditLogFormatter.php:402
 #, php-format
 msgid "Previous link: %s"
 msgstr ""
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:399
+#: src/Modules/Admin/AuditLogFormatter.php:405
 #, php-format
 msgid "Choice: %s"
 msgstr ""
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:402
+#: src/Modules/Admin/AuditLogFormatter.php:408
 #, php-format
 msgid "Run: %s"
 msgstr ""
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:405
+#: src/Modules/Admin/AuditLogFormatter.php:411
 #, php-format
 msgid "Scope: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:407
+#: src/Modules/Admin/AuditLogFormatter.php:413
 msgid "Dry run: yes"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:407
+#: src/Modules/Admin/AuditLogFormatter.php:413
 msgid "Dry run: no"
 msgstr ""
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:410
+#: src/Modules/Admin/AuditLogFormatter.php:416
 #, php-format
 msgid "Products evaluated: %s"
 msgstr ""
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:413
+#: src/Modules/Admin/AuditLogFormatter.php:419
 #, php-format
 msgid "Order: #%s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:416
+#: src/Modules/Admin/AuditLogFormatter.php:422
 msgid "WooCommerce order: in the trash"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:417
-msgid "WooCommerce order: deleted"
-msgstr ""
-
-#. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:420
-#, php-format
-msgid "Ledger rows deleted: %s"
-msgstr ""
-
-#. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:423
-#, php-format
-msgid "Cycle events deleted: %s"
+msgid "WooCommerce order: deleted"
 msgstr ""
 
 #. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:426
 #, php-format
-msgid "Stored tax rows deleted: %s"
+msgid "Ledger rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:429
 #, php-format
+msgid "Cycle events deleted: %s"
+msgstr ""
+
+#. translators: %s: number of rows.
+#: src/Modules/Admin/AuditLogFormatter.php:432
+#, php-format
+msgid "Stored tax rows deleted: %s"
+msgstr ""
+
+#. translators: %s: number of rows.
+#: src/Modules/Admin/AuditLogFormatter.php:435
+#, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr ""
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:432
+#: src/Modules/Admin/AuditLogFormatter.php:438
 #, php-format
 msgid "Creators: %s"
 msgstr ""
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:473
+#: src/Modules/Admin/AuditLogFormatter.php:479
 #, php-format
 msgid "Orders scanned: %s"
 msgstr ""
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:475
+#: src/Modules/Admin/AuditLogFormatter.php:481
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr ""
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:477
+#: src/Modules/Admin/AuditLogFormatter.php:483
 #, php-format
 msgid "Failures by code: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:490
+#: src/Modules/Admin/AuditLogFormatter.php:496
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:233
 msgid "Registered"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:491
+#: src/Modules/Admin/AuditLogFormatter.php:497
 msgid "Already in the ledger"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:492
+#: src/Modules/Admin/AuditLogFormatter.php:498
 #: build/dashboard.js:59
 msgid "Not counted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:493
+#: src/Modules/Admin/AuditLogFormatter.php:499
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:494
+#: src/Modules/Admin/AuditLogFormatter.php:500
 msgid "Not found"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:495
+#: src/Modules/Admin/AuditLogFormatter.php:501
 msgid "Busy"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:496
+#: src/Modules/Admin/AuditLogFormatter.php:502
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:262
 msgid "Failed"
 msgstr ""
@@ -1064,91 +1088,91 @@ msgstr ""
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:506
-#: src/Modules/Admin/AuditLogFormatter.php:532
-#: src/Modules/Admin/AuditLogFormatter.php:591
+#: src/Modules/Admin/AuditLogFormatter.php:512
+#: src/Modules/Admin/AuditLogFormatter.php:538
+#: src/Modules/Admin/AuditLogFormatter.php:597
 #, php-format
 msgid "%1$s: %2$d"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:519
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:156
+#: src/Modules/Admin/AuditLogFormatter.php:525
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:158
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:65
 msgid "Sale"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:520
+#: src/Modules/Admin/AuditLogFormatter.php:526
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:65
 msgid "Refund"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:521
+#: src/Modules/Admin/AuditLogFormatter.php:527
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:65
 msgid "Reversal"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:522
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:478
+#: src/Modules/Admin/AuditLogFormatter.php:528
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:480
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:65
 msgid "Correction"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:550
+#: src/Modules/Admin/AuditLogFormatter.php:556
 msgid "none"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:574
+#: src/Modules/Admin/AuditLogFormatter.php:580
 msgid "Linked"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:575
+#: src/Modules/Admin/AuditLogFormatter.php:581
 msgid "Moved"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:576
+#: src/Modules/Admin/AuditLogFormatter.php:582
 msgid "Removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:577
+#: src/Modules/Admin/AuditLogFormatter.php:583
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:109
 msgid "Unchanged"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:578
-#: src/Modules/Admin/AuditLogFormatter.php:730
+#: src/Modules/Admin/AuditLogFormatter.php:584
+#: src/Modules/Admin/AuditLogFormatter.php:736
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:240
 msgid "Manual"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:579
+#: src/Modules/Admin/AuditLogFormatter.php:585
 msgid "Ambiguous"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:580
-#: src/Modules/Admin/AuditLogFormatter.php:790
+#: src/Modules/Admin/AuditLogFormatter.php:586
+#: src/Modules/Admin/AuditLogFormatter.php:796
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
 #: build/dashboard.js:61
 msgid "Inactive"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:581
+#: src/Modules/Admin/AuditLogFormatter.php:587
 msgid "Errors"
 msgstr ""
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:610
+#: src/Modules/Admin/AuditLogFormatter.php:616
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr ""
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:625
+#: src/Modules/Admin/AuditLogFormatter.php:631
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -1157,7 +1181,7 @@ msgstr ""
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:694
+#: src/Modules/Admin/AuditLogFormatter.php:700
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:467
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
@@ -1166,103 +1190,103 @@ msgid "%1$s (#%2$d)"
 msgstr ""
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:694
+#: src/Modules/Admin/AuditLogFormatter.php:700
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:464
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:704
+#: src/Modules/Admin/AuditLogFormatter.php:710
 msgid "the product was added to a mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:705
+#: src/Modules/Admin/AuditLogFormatter.php:711
 msgid "the product left its mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:706
+#: src/Modules/Admin/AuditLogFormatter.php:712
 msgid "the product moved to another creator's category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:707
+#: src/Modules/Admin/AuditLogFormatter.php:713
 msgid "product categories changed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:708
+#: src/Modules/Admin/AuditLogFormatter.php:714
 msgid "a category mapping was created"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:709
+#: src/Modules/Admin/AuditLogFormatter.php:715
 msgid "a category mapping was removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:710
+#: src/Modules/Admin/AuditLogFormatter.php:716
 msgid "the creator was activated"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:711
+#: src/Modules/Admin/AuditLogFormatter.php:717
 msgid "the product category was deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:712
+#: src/Modules/Admin/AuditLogFormatter.php:718
 msgid "categories of several creators (ambiguous)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:713
+#: src/Modules/Admin/AuditLogFormatter.php:719
 msgid "full reconciliation"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:714
+#: src/Modules/Admin/AuditLogFormatter.php:720
 msgid "an administrator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:715
+#: src/Modules/Admin/AuditLogFormatter.php:721
 msgid "the administrator stopped viewing as the creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:716
+#: src/Modules/Admin/AuditLogFormatter.php:722
 msgid "the session expired"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:717
+#: src/Modules/Admin/AuditLogFormatter.php:723
 msgid "the administrator logged out"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:718
+#: src/Modules/Admin/AuditLogFormatter.php:724
 msgid "the administrator viewed another creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:731
+#: src/Modules/Admin/AuditLogFormatter.php:737
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:127
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:311
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:243
 msgid "Product category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:743
+#: src/Modules/Admin/AuditLogFormatter.php:749
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:382
 msgid "Remove category-managed links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:744
+#: src/Modules/Admin/AuditLogFormatter.php:750
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Keep as manual links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:756
+#: src/Modules/Admin/AuditLogFormatter.php:762
 msgid "all relevant products"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:757
+#: src/Modules/Admin/AuditLogFormatter.php:763
 msgid "the products of one category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:758
+#: src/Modules/Admin/AuditLogFormatter.php:764
 msgid "the products of one mapping"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:790
+#: src/Modules/Admin/AuditLogFormatter.php:796
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
@@ -1273,15 +1297,15 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:809
+#: src/Modules/Admin/AuditLogFormatter.php:815
 msgid "display name"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:810
+#: src/Modules/Admin/AuditLogFormatter.php:816
 msgid "bio"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:811
+#: src/Modules/Admin/AuditLogFormatter.php:817
 msgid "social links"
 msgstr ""
 
@@ -1303,12 +1327,13 @@ msgstr ""
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 #: src/Modules/Creators/Admin/UserProfileSection.php:62
 #: src/Modules/News/Admin/NewsAdminPage.php:334
-#: src/Modules/Notifications/Catalog/AdminTypes.php:146
-#: src/Modules/Notifications/Catalog/AdminTypes.php:177
+#: src/Modules/Notifications/Catalog/AdminTypes.php:147
+#: src/Modules/Notifications/Catalog/AdminTypes.php:178
 #: src/Modules/Notifications/Catalog/AdminTypes.php:208
-#: src/Modules/Notifications/Catalog/AdminTypes.php:289
-#: src/Modules/Notifications/Catalog/AdminTypes.php:338
-#: src/Modules/Notifications/Catalog/AdminTypes.php:367
+#: src/Modules/Notifications/Catalog/AdminTypes.php:239
+#: src/Modules/Notifications/Catalog/AdminTypes.php:320
+#: src/Modules/Notifications/Catalog/AdminTypes.php:369
+#: src/Modules/Notifications/Catalog/AdminTypes.php:398
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:175
 #: src/Modules/ProductDesigner/DesignerNotifications.php:321
 #: src/Modules/ProductDesigner/DesignerNotifications.php:366
@@ -1325,6 +1350,8 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:644
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:113
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:120
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:167
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:193
 msgid "Creator"
 msgstr ""
 
@@ -3201,10 +3228,10 @@ msgid "Orders with alerts"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/OrderLogTab.php:243
-#: src/Modules/Notifications/Catalog/AdminTypes.php:207
-#: src/Modules/Notifications/Catalog/AdminTypes.php:237
-#: src/Modules/Notifications/Catalog/AdminTypes.php:314
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:200
+#: src/Modules/Notifications/Catalog/AdminTypes.php:238
+#: src/Modules/Notifications/Catalog/AdminTypes.php:268
+#: src/Modules/Notifications/Catalog/AdminTypes.php:345
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:202
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:623
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
@@ -3610,6 +3637,7 @@ msgid "The proposal is no longer valid and was not approved."
 msgstr ""
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:88
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:95
 msgid "A technical error occurred. Nothing was changed. Please try again later."
 msgstr ""
 
@@ -3660,14 +3688,14 @@ msgid "Product category:"
 msgstr ""
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:220
-#: src/Modules/Notifications/Catalog/AdminTypes.php:178
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:556
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:590
+#: src/Modules/Notifications/Catalog/AdminTypes.php:209
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:558
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:592
 msgid "Change"
 msgstr ""
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:221
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:798
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:800
 msgid "Now"
 msgstr ""
 
@@ -3678,6 +3706,8 @@ msgid "Proposed"
 msgstr ""
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:223
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:167
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:193
 msgid "Decision"
 msgstr ""
 
@@ -4042,6 +4072,7 @@ msgstr ""
 #: build/dashboard.js:55
 #: build/dashboard.js:58
 #: build/dashboard.js:80
+#: build/dashboard.js:83
 msgid "Delete"
 msgstr ""
 
@@ -4115,6 +4146,8 @@ msgstr ""
 #: src/Modules/ProductDesigner/Rest/MeDesignerController.php:773
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:147
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:182
+#: src/Modules/WooCommerce/Rest/MeProductsController.php:183
+#: src/Modules/WooCommerce/Rest/MeProductsController.php:190
 msgid "Not found."
 msgstr ""
 
@@ -4138,7 +4171,7 @@ msgstr ""
 #: src/Modules/News/Admin/NewsAdminPage.php:66
 #: src/Modules/News/Admin/NewsAdminPage.php:180
 #: src/Modules/News/NewsDashboardSection.php:43
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:37
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:39
 #: src/Modules/Notifications/NotificationTypes.php:99
 msgid "News"
 msgstr ""
@@ -4409,9 +4442,9 @@ msgid "Attempts"
 msgstr ""
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:208
-#: src/Modules/Notifications/Catalog/AdminTypes.php:238
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:406
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:485
+#: src/Modules/Notifications/Catalog/AdminTypes.php:269
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:408
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:487
 #: src/Modules/ProductDesigner/DesignerNotifications.php:323
 #: src/Modules/ProductDesigner/DesignerNotifications.php:368
 #: src/Modules/ProductDesigner/DesignerNotifications.php:409
@@ -4503,8 +4536,8 @@ msgstr ""
 msgid "Show example"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:75
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:253
+#: src/Modules/Notifications/Catalog/AdminTypes.php:76
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:255
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1002
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1244
 #: build/dashboard.js:63
@@ -4512,8 +4545,8 @@ msgid "PayPal"
 msgstr ""
 
 #. translators: 1: gift card plugin, 2: the card's id in it.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:76
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:254
+#: src/Modules/Notifications/Catalog/AdminTypes.php:77
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:256
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:477
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1003
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1245
@@ -4521,15 +4554,15 @@ msgstr ""
 msgid "Gift card"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:77
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:255
+#: src/Modules/Notifications/Catalog/AdminTypes.php:78
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:257
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1001
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1243
 #: build/dashboard.js:63
 msgid "Bank transfer"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:117
+#: src/Modules/Notifications/Catalog/AdminTypes.php:118
 #: src/Modules/ProductDesigner/DesignerNotifications.php:329
 #: src/Modules/ProductDesigner/DesignerNotifications.php:374
 #: src/Modules/ProductDesigner/DesignerNotifications.php:415
@@ -4537,37 +4570,37 @@ msgstr ""
 msgid "This message was sent by Merch Dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:128
-#: src/Modules/Notifications/Catalog/AdminTypes.php:143
+#: src/Modules/Notifications/Catalog/AdminTypes.php:129
+#: src/Modules/Notifications/Catalog/AdminTypes.php:144
 msgid "New payout request"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:129
+#: src/Modules/Notifications/Catalog/AdminTypes.php:130
 msgid "When a creator requests a payout that must be processed."
 msgstr ""
 
 #. translators: 1: creator name, 2: amount.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:139
+#: src/Modules/Notifications/Catalog/AdminTypes.php:140
 #, php-format
 msgid "%1$s requested a payout of %2$s."
 msgstr ""
 
 #. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:142
+#: src/Modules/Notifications/Catalog/AdminTypes.php:143
 #, php-format
 msgid "New payout request from %s"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:144
+#: src/Modules/Notifications/Catalog/AdminTypes.php:145
 msgid "A creator requested a payout. It waits for you under Payouts."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:147
-#: src/Modules/Notifications/Catalog/AdminTypes.php:368
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:287
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:325
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:364
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:404
+#: src/Modules/Notifications/Catalog/AdminTypes.php:148
+#: src/Modules/Notifications/Catalog/AdminTypes.php:399
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:289
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:327
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:366
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:406
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:454
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
@@ -4577,264 +4610,323 @@ msgstr ""
 msgid "Amount"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:148
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:288
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:365
+#: src/Modules/Notifications/Catalog/AdminTypes.php:149
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:290
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:367
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:455
 #: build/dashboard.js:76
 msgid "Method"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:150
-#: src/Modules/Notifications/Catalog/AdminTypes.php:315
-#: src/Modules/Notifications/Catalog/AdminTypes.php:370
+#: src/Modules/Notifications/Catalog/AdminTypes.php:151
+#: src/Modules/Notifications/Catalog/AdminTypes.php:346
+#: src/Modules/Notifications/Catalog/AdminTypes.php:401
 msgid "Open Payouts"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:161
+#: src/Modules/Notifications/Catalog/AdminTypes.php:162
+#: src/Modules/Notifications/Catalog/AdminTypes.php:175
+msgid "Product removal requested"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:163
+msgid "When a creator asks to have a product removed that was not made in the product designer."
+msgstr ""
+
+#. translators: 1: creator name, 2: product name.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:171
+#, php-format
+msgid "%1$s asked to have %2$s removed."
+msgstr ""
+
+#. translators: %s: creator name.
 #: src/Modules/Notifications/Catalog/AdminTypes.php:174
+#, php-format
+msgid "Product removal requested by %s"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:176
+msgid "A creator asked to have a product removed. Nothing happens to the product until you have dealt with it in WooCommerce."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:179
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:165
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:798
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:934
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:175
+#: src/Modules/ProductDesigner/DesignerNotifications.php:137
+#: src/Modules/ProductDesigner/DesignerNotifications.php:185
+#: src/Modules/ProductDesigner/DesignerNotifications.php:219
+#: src/Modules/ProductDesigner/DesignerNotifications.php:253
+#: src/Modules/ProductDesigner/DesignerNotifications.php:288
+#: src/Modules/ProductDesigner/DesignerNotifications.php:322
+#: src/Modules/ProductDesigner/DesignerNotifications.php:367
+#: src/Modules/ProductDesigner/DesignerNotifications.php:538
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:229
+#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:279
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:182
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
+#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:167
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:193
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1018
+#: build/dashboard.js:55
+#: build/dashboard.js:59
+#: build/dashboard.js:72
+#: build/dashboard.js:78
+#: build/dashboard.js:81
+msgid "Product"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:181
+msgid "Open Removal requests"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:192
+#: src/Modules/Notifications/Catalog/AdminTypes.php:205
 msgid "New category proposal"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:162
+#: src/Modules/Notifications/Catalog/AdminTypes.php:193
 msgid "When a creator proposes a change to their category that must be approved."
 msgstr ""
 
 #. translators: 1: creator name, 2: the changed field.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:170
+#: src/Modules/Notifications/Catalog/AdminTypes.php:201
 #, php-format
 msgid "%1$s proposed a new %2$s."
 msgstr ""
 
 #. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:173
+#: src/Modules/Notifications/Catalog/AdminTypes.php:204
 #, php-format
 msgid "New category proposal from %s"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:175
+#: src/Modules/Notifications/Catalog/AdminTypes.php:206
 msgid "A creator proposed a change to their category. Nothing changes in the shop until you approve it."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:180
+#: src/Modules/Notifications/Catalog/AdminTypes.php:211
 msgid "Open Category proposals"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:191
+#: src/Modules/Notifications/Catalog/AdminTypes.php:222
 msgid "Order needs a decision"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:192
+#: src/Modules/Notifications/Catalog/AdminTypes.php:223
 msgid "When an order with a creator's own discount code concerns sales that are already settled (open case)."
 msgstr ""
 
 #. translators: 1: order number, 2: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:200
+#: src/Modules/Notifications/Catalog/AdminTypes.php:231
 #, php-format
 msgid "Order #%1$s with %2$s's discount code needs a decision."
 msgstr ""
 
 #. translators: %s: order number.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:203
+#: src/Modules/Notifications/Catalog/AdminTypes.php:234
 #, php-format
 msgid "Order #%s needs a decision"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:204
+#: src/Modules/Notifications/Catalog/AdminTypes.php:235
 msgid "An order needs a decision"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:205
+#: src/Modules/Notifications/Catalog/AdminTypes.php:236
 msgid "An order used a creator's own discount code, but the creator's sales in it are already settled. It is an open case until you decide."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:210
-#: src/Modules/Notifications/Catalog/AdminTypes.php:240
+#: src/Modules/Notifications/Catalog/AdminTypes.php:241
+#: src/Modules/Notifications/Catalog/AdminTypes.php:271
 msgid "Open Order history"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:221
+#: src/Modules/Notifications/Catalog/AdminTypes.php:252
 msgid "Order could not be counted"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:222
+#: src/Modules/Notifications/Catalog/AdminTypes.php:253
 msgid "When an order could not be added to the creators' sales."
 msgstr ""
 
 #. translators: %s: order number.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:230
+#: src/Modules/Notifications/Catalog/AdminTypes.php:261
 #, php-format
 msgid "Order #%s could not be counted in the creators' sales."
 msgstr ""
 
 #. translators: %s: order number.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:233
+#: src/Modules/Notifications/Catalog/AdminTypes.php:264
 #, php-format
 msgid "Order #%s could not be counted"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:234
+#: src/Modules/Notifications/Catalog/AdminTypes.php:265
 msgid "An order could not be counted"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:235
+#: src/Modules/Notifications/Catalog/AdminTypes.php:266
 msgid "An order could not be added to the creators' sales. It is tried again when the order is saved; the log has the details."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:251
-#: src/Modules/Notifications/Catalog/AdminTypes.php:259
+#: src/Modules/Notifications/Catalog/AdminTypes.php:282
+#: src/Modules/Notifications/Catalog/AdminTypes.php:290
 msgid "Category reconciliation failed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:252
+#: src/Modules/Notifications/Catalog/AdminTypes.php:283
 msgid "When the automatic linking of products by category gives up after its retries."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:256
+#: src/Modules/Notifications/Catalog/AdminTypes.php:287
 msgid "An automatic category reconciliation was given up."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:258
+#: src/Modules/Notifications/Catalog/AdminTypes.php:289
 msgid "A category reconciliation failed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:260
+#: src/Modules/Notifications/Catalog/AdminTypes.php:291
 msgid "Linking products to creators by category failed three times and was given up. Run a full reconciliation under Creators when the cause is fixed; the log has the details."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:261
+#: src/Modules/Notifications/Catalog/AdminTypes.php:292
 msgid "Run"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:262
-#: src/Modules/Notifications/Catalog/AdminTypes.php:339
+#: src/Modules/Notifications/Catalog/AdminTypes.php:293
+#: src/Modules/Notifications/Catalog/AdminTypes.php:370
 msgid "Open Creators"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:273
+#: src/Modules/Notifications/Catalog/AdminTypes.php:304
 msgid "Adjustment failed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:274
+#: src/Modules/Notifications/Catalog/AdminTypes.php:305
 msgid "When an adjustment of a creator's earlier settlements could not be carried out."
 msgstr ""
 
 #. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:282
+#: src/Modules/Notifications/Catalog/AdminTypes.php:313
 #, php-format
 msgid "An adjustment for %s failed."
 msgstr ""
 
 #. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:285
+#: src/Modules/Notifications/Catalog/AdminTypes.php:316
 #, php-format
 msgid "An adjustment for %s failed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:286
+#: src/Modules/Notifications/Catalog/AdminTypes.php:317
 msgid "An adjustment failed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:287
+#: src/Modules/Notifications/Catalog/AdminTypes.php:318
 msgid "An adjustment of earlier settlements could not be carried out. Nothing was changed for this creator; see the recalculation for the reason."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:290
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:521
+#: src/Modules/Notifications/Catalog/AdminTypes.php:321
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:523
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:172
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:467
 msgid "Reference"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:292
+#: src/Modules/Notifications/Catalog/AdminTypes.php:323
 msgid "Open Recalculations"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:303
+#: src/Modules/Notifications/Catalog/AdminTypes.php:334
 msgid "Payout gift card refused as a coupon"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:304
+#: src/Modules/Notifications/Catalog/AdminTypes.php:335
 msgid "When a gift card from a payout is refused as a coupon on an order in wp-admin or the REST API."
 msgstr ""
 
 #. translators: %s: order number.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:309
+#: src/Modules/Notifications/Catalog/AdminTypes.php:340
 #, php-format
 msgid "A payout gift card was refused as a coupon on order #%s."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:311
+#: src/Modules/Notifications/Catalog/AdminTypes.php:342
 msgid "A payout gift card was refused as a coupon"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:312
+#: src/Modules/Notifications/Catalog/AdminTypes.php:343
 msgid "Gift card refused as a coupon"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:313
+#: src/Modules/Notifications/Catalog/AdminTypes.php:344
 msgid "Someone tried to use a gift card from a creator payout as a coupon on an order, and it was refused. The log has the details."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:326
+#: src/Modules/Notifications/Catalog/AdminTypes.php:357
 msgid "Creator reset their discount code"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:327
+#: src/Modules/Notifications/Catalog/AdminTypes.php:358
 msgid "When a creator replaces their own discount code in the dashboard."
-msgstr ""
-
-#. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:332
-#, php-format
-msgid "%s reset their discount code."
-msgstr ""
-
-#. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:335
-#, php-format
-msgid "%s reset their discount code"
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/AdminTypes.php:336
-msgid "A discount code was reset"
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/AdminTypes.php:337
-msgid "A creator replaced their own discount code. The old code no longer works."
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/AdminTypes.php:350
-msgid "Creator cancelled a payout request"
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/AdminTypes.php:351
-msgid "When a creator cancels a payout request before it is processed."
-msgstr ""
-
-#. translators: 1: creator name, 2: amount.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:360
-#, php-format
-msgid "%1$s cancelled a payout request of %2$s."
 msgstr ""
 
 #. translators: %s: creator name.
 #: src/Modules/Notifications/Catalog/AdminTypes.php:363
 #, php-format
+msgid "%s reset their discount code."
+msgstr ""
+
+#. translators: %s: creator name.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:366
+#, php-format
+msgid "%s reset their discount code"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:367
+msgid "A discount code was reset"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:368
+msgid "A creator replaced their own discount code. The old code no longer works."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:381
+msgid "Creator cancelled a payout request"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:382
+msgid "When a creator cancels a payout request before it is processed."
+msgstr ""
+
+#. translators: 1: creator name, 2: amount.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:391
+#, php-format
+msgid "%1$s cancelled a payout request of %2$s."
+msgstr ""
+
+#. translators: %s: creator name.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:394
+#, php-format
 msgid "%s cancelled a payout request"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:364
+#: src/Modules/Notifications/Catalog/AdminTypes.php:395
 msgid "A payout request was cancelled"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:365
+#: src/Modules/Notifications/Catalog/AdminTypes.php:396
 msgid "A creator cancelled a payout request. It is no longer waiting for you."
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:29
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:118
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:120
 msgid "New sale"
 msgstr ""
 
@@ -4843,7 +4935,7 @@ msgid "When one of your products is sold."
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:30
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:181
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:183
 msgid "Sale refunded or cancelled"
 msgstr ""
 
@@ -4860,8 +4952,8 @@ msgid "Once a day, when you have more profit you can have paid out."
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:32
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:309
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:323
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:311
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:325
 msgid "Payout request cancelled"
 msgstr ""
 
@@ -4882,7 +4974,7 @@ msgid "When we cannot approve a change you proposed, with the reason."
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:35
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:883
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:951
 msgid "New product in your shop"
 msgstr ""
 
@@ -4891,87 +4983,103 @@ msgid "When a product is added to your shop."
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:36
-msgid "We looked at your dashboard"
+msgid "Removal request handled"
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:36
-msgid "When our team opens your dashboard to help you."
+msgid "When we have handled your request to remove a product."
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:37
+msgid "Removal request not approved"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:37
+msgid "When we cannot remove a product you asked us to, with the reason."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:38
+msgid "We looked at your dashboard"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:38
+msgid "When our team opens your dashboard to help you."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:39
 msgid "When we have news for you."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:38
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:40
 msgid "Your chatbot lost access"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:38
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:40
 msgid "When a platform stops your chatbot from reaching your channel. You get one e-mail until it is connected again."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:39
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1019
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:41
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1087
 msgid "Your webhook was paused"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:39
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:41
 msgid "When one of your webhooks is paused because 10 deliveries in a row failed."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:40
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1038
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:42
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1106
 msgid "New YouTube terms"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:40
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:42
 msgid "When the terms of the YouTube chatbot change and you need to accept them again."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:41
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:43
 #: src/Modules/ProductDesigner/DesignerNotifications.php:122
 msgid "Design sent for approval"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:41
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:43
 msgid "A receipt when you send a new product or a change for approval."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:42
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:44
 #: src/Modules/ProductDesigner/DesignerNotifications.php:156
 msgid "Your product is in the shop"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:42
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:44
 msgid "When we have approved your new product and it is in the shop."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:43
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:45
 #: src/Modules/ProductDesigner/DesignerNotifications.php:156
 msgid "Your change is in the shop"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:43
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:45
 msgid "When we have approved a change of your product and it is in the shop."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:44
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:46
 msgid "Design not approved"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:44
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:46
 msgid "When we cannot approve your design, with the reason."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:45
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:47
 msgid "New price on your product"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:45
+#: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:47
 msgid "When the base price changes, so the price in the shop changes too. Your profit stays the same."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:108
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:110
 #: src/Modules/ProductDesigner/DesignerNotifications.php:144
 #: src/Modules/ProductDesigner/DesignerNotifications.php:192
 #: src/Modules/ProductDesigner/DesignerNotifications.php:224
@@ -4980,318 +5088,292 @@ msgstr ""
 msgid "Thank you for creating with us."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:119
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:121
 msgid "When an order with the creator's products is paid; one per order."
 msgstr ""
 
 #. translators: %s: order number.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:144
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:146
 #, php-format
 msgid "New sale in order #%s."
 msgstr ""
 
 #. translators: 1: order number, 2: the creator's profit.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:146
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:148
 #, php-format
 msgid "New sale in order #%1$s: your profit is %2$s."
 msgstr ""
 
 #. translators: %s: order number.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:149
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:151
 #, php-format
 msgid "New sale: order #%s"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:150
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:152
 msgid "You made a sale"
 msgstr ""
 
 #. translators: %s: order number.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:152
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:154
 #, php-format
 msgid "Your products were sold in order #%s. Here is what was bought:"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:157
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:159
 #: build/dashboard.js:56
 msgid "Your profit"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:163
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:796
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:175
-#: src/Modules/ProductDesigner/DesignerNotifications.php:137
-#: src/Modules/ProductDesigner/DesignerNotifications.php:185
-#: src/Modules/ProductDesigner/DesignerNotifications.php:219
-#: src/Modules/ProductDesigner/DesignerNotifications.php:253
-#: src/Modules/ProductDesigner/DesignerNotifications.php:288
-#: src/Modules/ProductDesigner/DesignerNotifications.php:322
-#: src/Modules/ProductDesigner/DesignerNotifications.php:367
-#: src/Modules/ProductDesigner/DesignerNotifications.php:538
-#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:229
-#: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:279
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:279
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:182
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
-#: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1018
-#: build/dashboard.js:55
-#: build/dashboard.js:59
-#: build/dashboard.js:72
-#: build/dashboard.js:78
-#: build/dashboard.js:81
-msgid "Product"
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:163
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:165
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1020
 #: build/dashboard.js:59
 msgid "Quantity"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:163
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:165
 #: build/dashboard.js:81
 msgid "Price"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:167
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:205
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:169
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:207
 msgid "See your sales"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:182
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:184
 msgid "When an order with the creator's products is refunded, cancelled or changed after the sale."
 msgstr ""
 
 #. translators: 1: order number, 2: changed amount (negative).
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:193
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:195
 #, php-format
 msgid "Order #%1$s was refunded or changed: %2$s."
 msgstr ""
 
 #. translators: %s: order number.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:196
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:198
 #, php-format
 msgid "Order #%s was refunded or changed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:197
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:199
 msgid "A sale was changed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:198
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:200
 msgid "An order with your products was refunded, cancelled or changed. Your sales and profit are updated."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:201
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:203
 msgid "Change in sales"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:219
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:221
 msgid "Balance ready for payout"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:220
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:222
 msgid "Once a day, when more of the creator's profit can be paid out."
 msgstr ""
 
 #. translators: %s: amount.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:230
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:232
 #, php-format
 msgid "%s is ready to be paid out."
 msgstr ""
 
 #. translators: %s: amount.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:233
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:235
 #, php-format
 msgid "%s is ready to be paid out"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:234
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:236
 msgid "Your balance is ready"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:235
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:237
 msgid "More of your profit has passed the holding period and can now be paid out. You can request a payout in your dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:236
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:238
 msgid "Ready for payout"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:239
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:241
 #: build/dashboard.js:65
 msgid "Request a payout"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:267
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:282
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:269
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:284
 msgid "Payout request received"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:268
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:270
 msgid "When the creator requests a payout."
 msgstr ""
 
 #. translators: %s: amount.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:279
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:281
 #, php-format
 msgid "We received your payout request of %s."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:281
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:283
 msgid "We received your payout request"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:283
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:285
 msgid "Thank you. We will process your request and let you know when the money is on its way."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:295
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:328
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:373
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:407
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:486
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:528
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:837
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:869
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:297
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:330
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:375
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:409
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:488
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:530
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:839
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:871
 msgid "See your payouts"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:310
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:312
 msgid "When the creator cancels a payout request."
 msgstr ""
 
 #. translators: %s: amount.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:320
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:322
 #, php-format
 msgid "Your payout request of %s was cancelled."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:322
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:324
 msgid "Your payout request was cancelled"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:324
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:326
 msgid "Your payout request was cancelled. The amount is part of your balance again."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:343
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:345
 msgid "When an administrator completes a payout; the settlement document is issued at the same time."
 msgstr ""
 
 #. translators: 1: amount, 2: settlement document number.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:355
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:357
 #, php-format
 msgid "Your payout of %1$s is on its way. Settlement document %2$s is ready."
 msgstr ""
 
 #. translators: %s: amount.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:358
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:360
 #, php-format
 msgid "Your payout of %s is on its way"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:359
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:361
 msgid "Your payout is on its way"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:360
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:362
 msgid "We have paid out your profit. Your settlement document is ready in your dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:366
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:368
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:615
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:636
 msgid "Settlement document"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:387
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:402
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:389
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:404
 msgid "Payout request rejected"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:388
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:390
 msgid "When an administrator rejects a payout request, with the reason."
 msgstr ""
 
 #. translators: %s: amount.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:399
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:401
 #, php-format
 msgid "Your payout request of %s was rejected."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:401
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:403
 msgid "Your payout request was rejected"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:403
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:405
 msgid "We could not complete your payout request. The amount is part of your balance again, and you can request a new payout."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:421
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:423
 msgid "Gift card ready"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:422
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:424
 msgid "When an administrator registers the gift card of a payout. The code is never in the e-mail."
 msgstr ""
 
 #. translators: %s: amount.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:432
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:434
 #, php-format
 msgid "Your gift card of %s is ready. See the code under Payouts."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:434
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:435
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:436
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:437
 msgid "Your gift card is ready"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:436
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:438
 msgid "Your payout as a gift card is ready. For your security, the code is only shown in your dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:437
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:439
 #: build/dashboard.js:62
 msgid "Value"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:440
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:442
 msgid "See your gift card"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:455
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:457
 msgid "When an administrator issues a correction of a settlement document."
 msgstr ""
 
 #. translators: 1: document number, 2: correction number.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:468
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:470
 #, php-format
 msgid "Settlement document %1$s was corrected (%2$s)."
 msgstr ""
 
 #. translators: %s: document number.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:471
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:473
 #, php-format
 msgid "Settlement document %s was corrected"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:472
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:474
 msgid "A settlement document was corrected"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:473
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:475
 msgid "We issued a correction of one of your settlement documents. You can see both in your dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:477
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:479
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 msgid "Document"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:479
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:481
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:324
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
@@ -5300,285 +5382,286 @@ msgstr ""
 msgid "Difference"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:500
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:502
 msgid "Earlier settlement adjusted"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:501
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:503
 msgid "When an administrator adjusts earlier settlements; the amount is settled with the next payout."
 msgstr ""
 
 #. translators: %s: amount (positive or negative).
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:512
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:514
 #, php-format
 msgid "An earlier settlement was adjusted by %s."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:514
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:516
 msgid "An earlier settlement was adjusted"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:515
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:517
 msgid "Settlement adjusted"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:516
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:518
 msgid "We recalculated earlier settlements. The adjustment is settled with your next payout."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:520
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:522
 msgid "Adjustment"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:543
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:545
 msgid "When an administrator approves a change the creator proposed for their category."
 msgstr ""
 
 #. translators: %s: the changed field, e.g. "Banner".
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:550
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:552
 #, php-format
 msgid "Your proposal for %s was approved and is now in the shop."
 msgstr ""
 
 #. translators: %s: the changed field.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:553
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:555
 #, php-format
 msgid "Your proposal for %s was approved"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:554
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:556
 msgid "Your proposal was approved"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:555
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:557
 msgid "Your change is approved and now shown in the shop."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:559
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:593
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:561
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:595
 msgid "See your profile"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:574
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:576
 msgid "When an administrator rejects a proposed change, with the note."
 msgstr ""
 
 #. translators: %s: the changed field.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:584
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:586
 #, php-format
 msgid "Your proposal for %s was not approved."
 msgstr ""
 
 #. translators: %s: the changed field.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:587
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:589
 #, php-format
 msgid "Your proposal for %s was not approved"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:588
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:590
 msgid "Your proposal was not approved"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:589
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:591
 msgid "Your change was not approved, so nothing changed in the shop. You are welcome to propose it again."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:592
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:594
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:936
 msgid "Note from us"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:607
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:609
 msgid "Discount code created"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:608
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:610
 msgid "When an administrator creates the creator's first discount code. The code is never in the e-mail."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:614
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:616
 msgid "Your own discount code is ready. See it under Profile."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:616
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:618
 msgid "Your own discount code is ready"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:617
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:619
 msgid "Your discount code is ready"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:619
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:621
 msgid "With your own discount code you can buy your own merchandise without paying for your profit."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:620
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:622
 msgid "For your security, the code is only shown in your dashboard. Orders with your own code do not count in your sales and profit."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:625
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:657
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:627
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:659
 msgid "See your discount code"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:639
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:641
 msgid "Discount code reset"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:640
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:642
 msgid "When the creator's discount code is replaced by a new one (security message)."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:646
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:648
 msgid "Your discount code was reset. The old code no longer works."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:648
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:649
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:650
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:651
 msgid "Your discount code was reset"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:651
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:653
 msgid "Your discount code was replaced by a new one, and the old code no longer works. You can see the new code in your dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:652
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:654
 msgid "If you did not ask for this, please contact us."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:671
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:673
 msgid "Discount code ended"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:672
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:674
 msgid "When an administrator ends the creator's discount code."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:678
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:680
 msgid "Your discount code was ended and no longer works."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:680
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:681
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:682
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:683
 msgid "Your discount code was ended"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:682
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:684
 msgid "Your discount code no longer works. Please contact us if you need a new one."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:686
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:688
 msgid "Go to your dashboard"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:700
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:702
 msgid "Welcome"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:701
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:703
 msgid "When a creator is created with a user, or a user is linked to a creator."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:707
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:709
 msgid "Welcome to Merch Dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:709
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:710
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:711
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:712
 msgid "Welcome to Merch Dashboard"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:712
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:714
 msgid "Your creator account is ready. In your dashboard you follow your sales and profit, request payouts and keep your profile up to date."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:713
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:715
 msgid "Log in with your usual user name and password."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:718
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:748
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:930
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:720
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:750
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:998
 msgid "Open your dashboard"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:720
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:722
 msgid "We look forward to working with you."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:732
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:734
 msgid "Account deactivated or activated"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:733
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:735
 msgid "When an administrator deactivates the creator or activates them again."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:739
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:741
 msgid "Your creator account is active again."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:739
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:741
 msgid "Your creator account was deactivated."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:742
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:744
 msgid "Your creator account is active again"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:743
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:745
 msgid "Your account is active again"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:744
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:746
 msgid "Your creator account is active again, and you can use your dashboard as before."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:753
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:755
 msgid "Your creator account was deactivated"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:754
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:756
 msgid "Your account was deactivated"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:755
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:757
 msgid "Your creator account was deactivated, so your dashboard is not available for now. Please contact us if you have questions."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:773
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:775
 msgid "Profit changed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:774
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:776
 msgid "When an administrator changes the creator's profit, by default or for a product."
 msgstr ""
 
 #. translators: 1: previous profit, 2: new profit.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:786
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:788
 #, php-format
 msgid "Your profit was changed from %1$s to %2$s."
 msgstr ""
 
 #. translators: 1: product, 2: previous profit, 3: new profit.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:788
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:790
 #, php-format
 msgid "Your profit on %1$s was changed from %2$s to %3$s."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:790
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:791
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:792
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:793
 msgid "Your profit was changed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:792
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:794
 msgid "The change applies to sales from now on. Earlier sales keep their profit."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:796
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:798
 msgid "All your products (your standard)"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:797
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:799
 #: src/Modules/ProductDesigner/DesignerNotifications.php:255
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
@@ -5586,262 +5669,309 @@ msgstr ""
 msgid "Before"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:805
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:901
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:807
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:903
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:937
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:969
 msgid "See your products"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:820
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:822
 msgid "When an administrator changes whether the creator is VAT registered."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:826
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:831
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:828
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:833
 msgid "You are now registered as VAT registered."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:826
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:831
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:828
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:833
 msgid "You are no longer registered as VAT registered."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:828
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:829
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:830
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:831
 msgid "Your VAT status was changed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:832
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:834
 msgid "This affects your payouts for sales from now on. Earlier sales are not changed."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:851
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:853
 msgid "Billing details changed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:852
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:854
 msgid "When an administrator changes the details shown on the creator's settlement documents."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:858
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:860
 msgid "The details on your settlement documents were changed."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:860
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:861
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:862
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:863
 msgid "Your billing details were changed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:863
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:865
 msgid "The details shown on your settlement documents (name, address and registration numbers) were changed. They are used on documents from now on."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:864
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:866
 msgid "If something is wrong, please contact us."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:884
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:886
+msgid "When an administrator has handled a request to remove a product."
+msgstr ""
+
+#. translators: %s: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:893
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:899
+#, php-format
+msgid "We have handled your request to remove %s."
+msgstr ""
+
+#. translators: %s: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:896
+#, php-format
+msgid "Your request to remove %s is handled"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:897
+msgid "Your request is handled"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:918
+msgid "When an administrator declines a request to remove a product, with the note."
+msgstr ""
+
+#. translators: %s: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:928
+#, php-format
+msgid "We could not remove %s."
+msgstr ""
+
+#. translators: %s: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:931
+#, php-format
+msgid "We could not remove %s"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:932
+msgid "Your request was not approved"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:933
+msgid "The product stays in the shop. You are welcome to ask again."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:952
 msgid "When a product is linked to the creator."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:891
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:959
 #, php-format
 msgid "%s is now one of your products."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:894
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:962
 #, php-format
 msgid "New product: %s"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:895
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:963
 msgid "A new product in your shop"
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:897
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:965
 #, php-format
 msgid "%s is now one of your products, and its sales count as yours."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:915
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:924
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:925
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:983
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:992
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:993
 msgid "An administrator viewed your dashboard"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:916
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:984
 msgid "When an administrator starts \"View as creator\" for the creator."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:922
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:990
 msgid "An administrator viewed your dashboard, e.g. to help you."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:926
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:994
 msgid "An administrator opened your dashboard as you see it, for example to help you. Changes made there are logged."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:944
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1012
 msgid "News from Merch Dashboard"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:945
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1013
 msgid "When an administrator publishes news."
 msgstr ""
 
 #. translators: %s: news title.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:952
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:955
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1020
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1023
 #, php-format
 msgid "News: %s"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:957
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1025
 msgid "There is news from Merch Dashboard. Read it in your dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:961
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1029
 msgid "Read the news"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:975
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1043
 msgid "Chatbot lost access"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:976
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1044
 msgid "When a platform refuses the chatbot's access to the creator's channel; once until it is connected again."
 msgstr ""
 
 #. translators: %s: platform, e.g. Twitch.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:983
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1051
 #, php-format
 msgid "The chatbot lost access to your %s channel. Connect it again under Alerts."
 msgstr ""
 
 #. translators: %s: platform.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:986
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1054
 #, php-format
 msgid "The chatbot lost access to your %s channel"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:987
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1055
 msgid "Your chatbot needs to be connected again"
 msgstr ""
 
 #. translators: %s: platform.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:989
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1057
 #, php-format
 msgid "%s no longer lets the chatbot write in your channel, so purchases are not announced in your chat. Connect the channel again under Alerts."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:993
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1061
 msgid "Connect again"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1007
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1075
 msgid "Webhook paused"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1008
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1076
 msgid "When one of the creator's webhooks is paused after 10 failed deliveries in a row."
 msgstr ""
 
 #. translators: %s: webhook name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1015
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1083
 #, php-format
 msgid "Your webhook \"%s\" was paused after 10 failed deliveries."
 msgstr ""
 
 #. translators: %s: webhook name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1018
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1086
 #, php-format
 msgid "Your webhook \"%s\" was paused"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1020
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1088
 msgid "The last 10 deliveries to your webhook failed, so we paused it. Check the receiver, then resume the webhook under Alerts."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1021
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1089
 msgid "Webhook"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1024
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1092
 msgid "See your webhooks"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1039
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1107
 msgid "When an administrator renews the YouTube chatbot's terms, which every creator must accept again."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1045
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1113
 msgid "Please accept the new terms of the YouTube chatbot under Alerts."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1047
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1115
 msgid "Please accept the new YouTube terms"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1048
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1116
 msgid "New terms for the YouTube chatbot"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1049
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1117
 msgid "The terms of the YouTube chatbot were updated. Until you accept them, the chatbot does not write in your YouTube chat."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1053
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1121
 msgid "Read and accept"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1067
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1135
 msgid "API key created or revoked"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1068
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1136
 msgid "When an API key is created for the creator, or an administrator revokes their keys (security message)."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1078
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1146
 msgid "An administrator revoked your API keys."
 msgstr ""
 
 #. translators: %s: key name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1080
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1148
 #, php-format
 msgid "A new API key \"%s\" was created."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1083
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1084
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1151
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1152
 msgid "Your API keys were revoked"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1085
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1153
 msgid "An administrator revoked your API keys, so they no longer work. Please contact us if you have questions."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1089
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1103
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1157
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1171
 msgid "See your API keys"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1094
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1095
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1162
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1163
 msgid "A new API key was created"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1097
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1165
 msgid "A new API key was created for your account."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1098
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1166
 msgid "If you did not create it, revoke it under Alerts and contact us."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1100
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1168
 msgid "Key"
 msgstr ""
 
@@ -7049,6 +7179,7 @@ msgid "Approve and put in the shop"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:270
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:177
 msgid "Note to the creator"
 msgstr ""
 
@@ -10045,12 +10176,15 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:458
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:167
 #: build/dashboard.js:76
 msgid "Requested"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:298
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:459
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:193
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:199
 #: build/dashboard.js:76
 msgid "Handled"
 msgstr ""
@@ -10545,6 +10679,69 @@ msgstr ""
 msgid "%s (inactive)"
 msgstr ""
 
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:88
+msgid "The request is marked as handled, and the creator has been told."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:89
+msgid "The request is marked as handled, and the creator has been told. The product still exists in WooCommerce."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:90
+msgid "The request is declined. The creator sees your note."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:91
+msgid "Write a note to the creator before you decline the request."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:93
+msgid "The request is no longer waiting."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:105
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:130
+msgid "Removal requests"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:109
+msgid "Merch Dashboard Removal requests"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:136
+msgid "Creators ask here to have a product removed that was not made in the product designer. Nothing happens to the product by itself, and it stays in the shop. Check it, remove it yourself in WooCommerce if it may go, and mark the request as handled."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:143
+msgid "The requests could not be read. Please try again later."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:149
+msgid "No requests are waiting."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:173
+msgid "Mark as handled"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:178
+msgid "Decline"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:192
+msgid "Handled requests"
+msgstr ""
+
+#. translators: %s: the administrator's note.
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:198
+#, php-format
+msgid "Declined: %s"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:230
+msgid "No longer exists in WooCommerce."
+msgstr ""
+
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:62
 msgid "Counted order statuses saved. They apply from the next synchronization of an order; nothing was recalculated."
 msgstr ""
@@ -11014,6 +11211,10 @@ msgstr ""
 msgid "The payout request was not accepted."
 msgstr ""
 
+#: src/Modules/WooCommerce/Rest/MeProductsController.php:191
+msgid "The request was not sent."
+msgstr ""
+
 #: src/Modules/WooCommerce/Rest/MeSalesController.php:123
 msgid "Use a date in the format YYYY-MM-DD."
 msgstr ""
@@ -11440,11 +11641,13 @@ msgstr ""
 
 #. translators: %s: file name.
 #. translators: %s: design title.
+#. translators: %s: product name.
 #: build/alerts-global-admin.js:12
 #: build/alerts-presets-admin.js:12
 #: build/dashboard.js:39
 #: build/dashboard.js:58
 #: build/dashboard.js:80
+#: build/dashboard.js:81
 #, js-format
 msgid "Delete %s"
 msgstr ""
@@ -13649,20 +13852,29 @@ msgstr ""
 
 #: build/dashboard.js:53
 #: build/dashboard.js:55
-msgid "Delete for good"
+#: build/dashboard.js:58
+#: build/dashboard.js:80
+#: build/dashboard.js:81
+msgid "Delete product"
+msgstr ""
+
+#: build/dashboard.js:53
+msgid "Send request"
 msgstr ""
 
 #: build/dashboard.js:53
 #: build/dashboard.js:55
-#: build/dashboard.js:58
-#: build/dashboard.js:80
-msgid "Delete product"
+msgid "Delete for good"
 msgstr ""
 
 #. translators: %s: product title.
 #: build/dashboard.js:54
 #, js-format
 msgid "Delete %s?"
+msgstr ""
+
+#: build/dashboard.js:54
+msgid "We do not delete the product automatically. The request goes to manual handling, and the product stays in the shop until we have dealt with it."
 msgstr ""
 
 #: build/dashboard.js:54
@@ -13679,6 +13891,10 @@ msgstr ""
 
 #: build/dashboard.js:54
 msgid "The design moves to your deleted designs, where you can see it again or delete it for good."
+msgstr ""
+
+#: build/dashboard.js:54
+msgid "The request could not be sent. Try again in a minute."
 msgstr ""
 
 #: build/dashboard.js:54
@@ -14691,6 +14907,10 @@ msgstr[1] ""
 
 #: build/dashboard.js:81
 msgid "No image"
+msgstr ""
+
+#: build/dashboard.js:81
+msgid "Deletion awaiting handling"
 msgstr ""
 
 #: build/dashboard.js:81

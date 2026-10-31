@@ -93,7 +93,7 @@ final class DesignerNotificationsTest extends IntegrationTestCase {
 		self::assertSame( array( 'designer_submitted', 'designer_approved', 'designer_change_approved', 'designer_rejected', 'designer_price_changed', 'designer_unpublished', 'admin_designer_submitted', 'admin_designer_change_submitted', 'admin_designer_mockups_failed', 'admin_designer_import_failed', 'admin_designer_apply_failed' ), array_keys( $types->in_groups( array( DesignerNotifications::GROUP ) ) ) );
 		self::assertSame( 'sales', $types->get( 'sale_new' )?->group, 'A taken key keeps the catalog\'s type.' );
 		self::assertNull( $types->get( 'designer_elsewhere' ), 'A module type in a catalog group is ignored.' );
-		self::assertCount( 36, $types->in_groups( array_keys( NotificationTypes::groups() ) ), 'The Notifications page shows the catalog only.' );
+		self::assertCount( 39, $types->in_groups( array_keys( NotificationTypes::groups() ) ), 'The Notifications page shows the catalog only.' );
 		remove_filter( NotificationTypes::FILTER, $intruders, 20 );
 
 		$sender = $this->sender();

@@ -146,14 +146,16 @@ final class MeProductsEndpointTest extends IntegrationTestCase {
 		self::assertSame( array( $cap, $tee ), array_column( (array) $response->get_data(), 'id' ) );
 		self::assertSame(
 			array(
-				'id'           => $cap,
-				'name'         => 'Cap',
-				'status'       => 'private',
-				'price'        => null,
-				'stock_status' => 'instock',
-				'image'        => null,
+				'id'              => $cap,
+				'name'            => 'Cap',
+				'status'          => 'private',
+				'price'           => null,
+				'stock_status'    => 'instock',
+				'image'           => null,
 				// No ledger rows of the creator for the product: no profit, never 0 (ADR-050).
-				'profit'       => null,
+				'profit'          => null,
+				'designer'        => false,
+				'removal_pending' => false,
 			),
 			( (array) $response->get_data() )[0]
 		);
