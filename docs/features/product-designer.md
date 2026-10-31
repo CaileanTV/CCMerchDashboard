@@ -100,6 +100,14 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Slet permanent:** fjerner designet. Har det været i butikken, bliver versioner og filer til ordrerne, men creatoren ser det aldrig igen.
 - **Varianter:** en farve eller størrelse med ét valg vises på produktet uden at være et valg, og 1 × 1 er et simpelt produkt.
 
+## Digitaliseringsgebyr (ADR-086, 2026-10-31, eksperimentel)
+- **Formål:** en ny broderifil koster virksomheden et gebyr hos partneren, og creatoren betaler det.
+- **Opsætning:** beløbet sættes under Produktdesigner → Gebyrer (kræver `merchboard_manage_payouts`). Det er inkl. moms, og 0 betyder intet gebyr.
+- **I designeren:** creatoren ser beløbet og reglerne på en broderet side og igen ved indsendelse. Versionen beholder det beløb, creatoren så (`fee_quote`).
+- **Pr. fil:** ved godkendelse får hver broderet sides printfil et gebyr, ét pr. creator og fil (SHA-256). En fil, creatoren har brugt før, koster ikke noget, og en ændret fil koster et nyt gebyr. Filen skal være helt ens, så samme logo i en anden størrelse tæller som ny.
+- **Opkrævning:** første ordre i en tællende status på en version med filen opkræver gebyret, uanset variant og også på creatorens egen ordre. Det sker i et job, ikke under gemningen af ordren. Gebyret bliver en negativ regulering, der straks tæller i saldoen og står på næste afregningsbilag med referencen `DIG-000001`. Saldoen kan gå i minus og modregnes i kommende optjening (ADR-054).
+- **Annullering:** et opkrævet gebyr bliver stående ved refundering. Admin kan annullere det på fanen Gebyrer: en positiv regulering betaler det tilbage, og næste salg opkræver det igen. Reguleringer ændres aldrig.
+
 ## Sider pr. størrelse (2026-10-31, eksperimentel)
 - **Formål:** to størrelser af samme produkt kan have hver sin opsætning, fx kopper på 33 cl og 44 cl med hver sin PNG, PSD og printområde. Projektejeren valgte 2026-10-31, at creatoren designer hver størrelse for sig.
 - **Opsætning:** på et eget grundprodukt krydser admin størrelser af på en side under "Kun til disse størrelser". Ingen krydser betyder alle størrelser. Listen følger størrelsesfeltet, så det virker under oprettelsen. Leverandørprodukter har det ikke, fordi leverandøren laver alle sider på alle størrelser. En ændring giver en ny version af grundproduktet.

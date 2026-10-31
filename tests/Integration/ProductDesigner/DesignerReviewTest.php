@@ -10,7 +10,13 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\ProductDesigner;
 
+use DateTimeImmutable;
 use MerchBoard\Core\Audit\AuditTrail;
+use MerchBoard\Modules\ProductDesigner\Fees\DesignerFeeRepository;
+use MerchBoard\Modules\ProductDesigner\Fees\DesignerFees;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
+use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\PayoutAdjustmentRepository;
+use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
@@ -89,6 +95,13 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	private DesignerDrafts $drafts;
 
 	private DesignerReview $review;
+
+	/**
+	 * The digitization fee.
+	 *
+	 * @var DesignerFees
+	 */
+	private DesignerFees $fees;
 
 	private DesignerApply $apply;
 
@@ -196,7 +209,8 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$this->creator = $created;
 
 		$this->drafts      = new DesignerDrafts( $this->products, $bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2, $this->files );
-		$this->submissions = new DesignerSubmissions( $this->products, $bases, $this->files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2 );
+		$this->fees        = new DesignerFees( new DesignerFeeRepository( $this->wpdb ), new PayoutRepository( $this->wpdb ), new PayoutAdjustmentRepository( $this->wpdb ), $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->files, $this->queue, new CountedOrderStatuses(), new RecordingLogger(), static fn(): DateTimeImmutable => new DateTimeImmutable( '2026-10-31 12:00:00' ) );
+		$this->submissions = new DesignerSubmissions( $this->products, $bases, $this->files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2, $this->fees );
 		$this->apply       = new DesignerApply(
 			$this->wpdb,
 			$this->products,
@@ -230,7 +244,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 			add_action( $hook, $callback );
 		}
 
-		$this->review = new DesignerReview( $this->products, $bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->queue, 2, fn( int $version ) => $this->apply->run( $version ) );
+		$this->review = new DesignerReview( $this->products, $bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->queue, 2, fn( int $version ) => $this->apply->run( $version ), $this->fees );
 
 		$this->listener = function ( mixed $type, mixed $creator, mixed $data ): void {
 			$this->notified[] = array( (string) $type, is_array( $data ) ? $data : array() );
@@ -828,6 +842,129 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		}
 	}
 
+	public function test_a_new_embroidery_file_is_charged_once_at_the_first_sale(): void {
+		$this->fees->set_amount( '149,50' );
+
+		$views                   = $this->base_views();
+		$views[0]['thread_pack'] = 'gelato';
+
+		$this->bases->save( $this->base, $this->base_fields( '149,95' ), $views );
+
+		$adjustments = new PayoutAdjustmentRepository( $this->wpdb );
+		$product     = $this->submitted();
+		$version     = $this->pending_id( $product );
+
+		self::assertSame( '149.5000', $this->products->version( $version )['fee_quote'] ?? null, 'The amount the creator saw.' );
+
+		$this->fees->set_amount( '200' );
+		$this->review->approve( $version );
+		$this->drain();
+
+		self::assertSame( array( array( 'waiting', '149.5000', null ) ), $this->fee_rows() );
+		self::assertSame( array(), $adjustments->totals( $this->creator->id ), 'Nothing is drawn before a sale.' );
+
+		$this->fees->charge_version( $version, 77 );
+		$this->fees->charge_version( $version, 78 );
+
+		self::assertSame( array( array( 'charged', '149.5000', '77' ) ), $this->fee_rows() );
+		self::assertSame( array( 'DKK' => -1495000 ), $adjustments->totals( $this->creator->id ), 'Once, also with a second order. The balance may go below zero.' );
+
+		// The same file on another product costs nothing.
+		$second = $this->submitted();
+		$other  = $this->pending_id( $second );
+
+		$this->review->approve( $other );
+		$this->drain();
+		$this->fees->charge_version( $other, 79 );
+
+		self::assertCount( 1, $this->fee_rows() );
+		self::assertSame( array( 'DKK' => -1495000 ), $adjustments->totals( $this->creator->id ) );
+
+		$fee = (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT id FROM %i', Tables::name( $this->wpdb, Tables::DESIGNER_FEES ) ) );
+
+		self::assertSame( sprintf( 'DIG-%06d', $fee ), PayoutAdjustmentRepository::fee_reference( $fee ) );
+
+		// Cancelled: paid back, and the next sale of a version with the file charges it.
+		$this->fees->cancel( $fee );
+
+		self::assertSame( array( array( 'waiting', '149.5000', null ) ), $this->fee_rows() );
+		self::assertSame( array( 'DKK' => 0 ), $adjustments->totals( $this->creator->id ) );
+
+		try {
+			$this->fees->cancel( $fee );
+			self::fail( 'A fee that waits has nothing to cancel.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::FEE_INVALID, $e->reason() );
+		}
+
+		$this->fees->charge_version( $other, 80 );
+
+		self::assertSame( array( array( 'charged', '149.5000', '80' ) ), $this->fee_rows() );
+		self::assertSame( array( 'DKK' => -1495000 ), $adjustments->totals( $this->creator->id ) );
+		self::assertCount( 3, $adjustments->unsettled_for_update( $this->creator->id, 'DKK' ), 'An adjustment is never changed.' );
+		self::assertSame( $fee, $adjustments->unsettled_for_update( $this->creator->id, 'DKK' )[0]['fee_id'] );
+	}
+
+	public function test_a_changed_file_costs_a_new_fee_and_a_printed_side_costs_none(): void {
+		$this->fees->set_amount( '100' );
+
+		$printed = $this->submitted();
+		$version = $this->pending_id( $printed );
+
+		self::assertNull( $this->products->version( $version )['fee_quote'] ?? null, 'No embroidery.' );
+
+		$this->review->approve( $version );
+		$this->drain();
+		$this->fees->charge_version( $version, 1 );
+		self::assertSame( array(), $this->fee_rows() );
+
+		$views                   = $this->base_views();
+		$views[0]['thread_pack'] = 'gelato';
+
+		$this->bases->save( $this->base, $this->base_fields( '149,95' ), $views );
+
+		$no_fee = $this->submitted();
+
+		$this->fees->set_amount( '0' );
+
+		$later = $this->drafts->create( $this->creator, $this->base );
+
+		$this->save( $later, '20' );
+		$this->send_files( $later );
+		$this->submissions->submit( $this->creator, $later );
+
+		self::assertNull( $this->products->version( $this->pending_id( $later ) )['fee_quote'] ?? null, 'Without a fee nothing is kept.' );
+		self::assertSame( '100.0000', $this->products->version( $this->pending_id( $no_fee ) )['fee_quote'] ?? null );
+	}
+
+	public function test_only_a_sale_queues_the_charge_and_only_who_handles_payouts_sets_the_fee(): void {
+		$this->fees->status_changed( 5, 'pending', 'cancelled' );
+		self::assertSame( array(), $this->queue->pending );
+
+		$this->fees->status_changed( 5, 'pending', 'processing' );
+		self::assertSame( array( array( DesignerFees::HOOK, array( 5 ) ) ), array_map( static fn( array $job ): array => array( $job['hook'], $job['args'] ), $this->queue->pending ) );
+
+		foreach ( array( 'gratis', '-5', '1.23456' ) as $amount ) {
+			try {
+				$this->fees->set_amount( $amount );
+				self::fail( $amount );
+			} catch ( DesignerException $e ) {
+				self::assertSame( DesignerException::FEE_INVALID, $e->reason() );
+			}
+		}
+
+		wp_set_current_user( 0 );
+
+		try {
+			$this->fees->set_amount( '10' );
+			self::fail( 'Not without the right.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::NOT_AUTHORIZED, $e->reason() );
+		} finally {
+			wp_set_current_user( 1 );
+		}
+	}
+
 	public function test_a_size_price_of_a_size_it_does_not_have_is_left_out_and_a_bad_one_refused(): void {
 		$this->bases->save( $this->base, array_merge( $this->base_fields( '100' ), array( 'size_prices' => (string) wp_json_encode( array( 'XXL' => '150', 'M' => '' ) ) ) ), $this->base_views() ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
@@ -1378,6 +1515,17 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		update_post_meta( $post, DesignerPrices::SIZE_META, $size );
 
 		return $post;
+	}
+
+	/**
+	 * The fees: status, amount and order.
+	 *
+	 * @return list<list<mixed>>
+	 */
+	private function fee_rows(): array {
+		$rows = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT status, amount, order_id FROM %i ORDER BY id', Tables::name( $this->wpdb, Tables::DESIGNER_FEES ) ), ARRAY_N );
+
+		return is_array( $rows ) ? $rows : array();
 	}
 
 	/**

@@ -23,8 +23,8 @@ defined( 'ABSPATH' ) || exit;
  * `merchboard_payout_adjustments` and `merchboard_payout_adjustment_rows`.
  *
  * An adjustment is written once, when an approved recalculation item is
- * executed, and is only ever changed by the settlement document that settles
- * it (`settled_document_id`). It counts in the creator's balance from its
+ * executed or a digitization fee is charged or cancelled (ADR-086), and is only
+ * ever changed by the settlement document that settles it (`settled_document_id`). It counts in the creator's balance from its
  * execution (PayoutBalances) and appears on the next settlement document
  * (SettlementDocuments). `UNIQUE(recalculation_item_id)` executes an item at
  * most once; the primary key of the adjustment rows regulates a settled row
@@ -32,6 +32,20 @@ defined( 'ABSPATH' ) || exit;
  * creator's payout lock, inside the caller's transaction.
  */
 final class PayoutAdjustmentRepository {
+
+	/**
+	 * The rule of a digitization fee (ADR-086).
+	 */
+	public const FEE_RULE = 'adr086-digitization';
+
+	/**
+	 * The reference of a digitization fee on a settlement document.
+	 *
+	 * @param int $fee_id Fee.
+	 */
+	public static function fee_reference( int $fee_id ): string {
+		return sprintf( 'DIG-%06d', $fee_id );
+	}
 
 	/**
 	 * Constructor.
@@ -75,12 +89,12 @@ final class PayoutAdjustmentRepository {
 	 *
 	 * @param int    $creator_id Creator.
 	 * @param string $currency   Currency.
-	 * @return list<array{id: int, amount_units: int, recalculation_id: int}>
+	 * @return list<array{id: int, amount_units: int, recalculation_id: int, fee_id: int}>
 	 * @throws DatabaseException When the read fails.
 	 */
 	public function unsettled_for_update( int $creator_id, string $currency ): array {
 		$wpdb = $this->wpdb;
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, amount, recalculation_id FROM %i WHERE creator_id = %d AND currency = %s AND settled_document_id IS NULL ORDER BY id FOR UPDATE', $this->table( Tables::PAYOUT_ADJUSTMENTS ), $creator_id, $currency ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A locking read inside the caller's transaction.
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, amount, recalculation_id, designer_fee_id FROM %i WHERE creator_id = %d AND currency = %s AND settled_document_id IS NULL ORDER BY id FOR UPDATE', $this->table( Tables::PAYOUT_ADJUSTMENTS ), $creator_id, $currency ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A locking read inside the caller's transaction.
 
 		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
 			throw new DatabaseException( 'Could not read the unsettled payout adjustments.' );
@@ -92,6 +106,7 @@ final class PayoutAdjustmentRepository {
 					'id'               => (int) $row['id'],
 					'amount_units'     => SalesAmount::parse( (string) $row['amount'] ),
 					'recalculation_id' => (int) $row['recalculation_id'],
+					'fee_id'           => (int) $row['designer_fee_id'],
 				),
 				$rows
 			);
@@ -142,6 +157,45 @@ final class PayoutAdjustmentRepository {
 				RecalculationRule::RULE,
 				$recalculation_id,
 				$item_id,
+				$created_by ?? 0,
+				$now->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' ),
+				$connection
+			)
+		);
+		$id = (int) $wpdb->insert_id;
+
+		if ( $id < 1 ) {
+			throw new DatabaseException( 'Could not store the payout adjustment.' );
+		}
+
+		return $id;
+	}
+
+	/**
+	 * Stores the adjustment of a digitization fee on the lock's connection:
+	 * negative when it is charged, positive when it is cancelled.
+	 *
+	 * @param int               $creator_id   Creator.
+	 * @param string            $currency     Currency.
+	 * @param int               $amount_units Amount.
+	 * @param int               $fee_id       The fee.
+	 * @param int|null          $created_by   Acting user; null for a sale.
+	 * @param DateTimeImmutable $now          The time.
+	 * @param int               $connection   The lock's connection.
+	 * @return int Adjustment id.
+	 * @throws DatabaseException When the insert fails.
+	 */
+	public function insert_fee( int $creator_id, string $currency, int $amount_units, int $fee_id, ?int $created_by, DateTimeImmutable $now, int $connection ): int {
+		$wpdb = $this->wpdb;
+		$this->write(
+			$wpdb->prepare(
+				'INSERT INTO %i (creator_id, currency, amount, rule, designer_fee_id, created_by, created_at) SELECT %d, %s, %s, %s, %d, NULLIF(%d, 0), %s FROM DUAL WHERE CONNECTION_ID() = %d',
+				$this->table( Tables::PAYOUT_ADJUSTMENTS ),
+				$creator_id,
+				$currency,
+				SalesAmount::format( $amount_units ),
+				self::FEE_RULE,
+				$fee_id,
 				$created_by ?? 0,
 				$now->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' ),
 				$connection

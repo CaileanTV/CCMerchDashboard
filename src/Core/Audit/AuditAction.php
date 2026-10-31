@@ -775,4 +775,19 @@ enum AuditAction: string {
 	 * An administrator declined a removal request (ADR-083). Context: removal_id, product_id, decision_note.
 	 */
 	case ProductRemovalDeclined = 'product_removal_declined';
+
+	/**
+	 * An administrator set the digitization fee (ADR-086). Context: before, after.
+	 */
+	case DesignerFeeChanged = 'designer_fee_changed';
+
+	/**
+	 * A digitization fee was charged at a first sale (ADR-086). Context: fee_id, adjustment_id, order_id, amount, currency.
+	 */
+	case DesignerFeeCharged = 'designer_fee_charged';
+
+	/**
+	 * An administrator cancelled a charged digitization fee (ADR-086). Context: fee_id, adjustment_id, amount, currency.
+	 */
+	case DesignerFeeCancelled = 'designer_fee_cancelled';
 }

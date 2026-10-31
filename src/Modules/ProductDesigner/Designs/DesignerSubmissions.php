@@ -21,6 +21,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
+use MerchBoard\Modules\ProductDesigner\Fees\DesignerFees;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
@@ -61,6 +62,7 @@ class DesignerSubmissions {
 	 * @param AuditTrail                $audit       Audit trail.
 	 * @param Transaction               $transaction Transaction.
 	 * @param int                       $decimals    Store price decimals.
+	 * @param DesignerFees|null         $fees        The digitization fee (ADR-086).
 	 */
 	public function __construct(
 		private DesignerProductRepository $products,
@@ -68,7 +70,8 @@ class DesignerSubmissions {
 		private DesignerFiles $files,
 		private AuditTrail $audit,
 		private Transaction $transaction,
-		private int $decimals
+		private int $decimals,
+		private ?DesignerFees $fees = null
 	) {
 	}
 
@@ -209,7 +212,7 @@ class DesignerSubmissions {
 				}
 
 				$price = $this->price( $base, $draft );
-				$this->products->submit( (int) $draft['id'], $product, $price );
+				$this->products->submit( (int) $draft['id'], $product, $price, $this->fees?->quote( $base, SubmissionFiles::used_sides( is_array( $design ) ? $design : array() ) ) );
 				$this->audit->record(
 					AuditAction::DesignerVersionSubmitted,
 					$creator->id,

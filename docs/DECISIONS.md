@@ -4999,3 +4999,44 @@ Ingen. Nærbilleder ligger blandt versionens mockups i `files`. Ældre versioner
 
 ## Related
 ADR-080, ADR-082, ADR-084
+
+# ADR-086: Digitaliseringsgebyr for nye broderifiler
+
+## Date
+2026-10-31
+
+## Status
+Accepteret af projektejeren 2026-10-31. Eksperimentel: dækket af automatiske tests, men ikke kørt igennem en rigtig ordre, udbetaling eller et afregningsbilag.
+
+## Context
+Partneren tager et gebyr for at digitalisere hver helt ny broderifil. Det går ud over virksomhedens indtjening, så creatoren skal betale det. Gebyret skal fremgå af designeren.
+
+## Decision
+1. **Beløb:** ét beløb inkl. moms under Produktdesigner → Gebyrer. 0 betyder intet gebyr. Kræver `merchboard_manage_payouts`, fordi det ændrer, hvad creators får udbetalt.
+2. **Pr. ny fil (projektejerens valg):** ét gebyr pr. creator og fil. Filen genkendes på sin SHA-256, så samme fil på et nyt produkt ikke koster igen, mens en ændret fil koster et nyt gebyr. To broderede sider med hver sin fil giver to gebyrer.
+3. **Beløbet følger indsendelsen:** versionen gemmer det beløb, creatoren så (`fee_quote`). Gebyret oprettes ved godkendelse, så et afvist eller trukket design intet koster. En kendt fil beholder sit første beløb.
+4. **Første køb:** første ordre i en tællende status på en version med filen opkræver gebyret, uanset variant og også på creatorens egen ordre, selvom den ordre ikke tæller som salg (ADR-068). Et job gør det, fordi vi aldrig må lægge en transaktion om en WooCommerce-gemning. Fejler jobbet, venter gebyret på næste ordre.
+5. **Regulering:** opkrævningen er en negativ regulering (`merchboard_payout_adjustments`, regel `adr086-digitization`) under creatorens payout-lås. Den tæller straks i saldoen og afregnes af næste bilag med referencen `DIG-000001`. Saldoen kan gå i minus og modregnes i kommende optjening (ADR-054, ADR-063 pkt. 4).
+6. **Refundering og annullering (projektejerens valg):** gebyret står fast ved annullering og refundering, fordi partneren kan have taget betaling. Admin kan annullere det: en positiv regulering betaler det tilbage, gebyret venter igen, og næste salg opkræver det. Reguleringer ændres aldrig.
+
+## Alternatives considered
+Ét gebyr pr. produkt og pr. fil pr. produkt, fravalgt af projektejeren. Automatisk tilbageførsel ved refundering, fravalgt af projektejeren, fordi virksomheden så selv bærer gebyret, hvis filen allerede var betalt. En særskilt saldo for gebyrer, fravalgt, fordi reguleringer allerede når saldo, bilag og modregning.
+
+## Reason
+Reguleringerne bruger den eksisterende vej til saldo og bilag, så gebyret ikke kan komme ud af trit med afregningen.
+
+## Security
+Kun brugere med `merchboard_manage_payouts` kan sætte beløbet og annullere, med nonce og audit (`designer_fee_changed`, `designer_fee_charged`, `designer_fee_cancelled`). `UNIQUE(creator_id, file_hash)` og statusskiftet under låsen forhindrer dobbelt opkrævning. Creatoren ser aldrig partnerens navn.
+
+## Migration/data implications
+Migration 43 tilføjer tabellerne og kolonnerne, se DATABASE.md. Eksisterende rækker ændres ikke. Godkendte versioner fra før migrationen har intet gebyr.
+
+## Consequences
+- **Moms:** beløbet er inkl. moms og trækkes ens for alle creators. Regulering på afregningsbilaget er ikke vurderet af en revisor, heller ikke for momsregistrerede creators.
+- **Modregning:** den juridiske ret til modregning er ikke valideret (ADR-063) og bør stå i creators vilkår, sammen med gebyret.
+- **Uden nyt salg:** en creator, der aldrig tjener mere, kan stå med et udestående, som ikke opkræves automatisk.
+- **Filens identitet:** browsere kan kode samme billede forskelligt, så samme design fra to browsere kan tælle som to filer.
+- **Ingen besked:** creatoren får ingen notifikation, når gebyret trækkes; det ses i saldoen og på bilaget.
+
+## Related
+ADR-054, ADR-060, ADR-063, ADR-068, ADR-080, ADR-085

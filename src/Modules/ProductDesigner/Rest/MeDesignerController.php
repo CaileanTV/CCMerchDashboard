@@ -776,6 +776,7 @@ final class MeDesignerController extends RestController {
 				'max_uploads'      => CreatorUploads::MAX_FILES,
 				'max_objects'      => DesignValidator::MAX_OBJECTS,
 				'price_decimals'   => function_exists( 'wc_get_price_decimals' ) ? (int) wc_get_price_decimals() : 2,
+				'digitization_fee' => SalesAmount::format( Settings::digitization_fee_units() ),
 			),
 		);
 	}

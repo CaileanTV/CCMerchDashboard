@@ -199,7 +199,7 @@ final class SettlementDocuments {
 		);
 		$snapshot['adjustments'] = array_map(
 			static fn( array $entry ): array => array(
-				'reference' => Recalculation::reference_of( $entry['recalculation_id'] ),
+				'reference' => $entry['fee_id'] > 0 ? PayoutAdjustmentRepository::fee_reference( $entry['fee_id'] ) : Recalculation::reference_of( $entry['recalculation_id'] ),
 				'amount'    => SalesAmount::format( $entry['amount_units'] ),
 			),
 			$adjustments

@@ -20,6 +20,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
+use MerchBoard\Modules\ProductDesigner\Fees\DesignerFees;
 use MerchBoard\Modules\WooCommerce\JobQueue;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use OverflowException;
@@ -77,6 +78,7 @@ class DesignerReview {
 	 * @param JobQueue                  $queue       Job queue.
 	 * @param int                       $decimals    Store price decimals.
 	 * @param callable(int): void       $apply       Applies a version now (no queue).
+	 * @param DesignerFees|null         $fees        The digitization fee (ADR-086).
 	 */
 	public function __construct(
 		private DesignerProductRepository $products,
@@ -85,7 +87,8 @@ class DesignerReview {
 		private Transaction $transaction,
 		private JobQueue $queue,
 		private int $decimals,
-		private $apply
+		private $apply,
+		private ?DesignerFees $fees = null
 	) {
 	}
 
@@ -125,6 +128,7 @@ class DesignerReview {
 				}
 
 				$this->products->decide( $version_id, DesignerProductRepository::APPROVED, null, get_current_user_id(), $price );
+				$this->fees?->approved( $version, $base );
 				$this->audit->record(
 					AuditAction::DesignerVersionApproved,
 					(int) $version['creator_id'],

@@ -36,6 +36,8 @@ final class DesignerMenu {
 
 	public const PACKS = 'packs';
 
+	public const FEES = 'fees';
+
 	public const NOTIFICATIONS = 'notifications';
 
 	public const SETTINGS = 'settings';
@@ -64,12 +66,14 @@ final class DesignerMenu {
 	 * @param BaseProductsPage        $bases     Base products and cliparts.
 	 * @param CampaignsPage           $campaigns Campaigns.
 	 * @param DesignerSettingsSection $settings  Settings and embroidery packs.
+	 * @param DesignerFeesSection     $fees      The digitization fee.
 	 */
 	public function __construct(
 		private DesignsPage $designs,
 		private BaseProductsPage $bases,
 		private CampaignsPage $campaigns,
-		private DesignerSettingsSection $settings
+		private DesignerSettingsSection $settings,
+		private DesignerFeesSection $fees
 	) {
 	}
 
@@ -159,6 +163,7 @@ final class DesignerMenu {
 			self::BASES, self::CLIPARTS => $this->bases->render(),
 			self::CAMPAIGNS             => $this->campaigns->render(),
 			self::PACKS                 => $this->settings->render_packs(),
+			self::FEES                  => $this->fees->render(),
 			self::SETTINGS              => $this->settings->render(),
 			default                     => $this->designs->render(),
 		};
@@ -178,12 +183,17 @@ final class DesignerMenu {
 			self::CLIPARTS      => __( 'Cliparts', 'merchboard' ),
 			self::CAMPAIGNS     => __( 'Campaigns', 'merchboard' ),
 			self::PACKS         => __( 'Embroidery packs', 'merchboard' ),
+			self::FEES          => __( 'Fees', 'merchboard' ),
 			self::NOTIFICATIONS => __( 'Notifications', 'merchboard' ),
 			self::SETTINGS      => __( 'Settings', 'merchboard' ),
 		);
 
 		if ( ! current_user_can( Capabilities::MANAGE_SETTINGS ) ) {
 			unset( $tabs[ self::NOTIFICATIONS ] );
+		}
+
+		if ( ! current_user_can( Capabilities::MANAGE_PAYOUTS ) ) {
+			unset( $tabs[ self::FEES ] );
 		}
 
 		return $tabs;

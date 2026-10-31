@@ -76,12 +76,12 @@ class DesignerProductRepository {
 
 	private const PRODUCT_COLUMNS = 'id, creator_id, base_id, wc_product_id, live_version_id, status, shop_price, shop_base_price, shop_base_prices, created_at, updated_at';
 
-	private const VERSION_COLUMNS = 'id, design_product_id, creator_id, number, status, base_version, title, description, colors, sizes, sides, design, profit_kind, profit_value, quoted_price, files, mockup_state, apply_state, apply_step, apply_error, note, updated_at, submitted_at, decided_at, decided_by';
+	private const VERSION_COLUMNS = 'id, design_product_id, creator_id, number, status, base_version, title, description, colors, sizes, sides, design, profit_kind, profit_value, quoted_price, fee_quote, files, mockup_state, apply_state, apply_step, apply_error, note, updated_at, submitted_at, decided_at, decided_by';
 
 	/**
 	 * VERSION_COLUMNS of the alias v (joined with the product).
 	 */
-	private const VERSION_COLUMNS_V = 'v.id, v.design_product_id, v.creator_id, v.number, v.status, v.base_version, v.title, v.description, v.colors, v.sizes, v.sides, v.design, v.profit_kind, v.profit_value, v.quoted_price, v.files, v.mockup_state, v.apply_state, v.apply_step, v.apply_error, v.note, v.updated_at, v.submitted_at, v.decided_at, v.decided_by';
+	private const VERSION_COLUMNS_V = 'v.id, v.design_product_id, v.creator_id, v.number, v.status, v.base_version, v.title, v.description, v.colors, v.sizes, v.sides, v.design, v.profit_kind, v.profit_value, v.quoted_price, v.fee_quote, v.files, v.mockup_state, v.apply_state, v.apply_step, v.apply_error, v.note, v.updated_at, v.submitted_at, v.decided_at, v.decided_by';
 
 	/**
 	 * Constructor.
@@ -246,12 +246,13 @@ class DesignerProductRepository {
 	/**
 	 * Submits a draft: it waits for approval with the price it gives now.
 	 *
-	 * @param int    $version_id Draft version.
-	 * @param int    $product_id Its designer product.
-	 * @param string $price      Customer's price (decimal).
+	 * @param int         $version_id Draft version.
+	 * @param int         $product_id Its designer product.
+	 * @param string      $price      Customer's price (decimal).
+	 * @param string|null $fee The digitization fee the creator saw (ADR-086).
 	 * @throws DatabaseException When it cannot be stored (also when the product already has a pending version).
 	 */
-	public function submit( int $version_id, int $product_id, string $price ): void {
+	public function submit( int $version_id, int $product_id, string $price, ?string $fee = null ): void {
 		$now  = gmdate( 'Y-m-d H:i:s' );
 		$done = $this->wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
 			$this->table( Tables::DESIGNER_VERSIONS ),
@@ -259,6 +260,7 @@ class DesignerProductRepository {
 				'status'       => self::PENDING,
 				'pending_key'  => (string) $product_id,
 				'quoted_price' => $price,
+				'fee_quote'    => $fee,
 				'submitted_at' => $now,
 				'updated_at'   => $now,
 			),

@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\ProductDesigner;
 
+use DateTimeImmutable;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Transaction;
@@ -30,6 +31,7 @@ use MerchBoard\Modules\ProductDesigner\Admin\DesignerAssetDownload;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerNotificationActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerReviewActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerVersionFiles;
+use MerchBoard\Modules\ProductDesigner\Admin\DesignerFeesSection;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerMenu;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignsPage;
@@ -49,6 +51,8 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
+use MerchBoard\Modules\ProductDesigner\Fees\DesignerFeeRepository;
+use MerchBoard\Modules\ProductDesigner\Fees\DesignerFees;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulApi;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
@@ -79,6 +83,9 @@ use MerchBoard\Modules\WooCommerce\Pricing\DesignerPriceSource;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingProductStore;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRepository;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
+use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\PayoutAdjustmentRepository;
+use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
 use wpdb;
 
 defined( 'ABSPATH' ) || exit;
@@ -185,7 +192,24 @@ final class ProductDesignerModule implements Module {
 			)
 		);
 		$container->set( DesignerSettingsSection::class, static fn( Container $c ): DesignerSettingsSection => new DesignerSettingsSection( $c->get( PrintfulToken::class ), $c->get( GelatoAccount::class ), $c->get( ProdigiAccount::class ) ) );
-		$container->set( DesignerMenu::class, static fn( Container $c ): DesignerMenu => new DesignerMenu( $c->get( DesignsPage::class ), $c->get( BaseProductsPage::class ), $c->get( CampaignsPage::class ), $c->get( DesignerSettingsSection::class ) ) );
+		$container->set( DesignerMenu::class, static fn( Container $c ): DesignerMenu => new DesignerMenu( $c->get( DesignsPage::class ), $c->get( BaseProductsPage::class ), $c->get( CampaignsPage::class ), $c->get( DesignerSettingsSection::class ), $c->get( DesignerFeesSection::class ) ) );
+		$container->set( DesignerFeeRepository::class, static fn( Container $c ): DesignerFeeRepository => new DesignerFeeRepository( $c->get( wpdb::class ) ) );
+		$container->set(
+			DesignerFees::class,
+			static fn( Container $c ): DesignerFees => new DesignerFees(
+				$c->get( DesignerFeeRepository::class ),
+				$c->get( PayoutRepository::class ),
+				$c->get( PayoutAdjustmentRepository::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				$c->get( DesignerFiles::class ),
+				$c->get( JobQueue::class ),
+				$c->get( CountedOrderStatuses::class ),
+				$c->get( Logger::class ),
+				static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', wp_timezone() )
+			)
+		);
+		$container->set( DesignerFeesSection::class, static fn( Container $c ): DesignerFeesSection => new DesignerFeesSection( $c->get( DesignerFees::class ), $c->get( DesignerFeeRepository::class ), $c->get( Logger::class ) ) );
 		$container->set( DesignerShop::class, static fn( Container $c ): DesignerShop => new DesignerShop( $c->get( DesignerProductRepository::class ), $c->get( DesignerDrafts::class ), $c->get( DesignerProductGuard::class ), $c->get( WooCommerceDesignerWriter::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( DesignerFiles::class ), $c->get( BaseProductRepository::class ) ) );
 		$container->set( ThreadPacks::class, static fn( Container $c ): ThreadPacks => new ThreadPacks( $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( BaseProductRepository::class ) ) );
 		$container->set( DesignerSettingsActions::class, static fn( Container $c ): DesignerSettingsActions => new DesignerSettingsActions( $c->get( DesignerSettings::class ), $c->get( Logger::class ), $c->get( PrintfulToken::class ), $c->get( GelatoAccount::class ), $c->get( ThreadPacks::class ), $c->get( ProdigiAccount::class ) ) );
@@ -210,7 +234,7 @@ final class ProductDesignerModule implements Module {
 		// The creator's designer: drafts, uploads and `/me/designer` (step 30.8).
 		$container->set( DesignerProductRepository::class, static fn( Container $c ): DesignerProductRepository => new DesignerProductRepository( $c->get( wpdb::class ) ) );
 		$container->set( DesignerDrafts::class, static fn( Container $c ): DesignerDrafts => new DesignerDrafts( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), $c->get( DesignerFiles::class ) ) );
-		$container->set( DesignerSubmissions::class, static fn( Container $c ): DesignerSubmissions => new DesignerSubmissions( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals() ) );
+		$container->set( DesignerSubmissions::class, static fn( Container $c ): DesignerSubmissions => new DesignerSubmissions( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), $c->get( DesignerFees::class ) ) );
 		$container->set( CreatorUploads::class, static fn( Container $c ): CreatorUploads => new CreatorUploads( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ) ) );
 		$container->set(
 			MeDesignerController::class,
@@ -296,7 +320,8 @@ final class ProductDesignerModule implements Module {
 				$c->get( PricingProductStore::class )->decimals(),
 				static function ( int $version ) use ( $c ): void {
 					$c->get( DesignerApply::class )->run( $version );
-				}
+				},
+				$c->get( DesignerFees::class )
 			)
 		);
 		$container->set( DesignerReviewActions::class, static fn( Container $c ): DesignerReviewActions => new DesignerReviewActions( $c->get( DesignerReview::class ), $c->get( Logger::class ) ) );
@@ -370,6 +395,28 @@ final class ProductDesignerModule implements Module {
 		( new DesignerDashboardSection() )->register();
 		$container->get( DesignerOrderFiles::class )->register();
 		add_action(
+			'woocommerce_order_status_changed',
+			static function ( mixed $order, mixed $from, mixed $to ) use ( $container ): void {
+				$container->get( DesignerFees::class )->status_changed( $order, $from, $to );
+			},
+			10,
+			3
+		);
+		add_action(
+			'woocommerce_new_order',
+			static function ( mixed $order ) use ( $container ): void {
+				$container->get( DesignerFees::class )->order_created( $order );
+			},
+			20,
+			1
+		);
+		add_action(
+			DesignerFees::HOOK,
+			static function ( mixed $order ) use ( $container ): void {
+				$container->get( DesignerFees::class )->run( $order );
+			}
+		);
+		add_action(
 			DesignerApply::HOOK,
 			static function ( mixed $version ) use ( $container ): void {
 				$container->get( DesignerApply::class )->run( $version );
@@ -429,6 +476,7 @@ final class ProductDesignerModule implements Module {
 			'admin_init',
 			static function () use ( $container ): void {
 				$container->get( DesignerSettingsActions::class )->register();
+				$container->get( DesignerFeesSection::class )->register();
 				$container->get( CampaignActions::class )->register();
 				$container->get( BaseProductActions::class )->register();
 				$container->get( DesignerAssetDownload::class )->register();

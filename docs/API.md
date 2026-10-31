@@ -560,6 +560,8 @@ Kun mens produktdesigneren er slået til (ellers 404 `merchboard_designer_disabl
 
 ## `/designer-print/{version}/{side}` 🔄 (fase 30, trin 30.12–30.13, ADR-081, ADR-082)
 
+`GET /me/designer` har `limits.digitization_fee` (ADR-086): prisen for en ny broderifil som decimaltal, `0.0000` uden gebyr.
+
 En side i `GET /me/designer` har `sizes` (2026-10-31): de størrelser, siden hører til; tom for alle. `POST .../submit` svarer `design_sizes`, når en valgt størrelse mangler et design, eller et design ligger på en størrelse, der ikke er valgt.
 
 `POST` og `GET /me/designer/products/{id}/preview` (2026-10-31): starter og læser billeder af kladden. Svar: `status` (`none`, `pending`, `failed`, `done`) og `images` med `side` (sidens nøgle, eller `_photo-<stil>` for et valgt foto, der ikke hører til en side), `color` og `url` (`data:`). Afvisninger: `preview_unavailable`, `preview_busy`, `preview_failed`, `submission_files`.

@@ -145,6 +145,8 @@ export interface DesignerOverview {
 	readonly maxUploadBytes: number;
 	readonly maxObjects: number;
 	readonly priceDecimals: number;
+	/** What a new embroidery file costs the creator; '0.0000' for nothing. */
+	readonly digitizationFee: string;
 }
 
 export type ProfitKind = 'percent' | 'fixed';
@@ -551,6 +553,9 @@ export function parseOverview( body: unknown ): DesignerOverview | null {
 				maxUploadBytes: limits.max_upload_bytes,
 				maxObjects: limits.max_objects,
 				priceDecimals: limits.price_decimals,
+				digitizationFee: isString( limits.digitization_fee )
+					? limits.digitization_fee
+					: '0.0000',
 			};
 }
 

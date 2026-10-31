@@ -91,6 +91,9 @@ final class DesignerException extends RuntimeException {
 
 	public const DESIGN_EMPTY = 'design_empty';
 
+	/** A digitization fee's amount is invalid, or the fee is not charged. */
+	public const FEE_INVALID = 'fee_invalid';
+
 	/** With sides per size: a chosen size has no design, or a design lies on a size that is not chosen. */
 	public const DESIGN_SIZES = 'design_sizes';
 

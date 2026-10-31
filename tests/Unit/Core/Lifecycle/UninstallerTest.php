@@ -45,6 +45,7 @@ use MerchBoard\Tests\Unit\Support\InMemoryOptions;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\Support\RecordingWpdb;
 use MerchBoard\Tests\Unit\TestCase;
+use MerchBoard\Modules\ProductDesigner\Fees\DesignerFees;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass( Uninstaller::class )]
@@ -208,6 +209,10 @@ final class UninstallerTest extends TestCase {
 				),
 				array(
 					'query' => 'DROP TABLE IF EXISTS %i',
+					'args'  => array( 'wp_3_merchboard_designer_fee_versions' ),
+				),
+				array(
+					'query' => 'DROP TABLE IF EXISTS %i',
 					'args'  => array( 'wp_3_merchboard_item_pricing' ),
 				),
 			),
@@ -215,7 +220,7 @@ final class UninstallerTest extends TestCase {
 			'Kept (ADR-059): creators, audit log, payouts, settlement documents, rows and counters. The encrypted details are dropped.'
 		);
 		self::assertSame(
-			array( 'merchboard_creators', 'merchboard_audit_log', 'merchboard_payouts', 'merchboard_settlement_documents', 'merchboard_settlement_document_rows', 'merchboard_settlement_counters', 'merchboard_order_gift_card_assessments', 'merchboard_order_gift_card_payouts', 'merchboard_order_gift_card_attempts', 'merchboard_g1_state', 'merchboard_operations', 'merchboard_payout_recalculations', 'merchboard_payout_recalculation_items', 'merchboard_payout_adjustments', 'merchboard_payout_adjustment_rows', 'merchboard_payout_recalculation_exports', 'merchboard_creator_vat_history', 'merchboard_creator_codes', 'merchboard_order_exclusions' ),
+			array( 'merchboard_creators', 'merchboard_audit_log', 'merchboard_payouts', 'merchboard_settlement_documents', 'merchboard_settlement_document_rows', 'merchboard_settlement_counters', 'merchboard_order_gift_card_assessments', 'merchboard_order_gift_card_payouts', 'merchboard_order_gift_card_attempts', 'merchboard_g1_state', 'merchboard_operations', 'merchboard_payout_recalculations', 'merchboard_payout_recalculation_items', 'merchboard_payout_adjustments', 'merchboard_payout_adjustment_rows', 'merchboard_payout_recalculation_exports', 'merchboard_creator_vat_history', 'merchboard_creator_codes', 'merchboard_order_exclusions', 'merchboard_designer_fees' ),
 			Tables::retained_on_uninstall()
 		);
 	}
@@ -479,7 +484,7 @@ final class UninstallerTest extends TestCase {
 
 		self::assertSame( array( AlertSounds::OWNER_META, AlertSoundLibrary::LIBRARY_META, GlobalOverlaySounds::OWNER_META, AlertImages::OWNER_META, AlertImageLibrary::LIBRARY_META, GlobalOverlayImages::OWNER_META ), Uninstaller::ALERT_MEDIA_META_KEYS );
 		self::assertSame( array(), array_diff( array_merge( Uninstaller::ALERT_MEDIA_META_KEYS, array( Uninstaller::ALERT_IMPORTED_META ) ), $keys ), 'The markers are removed from the files that stay.' );
-		self::assertSame( array( 'merchboard_sales_backfill', ChatSender::HOOK, WebhookDispatcher::HOOK, NotificationSender::HOOK, BalanceReadyNotices::HOOK, DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerRetirement::HOOK, PrintfulMockups::HOOK, GelatoMockups::HOOK, ProdigiMockups::HOOK, CatalogImport::HOOK ), $hooks, 'Queued chat messages, webhook deliveries, notification e-mails and designer applies are cancelled.' );
+		self::assertSame( array( 'merchboard_sales_backfill', ChatSender::HOOK, WebhookDispatcher::HOOK, NotificationSender::HOOK, BalanceReadyNotices::HOOK, DesignerFees::HOOK, DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerRetirement::HOOK, PrintfulMockups::HOOK, GelatoMockups::HOOK, ProdigiMockups::HOOK, CatalogImport::HOOK ), $hooks, 'Queued chat messages, webhook deliveries, notification e-mails and designer applies are cancelled.' );
 	}
 
 	private function uninstaller(): Uninstaller {

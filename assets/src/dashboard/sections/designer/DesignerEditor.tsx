@@ -55,6 +55,7 @@ import {
 	quotePrice,
 	updateObject,
 	usedAreas,
+	usedSides,
 	withKnownThreads,
 	withObjects,
 	withThread,
@@ -291,6 +292,10 @@ function Editor( props: EditorProps ) {
 	);
 	const fonts = overview.fonts;
 	const areas = usedAreas( base.views, design, sizes );
+	const feeText =
+		Number( overview.digitizationFee ) > 0
+			? moneyText( overview.digitizationFee, base.currency, locale )
+			: null;
 	const price = quotePrice(
 		base.basePrice,
 		profitKind,
@@ -1044,6 +1049,16 @@ function Editor( props: EditorProps ) {
 				</Alert>
 			) : null }
 
+			{ confirming &&
+			feeText !== null &&
+			base.views.some(
+				( candidate ) =>
+					candidate.embroidery !== null &&
+					usedSides( design ).includes( candidate.key )
+			) ? (
+				<Alert tone="info">{ feeNotice( feeText ) }</Alert>
+			) : null }
+
 			{ confirming ? (
 				<Alert tone="info">
 					{ sprintf(
@@ -1430,6 +1445,7 @@ function Editor( props: EditorProps ) {
 					) }
 					{ embroidery === null ? null : (
 						<ThreadPanel
+							fee={ feeText }
 							threads={ embroidery.threads }
 							max={ embroidery.max }
 							plan={ plan }
@@ -1709,6 +1725,21 @@ function ThreadSwatches( props: {
 }
 
 /**
+ * What a new embroidery file costs the creator, and when.
+ *
+ * @param fee The fee as text.
+ */
+function feeNotice( fee: string ): string {
+	return sprintf(
+		/* translators: %s: the digitization fee. */ __(
+			'A new embroidery file costs %s for digitization. It is drawn from your account at the first purchase of the product, whichever variant it is. If that is your own order, it is drawn from your account too, so your account can go below zero, and the amount is offset against your coming profit. A file you have used before costs nothing.',
+			'merchboard'
+		),
+		fee
+	);
+}
+
+/**
  * The threads of an embroidered side: what was found, and the choice of
  * another thread for each.
  *
@@ -1717,8 +1748,10 @@ function ThreadSwatches( props: {
  * @param props.max     The most threads on the side.
  * @param props.plan    The side's threads; null while they are worked out.
  * @param props.onSwap  Called with the thread found and the one to use (null: back to the one found).
+ * @param props.fee     The price of a new embroidery file as text; null without one.
  */
 function ThreadPanel( props: {
+	readonly fee: string | null;
 	readonly threads: readonly DesignerThread[];
 	readonly max: number;
 	readonly plan: ThreadPlan | null;
@@ -1742,6 +1775,9 @@ function ThreadPanel( props: {
 					'merchboard'
 				) }
 			</p>
+			{ props.fee === null ? null : (
+				<Alert tone="info">{ feeNotice( props.fee ) }</Alert>
+			) }
 			<p className="merchboard-product-designer__hint">
 				{ __(
 					'Designs with a lot of fine detail are rejected, as they often cannot be embroidered correctly.',

@@ -276,6 +276,16 @@ final class Tables {
 	public const DESIGNER_VERSIONS = 'merchboard_designer_versions';
 
 	/**
+	 * Digitization fees of embroidery files (ADR-086).
+	 */
+	public const DESIGNER_FEES = 'merchboard_designer_fees';
+
+	/**
+	 * The approved versions that use a fee's file (ADR-086).
+	 */
+	public const DESIGNER_FEE_VERSIONS = 'merchboard_designer_fee_versions';
+
+	/**
 	 * Creators' uploaded images and the administrator's cliparts (ADR-080).
 	 */
 	public const DESIGNER_ASSETS = 'merchboard_designer_assets';
@@ -341,6 +351,8 @@ final class Tables {
 		self::DESIGNER_PROVIDER_TASKS,
 		self::DESIGNER_CAMPAIGNS,
 		self::PRODUCT_REMOVAL_REQUESTS,
+		self::DESIGNER_FEES,
+		self::DESIGNER_FEE_VERSIONS,
 	);
 
 	/**
@@ -354,8 +366,10 @@ final class Tables {
 	 * the history of the creators' VAT status (ADR-062 K06), which explains the
 	 * status of historical sales and documents; and the creators' discount
 	 * code registrations with the order exclusions (ADR-068, K2), which explain
-	 * why an order is missing from sales and settlement documents. Everything
-	 * else, including the encrypted payout details, is dropped.
+	 * why an order is missing from sales and settlement documents; and the
+	 * digitization fees (ADR-086), which explain adjustments on settlement
+	 * documents. Everything else, including the encrypted payout details, is
+	 * dropped.
 	 */
 	private const RETAINED_ON_UNINSTALL = array(
 		self::CREATORS,
@@ -377,6 +391,7 @@ final class Tables {
 		self::CREATOR_VAT_HISTORY,
 		self::CREATOR_CODES,
 		self::ORDER_EXCLUSIONS,
+		self::DESIGNER_FEES,
 	);
 
 	/**
