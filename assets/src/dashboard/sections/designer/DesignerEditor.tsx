@@ -2088,7 +2088,7 @@ export function ProductPanel( props: ProductPanelProps ) {
 					'merchboard'
 				) }
 			</p>
-			<fieldset className="merchboard-product-designer__options">
+			<fieldset className="merchboard-product-designer__options merchboard-product-designer__options--list">
 				<legend className="merchboard-field__label">
 					{ __( 'Colours', 'merchboard' ) }
 				</legend>

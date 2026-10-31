@@ -2016,6 +2016,12 @@ input:disabled + .merchboard-sounds__upload {
 	padding: 0;
 	margin: 0;
 	border: 0;
+
+	// Names of many lengths: one column keeps the boxes and swatches in line.
+	&--list {
+		display: grid;
+		gap: var(--merchboard-space-1);
+	}
 }
 
 .merchboard-product-designer__option {
