@@ -492,6 +492,40 @@ final class DesignerApiTest extends IntegrationTestCase {
 		self::assertArrayNotHasKey( 'photos', $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $body )->get_data()['draft']['design'] );
 	}
 
+	public function test_a_mockup_from_a_psd_has_the_size_of_its_scene(): void {
+		$views                       = json_decode( (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT views FROM %i WHERE id = %d', $this->table( Tables::DESIGNER_BASES ), $this->base ) ), true );
+		$views[0]['layers']['scene'] = array_values( $views[0]['layers'] )[0];
+		$views[0]['scene']           = array(
+			'width'  => 300,
+			'height' => 200,
+			'steps'  => array(
+				array(
+					'type'   => 'design',
+					'end'    => 'end',
+					'width'  => 10,
+					'height' => 10,
+					'quad'   => array( 0, 0, 10, 0, 10, 10, 0, 10 ),
+					'mesh'   => array_fill( 0, 32, 0.5 ),
+					'mask'   => null,
+				),
+			),
+		);
+		$this->execute( 'UPDATE %i SET views = %s WHERE id = %d', $this->table( Tables::DESIGNER_BASES ), (string) wp_json_encode( $views ), $this->base );
+
+		wp_set_current_user( $this->user );
+
+		$overview = $this->data( $this->call( 'GET', '/merchboard/v1/me/designer' ) );
+
+		self::assertSame( 300, $overview['bases'][0]['views'][0]['scene']['width'] ?? null );
+
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+
+		$this->data( $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $this->draft( array( self::text() ) ) ) );
+
+		self::assertSame( array( 400, 'submission_file' ), $this->refusal( $this->attach( $product, 'mockup:front:black', AlertImagesTest::png( 400, 400 ) ) ), 'Not the template\'s size.' );
+		self::assertSame( 200, $this->attach( $product, 'mockup:front:black', AlertImagesTest::png( 300, 200 ) )->get_status() );
+	}
+
 	public function test_a_printed_side_has_no_threads_and_any_colours(): void {
 		wp_set_current_user( $this->user );
 

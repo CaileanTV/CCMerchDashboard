@@ -448,6 +448,10 @@ final class BaseProductsPage {
 			echo '<input type="file" name="' . esc_attr( 'layer_' . $index . '_bg_' . $color['key'] ) . '" accept="image/png"></td></tr>';
 		}
 
+		if ( $psd ) {
+			$this->render_scene( $index, $view );
+		}
+
 		echo '</tbody></table>';
 		echo '<p>' . esc_html__( 'Print area in the template (px):', 'merchboard' ) . ' ';
 
@@ -900,6 +904,29 @@ final class BaseProductsPage {
 
 		/* translators: %d: the most photos of a design. */
 		echo '<p class="description">' . esc_html( sprintf( __( 'The photos Printful makes of each design sent for approval. They become the product\'s images in the shop, in place of the mockups the creator\'s browser made, and each is made per colour. At most %d: more are left out.', 'merchboard' ), CatalogImport::MAX_PHOTOS ) ) . '</p></td></tr>';
+	}
+
+	/**
+	 * A side's mockup PSD: read in the browser only, which fills the hidden
+	 * fields with the scene and its image. The PSD itself is never sent.
+	 *
+	 * @param int           $index The side's index in the form.
+	 * @param BaseView|null $view  The side.
+	 */
+	private function render_scene( int $index, ?BaseView $view ): void {
+		$asset = $view->layers[ BaseView::SCENE ] ?? null;
+
+		echo '<tr><th scope="row" style="width:12rem">' . esc_html__( 'Mockup PSD', 'merchboard' ) . '</th><td>';
+
+		if ( null !== $asset ) {
+			echo '<strong>' . esc_html__( 'Imported.', 'merchboard' ) . '</strong> ';
+			echo '<label><input type="checkbox" name="' . esc_attr( 'views[' . $index . '][clear]' ) . '[]" value="' . esc_attr( BaseView::SCENE ) . '"> ' . esc_html__( 'Remove', 'merchboard' ) . '</label> ';
+		}
+
+		echo '<input type="file" accept=".psd,image/vnd.adobe.photoshop" data-merchboard-scene="' . esc_attr( (string) $index ) . '">';
+		echo '<input type="file" name="' . esc_attr( 'layer_' . $index . '_' . BaseView::SCENE ) . '" accept="image/png" hidden>';
+		echo '<input type="hidden" name="' . esc_attr( 'views[' . $index . '][scene]' ) . '" value="">';
+		echo '<p class="description" id="' . esc_attr( 'merchboard-scene-status-' . $index ) . '" aria-live="polite">' . esc_html__( 'For a product whose mockup wraps the design, like a mug. Smart objects with "design" in their name take the print file: "højre" shows its right end, "venstre" its left end. Each design then gets this mockup instead of the one drawn on the template.', 'merchboard' ) . '</p></td></tr>';
 	}
 
 	/**

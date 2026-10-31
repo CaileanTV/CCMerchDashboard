@@ -6,6 +6,8 @@
  * the highlight screened over it. A plain 2D canvas: no Fabric.
  */
 import type { DesignerView, LayerKind } from '../../api/designer';
+import { renderScene } from './scene';
+import type { Scene } from './scene';
 
 /** JPEG quality of a mockup. */
 const QUALITY = 0.92;
@@ -130,6 +132,57 @@ export async function composeMockup(
 
 	return new Promise( ( resolve ) =>
 		canvas.toBlob( resolve, 'image/jpeg', QUALITY )
+	);
+}
+
+/**
+ * The mockup of a PSD scene as a JPEG, or null when it cannot be drawn.
+ *
+ * @param scene The scene.
+ * @param url   `data:` URL of its image.
+ * @param print The print file.
+ */
+export async function composeScene(
+	scene: Scene,
+	url: string,
+	print: HTMLCanvasElement
+): Promise< Blob | null > {
+	const image = await load( url );
+	const atlas =
+		image === null
+			? null
+			: surface( image.naturalWidth, image.naturalHeight );
+	const printContext = print.getContext( '2d', { willReadFrequently: true } );
+	const target = surface( scene.width, scene.height );
+
+	if (
+		image === null ||
+		atlas === null ||
+		printContext === null ||
+		target === null
+	) {
+		return null;
+	}
+
+	atlas.context.drawImage( image, 0, 0 );
+
+	const drawn = renderScene(
+		scene,
+		atlas.context.getImageData(
+			0,
+			0,
+			atlas.canvas.width,
+			atlas.canvas.height
+		),
+		printContext.getImageData( 0, 0, print.width, print.height )
+	);
+	const result = target.context.createImageData( scene.width, scene.height );
+
+	result.data.set( drawn.data );
+	target.context.putImageData( result, 0, 0 );
+
+	return new Promise( ( resolve ) =>
+		target.canvas.toBlob( resolve, 'image/jpeg', QUALITY )
 	);
 }
 

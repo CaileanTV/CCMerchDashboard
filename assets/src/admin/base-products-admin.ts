@@ -8,11 +8,15 @@
  */
 import { __, sprintf } from '@wordpress/i18n';
 
+import { readScene } from './psd-scene';
 import { LAYERS, readTemplate, TemplateError } from './psd-template';
 import type { PrintArea, PsdTemplate, Rgba } from './psd-template';
 
 /** Largest PSD read in the browser (it is never uploaded). */
 export const MAX_PSD_BYTES = 314572800;
+
+/** Largest mockup PSD: these hold whole scenes. */
+export const MAX_SCENE_BYTES = 1073741824;
 
 /**
  * The message of a refused PSD.
@@ -47,6 +51,20 @@ export function errorMessage( error: unknown ): string {
 			return sprintf(
 				/* translators: %s: layer name, e.g. "mb_color". */
 				__( 'The layer %s appears more than once.', 'merchboard' ),
+				error.detail
+			);
+		case 'no_design':
+			return __(
+				'The PSD needs a visible smart object with "design" in its name.',
+				'merchboard'
+			);
+		case 'warp':
+			return sprintf(
+				/* translators: %s: layer name. */
+				__(
+					'The layer %s uses a warp that cannot be read. Use Edit → Transform → Warp with the custom grid.',
+					'merchboard'
+				),
 				error.detail
 			);
 		case 'empty_area':
@@ -237,6 +255,98 @@ function attach( input: HTMLInputElement ): void {
 	} );
 }
 
+/**
+ * Wires one mockup PSD field.
+ *
+ * @param input The field (`data-merchboard-scene` = the side's index).
+ */
+function attachScene( input: HTMLInputElement ): void {
+	const index = input.dataset.merchboardScene ?? '';
+	const status = document.getElementById(
+		`merchboard-scene-status-${ index }`
+	);
+	const say = ( text: string ): void => {
+		if ( null !== status ) {
+			status.textContent = text;
+		}
+	};
+
+	input.addEventListener( 'change', async () => {
+		const file = input.files?.[ 0 ];
+		const form = input.form;
+
+		if ( undefined === file || null === form ) {
+			return;
+		}
+
+		if ( file.size > MAX_SCENE_BYTES ) {
+			say( __( 'The mockup PSD may be at most 1 GB.', 'merchboard' ) );
+
+			return;
+		}
+
+		say( __( 'Reading the PSD…', 'merchboard' ) );
+
+		try {
+			const { scene, atlas, designs, warnings } = readScene(
+				await file.arrayBuffer()
+			);
+			const image = form.elements.namedItem( `layer_${ index }_scene` );
+			const data = form.elements.namedItem( `views[${ index }][scene]` );
+
+			if (
+				! ( image instanceof HTMLInputElement ) ||
+				! ( data instanceof HTMLInputElement )
+			) {
+				throw new Error( 'No fields.' );
+			}
+
+			const transfer = new DataTransfer();
+
+			transfer.items.add(
+				new File( [ await toPng( atlas ) ], 'scene.png', {
+					type: 'image/png',
+				} )
+			);
+			image.files = transfer.files;
+			data.value = JSON.stringify( scene );
+			say(
+				[
+					sprintf(
+						/* translators: 1: smart objects, 2: width in px, 3: height in px. */
+						__(
+							'Read %1$s (mockup %2$d × %3$d px). Save to keep it.',
+							'merchboard'
+						),
+						designs.join( ', ' ),
+						scene.width,
+						scene.height
+					),
+					warnings.length === 0
+						? ''
+						: sprintf(
+								/* translators: %s: layer names. */
+								__(
+									'Effects, masks or adjustments on these layers are left out: %s.',
+									'merchboard'
+								),
+								warnings.join( ', ' )
+							),
+				].join( ' ' )
+			);
+		} catch ( error ) {
+			say( errorMessage( error ) );
+		} finally {
+			// The PSD itself is never sent with the form.
+			input.value = '';
+		}
+	} );
+}
+
 document
 	.querySelectorAll< HTMLInputElement >( 'input[data-merchboard-psd]' )
 	.forEach( attach );
+
+document
+	.querySelectorAll< HTMLInputElement >( 'input[data-merchboard-scene]' )
+	.forEach( attachScene );

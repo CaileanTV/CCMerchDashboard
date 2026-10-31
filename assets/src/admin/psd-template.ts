@@ -54,7 +54,14 @@ export interface PsdTemplate {
 }
 
 export type TemplateErrorCode =
-	'unreadable' | 'depth' | 'size' | 'no_layers' | 'duplicate' | 'empty_area';
+	| 'unreadable'
+	| 'depth'
+	| 'size'
+	| 'no_layers'
+	| 'duplicate'
+	| 'empty_area'
+	| 'no_design'
+	| 'warp';
 
 /**
  * A PSD that cannot become a template, with a code for the message.

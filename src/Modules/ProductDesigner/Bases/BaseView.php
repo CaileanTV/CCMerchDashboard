@@ -33,6 +33,10 @@ defined( 'ABSPATH' ) || exit;
  *   template is the sewing pattern, drawn normally over the design (its veil
  *   outside the part must cover it), and the print file is a JPEG on white.
  *   Only the provider's mockups show the product sewn.
+ * - A side with a `scene` has its mockup from a PSD with smart objects: the
+ *   layer `scene` is one image of the layers around the design, and the scene
+ *   says how the creator's browser draws them and warps the print file. The
+ *   mockup then has the scene's size, not the template's.
  */
 final readonly class BaseView {
 
@@ -49,6 +53,23 @@ final readonly class BaseView {
 	public const COLOR_BACKGROUND = 'background:';
 
 	/**
+	 * The layer of a PSD scene's image.
+	 */
+	public const SCENE = 'scene';
+
+	/**
+	 * The blends of a scene's images.
+	 */
+	public const SCENE_BLENDS = array( 'normal', 'multiply', 'screen', 'overlay', 'darken', 'lighten', 'color-dodge', 'color-burn', 'hard-light', 'darker-color' );
+
+	/**
+	 * The most steps of a scene, and the longest side of its mockup.
+	 */
+	private const MAX_SCENE_STEPS = 64;
+
+	private const MAX_SCENE_SIDE = 2000;
+
+	/**
 	 * The layer key of a colour's own background.
 	 *
 	 * @param string $color Colour key.
@@ -63,7 +84,7 @@ final readonly class BaseView {
 	 * @param string $layer Layer key.
 	 */
 	public static function valid_layer( string $layer ): bool {
-		return in_array( $layer, self::LAYERS, true ) || 1 === preg_match( '/^' . preg_quote( self::COLOR_BACKGROUND, '/' ) . '[a-z0-9][a-z0-9_-]{0,31}$/', $layer );
+		return self::SCENE === $layer || in_array( $layer, self::LAYERS, true ) || 1 === preg_match( '/^' . preg_quote( self::COLOR_BACKGROUND, '/' ) . '[a-z0-9][a-z0-9_-]{0,31}$/', $layer );
 	}
 
 	/**
@@ -109,6 +130,7 @@ final readonly class BaseView {
 	 * @param int                                            $dpi         Print resolution.
 	 * @param string                                         $thread_pack The embroidery pack; empty when the side is printed.
 	 * @param bool                                           $flat        Whether the side is a flat part of an all-over product.
+	 * @param array<string, mixed>|null                      $scene       The side's PSD scene; it comes with the layer `scene`.
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -122,7 +144,8 @@ final readonly class BaseView {
 		public int $height_mm,
 		public int $dpi,
 		public string $thread_pack = '',
-		public bool $flat = false
+		public bool $flat = false,
+		public ?array $scene = null
 	) {
 		if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9-]{0,31}$/', $key ) || '' === $name || mb_strlen( $name ) > 60 ) {
 			throw new InvalidArgumentException( 'Invalid side.' );
@@ -150,6 +173,10 @@ final readonly class BaseView {
 			throw new InvalidArgumentException( 'Invalid print size.' );
 		}
 
+		if ( null === $scene ? isset( $layers[ self::SCENE ] ) : ! isset( $layers[ self::SCENE ] ) || ! self::valid_scene( $scene ) ) {
+			throw new InvalidArgumentException( 'Invalid scene.' );
+		}
+
 		if ( '' !== $thread_pack && 1 !== preg_match( '/^[a-z0-9][a-z0-9-]{0,31}$/', $thread_pack ) ) {
 			throw new InvalidArgumentException( 'Invalid embroidery pack.' );
 		}
@@ -162,6 +189,72 @@ final readonly class BaseView {
 	 */
 	public function print_pixels(): array {
 		return array( (int) round( $this->width_mm * $this->dpi / 25.4 ), (int) round( $this->height_mm * $this->dpi / 25.4 ) );
+	}
+
+	/**
+	 * The size of the side's mockups in px.
+	 *
+	 * @return array{0: int, 1: int}
+	 */
+	public function mockup_size(): array {
+		return null === $this->scene ? array( $this->width, $this->height ) : array( (int) $this->scene['width'], (int) $this->scene['height'] );
+	}
+
+	/**
+	 * Whether a scene is sound. The creator's browser draws from it, so only
+	 * its shape matters: the image is checked as any upload.
+	 *
+	 * @param array<mixed> $scene Scene.
+	 */
+	private static function valid_scene( array $scene ): bool {
+		$size  = static fn( mixed $value ): bool => is_int( $value ) && $value >= 1 && $value <= self::MAX_SCENE_SIDE;
+		$place = static fn( mixed $value ): bool => is_int( $value ) && abs( $value ) <= 8000;
+		$rect  = static fn( mixed $rect ): bool => is_array( $rect ) && is_int( $rect['x'] ?? null ) && is_int( $rect['y'] ?? null ) && $rect['x'] >= 0 && $rect['y'] >= 0 && is_int( $rect['width'] ?? null ) && is_int( $rect['height'] ?? null ) && $rect['width'] >= 1 && $rect['height'] >= 1;
+		$steps = $scene['steps'] ?? null;
+
+		if ( ! $size( $scene['width'] ?? null ) || ! $size( $scene['height'] ?? null ) || ! is_array( $steps ) || ! array_is_list( $steps ) || array() === $steps || count( $steps ) > self::MAX_SCENE_STEPS ) {
+			return false;
+		}
+
+		$designs = 0;
+
+		foreach ( $steps as $step ) {
+			$type = is_array( $step ) ? ( $step['type'] ?? null ) : null;
+
+			if ( 'image' === $type ) {
+				$opacity = $step['opacity'] ?? null;
+
+				if ( ! $rect( $step['rect'] ?? null ) || ! $place( $step['left'] ?? null ) || ! $place( $step['top'] ?? null ) || ! in_array( $step['blend'] ?? null, self::SCENE_BLENDS, true ) || ! is_numeric( $opacity ) || $opacity < 0 || $opacity > 1 ) {
+					return false;
+				}
+			} elseif ( 'design' === $type ) {
+				++$designs;
+
+				$mask = $step['mask'] ?? null;
+
+				if ( ! in_array( $step['end'] ?? null, array( 'start', 'middle', 'end' ), true ) || ! is_int( $step['width'] ?? null ) || ! is_int( $step['height'] ?? null ) || $step['width'] < 1 || $step['height'] < 1 || ! self::numbers( $step['quad'] ?? null, 8 ) || ! self::numbers( $step['mesh'] ?? null, 32 ) ) {
+					return false;
+				}
+
+				if ( null !== $mask && ( ! $rect( $mask ) || ! $place( $mask['left'] ?? null ) || ! $place( $mask['top'] ?? null ) ) ) {
+					return false;
+				}
+			} else {
+				return false;
+			}
+		}
+
+		return $designs > 0;
+	}
+
+	/**
+	 * Whether a value is a list of a number of numbers.
+	 *
+	 * @param mixed $value Value.
+	 * @param int   $count How many.
+	 */
+	private static function numbers( mixed $value, int $count ): bool {
+		return is_array( $value ) && array_is_list( $value ) && count( $value ) === $count && array() === array_filter( $value, static fn( mixed $number ): bool => ! is_int( $number ) && ! is_float( $number ) );
 	}
 
 	/**
@@ -188,6 +281,10 @@ final readonly class BaseView {
 
 		if ( $this->flat ) {
 			$side['flat'] = true;
+		}
+
+		if ( null !== $this->scene ) {
+			$side['scene'] = $this->scene;
 		}
 
 		return $side;
@@ -227,7 +324,8 @@ final readonly class BaseView {
 			$int( $data['height_mm'] ?? null ),
 			$int( $data['dpi'] ?? null ),
 			is_string( $data['thread_pack'] ?? null ) ? $data['thread_pack'] : '',
-			true === ( $data['flat'] ?? false )
+			true === ( $data['flat'] ?? false ),
+			is_array( $data['scene'] ?? null ) ? $data['scene'] : null
 		);
 	}
 }

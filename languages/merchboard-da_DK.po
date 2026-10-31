@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-31T18:19:19+00:00\n"
+"PO-Revision-Date: 2026-10-31T19:31:20+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1290,7 +1290,7 @@ msgstr "produkterne i én mapping"
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1250
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1277
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:217
 #: build/dashboard.js:61
 #: build/dashboard.js:62
@@ -1334,7 +1334,7 @@ msgstr "Hændelse"
 #: src/Modules/Notifications/Catalog/AdminTypes.php:320
 #: src/Modules/Notifications/Catalog/AdminTypes.php:369
 #: src/Modules/Notifications/Catalog/AdminTypes.php:398
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:175
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:177
 #: src/Modules/ProductDesigner/DesignerNotifications.php:322
 #: src/Modules/ProductDesigner/DesignerNotifications.php:367
 #: src/Modules/ProductDesigner/DesignerNotifications.php:545
@@ -2049,7 +2049,7 @@ msgstr "Biblioteket er tomt. Creators kan kun bruge deres egne lyde."
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:306
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:359
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:405
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1186
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1213
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:160
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:198
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:193
@@ -2093,6 +2093,7 @@ msgstr[1] "%d sekunder"
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:334
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:430
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:445
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:923
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:195
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
 #: build/dashboard.js:86
@@ -3122,8 +3123,8 @@ msgstr "Font"
 
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:120
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:170
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:619
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:707
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:623
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:711
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:199
 msgid "Category"
 msgstr "Kategori"
@@ -3145,10 +3146,10 @@ msgid "Search fonts"
 msgstr "Søg efter fonte"
 
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:152
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:618
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:625
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:706
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:713
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:622
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:629
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:710
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:717
 msgid "Search"
 msgstr "Søg"
 
@@ -3163,7 +3164,7 @@ msgid "At most %d fonts, the most popular first."
 msgstr "Højst %d fonte, de mest populære først."
 
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:176
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:175
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:177
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:491
 msgid "Approved"
 msgstr "Godkendt"
@@ -3726,7 +3727,7 @@ msgid "Note to the creator (optional)"
 msgstr "Note til creatoren (valgfri)"
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:285
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:278
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:280
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:407
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:411
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:960
@@ -3968,9 +3969,9 @@ msgstr "Visningsnavn"
 #: src/Modules/News/Admin/NewsAdminPage.php:334
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:208
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:306
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1071
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1098
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:160
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:175
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:177
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:327
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:623
@@ -4054,7 +4055,7 @@ msgid "Edit"
 msgstr "Redigér"
 
 #: src/Modules/Creators/Admin/CreatorsListTable.php:236
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:521
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:525
 msgid "Activate"
 msgstr "Aktivér"
 
@@ -4063,7 +4064,7 @@ msgid "Deactivate"
 msgstr "Deaktivér"
 
 #: src/Modules/Creators/Admin/CreatorsListTable.php:241
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1206
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1233
 #: build/alerts-global-admin.js:12
 #: build/alerts-global-admin.js:18
 #: build/alerts-presets-admin.js:12
@@ -4333,7 +4334,7 @@ msgid "Withdrawn"
 msgstr "Trukket tilbage"
 
 #: src/Modules/News/Admin/NewsAdminPage.php:417
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1252
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1279
 #: build/dashboard.js:58
 #: build/dashboard.js:78
 msgid "Draft"
@@ -4362,32 +4363,32 @@ msgid "Notifications"
 msgstr "Notifikationer"
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:110
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:103
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:105
 msgid "The notification settings are saved."
 msgstr "Notifikationsindstillingerne er gemt."
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:111
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:104
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:106
 msgid "The test e-mail was sent to you. Check your inbox (and the spam folder)."
 msgstr "Testmailen er sendt til dig. Tjek din indbakke (og spammappen)."
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:112
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:105
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:107
 msgid "The test e-mail could not be sent. Check that the site can send e-mail; the log has the reason."
 msgstr "Testmailen kunne ikke sendes. Tjek, at sitet kan sende mail; loggen har årsagen."
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:113
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:106
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:108
 msgid "That notification does not exist."
 msgstr "Den notifikation findes ikke."
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:114
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:107
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:109
 msgid "You are not allowed to change the notifications."
 msgstr "Du har ikke adgang til at ændre notifikationerne."
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:115
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:108
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:110
 msgid "A technical error occurred. Nothing was changed; try again or check the log."
 msgstr "Der opstod en teknisk fejl. Intet er ændret; prøv igen, eller tjek loggen."
 
@@ -4414,7 +4415,7 @@ msgid "To the creator: %s"
 msgstr "Til creatoren: %s"
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:183
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:328
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:330
 msgid "Save notification settings"
 msgstr "Gem notifikationsindstillinger"
 
@@ -4657,7 +4658,7 @@ msgstr "En creator har bedt om at få et produkt slettet. Der sker intet med pro
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:165
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:798
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:934
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:175
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:177
 #: src/Modules/ProductDesigner/DesignerNotifications.php:138
 #: src/Modules/ProductDesigner/DesignerNotifications.php:186
 #: src/Modules/ProductDesigner/DesignerNotifications.php:220
@@ -6022,7 +6023,7 @@ msgid "Account and prices"
 msgstr "Konto og priser"
 
 #: src/Modules/Notifications/NotificationTypes.php:101
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:326
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:328
 msgid "To the administrator"
 msgstr "Til administratoren"
 
@@ -6034,7 +6035,7 @@ msgstr "Til administratoren"
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:95
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:155
 #: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:133
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:118
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:120
 msgid "Sorry, you are not allowed to manage the product designer."
 msgstr "Du har ikke tilladelse til at administrere produktdesigneren."
 
@@ -6256,7 +6257,7 @@ msgid "Use PNG, JPG or WebP images; template layers must be PNG."
 msgstr "Brug PNG-, JPG- eller WebP-billeder; skabelonlag skal være PNG."
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:241
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:102
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:104
 msgid "You are not allowed to manage the product designer."
 msgstr "Du har ikke adgang til at administrere produktdesigneren."
 
@@ -6265,7 +6266,7 @@ msgid "New base product"
 msgstr "Nyt grundprodukt"
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:286
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:153
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:155
 msgid "The product designer's data could not be read. Please try again later."
 msgstr "Produktdesignerens data kunne ikke læses. Prøv igen senere."
 
@@ -6284,21 +6285,21 @@ msgstr "Grundpris"
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:306
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:366
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:818
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:822
 #: build/dashboard.js:58
 msgid "Colours"
 msgstr "Farver"
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:306
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:367
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:824
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:828
 #: build/dashboard.js:58
 msgid "Sizes"
 msgstr "Størrelser"
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:306
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:370
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:830
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:834
 #: build/dashboard.js:55
 msgid "Sides"
 msgstr "Sider"
@@ -6317,7 +6318,7 @@ msgid "Designs"
 msgstr "Designs"
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:338
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:560
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:564
 msgid "← All base products"
 msgstr "← Alle grundprodukter"
 
@@ -6338,7 +6339,7 @@ msgstr "Beskrivelse"
 
 #. translators: %s: currency code, e.g. "DKK".
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:362
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:863
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:867
 #, php-format
 msgid "Base price incl. VAT (%s)"
 msgstr "Grundpris inkl. moms (%s)"
@@ -6350,14 +6351,14 @@ msgstr "Det, virksomheden beholder pr. stk. uden for sine egne kampagner, med é
 
 #. translators: %s: currency code, e.g. "DKK".
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:364
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:865
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:869
 #, php-format
 msgid "Price per extra design area incl. VAT (%s)"
 msgstr "Pris pr. ekstra designområde inkl. moms (%s)"
 
 #. translators: %s: currency code, e.g. "DKK".
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:364
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:865
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:869
 msgid "What the company keeps for each design area after the first. 0 means extra areas cost nothing."
 msgstr "Det, virksomheden beholder for hvert designområde ud over det første. 0 betyder, at ekstra områder ikke koster noget."
 
@@ -6417,238 +6418,250 @@ msgstr "Lagene mb_background, mb_color, mb_shading, mb_highlight og mb_print_are
 msgid "Background in %s"
 msgstr "Baggrund i %s"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:452
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:456
 msgid "Print area in the template (px):"
 msgstr "Printområde i skabelonen (px):"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:457
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:461
 msgid "Width"
 msgstr "Bredde"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:458
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:462
 msgid "Height"
 msgstr "Højde"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:463
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:467
 msgid "Print size:"
 msgstr "Printstørrelse:"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:464
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:468
 msgid "Width (mm)"
 msgstr "Bredde (mm)"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:465
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:469
 msgid "Height (mm)"
 msgstr "Højde (mm)"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:466
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:470
 msgid "Resolution (dpi)"
 msgstr "Opløsning (dpi)"
 
 #. translators: 1: width in px, 2: height in px.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:471
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:475
 #, php-format
 msgid "Print file: %1$d × %2$d px"
 msgstr "Printfil: %1$d × %2$d px"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:474
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:840
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:478
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:844
 msgid "Embroidery pack"
 msgstr "Broderipakke"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:475
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:479
 msgid "On an embroidered side, the design keeps to the threads of the pack."
 msgstr "På en broderet side holder designet sig til pakkens tråde."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:478
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:482
 msgid "Remove this side"
 msgstr "Fjern denne side"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:492
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:496
 msgid "No embroidery"
 msgstr "Intet broderi"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:513
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:517
 msgid "This base product is retired: its products are out of the shop, and it cannot be changed or activated again."
 msgstr "Dette grundprodukt er pensioneret: dets produkter er ude af butikken, og det kan ikke ændres eller aktiveres igen."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:519
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:523
 msgid "Back to draft"
 msgstr "Tilbage til kladde"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:519
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:523
 msgid "Creators can no longer start designs on it. Products in the shop are not affected."
 msgstr "Creators kan ikke længere starte designs på det. Produkter i butikken påvirkes ikke."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:521
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:525
 msgid "Creators can design on it."
 msgstr "Creators kan designe på det."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:525
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:529
 msgid "Delete base product"
 msgstr "Slet grundprodukt"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:527
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:531
 msgid "Retire"
 msgstr "Pensionér"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:528
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:532
 msgid "Retiring takes every product of this base product out of the shop (they become drafts and stay for the order history), rejects the designs waiting for approval and tells the creators. It cannot be undone."
 msgstr "Pensionering tager alle produkter af dette grundprodukt ud af butikken (de bliver kladder og bevares til ordrehistorikken), afviser de designs, der venter på godkendelse, og giver creatorne besked. Det kan ikke fortrydes."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:529
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:533
 msgid "Yes, retire this base product for good."
 msgstr "Ja, pensionér dette grundprodukt for altid."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:530
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:534
 msgid "Retire base product"
 msgstr "Pensionér grundprodukt"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:546
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:550
 msgid "Own base product"
 msgstr "Eget grundprodukt"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:549
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:553
 msgid "From Printful's catalog"
 msgstr "Fra Printfuls katalog"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:553
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:557
 msgid "From a Gelato template"
 msgstr "Fra en Gelato-skabelon"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:557
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:561
 msgid "From Prodigi's catalogue"
 msgstr "Fra Prodigis katalog"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:590
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:594
 msgid "Enter the Printful API token under Settings → Product designer first."
 msgstr "Indtast først Printful-API-token'en under Settings → Produktdesigner."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:607
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:611
 msgid "Search Printful's catalog and pick the product. Only products sold in Europe that can be sent to Denmark are listed. Printful renders it without a design in every colour you tick; those photos are what creators design on, and the print areas are measured on them. All-over products are designed on their flat sewing pattern instead."
 msgstr "Søg i Printfuls katalog, og vælg produktet. Kun produkter, der sælges i Europa og kan sendes til Danmark, vises. Printful laver billeder af produktet uden design i hver farve, du vælger. Dem designer creators på, og printområderne måles på dem. All-over-produkter designes i stedet på deres flade syemønster."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:619
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:707
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:623
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:711
 msgid "— All —"
 msgstr "— Alle —"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:641
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:645
 msgid "Printful's newest API does not answer right now, so the list is not limited to Europe. A product you pick is still checked."
 msgstr "Printfuls nyeste API svarer ikke lige nu, så listen er ikke begrænset til Europa. Et produkt, du vælger, bliver stadig tjekket."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:645
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:728
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:649
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:732
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:313
 msgid "No products found."
 msgstr "Ingen produkter fundet."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:660
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:664
 msgid "Pick"
 msgstr "Vælg"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:666
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:742
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:670
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:746
 msgid "Only the first results are shown. Add words to narrow the search."
 msgstr "Kun de første resultater vises. Tilføj ord for at indsnævre søgningen."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:678
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:682
 msgid "Enter the Prodigi API key under Settings → Product designer first."
 msgstr "Indtast først Prodigi-API-nøglen under Indstillinger → Produktdesigner."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:695
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:699
 msgid "Search Prodigi's catalogue and pick the product. Only products made in the EU are listed. Creators design on a white sheet in the shape of the print area, and Prodigi makes the mockups when a design is sent for approval."
 msgstr "Søg i Prodigis katalog, og vælg produktet. Kun produkter, der produceres i EU, vises. Creators designer på et hvidt ark i printfladens form, og Prodigi laver mockups, når et design sendes til godkendelse."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:754
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:758
 msgid "Enter the Gelato API key and store id under Settings → Product designer first."
 msgstr "Indtast først Gelatos API-nøgle og butiks-id under Indstillinger → Produktdesigner."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:768
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:772
 msgid "Gelato renders products only from a template. Make one template in the Gelato dashboard of the product you want, with the colours and sizes creators may choose, one named image layer per side and at least one mockup: Gelato makes the photos from the mockups in the template. Any design in it is never shown: we replace it with an empty file and later with the creators' print files. The template id is in the template's address at Gelato."
 msgstr "Gelato renderer kun produkter ud fra en skabelon. Lav én skabelon i Gelato-dashboardet af det produkt, du vil tilbyde, med de farver og størrelser, creators må vælge, ét navngivet billedlag pr. side og mindst én mockup: Gelato laver fotoene ud fra mockups i skabelonen. Et eventuelt design i den vises aldrig: vi erstatter det med en tom fil og senere med creatorernes printfiler. Skabelonens id står i dens adresse hos Gelato."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:770
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:774
 msgid "Gelato template id"
 msgstr "Gelato-skabelon-id"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:770
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:774
 msgid "Fetch"
 msgstr "Hent"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:810
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:814
 msgid "The print size depends on the size. A base product holds one print size: make one base product per size you want to offer."
 msgstr "Printmålet afhænger af størrelsen. Et grundprodukt har ét printmål, så lav ét grundprodukt pr. størrelse, du vil tilbyde."
 
 #. translators: 1: side name, 2: width in mm, 3: height in mm.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:834
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:853
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:838
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:857
 #, php-format
 msgid "%1$s (%2$d × %3$d mm)"
 msgstr "%1$s (%2$d × %3$d mm)"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:846
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:850
 msgid "Each side is a flat part of the sewing pattern. Keep every part you want printed: an unticked part stays white on the product."
 msgstr "Hver side er en flad del af syemønsteret. Behold alle de dele, der skal have tryk. En del uden flueben bliver hvid på produktet."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:846
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:850
 msgid "At most six sides. Each is rendered and measured; a side whose print area cannot be found on the photos is left out."
 msgstr "Højst seks sider. Hver side renderes og måles; en side, hvis printområde ikke kan findes på fotoene, udelades."
 
 #. translators: %s: the template's image layers with their sizes.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:858
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:862
 #, php-format
 msgid "Image layers in the template: %s"
 msgstr "Billedlag i skabelonen: %s"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:859
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:863
 msgid "Check in Gelato that each image layer fills the whole print area. Creators can only design on this size, and we cannot check it ourselves, because Gelato does not tell us the largest area. If you change the template, make a new import."
 msgstr "Tjek hos Gelato, at hvert billedlag fylder hele printområdet. Creators kan kun designe på denne størrelse, og vi kan ikke selv tjekke det, fordi Gelato ikke oplyser det største område. Ændrer du skabelonen, skal du lave en ny import."
 
 #. translators: %s: currency code, e.g. "DKK".
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:865
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:869
 msgid "What the company keeps for each part after the first. An all-over design usually covers every part: 0 means they cost nothing extra."
 msgstr "Det, virksomheden beholder for hver del efter den første. Et all-over-design dækker som regel alle dele. 0 betyder, at de ikke koster ekstra."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:867
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:871
 msgid "The base product is created as a draft at once. Its sewing patterns, if it has any, are fetched in the background. Creators design on the flat parts; the provider makes their mockups when they are sent for approval."
 msgstr "Grundproduktet oprettes straks som kladde. Eventuelle syemønstre hentes i baggrunden. Creators designer på de flade dele, og leverandøren laver mockups, når designet sendes til godkendelse."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:867
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:871
 msgid "The base product is created as a draft at once. The provider then renders its photos without a design and with a marker per side, from which the photos per colour and the print areas are taken, in the background (a few minutes). Check them and activate it."
 msgstr "Grundproduktet oprettes straks som kladde. Leverandøren renderer derefter fotos uden design og med en markør pr. side, hvorfra fotos pr. farve og printområderne tages, i baggrunden (et par minutter). Tjek dem og aktivér det."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:868
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:872
 msgid "Create and import"
 msgstr "Opret og importér"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:887
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:891
 msgid "Mockups"
 msgstr "Mockups"
 
 #. translators: %d: the most photos of a design.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:902
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:906
 #, php-format
 msgid "The photos Printful makes of each design sent for approval. They become the product's images in the shop, in place of the mockups the creator's browser made, and each is made per colour. At most %d: more are left out."
 msgstr "De billeder, Printful laver af hvert design, der sendes til godkendelse. De bliver produktets billeder i butikken i stedet for de mockups, creatorens browser lavede, og hvert billede laves pr. farve. Højst %d: resten udelades."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:926
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:919
+msgid "Mockup PSD"
+msgstr "Mockup-PSD"
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:922
+msgid "Imported."
+msgstr "Importeret."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:929
+msgid "For a product whose mockup wraps the design, like a mug. Smart objects with \"design\" in their name take the print file: \"højre\" shows its right end, \"venstre\" its left end. Each design then gets this mockup instead of the one drawn on the template."
+msgstr "Til et produkt, hvor mockuppen bøjer designet, fx en kop. Smart objects med \"design\" i navnet får printfilen: \"højre\" viser den højre ende, \"venstre\" den venstre. Hvert design får så denne mockup i stedet for den, der tegnes på skabelonen."
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:953
 msgid "Order of the mockups"
 msgstr "Mockuppernes rækkefølge"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:927
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:954
 msgid "The order of the photos in the shop. The first is the main image. Designs already sent keep theirs."
 msgstr "Billedernes rækkefølge i butikken. Det første er hovedbilledet. Designs, der allerede er sendt, beholder deres."
 
 #. translators: %s: the photo's id.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:936
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:963
 #, php-format
 msgid "Mockup %s"
 msgstr "Mockup %s"
 
 #. translators: %s: the photo's name.
 #. translators: %s: colour name.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:940
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:967
 #: build/dashboard.js:58
 #, js-format,php-format
 msgid "Move %s up"
@@ -6656,26 +6669,26 @@ msgstr "Flyt %s op"
 
 #. translators: %s: the photo's name.
 #. translators: %s: colour name.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:942
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:969
 #: build/dashboard.js:58
 #, js-format,php-format
 msgid "Move %s down"
 msgstr "Flyt %s ned"
 
 #. translators: %s: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:967
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:994
 #, php-format
 msgid "The photos and print areas are being imported from %s in the background. The status below updates by itself; the base product cannot be activated meanwhile."
 msgstr "Fotos og printområder importeres fra %s i baggrunden. Status herunder opdateres af sig selv; grundproduktet kan ikke aktiveres imens."
 
 #. translators: 1: Printful or Gelato, 2: reason.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:970
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:997
 #, php-format
 msgid "The import from %1$s failed: %2$s"
 msgstr "Importen fra %1$s fejlede: %2$s"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:980
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:195
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1007
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:197
 #: build/alerts-global-admin.js:1
 #: build/alerts-page-admin.js:1
 #: build/alerts-presets-admin.js:1
@@ -6684,126 +6697,126 @@ msgid "Try again"
 msgstr "Prøv igen"
 
 #. translators: %s: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:983
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1010
 #, php-format
 msgid "Imported from %s: the flat parts with their print areas. Check them before you activate the base product."
 msgstr "Importeret fra %s: de flade dele med deres printområder. Tjek dem, før du aktiverer grundproduktet."
 
 #. translators: %s: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:983
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1010
 #, php-format
 msgid "Imported from %s: one photo per colour and a measured print area per side. Check each print area before you activate the base product."
 msgstr "Importeret fra %s: ét foto pr. farve og et målt printområde pr. side. Tjek hvert printområde, før du aktiverer grundproduktet."
 
 #. translators: 1: names of sides, 2: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:987
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1014
 #, php-format
 msgid "Left out because %2$s's photos do not show them: %1$s."
 msgstr "Udeladt, fordi %2$ss fotos ikke viser dem: %1$s."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1000
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1027
 msgid "Show the provider's answer"
 msgstr "Vis leverandørens svar"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1014
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1041
 msgid "The provider's answer (no keys)"
 msgstr "Leverandørens svar (uden nøgler)"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1053
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1080
 msgid "The provider renders the product"
 msgstr "Leverandøren renderer produktet"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1054
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1081
 msgid "The print areas are measured"
 msgstr "Printområderne måles"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1055
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1082
 msgid "The photos are downloaded"
 msgstr "Fotoene hentes"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1056
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1083
 msgid "The sides are saved"
 msgstr "Siderne gemmes"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1071
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1098
 msgid "Render"
 msgstr "Rendering"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1071
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1098
 msgid "The provider says"
 msgstr "Leverandøren siger"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1071
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1098
 msgid "Picture"
 msgstr "Billede"
 
 #. translators: %d: minutes.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1086
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1113
 #, php-format
 msgid "The background job has not run for %d minutes. Check that WP-Cron or Action Scheduler runs on this site."
 msgstr "Baggrundsjobbet har ikke kørt i %d minutter. Tjek, at WP-Cron eller Action Scheduler kører på sitet."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1099
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1126
 msgid "Product with markers"
 msgstr "Produkt med markører"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1099
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1126
 msgid "Blank product"
 msgstr "Tomt produkt"
 
 #. translators: 1: looks so far, 2: most looks.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1110
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1137
 msgid "Ready"
 msgstr "Klar"
 
 #. translators: 1: looks so far, 2: most looks.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1110
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1137
 #, php-format
 msgid "Waiting (look %1$d of %2$d)"
 msgstr "Venter (kig %1$d af %2$d)"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1150
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1177
 msgid "importing…"
 msgstr "importerer…"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1151
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1178
 msgid "import failed"
 msgstr "import fejlet"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1182
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1209
 msgid "Images every creator can use in the designer. PNG, JPG or WebP; use PNG for transparency."
 msgstr "Billeder, som alle creators kan bruge i designeren. PNG, JPG eller WebP; brug PNG til gennemsigtighed."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1188
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1215
 msgid "Add clipart"
 msgstr "Tilføj klipart"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1193
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1220
 #: build/dashboard.js:55
 msgid "No cliparts yet."
 msgstr "Ingen kliparts endnu."
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1225
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1252
 msgid "— None —"
 msgstr "— Ingen —"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1251
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1278
 msgid "Retired"
 msgstr "Udgået"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1263
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1290
 msgid "Background"
 msgstr "Baggrund"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1264
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1291
 msgid "Colour mask"
 msgstr "Farvemaske"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1265
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1292
 msgid "Shading"
 msgstr "Skygge"
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1266
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1293
 msgid "Highlight"
 msgstr "Highlight"
 
@@ -6966,7 +6979,7 @@ msgstr "Merch Dashboard Produktdesigner"
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:149
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:87
 #: src/Modules/ProductDesigner/DesignerDashboardSection.php:44
-#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:160
+#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:162
 msgid "Product designer"
 msgstr "Produktdesigner"
 
@@ -7237,150 +7250,150 @@ msgstr "Lav i Gelatos dashboard en skabelon pr. produkt: produktet, de farver og
 msgid "Gelato fetches print files from a short-lived link on this site, so mockups from Gelato only work on a site Gelato can reach (not on a local test site)."
 msgstr "Gelato henter printfiler fra et kortlivet link på dette site, så mockups fra Gelato virker kun på et site, Gelato kan nå (ikke på et lokalt testsite)."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:94
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:96
 msgid "The design is approved. It is being put in the shop; the creator gets a notification when it is there."
 msgstr "Designet er godkendt. Det lægges nu i butikken; creatoren får en notifikation, når det er der."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:95
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:97
 msgid "The design is rejected. The creator gets your note and can change it."
 msgstr "Designet er afvist. Creatoren får din note og kan ændre det."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:96
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:98
 msgid "The design is being put in the shop again."
 msgstr "Designet lægges i butikken igen."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:97
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:99
 msgid "Printful or Gelato is still making the mockups of this design. Try again in a minute."
 msgstr "Printful eller Gelato laver stadig mockups af dette design. Prøv igen om et minut."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:98
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:100
 msgid "The base product changed after the design was sent. Reject it with a note so the creator sends it again."
 msgstr "Grundproduktet er ændret, efter designet blev sendt. Afvis det med en note, så creatoren sender det igen."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:99
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:101
 msgid "The price of the design could not be computed."
 msgstr "Designets pris kunne ikke beregnes."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:100
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:102
 msgid "The design is no longer waiting (withdrawn or decided already)."
 msgstr "Designet venter ikke længere (trukket tilbage eller allerede afgjort)."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:101
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:103
 msgid "Write a note of at most 2000 characters to the creator."
 msgstr "Skriv en note på højst 2000 tegn til creatoren."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:158
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:160
 msgid "Designs that creators sent for approval, oldest first. Nothing is in the shop before you approve it; an approved design becomes a product (or changes one) with the mockups as product images. The print files stay private: download them here, on the product and on the order."
 msgstr "Designs, som creators har sendt til godkendelse, ældste først. Intet kommer i butikken, før du godkender det; et godkendt design bliver et produkt (eller ændrer et) med mockups som produktbilleder. Printfilerne forbliver private: hent dem her, på produktet og på ordren."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:161
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:163
 msgid "No designs are waiting for approval."
 msgstr "Ingen designs venter på godkendelse."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:172
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:174
 msgid "On the way to the shop"
 msgstr "På vej i butikken"
 
 #. translators: %d: version number.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:188
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:190
 #, php-format
 msgid "(version %d)"
 msgstr "(version %d)"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:189
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:191
 msgid "It stopped on the way to the shop (more than 10 minutes ago). Try again."
 msgstr "Det gik i stå på vej i butikken (for mere end 10 minutter siden). Prøv igen."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:189
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:191
 msgid "Being put in the shop…"
 msgstr "Lægges i butikken …"
 
 #. translators: 1: product title, 2: version number.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:220
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:222
 #, php-format
 msgid "%1$s (version %2$d)"
 msgstr "%1$s (version %2$d)"
 
 #. translators: 1: creator name, 2: date and time.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:223
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:225
 #, php-format
 msgid "By %1$s, sent %2$s."
 msgstr "Af %1$s, sendt %2$s."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:224
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:226
 msgid "A new product."
 msgstr "Et nyt produkt."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:224
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:226
 msgid "A change of a product in the shop; the shop keeps the approved version until you approve this one."
 msgstr "En ændring af et produkt i butikken; butikken beholder den godkendte version, indtil du godkender denne."
 
 #. translators: %s: base product name.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:227
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:229
 #, php-format
 msgid "Base product: %s"
 msgstr "Grundprodukt: %s"
 
 #. translators: %s: colour names.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:229
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:231
 #, php-format
 msgid "Colours: %s"
 msgstr "Farver: %s"
 
 #. translators: %s: sizes.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:231
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:233
 #, php-format
 msgid "Sizes: %s"
 msgstr "Størrelser: %s"
 
 #. translators: %s: stitch colour.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:235
-#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:221
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:237
+#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:223
 #, php-format
 msgid "Stitching: %s"
 msgstr "Syninger: %s"
 
 #. translators: %s: price.
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:239
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:241
 #, js-format,php-format
 msgid "Customer price incl. VAT: %s"
 msgstr "Kundens pris inkl. moms: %s"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:247
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:249
 msgid "Printful or Gelato is making the mockups; the creator's mockups are shown until then."
 msgstr "Printful eller Gelato laver mockups; indtil da vises creatorens mockups."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:249
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:251
 msgid "Printful or Gelato could not make the mockups; the creator's mockups are shown."
 msgstr "Printful eller Gelato kunne ikke lave mockups; creatorens mockups vises."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:251
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:253
 msgid "Mockups from Printful or Gelato."
 msgstr "Mockups fra Printful eller Gelato."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:260
-#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:138
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:262
+#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:140
 msgid "Print files:"
 msgstr "Printfiler:"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:269
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:271
 msgid "Approve and put in the shop"
 msgstr "Godkend og læg i butikken"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:276
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:278
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:179
 msgid "Note to the creator"
 msgstr "Note til creatoren"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:277
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:279
 msgid "Note to the creator: why, and what to change"
 msgstr "Note til creatoren: hvorfor, og hvad der skal ændres"
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:315
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:317
 msgid "Choose which of the product designer's notifications are sent. They use the same e-mail template, bell and log as the other notifications (Merch Dashboard → Notifications)."
 msgstr "Vælg, hvilke af produktdesignerens notifikationer der sendes. De bruger samme mailskabelon, klokke og log som de øvrige notifikationer (Merch Dashboard → Notifikationer)."
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:325
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:327
 msgid "To the creator"
 msgstr "Til creatoren"
 
@@ -7587,7 +7600,7 @@ msgstr "Et godkendt design kunne ikke lægges i butikken. Intet i butikken er æ
 #: src/Modules/ProductDesigner/DesignerNotifications.php:328
 #: src/Modules/ProductDesigner/DesignerNotifications.php:373
 #: src/Modules/ProductDesigner/DesignerNotifications.php:554
-#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:188
+#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:190
 msgid "Open Designs"
 msgstr "Åbn Designs"
 
@@ -7848,25 +7861,25 @@ msgstr "Sort"
 msgid "Clear"
 msgstr "Klar"
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1000
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1001
 msgid "The product designer is not available."
 msgstr "Produktdesigneren er ikke tilgængelig."
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1019
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1020
 msgid "The product designer refused the change."
 msgstr "Produktdesigneren afviste ændringen."
 
-#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:179
+#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:181
 msgid "This product is made with the product designer. Its prices, variations and images are written when a design is approved; changes made here are overwritten then."
 msgstr "Dette produkt er lavet med produktdesigneren. Priser, varianter og billeder skrives, når et design godkendes; ændringer her overskrives da."
 
 #. translators: %d: version number.
-#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:183
+#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:185
 #, php-format
 msgid "In the shop: version %d."
 msgstr "I butikken: version %d."
 
-#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:206
+#: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:208
 msgid "none stored"
 msgstr "ingen gemt"
 
@@ -13233,40 +13246,36 @@ msgid "Loading the standard overlays…"
 msgstr "Indlæser standard-overlays…"
 
 #: build/base-products-admin.js:1
-msgid "The PSD may be at most 300 MB."
-msgstr "PSD'en må højst være 300 MB."
-
-#: build/base-products-admin.js:1
-msgid "Reading the PSD…"
-msgstr "Læser PSD'en …"
-
-#. translators: 1: imported layers, 2: width in px, 3: height in px.
-#: build/base-products-admin.js:2
-#, js-format
-msgid "Imported %1$s (%2$d × %3$d px). Check the print size in mm and dpi, then save."
-msgstr "Importeret %1$s (%2$d × %3$d px). Tjek printstørrelsen i mm og dpi, og gem."
-
-#: build/base-products-admin.js:2
 msgid "The PSD could not be imported. Please try again."
 msgstr "PSD'en kunne ikke importeres. Prøv igen."
 
-#: build/base-products-admin.js:2
+#: build/base-products-admin.js:1
 msgid "Save the PSD with 8 bits per channel (Image → Mode → 8 Bits/Channel)."
 msgstr "Gem PSD'en med 8 bit pr. kanal (Billede → Tilstand → 8 bit/kanal)."
 
-#: build/base-products-admin.js:2
+#: build/base-products-admin.js:1
 msgid "The PSD may be at most 8000 × 8000 pixels."
 msgstr "PSD'en må højst være 8000 × 8000 pixels."
 
-#: build/base-products-admin.js:2
+#: build/base-products-admin.js:1
 msgid "The PSD needs a layer named mb_background or mb_color."
 msgstr "PSD'en skal have et lag med navnet mb_background eller mb_color."
 
 #. translators: %s: layer name, e.g. "mb_color".
-#: build/base-products-admin.js:3
+#: build/base-products-admin.js:2
 #, js-format
 msgid "The layer %s appears more than once."
 msgstr "Laget %s findes mere end én gang."
+
+#: build/base-products-admin.js:2
+msgid "The PSD needs a visible smart object with \"design\" in its name."
+msgstr "PSD'en skal have et synligt smart object med \"design\" i navnet."
+
+#. translators: %s: layer name.
+#: build/base-products-admin.js:3
+#, js-format
+msgid "The layer %s uses a warp that cannot be read. Use Edit → Transform → Warp with the custom grid."
+msgstr "Laget %s bruger en vridning, der ikke kan læses. Brug Rediger → Transformer → Vridning med brugerdefineret gitter."
 
 #: build/base-products-admin.js:3
 msgid "The layer mb_print_area is empty. Draw the print area as a filled rectangle."
@@ -13275,6 +13284,37 @@ msgstr "Laget mb_print_area er tomt. Tegn printområdet som et fyldt rektangel."
 #: build/base-products-admin.js:3
 msgid "The file is not a readable PSD. Export AI files to PSD first."
 msgstr "Filen er ikke en læsbar PSD. Eksportér AI-filer til PSD først."
+
+#: build/base-products-admin.js:3
+msgid "The PSD may be at most 300 MB."
+msgstr "PSD'en må højst være 300 MB."
+
+#: build/base-products-admin.js:3
+#: build/base-products-admin.js:4
+msgid "Reading the PSD…"
+msgstr "Læser PSD'en …"
+
+#. translators: 1: imported layers, 2: width in px, 3: height in px.
+#: build/base-products-admin.js:4
+#, js-format
+msgid "Imported %1$s (%2$d × %3$d px). Check the print size in mm and dpi, then save."
+msgstr "Importeret %1$s (%2$d × %3$d px). Tjek printstørrelsen i mm og dpi, og gem."
+
+#: build/base-products-admin.js:4
+msgid "The mockup PSD may be at most 1 GB."
+msgstr "Mockup-PSD'en må højst fylde 1 GB."
+
+#. translators: 1: smart objects, 2: width in px, 3: height in px.
+#: build/base-products-admin.js:5
+#, js-format
+msgid "Read %1$s (mockup %2$d × %3$d px). Save to keep it."
+msgstr "Læste %1$s (mockup %2$d × %3$d px). Gem for at beholde den."
+
+#. translators: %s: layer names.
+#: build/base-products-admin.js:6
+#, js-format
+msgid "Effects, masks or adjustments on these layers are left out: %s."
+msgstr "Effekter, masker eller justeringer på disse lag er udeladt: %s."
 
 #: build/dashboard.js:1
 msgid "This page could not be displayed."

@@ -153,6 +153,58 @@ final class BaseProductsTest extends IntegrationTestCase {
 		self::assertNull( $this->assets->find( $asset ) );
 	}
 
+	public function test_a_side_keeps_a_scene_of_its_own_size_until_it_is_removed(): void {
+		$scene = (string) wp_json_encode(
+			array(
+				'width'  => 600,
+				'height' => 400,
+				'steps'  => array(
+					array(
+						'type'   => 'design',
+						'end'    => 'start',
+						'width'  => 10,
+						'height' => 10,
+						'quad'   => array( 0, 0, 10, 0, 10, 10, 0, 10 ),
+						'mesh'   => array_fill( 0, 32, 0.5 ),
+						'mask'   => null,
+					),
+				),
+			)
+		);
+		$side  = self::side(
+			'Mug',
+			array(
+				'background' => 1000,
+				'scene'      => 300,
+			)
+		);
+		$id    = $this->service->save( null, self::fields(), array( array_merge( $side, array( 'scene' => $scene ) ) ) );
+		$view  = $this->bases->find( $id )?->views[0];
+
+		self::assertNotNull( $view );
+		self::assertSame( array( 1000, 1000 ), array( $view->width, $view->height ), 'The image of a scene has a size of its own.' );
+		self::assertSame( array( 600, 400 ), $view->mockup_size() );
+		self::assertArrayHasKey( 'scene', $view->layers );
+
+		$this->service->save( $id, self::fields(), array( self::existing( 'mug' ) ) );
+		self::assertSame( array( 600, 400 ), $this->bases->find( $id )?->views[0]->mockup_size(), 'Kept when nothing is sent.' );
+
+		$this->service->save( $id, self::fields(), array( array_merge( self::existing( 'mug' ), array( 'clear' => array( 'scene' ) ) ) ) );
+
+		$view = $this->bases->find( $id )?->views[0];
+
+		self::assertNotNull( $view );
+		self::assertNull( $view->scene );
+		self::assertArrayNotHasKey( 'scene', $view->layers );
+
+		try {
+			$this->service->save( $id, self::fields(), array( array_merge( self::existing( 'mug', array( 'scene' => 300 ) ), array( 'scene' => 'nope' ) ) ) );
+			self::fail( 'An image needs its scene.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::BASE_VIEW, $e->reason() );
+		}
+	}
+
 	public function test_refused_changes_keep_no_file_and_change_nothing(): void {
 		$refusals = array(
 			DesignerException::BASE_NAME       => array( array( 'name' => ' ' ), array() ),

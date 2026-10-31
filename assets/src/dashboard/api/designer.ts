@@ -10,6 +10,7 @@ import type { ApiResult } from './client';
 import { isRecord, readSameOriginUrl } from './validate';
 import type { UnknownRecord } from './validate';
 import type { DesignDocument } from '../sections/designer/design-model';
+import type { Scene } from '../sections/designer/scene';
 import { parseDesign } from '../sections/designer/design-model';
 
 const PATH = '/merchboard/v1/me/designer';
@@ -47,6 +48,8 @@ export interface DesignerView {
 	readonly width: number;
 	readonly height: number;
 	readonly layers: Partial< Record< LayerKind, number > >;
+	/** The mockup from a PSD, with the asset of its image; null without one. */
+	readonly scene: ( Scene & { readonly asset: number } ) | null;
 	/**
 	 * A colour's own background (a photo of the product in that colour),
 	 * by colour key: drawn instead of the background and the tinted colour
@@ -305,6 +308,22 @@ function parseEmbroidery( value: unknown ): DesignerEmbroidery | null {
 }
 
 /**
+ * A side's PSD scene. The server checked its shape when it was imported.
+ *
+ * @param value The scene from the server.
+ * @param asset The asset of its image.
+ */
+function parseScene( value: unknown, asset: unknown ): DesignerView[ 'scene' ] {
+	return isRecord( value ) &&
+		isInt( value.width, 1 ) &&
+		isInt( value.height, 1 ) &&
+		Array.isArray( value.steps ) &&
+		isInt( asset, 1 )
+		? { ...( value as unknown as Scene ), asset }
+		: null;
+}
+
+/**
  * A side.
  *
  * @param value Value.
@@ -368,6 +387,10 @@ function parseView( value: unknown ): DesignerView | null {
 		width: value.width,
 		height: value.height,
 		layers,
+		scene: parseScene(
+			value.scene,
+			( value.layers as UnknownRecord ).scene
+		),
 		backgrounds,
 		area: { x: area.x, y: area.y, width: area.width, height: area.height },
 		printWidth: value.print_width,

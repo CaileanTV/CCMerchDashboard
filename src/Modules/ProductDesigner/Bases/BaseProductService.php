@@ -416,7 +416,7 @@ class BaseProductService {
 	 * @param list<array{file: string, mime: string, width: int, height: int, bytes: int}> $stored   Files stored so far (for clean-up).
 	 * @param string[]                                                                     $colors   Colour keys of the base product (a colour's own background).
 	 * @param-out list<array{file: string, mime: string, width: int, height: int, bytes: int}> $stored
-	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>, pack: string, flat: bool}>
+	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>, pack: string, flat: bool, scene: array<string, mixed>|null}>
 	 * @throws DesignerException When a side or file is refused.
 	 */
 	private function plan_views( ?BaseProduct $existing, array $views, array &$stored, array $colors = array() ): array {
@@ -464,7 +464,7 @@ class BaseProductService {
 				}
 			}
 
-			foreach ( array_merge( BaseView::LAYERS, array_map( static fn( string $color ): string => BaseView::color_layer( $color ), $colors ) ) as $layer ) {
+			foreach ( array_merge( BaseView::LAYERS, array( BaseView::SCENE ), array_map( static fn( string $color ): string => BaseView::color_layer( $color ), $colors ) ) as $layer ) {
 				$upload = $uploads[ $layer ] ?? null;
 
 				if ( is_array( $upload ) && UPLOAD_ERR_NO_FILE !== ( $upload['error'] ?? UPLOAD_ERR_NO_FILE ) ) {
@@ -475,7 +475,18 @@ class BaseProductService {
 				}
 			}
 
-			[ $width, $height ] = $this->template_size( $old, $layers, $new );
+			[ $width, $height ] = $this->template_size( $old, array_diff_key( $layers, array( BaseView::SCENE => true ) ), array_diff_key( $new, array( BaseView::SCENE => true ) ) );
+
+			// A new image comes with its scene, and a removed one takes the scene along.
+			$scene = isset( $layers[ BaseView::SCENE ] ) ? $old?->scene : null;
+
+			if ( isset( $new[ BaseView::SCENE ] ) ) {
+				$scene = json_decode( is_string( $input['scene'] ?? null ) ? $input['scene'] : '', true );
+
+				if ( ! is_array( $scene ) ) {
+					self::reject( DesignerException::BASE_VIEW );
+				}
+			}
 
 			// A field left out keeps its value.
 			$pack = is_string( $input['thread_pack'] ?? null ) ? $input['thread_pack'] : ( $old->thread_pack ?? '' );
@@ -495,6 +506,7 @@ class BaseProductService {
 				'pack'   => $pack,
 				// A flat side stays flat; only an import makes one.
 				'flat'   => true === ( $input['flat'] ?? false ) || true === $old?->flat,
+				'scene'  => $scene,
 			);
 		}
 
@@ -538,15 +550,15 @@ class BaseProductService {
 	/**
 	 * A side from its plan.
 	 *
-	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>, pack: string, flat: bool} $plan   Plan.
-	 * @param array<string, int>                                                                                                                                                      $layers Asset id by layer.
+	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>, pack: string, flat: bool, scene: array<string, mixed>|null} $plan   Plan.
+	 * @param array<string, int>                                                                                                                                                                                        $layers Asset id by layer.
 	 * @throws DesignerException When the side is invalid.
 	 */
 	private function view( array $plan, array $layers ): BaseView {
 		$number = static fn( string $field ): int => is_scalar( $plan['input'][ $field ] ?? null ) && 1 === preg_match( '/^\d{1,5}$/', trim( (string) $plan['input'][ $field ] ) ) ? (int) trim( (string) $plan['input'][ $field ] ) : -1;
 		$sorted = array();
 
-		foreach ( BaseView::LAYERS as $layer ) {
+		foreach ( array_merge( BaseView::LAYERS, array( BaseView::SCENE ) ) as $layer ) {
 			if ( isset( $layers[ $layer ] ) ) {
 				$sorted[ $layer ] = $layers[ $layer ];
 			}
@@ -576,7 +588,8 @@ class BaseProductService {
 				$number( 'height_mm' ),
 				$number( 'dpi' ),
 				$plan['pack'],
-				$plan['flat']
+				$plan['flat'],
+				$plan['scene']
 			);
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_VIEW );

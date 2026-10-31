@@ -15,7 +15,7 @@ import type {
 } from '../../api/designer';
 import { objectsOf, usedSides } from './design-model';
 import type { DesignDocument } from './design-model';
-import { composeMockup, flatJpegOf, pngOf } from './mockup';
+import { composeMockup, composeScene, flatJpegOf, pngOf } from './mockup';
 import { threadCanvas, threadSide } from './threads';
 
 export interface SubmissionInput {
@@ -172,6 +172,18 @@ export async function uploadFiles(
 
 		progress( ++done, submissionSize( input.design, input.colors ) );
 
+		// A PSD scene draws the product as it is: the same mockup for each colour.
+		const sceneUrl =
+			view.scene === null ? null : await input.image( view.scene.asset );
+		const sceneMockup =
+			view.scene === null || sceneUrl === null
+				? null
+				: await composeScene( view.scene, sceneUrl, print );
+
+		if ( view.scene !== null && sceneMockup === null ) {
+			return { ok: false, reason: 'render' };
+		}
+
 		for ( const colorKey of input.colors ) {
 			const color = input.base.colors.find(
 				( candidate ) => candidate.key === colorKey
@@ -187,14 +199,16 @@ export async function uploadFiles(
 			}
 
 			const mockup =
-				color === undefined || ( own !== undefined && ownUrl === null )
+				sceneMockup ??
+				( color === undefined ||
+				( own !== undefined && ownUrl === null )
 					? null
 					: await composeMockup(
 							view,
 							colorLayers,
 							color.hex,
 							print
-						);
+						) );
 
 			if ( mockup === null ) {
 				return { ok: false, reason: 'render' };

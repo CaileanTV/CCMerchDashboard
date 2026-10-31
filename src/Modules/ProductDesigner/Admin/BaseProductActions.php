@@ -208,7 +208,7 @@ final class BaseProductActions {
 
 			$uploads = array();
 
-			foreach ( BaseView::LAYERS as $layer ) {
+			foreach ( array_merge( BaseView::LAYERS, array( BaseView::SCENE ) ) as $layer ) {
 				$upload = $files[ 'layer_' . $index . '_' . $layer ] ?? null;
 
 				if ( is_array( $upload ) ) {
@@ -238,6 +238,7 @@ final class BaseProductActions {
 				'remove'    => '1' === $value( 'remove' ),
 				'clear'     => array_values( array_filter( is_array( $view['clear'] ?? null ) ? $view['clear'] : array(), static fn( mixed $layer ): bool => is_string( $layer ) && BaseView::valid_layer( $layer ) ) ),
 				'uploads'   => $uploads,
+				'scene'     => $value( 'scene' ),
 			);
 
 			if ( array_key_exists( 'thread_pack', $view ) ) {

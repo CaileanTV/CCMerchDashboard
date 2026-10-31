@@ -102,7 +102,7 @@ class DesignerSubmissions {
 		$draft = $this->products->draft( $product ) ?? self::refuse( DesignerException::DESIGN_NOT_DRAFT );
 		$base  = $this->current_base( (int) $row['base_id'], $draft );
 		$view  = $this->used_view( $base, $draft, $parts );
-		$size  = SubmissionFiles::PRINT === $parts[0] ? $view->print_pixels() : array( $view->width, $view->height );
+		$size  = SubmissionFiles::PRINT === $parts[0] ? $view->print_pixels() : $view->mockup_size();
 		$file  = $this->files->store( $upload, SubmissionFiles::PRINT === $parts[0] && ! $view->flat );
 		$stamp = SubmissionFiles::stamp( $draft );
 

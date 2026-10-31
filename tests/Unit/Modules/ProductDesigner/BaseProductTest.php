@@ -26,6 +26,42 @@ final class BaseProductTest extends TestCase {
 		self::assertEquals( $view, BaseView::from_array( json_decode( (string) wp_json_encode( $view->to_array() ), true ) ) );
 	}
 
+	public function test_a_side_with_a_scene_keeps_it_and_has_its_mockup_size(): void {
+		$scene = self::scene();
+		$view  = new BaseView( 'front', 'Front', 1000, 1000, array( 'background' => 1, 'scene' => 2 ), array( 'x' => 83, 'y' => 639, 'width' => 843, 'height' => 324 ), 300, 115, 300, '', false, $scene ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		self::assertSame( array( 2000, 1500 ), $view->mockup_size() );
+		self::assertSame( array( 1000, 1000 ), self::view()->mockup_size() );
+		self::assertEquals( $view, BaseView::from_array( json_decode( (string) wp_json_encode( $view->to_array() ), true ) ) );
+		self::assertArrayNotHasKey( 'scene', self::view()->to_array() );
+	}
+
+	public function test_a_broken_scene_is_refused(): void {
+		$good   = self::scene();
+		$broken = array(
+			array_merge( $good, array( 'width' => 2001 ) ),
+			array_merge( $good, array( 'steps' => array() ) ),
+			array_merge( $good, array( 'steps' => array( $good['steps'][0] ) ) ),
+			array_merge( $good, array( 'steps' => array_fill( 0, 65, $good['steps'][1] ) ) ),
+			array_merge( $good, array( 'steps' => array( array_merge( $good['steps'][0], array( 'blend' => 'dissolve' ) ), $good['steps'][1] ) ) ),
+			array_merge( $good, array( 'steps' => array( array_merge( $good['steps'][0], array( 'opacity' => 2 ) ), $good['steps'][1] ) ) ),
+			array_merge( $good, array( 'steps' => array( array_merge( $good['steps'][1], array( 'mesh' => array( 1, 2 ) ) ) ) ) ),
+			array_merge( $good, array( 'steps' => array( array_merge( $good['steps'][1], array( 'end' => 'top' ) ) ) ) ),
+		);
+
+		foreach ( $broken as $index => $scene ) {
+			try {
+				new BaseView( 'front', 'Front', 1000, 1000, array( 'background' => 1, 'scene' => 2 ), array( 'x' => 0, 'y' => 0, 'width' => 10, 'height' => 10 ), 300, 115, 300, '', false, $scene ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+				self::fail( 'Scene ' . $index . ' was accepted.' );
+			} catch ( InvalidArgumentException ) {
+				self::addToAssertionCount( 1 );
+			}
+		}
+
+		$this->expectException( InvalidArgumentException::class );
+		new BaseView( 'front', 'Front', 1000, 1000, array( 'background' => 1, 'scene' => 2 ), array( 'x' => 0, 'y' => 0, 'width' => 10, 'height' => 10 ), 300, 115, 300 ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	}
+
 	public function test_a_flat_side_stays_flat_and_a_printed_side_does_not_store_it(): void {
 		$flat = new BaseView( 'front', 'Front', 1000, 1000, array( 'background' => 1, 'shading' => 2 ), array( 'x' => 0, 'y' => 0, 'width' => 1000, 'height' => 1000 ), 300, 300, 150, '', true ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
@@ -96,6 +132,42 @@ final class BaseProductTest extends TestCase {
 	 */
 	private static function view( string $key = 'front', array $layers = array( 'background' => 1, 'color' => 2 ), array $area = array( 'x' => 250, 'y' => 200, 'width' => 500, 'height' => 600 ), int $width_mm = 300, int $dpi = 300 ): BaseView { // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		return new BaseView( $key, 'Front', 1000, 1000, $layers, $area, $width_mm, 400, $dpi );
+	}
+
+	/**
+	 * A sound scene.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function scene(): array {
+		return array(
+			'width'  => 2000,
+			'height' => 1500,
+			'steps'  => array(
+				array(
+					'type'    => 'image',
+					'rect'    => array(
+						'x'      => 0,
+						'y'      => 0,
+						'width'  => 10,
+						'height' => 10,
+					),
+					'left'    => 5,
+					'top'     => 5,
+					'blend'   => 'darker-color',
+					'opacity' => 0.3,
+				),
+				array(
+					'type'   => 'design',
+					'end'    => 'end',
+					'width'  => 1950,
+					'height' => 1805,
+					'quad'   => array( 1, 2, 3, 4, 5, 6, 7, 8.5 ),
+					'mesh'   => array_fill( 0, 32, 0.5 ),
+					'mask'   => null,
+				),
+			),
+		);
 	}
 
 	/**
