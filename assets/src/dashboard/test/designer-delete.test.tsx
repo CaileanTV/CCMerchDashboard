@@ -44,7 +44,7 @@ function render(
  */
 function type( value: string ): void {
 	const input = document.querySelector< HTMLInputElement >(
-		'.merchboard-dialog input:not([type="checkbox"])'
+		'.merchboard-dialog input'
 	);
 
 	act( () => {
@@ -57,22 +57,16 @@ function type( value: string ): void {
 }
 
 describe( 'the confirmation of a deletion', () => {
-	it( 'needs both the tick and the word', async () => {
+	it( 'needs the word', async () => {
 		const onConfirm = jest.fn( () => Promise.resolve( true ) );
 		const button = render( onConfirm );
 
 		expect( button.disabled ).toBe( true );
 
-		type( 'delete' );
+		type( 'dele' );
 		expect( button.disabled ).toBe( true );
 
-		act( () =>
-			document
-				.querySelector< HTMLInputElement >(
-					'.merchboard-dialog input[type="checkbox"]'
-				)
-				?.click()
-		);
+		type( 'delete' );
 		expect( button.disabled ).toBe( false );
 
 		await act( async () => {

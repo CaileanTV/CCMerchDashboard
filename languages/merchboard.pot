@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-31T01:11:49+00:00\n"
+"POT-Creation-Date: 2026-10-31T07:31:23+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -5851,12 +5851,12 @@ msgstr ""
 msgid "Hi %s,"
 msgstr ""
 
-#: src/Modules/Notifications/MeNotificationsController.php:192
+#: src/Modules/Notifications/MeNotificationsController.php:193
 msgid "Nothing to mark as read."
 msgstr ""
 
-#: src/Modules/Notifications/MeNotificationsController.php:226
-#: src/Modules/Notifications/MeNotificationsController.php:233
+#: src/Modules/Notifications/MeNotificationsController.php:227
+#: src/Modules/Notifications/MeNotificationsController.php:234
 msgid "The e-mail choices are not valid."
 msgstr ""
 
@@ -13702,10 +13702,6 @@ msgstr ""
 
 #: build/dashboard.js:54
 msgid "The product could not be deleted. If it is on its way to the shop, try again in a minute."
-msgstr ""
-
-#: build/dashboard.js:54
-msgid "Yes, I want to delete this."
 msgstr ""
 
 #. translators: %s: the word to type.

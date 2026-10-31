@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-31T01:11:54+00:00\n"
+"PO-Revision-Date: 2026-10-31T07:31:30+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -5851,12 +5851,12 @@ msgstr "Nøgle"
 msgid "Hi %s,"
 msgstr "Hej %s,"
 
-#: src/Modules/Notifications/MeNotificationsController.php:192
+#: src/Modules/Notifications/MeNotificationsController.php:193
 msgid "Nothing to mark as read."
 msgstr "Der er intet at markere som læst."
 
-#: src/Modules/Notifications/MeNotificationsController.php:226
-#: src/Modules/Notifications/MeNotificationsController.php:233
+#: src/Modules/Notifications/MeNotificationsController.php:227
+#: src/Modules/Notifications/MeNotificationsController.php:234
 msgid "The e-mail choices are not valid."
 msgstr "E-mailvalgene er ikke gyldige."
 
@@ -13703,10 +13703,6 @@ msgstr "Designet flyttes til dine slettede designs, hvor du kan se det igen elle
 #: build/dashboard.js:54
 msgid "The product could not be deleted. If it is on its way to the shop, try again in a minute."
 msgstr "Produktet kunne ikke slettes. Hvis det er på vej i butikken, så prøv igen om et minut."
-
-#: build/dashboard.js:54
-msgid "Yes, I want to delete this."
-msgstr "Ja, jeg vil slette dette."
 
 #. translators: %s: the word to type.
 #: build/dashboard.js:55

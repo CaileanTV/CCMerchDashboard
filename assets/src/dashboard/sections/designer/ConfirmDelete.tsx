@@ -1,6 +1,6 @@
 /**
- * The confirmation before a designer product is deleted: a tick and a word,
- * so it cannot happen by a slip of the hand.
+ * The confirmation before a designer product is deleted: a typed word, so it
+ * cannot happen by a slip of the hand.
  */
 import { useId, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
@@ -66,12 +66,10 @@ export function ConfirmDelete( props: ConfirmDeleteProps ) {
 	const label = props.permanent
 		? __( 'Delete for good', 'merchboard' )
 		: __( 'Delete product', 'merchboard' );
-	const [ ticked, setTicked ] = useState( false );
 	const [ typed, setTyped ] = useState( '' );
 	const [ busy, setBusy ] = useState( false );
 	const [ failed, setFailed ] = useState( false );
 	const inputId = useId();
-	const tickId = useId();
 
 	const confirm = async () => {
 		setBusy( true );
@@ -97,9 +95,7 @@ export function ConfirmDelete( props: ConfirmDeleteProps ) {
 					variant="danger"
 					onClick={ () => void confirm() }
 					isBusy={ busy }
-					disabled={
-						! ticked || typed.trim().toUpperCase() !== word || busy
-					}
+					disabled={ typed.trim().toUpperCase() !== word || busy }
 				>
 					{ label }
 				</Button>
@@ -114,17 +110,6 @@ export function ConfirmDelete( props: ConfirmDeleteProps ) {
 					) }
 				</Alert>
 			) : null }
-			<p>
-				<input
-					id={ tickId }
-					type="checkbox"
-					checked={ ticked }
-					onChange={ () => setTicked( ! ticked ) }
-				/>{ ' ' }
-				<label htmlFor={ tickId }>
-					{ __( 'Yes, I want to delete this.', 'merchboard' ) }
-				</label>
-			</p>
 			<div className="merchboard-field">
 				<label htmlFor={ inputId } className="merchboard-field__label">
 					{ sprintf(

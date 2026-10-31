@@ -96,7 +96,7 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Beskrivelse:** kommer fra grundproduktet og kan ikke ændres af creatoren.
 - **Annullér ændring:** en ændring af et produkt i butikken kan annulleres. Listen viser "I butikken · ændring i gang".
 - **Sæt i kladde:** tager et godkendt produkt ud af butikken, og det kan sættes tilbage uden ny godkendelse.
-- **Slet:** kræver afkrydsning og ordet SLET. Designet flyttes til "Slettede designs", hvor billedet kan ses. Også afviste designs og designs på udgåede grundprodukter kan slettes.
+- **Slet:** kræver ordet SLET. Designet flyttes til "Slettede designs", hvor billedet kan ses. Også afviste designs og designs på udgåede grundprodukter kan slettes.
 - **Slet permanent:** fjerner designet. Har det været i butikken, bliver versioner og filer til ordrerne, men creatoren ser det aldrig igen.
 - **Varianter:** en farve eller størrelse med ét valg vises på produktet uden at være et valg, og 1 × 1 er et simpelt produkt.
 
