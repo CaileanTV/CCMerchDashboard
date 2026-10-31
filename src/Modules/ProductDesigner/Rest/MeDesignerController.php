@@ -936,6 +936,7 @@ final class MeDesignerController extends RestController {
 			'stitches'         => null === $this->mockups ? array() : $this->mockups->stitches( $base ),
 			'name'             => $base->name,
 			'description'      => $base->description,
+			'note'             => $base->note,
 			'base_price'       => SalesAmount::format( $base->base_units ),
 			'extra_side_price' => SalesAmount::format( $base->extra_side_units ),
 			'currency'         => $base->currency,

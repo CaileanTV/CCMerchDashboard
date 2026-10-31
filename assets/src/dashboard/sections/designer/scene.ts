@@ -66,6 +66,8 @@ export interface SceneDesign {
 export type SceneStep = SceneImage | SceneDesign;
 
 export interface Scene {
+	/** Whether a creator can see the mockup while designing. */
+	readonly preview?: boolean;
 	readonly width: number;
 	readonly height: number;
 	readonly steps: readonly SceneStep[];

@@ -36,6 +36,7 @@ async function show(
 				product={ 7 }
 				views={ VIEWS }
 				prepare={ prepare }
+				draw={ undefined }
 				onClose={ jest.fn() }
 			/>
 		);

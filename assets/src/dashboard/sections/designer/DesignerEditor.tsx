@@ -67,7 +67,12 @@ import type {
 } from './design-model';
 import type { FabricStage } from './fabric-stage';
 import { FinishedProduct } from './FinishedProduct';
-import { submissionSize, submitWithFiles, uploadFiles } from './submission';
+import {
+	sceneImages,
+	submissionSize,
+	submitWithFiles,
+	uploadFiles,
+} from './submission';
 import { IconButton, LayerList } from './LayerList';
 import { TemplateLayers } from './TemplateLayers';
 import { threadObject, threadSide } from './threads';
@@ -292,6 +297,9 @@ function Editor( props: EditorProps ) {
 		overview.priceDecimals,
 		base.extraSidePrice,
 		areas
+	);
+	const scenePreview = base.views.some(
+		( candidate ) => candidate.scene?.preview === true
 	);
 	const dirty =
 		design !== saved.design ||
@@ -832,6 +840,17 @@ function Editor( props: EditorProps ) {
 		return uploaded.ok ? null : uploaded.reason;
 	};
 
+	/** A PSD mockup of the design as it stands: nothing is saved or sent. */
+	const showScenes = () =>
+		sceneImages( {
+			product: product.id,
+			base,
+			design,
+			colors,
+			image: imageOf,
+			fonts: () => fontsOf( design ),
+		} );
+
 	const onKeyDown = ( event: KeyboardEvent< HTMLDivElement > ) => {
 		const target = event.target as HTMLElement;
 
@@ -965,7 +984,8 @@ function Editor( props: EditorProps ) {
 							? __( 'Save draft', 'merchboard' )
 							: __( 'Saved', 'merchboard' ) }
 					</Button>
-					{ impersonating || ! base.preview ? null : (
+					{ ( impersonating || ! base.preview ) &&
+					! scenePreview ? null : (
 						<Button
 							variant="ghost"
 							onClick={ () => setFinished( true ) }
@@ -1055,11 +1075,18 @@ function Editor( props: EditorProps ) {
 				<Alert tone={ message.tone }>{ message.text }</Alert>
 			) }
 
+			{ base.note === '' ? null : (
+				<div className="merchboard-product-designer__note">
+					<Alert tone="info">{ base.note }</Alert>
+				</div>
+			) }
+
 			{ finished ? (
 				<FinishedProduct
 					product={ product.id }
 					views={ base.views }
 					prepare={ showFinished }
+					draw={ scenePreview ? showScenes : undefined }
 					onClose={ () => setFinished( false ) }
 				/>
 			) : null }

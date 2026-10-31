@@ -492,6 +492,14 @@ final class DesignerApiTest extends IntegrationTestCase {
 		self::assertArrayNotHasKey( 'photos', $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $body )->get_data()['draft']['design'] );
 	}
 
+	public function test_a_creator_reads_the_note_of_a_base_product(): void {
+		$this->execute( 'UPDATE %i SET creator_note = %s WHERE id = %d', $this->table( Tables::DESIGNER_BASES ), 'Kontakt os.', $this->base );
+
+		wp_set_current_user( $this->user );
+
+		self::assertSame( 'Kontakt os.', $this->data( $this->call( 'GET', '/merchboard/v1/me/designer' ) )['bases'][0]['note'] ?? null );
+	}
+
 	public function test_a_mockup_from_a_psd_has_the_size_of_its_scene(): void {
 		$views                       = json_decode( (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT views FROM %i WHERE id = %d', $this->table( Tables::DESIGNER_BASES ), $this->base ) ), true );
 		$views[0]['layers']['scene'] = array_values( $views[0]['layers'] )[0];

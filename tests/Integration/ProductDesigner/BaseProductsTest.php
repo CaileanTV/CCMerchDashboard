@@ -189,6 +189,15 @@ final class BaseProductsTest extends IntegrationTestCase {
 		$this->service->save( $id, self::fields(), array( self::existing( 'mug' ) ) );
 		self::assertSame( array( 600, 400 ), $this->bases->find( $id )?->views[0]->mockup_size(), 'Kept when nothing is sent.' );
 
+		$this->service->save( $id, self::fields(), array( array_merge( self::existing( 'mug' ), array( 'scene_preview' => '1' ) ) ) );
+		self::assertTrue( $this->bases->find( $id )?->views[0]->scene['preview'] ?? null, 'The preview is switched on.' );
+
+		$version = $this->bases->find( $id )?->version;
+
+		$this->service->save( $id, self::fields(), array( array_merge( self::existing( 'mug' ), array( 'scene_preview' => '0' ) ) ) );
+		self::assertFalse( $this->bases->find( $id )?->views[0]->scene['preview'] ?? null, 'And off.' );
+		self::assertSame( $version, $this->bases->find( $id )?->version, 'No design is outdated by the switch.' );
+
 		$this->service->save( $id, self::fields(), array( array_merge( self::existing( 'mug' ), array( 'clear' => array( 'scene' ) ) ) ) );
 
 		$view = $this->bases->find( $id )?->views[0];
@@ -203,6 +212,22 @@ final class BaseProductsTest extends IntegrationTestCase {
 		} catch ( DesignerException $e ) {
 			self::assertSame( DesignerException::BASE_VIEW, $e->reason() );
 		}
+	}
+
+	public function test_a_note_to_creators_is_kept_until_it_is_changed(): void {
+		$id = $this->service->save( null, array_merge( self::fields(), array( 'note' => "Saml produkter?\nKontakt os. <b>x</b>" ) ), array( self::side( 'Front', array( 'background' => 1000 ) ) ) );
+
+		self::assertSame( "Saml produkter?\nKontakt os. x", $this->bases->find( $id )?->note );
+
+		$this->service->save( $id, self::fields(), array( self::existing( 'front' ) ) );
+		self::assertSame( "Saml produkter?\nKontakt os. x", $this->bases->find( $id )?->note, 'Left out, it is kept.' );
+		self::assertSame( 1, $this->bases->find( $id )?->version, 'No design is outdated by it.' );
+
+		$this->service->set_active( $id, true );
+		self::assertSame( "Saml produkter?\nKontakt os. x", $this->bases->find( $id )?->note, 'A change of status keeps it.' );
+
+		$this->service->save( $id, array_merge( self::fields(), array( 'note' => '' ) ), array( self::existing( 'front' ) ) );
+		self::assertSame( '', $this->bases->find( $id )?->note );
 	}
 
 	public function test_refused_changes_keep_no_file_and_change_nothing(): void {

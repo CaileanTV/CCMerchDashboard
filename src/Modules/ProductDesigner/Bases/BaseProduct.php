@@ -63,6 +63,7 @@ final readonly class BaseProduct {
 	 * @param BaseView[] $views       Sides.
 	 * @param int        $version     Version.
 	 * @param int        $extra_side_units Price incl. VAT of each used side after the first.
+	 * @param string     $note             What creators read in the designer; may be empty.
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -78,7 +79,8 @@ final readonly class BaseProduct {
 		public array $sizes,
 		public array $views,
 		public int $version = 1,
-		public int $extra_side_units = 0
+		public int $extra_side_units = 0,
+		public string $note = ''
 	) {
 		if ( ( null !== $id && $id < 1 ) || ! in_array( $status, array( self::DRAFT, self::ACTIVE, self::RETIRED ), true ) || ! in_array( $source, self::SOURCES, true ) || $version < 1 || $extra_side_units < 0 ) {
 			throw new InvalidArgumentException( 'Invalid base product.' );

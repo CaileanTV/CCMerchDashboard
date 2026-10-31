@@ -36,7 +36,8 @@ defined( 'ABSPATH' ) || exit;
  * - A side with a `scene` has its mockup from a PSD with smart objects: the
  *   layer `scene` is one image of the layers around the design, and the scene
  *   says how the creator's browser draws them and warps the print file. The
- *   mockup then has the scene's size, not the template's.
+ *   mockup then has the scene's size, not the template's. With `preview` in
+ *   the scene the creator can also see it while designing.
  */
 final readonly class BaseView {
 
@@ -212,7 +213,7 @@ final readonly class BaseView {
 		$rect  = static fn( mixed $rect ): bool => is_array( $rect ) && is_int( $rect['x'] ?? null ) && is_int( $rect['y'] ?? null ) && $rect['x'] >= 0 && $rect['y'] >= 0 && is_int( $rect['width'] ?? null ) && is_int( $rect['height'] ?? null ) && $rect['width'] >= 1 && $rect['height'] >= 1;
 		$steps = $scene['steps'] ?? null;
 
-		if ( ! $size( $scene['width'] ?? null ) || ! $size( $scene['height'] ?? null ) || ! is_array( $steps ) || ! array_is_list( $steps ) || array() === $steps || count( $steps ) > self::MAX_SCENE_STEPS ) {
+		if ( ! is_bool( $scene['preview'] ?? false ) || ! $size( $scene['width'] ?? null ) || ! $size( $scene['height'] ?? null ) || ! is_array( $steps ) || ! array_is_list( $steps ) || array() === $steps || count( $steps ) > self::MAX_SCENE_STEPS ) {
 			return false;
 		}
 

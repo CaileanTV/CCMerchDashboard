@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class BaseProductRepository {
 
-	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price';
+	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price, creator_note';
 
 	/**
 	 * Constructor.
@@ -93,7 +93,7 @@ class BaseProductRepository {
 					'updated_by' => $user > 0 ? $user : null,
 				)
 			),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%s', '%d' )
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%d' )
 		);
 
 		if ( 1 !== $done || '' !== $this->wpdb->last_error ) {
@@ -122,7 +122,7 @@ class BaseProductRepository {
 				)
 			),
 			array( 'id' => $id ),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%d' ),
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d' ),
 			array( '%d' )
 		);
 
@@ -408,6 +408,7 @@ class BaseProductRepository {
 			'views'            => $views,
 			'version'          => $base->version,
 			'extra_side_price' => SalesAmount::format( $base->extra_side_units ),
+			'creator_note'     => $base->note,
 		);
 	}
 
@@ -449,7 +450,8 @@ class BaseProductRepository {
 				array_values( array_map( static fn( mixed $size ): string => is_string( $size ) ? $size : '', $sizes ) ),
 				array_values( array_map( BaseView::from_array( ... ), $views ) ),
 				is_numeric( $row['version'] ?? null ) ? (int) $row['version'] : 0,
-				SalesAmount::parse( (string) ( $row['extra_side_price'] ?? '0' ) )
+				SalesAmount::parse( (string) ( $row['extra_side_price'] ?? '0' ) ),
+				(string) ( $row['creator_note'] ?? '' )
 			);
 		} catch ( InvalidArgumentException ) {
 			throw new DatabaseException( 'Invalid base product row.' );

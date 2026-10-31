@@ -358,6 +358,7 @@ final class BaseProductsPage {
 		echo '<table class="form-table" role="presentation"><tbody>';
 		echo '<tr><th scope="row"><label for="merchboard-base-name">' . esc_html__( 'Name', 'merchboard' ) . '</label></th><td><input type="text" id="merchboard-base-name" name="name" class="regular-text" maxlength="191" required value="' . esc_attr( $base->name ?? '' ) . '"></td></tr>';
 		echo '<tr><th scope="row"><label for="merchboard-base-description">' . esc_html__( 'Description', 'merchboard' ) . '</label></th><td><textarea id="merchboard-base-description" name="description" rows="4" class="large-text">' . esc_textarea( $base->description ?? '' ) . '</textarea></td></tr>';
+		echo '<tr><th scope="row"><label for="merchboard-base-note">' . esc_html__( 'Note in the designer', 'merchboard' ) . '</label></th><td><textarea id="merchboard-base-note" name="note" rows="3" maxlength="1000" class="large-text">' . esc_textarea( $base->note ?? '' ) . '</textarea><p class="description">' . esc_html__( 'Shown to creators while they design this product. Leave it empty to show nothing.', 'merchboard' ) . '</p></td></tr>';
 		/* translators: %s: currency code, e.g. "DKK". */
 		echo '<tr><th scope="row"><label for="merchboard-base-price">' . esc_html( sprintf( __( 'Base price incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-price" name="base_price" required value="' . esc_attr( null === $base ? '' : $this->money( $base->base_units ) ) . '"><p class="description">' . esc_html__( 'What the company keeps per unit outside its own campaigns, with one design area included. Creators add their profit on top.', 'merchboard' ) . '</p></td></tr>';
 		/* translators: %s: currency code, e.g. "DKK". */
@@ -464,7 +465,19 @@ final class BaseProductsPage {
 			echo '<label>' . esc_html( $label ) . ' <input type="number" min="0" max="8000" step="1" style="width:6rem" name="' . esc_attr( $field( $key ) ) . '" value="' . esc_attr( $value( $view->area[ $key ] ?? null ) ) . '"></label> ';
 		}
 
-		echo '</p><p>' . esc_html__( 'Print size:', 'merchboard' ) . ' ';
+		echo '</p>';
+
+		if ( $psd ) {
+			$template = $view->layers['background'] ?? $view->layers['color'] ?? null;
+
+			if ( null === $template && null !== $view ) {
+				$template = array_values( $view->color_backgrounds() )[0] ?? null;
+			}
+
+			echo '<div data-merchboard-area="' . esc_attr( (string) $index ) . '" data-url="' . esc_attr( null === $template ? '' : DesignerAssetDownload::url( $template ) ) . '"></div>';
+		}
+
+		echo '<p>' . esc_html__( 'Print size:', 'merchboard' ) . ' ';
 		echo '<label>' . esc_html__( 'Width (mm)', 'merchboard' ) . ' <input type="number" min="1" max="' . esc_attr( (string) BaseView::MAX_MM ) . '" step="1" style="width:6rem" name="' . esc_attr( $field( 'width_mm' ) ) . '" value="' . esc_attr( $value( $view->width_mm ?? null ) ) . '"></label> ';
 		echo '<label>' . esc_html__( 'Height (mm)', 'merchboard' ) . ' <input type="number" min="1" max="' . esc_attr( (string) BaseView::MAX_MM ) . '" step="1" style="width:6rem" name="' . esc_attr( $field( 'height_mm' ) ) . '" value="' . esc_attr( $value( $view->height_mm ?? null ) ) . '"></label> ';
 		echo '<label>' . esc_html__( 'Resolution (dpi)', 'merchboard' ) . ' <input type="number" min="' . esc_attr( (string) BaseView::MIN_DPI ) . '" max="' . esc_attr( (string) BaseView::MAX_DPI ) . '" step="1" style="width:6rem" name="' . esc_attr( $field( 'dpi' ) ) . '" value="' . esc_attr( $value( $view->dpi ?? 300 ) ) . '"></label>';
@@ -926,6 +939,7 @@ final class BaseProductsPage {
 		echo '<input type="file" accept=".psd,image/vnd.adobe.photoshop" data-merchboard-scene="' . esc_attr( (string) $index ) . '">';
 		echo '<input type="file" name="' . esc_attr( 'layer_' . $index . '_' . BaseView::SCENE ) . '" accept="image/png" hidden>';
 		echo '<input type="hidden" name="' . esc_attr( 'views[' . $index . '][scene]' ) . '" value="">';
+		echo '<p><input type="hidden" name="' . esc_attr( 'views[' . $index . '][scene_preview]' ) . '" value="0"><label><input type="checkbox" name="' . esc_attr( 'views[' . $index . '][scene_preview]' ) . '" value="1"' . checked( true === ( $view->scene['preview'] ?? false ), true, false ) . '> ' . esc_html__( 'Let creators see this mockup while they design ("See the finished product")', 'merchboard' ) . '</label></p>';
 		echo '<p class="description" id="' . esc_attr( 'merchboard-scene-status-' . $index ) . '" aria-live="polite">' . esc_html__( 'For a product whose mockup wraps the design, like a mug. Smart objects with "design" in their name take the print file: "højre" shows its right end, "venstre" its left end. Each design then gets this mockup instead of the one drawn on the template.', 'merchboard' ) . '</p></td></tr>';
 	}
 

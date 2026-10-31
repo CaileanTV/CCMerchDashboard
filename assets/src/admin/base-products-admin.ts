@@ -8,6 +8,7 @@
  */
 import { __, sprintf } from '@wordpress/i18n';
 
+import { attachAreaPicker } from './area-picker';
 import { readScene } from './psd-scene';
 import { LAYERS, readTemplate, TemplateError } from './psd-template';
 import type { PrintArea, PsdTemplate, Rgba } from './psd-template';
@@ -350,3 +351,13 @@ document
 document
 	.querySelectorAll< HTMLInputElement >( 'input[data-merchboard-scene]' )
 	.forEach( attachScene );
+
+document
+	.querySelectorAll< HTMLElement >( '[data-merchboard-area]' )
+	.forEach( ( holder ) => {
+		const form = holder.closest( 'form' );
+
+		if ( null !== form ) {
+			attachAreaPicker( holder, form );
+		}
+	} );

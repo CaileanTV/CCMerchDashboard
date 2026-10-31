@@ -11,6 +11,7 @@ namespace MerchBoard\Tests\Integration\ProductDesigner;
 
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Migrations\AddDesignerBaseImport;
+use MerchBoard\Core\Database\Migrations\AddDesignerBaseNote;
 use MerchBoard\Core\Database\Migrations\AddDesignerExtraSidePrice;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
@@ -70,7 +71,7 @@ final class DesignerFoundationTest extends IntegrationTestCase {
 		$unique = array_column( (array) $this->wpdb->get_results( $this->wpdb->prepare( 'SHOW INDEX FROM %i WHERE Non_unique = 0', $this->table( Tables::DESIGNER_VERSIONS ) ), ARRAY_A ), 'Key_name' );
 		self::assertContains( 'pending_key', $unique, 'At most one pending change per designer product.' );
 		self::assertContains( 'product_number', $unique );
-		self::assertSame( 40, (int) get_option( 'merchboard_db_version' ) );
+		self::assertSame( 41, (int) get_option( 'merchboard_db_version' ) );
 	}
 
 	public function test_migration_38_widens_the_provider_template_and_adds_the_import_once(): void {
@@ -94,6 +95,15 @@ final class DesignerFoundationTest extends IntegrationTestCase {
 
 		self::assertIsArray( $column );
 		self::assertSame( array( 'decimal(19,4)', 'NO', '0.0000' ), array( strtolower( $column['Type'] ), $column['Null'], $column['Default'] ) );
+	}
+
+	public function test_migration_41_adds_an_empty_note_once(): void {
+		( new AddDesignerBaseNote() )->up( $this->wpdb );
+
+		$column = $this->wpdb->get_row( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $this->table( Tables::DESIGNER_BASES ), 'creator_note' ), ARRAY_A );
+
+		self::assertIsArray( $column );
+		self::assertSame( array( 'varchar(1000)', 'NO', '' ), array( strtolower( $column['Type'] ), $column['Null'], $column['Default'] ) );
 	}
 
 	public function test_only_administrators_get_the_designer_capability(): void {

@@ -79,6 +79,8 @@ export interface DesignerBase {
 	/** The stitch colours the creator can choose; empty without a choice. */
 	readonly stitches: readonly string[];
 	readonly description: string;
+	/** What the administrator tells creators about this product. */
+	readonly note: string;
 	readonly basePrice: string;
 	/** What each used side after the first adds to the base price. */
 	readonly extraSidePrice: string;
@@ -439,6 +441,7 @@ function parseBase( value: unknown ): DesignerBase | null {
 				id: value.id,
 				name: value.name,
 				description: value.description,
+				note: isString( value.note ) ? value.note : '',
 				basePrice: value.base_price,
 				extraSidePrice: value.extra_side_price,
 				currency: value.currency,

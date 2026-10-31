@@ -10,7 +10,9 @@
 import { submitDesign, uploadSubmissionFile } from '../../api/designer';
 import type {
 	DesignerBase,
+	DesignerPreview,
 	DesignerProduct,
+	DesignerView,
 	LayerKind,
 } from '../../api/designer';
 import { objectsOf, usedSides } from './design-model';
@@ -74,6 +76,108 @@ export async function submitWithFiles(
 }
 
 /**
+ * A side's print file, or null when an image cannot be read.
+ *
+ * @param input The draft.
+ * @param view  The side.
+ */
+async function printOf(
+	input: SubmissionInput,
+	view: DesignerView
+): Promise< HTMLCanvasElement | null > {
+	const { renderPrintFile } = await import( './fabric-stage' );
+	const objects = objectsOf( input.design, view.key );
+	const images = new Map< number, string >();
+
+	for ( const object of objects ) {
+		if ( object.type === 'image' && ! images.has( object.asset ) ) {
+			const url = await input.image( object.asset );
+
+			if ( url === null ) {
+				return null;
+			}
+
+			images.set( object.asset, url );
+		}
+	}
+
+	const threaded =
+		view.embroidery === null
+			? null
+			: await threadSide(
+					objects,
+					images,
+					input.design.threads?.[ view.key ] ?? {},
+					view.embroidery
+				);
+	const print = await renderPrintFile(
+		threaded?.objects ?? objects,
+		threaded?.images ?? images,
+		view.printWidth,
+		view.printHeight
+	);
+
+	if ( threaded !== null ) {
+		threadCanvas( print, threaded.plan );
+	}
+
+	return print;
+}
+
+/**
+ * A file as a `data:` URL: the dashboard's CSP takes no other.
+ *
+ * @param file The file.
+ */
+function dataUrl( file: Blob ): Promise< string | null > {
+	return new Promise( ( resolve ) => {
+		const reader = new FileReader();
+
+		reader.onload = () =>
+			resolve( typeof reader.result === 'string' ? reader.result : null );
+		reader.onerror = () => resolve( null );
+		reader.readAsDataURL( file );
+	} );
+}
+
+/**
+ * The mockups a creator can see while designing: drawn here from the side's
+ * PSD scene, so nothing is sent. Null when one cannot be drawn.
+ *
+ * @param input The design as it stands.
+ */
+export async function sceneImages(
+	input: SubmissionInput
+): Promise< DesignerPreview[ 'images' ] | null > {
+	const sides = usedSides( input.design );
+	const shown: { side: string; color: string; url: string }[] = [];
+
+	await input.fonts();
+
+	for ( const view of input.base.views ) {
+		if ( view.scene?.preview !== true || ! sides.includes( view.key ) ) {
+			continue;
+		}
+
+		const atlas = await input.image( view.scene.asset );
+		const print = await printOf( input, view );
+		const mockup =
+			atlas === null || print === null
+				? null
+				: await composeScene( view.scene, atlas, print );
+		const url = mockup === null ? null : await dataUrl( mockup );
+
+		if ( url === null ) {
+			return null;
+		}
+
+		shown.push( { side: view.key, color: input.colors[ 0 ] ?? '', url } );
+	}
+
+	return shown;
+}
+
+/**
  * Renders and sends the files of the draft, for a submission or a preview.
  *
  * @param input    The draft.
@@ -92,7 +196,6 @@ export async function uploadFiles(
 	let done = 0;
 
 	await input.fonts();
-	const { renderPrintFile } = await import( './fabric-stage' );
 
 	for ( const key of sides ) {
 		const view = input.base.views.find(
@@ -103,19 +206,10 @@ export async function uploadFiles(
 			return { ok: false, reason: 'design_stale' };
 		}
 
-		const objects = objectsOf( input.design, key );
-		const images = new Map< number, string >();
+		const print = await printOf( input, view );
 
-		for ( const object of objects ) {
-			if ( object.type === 'image' && ! images.has( object.asset ) ) {
-				const url = await input.image( object.asset );
-
-				if ( url === null ) {
-					return { ok: false, reason: 'render' };
-				}
-
-				images.set( object.asset, url );
-			}
+		if ( print === null ) {
+			return { ok: false, reason: 'render' };
 		}
 
 		const layers: Partial< Record< LayerKind, string > > = {};
@@ -131,26 +225,6 @@ export async function uploadFiles(
 			}
 
 			layers[ kind ] = url;
-		}
-
-		const threaded =
-			view.embroidery === null
-				? null
-				: await threadSide(
-						objects,
-						images,
-						input.design.threads?.[ key ] ?? {},
-						view.embroidery
-					);
-		const print = await renderPrintFile(
-			threaded?.objects ?? objects,
-			threaded?.images ?? images,
-			view.printWidth,
-			view.printHeight
-		);
-
-		if ( threaded !== null ) {
-			threadCanvas( print, threaded.plan );
 		}
 
 		const file = await ( view.flat ? flatJpegOf( print ) : pngOf( print ) );

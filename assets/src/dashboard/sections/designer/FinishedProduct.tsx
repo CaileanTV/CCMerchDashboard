@@ -22,6 +22,9 @@ export interface FinishedProductProps {
 	readonly views: readonly DesignerView[];
 	/** Saves the draft and sends its files; a reason when it fails. */
 	readonly prepare: () => Promise< string | null >;
+	/** Draws the photos here instead; null when they cannot be drawn. */
+	readonly draw:
+		( () => Promise< DesignerPreview[ 'images' ] | null > ) | undefined;
 	readonly onClose: () => void;
 }
 
@@ -53,7 +56,7 @@ function failure( reason: string | undefined ): string {
  * @param props Props.
  */
 export function FinishedProduct( props: FinishedProductProps ) {
-	const { product, views, prepare, onClose } = props;
+	const { product, views, prepare, draw, onClose } = props;
 	const [ images, setImages ] = useState< DesignerPreview[ 'images' ] >( [] );
 	const [ error, setError ] = useState< string | null >( null );
 	const [ busy, setBusy ] = useState( true );
@@ -69,6 +72,19 @@ export function FinishedProduct( props: FinishedProductProps ) {
 			}
 		};
 		const run = async () => {
+			if ( draw !== undefined ) {
+				const drawn = await draw();
+
+				if ( drawn === null || drawn.length === 0 ) {
+					fail( drawn === null ? undefined : 'design_empty' );
+				} else if ( current ) {
+					setImages( drawn );
+					setBusy( false );
+				}
+
+				return;
+			}
+
 			const refused = await prepare();
 
 			if ( refused !== null ) {

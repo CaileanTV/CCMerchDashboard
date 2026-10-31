@@ -86,7 +86,8 @@ class BaseProductService {
 	 * Fields: `name`, `description`, `base_price` (decimal, comma or point),
 	 * `category_id`, `colors` (one per line: name and #rrggbb), `sizes`
 	 * (separated by commas or new lines), `extra_side_price` (the price of
-	 * each used side after the first; empty is 0, left out keeps it). Each side: `key` (empty for a new
+	 * each used side after the first; empty is 0, left out keeps it), `note`
+	 * (what creators read in the designer; left out keeps it). Each side: `key` (empty for a new
 	 * one), `name`, `x`, `y`, `width`, `height` (print area in template px),
 	 * `width_mm`, `height_mm`, `dpi`, `remove` (bool), `uploads` (upload
 	 * arrays by layer) and `clear` (layers to remove).
@@ -488,6 +489,10 @@ class BaseProductService {
 				}
 			}
 
+			if ( null !== $scene && array_key_exists( 'scene_preview', $input ) ) {
+				$scene['preview'] = '1' === $input['scene_preview'];
+			}
+
 			// A field left out keeps its value.
 			$pack = is_string( $input['thread_pack'] ?? null ) ? $input['thread_pack'] : ( $old->thread_pack ?? '' );
 
@@ -644,7 +649,8 @@ class BaseProductService {
 				$sizes,
 				$views,
 				$version,
-				$extra
+				$extra,
+				mb_substr( sanitize_textarea_field( $fields['note'] ?? $existing->note ?? '' ), 0, 1000 )
 			);
 		} catch ( InvalidArgumentException ) {
 			self::reject( BaseProduct::ACTIVE === ( $existing->status ?? '' ) ? DesignerException::BASE_INCOMPLETE : DesignerException::BASE_VIEW );
@@ -660,7 +666,7 @@ class BaseProductService {
 	 */
 	private function with_status( BaseProduct $base, string $status ): BaseProduct {
 		try {
-			return new BaseProduct( $base->id, $status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $base->views, $base->version, $base->extra_side_units );
+			return new BaseProduct( $base->id, $status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $base->views, $base->version, $base->extra_side_units, $base->note );
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_INCOMPLETE );
 		}
@@ -787,6 +793,7 @@ class BaseProductService {
 		$fields = array(
 			'name'             => array( $before->name, $after->name ),
 			'description'      => array( $before->description, $after->description ),
+			'note'             => array( $before->note, $after->note ),
 			'base_price'       => array( $before->base_units, $after->base_units ),
 			'extra_side_price' => array( $before->extra_side_units, $after->extra_side_units ),
 			'category_id'      => array( $before->category_id, $after->category_id ),
@@ -807,7 +814,17 @@ class BaseProductService {
 	 * @return list<array<string, mixed>>
 	 */
 	private static function templates( array $views ): array {
-		return array_map( static fn( BaseView $view ): array => $view->to_array(), $views );
+		// The switch of the preview changes nothing a design was made on.
+		return array_map(
+			static function ( BaseView $view ): array {
+				$template = $view->to_array();
+
+				unset( $template['scene']['preview'] );
+
+				return $template;
+			},
+			$views
+		);
 	}
 
 	/**

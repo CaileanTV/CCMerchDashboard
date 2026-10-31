@@ -92,7 +92,7 @@ final class BaseProductActions {
 				case 'save':
 					$fields = array();
 
-					foreach ( array( 'name', 'description', 'base_price', 'extra_side_price', 'category_id', 'colors', 'sizes' ) as $key ) {
+					foreach ( array( 'name', 'description', 'note', 'base_price', 'extra_side_price', 'category_id', 'colors', 'sizes' ) as $key ) {
 						$fields[ $key ] = $text( $key );
 					}
 
@@ -226,19 +226,20 @@ final class BaseProductActions {
 			}
 
 			$views[] = array(
-				'key'       => $value( 'key' ),
-				'name'      => $value( 'name' ),
-				'x'         => $value( 'x' ),
-				'y'         => $value( 'y' ),
-				'width'     => $value( 'width' ),
-				'height'    => $value( 'height' ),
-				'width_mm'  => $value( 'width_mm' ),
-				'height_mm' => $value( 'height_mm' ),
-				'dpi'       => $value( 'dpi' ),
-				'remove'    => '1' === $value( 'remove' ),
-				'clear'     => array_values( array_filter( is_array( $view['clear'] ?? null ) ? $view['clear'] : array(), static fn( mixed $layer ): bool => is_string( $layer ) && BaseView::valid_layer( $layer ) ) ),
-				'uploads'   => $uploads,
-				'scene'     => $value( 'scene' ),
+				'key'           => $value( 'key' ),
+				'name'          => $value( 'name' ),
+				'x'             => $value( 'x' ),
+				'y'             => $value( 'y' ),
+				'width'         => $value( 'width' ),
+				'height'        => $value( 'height' ),
+				'width_mm'      => $value( 'width_mm' ),
+				'height_mm'     => $value( 'height_mm' ),
+				'dpi'           => $value( 'dpi' ),
+				'remove'        => '1' === $value( 'remove' ),
+				'clear'         => array_values( array_filter( is_array( $view['clear'] ?? null ) ? $view['clear'] : array(), static fn( mixed $layer ): bool => is_string( $layer ) && BaseView::valid_layer( $layer ) ) ),
+				'uploads'       => $uploads,
+				'scene'         => $value( 'scene' ),
+				'scene_preview' => $value( 'scene_preview' ),
 			);
 
 			if ( array_key_exists( 'thread_pack', $view ) ) {

@@ -1845,6 +1845,10 @@ input:disabled + .merchboard-sounds__upload {
 	border-top: 1px solid var(--merchboard-border);
 }
 
+.merchboard-product-designer__note {
+	white-space: pre-line;
+}
+
 .merchboard-product-designer__working {
 	display: flex;
 	gap: var(--merchboard-space-2);
