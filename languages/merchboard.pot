@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-31T13:24:55+00:00\n"
+"POT-Creation-Date: 2026-10-31T13:33:19+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -6637,6 +6637,12 @@ msgstr ""
 #: build/alerts-presets-admin.js:1
 #: build/dashboard.js:1
 msgid "Try again"
+msgstr ""
+
+#. translators: %s: Printful or Gelato.
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:902
+#, php-format
+msgid "Imported from %s: the flat parts with their print areas. Check them before you activate the base product."
 msgstr ""
 
 #. translators: %s: Printful or Gelato.

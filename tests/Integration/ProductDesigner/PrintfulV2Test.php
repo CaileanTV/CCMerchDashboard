@@ -281,6 +281,8 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		$view = $base->views[0] ?? null;
 
 		self::assertSame( CatalogImport::READY, $this->bases->import( $id )['state'] ?? null, (string) wp_json_encode( $this->bases->import( $id ) ) );
+		self::assertSame( array(), $this->bases->import( $id )['data']['skipped'] ?? null, 'No part is left out.' );
+		self::assertTrue( $this->bases->import( $id )['data']['flat'] ?? null );
 		self::assertCount( 2, $base->views ?? array() );
 		self::assertNotNull( $view );
 		self::assertTrue( $view->flat );

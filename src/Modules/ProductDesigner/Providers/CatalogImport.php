@@ -913,7 +913,8 @@ class CatalogImport {
 					'ref'      => $data['ref'] ?? '',
 					'renders'  => $data['renders'] ?? array(),
 					'slots'    => $slots,
-					'skipped'  => array_column( array_values( array_filter( $sides, static fn( mixed $side ): bool => is_array( $side ) && ! isset( $slots[ (string) ( $side['key'] ?? '' ) ] ) ) ), 'name' ),
+					'flat'     => true === ( $data['flat'] ?? false ),
+					'skipped'  => array_column( array_values( array_filter( $sides, static fn( mixed $side ): bool => is_array( $side ) && ! isset( $kept[ (string) ( $side['key'] ?? '' ) ] ) ) ), 'name' ),
 					'started'  => $data['started'] ?? 0,
 					'finished' => time(),
 				)

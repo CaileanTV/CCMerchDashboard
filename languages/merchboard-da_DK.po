@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-31T13:25:00+00:00\n"
+"PO-Revision-Date: 2026-10-31T13:33:25+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -6638,6 +6638,12 @@ msgstr "Importen fra %1$s fejlede: %2$s"
 #: build/dashboard.js:1
 msgid "Try again"
 msgstr "Prøv igen"
+
+#. translators: %s: Printful or Gelato.
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:902
+#, php-format
+msgid "Imported from %s: the flat parts with their print areas. Check them before you activate the base product."
+msgstr "Importeret fra %s: de flade dele med deres printområder. Tjek dem, før du aktiverer grundproduktet."
 
 #. translators: %s: Printful or Gelato.
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:902

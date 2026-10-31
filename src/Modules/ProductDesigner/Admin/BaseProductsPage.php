@@ -899,7 +899,7 @@ final class BaseProductsPage {
 			echo '<p><button type="submit" class="button">' . esc_html__( 'Try again', 'merchboard' ) . '</button></p></form></div>';
 		} else {
 			/* translators: %s: Printful or Gelato. */
-			echo '<div class="notice notice-success inline"><p>' . esc_html( sprintf( __( 'Imported from %s: one photo per colour and a measured print area per side. Check each print area before you activate the base product.', 'merchboard' ), $name ) ) . '</p>';
+			echo '<div class="notice notice-success inline"><p>' . esc_html( sprintf( true === ( $data['flat'] ?? false ) ? __( 'Imported from %s: the flat parts with their print areas. Check them before you activate the base product.', 'merchboard' ) : __( 'Imported from %s: one photo per colour and a measured print area per side. Check each print area before you activate the base product.', 'merchboard' ), $name ) ) . '</p>';
 
 			if ( is_array( $data['skipped'] ?? null ) && array() !== $data['skipped'] ) {
 				/* translators: 1: names of sides, 2: Printful or Gelato. */
