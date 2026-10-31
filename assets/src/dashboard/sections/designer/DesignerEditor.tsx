@@ -67,6 +67,8 @@ import type {
 	TextObject,
 } from './design-model';
 import type { FabricStage } from './fabric-stage';
+import { FontPicker } from '../../components/FontPicker';
+import { addFontStylesheet } from '../alerts/useFontStylesheet';
 import { FinishedProduct } from './FinishedProduct';
 import {
 	hasStitches,
@@ -103,6 +105,16 @@ export interface DesignerEditorProps {
 }
 
 /**
+ * A Google font's stylesheet.
+ *
+ * @param family  Family.
+ * @param weights Weights the family has.
+ */
+function fontUrl( family: string, weights: readonly number[] ): string {
+	return `https://fonts.googleapis.com/css2?family=${ family.replace( / /g, '+' ) }:wght@${ weights.join( ';' ) }&display=swap`;
+}
+
+/**
  * Loads a Google font's stylesheet once and waits for the face.
  *
  * @param family  Family.
@@ -112,19 +124,7 @@ async function loadFont(
 	family: string,
 	weights: readonly number[]
 ): Promise< void > {
-	const href = `https://fonts.googleapis.com/css2?family=${ family.replace( / /g, '+' ) }:wght@${ weights.join( ';' ) }&display=swap`;
-
-	if (
-		! document.querySelector(
-			`link[data-merchboard-font="${ CSS.escape( family ) }"]`
-		)
-	) {
-		const link = document.createElement( 'link' );
-		link.rel = 'stylesheet';
-		link.href = href;
-		link.dataset.merchboardFont = family;
-		document.head.appendChild( link );
-	}
+	addFontStylesheet( fontUrl( family, weights ) );
 
 	try {
 		await Promise.all(
@@ -2492,33 +2492,27 @@ function Properties( props: {
 							} as Partial< TextObject > )
 						}
 					/>
-					<select
-						className="merchboard-input"
+					<FontPicker
 						value={ text.font }
 						aria-label={ __( 'Font', 'merchboard' ) }
-						onChange={ ( event ) => {
+						choices={ props.fonts.map( ( candidate ) => ( {
+							value: candidate.family,
+							label: candidate.family,
+							url: fontUrl( candidate.family, candidate.weights ),
+						} ) ) }
+						onChange={ ( value ) => {
 							const next = props.fonts.find(
-								( candidate ) =>
-									candidate.family === event.target.value
+								( candidate ) => candidate.family === value
 							);
 
 							onChange( {
-								font: event.target.value,
+								font: value,
 								weight: next?.weights.includes( text.weight )
 									? text.weight
 									: ( next?.weights[ 0 ] ?? 400 ),
 							} as Partial< TextObject > );
 						} }
-					>
-						{ props.fonts.map( ( candidate ) => (
-							<option
-								key={ candidate.family }
-								value={ candidate.family }
-							>
-								{ candidate.family }
-							</option>
-						) ) }
-					</select>
+					/>
 					<select
 						className="merchboard-input"
 						value={ text.weight }

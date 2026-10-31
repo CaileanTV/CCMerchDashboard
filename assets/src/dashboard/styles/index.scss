@@ -468,6 +468,62 @@
 	}
 }
 
+.merchboard-font-picker {
+	position: relative;
+}
+
+.merchboard-font-picker__button {
+	display: flex;
+	align-items: center;
+	text-align: start;
+	cursor: pointer;
+
+	&::after {
+		margin-inline-start: auto;
+		content: "▾";
+	}
+}
+
+.merchboard-font-picker__list {
+	position: absolute;
+	z-index: 20;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	max-height: 320px;
+	overflow-y: auto;
+	background: var(--merchboard-control-bg);
+	border: 1px solid var(--merchboard-control-border);
+	border-radius: var(--merchboard-radius-sm);
+	box-shadow: var(--merchboard-shadow);
+}
+
+.merchboard-font-picker__option {
+	flex: none;
+	padding: var(--merchboard-space-2) var(--merchboard-space-3);
+	font-size: 1.15rem;
+	color: var(--merchboard-text);
+	text-align: start;
+	cursor: pointer;
+	background: none;
+	border: 0;
+
+	&:hover,
+	&:focus {
+		background: var(--merchboard-control-border);
+		outline: none;
+	}
+
+	&[aria-selected="true"] {
+		font-weight: 700;
+	}
+
+	&[aria-disabled="true"] {
+		cursor: not-allowed;
+		opacity: 0.55;
+	}
+}
+
 .merchboard-input--textarea {
 	min-height: 8rem;
 	resize: vertical;

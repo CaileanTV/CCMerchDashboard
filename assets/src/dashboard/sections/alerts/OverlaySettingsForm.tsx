@@ -15,6 +15,7 @@ import { ApiErrorState } from '../../components/ApiErrorState';
 import { Alert } from '../../components/Alert';
 import { Card } from '../../components/Card';
 import { Field } from '../../components/Field';
+import { FontPicker } from '../../components/FontPicker';
 import { Toast } from '../../components/Toast';
 import { AlertImagesCard } from './AlertImagesCard';
 import { AnimationFields } from './AnimationFields';
@@ -468,29 +469,34 @@ export function OverlaySettingsForm( {
 				) }
 			>
 				{ ( control ) => (
-					<select
+					<FontPicker
 						{ ...control }
-						className="merchboard-input"
 						value={ values.font_family }
-						onChange={ ( event ) =>
-							set( { font_family: event.target.value } )
-						}
-					>
-						<option value="inherit">
-							{ __( 'Default font', 'merchboard' ) }
-						</option>
-						{ ! fontApproved &&
-							values.font_family !== 'inherit' && (
-								<option value={ values.font_family } disabled>
-									{ values.font_family }
-								</option>
-							) }
-						{ fonts.map( ( font ) => (
-							<option key={ font.family } value={ font.family }>
-								{ font.family }
-							</option>
-						) ) }
-					</select>
+						onChange={ ( value ) => set( { font_family: value } ) }
+						choices={ [
+							{
+								value: 'inherit',
+								label: __( 'Default font', 'merchboard' ),
+								url: null,
+							},
+							...( ! fontApproved &&
+							values.font_family !== 'inherit'
+								? [
+										{
+											value: values.font_family,
+											label: values.font_family,
+											url: null,
+											disabled: true,
+										},
+									]
+								: [] ),
+							...fonts.map( ( font ) => ( {
+								value: font.family,
+								label: font.family,
+								url: font.url,
+							} ) ),
+						] }
+					/>
 				) }
 			</Field>
 		),

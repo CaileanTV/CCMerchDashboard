@@ -100,6 +100,9 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Slet permanent:** fjerner designet. Har det været i butikken, bliver versioner og filer til ordrerne, men creatoren ser det aldrig igen.
 - **Varianter:** en farve eller størrelse med ét valg vises på produktet uden at være et valg, og 1 × 1 er et simpelt produkt.
 
+## Fontvælger (2026-11-01)
+Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i sin egen skrift. En almindelig select kan ikke det i de fleste browsere, så `FontPicker` er sin egen liste med tastaturstyring. Fontfilerne hentes først, når listen åbnes.
+
 ## Digitaliseringsgebyr (ADR-086, 2026-10-31, eksperimentel)
 - **Formål:** en ny broderifil koster virksomheden et gebyr hos partneren, og creatoren betaler det.
 - **Opsætning:** beløbet sættes under Produktdesigner → Gebyrer (kræver `merchboard_manage_payouts`). Det er inkl. moms, og 0 betyder intet gebyr.

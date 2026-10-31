@@ -529,15 +529,24 @@ describe( 'AlertsSection', () => {
 		expect( rendered?.container.textContent ).toContain(
 			'Your font is no longer available'
 		);
+		act( () => {
+			rendered?.container
+				.querySelector< HTMLElement >( '[aria-haspopup="listbox"]' )
+				?.click();
+		} );
+
 		expect(
 			Array.from(
-				rendered?.container.querySelectorAll< HTMLOptionElement >(
-					'option'
+				rendered?.container.querySelectorAll< HTMLElement >(
+					'[role="option"]'
 				) ?? []
 			)
-				.filter( ( option ) => ! option.disabled )
-				.map( ( option ) => option.value )
-		).toEqual( expect.arrayContaining( [ 'inherit', 'Roboto' ] ) );
+				.filter(
+					( option ) =>
+						option.getAttribute( 'aria-disabled' ) !== 'true'
+				)
+				.map( ( option ) => option.dataset.value )
+		).toEqual( [ 'inherit', 'Roboto' ] );
 
 		typeTemplate( 'Hi $UserName!' );
 		await saveNow();
