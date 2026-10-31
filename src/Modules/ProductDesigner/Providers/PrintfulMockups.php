@@ -39,10 +39,13 @@ defined( 'ABSPATH' ) || exit;
  * shape differs from its position by more than 2 %: the print file has the
  * side's own shape, so it fits.
  *
- * A flat product (all-over print) gets one task with every used side, and
- * only then does a photo show the whole product. Each side has its mockup
- * style; v2 names every photo after the first placement, so its `style_id`
- * says which side it shows. A side without a style keeps the browser's image.
+ * A flat product (all-over print), or a base product whose photos the
+ * administrator chose (mockup styles), gets one task with every used side,
+ * and only then does a photo show the whole product. A style belongs to the
+ * product, not to a side, and v2 names every photo after the first placement,
+ * so its `style_id` says which it is. A chosen photo is stored under its own
+ * key (SubmissionFiles::PHOTO), and a colour that has one shows only the
+ * chosen photos: the browser's mockups of that colour go.
  *
  * Meanwhile the version's `mockup_state` is `running`, and it cannot be
  * approved. `ready` when every side is done; `failed` (the browser's
@@ -118,7 +121,7 @@ class PrintfulMockups {
 
 			$sides = array_keys( SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null )['print'] );
 
-			if ( $provider['flat'] ) {
+			if ( $provider['flat'] || array() !== $provider['photos'] ) {
 				if ( array() !== array_intersect( array_map( 'strval', $sides ), array_keys( $provider['placements'] ) ) ) {
 					$this->tasks->create( $id, 'printful', self::TASK_SIDE, '{}' );
 				}
@@ -176,9 +179,6 @@ class PrintfulMockups {
 			self::fail( PrintfulException::INVALID );
 		}
 
-		// Every used side in one task, as for a flat version.
-		$provider['flat'] = true;
-
 		$product  = (int) $provider['ref'];
 		$variants = array_slice( $this->variants( $product, $version, $base, $provider['variants'] ), 0, 1, true );
 		$sides    = $this->task_sides( $id, self::TASK_SIDE, $version, $base, $provider );
@@ -192,8 +192,7 @@ class PrintfulMockups {
 			array(
 				'key'        => $this->api->create_mockup_task( self::task_v2( $product, array_keys( $variants ), $sides, $provider ) ),
 				'variants'   => $variants,
-				'flat'       => true,
-				'styles'     => array_intersect_key( $provider['styles'], array_flip( array_column( $sides, 'key' ) ) ),
+				'photos'     => $provider['photos'],
 				'placements' => array_column( $sides, 'placement', 'key' ),
 			),
 			HOUR_IN_SECONDS
@@ -349,7 +348,7 @@ class PrintfulMockups {
 	/**
 	 * Creates the task of a side at Printful.
 	 *
-	 * @phpstan-param array{placements: array<string, string>, variants: array<string, array<string, string>>, flat: bool, styles: array<string, string>, techniques: array<string, string>, options: array<mixed>} $provider
+	 * @phpstan-param array{placements: array<string, string>, variants: array<string, array<string, string>>, photos: list<string>, techniques: array<string, string>, options: array<mixed>} $provider
 	 *
 	 * @param int                  $id       Version.
 	 * @param int                  $product  Printful product.
@@ -391,8 +390,7 @@ class PrintfulMockups {
 					array(
 						'api'        => $api,
 						'variants'   => $variants,
-						'flat'       => $provider['flat'],
-						'styles'     => array_intersect_key( $provider['styles'], array_flip( array_column( $sides, 'key' ) ) ),
+						'photos'     => $provider['photos'],
 						'placements' => array_column( $sides, 'placement', 'key' ),
 					)
 				),
@@ -401,10 +399,10 @@ class PrintfulMockups {
 	}
 
 	/**
-	 * The sides of a task with their print files: every used side of a flat
-	 * version, else the task's one.
+	 * The sides of a task with their print files: every used side of a task
+	 * of all sides, else the task's one.
 	 *
-	 * @phpstan-param array{placements: array<string, string>, flat: bool, techniques: array<string, string>} $provider
+	 * @phpstan-param array{placements: array<string, string>, techniques: array<string, string>} $provider
 	 *
 	 * @param int                  $id       Version.
 	 * @param string               $side     The task's side.
@@ -418,7 +416,7 @@ class PrintfulMockups {
 		$sides = array();
 
 		foreach ( $base->views as $view ) {
-			$wanted = $provider['flat'] ? in_array( $view->key, $used, true ) : $view->key === $side;
+			$wanted = self::TASK_SIDE === $side ? in_array( $view->key, $used, true ) : $view->key === $side;
 
 			if ( ! $wanted || ! isset( $provider['placements'][ $view->key ] ) ) {
 				continue;
@@ -444,7 +442,7 @@ class PrintfulMockups {
 	/**
 	 * The body of a v2 task. A layer's position is in inches.
 	 *
-	 * @phpstan-param array{flat: bool, styles: array<string, string>, options: array<mixed>} $provider
+	 * @phpstan-param array{photos: list<string>, options: array<mixed>} $provider
 	 *
 	 * @param int                                                                                                         $product  Printful product.
 	 * @param int[]                                                                                                       $variants Variants.
@@ -478,16 +476,12 @@ class PrintfulMockups {
 			),
 		);
 
-		if ( $provider['flat'] ) {
-			$styles = array_values( array_unique( array_filter( array_map( 'intval', array_intersect_key( $provider['styles'], array_flip( array_column( $sides, 'key' ) ) ) ) ) ) );
+		if ( array() !== $provider['photos'] ) {
+			$task['mockup_style_ids'] = array_map( 'intval', $provider['photos'] );
+		}
 
-			if ( array() !== $styles ) {
-				$task['mockup_style_ids'] = $styles;
-			}
-
-			if ( array() !== $provider['options'] ) {
-				$task['product_options'] = $provider['options'];
-			}
+		if ( array() !== $provider['options'] ) {
+			$task['product_options'] = $provider['options'];
 		}
 
 		return array(
@@ -605,9 +599,10 @@ class PrintfulMockups {
 	}
 
 	/**
-	 * The URL of the first photo of each side and colour. A flat task's
-	 * photo belongs to the sides of its style, or in v1 to its placement;
-	 * any other task has one side.
+	 * The URL of the first photo of each side and colour. A chosen style's
+	 * photo has its own key; else a task of all sides gives a photo to the
+	 * sides of its placement (v1 knows no styles), and any other task has one
+	 * side.
 	 *
 	 * @param string               $side    The task's side.
 	 * @param array<mixed>         $mockups Printful's mockups.
@@ -616,9 +611,8 @@ class PrintfulMockups {
 	 */
 	private static function mockup_urls( string $side, array $mockups, array $map ): array {
 		$colors     = is_array( $map['variants'] ?? null ) ? $map['variants'] : array();
-		$styles     = is_array( $map['styles'] ?? null ) ? $map['styles'] : array();
+		$photos     = is_array( $map['photos'] ?? null ) ? array_map( 'strval', $map['photos'] ) : array();
 		$placements = is_array( $map['placements'] ?? null ) ? $map['placements'] : array();
-		$flat       = true === ( $map['flat'] ?? false );
 		$urls       = array();
 
 		foreach ( $mockups as $mockup ) {
@@ -628,12 +622,17 @@ class PrintfulMockups {
 
 			$url = is_string( $mockup['mockup_url'] ?? null ) ? $mockup['mockup_url'] : ( is_array( $mockup['extra'][0] ?? null ) && is_string( $mockup['extra'][0]['url'] ?? null ) ? $mockup['extra'][0]['url'] : '' );
 
-			if ( ! $flat ) {
-				$sides = array( $side );
-			} elseif ( isset( $mockup['style_id'] ) && array() !== $styles ) {
-				$sides = array_keys( $styles, (string) $mockup['style_id'], true );
-			} else {
+			$style = is_scalar( $mockup['style_id'] ?? null ) ? (string) $mockup['style_id'] : '';
+
+			if ( in_array( $style, $photos, true ) ) {
+				$sides = array( SubmissionFiles::PHOTO . $style );
+			} elseif ( '' !== $style && array() !== $photos ) {
+				// Printful adds styles nobody asked for (a real answer, 2026-10-31).
+				continue;
+			} elseif ( self::TASK_SIDE === $side ) {
 				$sides = array_keys( $placements, (string) ( $mockup['placement'] ?? '' ), true );
+			} else {
+				$sides = array( $side );
 			}
 
 			foreach ( is_array( $mockup['variant_ids'] ?? null ) ? $mockup['variant_ids'] : array() as $variant ) {
@@ -689,6 +688,20 @@ class PrintfulMockups {
 				$files['mockups'][ $side ][ $color ] = $file;
 			}
 		}
+
+		// A colour with chosen photos shows only them.
+		foreach ( $stored as $side => $colors ) {
+			foreach ( str_starts_with( (string) $side, SubmissionFiles::PHOTO ) ? array_keys( $colors ) : array() as $color ) {
+				foreach ( $files['mockups'] as $key => $by_color ) {
+					if ( ! str_starts_with( (string) $key, SubmissionFiles::PHOTO ) && isset( $by_color[ $color ] ) ) {
+						$replaced[] = $by_color[ $color ]['file'] ?? null;
+						unset( $files['mockups'][ $key ][ $color ] );
+					}
+				}
+			}
+		}
+
+		$files['mockups'] = array_filter( $files['mockups'] );
 
 		if ( ! $this->products->set_pending_files( $id, (string) wp_json_encode( $files ) ) ) {
 			$replaced = $names;

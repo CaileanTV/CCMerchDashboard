@@ -31,10 +31,17 @@ final class SubmissionFiles {
 	public const MOCKUP = 'mockup';
 
 	/**
-	 * A slot: `print:<side>` or `mockup:<side>:<colour>` (keys as BaseView
-	 * and the colours' sanitize_title() keys make them).
+	 * What starts the key of a photo the administrator chose (a mockup style
+	 * of the base product), stored among the mockups in place of a side. No
+	 * side key can start like this.
 	 */
-	private const SLOT = '/^(?:print:([a-z0-9][a-z0-9-]{0,31})|mockup:([a-z0-9][a-z0-9-]{0,31}):([a-z0-9%_-]{1,32}))$/';
+	public const PHOTO = '_photo-';
+
+	/**
+	 * A slot: `print:<side>` or `mockup:<side>:<colour>` (keys as BaseView
+	 * and the colours' sanitize_title() keys make them, or a chosen photo).
+	 */
+	private const SLOT = '/^(?:print:([a-z0-9][a-z0-9-]{0,31})|mockup:([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}):([a-z0-9%_-]{1,32}))$/';
 
 	/**
 	 * The stamp of a version's content (its stored columns).
@@ -141,16 +148,18 @@ final class SubmissionFiles {
 		$colors = json_decode( (string) ( $version['colors'] ?? '' ), true );
 		$sides  = self::used_sides( is_array( $design ) ? $design : array() );
 		$colors = is_array( $colors ) ? array_values( array_map( 'strval', $colors ) ) : array();
+		// A chosen photo left from a withdrawn version is no file the browser sends.
+		$mockups = array_filter( $files['mockups'], static fn( int|string $side ): bool => ! str_starts_with( (string) $side, self::PHOTO ), ARRAY_FILTER_USE_KEY );
 
 		if ( self::stamp( $version ) !== $files['stamp'] || array() === $sides || array() === $colors ) {
 			return false;
 		}
 
-		if ( self::sorted( array_keys( $files['print'] ) ) !== self::sorted( $sides ) || self::sorted( array_keys( $files['mockups'] ) ) !== self::sorted( $sides ) ) {
+		if ( self::sorted( array_keys( $files['print'] ) ) !== self::sorted( $sides ) || self::sorted( array_keys( $mockups ) ) !== self::sorted( $sides ) ) {
 			return false;
 		}
 
-		foreach ( $files['mockups'] as $by_color ) {
+		foreach ( $mockups as $by_color ) {
 			if ( self::sorted( array_keys( $by_color ) ) !== self::sorted( $colors ) ) {
 				return false;
 			}

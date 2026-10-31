@@ -36,11 +36,12 @@ interface CatalogRenderer {
 	 * product designed on its flat pattern: no render, and each side names its
 	 * `template` (optional), its size and its print `area` in it. `groups`
 	 * names the groups of sizes with the same print sizes (empty when there is
-	 * one), and `group` is the one offered.
+	 * one), and `group` is the one offered. `photos` are the mockup styles the
+	 * administrator can choose (Printful v2), with the ones ticked by default.
 	 *
 	 * @param string $ref   The provider's product (Printful) or template (Gelato).
 	 * @param int    $group The group of sizes.
-	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int, technique?: string, style?: int, template?: string, template_width?: int, template_height?: int, area?: array{x: int, y: int, width: int, height: int}}>, variants: array<string, array<string, string>>, flat?: bool, groups?: list<string>, group?: int, options?: list<array{name: string, value: string}>}
+	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int, technique?: string, style?: int, template?: string, template_width?: int, template_height?: int, area?: array{x: int, y: int, width: int, height: int}}>, variants: array<string, array<string, string>>, flat?: bool, groups?: list<string>, group?: int, options?: list<array{name: string, value: string}>, photos?: list<array{id: int, category: string, view: string, default: bool}>}
 	 */
 	public function choice( string $ref, int $group = 0 ): array;
 

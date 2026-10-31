@@ -1845,6 +1845,30 @@ input:disabled + .merchboard-sounds__upload {
 	border-top: 1px solid var(--merchboard-border);
 }
 
+.merchboard-product-designer__working {
+	display: flex;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+	margin: 0;
+}
+
+.merchboard-product-designer__spinner {
+	flex: none;
+	width: 1.25rem;
+	height: 1.25rem;
+	border: 2px solid var(--merchboard-border);
+	border-top-color: var(--merchboard-primary);
+	border-radius: 50%;
+	animation: merchboard-spin 0.8s linear infinite;
+}
+
+@keyframes merchboard-spin {
+
+	to {
+		transform: rotate(360deg);
+	}
+}
+
 .merchboard-product-designer__finished {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
@@ -2064,23 +2088,30 @@ input:disabled + .merchboard-sounds__upload {
 
 	li {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--merchboard-space-1);
 	}
 }
 
 .merchboard-product-designer__thumb {
+	position: relative;
 	display: grid;
 	place-items: center;
 	aspect-ratio: 1;
+	overflow: hidden;
 	padding: var(--merchboard-space-1);
 	border: 1px solid var(--merchboard-border);
 	border-radius: 6px;
 	background: repeating-conic-gradient(var(--merchboard-skeleton) 0 25%, var(--merchboard-surface) 0 50%) 0 0 / 12px 12px;
 	cursor: pointer;
 
+	// Out of the flow: a tall image would otherwise stretch the square.
 	img {
-		max-width: 100%;
-		max-height: 100%;
+		position: absolute;
+		inset: var(--merchboard-space-1);
+		width: calc(100% - 2 * var(--merchboard-space-1));
+		height: calc(100% - 2 * var(--merchboard-space-1));
+		object-fit: contain;
 	}
 
 	&:focus-visible {

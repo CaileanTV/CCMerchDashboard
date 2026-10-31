@@ -1,7 +1,7 @@
 /**
- * The finished product before a design is sent: Printful's own photos of
- * the saved draft, so the creator can judge sizes and placement. The print
- * files are sent first, then the photos are polled.
+ * The finished product before a design is sent: real photos of the saved
+ * draft, so the creator can judge sizes and placement. The print files are
+ * sent first, then the photos are polled. Who makes them is never named here.
  */
 import { useEffect, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -36,7 +36,7 @@ function failure( reason: string | undefined ): string {
 			return __( 'Add something to your product first.', 'merchboard' );
 		case 'preview_busy':
 			return __(
-				'Printful makes a limited number of photos a minute. Please try again in a minute.',
+				'We can only make a limited number of photos a minute. Please try again in a minute.',
 				'merchboard'
 			);
 		default:
@@ -128,8 +128,9 @@ export function FinishedProduct( props: FinishedProductProps ) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [] );
 
+	// A photo the administrator chose belongs to the product, not to a side.
 	const name = ( side: string ) =>
-		views.find( ( view ) => view.key === side )?.name ?? side;
+		views.find( ( view ) => view.key === side )?.name ?? null;
 
 	return (
 		<Dialog
@@ -138,9 +139,16 @@ export function FinishedProduct( props: FinishedProductProps ) {
 			closeLabel={ __( 'Close', 'merchboard' ) }
 		>
 			{ busy ? (
-				<p role="status">
+				<p
+					className="merchboard-product-designer__working"
+					role="status"
+				>
+					<span
+						className="merchboard-product-designer__spinner"
+						aria-hidden="true"
+					/>
 					{ __(
-						'Printful is sewing your design together. It usually takes less than a minute…',
+						'We are making photos of your finished product. It usually takes less than a minute…',
 						'merchboard'
 					) }
 				</p>
@@ -150,7 +158,7 @@ export function FinishedProduct( props: FinishedProductProps ) {
 				<>
 					<p>
 						{ __(
-							"These are Printful's photos of your saved design in its first colour. Check sizes and placement before you send it. A part without a design is white.",
+							'These are photos of your saved design in its first colour. Check sizes and placement before you send it. A part without a design is white.',
 							'merchboard'
 						) }
 					</p>
@@ -159,9 +167,19 @@ export function FinishedProduct( props: FinishedProductProps ) {
 							<figure key={ `${ image.side }-${ image.color }` }>
 								<img
 									src={ image.url }
-									alt={ name( image.side ) }
+									alt={
+										name( image.side ) ??
+										__(
+											'Your finished product',
+											'merchboard'
+										)
+									}
 								/>
-								<figcaption>{ name( image.side ) }</figcaption>
+								{ name( image.side ) === null ? null : (
+									<figcaption>
+										{ name( image.side ) }
+									</figcaption>
+								) }
 							</figure>
 						) ) }
 					</div>

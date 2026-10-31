@@ -120,6 +120,7 @@ final class BaseProductActions {
 								'sizes'            => is_array( $input['sizes'] ?? null ) ? $input['sizes'] : array(),
 								'sides'            => is_array( $input['sides'] ?? null ) ? $input['sides'] : array(),
 								'packs'            => is_array( $input['packs'] ?? null ) ? $input['packs'] : array(),
+								'photos'           => is_array( $input['photos'] ?? null ) ? $input['photos'] : array(),
 								'base_price'       => $text( 'base_price' ),
 								'extra_side_price' => $text( 'extra_side_price' ),
 								'group'            => absint( $text( 'group' ) ),

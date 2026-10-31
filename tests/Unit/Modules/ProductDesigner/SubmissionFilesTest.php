@@ -20,8 +20,9 @@ final class SubmissionFilesTest extends TestCase {
 		self::assertSame( array( 'print', 'front', null ), SubmissionFiles::slot( 'print:front' ) );
 		self::assertSame( array( 'mockup', 'back-2', 'sand_light' ), SubmissionFiles::slot( 'mockup:back-2:sand_light' ) );
 		self::assertSame( array( 'mockup', 'front', 'gr%c3%b8n' ), SubmissionFiles::slot( 'mockup:front:gr%c3%b8n' ), 'A colour key as sanitize_title() makes it.' );
+		self::assertSame( array( 'mockup', '_photo-15710', 'black' ), SubmissionFiles::slot( 'mockup:_photo-15710:black' ), 'A photo the administrator chose.' );
 
-		foreach ( array( '', 'print', 'print:', 'print:Front', 'print:front:black', 'mockup:front', 'mockup:front:', 'cover:front', 'print:../x', 'mockup:front:black/../' ) as $slot ) {
+		foreach ( array( '', 'print', 'print:', 'print:Front', 'print:front:black', 'print:_photo-1', 'mockup:_photo-x:black', 'mockup:front', 'mockup:front:', 'cover:front', 'print:../x', 'mockup:front:black/../' ) as $slot ) {
 			self::assertNull( SubmissionFiles::slot( $slot ), $slot );
 		}
 	}
@@ -63,6 +64,11 @@ final class SubmissionFilesTest extends TestCase {
 		$extra          = $version;
 		$extra['files'] = (string) wp_json_encode( self::files( SubmissionFiles::stamp( $version ), array( 'front', 'back' ), array( 'black', 'sand' ) ) );
 		self::assertFalse( SubmissionFiles::complete( $extra ), 'No file of an unused side.' );
+
+		$photo = self::files( SubmissionFiles::stamp( $version ), array( 'front' ), array( 'black', 'sand' ) );
+
+		$photo['mockups']['_photo-15710'] = $photo['mockups']['front'];
+		self::assertTrue( SubmissionFiles::complete( array( 'files' => (string) wp_json_encode( $photo ) ) + $version ), 'A chosen photo from a withdrawn version is no file of a side.' );
 
 		$broken          = $version;
 		$broken['files'] = '{"stamp":"x","print":{"front":{"file":1}}}';

@@ -181,10 +181,11 @@ class BaseProductRepository {
 	 * The provider data of a base product: source, product or template, the
 	 * provider's placement by side key, its variant by colour key and size,
 	 * and the image of each side (empty for one imported before review
-	 * 30.15), and what a flat product adds; null for an own base product.
+	 * 30.15), the mockup styles the administrator chose (`photos`) and what
+	 * a flat product adds; null for an own base product.
 	 *
 	 * @param int $id Id.
-	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, styles: array<string, string>, techniques: array<string, string>, options: array<mixed>}|null
+	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, photos: list<string>, techniques: array<string, string>, options: array<mixed>}|null
 	 * @throws DatabaseException When it cannot be read.
 	 */
 	public function provider( int $id ): ?array {
@@ -213,6 +214,9 @@ class BaseProductRepository {
 			}
 		}
 
+		// Before the administrator chose them, a flat product had one style per side.
+		$photos = $current && is_array( $decoded['photos'] ?? $decoded['styles'] ?? null ) ? ( $decoded['photos'] ?? $decoded['styles'] ) : array();
+
 		return array(
 			'source'     => (string) $row['source'],
 			'ref'        => $row['provider_ref'],
@@ -220,7 +224,7 @@ class BaseProductRepository {
 			'variants'   => $variants,
 			'slots'      => self::strings( $current && is_array( $decoded['slots'] ?? null ) ? $decoded['slots'] : array() ),
 			'flat'       => $current && true === ( $decoded['flat'] ?? false ),
-			'styles'     => self::strings( $current && is_array( $decoded['styles'] ?? null ) ? $decoded['styles'] : array() ),
+			'photos'     => array_values( array_unique( array_diff( self::strings( $photos ), array( '0', '' ) ) ) ),
 			'techniques' => self::strings( $current && is_array( $decoded['techniques'] ?? null ) ? $decoded['techniques'] : array() ),
 			'options'    => $current && is_array( $decoded['options'] ?? null ) ? $decoded['options'] : array(),
 		);

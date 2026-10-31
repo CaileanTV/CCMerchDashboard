@@ -285,7 +285,7 @@ final class PrintfulTest extends IntegrationTestCase {
 				),
 				'slots'      => array( 'front-print' => 'front' ),
 				'flat'       => false,
-				'styles'     => array(),
+				'photos'     => array(),
 				'techniques' => array(),
 				'options'    => array(),
 			),

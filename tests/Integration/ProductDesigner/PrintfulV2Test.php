@@ -298,13 +298,13 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		self::assertNotNull( $provider );
 		self::assertTrue( $provider['flat'] );
 		self::assertSame( array( 'front-print' => 'default', 'back-print' => 'back' ), $provider['placements'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-		self::assertSame( array( 'front-print' => '15710', 'back-print' => '15711' ), $provider['styles'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( array( '15710', '15711' ), $provider['photos'], 'Ticked by default: the view of each part.' );
 		self::assertSame( array( array( 'name' => 'stitch_color', 'value' => 'white' ) ), $provider['options'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 		$this->assert_stays_flat( $id );
 	}
 
-	public function test_one_task_with_every_part_gives_each_side_the_photo_of_its_style(): void {
+	public function test_one_task_with_every_part_makes_the_chosen_photos(): void {
 		[ $version ] = $this->submit_flat();
 		$mockups     = $this->mockups();
 
@@ -330,9 +330,75 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		$files = SubmissionFiles::decode( (string) ( $this->products->version( $version )['files'] ?? '' ) );
 
 		self::assertSame( PrintfulMockups::READY, $this->products->version( $version )['mockup_state'] ?? null );
-		self::assertSame( 'image/png', $files['mockups']['front-print']['standard']['mime'] ?? null );
-		self::assertSame( array( 300, 300 ), array( $files['mockups']['front-print']['standard']['width'] ?? 0, $files['mockups']['front-print']['standard']['height'] ?? 0 ), 'The front style\'s photo.' );
-		self::assertSame( array( 320, 320 ), array( $files['mockups']['back-print']['standard']['width'] ?? 0, $files['mockups']['back-print']['standard']['height'] ?? 0 ), 'The back style\'s photo, though v2 names it after the first placement.' );
+		self::assertSame( array( '_photo-15710', '_photo-15711' ), array_keys( $files['mockups'] ), 'Only the chosen photos: the browser\'s are gone.' );
+		self::assertSame( 'image/png', $files['mockups']['_photo-15710']['standard']['mime'] ?? null );
+		self::assertSame( array( 300, 300 ), array( $files['mockups']['_photo-15710']['standard']['width'] ?? 0, $files['mockups']['_photo-15710']['standard']['height'] ?? 0 ), 'The front style\'s photo.' );
+		self::assertSame( array( 320, 320 ), array( $files['mockups']['_photo-15711']['standard']['width'] ?? 0, $files['mockups']['_photo-15711']['standard']['height'] ?? 0 ), 'The back style\'s photo, though v2 names it after the first placement.' );
+	}
+
+	public function test_the_administrator_chooses_the_photos(): void {
+		$choice = ( new PrintfulCatalog( $this->api ) )->choice( '257' );
+
+		self::assertSame( array( 15710, 15711 ), array_column( $choice['photos'] ?? array(), 'id' ), 'Each once, and never a seasonal one.' );
+		self::assertSame( array( 'Men\'s', 'Front', true ), array( $choice['photos'][0]['category'] ?? '', $choice['photos'][0]['view'] ?? '', $choice['photos'][0]['default'] ?? false ) );
+
+		$id = $this->import_flat( array( '15711', '999' ) );
+
+		self::assertSame( array( '15711' ), $this->bases->provider( $id )['photos'] ?? null, 'Only what the product offers.' );
+	}
+
+	public function test_a_chosen_photo_makes_one_task_of_a_regular_product_too(): void {
+		[ $version ] = $this->submit_flat();
+		$base        = (int) ( $this->products->version( $version )['base_id'] ?? 0 );
+		$provider    = $this->bases->provider( $base ) ?? self::fail( 'No provider.' );
+
+		$this->bases->set_provider( $base, 'printful', '257', (string) wp_json_encode( array_merge( $provider, array( 'flat' => false ) ) ) );
+
+		$mockups = $this->mockups();
+
+		$mockups->submitted( $version );
+		$this->drain( $mockups );
+
+		self::assertCount( 1, $this->calls_starting( 'POST' ), 'One task, or each photo would show one side.' );
+		self::assertSame( PrintfulMockups::READY, $this->products->version( $version )['mockup_state'] ?? null );
+	}
+
+	public function test_a_photo_nobody_chose_never_reaches_the_shop(): void {
+		[ $version ] = $this->submit_flat();
+		$base        = (int) ( $this->products->version( $version )['base_id'] ?? 0 );
+		$provider    = $this->bases->provider( $base ) ?? self::fail( 'No provider.' );
+
+		$this->bases->set_provider( $base, 'printful', '257', (string) wp_json_encode( array_merge( $provider, array( 'photos' => array( '15711' ) ) ) ) );
+
+		$mockups = $this->mockups();
+
+		$mockups->submitted( $version );
+		$this->drain( $mockups );
+
+		$files = SubmissionFiles::decode( (string) ( $this->products->version( $version )['files'] ?? '' ) );
+
+		self::assertSame( array( '_photo-15711' ), array_keys( $files['mockups'] ), 'Printful\'s answer also held 15710.' );
+	}
+
+	public function test_a_flat_product_from_before_the_choice_keeps_its_styles(): void {
+		$id       = $this->import_flat();
+		$provider = $this->bases->provider( $id ) ?? self::fail( 'No provider.' );
+
+		unset( $provider['photos'] );
+		$provider['styles'] = array(
+			'front-print' => '15710',
+			'back-print'  => '15711',
+			'sleeve'      => '0',
+		);
+
+		$this->bases->set_provider( $id, 'printful', '257', (string) wp_json_encode( $provider ) );
+
+		self::assertSame( array( '15710', '15711' ), $this->bases->provider( $id )['photos'] ?? null );
+	}
+
+	public function test_a_catalog_text_never_names_a_provider(): void {
+		self::assertSame( 'Soft fabric. Machine wash.', PrintfulCatalog::description( 'Soft fabric. Printed by Printful in Latvia. Machine wash.' ) );
+		self::assertSame( 'Soft fabric.', PrintfulCatalog::description( '<p>Soft fabric.</p><p>Made with gelato.com</p>' ) );
 	}
 
 	public function test_a_refused_v2_task_goes_to_v1_with_the_same_files(): void {
@@ -452,7 +518,7 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		$state = $mockups->preview( $version );
 
 		self::assertSame( 'done', $state['status'] );
-		self::assertSame( array( 'front-print', 'back-print' ), array_column( $state['images'], 'side' ) );
+		self::assertSame( array( '_photo-15710', '_photo-15711' ), array_column( $state['images'], 'side' ) );
 		self::assertStringStartsWith( 'data:image/png;base64,', $state['images'][0]['url'] ?? '' );
 		self::assertSame( $before, $this->products->version( $version )['status'] ?? null, 'Nothing was sent.' );
 		self::assertNull( $this->products->pending( $product ) );
@@ -538,8 +604,10 @@ final class PrintfulV2Test extends IntegrationTestCase {
 
 	/**
 	 * Imports the all-over tee with both its parts.
+	 *
+	 * @param string[] $photos The ticked photos.
 	 */
-	private function import_flat(): int {
+	private function import_flat( array $photos = array() ): int {
 		$catalog = new CatalogImport( $this->wpdb, $this->bases, $this->base_service(), $this->files, $this->queue, $this->service( Logger::class ), 2, 'https://shop.example/assets/', new PrintfulCatalog( $this->api ) );
 		$id      = $catalog->create(
 			'printful',
@@ -548,6 +616,7 @@ final class PrintfulV2Test extends IntegrationTestCase {
 				'colors'           => array( 'Standard' ),
 				'sizes'            => array( 'S', 'M' ),
 				'sides'            => array( 'default', 'back' ),
+				'photos'           => $photos,
 				'base_price'       => '199',
 				'extra_side_price' => '0',
 			)

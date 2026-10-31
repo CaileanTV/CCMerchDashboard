@@ -88,7 +88,18 @@ class PrintfulCatalog implements CatalogRenderer {
 	/**
 	 * Mockup categories made for a season: never a product's photo.
 	 */
-	private const SEASONAL = '/halloween|holiday|christmas|xmas|valentine|easter|black friday/i';
+	private const SEASONAL = '/halloween|holiday|christmas|xmas|valentine|easter|black friday|spring|summer|red, white/i';
+
+	/**
+	 * The styles ticked by default, best first: they show the product alone.
+	 */
+	private const PLAIN = array( '/^men\'s$/i', '/^women\'s$/i', '/^flat$/i', '/^(men\'s|women\'s|flat)( \d+)?$/i' );
+
+	/**
+	 * A sentence of a catalog text that names a provider is left out: creators
+	 * and customers never see one.
+	 */
+	private const NAMES_PROVIDER = '/\b(printful|gelato|prodigi)\b/i';
 
 	private const POLL_DELAY = 15;
 
@@ -200,7 +211,7 @@ class PrintfulCatalog implements CatalogRenderer {
 	 *
 	 * @param string $ref   Printful product id.
 	 * @param int    $group The group of sizes with the same print sizes.
-	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int, technique?: string, style?: int, template?: string, template_width?: int, template_height?: int, area?: array{x: int, y: int, width: int, height: int}}>, variants: array<string, array<string, string>>, flat?: bool, groups?: list<string>, group?: int, options?: list<array{name: string, value: string}>}
+	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int, technique?: string, style?: int, template?: string, template_width?: int, template_height?: int, area?: array{x: int, y: int, width: int, height: int}}>, variants: array<string, array<string, string>>, flat?: bool, groups?: list<string>, group?: int, options?: list<array{name: string, value: string}>, photos?: list<array{id: int, category: string, view: string, default: bool}>}
 	 * @throws PrintfulException When Printful refuses or fails, or the product cannot be a base product.
 	 */
 	public function choice( string $ref, int $group = 0 ): array {
@@ -226,7 +237,7 @@ class PrintfulCatalog implements CatalogRenderer {
 	 *
 	 * @param int $id    Printful product.
 	 * @param int $group The group of sizes.
-	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int, technique?: string, style?: int, template?: string, template_width?: int, template_height?: int, area?: array{x: int, y: int, width: int, height: int}}>, variants: array<string, array<string, string>>, flat: bool, groups: list<string>, group: int, options: list<array{name: string, value: string}>}
+	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int, technique?: string, style?: int, template?: string, template_width?: int, template_height?: int, area?: array{x: int, y: int, width: int, height: int}}>, variants: array<string, array<string, string>>, flat: bool, groups: list<string>, group: int, options: list<array{name: string, value: string}>, photos: list<array{id: int, category: string, view: string, default: bool}>}
 	 * @throws PrintfulException When Printful refuses or fails, or the product cannot be a base product.
 	 */
 	private function choice_v2( int $id, int $group ): array {
@@ -253,7 +264,8 @@ class PrintfulCatalog implements CatalogRenderer {
 		$groups = $flat ? self::size_groups( $rows ) : array( $rows );
 		$group  = isset( $groups[ $group ] ) ? $group : 0;
 		$first  = $groups[ $group ][0];
-		$sides  = self::sides_v2( $first, $this->api->mockup_styles( $id, self::REGION ), $technique, $flat );
+		$styles = $this->api->mockup_styles( $id, self::REGION );
+		$sides  = self::sides_v2( $first, $styles, $technique, $flat );
 
 		if ( $flat ) {
 			$sides = $this->with_labels( $id, self::with_templates( $sides, $this->api->mockup_templates( $id, self::REGION ), (int) $first['id'] ), (int) $first['id'] );
@@ -266,7 +278,7 @@ class PrintfulCatalog implements CatalogRenderer {
 		}
 
 		return array(
-			'name'        => mb_substr( trim( sanitize_text_field( (string) ( $product['name'] ?? 'Printful ' . $id ) ) ), 0, 191 ),
+			'name'        => mb_substr( trim( sanitize_text_field( (string) ( $product['name'] ?? 'Product ' . $id ) ) ), 0, 191 ),
 			'description' => self::description( (string) ( $product['description'] ?? '' ) ),
 			'image'       => is_string( $product['image'] ?? null ) ? $product['image'] : '',
 			'colors'      => $colors,
@@ -277,6 +289,7 @@ class PrintfulCatalog implements CatalogRenderer {
 			'groups'      => 1 < count( $groups ) ? array_map( static fn( array $rows ): string => implode( ', ', self::variant_map( $rows )[1] ), $groups ) : array(),
 			'group'       => $group,
 			'options'     => $flat ? self::stitch_option( $product ) : array(),
+			'photos'      => self::photos( $styles, $sides, (int) $first['id'], $flat ),
 		);
 	}
 
@@ -314,7 +327,7 @@ class PrintfulCatalog implements CatalogRenderer {
 		}
 
 		return array(
-			'name'        => mb_substr( trim( sanitize_text_field( (string) ( $product['title'] ?? $product['model'] ?? 'Printful ' . $id ) ) ), 0, 191 ),
+			'name'        => mb_substr( trim( sanitize_text_field( (string) ( $product['title'] ?? $product['model'] ?? 'Product ' . $id ) ) ), 0, 191 ),
 			'description' => self::description( (string) ( $product['description'] ?? '' ) ),
 			'image'       => is_string( $product['image'] ?? null ) ? $product['image'] : '',
 			'colors'      => $colors,
@@ -744,6 +757,15 @@ class PrintfulCatalog implements CatalogRenderer {
 	 */
 	public static function description( string $html ): string {
 		$text = wp_strip_all_tags( (string) preg_replace( '/<[^>]+>/', '$0 ', $html ) );
+		$text = (string) preg_replace_callback(
+			'/[^\n]+/',
+			static function ( array $line ): string {
+				$sentences = preg_split( '/(?<=[.!?])\s+/', $line[0] );
+
+				return implode( ' ', array_filter( is_array( $sentences ) ? $sentences : array(), static fn( string $sentence ): bool => 1 !== preg_match( self::NAMES_PROVIDER, $sentence ) ) );
+			},
+			$text
+		);
 
 		return mb_substr( trim( (string) preg_replace( '/[ \t]{2,}/', ' ', $text ) ), 0, 2000 );
 	}
@@ -836,7 +858,7 @@ class PrintfulCatalog implements CatalogRenderer {
 				'width'     => $width,
 				'height'    => $height,
 				'technique' => is_string( $row['technique'] ?? null ) ? $row['technique'] : $technique,
-				'style'     => $flat ? self::style_of( $placement, $row, (int) ( $variant['id'] ?? 0 ) ) : 0,
+				'style'     => self::style_of( $placement, $row, (int) ( $variant['id'] ?? 0 ) ),
 			);
 		}
 
@@ -844,9 +866,9 @@ class PrintfulCatalog implements CatalogRenderer {
 	}
 
 	/**
-	 * The mockup style that shows a placement: the view it faces, or the
-	 * first style for a placement that faces no view. Seasonal photos are
-	 * never a product's. 0 when there is none.
+	 * The mockup style that shows a placement: the view it faces, on the
+	 * product alone if it can, or the first style for a placement that faces
+	 * no view. 0 when there is none.
 	 *
 	 * @param string       $placement Placement.
 	 * @param array<mixed> $row       The placement's row of mockup styles.
@@ -861,6 +883,31 @@ class PrintfulCatalog implements CatalogRenderer {
 			'sleeve_right' => 'Right',
 		);
 		$view   = $views[ $placement ] ?? '';
+		$styles = self::usable_styles( $row, $variant );
+		$facing = array_values( array_filter( $styles, static fn( array $style ): bool => ( $style['view_name'] ?? null ) === $view ) );
+
+		foreach ( self::PLAIN as $plain ) {
+			foreach ( $facing as $style ) {
+				if ( 1 === preg_match( $plain, (string) ( $style['category_name'] ?? '' ) ) ) {
+					return (int) $style['id'];
+				}
+			}
+		}
+
+		$style = $facing[0] ?? $styles[0] ?? null;
+
+		return null === $style ? 0 : (int) $style['id'];
+	}
+
+	/**
+	 * A placement's mockup styles a variant has. Seasonal photos are never a
+	 * product's.
+	 *
+	 * @param array<mixed> $row     The placement's row of mockup styles.
+	 * @param int          $variant Variant.
+	 * @return list<array<mixed>>
+	 */
+	private static function usable_styles( array $row, int $variant ): array {
 		$styles = array();
 
 		foreach ( is_array( $row['mockup_styles'] ?? null ) ? $row['mockup_styles'] : array() as $style ) {
@@ -871,13 +918,49 @@ class PrintfulCatalog implements CatalogRenderer {
 			}
 		}
 
-		foreach ( $styles as $style ) {
-			if ( ( $style['view_name'] ?? null ) === $view ) {
-				return (int) $style['id'];
+		return $styles;
+	}
+
+	/**
+	 * The photos the administrator can choose for a product (a style belongs
+	 * to the product, not to a placement). Ticked by default: the style of
+	 * every flat part, else of the front and back, else the first.
+	 *
+	 * @param array<mixed>                                 $rows    Mockup styles by placement.
+	 * @param array<array{placement: string, style?: int}> $sides   The product's sides.
+	 * @param int                                          $variant Variant.
+	 * @param bool                                         $flat    Whether the product is designed flat.
+	 * @return list<array{id: int, category: string, view: string, default: bool}>
+	 */
+	private static function photos( array $rows, array $sides, int $variant, bool $flat ): array {
+		$main     = array_filter( $sides, static fn( array $side ): bool => $flat || in_array( $side['placement'], array( 'default', 'front', 'back' ), true ) );
+		$defaults = array_filter( array_map( 'intval', array_column( $main, 'style' ) ) );
+		$photos   = array();
+
+		foreach ( $rows as $row ) {
+			if ( ! is_array( $row ) || ! in_array( $row['placement'] ?? '', array_column( $sides, 'placement' ), true ) ) {
+				continue;
+			}
+
+			foreach ( self::usable_styles( $row, $variant ) as $style ) {
+				$id = (int) $style['id'];
+
+				$photos[ $id ] ??= array(
+					'id'       => $id,
+					'category' => sanitize_text_field( (string) ( $style['category_name'] ?? '' ) ),
+					'view'     => sanitize_text_field( (string) ( $style['view_name'] ?? '' ) ),
+					'default'  => in_array( $id, $defaults, true ),
+				);
 			}
 		}
 
-		return isset( $styles[0] ) ? (int) $styles[0]['id'] : 0;
+		$photos = array_values( $photos );
+
+		if ( array() === $defaults && array() !== $photos ) {
+			$photos[0]['default'] = true;
+		}
+
+		return $photos;
 	}
 
 	/**

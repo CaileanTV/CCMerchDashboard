@@ -48,9 +48,9 @@ export interface DesignerView {
 	readonly height: number;
 	readonly layers: Partial< Record< LayerKind, number > >;
 	/**
-	 * A colour's own background (a photo of the product in that colour,
-	 * e.g. rendered by Printful or Gelato), by colour key: drawn instead of
-	 * the background and the tinted colour mask.
+	 * A colour's own background (a photo of the product in that colour),
+	 * by colour key: drawn instead of the background and the tinted colour
+	 * mask.
 	 */
 	readonly backgrounds: Readonly< Record< string, number > >;
 	readonly area: {

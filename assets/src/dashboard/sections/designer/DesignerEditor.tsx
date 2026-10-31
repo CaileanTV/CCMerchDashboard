@@ -1336,7 +1336,7 @@ function Editor( props: EditorProps ) {
 							: null }
 						{ view.flat
 							? `${ __(
-									'This is the flat part before it is sewn. Fill it to the edges, for what falls outside the solid line is cut away. The labels are Printful\'s: keep text and logos inside "Safe Print Area" (the dashed line), "Folding line" is where the part is folded, "Collar" is the collar, and "Placement on product" shows where the part sits. See how it looks with "See the finished product".',
+									'This is the flat part before it is sewn. Fill it to the edges, for what falls outside the solid line is cut away. The labels on the pattern are in English: keep text and logos inside "Safe Print Area" (the dashed line), "Folding line" is where the part is folded, "Collar" is the collar, and "Placement on product" shows where the part sits. See how it looks with "See the finished product".',
 									'merchboard'
 								) } `
 							: null }

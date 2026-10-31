@@ -277,7 +277,7 @@ final class GelatoTest extends IntegrationTestCase {
 				),
 				'slots'      => array( 'front' => '0' ),
 				'flat'       => false,
-				'styles'     => array(),
+				'photos'     => array(),
 				'techniques' => array(),
 				'options'    => array(),
 			),

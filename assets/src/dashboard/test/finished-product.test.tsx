@@ -90,6 +90,53 @@ describe( 'the finished product', () => {
 		expect(
 			document.querySelector( 'img[alt="Front print"]' )
 		).not.toBeNull();
+		expect(
+			document.querySelector( '.merchboard-product-designer__spinner' )
+		).toBeNull();
+	} );
+
+	it( 'shows that it is working while the photos are made', async () => {
+		jest.useFakeTimers();
+		mockApi( {
+			'POST /merchboard/v1/me/designer/products/7/preview': () =>
+				response( 200, { status: 'pending' } ),
+			'GET /merchboard/v1/me/designer/products/7/preview': () =>
+				response( 200, { status: 'pending', images: [] } ),
+		} );
+
+		await show( () => Promise.resolve( null ) );
+
+		expect(
+			document.querySelector( '.merchboard-product-designer__spinner' )
+		).not.toBeNull();
+		expect(
+			document.querySelector( '[role="status"]' )?.textContent
+		).toContain( 'We are making photos' );
+	} );
+
+	it( 'gives a chosen photo no side', async () => {
+		jest.useFakeTimers();
+		mockApi( {
+			'POST /merchboard/v1/me/designer/products/7/preview': () =>
+				response( 200, { status: 'pending' } ),
+			'GET /merchboard/v1/me/designer/products/7/preview': () =>
+				response( 200, {
+					status: 'done',
+					images: [
+						{ side: '_photo-15710', color: 'white', url: IMAGE },
+					],
+				} ),
+		} );
+
+		await show( () => Promise.resolve( null ) );
+		await act( async () => {
+			await jest.advanceTimersByTimeAsync( 3100 );
+		} );
+
+		expect( document.querySelector( 'figcaption' ) ).toBeNull();
+		expect(
+			document.querySelector( 'img[alt="Your finished product"]' )
+		).not.toBeNull();
 	} );
 
 	it( 'stops when the files cannot be sent', async () => {

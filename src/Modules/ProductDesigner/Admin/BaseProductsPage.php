@@ -843,6 +843,8 @@ final class BaseProductsPage {
 
 		echo '<p class="description">' . esc_html( $flat ? __( 'Each side is a flat part of the sewing pattern. Keep every part you want printed: an unticked part stays white on the product.', 'merchboard' ) : __( 'At most six sides. Each is rendered and measured; a side whose print area cannot be found on the photos is left out.', 'merchboard' ) ) . '</p></td></tr>';
 
+		$this->render_photos( $choice['photos'] ?? array() );
+
 		if ( GelatoCatalog::SOURCE === $source ) {
 			$layers = array_map(
 				/* translators: 1: side name, 2: width in mm, 3: height in mm. */
@@ -862,6 +864,40 @@ final class BaseProductsPage {
 		echo '</tbody></table>';
 		echo '<p>' . esc_html( $flat ? __( 'The base product is created as a draft at once. Its sewing patterns, if it has any, are fetched in the background. Creators design on the flat parts; the provider makes their mockups when they are sent for approval.', 'merchboard' ) : __( 'The base product is created as a draft at once. The provider then renders its photos without a design and with a marker per side, from which the photos per colour and the print areas are taken, in the background (a few minutes). Check them and activate it.', 'merchboard' ) ) . '</p>';
 		echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Create and import', 'merchboard' ) . '</button></p></form>';
+	}
+
+	/**
+	 * The photos Printful can make of the product's designs, by category.
+	 *
+	 * @param array<array{id: int, category: string, view: string, default: bool}> $photos What the product offers.
+	 */
+	private function render_photos( array $photos ): void {
+		if ( array() === $photos ) {
+			return;
+		}
+
+		$categories = array();
+
+		foreach ( $photos as $photo ) {
+			$categories[ $photo['category'] ][] = $photo;
+		}
+
+		echo '<tr><th scope="row">' . esc_html__( 'Mockups', 'merchboard' ) . '</th><td>';
+
+		foreach ( $categories as $category => $rows ) {
+			$open = array() !== array_filter( array_column( $rows, 'default' ) );
+
+			echo '<details style="margin:0 0 .4em"' . ( $open ? ' open' : '' ) . '><summary>' . esc_html( (string) $category ) . '</summary>';
+
+			foreach ( $rows as $photo ) {
+				echo '<label style="display:inline-block;margin:.2em 1em .2em 0"><input type="checkbox" name="photos[]" value="' . esc_attr( (string) $photo['id'] ) . '"' . checked( $photo['default'], true, false ) . '> ' . esc_html( $photo['view'] ) . '</label>';
+			}
+
+			echo '</details>';
+		}
+
+		/* translators: %d: the most photos of a design. */
+		echo '<p class="description">' . esc_html( sprintf( __( 'The photos Printful makes of each design sent for approval. They become the product\'s images in the shop, in place of the mockups the creator\'s browser made, and each is made per colour. At most %d: more are left out.', 'merchboard' ), CatalogImport::MAX_PHOTOS ) ) . '</p></td></tr>';
 	}
 
 	/**

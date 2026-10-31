@@ -124,6 +124,11 @@ class CatalogImport {
 	private const FLAT_MAX = 1500;
 
 	/**
+	 * The most photos made of a design, each per colour.
+	 */
+	public const MAX_PHOTOS = 8;
+
+	/**
 	 * The import data of the current round (for a failure inside it).
 	 *
 	 * @var array<string, mixed>|null
@@ -177,8 +182,9 @@ class CatalogImport {
 	/**
 	 * Creates a draft base product from a catalog product and starts its
 	 * import. Picked: `colors` (names), `sizes`, `sides` (placements),
-	 * `packs` (embroidery pack by placement), `base_price`,
-	 * `extra_side_price` and `group` (the sizes with the same print sizes).
+	 * `packs` (embroidery pack by placement), `photos` (mockup styles),
+	 * `base_price`, `extra_side_price` and `group` (the sizes with the same
+	 * print sizes).
 	 *
 	 * @param string               $source `printful` or `gelato`.
 	 * @param string               $ref    The provider's product (Printful) or template (Gelato).
@@ -202,6 +208,7 @@ class CatalogImport {
 		$choice = $renderer->choice( $ref, is_numeric( $picked['group'] ?? null ) ? (int) $picked['group'] : 0 );
 		$flat   = true === ( $choice['flat'] ?? false );
 		$list   = static fn( string $key ): array => array_map( 'strval', array_filter( is_array( $picked[ $key ] ?? null ) ? $picked[ $key ] : array(), 'is_scalar' ) );
+		$photos = self::chosen_photos( $choice['photos'] ?? array(), $list( 'photos' ) );
 		$sizes  = array_values( array_intersect( $choice['sizes'], $list( 'sizes' ) ) );
 		$colors = array();
 		$render = array();
@@ -279,7 +286,7 @@ class CatalogImport {
 					'variants'   => $map,
 					'slots'      => array(),
 					'flat'       => $flat,
-					'styles'     => array_map( 'strval', array_column( $sides, 'style', 'key' ) ),
+					'photos'     => $photos,
 					'techniques' => array_column( $sides, 'technique', 'key' ),
 					'options'    => $choice['options'] ?? array(),
 				)
@@ -298,6 +305,26 @@ class CatalogImport {
 		);
 
 		return $id;
+	}
+
+	/**
+	 * The photos to make of the product's designs: the ticked ones it offers
+	 * or, with none ticked, its default ones, and never more than MAX_PHOTOS:
+	 * each is made per colour.
+	 *
+	 * @param array<array{id: int, category: string, view: string, default: bool}> $offered What the product offers.
+	 * @param array<string>                                                        $ticked  The ticked ids.
+	 * @return list<string>
+	 */
+	private static function chosen_photos( array $offered, array $ticked ): array {
+		$ids    = array_map( 'strval', array_column( $offered, 'id' ) );
+		$chosen = array_values( array_intersect( $ids, $ticked ) );
+
+		if ( array() === $chosen ) {
+			$chosen = array_map( 'strval', array_column( array_filter( $offered, static fn( array $photo ): bool => $photo['default'] ), 'id' ) );
+		}
+
+		return array_slice( $chosen, 0, self::MAX_PHOTOS );
 	}
 
 	/**
@@ -910,7 +937,7 @@ class CatalogImport {
 					'variants'   => $provider['variants'] ?? array(),
 					'slots'      => $slots,
 					'flat'       => $provider['flat'] ?? false,
-					'styles'     => $provider['styles'] ?? array(),
+					'photos'     => $provider['photos'] ?? array(),
 					'techniques' => $provider['techniques'] ?? array(),
 					'options'    => $provider['options'] ?? array(),
 				)
