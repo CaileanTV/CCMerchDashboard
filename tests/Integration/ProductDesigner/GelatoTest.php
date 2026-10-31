@@ -141,7 +141,6 @@ final class GelatoTest extends IntegrationTestCase {
 		remove_action( 'merchboard_notify', $this->listener, 1 );
 		delete_option( GelatoAccount::KEY_OPTION );
 		delete_option( GelatoAccount::STORE_OPTION );
-		delete_transient( GelatoCatalog::CACHE );
 		Settings::save( array_merge( Settings::all(), array( Settings::DESIGNER_ENABLED => false, Settings::GELATO_ENABLED => false ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		$GLOBALS['wp_rest_server'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh REST server after the test.
 		DesignerFiles::remove_all();
@@ -224,15 +223,9 @@ final class GelatoTest extends IntegrationTestCase {
 		self::assertCount( $before, $this->calls );
 	}
 
-	public function test_the_catalogs_are_searched_and_a_template_offers_the_catalog_s_colours_and_sizes(): void {
+	public function test_a_template_offers_the_catalog_s_colours_and_sizes(): void {
 		$this->account->set( self::KEY, self::STORE );
 		$gelato = new GelatoCatalog( $this->api );
-
-		self::assertSame( array( 't-shirts' ), array_column( $gelato->catalogs( 'shirt' ), 'uid' ) );
-		self::assertCount( 2, $gelato->catalogs() );
-		[ , , $args ] = $this->call( 'GET', 'https://product.gelatoapis.com/v3/catalogs' ) ?? self::fail( 'No call.' );
-		self::assertSame( self::KEY, $args['headers']['X-API-KEY'] ?? null );
-		self::assertCount( 1, array_filter( $this->calls, static fn( array $call ): bool => str_contains( $call[1], '/v3/catalogs' ) ), 'The catalogs are cached.' );
 
 		$choice = $gelato->choice( 'tpl-1' );
 		self::assertSame( array( 'Black', 'White' ), array_column( $choice['colors'], 'name' ), 'From the catalog\'s productUid, not the template\'s own option names.' );
@@ -811,19 +804,6 @@ final class GelatoTest extends IntegrationTestCase {
 					'description'  => '<p>Soft cotton.</p>',
 					'previewUrl'   => 'https://cdn.example/gelato-preview.png',
 					'variants'     => array( $variant( 'tv-b-s', 'Black', 'S' ), $variant( 'tv-b-m', 'Black', 'M' ), $variant( 'tv-w-s', 'White', 'S' ), $variant( 'tv-w-m', 'White', 'M' ) ),
-				)
-			),
-			'https://product.gelatoapis.com/v3/catalogs' => self::answer(
-				200,
-				array(
-					array(
-						'catalogUid' => 't-shirts',
-						'title'      => 'T-shirts',
-					),
-					array(
-						'catalogUid' => 'mugs',
-						'title'      => 'Mugs',
-					),
 				)
 			),
 			// The import's products (one per colour and the marker one), and then the design's.

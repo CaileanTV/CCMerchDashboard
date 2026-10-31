@@ -17,9 +17,9 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * ADR-082 pkt. 2 (step 30.13, catalog import from review 30.15): the
- * administrator picks a product catalog at Gelato and one template made of
- * a product from it, which is only Gelato's render engine: its own design
- * is always replaced by our files. The colours and sizes come from each
+ * administrator names one template made in Gelato's dashboard, which is only
+ * Gelato's render engine: its own design is always replaced by our files.
+ * The colours and sizes come from each
  * template variant's `productUid` (the catalog attributes `gco_` and `gsi_`;
  * the variant's own options, "Standard" or "One size" when it has none),
  * the sides from the first variant's image placeholders with their print
@@ -30,17 +30,11 @@ defined( 'ABSPATH' ) || exit;
  * product per picked colour with a transparent file in each placeholder,
  * and one of the first colour with a marker per placeholder (CatalogImport).
  * Only a side an image shows gets a photo. The products
- * stay hidden in the API store (Gelato has no call to delete them). The
- * catalogs are cached for an hour.
+ * stay hidden in the API store (Gelato has no call to delete them).
  */
 class GelatoCatalog implements CatalogRenderer {
 
 	public const SOURCE = 'gelato';
-
-	/**
-	 * The cached catalogs (transient).
-	 */
-	public const CACHE = 'merchboard_gelato_catalogs';
 
 	/**
 	 * The colour of a variant without one.
@@ -94,59 +88,6 @@ class GelatoCatalog implements CatalogRenderer {
 	 */
 	public function available(): bool {
 		return $this->api->available();
-	}
-
-	/**
-	 * The product catalogs whose title holds every word.
-	 *
-	 * @param string $query Words.
-	 * @return list<array{uid: string, title: string}>
-	 * @throws GelatoException When Gelato refuses or fails.
-	 */
-	public function catalogs( string $query = '' ): array {
-		$cached   = get_transient( self::CACHE );
-		$catalogs = array();
-
-		if ( is_array( $cached ) ) {
-			$list = $cached;
-		} else {
-			$answer = $this->api->catalogs();
-			$list   = is_array( $answer['data'] ?? null ) ? $answer['data'] : $answer;
-		}
-
-		// The cache is read like Gelato's answer: every entry is checked again.
-		foreach ( $list as $catalog ) {
-			$uid = is_array( $catalog ) ? ( $catalog['catalogUid'] ?? $catalog['uid'] ?? null ) : null;
-
-			if ( is_array( $catalog ) && is_string( $uid ) && 1 === preg_match( '/^[a-z0-9_-]{1,100}$/i', $uid ) ) {
-				$catalogs[] = array(
-					'uid'   => $uid,
-					'title' => mb_substr( sanitize_text_field( is_string( $catalog['title'] ?? null ) ? $catalog['title'] : $uid ), 0, 100 ),
-				);
-			}
-		}
-
-		if ( ! is_array( $cached ) ) {
-			set_transient( self::CACHE, $catalogs, HOUR_IN_SECONDS );
-		}
-
-		$split = preg_split( '/\s+/u', mb_strtolower( trim( $query ) ) );
-		$words = array_filter( false === $split ? array() : $split, static fn( string $word ): bool => '' !== $word );
-
-		return array_values(
-			array_filter(
-				$catalogs,
-				static function ( array $catalog ) use ( $words ): bool {
-					foreach ( $words as $word ) {
-						if ( ! str_contains( mb_strtolower( $catalog['title'] . ' ' . $catalog['uid'] ), $word ) ) {
-							return false;
-						}
-					}
-
-					return true;
-				}
-			)
-		);
 	}
 
 	/**

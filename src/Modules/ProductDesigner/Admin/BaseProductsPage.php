@@ -534,7 +534,7 @@ final class BaseProductsPage {
 		}
 
 		if ( Settings::gelato_enabled() && null !== $this->gelato ) {
-			$sources[ GelatoCatalog::SOURCE ] = __( 'From Gelato\'s catalog', 'merchboard' );
+			$sources[ GelatoCatalog::SOURCE ] = __( 'From a Gelato template', 'merchboard' );
 		}
 
 		echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( '← All base products', 'merchboard' ) . '</a></p>';
@@ -552,7 +552,7 @@ final class BaseProductsPage {
 		if ( PrintfulCatalog::SOURCE === $source && null !== $this->printful && isset( $sources[ $source ] ) ) {
 			$this->render_printful_catalog( $this->printful );
 		} elseif ( GelatoCatalog::SOURCE === $source && null !== $this->gelato && isset( $sources[ $source ] ) ) {
-			$this->render_gelato_catalog( $this->gelato );
+			$this->render_gelato_template( $this->gelato );
 		} else {
 			$this->render_form( null );
 		}
@@ -640,20 +640,19 @@ final class BaseProductsPage {
 	}
 
 	/**
-	 * Gelato's catalogs: pick one, then the template made of a product from it.
+	 * A Gelato template by its id: Gelato has no call that lists templates or
+	 * shows its products, and only a template can be rendered.
 	 *
 	 * @param GelatoCatalog $gelato Gelato.
 	 */
-	private function render_gelato_catalog( GelatoCatalog $gelato ): void {
+	private function render_gelato_template( GelatoCatalog $gelato ): void {
 		if ( ! $this->gelato_ready ) {
 			echo '<p>' . esc_html__( 'Enter the Gelato API key and store id under Settings → Product designer first.', 'merchboard' ) . '</p>';
 
 			return;
 		}
 
-		// Read-only parameters; nothing is changed by this request.
-		$query    = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
-		$catalog  = isset( $_GET['catalog'] ) ? sanitize_key( wp_unslash( $_GET['catalog'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		// A read-only parameter; nothing is changed by this request.
 		$template = isset( $_GET['template'] ) ? sanitize_text_field( wp_unslash( $_GET['template'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 
 		if ( '' !== $template ) {
@@ -662,47 +661,9 @@ final class BaseProductsPage {
 			return;
 		}
 
-		try {
-			$catalogs = $gelato->catalogs( '' === $catalog ? $query : '' );
-		} catch ( GelatoException $e ) {
-			$this->provider_error( $e->reason(), $e->call, $e->detail );
-
-			return;
-		}
-
-		if ( '' !== $catalog ) {
-			$title = $catalog;
-
-			foreach ( $catalogs as $entry ) {
-				$title = $entry['uid'] === $catalog ? $entry['title'] : $title;
-			}
-
-			/* translators: %s: Gelato catalog title. */
-			echo '<p><strong>' . esc_html( sprintf( __( 'Catalog: %s', 'merchboard' ), $title ) ) . '</strong> · <a href="' . esc_url( self::new_url( array( 'source' => GelatoCatalog::SOURCE ) ) ) . '">' . esc_html__( 'Another catalog', 'merchboard' ) . '</a></p>';
-			echo '<p>' . esc_html__( 'Gelato renders products only from a template. Make one template in the Gelato dashboard of the product from this catalog you want, with the colours and sizes creators may choose, one named image layer per side and at least one mockup: Gelato makes the photos from the mockups in the template. Any design in it is never shown: we replace it with an empty file and later with the creators\' print files. The template id is in the template\'s address at Gelato.', 'merchboard' ) . '</p>';
-			echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( DesignerMenu::SLUG ) . '"><input type="hidden" name="tab" value="' . esc_attr( DesignerMenu::BASES ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( GelatoCatalog::SOURCE ) . '"><input type="hidden" name="catalog" value="' . esc_attr( $catalog ) . '">';
-			echo '<p><label>' . esc_html__( 'Gelato template id', 'merchboard' ) . ' <input type="text" name="template" required class="regular-text" pattern="[A-Za-z0-9-]{1,100}" autocomplete="off"></label> <button type="submit" class="button">' . esc_html__( 'Fetch', 'merchboard' ) . '</button></p></form>';
-
-			return;
-		}
-
-		echo '<p>' . esc_html__( 'Pick the catalog of the product at Gelato, for example t-shirts or mugs.', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html__( 'Gelato renders products only from a template. Make one template in the Gelato dashboard of the product you want, with the colours and sizes creators may choose, one named image layer per side and at least one mockup: Gelato makes the photos from the mockups in the template. Any design in it is never shown: we replace it with an empty file and later with the creators\' print files. The template id is in the template\'s address at Gelato.', 'merchboard' ) . '</p>';
 		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( DesignerMenu::SLUG ) . '"><input type="hidden" name="tab" value="' . esc_attr( DesignerMenu::BASES ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( GelatoCatalog::SOURCE ) . '">';
-		echo '<p><label>' . esc_html__( 'Search', 'merchboard' ) . ' <input type="search" name="q" value="' . esc_attr( $query ) . '" class="regular-text"></label> <button type="submit" class="button">' . esc_html__( 'Search', 'merchboard' ) . '</button></p></form>';
-
-		if ( array() === $catalogs ) {
-			echo '<p>' . esc_html__( 'No catalogs found.', 'merchboard' ) . '</p>';
-
-			return;
-		}
-
-		echo '<ul>';
-
-		foreach ( $catalogs as $entry ) {
-			echo '<li><a href="' . esc_url( self::new_url( array( 'source' => GelatoCatalog::SOURCE, 'catalog' => $entry['uid'] ) ) ) . '">' . esc_html( $entry['title'] ) . '</a></li>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-		}
-
-		echo '</ul>';
+		echo '<p><label>' . esc_html__( 'Gelato template id', 'merchboard' ) . ' <input type="text" name="template" required class="regular-text" pattern="[A-Za-z0-9-]{1,100}" autocomplete="off"></label> <button type="submit" class="button">' . esc_html__( 'Fetch', 'merchboard' ) . '</button></p></form>';
 	}
 
 	/**

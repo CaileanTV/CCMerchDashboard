@@ -20,7 +20,6 @@ defined( 'ABSPATH' ) || exit;
  * ADR-082 pkt. 1 and 5: the Gelato calls Merch Dashboard makes, with the
  * key as `X-API-KEY`:
  *
- * - `GET https://product.gelatoapis.com/v3/catalogs` (the catalog search, review 30.15);
  * - on `https://ecommerce.gelatoapis.com`: `GET /v1/templates/{templateId}`,
  *   `POST /v1/stores/{storeId}/products:create-from-template` and
  *   `GET /v1/stores/{storeId}/products/{productId}`;
@@ -35,8 +34,6 @@ defined( 'ABSPATH' ) || exit;
 class GelatoApi {
 
 	public const BASE = 'https://ecommerce.gelatoapis.com';
-
-	public const CATALOG_BASE = 'https://product.gelatoapis.com';
 
 	private const TIMEOUT = 15;
 
@@ -66,16 +63,6 @@ class GelatoApi {
 	 */
 	public function available(): bool {
 		return Settings::gelato_enabled() && $this->account->configured();
-	}
-
-	/**
-	 * The product catalogs (`catalogUid`, `title`).
-	 *
-	 * @return array<mixed>
-	 * @throws GelatoException When the call fails.
-	 */
-	public function catalogs(): array {
-		return $this->call( 'GET', '/v3/catalogs', null, self::CATALOG_BASE );
 	}
 
 	/**
@@ -155,11 +142,10 @@ class GelatoApi {
 	 * @param string                    $method Method.
 	 * @param string                    $path   Path.
 	 * @param array<string, mixed>|null $body   JSON body.
-	 * @param string                    $base   API host.
 	 * @return array<string, mixed>
 	 * @throws GelatoException When the call fails.
 	 */
-	private function call( string $method, string $path, ?array $body = null, string $base = self::BASE ): array {
+	private function call( string $method, string $path, ?array $body = null ): array {
 		$this->require_available();
 
 		$args = array(
@@ -176,8 +162,8 @@ class GelatoApi {
 			$args['body']                    = (string) wp_json_encode( $body );
 		}
 
-		$response = ( $this->http )( $method, $base . $path, $args );
-		$call     = $method . ' ' . (string) wp_parse_url( $base, PHP_URL_HOST ) . $path;
+		$response = ( $this->http )( $method, self::BASE . $path, $args );
+		$call     = $method . ' ' . (string) wp_parse_url( self::BASE, PHP_URL_HOST ) . $path;
 
 		if ( $response instanceof WP_Error ) {
 			self::fail( GelatoException::FAILED, $call );
