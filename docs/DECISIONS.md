@@ -385,7 +385,7 @@ Nye dokumenter følger denne regel.
 2026-09-24
 
 ## Status
-Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069) og YouTube Data API v3 (ADR-070), kun til alert-chatbotten. **Statusnote 2026-10-28:** og Printful (ADR-081, kun katalog og mockups) og Gelato (ADR-082, katalog og mockups via Gelato-skabeloner), kun til produktdesigneren (ADR-080). **Statusnote 2026-10-31:** og Prodigi (ADR-084, katalog og mockups, kun til produktdesigneren).
+Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069) og YouTube Data API v3 (ADR-070), kun til alert-chatbotten. **Statusnote 2026-10-28:** og Printful (ADR-081, kun katalog og mockups) og Gelato (ADR-082, katalog og mockups via Gelato-skabeloner), kun til produktdesigneren (ADR-080). **Statusnote 2026-10-31:** og Prodigi (ADR-084, katalog og mockups, kun til produktdesigneren). **Statusnote 2026-11-01:** og Printify (ADR-087), foreløbig kun læsning af kataloget til en afprøvning.
 
 ## Context
 Udviklingsmiljøet kan have connectors til eksterne tjenester (fx Dinero og Google Drive). Hvis de er tilgængelige, er der risiko for, at de bliver brugt som datakilde, lager eller backup, uden at det er en del af projektets arkitektur. Roadmappets "Integrations"-område er bevidst formuleret generisk.
@@ -4925,7 +4925,7 @@ Schema-version 40: tabellen `merchboard_product_removal_requests`. Tabellen slet
 2026-10-31
 
 ## Status
-Accepteret. Projektejeren har godkendt Prodigi som ny tjeneste 2026-10-31, og at den bygges ind i produktdesigneren, mens den faktiske opsætning (konto, nøgle, rigtige kald) venter. **Eksperimentel: skrevet ud fra Prodigis OpenAPI-fil og testet med falsk HTTP. Intet kald er kørt mod Prodigi.**
+Accepteret. Projektejeren har godkendt Prodigi som ny tjeneste 2026-10-31, og at den bygges ind i produktdesigneren, mens den faktiske opsætning (konto, nøgle, rigtige kald) venter. **Eksperimentel: skrevet ud fra Prodigis OpenAPI-fil og testet med falsk HTTP. Intet kald er kørt mod Prodigi.** **Statusnote 2026-11-01:** adgangen til v5 er ikke bevist. Projektejerens dashboard viser kun en `test_`-nøgle, og Prodigis officielle dokumentation dækker kun v4. Projektejeren afventer svar fra Prodigi. Lukker v5, skal import og mockups laves på v4 eller med egne mockups.
 
 ## Context
 Printful og Gelato dækker ikke alt, projektejeren vil tilbyde, og Prodigi har egen produktion i EU. Prodigis v4-dokumentation viser hverken katalogliste eller mockups, men v5-specifikationen (`https://www.prodigi.com/print-api/reference/v5/openapi.yml`) har begge dele. Grænsen er 1.000 kald i timen pr. nøgle.
@@ -5040,3 +5040,51 @@ Migration 43 tilføjer tabellerne og kolonnerne, se DATABASE.md. Eksisterende r�
 
 ## Related
 ADR-054, ADR-060, ADR-063, ADR-068, ADR-080, ADR-085
+
+---
+
+# ADR-087: Printify som ekstra tjeneste
+
+## Date
+2026-11-01
+
+## Status
+Accepteret af projektejeren 2026-11-01 som endnu en tjeneste ved siden af Printful, Gelato og Prodigi, ikke som erstatning. **Foreløbig gælder godkendelsen kun afprøvning af kataloget med læseadgang. Der er ikke skrevet kode, og intet kald er kørt mod Printify.** Selve integrationen kræver, at afprøvningen er gennemført, og en statusnote her.
+
+## Context
+Printifys API er dokumenteret offentligt, og en personlig nøgle kan oprettes af kontohaveren uden godkendelse. Prodigi viste, at dokumentation ikke beviser adgang: den kode blev bygget, før en nøgle fandtes, og v5-adgangen er stadig ikke bevist (ADR-084). Printify skal derfor prøves med en rigtig nøgle, før der bygges.
+
+Dokumentationen siger: v1 er komplet, v2 anbefales til nye integrationer, men dækker kun katalog og forsendelse. Varianter har printmål i pixels, men ingen farvekoder. Producenter har en returadresse, men der er intet landefilter. Mockups findes kun på et oprettet produkt i en butik, og et produkt kan slettes igen. Der nævnes hverken testmiljø eller all-over print. Dokumentationens historik slutter ifølge vores læsning i oktober 2024.
+
+## Decision
+1. **Ekstra tjeneste.** Printify erstatter ikke nogen tjeneste og ændrer intet ved Prodigi-sporet.
+2. **Afprøvning først.** Nøglen må kun have `shops.read`, `catalog.read` og `print_providers.read`. Tilladte kald: `GET /v1/shops.json` og `GET` under `/v1/catalog/`. Nøglen ligger i en miljøvariabel på projektejerens maskine og må aldrig stå i chat, filer, commits eller ZIP'er.
+3. **Afprøvningen skal svare på:** hvilke producenter ligger i EU, hvilke produkttyper og teknikker de har, om printmålene passer til `BaseView`, og om katalogdata kan bruges uden farvekoder.
+4. **Ingen ordrer, uploads eller produkter** før en ny statusnote. Ordrer kræver sin egen ADR.
+5. **Samme regler som de andre tjenester, når der bygges:** kill switch fra som standard, krypteret nøgle, og creators og kunder ser aldrig navnet Printify.
+
+## Alternatives considered
+- **Bygge straks ud fra dokumentationen:** fravalgt, fordi det var den fejl, Prodigi-sporet viste.
+- **Erstatte Prodigi:** fravalgt af projektejeren.
+- **OAuth-app:** fravalgt; den er til platforme for flere sælgere og kræver ansøgning.
+
+## Reason
+En nøgle med læseadgang koster ingenting og viser, om Printify overhovedet kan levere fra EU, før der bruges tid på kode.
+
+## Security
+Scopes uden skrivning betyder, at en lækket nøgle ikke kan oprette produkter eller ordrer. Nøglen gælder ét år og kan tilbagekaldes af projektejeren.
+
+## Consequences
+**Vilkår (projektejerens valg 2026-11-01):** vi tager udgangspunkt i Printifys Terms of Service (opdateret 2026-09-17). Siden `printify.com/API-terms/`, som dokumentationen linker til, gav 404 den 2026-11-01, og der afventes ingen særskilte API-vilkår. Sådan læses de:
+- **Automatisk adgang:** H.9.14 forbyder adgang med "automated means" for at hente data og nævner ikke API'et. Vi bruger kun det API, Printify selv udstiller, inden for dets dokumenterede grænser. Der skrabes ikke fra hjemmesiden.
+- **Creators:** licensen er til "Your own individual use" (H.1), og adgang må ikke deles (H.9.4). Virksomheden er sælger og eneste bruger af kontoen. Creators får aldrig adgang til Printify.
+- **Mockups:** Printify ejer mockups og skabeloner (L.3), og de må kun bruges til at sælge produkter fra Printify. De må derfor ikke vises på varer fra en anden leverandør.
+- **Blanke varer:** H.9.11 forbyder videresalg af varer uden eget tryk, så alle produkter skal have et design.
+
+Stadig åbent eller en risiko:
+- **Neutral levering:** de sider, vi har læst, siger ikke, om pakkesedler og pakker er neutrale. Det afgør, om kravet om aldrig at nævne leverandøren kan holdes, og skal være på plads, før rigtige ordrer overvejes.
+- **Afhængighed:** Printify kan suspendere eller lukke en konto efter eget skøn (G.1.4, G.4), og ansvaret er loftbelagt (M.1).
+- **Automatisk godkendelse:** nye butikker godkender ordrer efter 24 timer og slås kun fra i Printifys eget system. Det er uden betydning, så længe vi ikke sender ordrer.
+
+## Related
+ADR-016, ADR-080, ADR-081, ADR-082, ADR-084
