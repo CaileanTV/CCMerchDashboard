@@ -100,6 +100,9 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Slet permanent:** fjerner designet. Har det været i butikken, bliver versioner og filer til ordrerne, men creatoren ser det aldrig igen.
 - **Varianter:** en farve eller størrelse med ét valg vises på produktet uden at være et valg, og 1 × 1 er et simpelt produkt.
 
+## Størrelsernes rækkefølge (2026-11-01)
+Admin ændrer rækkefølgen med pile under feltet Størrelser. Designeren viser størrelserne i den rækkefølge, og et godkendt design følger grundproduktets rækkefølge, også hvis det blev gemt før ændringen. Rækkefølgen giver ikke en ny version af grundproduktet, så kladder og ventende designs forbliver gyldige. Produkter i butikken ændres ikke, før en ændring af dem godkendes.
+
 ## Fontvælger (2026-11-01)
 Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i sin egen skrift. En almindelig select kan ikke det i de fleste browsere, så `FontPicker` er sin egen liste med tastaturstyring. Fontfilerne hentes først, når listen åbnes.
 

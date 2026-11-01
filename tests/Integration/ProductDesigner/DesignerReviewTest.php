@@ -842,6 +842,23 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		}
 	}
 
+	public function test_a_new_order_of_the_sizes_reaches_a_saved_design_without_a_new_version(): void {
+		$product = $this->submitted();
+		$version = $this->bases_row()->version;
+
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '149,95' ), array( 'sizes' => 'M, S' ) ), $this->base_views() );
+
+		self::assertSame( array( 'M', 'S' ), $this->bases_row()->sizes );
+		self::assertSame( $version, $this->bases_row()->version, 'A saved or sent design stays valid.' );
+
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+
+		[ , $content ] = $this->writer->contents[0];
+
+		self::assertSame( array( 'M', 'S' ), $content->sizes );
+	}
+
 	public function test_a_new_embroidery_file_is_charged_once_at_the_first_sale(): void {
 		$this->fees->set_amount( '149,50' );
 

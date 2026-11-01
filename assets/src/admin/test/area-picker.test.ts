@@ -4,12 +4,90 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { drawnArea, isInside, movedArea } from '../area-picker';
-import { sizesOf } from '../base-products-admin';
+import { attachSizeOrder, movedSize, sizesOf } from '../base-products-admin';
 
 describe( 'the sizes with a price', () => {
 	it( 'are the sizes of the field, each once', () => {
 		expect( sizesOf( 'S, M\nL,, M ' ) ).toEqual( [ 'S', 'M', 'L' ] );
 		expect( sizesOf( '  ' ) ).toEqual( [] );
+	} );
+} );
+
+describe( 'the order of the sizes', () => {
+	const sizes = [ '33 cl', '44 cl', '55 cl' ];
+
+	it( 'moves one size a place, up or down', () => {
+		expect( movedSize( sizes, 1, -1 ) ).toEqual( [
+			'44 cl',
+			'33 cl',
+			'55 cl',
+		] );
+		expect( movedSize( sizes, 1, 1 ) ).toEqual( [
+			'33 cl',
+			'55 cl',
+			'44 cl',
+		] );
+		expect( sizes ).toEqual( [ '33 cl', '44 cl', '55 cl' ] );
+	} );
+} );
+
+describe( 'the arrows of the sizes', () => {
+	const setup = () => {
+		const holder = document.createElement( 'div' );
+		const field = document.createElement( 'input' );
+
+		field.value = 'S, M, L';
+		document.body.append( field, holder );
+		attachSizeOrder( holder, field );
+
+		return { holder, field };
+	};
+	const arrow = ( holder: HTMLElement, move: string ) =>
+		holder.querySelector< HTMLButtonElement >(
+			`[data-move="${ move }"]`
+		) as HTMLButtonElement;
+
+	it( 'writes the sizes field and tells the other fields', () => {
+		const { holder, field } = setup();
+		const changes: string[] = [];
+
+		field.addEventListener( 'input', () => changes.push( field.value ) );
+		arrow( holder, 'M:1' ).click();
+
+		expect( field.value ).toBe( 'S, L, M' );
+		expect( changes ).toEqual( [ 'S, L, M' ] );
+		expect(
+			Array.from( holder.querySelectorAll( 'p' ) ).map( ( row ) =>
+				row.textContent?.trim()
+			)
+		).toEqual( [ '↑ ↓ S', '↑ ↓ L', '↑ ↓ M' ] );
+	} );
+
+	it( 'cannot move past the ends and keeps the keyboard on an arrow', () => {
+		const { holder } = setup();
+
+		expect( arrow( holder, 'S:-1' ).disabled ).toBe( true );
+		expect( arrow( holder, 'L:1' ).disabled ).toBe( true );
+
+		arrow( holder, 'S:1' ).click();
+		expect( holder.ownerDocument.activeElement ).toBe(
+			arrow( holder, 'S:1' )
+		);
+
+		arrow( holder, 'S:1' ).click();
+		expect( arrow( holder, 'S:1' ).disabled ).toBe( true );
+		expect(
+			( holder.ownerDocument.activeElement as HTMLElement ).tagName
+		).toBe( 'BUTTON' );
+	} );
+
+	it( 'follows what is typed and hides with a single size', () => {
+		const { holder, field } = setup();
+
+		field.value = 'One size';
+		field.dispatchEvent( new Event( 'input' ) );
+
+		expect( holder.hidden ).toBe( true );
 	} );
 } );
 

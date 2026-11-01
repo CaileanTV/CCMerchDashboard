@@ -297,7 +297,7 @@ class DesignerApply {
 				),
 				$colors
 			),
-			is_array( $sizes ) ? array_values( array_filter( $sizes, 'is_string' ) ) : array(),
+			self::in_base_order( is_array( $sizes ) ? array_values( array_filter( $sizes, 'is_string' ) ) : array(), $base ),
 			$images,
 			$first,
 			$price,
@@ -307,6 +307,20 @@ class DesignerApply {
 			array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $this->size_prices( $version, $base ) ),
 			$size_images
 		);
+	}
+
+	/**
+	 * The sizes in the base product's order, which can change after a design
+	 * was saved. A size it no longer has comes last.
+	 *
+	 * @phpstan-param list<string> $sizes
+	 *
+	 * @param string[]    $sizes The version's sizes.
+	 * @param BaseProduct $base  The base product.
+	 * @return list<string>
+	 */
+	private static function in_base_order( array $sizes, BaseProduct $base ): array {
+		return array_values( array_unique( array_merge( array_intersect( $base->sizes, $sizes ), $sizes ) ) );
 	}
 
 	/**

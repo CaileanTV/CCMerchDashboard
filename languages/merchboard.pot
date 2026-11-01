@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-31T22:28:06+00:00\n"
+"POT-Creation-Date: 2026-11-01T15:56:42+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -6413,7 +6413,7 @@ msgid "One per line: a name and a colour code, e.g. \"Black #111111\"."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:371
-msgid "Separated by commas, e.g. \"S, M, L, XL\"."
+msgid "Separated by commas, e.g. \"S, M, L, XL\". Creators and customers see them in this order."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:375
@@ -6702,16 +6702,20 @@ msgid "Mockup %s"
 msgstr ""
 
 #. translators: %s: the photo's name.
+#. translators: %s: a size.
 #. translators: %s: colour name.
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:989
+#: build/base-products-admin.js:7
 #: build/dashboard.js:58
 #, php-format,js-format
 msgid "Move %s up"
 msgstr ""
 
 #. translators: %s: the photo's name.
+#. translators: %s: a size.
 #. translators: %s: colour name.
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:991
+#: build/base-products-admin.js:8
 #: build/dashboard.js:58
 #, php-format,js-format
 msgid "Move %s down"
@@ -13419,15 +13423,15 @@ msgstr ""
 msgid "Effects, masks or adjustments on these layers are left out: %s."
 msgstr ""
 
-#: build/base-products-admin.js:6
+#: build/base-products-admin.js:8
 msgid "Only for these sizes (none ticked: every size):"
 msgstr ""
 
-#: build/base-products-admin.js:6
+#: build/base-products-admin.js:8
 msgid "Draw the print area on the image with the mouse. Drag inside it to move it."
 msgstr ""
 
-#: build/base-products-admin.js:6
+#: build/base-products-admin.js:8
 msgid "Choose a background to draw the print area on it."
 msgstr ""
 

@@ -273,6 +273,115 @@ export function sizesOf( text: string ): string[] {
 }
 
 /**
+ * The sizes with one moved a place, as the sizes field holds them.
+ *
+ * @param sizes The sizes.
+ * @param index The size to move.
+ * @param step  -1 up, 1 down.
+ */
+export function movedSize(
+	sizes: readonly string[],
+	index: number,
+	step: -1 | 1
+): string[] {
+	const moved = [ ...sizes ];
+	const [ size ] = moved.splice( index, 1 );
+
+	if ( size !== undefined ) {
+		moved.splice( index + step, 0, size );
+	}
+
+	return moved;
+}
+
+/**
+ * Arrows that change the order of the sizes. They write the sizes field, as
+ * typing does, so the prices and the sides follow. Nothing is saved before the
+ * form is.
+ *
+ * @param holder The place.
+ * @param sizes  The sizes field.
+ */
+export function attachSizeOrder(
+	holder: HTMLElement,
+	sizes: HTMLInputElement
+): void {
+	const draw = (): void => {
+		const offered = sizesOf( sizes.value );
+
+		holder.replaceChildren();
+		holder.hidden = offered.length < 2;
+
+		offered.forEach( ( size, index ) => {
+			const row = document.createElement( 'p' );
+			const arrow = (
+				text: string,
+				label: string,
+				step: -1 | 1,
+				disabled: boolean
+			): HTMLButtonElement => {
+				const button = document.createElement( 'button' );
+
+				button.type = 'button';
+				button.className = 'button button-small';
+				button.textContent = text;
+				button.disabled = disabled;
+				button.setAttribute( 'aria-label', label );
+				button.dataset.move = `${ size }:${ step }`;
+				button.addEventListener( 'click', () => {
+					sizes.value = movedSize( offered, index, step ).join(
+						', '
+					);
+					sizes.dispatchEvent(
+						new Event( 'input', { bubbles: true } )
+					);
+
+					// The same arrow, or the first one left at the end of the list.
+					const arrows = Array.from(
+						holder.querySelectorAll< HTMLButtonElement >(
+							'button:not(:disabled)'
+						)
+					);
+
+					(
+						arrows.find(
+							( candidate ) =>
+								candidate.dataset.move === `${ size }:${ step }`
+						) ?? arrows[ 0 ]
+					)?.focus();
+				} );
+
+				return button;
+			};
+
+			row.style.margin = '4px 0';
+			row.append(
+				arrow(
+					'↑',
+					/* translators: %s: a size. */
+					sprintf( __( 'Move %s up', 'merchboard' ), size ),
+					-1,
+					index === 0
+				),
+				' ',
+				arrow(
+					'↓',
+					/* translators: %s: a size. */
+					sprintf( __( 'Move %s down', 'merchboard' ), size ),
+					1,
+					index === offered.length - 1
+				),
+				` ${ size }`
+			);
+			holder.append( row );
+		} );
+	};
+
+	sizes.addEventListener( 'input', draw );
+	draw();
+}
+
+/**
  * Shows a price field per size while the tick is on. A size keeps what was
  * typed for it when the list of sizes changes.
  *
@@ -487,6 +596,12 @@ if (
 	sizeField instanceof HTMLInputElement
 ) {
 	attachSizePrices( sizePrices, sizeTick, sizeField );
+}
+
+const sizeOrder = document.getElementById( 'merchboard-base-size-order' );
+
+if ( sizeOrder !== null && sizeField instanceof HTMLInputElement ) {
+	attachSizeOrder( sizeOrder, sizeField );
 }
 
 if ( sizeField instanceof HTMLInputElement ) {

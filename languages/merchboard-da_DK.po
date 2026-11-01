@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-10-31T22:28:12+00:00\n"
+"PO-Revision-Date: 2026-11-01T15:56:47+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -6413,8 +6413,8 @@ msgid "One per line: a name and a colour code, e.g. \"Black #111111\"."
 msgstr "Én pr. linje: et navn og en farvekode, fx \"Sort #111111\"."
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:371
-msgid "Separated by commas, e.g. \"S, M, L, XL\"."
-msgstr "Adskilt med komma, fx \"S, M, L, XL\"."
+msgid "Separated by commas, e.g. \"S, M, L, XL\". Creators and customers see them in this order."
+msgstr "Adskilt med komma, fx \"S, M, L, XL\". Creators og kunder ser dem i denne rækkefølge."
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:375
 msgid "Each side has a mockup template of PNG layers of the same size: the background, the colour mask (tinted in the product colour), the shading and the highlight. The print area is where the design is placed on the template (in pixels) and its real size when printed (millimetres at a resolution in dpi)."
@@ -6702,16 +6702,20 @@ msgid "Mockup %s"
 msgstr "Mockup %s"
 
 #. translators: %s: the photo's name.
+#. translators: %s: a size.
 #. translators: %s: colour name.
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:989
+#: build/base-products-admin.js:7
 #: build/dashboard.js:58
 #, js-format,php-format
 msgid "Move %s up"
 msgstr "Flyt %s op"
 
 #. translators: %s: the photo's name.
+#. translators: %s: a size.
 #. translators: %s: colour name.
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:991
+#: build/base-products-admin.js:8
 #: build/dashboard.js:58
 #, js-format,php-format
 msgid "Move %s down"
@@ -13419,15 +13423,15 @@ msgstr "Læste %1$s (mockup %2$d × %3$d px). Gem for at beholde den."
 msgid "Effects, masks or adjustments on these layers are left out: %s."
 msgstr "Effekter, masker eller justeringer på disse lag er udeladt: %s."
 
-#: build/base-products-admin.js:6
+#: build/base-products-admin.js:8
 msgid "Only for these sizes (none ticked: every size):"
 msgstr "Kun til disse størrelser (ingen krydset af: alle størrelser):"
 
-#: build/base-products-admin.js:6
+#: build/base-products-admin.js:8
 msgid "Draw the print area on the image with the mouse. Drag inside it to move it."
 msgstr "Tegn printområdet på billedet med musen. Træk inde i området for at flytte det."
 
-#: build/base-products-admin.js:6
+#: build/base-products-admin.js:8
 msgid "Choose a background to draw the print area on it."
 msgstr "Vælg en baggrund for at tegne printområdet på den."
 
