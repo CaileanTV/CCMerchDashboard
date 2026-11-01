@@ -156,6 +156,12 @@ final class Settings {
 	public const PRODIGI_ENABLED = 'prodigi_enabled';
 
 	/**
+	 * Whether Printify's catalog is used for base products (ADR-087). Off by
+	 * default; enabled only by exactly boolean true.
+	 */
+	public const PRINTIFY_ENABLED = 'printify_enabled';
+
+	/**
 	 * Whether customers get an optional "username" field in the checkout
 	 * (ADR-065 pkt. 9, step 25.9.1). Off by default; shown only while alerts
 	 * are on; enabled only by exactly boolean true.
@@ -253,7 +259,7 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, designer_digitization_fee: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string}
 	 */
 	public static function defaults(): array {
 		return array(
@@ -276,6 +282,7 @@ final class Settings {
 			self::PRINTFUL_ENABLED          => false,
 			self::GELATO_ENABLED            => false,
 			self::PRODIGI_ENABLED           => false,
+			self::PRINTIFY_ENABLED          => false,
 			self::DESIGNER_DIGITIZATION_FEE => '0.0000',
 		);
 	}
@@ -287,7 +294,7 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, designer_digitization_fee: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string}
 	 */
 	public static function sanitize( array $values ): array {
 		$slug  = $values[ self::DASHBOARD_SLUG ] ?? null;
@@ -322,6 +329,7 @@ final class Settings {
 			self::PRINTFUL_ENABLED          => true === ( $values[ self::PRINTFUL_ENABLED ] ?? false ),
 			self::GELATO_ENABLED            => true === ( $values[ self::GELATO_ENABLED ] ?? false ),
 			self::PRODIGI_ENABLED           => true === ( $values[ self::PRODIGI_ENABLED ] ?? false ),
+			self::PRINTIFY_ENABLED          => true === ( $values[ self::PRINTIFY_ENABLED ] ?? false ),
 			self::DESIGNER_DIGITIZATION_FEE => is_string( $values[ self::DESIGNER_DIGITIZATION_FEE ] ?? null ) && 1 === preg_match( '/^\d{1,7}\.\d{4}$/', $values[ self::DESIGNER_DIGITIZATION_FEE ] ) ? $values[ self::DESIGNER_DIGITIZATION_FEE ] : '0.0000',
 		);
 	}
@@ -446,7 +454,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, designer_digitization_fee: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );
@@ -597,6 +605,13 @@ final class Settings {
 	 */
 	public static function prodigi_enabled(): bool {
 		return self::all()[ self::PRODIGI_ENABLED ];
+	}
+
+	/**
+	 * Whether Printify's catalog is switched on (ADR-087).
+	 */
+	public static function printify_enabled(): bool {
+		return self::all()[ self::PRINTIFY_ENABLED ];
 	}
 
 	/**

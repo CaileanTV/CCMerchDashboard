@@ -31,7 +31,7 @@ final class NoProviderNamesTest extends TestCase {
 		foreach ( $files as $file ) {
 			$path = str_replace( '\\', '/', (string) $file );
 
-			if ( ! str_contains( $path, '/test/' ) && 1 === preg_match( '/printful|gelato|prodigi/i', (string) file_get_contents( $path ) ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A source file.
+			if ( ! str_contains( $path, '/test/' ) && 1 === preg_match( '/printful|gelato|prodigi|printify/i', (string) file_get_contents( $path ) ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A source file.
 				$found[] = $path;
 			}
 		}

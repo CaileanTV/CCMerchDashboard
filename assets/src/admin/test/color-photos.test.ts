@@ -41,6 +41,9 @@ describe( 'naming and measuring', () => {
 				{ name: 'Hvid', hex: '#eeeeee' },
 			] )
 		).toBe( 'Lime Grøn #00ff00\nSort, 111111\nHvid #eeeeee' );
+		expect(
+			withColors( 'Ash #ffffff', [ { name: 'Ash', hex: '#dddddd' } ] )
+		).toBe( 'Ash #dddddd' );
 		expect( withColors( '', [ { name: 'Hvid', hex: '#eeeeee' } ] ) ).toBe(
 			'Hvid #eeeeee'
 		);

@@ -99,7 +99,7 @@ class PrintfulCatalog implements CatalogRenderer {
 	 * A sentence of a catalog text that names a provider is left out: creators
 	 * and customers never see one.
 	 */
-	private const NAMES_PROVIDER = '/\b(printful|gelato|prodigi)\b/i';
+	private const NAMES_PROVIDER = '/\b(printful|gelato|prodigi|printify)\b/i';
 
 	private const POLL_DELAY = 15;
 

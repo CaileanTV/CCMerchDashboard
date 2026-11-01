@@ -23,6 +23,8 @@ use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogRenderer;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintifyCatalog;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintifyException;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
@@ -96,8 +98,10 @@ final class BaseProductsPage {
 	 * @param GelatoCatalog|null      $gelato         Gelato's catalogs and templates.
 	 * @param ProdigiCatalog|null     $prodigi        Prodigi's catalogue.
 	 * @param bool                    $prodigi_ready  Whether a Prodigi key is stored.
+	 * @param PrintifyCatalog|null    $printify       Printify's catalog.
+	 * @param bool                    $printify_ready Whether a Printify token is stored.
 	 */
-	public function __construct( private BaseProductRepository $bases, private DesignerAssetRepository $assets, private int $decimals, private string $currency, private string $plugin_dir = '', private string $plugin_url = '', private bool $printful_ready = false, private bool $gelato_ready = false, private ?CatalogImport $catalog = null, private ?PrintfulCatalog $printful = null, private ?GelatoCatalog $gelato = null, private ?ProdigiCatalog $prodigi = null, private bool $prodigi_ready = false ) {
+	public function __construct( private BaseProductRepository $bases, private DesignerAssetRepository $assets, private int $decimals, private string $currency, private string $plugin_dir = '', private string $plugin_url = '', private bool $printful_ready = false, private bool $gelato_ready = false, private ?CatalogImport $catalog = null, private ?PrintfulCatalog $printful = null, private ?GelatoCatalog $gelato = null, private ?ProdigiCatalog $prodigi = null, private bool $prodigi_ready = false, private ?PrintifyCatalog $printify = null, private bool $printify_ready = false ) {
 	}
 
 	/**
@@ -213,6 +217,12 @@ final class BaseProductsPage {
 			GelatoException::RATE_LIMITED           => array( __( 'Gelato asks us to wait a minute. Please try again shortly.', 'merchboard' ), 'error' ),
 			GelatoException::INVALID                => array( __( 'The Gelato template has no usable variants or image placeholders.', 'merchboard' ), 'error' ),
 			GelatoException::FAILED                 => array( __( 'Gelato could not be reached. Please try again later.', 'merchboard' ), 'error' ),
+			PrintifyException::NOT_CONFIGURED       => array( __( 'Printify is switched off or has no access token.', 'merchboard' ), 'error' ),
+			PrintifyException::UNAUTHORIZED         => array( __( 'Printify refused the access token. Enter a new one under Settings → Product designer.', 'merchboard' ), 'error' ),
+			PrintifyException::NOT_FOUND            => array( __( 'Printify does not know that product or producer.', 'merchboard' ), 'error' ),
+			PrintifyException::RATE_LIMITED         => array( __( 'Printify asks us to wait a minute. Please try again shortly.', 'merchboard' ), 'error' ),
+			PrintifyException::INVALID              => array( __( 'The Printify product has no variants or print areas that can be used.', 'merchboard' ), 'error' ),
+			PrintifyException::FAILED               => array( __( 'Printify could not be reached. Please try again later.', 'merchboard' ), 'error' ),
 			ProdigiException::NOT_CONFIGURED        => array( __( 'Prodigi is switched off or has no API key.', 'merchboard' ), 'error' ),
 			ProdigiException::UNAUTHORIZED          => array( __( 'Prodigi refused the API key. Enter a new one under Settings → Product designer.', 'merchboard' ), 'error' ),
 			ProdigiException::NOT_FOUND             => array( __( 'Prodigi does not know that product.', 'merchboard' ), 'error' ),
@@ -485,11 +495,8 @@ final class BaseProductsPage {
 		echo '</p>';
 
 		if ( $psd ) {
-			$template = $view->layers['background'] ?? $view->layers['color'] ?? null;
-
-			if ( null === $template && null !== $view ) {
-				$template = array_values( $view->color_backgrounds() )[0] ?? null;
-			}
+			// A colour's photo first: a white sheet from an import shows nothing to draw on.
+			$template = array_values( null === $view ? array() : $view->color_backgrounds() )[0] ?? $view->layers['background'] ?? $view->layers['color'] ?? null;
 
 			echo '<div data-merchboard-area="' . esc_attr( (string) $index ) . '" data-url="' . esc_attr( null === $template ? '' : DesignerAssetDownload::url( $template ) ) . '"></div>';
 		}
@@ -595,6 +602,10 @@ final class BaseProductsPage {
 			$sources[ ProdigiCatalog::SOURCE ] = __( 'From Prodigi\'s catalogue', 'merchboard' );
 		}
 
+		if ( Settings::printify_enabled() && null !== $this->printify ) {
+			$sources[ PrintifyCatalog::SOURCE ] = __( 'From Printify\'s catalog', 'merchboard' );
+		}
+
 		echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html__( '← All base products', 'merchboard' ) . '</a></p>';
 
 		if ( count( $sources ) > 1 ) {
@@ -613,6 +624,8 @@ final class BaseProductsPage {
 			$this->render_gelato_template( $this->gelato );
 		} elseif ( ProdigiCatalog::SOURCE === $source && null !== $this->prodigi && isset( $sources[ $source ] ) ) {
 			$this->render_prodigi_catalog( $this->prodigi );
+		} elseif ( PrintifyCatalog::SOURCE === $source && null !== $this->printify && isset( $sources[ $source ] ) ) {
+			$this->render_printify_catalog( $this->printify );
 		} else {
 			$this->render_form( null );
 		}
@@ -782,6 +795,96 @@ final class BaseProductsPage {
 	}
 
 	/**
+	 * Printify's catalog: search the words, pick a product, then its producer.
+	 * Producers anywhere are offered, the ones in the EU first.
+	 *
+	 * @param PrintifyCatalog $printify Printify's catalog.
+	 */
+	private function render_printify_catalog( PrintifyCatalog $printify ): void {
+		if ( ! $this->printify_ready ) {
+			echo '<p>' . esc_html__( 'Enter the Printify access token under Settings → Product designer first.', 'merchboard' ) . '</p>';
+
+			return;
+		}
+
+		// Read-only parameters; nothing is changed by this request.
+		$query     = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$pick      = isset( $_GET['pick'] ) ? sanitize_text_field( wp_unslash( $_GET['pick'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$blueprint = isset( $_GET['blueprint'] ) ? absint( $_GET['blueprint'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+
+		if ( '' !== $pick ) {
+			$this->render_pick( $printify, PrintifyCatalog::SOURCE, $pick );
+
+			return;
+		}
+
+		try {
+			if ( $blueprint > 0 ) {
+				$this->render_printify_producers( $printify, $blueprint );
+
+				return;
+			}
+
+			echo '<p>' . esc_html__( 'Search Printify\'s catalog and pick the product and its producer. The import brings the colours, sizes and print areas. You add your own photos afterwards and draw the print area on them.', 'merchboard' ) . '</p>';
+			echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( DesignerMenu::SLUG ) . '"><input type="hidden" name="tab" value="' . esc_attr( DesignerMenu::BASES ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( PrintifyCatalog::SOURCE ) . '">';
+			echo '<p><label>' . esc_html__( 'Search', 'merchboard' ) . ' <input type="search" name="q" value="' . esc_attr( $query ) . '" class="regular-text"></label> <button type="submit" class="button">' . esc_html__( 'Search', 'merchboard' ) . '</button></p></form>';
+
+			if ( '' === $query ) {
+				return;
+			}
+
+			$products = $printify->search( $query );
+		} catch ( PrintifyException $e ) {
+			$this->provider_error( $e->reason(), $e->call, $e->detail );
+
+			return;
+		}
+
+		if ( array() === $products ) {
+			echo '<p>' . esc_html__( 'No products found.', 'merchboard' ) . '</p>';
+
+			return;
+		}
+
+		echo '<ul>';
+
+		foreach ( $products as $product ) {
+			echo '<li><a href="' . esc_url( self::new_url( array( 'source' => PrintifyCatalog::SOURCE, 'blueprint' => $product['id'] ) ) ) . '">' . esc_html( trim( $product['title'] . ' · ' . $product['brand'], ' ·' ) ) . '</a></li>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		}
+
+		echo '</ul>';
+
+		if ( count( $products ) >= PrintifyCatalog::MAX_RESULTS ) {
+			echo '<p class="description">' . esc_html__( 'Only the first results are shown. Add words to narrow the search.', 'merchboard' ) . '</p>';
+		}
+	}
+
+	/**
+	 * The producers of a Printify product.
+	 *
+	 * @param PrintifyCatalog $printify  Printify's catalog.
+	 * @param int             $blueprint The product.
+	 * @throws PrintifyException When Printify refuses or fails.
+	 */
+	private function render_printify_producers( PrintifyCatalog $printify, int $blueprint ): void {
+		$producers = $printify->producers( $blueprint );
+
+		if ( array() === $producers ) {
+			echo '<p>' . esc_html__( 'No producer makes this product.', 'merchboard' ) . '</p>';
+
+			return;
+		}
+
+		echo '<p>' . esc_html__( 'Choose the producer. Colours, sizes and print areas differ between them. The ones in the EU are listed first; the place is the address Printify shows for the producer.', 'merchboard' ) . '</p><ul>';
+
+		foreach ( $producers as $producer ) {
+			echo '<li><a href="' . esc_url( self::new_url( array( 'source' => PrintifyCatalog::SOURCE, 'pick' => $blueprint . '-' . $producer['id'] ) ) ) . '">' . esc_html( $producer['title'] ) . '</a> ' . esc_html( trim( $producer['city'] . ', ' . $producer['country'], ', ' ) ) . '</li>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		}
+
+		echo '</ul>';
+	}
+
+	/**
 	 * A Gelato template by its id: Gelato has no call that lists templates or
 	 * shows its products, and only a template can be rendered.
 	 *
@@ -820,13 +923,14 @@ final class BaseProductsPage {
 	private function render_pick( CatalogRenderer $renderer, string $source, string $ref, int $group = 0 ): void {
 		try {
 			$choice = $renderer->choice( $ref, $group );
-		} catch ( PrintfulException | GelatoException | ProdigiException $e ) {
+		} catch ( PrintfulException | GelatoException | ProdigiException | PrintifyException $e ) {
 			$this->provider_error( $e->reason(), $e->call, $e->detail );
 
 			return;
 		}
 
-		$flat = true === ( $choice['flat'] ?? false );
+		$flat    = true === ( $choice['flat'] ?? false );
+		$printed = true === ( $choice['printed'] ?? false );
 
 		$defaults = array_values( array_intersect( array( 'front', 'back' ), array_column( $choice['sides'], 'placement' ) ) );
 		$defaults = PrintfulCatalog::SOURCE === $source && true !== ( $choice['flat'] ?? false ) ? $defaults : array_column( $choice['sides'], 'placement' );
@@ -881,7 +985,7 @@ final class BaseProductsPage {
 			echo '</p>';
 		}
 
-		echo '<p class="description">' . esc_html( $flat ? __( 'Each side is a flat part of the sewing pattern. Keep every part you want printed: an unticked part stays white on the product.', 'merchboard' ) : __( 'At most six sides. Each is rendered and measured; a side whose print area cannot be found on the photos is left out.', 'merchboard' ) ) . '</p></td></tr>';
+		echo '<p class="description">' . esc_html( $printed ? __( 'At most six sides. Each starts as a white sheet with the smallest print size of the sizes you can choose, which fits them all at 300 dpi.', 'merchboard' ) : ( $flat ? __( 'Each side is a flat part of the sewing pattern. Keep every part you want printed: an unticked part stays white on the product.', 'merchboard' ) : __( 'At most six sides. Each is rendered and measured; a side whose print area cannot be found on the photos is left out.', 'merchboard' ) ) ) . '</p></td></tr>';
 
 		$this->render_photos( $choice['photos'] ?? array() );
 
@@ -902,7 +1006,7 @@ final class BaseProductsPage {
 		/* translators: %s: currency code, e.g. "DKK". */
 		echo '<tr><th scope="row"><label for="merchboard-base-extra">' . esc_html( sprintf( __( 'Price per extra design area incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-extra" name="extra_side_price" value="0"><p class="description">' . esc_html( $flat ? __( 'What the company keeps for each part after the first. An all-over design usually covers every part: 0 means they cost nothing extra.', 'merchboard' ) : __( 'What the company keeps for each design area after the first. 0 means extra areas cost nothing.', 'merchboard' ) ) . '</p></td></tr>';
 		echo '</tbody></table>';
-		echo '<p>' . esc_html( $flat ? __( 'The base product is created as a draft at once. Its sewing patterns, if it has any, are fetched in the background. Creators design on the flat parts; the provider makes their mockups when they are sent for approval.', 'merchboard' ) : __( 'The base product is created as a draft at once. The provider then renders its photos without a design and with a marker per side, from which the photos per colour and the print areas are taken, in the background (a few minutes). Check them and activate it.', 'merchboard' ) ) . '</p>';
+		echo '<p>' . esc_html( $printed ? __( 'The base product is created as a draft at once. Then choose your own photos on each side and draw the print area on them.', 'merchboard' ) : ( $flat ? __( 'The base product is created as a draft at once. Its sewing patterns, if it has any, are fetched in the background. Creators design on the flat parts; the provider makes their mockups when they are sent for approval.', 'merchboard' ) : __( 'The base product is created as a draft at once. The provider then renders its photos without a design and with a marker per side, from which the photos per colour and the print areas are taken, in the background (a few minutes). Check them and activate it.', 'merchboard' ) ) ) . '</p>';
 		echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Create and import', 'merchboard' ) . '</button></p></form>';
 	}
 
@@ -1042,7 +1146,7 @@ final class BaseProductsPage {
 			echo '<p><button type="submit" class="button">' . esc_html__( 'Try again', 'merchboard' ) . '</button></p></form></div>';
 		} else {
 			/* translators: %s: Printful or Gelato. */
-			echo '<div class="notice notice-success inline"><p>' . esc_html( sprintf( true === ( $data['flat'] ?? false ) ? __( 'Imported from %s: the flat parts with their print areas. Check them before you activate the base product.', 'merchboard' ) : __( 'Imported from %s: one photo per colour and a measured print area per side. Check each print area before you activate the base product.', 'merchboard' ), $name ) ) . '</p>';
+			echo '<div class="notice notice-success inline"><p>' . esc_html( sprintf( true === ( $data['printed'] ?? false ) ? __( 'Imported from %s: colours, sizes and print sizes. Add your own photos on each side, draw the print area on them, and check everything before you activate the base product.', 'merchboard' ) : ( true === ( $data['flat'] ?? false ) ? __( 'Imported from %s: the flat parts with their print areas. Check them before you activate the base product.', 'merchboard' ) : __( 'Imported from %s: one photo per colour and a measured print area per side. Check each print area before you activate the base product.', 'merchboard' ) ), $name ) ) . '</p>';
 
 			if ( is_array( $data['skipped'] ?? null ) && array() !== $data['skipped'] ) {
 				/* translators: 1: names of sides, 2: Printful or Gelato. */

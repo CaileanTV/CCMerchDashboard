@@ -13,6 +13,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintifyAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
@@ -32,11 +33,12 @@ final class DesignerSettingsSection {
 	/**
 	 * Constructor.
 	 *
-	 * @param PrintfulToken|null  $token  The Printful token (step 30.12).
-	 * @param GelatoAccount|null  $gelato The Gelato key and store (step 30.13).
-	 * @param ProdigiAccount|null $prodigi The Prodigi key (ADR-084).
+	 * @param PrintfulToken|null   $token  The Printful token (step 30.12).
+	 * @param GelatoAccount|null   $gelato The Gelato key and store (step 30.13).
+	 * @param ProdigiAccount|null  $prodigi The Prodigi key (ADR-084).
+	 * @param PrintifyAccount|null $printify The Printify token (ADR-087).
 	 */
-	public function __construct( private ?PrintfulToken $token = null, private ?GelatoAccount $gelato = null, private ?ProdigiAccount $prodigi = null ) {
+	public function __construct( private ?PrintfulToken $token = null, private ?GelatoAccount $gelato = null, private ?ProdigiAccount $prodigi = null, private ?PrintifyAccount $printify = null ) {
 	}
 
 	/**
@@ -53,6 +55,7 @@ final class DesignerSettingsSection {
 			DesignerException::PRINTFUL_TOKEN => array( __( 'The Printful token was not saved: use the token as Printful shows it (letters, digits, - and _).', 'merchboard' ), 'error' ),
 			DesignerException::GELATO_ACCOUNT => array( __( 'The Gelato settings were not saved: use the API key as Gelato shows it and the store id from the store\'s address (a UUID).', 'merchboard' ), 'error' ),
 			DesignerException::PRODIGI_KEY    => array( __( 'The Prodigi key was not saved: use the v5 API key as Prodigi shows it, starting with live_ or sandbox_.', 'merchboard' ), 'error' ),
+			DesignerException::PRINTIFY_KEY   => array( __( 'The Printify token was not saved: paste the whole access token as Printify shows it.', 'merchboard' ), 'error' ),
 			DesignerException::THREAD_PACK    => array( __( 'The embroidery pack was not saved: it needs a name and at least one thread, each thread a unique code, a name and a colour, and a limit between 1 and the number of threads.', 'merchboard' ), 'error' ),
 			DesignerException::THREAD_PACK_IN_USE => array( __( 'A base product uses this embroidery pack, so it cannot be deleted.', 'merchboard' ), 'error' ),
 			'pack_deleted'                    => array( __( 'The embroidery pack was deleted.', 'merchboard' ), 'success' ),
@@ -107,6 +110,12 @@ final class DesignerSettingsSection {
 				__( 'Off by default. Only the catalogue and mockups are used, and only products made in the EU are offered; orders are not sent to Prodigi.', 'merchboard' ),
 				Settings::prodigi_enabled(),
 			),
+			Settings::PRINTIFY_ENABLED => array(
+				__( 'Printify', 'merchboard' ),
+				__( 'Use Printify\'s catalog for base products', 'merchboard' ),
+				__( 'Off by default. Only the catalog is read: products with their colours, sizes and print areas. Nothing is sent to Printify, and it makes neither mockups nor orders.', 'merchboard' ),
+				Settings::printify_enabled(),
+			),
 		);
 
 		self::render_notice();
@@ -152,6 +161,7 @@ final class DesignerSettingsSection {
 		echo '</td></tr>';
 		$this->render_gelato();
 		$this->render_prodigi();
+		$this->render_printify();
 		echo '</tbody></table>';
 		submit_button( __( 'Save product designer settings', 'merchboard' ), 'secondary' );
 		echo '</form>';
@@ -210,6 +220,23 @@ final class DesignerSettingsSection {
 		}
 
 		echo '</p></form></details>';
+	}
+
+	/**
+	 * The Printify access token with the setup guide (ADR-087).
+	 */
+	private function render_printify(): void {
+		$stored = null !== $this->printify && $this->printify->configured();
+
+		echo '<tr><th scope="row"><label for="merchboard-printify-key">' . esc_html__( 'Printify access token', 'merchboard' ) . '</label></th><td>';
+		echo '<input type="password" id="merchboard-printify-key" name="printify_key" value="" class="regular-text" autocomplete="off"> ';
+		echo '<span>' . esc_html( $stored ? __( 'A token is stored.', 'merchboard' ) : __( 'No token yet.', 'merchboard' ) ) . '</span>';
+
+		if ( $stored ) {
+			echo '<br><label><input type="checkbox" name="printify_key_remove" value="1"> ' . esc_html__( 'Remove the stored token', 'merchboard' ) . '</label>';
+		}
+
+		echo '<p class="description">' . esc_html__( 'A personal access token from Printify (My Profile → Connections) with the scopes catalog.read and print_providers.read. It is stored encrypted and never shown again; leave the field empty to keep the stored one. A token is valid for one year.', 'merchboard' ) . '</p></td></tr>';
 	}
 
 	/**

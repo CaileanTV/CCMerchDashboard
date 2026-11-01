@@ -63,6 +63,9 @@ use MerchBoard\Modules\ProductDesigner\Providers\GelatoMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintifyAccount;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintifyApi;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintifyCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiApi;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiCatalog;
@@ -144,6 +147,10 @@ final class ProductDesignerModule implements Module {
 		$container->set( GelatoAccount::class, static fn( Container $c ): GelatoAccount => new GelatoAccount( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( GelatoApi::class, static fn( Container $c ): GelatoApi => new GelatoApi( $c->get( GelatoAccount::class ) ) );
 		$container->set( GelatoCatalog::class, static fn( Container $c ): GelatoCatalog => new GelatoCatalog( $c->get( GelatoApi::class ) ) );
+		// Printify (ADR-087): the token, the API and the catalog.
+		$container->set( PrintifyAccount::class, static fn( Container $c ): PrintifyAccount => new PrintifyAccount( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set( PrintifyApi::class, static fn( Container $c ): PrintifyApi => new PrintifyApi( $c->get( PrintifyAccount::class ) ) );
+		$container->set( PrintifyCatalog::class, static fn( Container $c ): PrintifyCatalog => new PrintifyCatalog( $c->get( PrintifyApi::class ) ) );
 		// Prodigi (ADR-084): the key, the API, the catalogue and the mockups.
 		$container->set( ProdigiAccount::class, static fn( Container $c ): ProdigiAccount => new ProdigiAccount( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( ProdigiApi::class, static fn( Container $c ): ProdigiApi => new ProdigiApi( $c->get( ProdigiAccount::class ) ) );
@@ -175,7 +182,8 @@ final class ProductDesignerModule implements Module {
 				plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ) . 'assets/designer/',
 				$c->get( PrintfulCatalog::class ),
 				$c->get( GelatoCatalog::class ),
-				$c->get( ProdigiCatalog::class )
+				$c->get( ProdigiCatalog::class ),
+				$c->get( PrintifyCatalog::class )
 			)
 		);
 		$container->set(
@@ -191,7 +199,7 @@ final class ProductDesignerModule implements Module {
 				$c->get( Logger::class )
 			)
 		);
-		$container->set( DesignerSettingsSection::class, static fn( Container $c ): DesignerSettingsSection => new DesignerSettingsSection( $c->get( PrintfulToken::class ), $c->get( GelatoAccount::class ), $c->get( ProdigiAccount::class ) ) );
+		$container->set( DesignerSettingsSection::class, static fn( Container $c ): DesignerSettingsSection => new DesignerSettingsSection( $c->get( PrintfulToken::class ), $c->get( GelatoAccount::class ), $c->get( ProdigiAccount::class ), $c->get( PrintifyAccount::class ) ) );
 		$container->set( DesignerMenu::class, static fn( Container $c ): DesignerMenu => new DesignerMenu( $c->get( DesignsPage::class ), $c->get( BaseProductsPage::class ), $c->get( CampaignsPage::class ), $c->get( DesignerSettingsSection::class ), $c->get( DesignerFeesSection::class ) ) );
 		$container->set( DesignerFeeRepository::class, static fn( Container $c ): DesignerFeeRepository => new DesignerFeeRepository( $c->get( wpdb::class ) ) );
 		$container->set(
@@ -212,7 +220,7 @@ final class ProductDesignerModule implements Module {
 		$container->set( DesignerFeesSection::class, static fn( Container $c ): DesignerFeesSection => new DesignerFeesSection( $c->get( DesignerFees::class ), $c->get( DesignerFeeRepository::class ), $c->get( Logger::class ) ) );
 		$container->set( DesignerShop::class, static fn( Container $c ): DesignerShop => new DesignerShop( $c->get( DesignerProductRepository::class ), $c->get( DesignerDrafts::class ), $c->get( DesignerProductGuard::class ), $c->get( WooCommerceDesignerWriter::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( DesignerFiles::class ), $c->get( BaseProductRepository::class ) ) );
 		$container->set( ThreadPacks::class, static fn( Container $c ): ThreadPacks => new ThreadPacks( $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( BaseProductRepository::class ) ) );
-		$container->set( DesignerSettingsActions::class, static fn( Container $c ): DesignerSettingsActions => new DesignerSettingsActions( $c->get( DesignerSettings::class ), $c->get( Logger::class ), $c->get( PrintfulToken::class ), $c->get( GelatoAccount::class ), $c->get( ThreadPacks::class ), $c->get( ProdigiAccount::class ) ) );
+		$container->set( DesignerSettingsActions::class, static fn( Container $c ): DesignerSettingsActions => new DesignerSettingsActions( $c->get( DesignerSettings::class ), $c->get( Logger::class ), $c->get( PrintfulToken::class ), $c->get( GelatoAccount::class ), $c->get( ThreadPacks::class ), $c->get( ProdigiAccount::class ), $c->get( PrintifyAccount::class ) ) );
 		$container->set( DesignerPriceSource::class, static fn( Container $c ): DesignerPriceSource => new DesignerPrices( $c->get( wpdb::class ), $c->get( PricingProductStore::class ) ) );
 		$container->set( CampaignRepository::class, static fn( Container $c ): CampaignRepository => new CampaignRepository( $c->get( wpdb::class ) ) );
 		$container->set( CampaignService::class, static fn( Container $c ): CampaignService => new CampaignService( $c->get( CampaignRepository::class ), $c->get( CreatorCodeRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
@@ -228,7 +236,7 @@ final class ProductDesignerModule implements Module {
 		$container->set( BaseProductRepository::class, static fn( Container $c ): BaseProductRepository => new BaseProductRepository( $c->get( wpdb::class ) ) );
 		$container->set( BaseProductService::class, static fn( Container $c ): BaseProductService => new BaseProductService( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency() ) );
 		$container->set( ClipartLibrary::class, static fn( Container $c ): ClipartLibrary => new ClipartLibrary( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( BaseProductsPage::class, static fn( Container $c ): BaseProductsPage => new BaseProductsPage( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency(), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ), $c->get( PrintfulToken::class )->configured(), $c->get( GelatoAccount::class )->configured(), $c->get( CatalogImport::class ), $c->get( PrintfulCatalog::class ), $c->get( GelatoCatalog::class ), $c->get( ProdigiCatalog::class ), $c->get( ProdigiAccount::class )->configured() ) );
+		$container->set( BaseProductsPage::class, static fn( Container $c ): BaseProductsPage => new BaseProductsPage( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency(), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ), $c->get( PrintfulToken::class )->configured(), $c->get( GelatoAccount::class )->configured(), $c->get( CatalogImport::class ), $c->get( PrintfulCatalog::class ), $c->get( GelatoCatalog::class ), $c->get( ProdigiCatalog::class ), $c->get( ProdigiAccount::class )->configured(), $c->get( PrintifyCatalog::class ), $c->get( PrintifyAccount::class )->configured() ) );
 		$container->set( BaseProductActions::class, static fn( Container $c ): BaseProductActions => new BaseProductActions( $c->get( BaseProductService::class ), $c->get( ClipartLibrary::class ), $c->get( Logger::class ), $c->get( CatalogImport::class ) ) );
 		$container->set( DesignerAssetDownload::class, static fn( Container $c ): DesignerAssetDownload => new DesignerAssetDownload( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ) ) );
 		// The creator's designer: drafts, uploads and `/me/designer` (step 30.8).

@@ -385,7 +385,7 @@ Nye dokumenter følger denne regel.
 2026-09-24
 
 ## Status
-Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069) og YouTube Data API v3 (ADR-070), kun til alert-chatbotten. **Statusnote 2026-10-28:** og Printful (ADR-081, kun katalog og mockups) og Gelato (ADR-082, katalog og mockups via Gelato-skabeloner), kun til produktdesigneren (ADR-080). **Statusnote 2026-10-31:** og Prodigi (ADR-084, katalog og mockups, kun til produktdesigneren). **Statusnote 2026-11-01:** og Printify (ADR-087), foreløbig kun læsning af kataloget til en afprøvning.
+Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069) og YouTube Data API v3 (ADR-070), kun til alert-chatbotten. **Statusnote 2026-10-28:** og Printful (ADR-081, kun katalog og mockups) og Gelato (ADR-082, katalog og mockups via Gelato-skabeloner), kun til produktdesigneren (ADR-080). **Statusnote 2026-10-31:** og Prodigi (ADR-084, katalog og mockups, kun til produktdesigneren). **Statusnote 2026-11-01:** og Printify (ADR-087), kun læsning af kataloget til grundprodukter.
 
 ## Context
 Udviklingsmiljøet kan have connectors til eksterne tjenester (fx Dinero og Google Drive). Hvis de er tilgængelige, er der risiko for, at de bliver brugt som datakilde, lager eller backup, uden at det er en del af projektets arkitektur. Roadmappets "Integrations"-område er bevidst formuleret generisk.
@@ -5049,42 +5049,47 @@ ADR-054, ADR-060, ADR-063, ADR-068, ADR-080, ADR-085
 2026-11-01
 
 ## Status
-Accepteret af projektejeren 2026-11-01 som endnu en tjeneste ved siden af Printful, Gelato og Prodigi, ikke som erstatning. **Foreløbig gælder godkendelsen kun afprøvning af kataloget med læseadgang. Der er ikke skrevet kode, og intet kald er kørt mod Printify.** Selve integrationen kræver, at afprøvningen er gennemført, og en statusnote her.
+Accepteret af projektejeren 2026-11-01 som endnu en tjeneste ved siden af Printful, Gelato og Prodigi, ikke som erstatning. **Eksperimentel: kataloget er afprøvet med projektejerens nøgle, og koden er testet med falsk HTTP ud fra de rigtige svar. Pluginets eget kald er ikke kørt mod Printify.**
+
+**Statusnote 2026-11-01:** afprøvningen er gennemført. 85 producenter og 3.019 produkter, heraf 14 producenter med adresse i EU. Projektejeren har bestemt, at Printify kun skal bruges til at hente produkter ind med deres printområder, og at hele kataloget skal kunne findes, også uden for EU. Beslutningen nedenfor er rettet til det.
 
 ## Context
-Printifys API er dokumenteret offentligt, og en personlig nøgle kan oprettes af kontohaveren uden godkendelse. Prodigi viste, at dokumentation ikke beviser adgang: den kode blev bygget, før en nøgle fandtes, og v5-adgangen er stadig ikke bevist (ADR-084). Printify skal derfor prøves med en rigtig nøgle, før der bygges.
+Printifys API er dokumenteret offentligt, og en personlig nøgle kan oprettes af kontohaveren uden godkendelse. Prodigi viste, at dokumentation ikke beviser adgang (ADR-084), så Printify blev prøvet med en rigtig nøgle, før der blev bygget.
 
-Dokumentationen siger: v1 er komplet, v2 anbefales til nye integrationer, men dækker kun katalog og forsendelse. Varianter har printmål i pixels, men ingen farvekoder. Producenter har en returadresse, men der er intet landefilter. Mockups findes kun på et oprettet produkt i en butik, og et produkt kan slettes igen. Der nævnes hverken testmiljø eller all-over print. Dokumentationens historik slutter ifølge vores læsning i oktober 2024.
+Rigtige svar 2026-11-01: varianter har printmål i pixels, men ingen farvekoder. Printmålene følger størrelsen (hættetrøje 77 forside: 3531×2908 på S, 4016×3307 på L og op). Producenter har en adresse, men kataloget har intet landefilter. Listen over produkter fylder 5,5 MB. Et produkt uden farver kan have andre valg, fx papir. Mockups findes kun på et oprettet produkt og bruges ikke.
 
 ## Decision
-1. **Ekstra tjeneste.** Printify erstatter ikke nogen tjeneste og ændrer intet ved Prodigi-sporet.
-2. **Afprøvning først.** Nøglen må kun have `shops.read`, `catalog.read` og `print_providers.read`. Tilladte kald: `GET /v1/shops.json` og `GET` under `/v1/catalog/`. Nøglen ligger i en miljøvariabel på projektejerens maskine og må aldrig stå i chat, filer, commits eller ZIP'er.
-3. **Afprøvningen skal svare på:** hvilke producenter ligger i EU, hvilke produkttyper og teknikker de har, om printmålene passer til `BaseView`, og om katalogdata kan bruges uden farvekoder.
-4. **Ingen ordrer, uploads eller produkter** før en ny statusnote. Ordrer kræver sin egen ADR.
-5. **Samme regler som de andre tjenester, når der bygges:** kill switch fra som standard, krypteret nøgle, og creators og kunder ser aldrig navnet Printify.
+1. **Ekstra tjeneste.** Printify erstatter ikke nogen tjeneste og ændrer intet ved andre tjenester.
+2. **Kun kataloget.** Tilladte kald, alle `GET` på `https://api.printify.com/v1`: `/catalog/blueprints.json`, `/catalog/blueprints/{id}.json`, `/catalog/blueprints/{id}/print_providers.json`, `/catalog/blueprints/{id}/print_providers/{id}/variants.json` og `/catalog/print_providers.json`. Ingen produkter, uploads, mockups, ordrer eller webhooks. Nøglen behøver kun `catalog.read` og `print_providers.read`.
+3. **Hele kataloget.** Administratoren søger på ord, vælger produkt og derefter producent. Producenter overalt tilbydes, dem i EU står først, og stedet vises. Adressen beviser ikke, hvor varen laves.
+4. **Egne fotos.** Importen giver navn, farver, størrelser og printmål. Hver side starter som et hvidt ark på 1000 × 1000 px, så virksomhedens egne fotos passer (farvefotos), og printfeltet tegnes på dem. Printifys billeder hentes ikke. Designs får mockups fra browseren og gennemsigtig printfil: en side er ikke `flat`.
+5. **Ét printmål pr. side.** En side får det mindste printmål blandt størrelserne, så ét grundprodukt dækker dem alle. Der regnes med 300 dpi, som Printify ikke selv oplyser. Kataloget har ingen farvekoder: farver starter hvide, og et foto med farvens navn giver farven sin kode.
+6. **Kill switch og nøgle:** `printify_enabled` er slået fra som standard. Nøglen krypteres med sodium i nøgledomænet `designer-printify`, ligger uden autoload og auditeres kun som "sat" eller "fjernet". Creators og kunder ser aldrig navnet Printify.
 
 ## Alternatives considered
-- **Bygge straks ud fra dokumentationen:** fravalgt, fordi det var den fejl, Prodigi-sporet viste.
-- **Erstatte Prodigi:** fravalgt af projektejeren.
+- **Erstatte en anden tjeneste:** fravalgt af projektejeren.
+- **Kun producenter i EU:** fravalgt af projektejeren.
+- **Mockups fra Printify:** fravalgt af projektejeren. Det ville kræve et midlertidigt produkt pr. design.
+- **Ét grundprodukt pr. gruppe af printmål:** fravalgt; en hættetrøje ville blive til tre grundprodukter.
 - **OAuth-app:** fravalgt; den er til platforme for flere sælgere og kræver ansøgning.
 
 ## Reason
-En nøgle med læseadgang koster ingenting og viser, om Printify overhovedet kan levere fra EU, før der bruges tid på kode.
+Kun at læse kataloget er det mindste, der løser opgaven. Printify får intet fra os, og mockups, afregning og godkendelse er uændrede.
 
 ## Security
-Scopes uden skrivning betyder, at en lækket nøgle ikke kan oprette produkter eller ordrer. Nøglen gælder ét år og kan tilbagekaldes af projektejeren.
+Scopes uden skrivning betyder, at en lækket nøgle ikke kan oprette produkter eller ordrer. Nøglen gælder ét år og kan tilbagekaldes af projektejeren. Den er aldrig i chat, commits eller ZIP'er, og API'et kalder kun `GET`.
 
 ## Consequences
 **Vilkår (projektejerens valg 2026-11-01):** vi tager udgangspunkt i Printifys Terms of Service (opdateret 2026-09-17). Siden `printify.com/API-terms/`, som dokumentationen linker til, gav 404 den 2026-11-01, og der afventes ingen særskilte API-vilkår. Sådan læses de:
 - **Automatisk adgang:** H.9.14 forbyder adgang med "automated means" for at hente data og nævner ikke API'et. Vi bruger kun det API, Printify selv udstiller, inden for dets dokumenterede grænser. Der skrabes ikke fra hjemmesiden.
 - **Creators:** licensen er til "Your own individual use" (H.1), og adgang må ikke deles (H.9.4). Virksomheden er sælger og eneste bruger af kontoen. Creators får aldrig adgang til Printify.
-- **Mockups:** Printify ejer mockups og skabeloner (L.3), og de må kun bruges til at sælge produkter fra Printify. De må derfor ikke vises på varer fra en anden leverandør.
-- **Blanke varer:** H.9.11 forbyder videresalg af varer uden eget tryk, så alle produkter skal have et design.
+- **Mockups:** Printify ejer mockups og skabeloner (L.3). De bruges ikke.
+- **Billede i admin:** produktets billede vises kun for administratoren, mens produktet vælges, og gemmes ikke.
 
 Stadig åbent eller en risiko:
-- **Neutral levering:** de sider, vi har læst, siger ikke, om pakkesedler og pakker er neutrale. Det afgør, om kravet om aldrig at nævne leverandøren kan holdes, og skal være på plads, før rigtige ordrer overvejes.
-- **Afhængighed:** Printify kan suspendere eller lukke en konto efter eget skøn (G.1.4, G.4), og ansvaret er loftbelagt (M.1).
-- **Automatisk godkendelse:** nye butikker godkender ordrer efter 24 timer og slås kun fra i Printifys eget system. Det er uden betydning, så længe vi ikke sender ordrer.
+- **Produktion:** intet sendes til Printify, så en vare fra kataloget produceres som i dag, manuelt. Sendes ordrer dertil senere, kræver det en ny ADR, herunder om pakker er neutrale, og at automatisk godkendelse efter 24 timer er slået fra.
+- **Afhængighed:** Printify kan suspendere eller lukke en konto efter eget skøn (G.1.4, G.4), og ansvaret er loftbelagt (M.1). Importerede grundprodukter virker videre uden Printify.
+- **Printmål:** 300 dpi er en antagelse. Det mindste printmål udnytter ikke hele feltet på de store størrelser.
 
 ## Related
 ADR-016, ADR-080, ADR-081, ADR-082, ADR-084

@@ -37,7 +37,8 @@ export function colorOfFile( name: string ): string {
 
 /**
  * The colours field with the colours it lacks. A colour is the same whatever
- * its case.
+ * its case. A colour still white from a catalog without colour codes gets the
+ * photo's.
  *
  * @param text   The field's text.
  * @param colors The photos' colours.
@@ -49,19 +50,21 @@ export function withColors(
 	const lines = text
 		.split( /\r?\n/ )
 		.filter( ( line ) => line.trim() !== '' );
-	const known = new Set(
-		lines.map( ( line ) =>
-			line
-				.trim()
-				.replace( /[\s,;]+#?[0-9a-f]{6}$/i, '' )
-				.toLowerCase()
-		)
+	const known = lines.map( ( line ) =>
+		line
+			.trim()
+			.replace( /[\s,;]+#?[0-9a-f]{6}$/i, '' )
+			.toLowerCase()
 	);
 
 	for ( const { name, hex } of colors ) {
-		if ( ! known.has( name.toLowerCase() ) ) {
-			known.add( name.toLowerCase() );
+		const at = known.indexOf( name.toLowerCase() );
+
+		if ( at < 0 ) {
+			known.push( name.toLowerCase() );
 			lines.push( `${ name } ${ hex }` );
+		} else {
+			lines[ at ] = ( lines[ at ] ?? '' ).replace( /#ffffff\s*$/i, hex );
 		}
 	}
 
@@ -215,9 +218,20 @@ export function attachColorPhotos(
 		const holder = form.querySelector< HTMLElement >(
 			`[data-merchboard-area="${ index }"]`
 		);
+		// A stored template stays, and the photo only shows for the drawing.
+		if ( holder?.dataset.url ) {
+			holder.dispatchEvent(
+				new CustomEvent( 'merchboard-template', {
+					detail: URL.createObjectURL( file ),
+				} )
+			);
+
+			return;
+		}
+
 		const field = form.elements.namedItem( `layer_${ index }_background` );
 
-		if ( ! ( field instanceof HTMLInputElement ) || holder?.dataset.url ) {
+		if ( ! ( field instanceof HTMLInputElement ) ) {
 			return;
 		}
 

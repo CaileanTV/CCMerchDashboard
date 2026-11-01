@@ -144,6 +144,7 @@ final class SettingsTest extends TestCase {
 				Settings::PRINTFUL_ENABLED          => false,
 				Settings::GELATO_ENABLED            => false,
 				Settings::PRODIGI_ENABLED           => false,
+				Settings::PRINTIFY_ENABLED          => false,
 				Settings::DESIGNER_DIGITIZATION_FEE => '0.0000',
 			),
 			Settings::all()

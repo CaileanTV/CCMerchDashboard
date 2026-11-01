@@ -210,6 +210,11 @@ export function attachAreaPicker(
 		field( key )?.addEventListener( 'input', paint );
 	}
 
+	// Photos chosen for the side show at once, also over a stored template.
+	holder.addEventListener( 'merchboard-template', ( event ) => {
+		show( ( event as CustomEvent< string > ).detail );
+	} );
+
 	// A new template image shows at once.
 	for ( const layer of [ 'background', 'color' ] ) {
 		const input = form.elements.namedItem( `layer_${ index }_${ layer }` );

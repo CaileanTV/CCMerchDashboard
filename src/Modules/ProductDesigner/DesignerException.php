@@ -119,6 +119,9 @@ final class DesignerException extends RuntimeException {
 
 	public const PRODIGI_KEY = 'prodigi_key';
 
+	/** The Printify token was refused (ADR-087). */
+	public const PRINTIFY_KEY = 'printify_key';
+
 	public const PREVIEW_UNAVAILABLE = 'preview_unavailable';
 
 	public const PREVIEW_BUSY = 'preview_busy';

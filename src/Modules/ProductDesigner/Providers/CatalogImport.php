@@ -149,6 +149,7 @@ class CatalogImport {
 	 * @param PrintfulCatalog|null  $printful   Printful.
 	 * @param GelatoCatalog|null    $gelato     Gelato.
 	 * @param ProdigiCatalog|null   $prodigi    Prodigi.
+	 * @param PrintifyCatalog|null  $printify   Printify's catalog.
 	 */
 	public function __construct(
 		private wpdb $wpdb,
@@ -161,7 +162,8 @@ class CatalogImport {
 		private string $assets_url,
 		private ?PrintfulCatalog $printful = null,
 		private ?GelatoCatalog $gelato = null,
-		private ?ProdigiCatalog $prodigi = null
+		private ?ProdigiCatalog $prodigi = null,
+		private ?PrintifyCatalog $printify = null
 	) {
 	}
 
@@ -175,6 +177,7 @@ class CatalogImport {
 			PrintfulCatalog::SOURCE => $this->printful,
 			GelatoCatalog::SOURCE   => $this->gelato,
 			ProdigiCatalog::SOURCE  => $this->prodigi,
+			PrintifyCatalog::SOURCE => $this->printify,
 			default                 => null,
 		};
 	}
@@ -194,6 +197,7 @@ class CatalogImport {
 	 * @throws PrintfulException When Printful refuses or fails.
 	 * @throws GelatoException When Gelato refuses or fails.
 	 * @throws ProdigiException When Prodigi refuses or fails.
+	 * @throws PrintifyException When Printify refuses or fails.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function create( string $source, string $ref, array $picked ): int {
@@ -207,6 +211,8 @@ class CatalogImport {
 
 		$choice = $renderer->choice( $ref, is_numeric( $picked['group'] ?? null ) ? (int) $picked['group'] : 0 );
 		$flat   = true === ( $choice['flat'] ?? false );
+		// White sheets for the company's own photos: no pattern, and designs print as on any side.
+		$sheets = true === ( $choice['printed'] ?? false );
 		$list   = static fn( string $key ): array => array_map( 'strval', array_filter( is_array( $picked[ $key ] ?? null ) ? $picked[ $key ] : array(), 'is_scalar' ) );
 		$photos = self::chosen_photos( $choice['photos'] ?? array(), $list( 'photos' ) );
 		$sizes  = array_values( array_intersect( $choice['sizes'], $list( 'sizes' ) ) );
@@ -285,7 +291,7 @@ class CatalogImport {
 					'placements' => array_column( $sides, 'placement', 'key' ),
 					'variants'   => $map,
 					'slots'      => array(),
-					'flat'       => $flat,
+					'flat'       => $flat && ! $sheets,
 					'photos'     => $photos,
 					'stitches'   => $choice['stitches'] ?? array(),
 					'techniques' => array_column( $sides, 'technique', 'key' ),
@@ -302,6 +308,7 @@ class CatalogImport {
 				'colors'      => $data,
 				'measure_hex' => GelatoCatalog::SOURCE === $source,
 				'flat'        => $flat,
+				'printed'     => $sheets,
 			)
 		);
 
@@ -348,7 +355,7 @@ class CatalogImport {
 			return;
 		}
 
-		$this->start( $id, array_intersect_key( $import['data'], array_flip( array( 'source', 'ref', 'sides', 'colors', 'measure_hex', 'flat' ) ) ) );
+		$this->start( $id, array_intersect_key( $import['data'], array_flip( array( 'source', 'ref', 'sides', 'colors', 'measure_hex', 'flat', 'printed' ) ) ) );
 	}
 
 	/**
@@ -390,14 +397,14 @@ class CatalogImport {
 		foreach ( is_array( $renders ) ? $renders : array() as $kind => $render ) {
 			try {
 				$answer[ 'render ' . $kind ] = is_array( $render ) ? $renderer->render_answer( (string) ( $render['key'] ?? '' ) ) : array();
-			} catch ( PrintfulException | GelatoException | ProdigiException $e ) {
+			} catch ( PrintfulException | GelatoException | ProdigiException | PrintifyException $e ) {
 				$answer[ 'render ' . $kind ] = self::refusal( $e );
 			}
 		}
 
 		try {
 			return array_merge( $answer, $renderer->diagnose( $provider['ref'] ) );
-		} catch ( PrintfulException | GelatoException | ProdigiException $e ) {
+		} catch ( PrintfulException | GelatoException | ProdigiException | PrintifyException $e ) {
 			$answer['error'] = self::refusal( $e );
 
 			return $answer;
@@ -429,8 +436,8 @@ class CatalogImport {
 
 		try {
 			$this->step( $id );
-		} catch ( PrintfulException | GelatoException | ProdigiException $e ) {
-			if ( in_array( $e->reason(), array( PrintfulException::RATE_LIMITED, GelatoException::RATE_LIMITED, ProdigiException::RATE_LIMITED ), true ) ) {
+		} catch ( PrintfulException | GelatoException | ProdigiException | PrintifyException $e ) {
+			if ( in_array( $e->reason(), array( PrintfulException::RATE_LIMITED, GelatoException::RATE_LIMITED, ProdigiException::RATE_LIMITED, PrintifyException::RATE_LIMITED ), true ) ) {
 				$this->schedule( $id, $e->retry_after );
 			} else {
 				$this->fail( $id, $e->reason(), $e->call, $e->detail );
@@ -488,6 +495,7 @@ class CatalogImport {
 	 * @throws PrintfulException When Printful refuses or fails.
 	 * @throws GelatoException When Gelato refuses or fails.
 	 * @throws ProdigiException When Prodigi refuses or fails.
+	 * @throws PrintifyException When Printify refuses or fails.
 	 * @throws DesignerException When the import cannot go on.
 	 * @throws DatabaseException When the designer's data cannot be read or stored.
 	 * @throws InvalidArgumentException When a photo cannot be read.
@@ -560,6 +568,12 @@ class CatalogImport {
 			$width  = self::FLAT_WIDTH;
 			$height = (int) max( 1, round( self::FLAT_WIDTH * (int) ( $side['height_mm'] ?? 1 ) / max( 1, (int) ( $side['width_mm'] ?? 1 ) ) ) );
 			$files  = array();
+
+			// A sheet of the size of the company's own photos.
+			if ( true === ( $data['printed'] ?? false ) ) {
+				$width  = (int) ( $side['template_width'] ?? $width );
+				$height = (int) ( $side['template_height'] ?? $height );
+			}
 
 			if ( '' !== $url ) {
 				$bytes = $renderer->download( $url );
@@ -955,6 +969,7 @@ class CatalogImport {
 					'renders'  => $data['renders'] ?? array(),
 					'slots'    => $slots,
 					'flat'     => true === ( $data['flat'] ?? false ),
+					'printed'  => true === ( $data['printed'] ?? false ),
 					'skipped'  => array_column( array_values( array_filter( $sides, static fn( mixed $side ): bool => is_array( $side ) && ! isset( $kept[ (string) ( $side['key'] ?? '' ) ] ) ) ), 'name' ),
 					'started'  => $data['started'] ?? 0,
 					'finished' => time(),
@@ -1016,7 +1031,7 @@ class CatalogImport {
 			'height_mm'   => (string) $side['height_mm'],
 			'dpi'         => (string) $side['dpi'],
 			'thread_pack' => '',
-			'flat'        => true,
+			'flat'        => true !== ( $data['printed'] ?? false ),
 			'remove'      => false,
 			'clear'       => array(),
 			'uploads'     => $uploads,
@@ -1202,10 +1217,10 @@ class CatalogImport {
 	/**
 	 * A provider's refusal for the diagnosis.
 	 *
-	 * @param PrintfulException|GelatoException|ProdigiException $e Refusal.
+	 * @param PrintfulException|GelatoException|ProdigiException|PrintifyException $e Refusal.
 	 * @return array{reason: string, call: string, detail: string}
 	 */
-	private static function refusal( PrintfulException|GelatoException|ProdigiException $e ): array {
+	private static function refusal( PrintfulException|GelatoException|ProdigiException|PrintifyException $e ): array {
 		return array(
 			'reason' => $e->reason(),
 			'call'   => $e->call,
@@ -1220,9 +1235,10 @@ class CatalogImport {
 	 */
 	public static function provider_name( string $source ): string {
 		return match ( $source ) {
-			GelatoCatalog::SOURCE  => 'Gelato',
-			ProdigiCatalog::SOURCE => 'Prodigi',
-			default                => 'Printful',
+			GelatoCatalog::SOURCE   => 'Gelato',
+			ProdigiCatalog::SOURCE  => 'Prodigi',
+			PrintifyCatalog::SOURCE => 'Printify',
+			default                 => 'Printful',
 		};
 	}
 
@@ -1253,6 +1269,7 @@ class CatalogImport {
 	 * @param string $source `printful`, `gelato` or `prodigi`.
 	 * @throws GelatoException For Gelato.
 	 * @throws ProdigiException For Prodigi.
+	 * @throws PrintifyException For Printify.
 	 * @throws PrintfulException For Printful.
 	 */
 	private static function unavailable( string $source ): never {
@@ -1262,6 +1279,10 @@ class CatalogImport {
 
 		if ( ProdigiCatalog::SOURCE === $source ) {
 			throw new ProdigiException( ProdigiException::NOT_CONFIGURED );
+		}
+
+		if ( PrintifyCatalog::SOURCE === $source ) {
+			throw new PrintifyException( PrintifyException::NOT_CONFIGURED );
 		}
 
 		throw new PrintfulException( PrintfulException::NOT_CONFIGURED );
