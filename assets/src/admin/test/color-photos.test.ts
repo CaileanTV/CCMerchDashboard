@@ -89,7 +89,10 @@ describe( 'the upload', () => {
 	const setup = ( files: File[] ) => {
 		const form = document.createElement( 'form' );
 
-		form.action = 'https://site.test/wp-admin/admin-post.php';
+		form.setAttribute(
+			'action',
+			'https://site.test/wp-admin/admin-post.php'
+		);
 		form.dataset.photoFiles = '2';
 		form.dataset.photoBytes = '1000000';
 		form.dataset.resultArg = 'result';
@@ -251,6 +254,9 @@ describe( 'the upload', () => {
 		await flush();
 
 		expect( requests ).toHaveLength( 3 );
+		expect(
+			( global.fetch as unknown as jest.Mock ).mock.calls[ 0 ]?.[ 0 ]
+		).toBe( 'https://site.test/wp-admin/admin-post.php' );
 		expect( requests[ 1 ]?.get( 'do' ) ).toBe( 'color_photos' );
 		expect( requests[ 1 ]?.get( 'base_id' ) ).toBe( '7' );
 		expect( requests[ 1 ]?.get( 'side' ) ).toBe( 'Forside' );

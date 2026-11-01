@@ -327,7 +327,8 @@ export function attachColorPhotos(
 		return false;
 	};
 	const post = ( body: FormData ): Promise< Response > =>
-		fetch( form.action, {
+		// `form.action` is the form's field of that name.
+		fetch( form.getAttribute( 'action' ) ?? '', {
 			method: 'POST',
 			body,
 			credentials: 'same-origin',
