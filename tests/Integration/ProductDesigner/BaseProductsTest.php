@@ -153,6 +153,58 @@ final class BaseProductsTest extends IntegrationTestCase {
 		self::assertNull( $this->assets->find( $asset ) );
 	}
 
+	public function test_colour_photos_come_in_batches_and_a_refused_batch_keeps_nothing(): void {
+		$id    = $this->service->save( null, array_merge( self::fields(), array( 'colors' => "Mørk Grøn #111111\nSand #d8c8a8\nBlack #000000" ) ), array( self::side( 'Forside', array( 'background' => 1000 ) ) ) );
+		$photo = static fn( int $size = 1000 ): array => AlertImagesTest::upload( AlertImagesTest::png( $size, $size ), 'photo.png' );
+
+		// By the name of the side, as a new side has no key in the browser, and whatever the case of the colour.
+		$this->service->add_color_photos(
+			$id,
+			'Forside',
+			array(
+				'mørk grøn' => $photo(),
+				'Sand'      => $photo(),
+			)
+		);
+		$this->service->add_color_photos( $id, 'forside', array( 'Black' => $photo() ) );
+
+		$base  = $this->bases->find( $id );
+		$saved = $base?->views[0]->color_backgrounds() ?? array();
+
+		self::assertNotNull( $base );
+		self::assertSame( array( 'mork-gron', 'sand', 'black' ), array_keys( $saved ) );
+		self::assertSame( 3, $base->version, 'Each batch changes the template.' );
+		self::assertSame( array( 500, 600 ), array( $base->views[0]->area['width'], $base->views[0]->area['height'] ), 'The print area stays.' );
+
+		// A photo replaces the colour's own background, whose file is deleted.
+		$file = $this->assets->find( $saved['sand'] )['file'] ?? '';
+
+		$this->service->add_color_photos( $id, 'forside', array( 'Sand' => $photo() ) );
+
+		self::assertNull( $this->assets->find( $saved['sand'] ) );
+		self::assertNull( $this->files->path( $file ) );
+
+		$count = count( (array) glob( DesignerFiles::directory() . '/*.png' ) );
+		$cases = array(
+			DesignerException::BASE_LAYER_SIZE => array( 'forside', array( 'Sand' => $photo(), 'Black' => $photo( 500 ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- A short case.
+			DesignerException::BASE_COLORS     => array( 'forside', array( 'Black' => $photo(), 'Mynxie' => $photo() ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- A short case.
+			DesignerException::BASE_VIEW       => array( 'bagside', array( 'Sand' => $photo() ) ),
+			DesignerException::FILE_MISSING    => array( 'forside', array( 'Sand' => array() ) ),
+		);
+
+		foreach ( $cases as $reason => [ $side, $photos ] ) {
+			try {
+				$this->service->add_color_photos( $id, $side, $photos );
+				self::fail( 'Refused: ' . $reason );
+			} catch ( DesignerException $e ) {
+				self::assertSame( $reason, $e->reason() );
+			}
+		}
+
+		self::assertSame( $count, count( (array) glob( DesignerFiles::directory() . '/*.png' ) ), 'A refused batch keeps no file.' );
+		self::assertSame( 4, $this->bases->find( $id )?->version );
+	}
+
 	public function test_a_side_keeps_a_scene_of_its_own_size_until_it_is_removed(): void {
 		$scene = (string) wp_json_encode(
 			array(

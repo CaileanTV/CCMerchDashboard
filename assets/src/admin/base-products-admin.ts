@@ -9,6 +9,7 @@
 import { __, sprintf } from '@wordpress/i18n';
 
 import { attachAreaPicker } from './area-picker';
+import { attachColorPhotos } from './color-photos';
 import { readScene } from './psd-scene';
 import { LAYERS, readTemplate, TemplateError } from './psd-template';
 import type { PrintArea, PsdTemplate, Rgba } from './psd-template';
@@ -674,6 +675,12 @@ if (
 }
 
 attachSideOrder( document );
+
+const photoForm = document.querySelector( 'input[data-merchboard-photos]' );
+
+if ( photoForm instanceof HTMLInputElement && photoForm.form !== null ) {
+	attachColorPhotos( photoForm.form );
+}
 
 const sizeOrder = document.getElementById( 'merchboard-base-size-order' );
 

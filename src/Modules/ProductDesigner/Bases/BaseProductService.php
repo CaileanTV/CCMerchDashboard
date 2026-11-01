@@ -274,6 +274,100 @@ class BaseProductService {
 	}
 
 	/**
+	 * Adds a batch of photos to a side, each the own background of the colour
+	 * it is named after, and replaces what the colour had. The browser sends
+	 * many photos in batches, as one request may hold only a few files. A
+	 * batch is kept whole or not at all.
+	 *
+	 * @param int                                 $id     Base product.
+	 * @param string                              $side   The side's key or name.
+	 * @param array<string, array<string, mixed>> $photos Upload arrays by colour name.
+	 * @throws DesignerException When the user may not, or a side, colour or file is refused.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function add_color_photos( int $id, string $side, array $photos ): void {
+		self::authorize();
+
+		$base = $this->existing( $id );
+
+		if ( BaseProduct::RETIRED === $base->status ) {
+			self::reject( DesignerException::BASE_RETIRED );
+		}
+
+		$index = null;
+
+		foreach ( $base->views as $position => $view ) {
+			if ( $side === $view->key || $side === $view->name ) {
+				$index = $position;
+				break;
+			}
+		}
+
+		if ( null === $index || array() === $photos ) {
+			self::reject( DesignerException::BASE_VIEW );
+		}
+
+		$view   = $base->views[ $index ];
+		$keys   = array_column( array_map( static fn( array $color ): array => array( mb_strtolower( $color['name'] ), $color['key'] ), $base->colors ), 1, 0 );
+		$stored = array();
+		$new    = array();
+
+		try {
+			foreach ( $photos as $color => $upload ) {
+				$key = $keys[ mb_strtolower( trim( (string) $color ) ) ] ?? null;
+
+				if ( null === $key ) {
+					self::reject( DesignerException::BASE_COLORS );
+				}
+
+				$file     = $this->files->store( $upload, true );
+				$stored[] = $file;
+
+				if ( $file['width'] !== $view->width || $file['height'] !== $view->height ) {
+					self::reject( DesignerException::BASE_LAYER_SIZE );
+				}
+
+				$new[ BaseView::color_layer( $key ) ] = $file;
+			}
+
+			$replaced = $this->transaction->run(
+				function () use ( $id, $base, $view, $index, $new ): array {
+					$layers = $view->layers;
+
+					foreach ( $new as $layer => $file ) {
+						$layers[ $layer ] = $this->assets->insert( DesignerAssetRepository::LAYER, $base->name . ' – ' . $view->name . ' – ' . $layer, $file );
+					}
+
+					$changed = $this->with_layers( $base, $index, $layers );
+
+					$this->bases->update( $id, $changed );
+					$this->audit->record(
+						AuditAction::DesignerBaseChanged,
+						null,
+						array(
+							'base_id'        => $id,
+							'base_name'      => $changed->name,
+							'version'        => $changed->version,
+							'changed_fields' => array( 'views' ),
+							'status'         => $changed->status,
+						)
+					);
+
+					return array_values( array_diff( $base->layer_assets(), $changed->layer_assets() ) );
+				}
+			);
+		} catch ( DesignerException | DatabaseException $e ) {
+			foreach ( $stored as $file ) {
+				$this->files->delete( $file['file'] );
+			}
+
+			throw $e;
+		}
+
+		$this->forget_layers( $replaced );
+	}
+
+	/**
 	 * Retires a base product for good: no new designs, its products are
 	 * taken out of the shop and its waiting designs rejected (after the
 	 * commit, `merchboard_designer_base_retired`).
@@ -685,6 +779,27 @@ class BaseProductService {
 			return new BaseProduct( $base->id, $status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $base->views, $base->version, $base->extra_side_units, $base->note, $base->size_prices );
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_INCOMPLETE );
+		}
+	}
+
+	/**
+	 * The same base product with other layers on a side, as a new version.
+	 *
+	 * @param BaseProduct        $base   Base product.
+	 * @param int                $index  The side's place.
+	 * @param array<string, int> $layers Asset id by layer.
+	 * @throws DesignerException When the side is invalid.
+	 */
+	private function with_layers( BaseProduct $base, int $index, array $layers ): BaseProduct {
+		$view = $base->views[ $index ];
+
+		try {
+			$side  = new BaseView( $view->key, $view->name, $view->width, $view->height, $layers, $view->area, $view->width_mm, $view->height_mm, $view->dpi, $view->thread_pack, $view->flat, $view->scene, $view->sizes );
+			$views = array_map( static fn( BaseView $other ): BaseView => $other->key === $side->key ? $side : $other, $base->views );
+
+			return new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version + 1, $base->extra_side_units, $base->note, $base->size_prices );
+		} catch ( InvalidArgumentException ) {
+			self::reject( DesignerException::BASE_VIEW );
 		}
 	}
 

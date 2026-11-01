@@ -227,7 +227,7 @@ export function attachAreaPicker(
 
 	if ( ( holder.dataset.url ?? '' ) === '' ) {
 		hint.textContent = __(
-			'Choose a background to draw the print area on it.',
+			'Choose a background or colour photos to draw the print area on them.',
 			'merchboard'
 		);
 	} else {

@@ -82,6 +82,8 @@ Sæt flueben i "Lad creators se denne mockup", hvis creators skal kunne se mocku
 
 **Digitaliseringsgebyr, fra 2026-10-31 (eksperimentel, ADR-086):** Produktdesigner → Gebyrer har beløbet pr. ny broderifil og listen over gebyrer. Et opkrævet gebyr kan annulleres, så creatoren får beløbet tilbage, og næste salg opkræver det igen.
 
+**Farvefotos, fra 2026-11-01 (eksperimentel):** feltet "Farvefotos" på en side tager alle sidens PNG-fotos på én gang. Et foto, der hedder det samme som en farve, fx `Sort.png`, bliver farvens baggrund, og en ny farve kommer selv på farvelisten med en målt farvekode. En ny side får første foto som baggrund, så printfeltet kan tegnes med musen, før noget sendes. Miniaturerne viser præcis, hvad der uploades, når der gemmes: tjek dem, for mockup-filer indeholder ofte creators' designs. Fotos sendes i små portioner, og hver portion gemmes helt eller slet ikke. Stopper en portion, står årsagen på siden, og de portioner, der allerede er sendt, er gemt. Hver portion hæver grundproduktets version.
+
 **Sidernes rækkefølge, fra 2026-11-01:** op- og ned-pile på hver gemt side på grundproduktet. Rækkefølgen gemmes med formularen og giver ikke en ny version. Den styrer fanerne i designeren og billederne på designs, der godkendes herefter. En side beholder sine størrelser, når den flyttes.
 
 **Størrelsernes rækkefølge, fra 2026-11-01:** op- og ned-pile under feltet Størrelser på grundproduktet. De retter feltet, og rækkefølgen gemmes med formularen. Den gælder i designeren og for designs, der godkendes herefter. Produkter, der allerede er i butikken, beholder deres rækkefølge, til en ændring af dem godkendes.

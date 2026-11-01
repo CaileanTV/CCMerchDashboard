@@ -25,7 +25,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Saves, activates, deactivates, retires (step 30.11, with a confirmation)
- * and deletes base products, creates one from Printful's or Gelato's
+ * and deletes base products, takes a side's colour photos in batches,
+ * creates one from Printful's or Gelato's
  * catalog and tries a failed import again (review 30.15; nothing is
  * activated or deleted while it is imported) and adds and deletes cliparts
  * (step 30.6). Order of checks: capability
@@ -99,6 +100,20 @@ final class BaseProductActions {
 					$fields['size_prices'] = (string) wp_json_encode( '1' === $text( 'size_priced' ) && is_array( $input['size_prices'] ?? null ) ? $input['size_prices'] : array() );
 
 					return BaseProductsPage::edit_url( $this->bases->save( $id > 0 ? $id : null, $fields, self::views( $input, $files ) ), 'saved' );
+				case 'color_photos':
+					$photos = array();
+
+					foreach ( is_array( $input['photo_colors'] ?? null ) ? $input['photo_colors'] : array() as $index => $color ) {
+						$upload = $files[ 'photo_' . $index ] ?? null;
+
+						if ( is_string( $color ) ) {
+							$photos[ $color ] = is_array( $upload ) ? $upload : array();
+						}
+					}
+
+					$this->bases->add_color_photos( $id, $text( 'side' ), $photos );
+
+					return BaseProductsPage::edit_url( $id, 'saved' );
 				case 'activate':
 				case 'deactivate':
 					if ( true === $this->catalog?->running( $id ) ) {

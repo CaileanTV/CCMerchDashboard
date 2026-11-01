@@ -71,6 +71,11 @@ final class BaseProductsPage {
 	public const STATUS_ACTION = 'merchboard_base_import_status';
 
 	/**
+	 * The most colour photos of one request; PHP's own limit may be lower.
+	 */
+	private const PHOTOS_PER_REQUEST = 10;
+
+	/**
 	 * Seconds without a round before a running import is shown as stuck.
 	 */
 	private const STALE_IMPORT = 300;
@@ -351,7 +356,10 @@ final class BaseProductsPage {
 			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'Creators have designs on this base product. A new base price or template raises the version; the designer products are repriced in a later step, and sales already registered keep their amounts.', 'merchboard' ) . '</p></div>';
 		}
 
-		echo '<form method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		// What one request may hold, for the script that sends a side's colour photos in batches.
+		$limits = ' data-photo-files="' . esc_attr( (string) min( self::PHOTOS_PER_REQUEST, max( 1, (int) ini_get( 'max_file_uploads' ) ) ) ) . '" data-photo-bytes="' . esc_attr( (string) wp_max_upload_size() ) . '" data-result-arg="' . esc_attr( self::RESULT_ARG ) . '"';
+
+		echo '<form method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"' . $limits . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
 		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="save">';
 		echo '<input type="hidden" name="base_id" value="' . esc_attr( (string) $id ) . '">';
 		wp_nonce_field( BaseProductActions::ACTION );
@@ -423,6 +431,10 @@ final class BaseProductsPage {
 			// Read in the browser only: the field has no name, so the PSD is never sent.
 			echo '<p><label>' . esc_html__( 'Import from PSD', 'merchboard' ) . ' <input type="file" accept=".psd,image/vnd.adobe.photoshop" data-merchboard-psd="' . esc_attr( (string) $index ) . '"></label> ';
 			echo '<span class="description" id="' . esc_attr( 'merchboard-psd-status-' . $index ) . '" aria-live="polite">' . esc_html__( 'Layers mb_background, mb_color, mb_shading, mb_highlight and mb_print_area. The PSD stays on your computer; only the PNG layers are uploaded when you save.', 'merchboard' ) . '</span></p>';
+			// The field has no name: the script sends the photos in batches when the form is saved.
+			echo '<p><label>' . esc_html__( 'Colour photos', 'merchboard' ) . ' <input type="file" multiple accept="image/png" data-merchboard-photos="' . esc_attr( (string) $index ) . '"></label> ';
+			echo '<span class="description" id="' . esc_attr( 'merchboard-photos-status-' . $index ) . '" aria-live="polite">' . esc_html__( 'Choose all the PNG photos of this side at once. A file named after a colour, e.g. "Black.png", becomes that colour\'s background, and a new colour is added to the list. Check the small pictures: exactly these are uploaded when you save.', 'merchboard' ) . '</span></p>';
+			echo '<div id="' . esc_attr( 'merchboard-photos-preview-' . $index ) . '"></div>';
 		}
 
 		echo '<table class="widefat" style="max-width:60rem"><tbody>';
