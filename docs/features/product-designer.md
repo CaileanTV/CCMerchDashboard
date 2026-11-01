@@ -100,6 +100,9 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Slet permanent:** fjerner designet. Har det været i butikken, bliver versioner og filer til ordrerne, men creatoren ser det aldrig igen.
 - **Varianter:** en farve eller størrelse med ét valg vises på produktet uden at være et valg, og 1 × 1 er et simpelt produkt.
 
+## Sidernes rækkefølge (2026-11-01)
+Admin flytter en gemt side med pile på grundproduktet. Formularen sender siderne i den rækkefølge. Den giver ikke en ny version, så kladder og ventende designs forbliver gyldige. Fanerne i designeren følger den, og et godkendt design får sine billeder i samme rækkefølge, så første side giver hovedbilledet. Produkter i butikken ændres ikke, før en ændring af dem godkendes.
+
 ## Størrelsernes rækkefølge (2026-11-01)
 Admin ændrer rækkefølgen med pile under feltet Størrelser. Designeren viser størrelserne i den rækkefølge, og et godkendt design følger grundproduktets rækkefølge, også hvis det blev gemt før ændringen. Rækkefølgen giver ikke en ny version af grundproduktet, så kladder og ventende designs forbliver gyldige. Produkter i butikken ændres ikke, før en ændring af dem godkendes.
 

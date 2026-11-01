@@ -854,8 +854,8 @@ class BaseProductService {
 	 * @return list<array<string, mixed>>
 	 */
 	private static function templates( array $views ): array {
-		// The switch of the preview changes nothing a design was made on.
-		return array_map(
+		// The switch of the preview and the order of the sides change nothing a design was made on.
+		$templates = array_map(
 			static function ( BaseView $view ): array {
 				$template = $view->to_array();
 
@@ -865,6 +865,10 @@ class BaseProductService {
 			},
 			$views
 		);
+
+		usort( $templates, static fn( array $a, array $b ): int => $a['key'] <=> $b['key'] );
+
+		return $templates;
 	}
 
 	/**

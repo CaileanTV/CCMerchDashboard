@@ -859,6 +859,39 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertSame( array( 'M', 'S' ), $content->sizes );
 	}
 
+	public function test_a_new_order_of_the_sides_needs_no_new_version_and_reaches_the_shop(): void {
+		$this->two_sized_sides();
+
+		$product = $this->drafts->create( $this->creator, $this->base );
+
+		$this->save( $product, '20', array( 'front', 'large' ) );
+		$this->send_files( $product, array( 'front', 'large' ) );
+		$this->submissions->submit( $this->creator, $product );
+
+		$version = $this->bases_row()->version;
+		$views   = $this->base_views();
+		$first   = array_merge(
+			$views[0],
+			array(
+				'key'  => 'large',
+				'name' => 'Large',
+			)
+		);
+
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '149,95' ), array( 'extra_side_price' => '50' ) ), array( $first, $views[0] ) );
+
+		self::assertSame( array( 'large', 'front' ), array_map( static fn( $view ): string => $view->key, $this->bases_row()->views ) );
+		self::assertSame( array( array( 'M' ), array( 'S' ) ), array_map( static fn( $view ): array => $view->sizes, $this->bases_row()->views ), 'Each side keeps its size.' );
+		self::assertSame( $version, $this->bases_row()->version, 'A sent design stays valid.' );
+
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+
+		[ , $content ] = $this->writer->contents[0];
+
+		self::assertSame( $content->size_images['M']['black'], $content->images[0], 'The first side gives the main image.' );
+	}
+
 	public function test_a_new_embroidery_file_is_charged_once_at_the_first_sale(): void {
 		$this->fees->set_amount( '149,50' );
 

@@ -17,6 +17,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Notis i designeren (schema-version 41):** en tekst pr. grundprodukt, som creators ser, mens de designer.
 - **Pris pr. størrelse (schema-version 42):** et flueben på grundproduktet giver forskellig grundpris pr. størrelse, fra butikkens varianter til afregningen af hver ordrelinje.
 - **Broderi, der ligner broderi (ADR-085, eksperimentel):** en broderet side vises med rigtig stingoverflade på produktbilledet og på et nyt nærbillede pr. farve, i stedet for et fladt billede. Et design med kun broderede sider opretter intet produkt hos Gelato. "Se det færdige produkt" virker på disse produkter.
+- **Sidernes rækkefølge:** pile på grundproduktet flytter en side, uden at den skal oprettes igen. Fanerne i designeren og billederne på designs, der godkendes herefter, følger med.
 - **Størrelsernes rækkefølge:** pile på grundproduktet ændrer rækkefølgen uden at taste størrelserne om. Den gælder i designeren og for designs, der godkendes herefter.
 - **Fontvælger:** fontmenuen i designeren og i alert-overlayet viser hver font i sin egen skrift.
 - **Digitaliseringsgebyr (schema-version 43, ADR-086, eksperimentel):** ny fane Gebyrer under Produktdesigner. En ny broderifil koster creatoren et gebyr, som står i designeren og trækkes fra kontoen ved første køb af varen, også på creatorens egen ordre. Kontoen kan gå i minus, og beløbet modregnes i kommende fortjeneste. Admin kan annullere et opkrævet gebyr.

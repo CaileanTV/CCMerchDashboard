@@ -4,7 +4,12 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { drawnArea, isInside, movedArea } from '../area-picker';
-import { attachSizeOrder, movedSize, sizesOf } from '../base-products-admin';
+import {
+	attachSideOrder,
+	attachSizeOrder,
+	movedSize,
+	sizesOf,
+} from '../base-products-admin';
 
 describe( 'the sizes with a price', () => {
 	it( 'are the sizes of the field, each once', () => {
@@ -88,6 +93,68 @@ describe( 'the arrows of the sizes', () => {
 		field.dispatchEvent( new Event( 'input' ) );
 
 		expect( holder.hidden ).toBe( true );
+	} );
+} );
+
+describe( 'the arrows of the sides', () => {
+	const setup = () => {
+		const form = document.createElement( 'form' );
+
+		form.innerHTML = [ '44cl', '33cl' ]
+			.map(
+				( name ) =>
+					`<fieldset data-merchboard-side="${ name }"><legend>${ name }</legend></fieldset>`
+			)
+			.join( '' );
+		form.insertAdjacentHTML(
+			'beforeend',
+			'<fieldset><legend>New side</legend></fieldset>'
+		);
+		document.body.append( form );
+		attachSideOrder( form );
+
+		return form;
+	};
+	const order = ( form: HTMLElement ) =>
+		Array.from( form.querySelectorAll( 'legend' ) ).map(
+			( legend ) => legend.textContent
+		);
+	const arrow = ( form: HTMLElement, label: string ) =>
+		form.querySelector< HTMLButtonElement >(
+			`[aria-label="${ label }"]`
+		) as HTMLButtonElement;
+
+	it( 'moves a side in the form, and a new side stays last', () => {
+		const form = setup();
+
+		arrow( form, 'Move 33cl up' ).click();
+
+		expect( order( form ) ).toEqual( [ '33cl', '44cl', 'New side' ] );
+	} );
+
+	it( 'cannot move past the ends and keeps the keyboard on an arrow', () => {
+		const form = setup();
+
+		expect( arrow( form, 'Move 44cl up' ).disabled ).toBe( true );
+		expect( arrow( form, 'Move 33cl down' ).disabled ).toBe( true );
+
+		arrow( form, 'Move 33cl up' ).click();
+
+		expect( arrow( form, 'Move 33cl up' ).disabled ).toBe( true );
+		expect( arrow( form, 'Move 33cl down' ).disabled ).toBe( false );
+		expect( form.ownerDocument.activeElement ).toBe(
+			arrow( form, 'Move 33cl down' )
+		);
+	} );
+
+	it( 'shows no arrows on a single side', () => {
+		const form = document.createElement( 'form' );
+
+		form.innerHTML =
+			'<fieldset data-merchboard-side="Front"><legend>Front</legend></fieldset>';
+		attachSideOrder( form );
+
+		expect( form.querySelector( 'button' ) ).toBeNull();
 	} );
 } );
 

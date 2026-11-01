@@ -82,6 +82,8 @@ Sæt flueben i "Lad creators se denne mockup", hvis creators skal kunne se mocku
 
 **Digitaliseringsgebyr, fra 2026-10-31 (eksperimentel, ADR-086):** Produktdesigner → Gebyrer har beløbet pr. ny broderifil og listen over gebyrer. Et opkrævet gebyr kan annulleres, så creatoren får beløbet tilbage, og næste salg opkræver det igen.
 
+**Sidernes rækkefølge, fra 2026-11-01:** op- og ned-pile på hver gemt side på grundproduktet. Rækkefølgen gemmes med formularen og giver ikke en ny version. Den styrer fanerne i designeren og billederne på designs, der godkendes herefter. En side beholder sine størrelser, når den flyttes.
+
 **Størrelsernes rækkefølge, fra 2026-11-01:** op- og ned-pile under feltet Størrelser på grundproduktet. De retter feltet, og rækkefølgen gemmes med formularen. Den gælder i designeren og for designs, der godkendes herefter. Produkter, der allerede er i butikken, beholder deres rækkefølge, til en ændring af dem godkendes.
 
 **Sider pr. størrelse, fra 2026-10-31 (eksperimentel):** på et eget grundprodukt har hver side "Kun til disse størrelser", så fx 33 cl og 44 cl får hver sin opsætning. Ordrelinjen viser kun printfilen til den solgte størrelse.

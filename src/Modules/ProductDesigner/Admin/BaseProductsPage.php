@@ -405,7 +405,8 @@ final class BaseProductsPage {
 		$field = static fn( string $name ): string => 'views[' . $index . '][' . $name . ']';
 		$value = static fn( ?int $number ): string => null === $number ? '' : (string) $number;
 
-		echo '<fieldset class="card" style="max-width:none;margin-bottom:1em"><legend><strong>' . esc_html( null === $view ? __( 'New side', 'merchboard' ) : $view->name ) . '</strong></legend>';
+		// The script gives a stored side its arrows; the form sends the sides in this order.
+		echo '<fieldset class="card" style="max-width:none;margin-bottom:1em"' . ( null === $view ? '' : ' data-merchboard-side="' . esc_attr( $view->name ) . '"' ) . '><legend><strong>' . esc_html( null === $view ? __( 'New side', 'merchboard' ) : $view->name ) . '</strong></legend>';
 		echo '<input type="hidden" name="' . esc_attr( $field( 'key' ) ) . '" value="' . esc_attr( $view->key ?? '' ) . '">';
 		echo '<p><label>' . esc_html__( 'Name', 'merchboard' ) . ' <input type="text" name="' . esc_attr( $field( 'name' ) ) . '" maxlength="60" value="' . esc_attr( $view->name ?? '' ) . '"></label>';
 

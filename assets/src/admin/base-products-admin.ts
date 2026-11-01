@@ -382,6 +382,81 @@ export function attachSizeOrder(
 }
 
 /**
+ * Arrows on each stored side. They move the side in the form, and the form
+ * sends the sides in that order, so nothing is saved before the form is.
+ *
+ * @param root What holds the sides.
+ */
+export function attachSideOrder( root: ParentNode ): void {
+	const sides = () =>
+		Array.from(
+			root.querySelectorAll< HTMLElement >(
+				'fieldset[data-merchboard-side]'
+			)
+		);
+
+	if ( sides().length < 2 ) {
+		return;
+	}
+
+	const arrows: {
+		side: HTMLElement;
+		step: -1 | 1;
+		button: HTMLButtonElement;
+	}[] = [];
+	const refresh = (): void => {
+		const all = sides();
+
+		for ( const { side, step, button } of arrows ) {
+			button.disabled = all[ all.indexOf( side ) + step ] === undefined;
+		}
+	};
+
+	for ( const side of sides() ) {
+		const name = side.dataset.merchboardSide ?? '';
+		const row = document.createElement( 'p' );
+		const add = ( text: string, label: string, step: -1 | 1 ) => {
+			const button = document.createElement( 'button' );
+
+			button.type = 'button';
+			button.className = 'button button-small';
+			button.textContent = text;
+			button.setAttribute( 'aria-label', label );
+			button.addEventListener( 'click', () => {
+				const all = sides();
+				const next = all[ all.indexOf( side ) + step ];
+
+				if ( step < 0 ) {
+					next?.before( side );
+				} else {
+					next?.after( side );
+				}
+
+				refresh();
+
+				// A side at the end of the list has lost the arrow it moved with.
+				( button.disabled
+					? side.querySelector< HTMLButtonElement >(
+							'p button:not(:disabled)'
+						)
+					: button
+				)?.focus();
+			} );
+			arrows.push( { side, step, button } );
+			row.append( button, ' ' );
+		};
+
+		/* translators: %s: name of a side. */
+		add( '↑', sprintf( __( 'Move %s up', 'merchboard' ), name ), -1 );
+		/* translators: %s: name of a side. */
+		add( '↓', sprintf( __( 'Move %s down', 'merchboard' ), name ), 1 );
+		side.querySelector( 'legend' )?.after( row );
+	}
+
+	refresh();
+}
+
+/**
  * Shows a price field per size while the tick is on. A size keeps what was
  * typed for it when the list of sizes changes.
  *
@@ -597,6 +672,8 @@ if (
 ) {
 	attachSizePrices( sizePrices, sizeTick, sizeField );
 }
+
+attachSideOrder( document );
 
 const sizeOrder = document.getElementById( 'merchboard-base-size-order' );
 

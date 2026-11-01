@@ -19,6 +19,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
@@ -252,7 +253,12 @@ class DesignerApply {
 
 		usort( $colors, static fn( array $a, array $b ): int => array_search( $a['key'], $chosen, true ) <=> array_search( $b['key'], $chosen, true ) );
 
-		$sides  = array_keys( $files['mockups'] );
+		$order = array_flip( array_map( static fn( BaseView $view ): string => $view->key, $base->views ) );
+		$sides = array_keys( $files['mockups'] );
+
+		// The base product's order of the sides. A chosen photo stays first, and a close-up follows its side.
+		usort( $sides, static fn( int|string $a, int|string $b ): int => ( $order[ SubmissionFiles::side_of( (string) $a ) ] ?? -1 ) <=> ( $order[ SubmissionFiles::side_of( (string) $b ) ] ?? -1 ) );
+
 		$images = array();
 		$first  = array();
 
