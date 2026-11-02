@@ -810,7 +810,8 @@ final class BaseProductsPage {
 		// Read-only parameters; nothing is changed by this request.
 		$query     = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$pick      = isset( $_GET['pick'] ) ? sanitize_text_field( wp_unslash( $_GET['pick'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
-		$blueprint = isset( $_GET['blueprint'] ) ? absint( $_GET['blueprint'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		// Not "blueprint": WooCommerce stops every admin page with that parameter.
+		$blueprint = isset( $_GET['printify_product'] ) ? absint( $_GET['printify_product'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$group     = isset( $_GET['group'] ) ? sanitize_key( wp_unslash( $_GET['group'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$eu_only   = isset( $_GET['eu'] ) && '1' === $_GET['eu']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$page      = isset( $_GET['catalog_page'] ) ? absint( $_GET['catalog_page'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
@@ -886,7 +887,7 @@ final class BaseProductsPage {
 			$target = $producer > 0 ? array(
 				'source' => PrintifyCatalog::SOURCE,
 				'pick'   => $product['id'] . '-' . $producer,
-			) : array_merge( $args, array( 'blueprint' => $product['id'] ) );
+			) : array_merge( $args, array( 'printify_product' => $product['id'] ) );
 
 			echo '<li class="card" style="margin:0;padding:8px;min-width:0"><a href="' . esc_url( self::new_url( $target ) ) . '" style="display:block;text-decoration:none">';
 			echo '<img src="' . esc_url( PrintifyThumbnails::url( $product['id'] ) ) . '" alt="" loading="lazy" width="' . esc_attr( (string) PrintifyCatalog::THUMB ) . '" height="' . esc_attr( (string) PrintifyCatalog::THUMB ) . '" style="display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain">';
