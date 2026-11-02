@@ -303,6 +303,31 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		self::assertSame( array( 'L' ), $catalog->choice( '257', 1 )['sizes'] );
 	}
 
+	public function test_a_large_print_area_gets_a_lower_resolution_instead_of_being_left_out(): void {
+		// A 16" × 32" desk mat at 300 dpi is 9,600 px: more than the designer's 8,000.
+		$this->answers[ self::API . '/v2/catalog-products/257/catalog-variants?' . self::PAGE ]                  = self::answer(
+			array(
+				'data'   => array( self::flat_variant( 501, 'L', 16, 32 ) ),
+				'paging' => array( 'total' => 1 ),
+			)
+		);
+		$this->answers[ self::API . '/v2/catalog-products/257/availability?' . self::REGION . '&' . self::PAGE ] = self::answer(
+			array(
+				'data'   => array( self::stock( 501, 'cut-sew' ) ),
+				'paging' => array( 'total' => 1 ),
+			)
+		);
+
+		$sides = ( new PrintfulCatalog( $this->api ) )->choice( '257' )['sides'];
+
+		self::assertNotSame( array(), $sides );
+
+		foreach ( $sides as $side ) {
+			self::assertLessThanOrEqual( DesignerFiles::MAX_PIXELS, max( $side['width'], $side['height'] ) );
+			self::assertSame( array( 406, 813 ), array( $side['width_mm'], $side['height_mm'] ), 'The size in mm stays.' );
+		}
+	}
+
 	public function test_an_all_over_product_is_imported_with_its_patterns_and_no_render(): void {
 		$id   = $this->import_flat();
 		$base = $this->bases->find( $id );

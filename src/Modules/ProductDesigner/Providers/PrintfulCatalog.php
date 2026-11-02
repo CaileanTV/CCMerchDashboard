@@ -322,9 +322,16 @@ class PrintfulCatalog implements CatalogRenderer {
 			if ( self::stands( $e ) ) {
 				throw $e;
 			}
+
+			$v2 = $e;
 		}
 
-		return $this->choice_v1( $id );
+		try {
+			return $this->choice_v1( $id );
+		} catch ( PrintfulException $e ) {
+			// v1 cannot take an all-over product: when v2 answered but its answer could not be used, that is the reason to show.
+			throw PrintfulException::V2_REQUIRED === $e->reason() && PrintfulException::INVALID === $v2->reason() ? $v2 : $e;
+		}
 	}
 
 	/**
@@ -966,12 +973,14 @@ class PrintfulCatalog implements CatalogRenderer {
 
 		foreach ( $picked as $placement => $row ) {
 			$placement = (string) $placement;
-			$dpi       = min( BaseView::MAX_DPI, max( BaseView::MIN_DPI, (int) ( $row['dpi'] ?? 150 ) ) );
-			$width     = (int) round( $sizes[ $placement ][0] * $dpi );
-			$height    = (int) round( $sizes[ $placement ][1] * $dpi );
-			$mm_w      = (int) round( $sizes[ $placement ][0] * 25.4 );
-			$mm_h      = (int) round( $sizes[ $placement ][1] * 25.4 );
-			$name      = mb_substr( trim( sanitize_text_field( is_string( $row['display_name'] ?? null ) ? $row['display_name'] : ucfirst( str_replace( '_', ' ', $placement ) ) ) ), 0, 60 );
+			$longest   = max( $sizes[ $placement ][0], $sizes[ $placement ][1] );
+			// A large area (a 16" × 32" desk mat at 300 dpi is 9,600 px) gets the resolution the designer's largest image allows.
+			$dpi    = min( BaseView::MAX_DPI, max( BaseView::MIN_DPI, (int) ( $row['dpi'] ?? 150 ) ), $longest > 0 ? (int) floor( DesignerFiles::MAX_PIXELS / $longest ) : BaseView::MAX_DPI );
+			$width  = (int) round( $sizes[ $placement ][0] * $dpi );
+			$height = (int) round( $sizes[ $placement ][1] * $dpi );
+			$mm_w   = (int) round( $sizes[ $placement ][0] * 25.4 );
+			$mm_h   = (int) round( $sizes[ $placement ][1] * 25.4 );
+			$name   = mb_substr( trim( sanitize_text_field( is_string( $row['display_name'] ?? null ) ? $row['display_name'] : ucfirst( str_replace( '_', ' ', $placement ) ) ) ), 0, 60 );
 
 			if ( '' === $name || $mm_w < 1 || $mm_h < 1 || max( $mm_w, $mm_h ) > BaseView::MAX_MM || max( $width, $height ) > DesignerFiles::MAX_PIXELS ) {
 				continue;
