@@ -188,9 +188,9 @@ class PrintfulCatalog implements CatalogRenderer {
 	}
 
 	/**
-	 * The categories by id with their parent's name in front, as several
-	 * share a name ("3/4 sleeve shirts" under men's, women's and kids'),
-	 * sorted by that label.
+	 * The categories by id with the names of every category above them in
+	 * front, as names repeat on several levels ("All shirts › 3/4 sleeve
+	 * shirts" under men's, women's and kids'), sorted by that label.
 	 *
 	 * @return array<int, string>
 	 * @throws PrintfulException When Printful refuses or fails.
@@ -198,10 +198,22 @@ class PrintfulCatalog implements CatalogRenderer {
 	public function category_labels(): array {
 		$categories = $this->categories();
 		$titles     = array_column( $categories, 'title', 'id' );
+		$parents    = array_column( $categories, 'parent', 'id' );
 		$labels     = array();
 
 		foreach ( $categories as $category ) {
-			$labels[ $category['id'] ] = isset( $titles[ $category['parent'] ] ) ? $titles[ $category['parent'] ] . ' › ' . $category['title'] : $category['title'];
+			$path = array( $category['title'] );
+			$seen = array( $category['id'] => true );
+			$up   = $category['parent'];
+
+			// Up to the top, and never round in a loop of a broken answer.
+			while ( isset( $titles[ $up ] ) && ! isset( $seen[ $up ] ) ) {
+				$seen[ $up ] = true;
+				array_unshift( $path, $titles[ $up ] );
+				$up = $parents[ $up ] ?? 0;
+			}
+
+			$labels[ $category['id'] ] = implode( ' › ', $path );
 		}
 
 		asort( $labels, SORT_NATURAL | SORT_FLAG_CASE );
