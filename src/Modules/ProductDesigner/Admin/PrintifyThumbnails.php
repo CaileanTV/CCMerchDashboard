@@ -99,8 +99,11 @@ final class PrintifyThumbnails {
 
 		try {
 			$body = $this->catalog->thumbnail( $product );
-		} catch ( PrintifyException | DesignerException | InvalidArgumentException ) {
-			return self::failure( 404, __( 'The picture could not be fetched.', 'merchboard' ) );
+		} catch ( PrintifyException | DesignerException $e ) {
+			/* translators: %s: the reason, a code. */
+			return self::failure( 404, sprintf( __( 'The picture could not be fetched (%s).', 'merchboard' ), $e->reason() ) );
+		} catch ( InvalidArgumentException ) {
+			return self::failure( 404, __( 'The picture could not be read.', 'merchboard' ) );
 		}
 
 		return array(

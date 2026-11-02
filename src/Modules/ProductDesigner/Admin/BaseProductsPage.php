@@ -861,6 +861,10 @@ final class BaseProductsPage {
 		/* translators: %d: number of products. */
 		echo '<p class="description">' . esc_html( sprintf( _n( '%d product.', '%d products.', $found['total'], 'merchboard' ), $found['total'] ) ) . ( $eu_only ? ' ' . esc_html__( 'A producer is in the EU by the address Printify shows for it.', 'merchboard' ) : '' ) . '</p>';
 
+		if ( ! $found['complete'] ) {
+			echo '<p class="description">' . esc_html__( 'Not every producer has been read yet: reload the page to see the rest.', 'merchboard' ) . '</p>';
+		}
+
 		if ( array() === $found['products'] ) {
 			echo '<p>' . esc_html__( 'No products found.', 'merchboard' ) . '</p>';
 
@@ -886,7 +890,8 @@ final class BaseProductsPage {
 
 			echo '<li class="card" style="margin:0;padding:8px;min-width:0"><a href="' . esc_url( self::new_url( $target ) ) . '" style="display:block;text-decoration:none">';
 			echo '<img src="' . esc_url( PrintifyThumbnails::url( $product['id'] ) ) . '" alt="" loading="lazy" width="' . esc_attr( (string) PrintifyCatalog::THUMB ) . '" height="' . esc_attr( (string) PrintifyCatalog::THUMB ) . '" style="display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain">';
-			echo '<strong style="display:block;margin-top:6px">' . esc_html( $product['title'] ) . '</strong><span class="description">' . esc_html( $product['brand'] ) . '</span></a></li>';
+			echo '<strong style="display:block;margin-top:6px">' . esc_html( $product['title'] ) . '</strong><span class="description">' . esc_html( $product['brand'] ) . '</span></a>';
+			echo self::producer_line( $product['producers'] ) . '</li>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- producer_line() escapes.
 		}
 
 		echo '</ul>';
@@ -907,6 +912,24 @@ final class BaseProductsPage {
 
 			echo '<p style="display:flex;gap:1em;align-items:center">' . implode( ' ', $links ) . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
 		}
+	}
+
+	/**
+	 * The producers of a product on its card: the first three with their
+	 * country, the ones in the EU first, and how many more there are.
+	 *
+	 * @param array<array{id: int, title: string, country: string, eu: bool}> $producers Producers.
+	 */
+	private static function producer_line( array $producers ): string {
+		if ( array() === $producers ) {
+			return '';
+		}
+
+		$names = array_map( static fn( array $producer ): string => trim( $producer['title'] . ' (' . $producer['country'] . ')', ' ()' ), array_slice( $producers, 0, 3 ) );
+		$more  = count( $producers ) - count( $names );
+
+		/* translators: %d: number of further producers. */
+		return '<p class="description" style="margin:4px 0 0;font-size:12px">' . esc_html( implode( ', ', $names ) . ( $more > 0 ? ' ' . sprintf( __( '+%d more', 'merchboard' ), $more ) : '' ) ) . '</p>';
 	}
 
 	/**

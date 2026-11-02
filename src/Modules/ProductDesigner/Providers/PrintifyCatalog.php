@@ -74,6 +74,12 @@ class PrintifyCatalog implements CatalogRenderer {
 	public const PRODUCER_PRODUCTS = 'merchboard_printify_producer_';
 
 	/**
+	 * Seconds a page may spend reading producers it does not know yet; the
+	 * rest come on the next page.
+	 */
+	private const PRODUCER_BUDGET = 15;
+
+	/**
 	 * The template of a side: the size of the company's photos.
 	 */
 	public const TEMPLATE = 1000;
@@ -133,7 +139,7 @@ class PrintifyCatalog implements CatalogRenderer {
 	 * @param bool   $eu_only  Only products a producer in the EU makes.
 	 * @param int    $page     Page, from 1.
 	 * @param int    $producer Only this producer's products; 0 for all.
-	 * @return array{products: list<array{id: int, title: string, brand: string}>, total: int, page: int, pages: int}
+	 * @return array{products: list<array{id: int, title: string, brand: string, producers: list<array{id: int, title: string, country: string, eu: bool}>}>, total: int, page: int, pages: int, complete: bool}
 	 * @throws PrintifyException When Printify refuses or fails.
 	 */
 	public function browse( string $query, string $group = '', bool $eu_only = false, int $page = 1, int $producer = 0 ): array {
@@ -156,12 +162,20 @@ class PrintifyCatalog implements CatalogRenderer {
 
 		$pages = max( 1, (int) ceil( count( $found ) / self::PER_PAGE ) );
 		$page  = min( max( 1, $page ), $pages );
+		$shown = array_slice( $found, ( $page - 1 ) * self::PER_PAGE, self::PER_PAGE );
+
+		[ $makers, $complete ] = $this->makers();
+
+		foreach ( $shown as $index => $row ) {
+			$shown[ $index ]['producers'] = $makers[ $row['id'] ] ?? array();
+		}
 
 		return array(
-			'products' => array_slice( $found, ( $page - 1 ) * self::PER_PAGE, self::PER_PAGE ),
+			'products' => $shown,
 			'total'    => count( $found ),
 			'page'     => $page,
 			'pages'    => $pages,
+			'complete' => $complete,
 		);
 	}
 
@@ -416,8 +430,9 @@ class PrintifyCatalog implements CatalogRenderer {
 	 * @throws PrintifyException When Printify refuses or fails.
 	 */
 	private function blueprints(): array {
-		$rows   = get_transient( self::BLUEPRINTS );
-		$cached = is_array( $rows );
+		$rows = get_transient( self::BLUEPRINTS );
+		// A list kept by an earlier version has no pictures: it is read again.
+		$cached = is_array( $rows ) && ( array() === $rows || ( is_array( reset( $rows ) ) && array_key_exists( 'image', reset( $rows ) ) ) );
 
 		if ( ! $cached ) {
 			$rows = $this->api->blueprints();
@@ -452,6 +467,38 @@ class PrintifyCatalog implements CatalogRenderer {
 		$image = is_string( $row['image'] ?? null ) ? $row['image'] : ( is_array( $row['images'] ?? null ) ? reset( $row['images'] ) : '' );
 
 		return is_string( $image ) && 1 === preg_match( PrintifyApi::IMAGES, $image ) ? $image : '';
+	}
+
+	/**
+	 * The producers of every product, the ones in the EU first. A producer
+	 * not read yet is read while the page's budget lasts; the others come on
+	 * a later page, which `complete` tells.
+	 *
+	 * @return array{0: array<int, list<array{id: int, title: string, country: string, eu: bool}>>, 1: bool}
+	 * @throws PrintifyException When Printify refuses or fails.
+	 */
+	private function makers(): array {
+		$started  = microtime( true );
+		$complete = true;
+		$makers   = array();
+
+		foreach ( $this->all_producers() as $producer ) {
+			if ( ! is_array( get_transient( self::PRODUCER_PRODUCTS . $producer['id'] ) ) && microtime( true ) - $started > self::PRODUCER_BUDGET ) {
+				$complete = false;
+				continue;
+			}
+
+			foreach ( $this->producer_products( $producer['id'] ) as $product ) {
+				$makers[ $product ][] = array(
+					'id'      => $producer['id'],
+					'title'   => $producer['title'],
+					'country' => $producer['country'],
+					'eu'      => $producer['eu'],
+				);
+			}
+		}
+
+		return array( $makers, $complete );
 	}
 
 	/**

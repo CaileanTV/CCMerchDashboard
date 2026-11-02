@@ -185,6 +185,11 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertSame( array( 'Textildruck Europa' ), array_column( $catalog->all_producers( true ), 'title' ) );
 		self::assertSame( array( 'Textildruck Europa', 'Monster Digital' ), array_column( $catalog->all_producers(), 'title' ) );
 
+		$all = $catalog->browse( '' );
+
+		self::assertSame( array( array( 'Monster Digital' ), array( 'Textildruck Europa', 'Monster Digital' ), array() ), array_map( static fn( array $product ): array => array_column( $product['producers'], 'title' ), $all['products'] ), 'Each card names its producers, the EU first.' );
+		self::assertTrue( $all['complete'] );
+
 		$page = $catalog->browse( '', '', false, 9 );
 
 		self::assertSame( array( 3, 1, 1 ), array( $page['total'], $page['page'], $page['pages'] ), 'A page past the end shows the last one.' );
@@ -229,6 +234,24 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertCount( 1, array_filter( $this->calls, static fn( array $call ): bool => str_starts_with( $call[1], 'https://images.printify.com/' ) ), 'It is kept.' );
 		self::assertSame( 403, $thumbnails->response( array_merge( $input, array( '_wpnonce' => 'wrong' ) ) )['status'] );
 		self::assertSame( 404, $thumbnails->response( array_merge( $input, array( 'product' => '443' ) ) )['status'], 'A product without a picture.' );
+		self::assertStringContainsString( PrintifyException::NOT_FOUND, $thumbnails->response( array_merge( $input, array( 'product' => '443' ) ) )['body'], 'The administrator sees why.' );
+
+		// A list kept by the version before pictures is read again.
+		delete_transient( PrintifyCatalog::BLUEPRINTS );
+		set_transient(
+			PrintifyCatalog::BLUEPRINTS,
+			array(
+				array(
+					'id'    => 77,
+					'title' => 'Old',
+					'brand' => 'Gildan',
+				),
+			),
+			HOUR_IN_SECONDS
+		);
+		$this->files->delete( md5( 'printify-thumb|' . PrintifyCatalog::THUMB . '|https://images.printify.com/66c32f6ebb0d2981ff0aa7f3' ) . '.jpg' );
+
+		self::assertSame( 200, $thumbnails->response( $input )['status'] );
 
 		wp_set_current_user( 0 );
 
