@@ -174,12 +174,13 @@ final class ApprovalsPage {
 	}
 
 	/**
-	 * WordPress's red count in the menu, or nothing while none wait.
+	 * WordPress's count in the menu, or nothing while none wait. It is red in
+	 * every admin colour scheme, as the owner asked (a scheme can make it blue).
 	 *
 	 * @param int $count Waiting.
 	 */
 	private static function menu_count( int $count ): string {
-		return $count > 0 ? ' <span class="awaiting-mod count-' . esc_attr( (string) $count ) . '"><span class="pending-count">' . esc_html( number_format_i18n( $count ) ) . '</span></span>' : '';
+		return $count > 0 ? ' <span class="awaiting-mod count-' . esc_attr( (string) $count ) . '" style="background-color:#d63638;color:#fff"><span class="pending-count">' . esc_html( number_format_i18n( $count ) ) . '</span></span>' : '';
 	}
 
 	/**
