@@ -100,6 +100,9 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - **Slet permanent:** fjerner designet. Har det været i butikken, bliver versioner og filer til ordrerne, men creatoren ser det aldrig igen.
 - **Varianter:** en farve eller størrelse med ét valg vises på produktet uden at være et valg, og 1 × 1 er et simpelt produkt.
 
+## Sider pr. størrelse fra kataloger og cm (2026-11-02, eksperimentel)
+`BaseProductService::plan_views()` tager nu sider pr. størrelse fra alle kilder. `PrintfulCatalog::choice_v2()` laver sider for alle grupper fra `size_groups()` med `sizes` og størrelserne i navnet, så nøglerne er forskellige. `PrintifyCatalog::shape_groups()` grupperer efter printfeltets form rundet til 2 %. `CatalogImport::create()` tager en side med, når dens placering og mindst én af dens størrelser er valgt, og `flat_view()` gemmer sidens størrelser. `PrintfulMockups` laver én opgave pr. gruppe (`all:<n>`, n er gruppens nummer i `size_groups()`) med varianter i gruppens størrelser; de valgte fotos kommer fra gruppen for den første valgte størrelse, og forhåndsvisningen bruger samme gruppe. `SizeUnits` skriver tommer som hele cm i størrelser, varianter, sidenavne og "(in)" i navnet; giver to størrelser samme navn, beholdes tommerne. Formularen sender `units`, så importen omregner som siden viste.
+
 ## Printfuls katalog som oversigt (2026-11-02, eksperimentel)
 `PrintfulCatalog::browse()` giver en side af den cachede, europæiske liste med søgning, kategori med underkategorier og teknik. Listen gemmer nu produkternes tekniknøgler; en liste gemt af en tidligere version uden dem hentes igen. `category_labels()` sætter hele stien af overkategorier foran, fordi navne går igen på flere niveauer. Printfuls egne billeder er 300–600 px, så de vises direkte uden små kopier. Siderne deler `BaseProductsPage::pager()` med Printify.
 

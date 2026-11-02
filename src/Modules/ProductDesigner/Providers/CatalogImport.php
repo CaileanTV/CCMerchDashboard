@@ -210,7 +210,12 @@ class CatalogImport {
 		}
 
 		$choice = $renderer->choice( $ref, is_numeric( $picked['group'] ?? null ) ? (int) $picked['group'] : 0 );
-		$flat   = true === ( $choice['flat'] ?? false );
+
+		// Sizes in inches become centimetres unless inches were asked for, as on the form.
+		if ( 'in' !== ( $picked['units'] ?? '' ) && in_array( $source, array( PrintfulCatalog::SOURCE, PrintifyCatalog::SOURCE ), true ) ) {
+			$choice = SizeUnits::choice( $choice );
+		}
+		$flat = true === ( $choice['flat'] ?? false );
 		// White sheets for the company's own photos: no pattern, and designs print as on any side.
 		$sheets = true === ( $choice['printed'] ?? false );
 		$list   = static fn( string $key ): array => array_map( 'strval', array_filter( is_array( $picked[ $key ] ?? null ) ? $picked[ $key ] : array(), 'is_scalar' ) );
@@ -235,14 +240,18 @@ class CatalogImport {
 		foreach ( $choice['sides'] as $side ) {
 			$key  = substr( sanitize_title( $side['name'] ), 0, 32 );
 			$pack = $packs[ $side['placement'] ] ?? '';
+			// A side of some sizes only comes with the ticked ones of them, and not at all without any.
+			$own  = $side['sizes'] ?? array();
+			$only = array_values( array_intersect( $own, $sizes ) );
 
-			if ( '' !== $key && ! isset( $sides[ $key ] ) && in_array( $side['placement'], $list( 'sides' ), true ) && count( $sides ) < count( ImageProbe::MARKERS ) ) {
+			if ( '' !== $key && ! isset( $sides[ $key ] ) && in_array( $side['placement'], $list( 'sides' ), true ) && count( $sides ) < count( ImageProbe::MARKERS ) && ( array() === $own || array() !== $only ) ) {
 				$sides[ $key ] = array_merge(
 					array(
 						'key'         => $key,
 						'thread_pack' => is_string( $pack ) && null !== ThreadPacks::find( $pack ) ? $pack : '',
 					),
-					$side
+					$side,
+					array( 'sizes' => $only )
 				);
 			}
 		}
@@ -1035,7 +1044,7 @@ class CatalogImport {
 			'remove'      => false,
 			'clear'       => array(),
 			'uploads'     => $uploads,
-		);
+		) + ( is_array( $side['sizes'] ?? null ) && array() !== $side['sizes'] ? array( 'sizes' => array_values( array_filter( $side['sizes'], 'is_string' ) ) ) : array() );
 	}
 
 	/**

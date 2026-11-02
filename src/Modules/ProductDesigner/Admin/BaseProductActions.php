@@ -142,6 +142,7 @@ final class BaseProductActions {
 								'base_price'       => $text( 'base_price' ),
 								'extra_side_price' => $text( 'extra_side_price' ),
 								'group'            => absint( $text( 'group' ) ),
+								'units'            => $text( 'units' ),
 							)
 						),
 						'importing'

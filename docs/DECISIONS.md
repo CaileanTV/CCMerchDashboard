@@ -4720,6 +4720,8 @@ ADR-049, ADR-050, ADR-062, ADR-064, ADR-067, ADR-068, ADR-077, ADR-078, ADR-079,
 ## Status
 Accepteret (fase 30, trin 30.1). Projektejeren har godkendt Printful 2026-10-28, kun til katalog og mockups (ADR-016).
 
+**Statusnote 2026-11-02:** et produkt, hvor printmålet følger størrelsen, bliver ét grundprodukt med sider pr. gruppe af størrelser i stedet for ét grundprodukt pr. gruppe (projektejerens valg). Mockups laves med én opgave pr. gruppe på en variant i gruppens størrelse. Et printfelt, der ved Printfuls dpi bliver over 8.000 px, får en lavere dpi i stedet for at blive udeladt. Størrelser i tommer omregnes til hele cm ved import, medmindre tommer vælges.
+
 **Statusnote 2026-10-29 (trin 30.12, implementeret og testet automatisk med falsk HTTP; ikke afprøvet mod Printful):** pkt. 1–6 er implementeret med disse præciseringer:
 - **Endpoints** som pkt. 1 (`PrintfulApi`): `GET /products/{id}`, `GET /mockup-generator/printfiles/{id}`, `GET /mockup-generator/templates/{id}`, `POST /mockup-generator/create-task/{id}`, `GET /mockup-generator/task?task_key=…` og download af filer, Printful returnerer (kun https; `wp_safe_remote_*` afviser private adresser). `GET /products` (listen) bruges ikke: admin indtaster produkt-id'et. Svarformerne er tjekket mod Printfuls dokumentation 2026-10-29. Mockuppen læses fra `mockup_url` og ellers fra `extra[0].url`.
 - **Token** (`PrintfulToken`): sodium med nøgledomænet `designer-printful` (ChatCipher), option `merchboard_designer_printful_token` uden autoload; auditeres kun som "sat"/"fjernet". Feltet ligger under Settings → Produktdesigner med opsætningsvejledningen.
@@ -5050,6 +5052,8 @@ ADR-054, ADR-060, ADR-063, ADR-068, ADR-080, ADR-085
 
 ## Status
 Accepteret af projektejeren 2026-11-01 som endnu en tjeneste ved siden af Printful, Gelato og Prodigi, ikke som erstatning. **Eksperimentel: kataloget er afprøvet med projektejerens nøgle, og koden er testet med falsk HTTP ud fra de rigtige svar. Pluginets eget kald er ikke kørt mod Printify.**
+
+**Statusnote 2026-11-02:** størrelser, hvis printfelter har en anden form (fx en plakat stående og liggende), får hver deres sider på ét grundprodukt. Tøjets størrelser deler form og har stadig én side med det mindste mål. Størrelser i tommer omregnes til hele cm ved import, medmindre tommer vælges (projektejerens valg).
 
 **Statusnote 2026-11-01:** afprøvningen er gennemført. 85 producenter og 3.019 produkter, heraf 14 producenter med adresse i EU. Projektejeren har bestemt, at Printify kun skal bruges til at hente produkter ind med deres printområder, og at hele kataloget skal kunne findes, også uden for EU. Beslutningen nedenfor er rettet til det.
 

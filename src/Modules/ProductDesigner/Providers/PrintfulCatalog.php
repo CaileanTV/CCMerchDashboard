@@ -363,17 +363,32 @@ class PrintfulCatalog implements CatalogRenderer {
 			self::fail( PrintfulException::NOT_IN_EU );
 		}
 
-		$groups = $flat ? self::size_groups( $rows ) : array( $rows );
-		$group  = isset( $groups[ $group ] ) ? $group : 0;
-		$first  = $groups[ $group ][0];
-		$styles = $this->api->mockup_styles( $id, self::REGION );
-		$sides  = self::sides_v2( $first, $styles, $technique, $flat );
+		unset( $group );
 
-		if ( $flat ) {
-			$sides = $this->with_labels( $id, self::with_templates( $sides, $this->api->mockup_templates( $id, self::REGION ), (int) $first['id'] ), (int) $first['id'] );
+		$groups    = $flat ? self::size_groups( $rows ) : array( $rows );
+		$first     = $groups[0][0];
+		$styles    = $this->api->mockup_styles( $id, self::REGION );
+		$templates = $flat ? $this->api->mockup_templates( $id, self::REGION ) : array();
+		$sides     = array();
+
+		// One base product for every size: a print size that follows the size gives each group of sizes its own sides (the owner's choice 2026-11-02).
+		foreach ( $groups as $members ) {
+			$lead  = $members[0];
+			$found = self::sides_v2( $lead, $styles, $technique, $flat );
+
+			if ( $flat ) {
+				$found = $this->with_labels( $id, self::with_templates( $found, $templates, (int) $lead['id'] ), (int) $lead['id'] );
+			}
+
+			if ( 1 < count( $groups ) ) {
+				$own   = self::variant_map( $members )[1];
+				$found = array_map( static fn( array $side ): array => array_merge( $side, array( 'name' => mb_substr( $side['name'] . ' ' . implode( ', ', $own ), 0, 60 ), 'sizes' => $own ) ), $found ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			}
+
+			$sides = array_merge( $sides, $found );
 		}
 
-		[ $colors, $sizes, $variants ] = self::variant_map( $groups[ $group ] );
+		[ $colors, $sizes, $variants ] = self::variant_map( $rows );
 
 		if ( array() === $colors || array() === $sizes || array() === $sides ) {
 			self::fail( PrintfulException::INVALID );
@@ -390,8 +405,8 @@ class PrintfulCatalog implements CatalogRenderer {
 			'sides'       => $sides,
 			'variants'    => $variants,
 			'flat'        => $flat,
-			'groups'      => 1 < count( $groups ) ? array_map( static fn( array $rows ): string => implode( ', ', self::variant_map( $rows )[1] ), $groups ) : array(),
-			'group'       => $group,
+			'groups'      => array(),
+			'group'       => 0,
 			'options'     => array_map(
 				static fn( string $stitch ): array => array(
 					'name'  => 'stitch_color',

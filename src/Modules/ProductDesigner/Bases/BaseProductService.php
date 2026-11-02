@@ -598,11 +598,11 @@ class BaseProductService {
 				self::reject( DesignerException::THREAD_PACK );
 			}
 
-			// Sides per size are for own products: a provider renders every side on every size.
+			// Sides per size: an own product's, or an import's where the print size follows the size (the owner's choice 2026-11-02).
 			$kept = array_values( array_intersect( $old->sizes ?? array(), $sizes ) );
 			$only = is_array( $input['sizes'] ?? null ) ? array_values( array_filter( $input['sizes'], 'is_string' ) ) : $kept;
 
-			if ( array() !== array_diff( $only, $sizes ) || ( array() !== $only && 'own' !== ( $existing->source ?? 'own' ) ) || ( array() === $only && ! is_array( $input['sizes'] ?? null ) && array() !== ( $old->sizes ?? array() ) ) ) {
+			if ( array() !== array_diff( $only, $sizes ) || ( array() === $only && ! is_array( $input['sizes'] ?? null ) && array() !== ( $old->sizes ?? array() ) ) ) {
 				self::reject( DesignerException::BASE_VIEW );
 			}
 

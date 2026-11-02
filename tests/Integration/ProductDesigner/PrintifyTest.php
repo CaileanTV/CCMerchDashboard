@@ -303,6 +303,52 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertArrayNotHasKey( 'groups', $choice, 'One base product covers every size.' );
 	}
 
+	public function test_sizes_of_another_shape_get_their_own_sides_and_inches_become_centimetres(): void {
+		$poster = static fn( int $id, string $size, int $width, int $height ): array => array(
+			'id'           => $id,
+			'options'      => array( 'size' => $size ),
+			'placeholders' => array(
+				array(
+					'position'          => 'front',
+					'decoration_method' => 'digital-printing',
+					'width'             => $width,
+					'height'            => $height,
+				),
+			),
+		);
+
+		$this->answers[ self::API . '/catalog/blueprints/443.json' ]                             = self::answer( array( 'title' => 'Posters (in)' ) );
+		$this->answers[ self::API . '/catalog/blueprints/443/print_providers/26/variants.json' ] = self::answer(
+			array(
+				'variants' => array(
+					$poster( 1, '11.7" x 16.5"', 3510, 4950 ),
+					$poster( 2, '16.5" x 23.4"', 4950, 7020 ),
+					$poster( 3, '16.5" x 11.7"', 4950, 3510 ),
+				),
+			)
+		);
+
+		$catalog = new PrintifyCatalog( $this->api );
+		$choice  = $catalog->choice( '443-26' );
+
+		self::assertSame( array( array( '11.7" x 16.5"', '16.5" x 23.4"' ), array( '16.5" x 11.7"' ) ), array_column( $choice['sides'], 'sizes' ), 'Upright and lying are two sides.' );
+		self::assertSame( array( 297, 419 ), array( $choice['sides'][0]['width_mm'], $choice['sides'][0]['height_mm'] ), 'The smallest of a shape fits all its sizes.' );
+		self::assertArrayNotHasKey( 'sizes', ( new PrintifyCatalog( $this->api ) )->choice( '77-26' )['sides'][0], 'A garment\'s sizes share one shape.' );
+
+		$id   = $this->import( '443-26', array( '30 × 42 cm', '42 × 30 cm' ), array( 'front' ), '', array( 'Standard' ) );
+		$base = $this->bases->find( $id );
+
+		self::assertNotNull( $base );
+		self::assertSame( 'Posters (cm)', $base->name );
+		self::assertSame( array( '30 × 42 cm', '42 × 30 cm' ), $base->sizes );
+		self::assertSame( array( array( '30 × 42 cm' ), array( '42 × 30 cm' ) ), array_map( static fn( $view ): array => $view->sizes, $base->views ) );
+		self::assertSame( '30 × 42 cm', array_key_first( $this->bases->provider( $id )['variants']['standard'] ?? array() ) );
+
+		$inches = $this->bases->find( $this->import( '443-26', array( '11.7" x 16.5"' ), array( 'front' ), 'in', array( 'Standard' ) ) );
+
+		self::assertSame( array( '11.7" x 16.5"' ), $inches->sizes ?? null, 'Inches when they are asked for.' );
+	}
+
 	public function test_a_product_without_colours_uses_its_other_option_and_a_large_print_stays_within_the_limit(): void {
 		$url = self::API . '/catalog/blueprints/443/print_providers/26/variants.json';
 
@@ -379,20 +425,26 @@ final class PrintifyTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * Imports the hoodie with its front and back, running the job at once.
+	 * Imports a product, by default the hoodie with its front and back, running the job at once.
 	 *
+	 * @param string        $ref    Product and producer.
+	 * @param array<string> $sizes  Sizes.
+	 * @param array<string> $sides  Placements.
+	 * @param string        $units  'in' for inches.
+	 * @param array<string> $colors Colours.
 	 * @return int The base product.
 	 */
-	private function import(): int {
+	private function import( string $ref = '77-26', array $sizes = array( 'S', 'M', 'L' ), array $sides = array( 'front', 'back' ), string $units = '', array $colors = array( 'Ash', 'Black' ) ): int {
 		$catalog = new CatalogImport( $this->wpdb, $this->bases, $this->base_service(), $this->files, $this->queue, $this->service( Logger::class ), 2, 'https://shop.example/assets/', null, null, null, new PrintifyCatalog( $this->api ) );
 		$id      = $catalog->create(
 			PrintifyCatalog::SOURCE,
-			'77-26',
+			$ref,
 			array(
-				'colors'     => array( 'Ash', 'Black' ),
-				'sizes'      => array( 'S', 'M', 'L' ),
-				'sides'      => array( 'front', 'back' ),
+				'colors'     => $colors,
+				'sizes'      => $sizes,
+				'sides'      => $sides,
 				'base_price' => '200',
+				'units'      => $units,
 			)
 		);
 

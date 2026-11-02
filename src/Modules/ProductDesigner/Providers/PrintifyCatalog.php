@@ -343,8 +343,23 @@ class PrintifyCatalog implements CatalogRenderer {
 		}
 
 		$blueprint = $this->api->blueprint( (int) $match[1] );
-		$rows      = array_filter( $this->api->variants( (int) $match[1], (int) $match[2] ), 'is_array' );
-		$sides     = self::sides( $rows );
+		$rows      = array_values( array_filter( $this->api->variants( (int) $match[1], (int) $match[2] ), 'is_array' ) );
+		$groups    = self::shape_groups( $rows );
+		$sides     = array();
+
+		// Sizes whose print areas have another shape (a poster upright and lying) get their own sides (the owner's choice 2026-11-02).
+		foreach ( $groups as $members ) {
+			$found = self::sides( $members );
+
+			if ( 1 < count( $groups ) ) {
+				$own   = self::variant_map( $members )[1];
+				$found = array_map( static fn( array $side ): array => array_merge( $side, array( 'name' => mb_substr( $side['name'] . ' ' . implode( ', ', $own ), 0, 60 ), 'sizes' => $own ) ), $found ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			}
+
+			$sides = array_merge( $sides, $found );
+		}
+
+		$sides = array_slice( $sides, 0, self::MAX_SIDES );
 
 		[ $colors, $sizes, $variants ] = self::variant_map( $rows );
 
@@ -653,6 +668,32 @@ class PrintifyCatalog implements CatalogRenderer {
 		}
 
 		return $places;
+	}
+
+	/**
+	 * The variants by the shape of their print areas, rounded to 2 %: a
+	 * garment's sizes share one, a poster upright and lying have two.
+	 *
+	 * @param list<array<mixed>> $rows Variants.
+	 * @return list<list<array<mixed>>>
+	 */
+	private static function shape_groups( array $rows ): array {
+		$groups = array();
+
+		foreach ( $rows as $row ) {
+			$shape = array();
+
+			foreach ( is_array( $row['placeholders'] ?? null ) ? $row['placeholders'] : array() as $place ) {
+				if ( is_array( $place ) && is_string( $place['position'] ?? null ) && is_numeric( $place['width'] ?? null ) && is_numeric( $place['height'] ?? null ) && (float) $place['height'] > 0 ) {
+					$shape[ $place['position'] ] = round( (float) $place['width'] / (float) $place['height'] * 50 ) / 50;
+				}
+			}
+
+			ksort( $shape );
+			$groups[ (string) wp_json_encode( $shape ) ][] = $row;
+		}
+
+		return array_values( $groups );
 	}
 
 	/**

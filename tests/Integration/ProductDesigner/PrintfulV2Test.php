@@ -277,30 +277,104 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		}
 	}
 
-	public function test_a_print_size_that_follows_the_size_splits_the_sizes_in_groups(): void {
-		$this->answers[ self::API . '/v2/catalog-products/257/catalog-variants?' . self::PAGE ]                  = self::answer(
+	public function test_a_print_size_that_follows_the_size_gives_one_base_product_with_sides_per_size(): void {
+		$this->three_sizes();
+
+		$choice = ( new PrintfulCatalog( $this->api ) )->choice( '257' );
+
+		self::assertSame( array(), $choice['groups'] ?? null, 'One base product for every size (the owner\'s choice 2026-11-02).' );
+		self::assertSame( array( 'S', 'M', 'L' ), $choice['sizes'] );
+		self::assertSame( array( 'Front print S, M', 'Back print S, M', 'Front print L', 'Back print L' ), array_column( $choice['sides'], 'name' ) );
+		self::assertSame( array( array( 'S', 'M' ), array( 'S', 'M' ), array( 'L' ), array( 'L' ) ), array_column( $choice['sides'], 'sizes' ) );
+		self::assertSame( array( 51, 102 ), array( $choice['sides'][0]['width_mm'], $choice['sides'][2]['width_mm'] ), 'Each group has its own print size.' );
+
+		$id   = $this->import_flat( array(), array( 'S', 'M', 'L' ) );
+		$base = $this->bases->find( $id );
+
+		self::assertNotNull( $base );
+		self::assertSame( array( 'front-print-s-m', 'back-print-s-m', 'front-print-l', 'back-print-l' ), array_map( static fn( $view ): string => $view->key, $base->views ) );
+		self::assertSame( array( array( 'S', 'M' ), array( 'S', 'M' ), array( 'L' ), array( 'L' ) ), array_map( static fn( $view ): array => $view->sizes, $base->views ) );
+		self::assertSame( array( 'front-print-s-m', 'back-print-s-m' ), $base->sides_of( 'M' ) );
+		self::assertSame( array( 'default', 'back', 'default', 'back' ), array_values( $this->bases->provider( $id )['placements'] ?? array() ) );
+
+		// Without L, its sides are not imported.
+		$smaller = $this->bases->find( $this->import_flat( array(), array( 'S' ) ) );
+
+		self::assertSame( array( array( 'S' ), array( 'S' ) ), array_map( static fn( $view ): array => $view->sizes, $smaller->views ?? array() ) );
+	}
+
+	public function test_each_group_of_sizes_gets_its_own_task_on_a_variant_of_its_size(): void {
+		$this->three_sizes();
+
+		$base = $this->import_flat( array( '15710' ), array( 'S', 'M', 'L' ) );
+
+		$this->base_service()->set_active( $base, true );
+
+		$user        = $this->create_user( 'sized-creator' );
+		$creator     = $this->service( CreatorService::class )->create( 'Sizes', CreatorStatus::Active, $user );
+		$drafts      = new DesignerDrafts( $this->products, $this->bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2, $this->files );
+		$submissions = new DesignerSubmissions( $this->products, $this->bases, $this->files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2 );
+		$product     = $drafts->create( $creator, $base );
+		$views       = $this->bases->find( $base )->views ?? array();
+		$rect        = array(
 			array(
-				'data'   => array(
-					self::flat_variant( 501, 'S', 2, 3 ),
-					self::flat_variant( 502, 'M', 2, 3 ),
-					self::flat_variant( 503, 'L', 4, 5 ),
+				'type'        => 'rect',
+				'id'          => 'r1',
+				'x'           => 5,
+				'y'           => 5,
+				'width'       => 10,
+				'height'      => 10,
+				'angle'       => 0,
+				'scaleX'      => 1,
+				'scaleY'      => 1,
+				'opacity'     => 1,
+				'fill'        => '#00ff00',
+				'strokeWidth' => 0,
+				'radius'      => 0,
+			),
+		);
+
+		$drafts->save(
+			$creator,
+			$product,
+			array(
+				'title'        => 'Every size',
+				'description'  => '',
+				'colors'       => array( 'standard' ),
+				'sizes'        => array( 'S', 'L' ),
+				'profit_kind'  => 'percent',
+				'profit_value' => '20',
+				'design'       => array(
+					'version' => 1,
+					'sides'   => array_fill_keys( array_map( static fn( $view ): string => $view->key, $views ), $rect ),
 				),
-				'paging' => array( 'total' => 3 ),
-			)
-		);
-		$this->answers[ self::API . '/v2/catalog-products/257/availability?' . self::REGION . '&' . self::PAGE ] = self::answer(
-			array(
-				'data'   => array( self::stock( 501, 'cut-sew' ), self::stock( 502, 'cut-sew' ), self::stock( 503, 'cut-sew' ) ),
-				'paging' => array( 'total' => 3 ),
-			)
+			),
+			new DesignValidator( static fn(): bool => false, array() )
 		);
 
-		$catalog = new PrintfulCatalog( $this->api );
-		$first   = $catalog->choice( '257' );
+		foreach ( $views as $view ) {
+			[ $width, $height ] = $view->print_pixels();
 
-		self::assertSame( array( 'S, M', 'L' ), $first['groups'] ?? null );
-		self::assertSame( array( 'S', 'M' ), $first['sizes'] );
-		self::assertSame( array( 'L' ), $catalog->choice( '257', 1 )['sizes'] );
+			$submissions->attach( $creator, $product, 'print:' . $view->key, AlertImagesTest::upload( self::jpeg( $width, $height ), 'print.jpg' ) );
+			$submissions->attach( $creator, $product, 'mockup:' . $view->key . ':standard', AlertImagesTest::upload( AlertImagesTest::png( 40, 40 ), 'mockup.png' ) );
+		}
+
+		$submissions->submit( $creator, $product );
+
+		$version = (int) ( $this->products->pending( $product )['id'] ?? 0 );
+		$mockups = $this->mockups();
+
+		$mockups->submitted( $version );
+		$this->drain( $mockups );
+
+		$tasks = array_map( static fn( array $call ): array => json_decode( (string) ( $call[2]['body'] ?? '' ), true )['products'][0] ?? array(), $this->calls_starting( 'POST' ) );
+
+		self::assertCount( 2, $tasks, 'One task per group of sizes.' );
+		self::assertSame( array( array( 501 ), array( 503 ) ), array_column( $tasks, 'catalog_variant_ids' ), 'Each group on a variant of its own size.' );
+		self::assertSame( array( 'default', 'back' ), array_column( $tasks[0]['placements'] ?? array(), 'placement' ) );
+		self::assertStringContainsString( '/front-print-l', urldecode( (string) ( $tasks[1]['placements'][0]['layers'][0]['url'] ?? '' ) ), 'The large group sends its own print file.' );
+		self::assertSame( array( 15710 ), $tasks[0]['mockup_style_ids'] ?? null, 'The chosen photo comes from the group of the first chosen size.' );
+		self::assertArrayNotHasKey( 'mockup_style_ids', $tasks[1] );
 	}
 
 	public function test_a_large_print_area_gets_a_lower_resolution_instead_of_being_left_out(): void {
@@ -792,15 +866,16 @@ final class PrintfulV2Test extends IntegrationTestCase {
 	 * Imports the all-over tee with both its parts.
 	 *
 	 * @param string[] $photos The ticked photos.
+	 * @param string[] $sizes  The ticked sizes.
 	 */
-	private function import_flat( array $photos = array() ): int {
+	private function import_flat( array $photos = array(), array $sizes = array( 'S', 'M' ) ): int {
 		$catalog = new CatalogImport( $this->wpdb, $this->bases, $this->base_service(), $this->files, $this->queue, $this->service( Logger::class ), 2, 'https://shop.example/assets/', new PrintfulCatalog( $this->api ) );
 		$id      = $catalog->create(
 			'printful',
 			'257',
 			array(
 				'colors'           => array( 'Standard' ),
-				'sizes'            => array( 'S', 'M' ),
+				'sizes'            => $sizes,
 				'sides'            => array( 'default', 'back' ),
 				'photos'           => $photos,
 				'base_price'       => '199',
@@ -945,6 +1020,28 @@ final class PrintfulV2Test extends IntegrationTestCase {
 	 */
 	private function calls_starting( string $method ): array {
 		return array_values( array_filter( $this->calls, static fn( array $call ): bool => $method === $call[0] ) );
+	}
+
+	/**
+	 * The all-over product in S and M (2 × 3 in) and L (4 × 5 in).
+	 */
+	private function three_sizes(): void {
+		$this->answers[ self::API . '/v2/catalog-products/257/catalog-variants?' . self::PAGE ]                  = self::answer(
+			array(
+				'data'   => array(
+					self::flat_variant( 501, 'S', 2, 3 ),
+					self::flat_variant( 502, 'M', 2, 3 ),
+					self::flat_variant( 503, 'L', 4, 5 ),
+				),
+				'paging' => array( 'total' => 3 ),
+			)
+		);
+		$this->answers[ self::API . '/v2/catalog-products/257/availability?' . self::REGION . '&' . self::PAGE ] = self::answer(
+			array(
+				'data'   => array( self::stock( 501, 'cut-sew' ), self::stock( 502, 'cut-sew' ), self::stock( 503, 'cut-sew' ) ),
+				'paging' => array( 'total' => 3 ),
+			)
+		);
 	}
 
 	/**

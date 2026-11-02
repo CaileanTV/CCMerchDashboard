@@ -23,7 +23,9 @@ use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogRenderer;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
+use MerchBoard\Modules\ProductDesigner\Providers\ImageProbe;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyCatalog;
+use MerchBoard\Modules\ProductDesigner\Providers\SizeUnits;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyException;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiException;
@@ -517,6 +519,10 @@ final class BaseProductsPage {
 
 		if ( $psd && $own ) {
 			echo '</p><div data-merchboard-side-sizes="' . esc_attr( 'views[' . $index . ']' ) . '" data-chosen="' . esc_attr( (string) wp_json_encode( $view->sizes ?? array() ) ) . '"></div><p>';
+		} elseif ( null !== $view && array() !== $view->sizes ) {
+			// An import's sides per size are set by the provider's print sizes.
+			/* translators: %s: sizes. */
+			echo '</p><p class="description">' . esc_html( sprintf( __( 'Only for these sizes: %s', 'merchboard' ), implode( ', ', $view->sizes ) ) ) . '</p><p>';
 		}
 
 		if ( null !== $view ) {
@@ -1110,12 +1116,23 @@ final class BaseProductsPage {
 
 		$flat    = true === ( $choice['flat'] ?? false );
 		$printed = true === ( $choice['printed'] ?? false );
+		// Sizes in inches are shown in centimetres unless inches are asked for (the owner's choice 2026-11-02).
+		$inches = in_array( $source, array( PrintfulCatalog::SOURCE, PrintifyCatalog::SOURCE ), true ) && SizeUnits::has_inches( $choice['sizes'] );
+		$in_cm  = $inches && ! ( isset( $_GET['units'] ) && 'in' === $_GET['units'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$choice = $in_cm ? SizeUnits::choice( $choice ) : $choice;
 
 		$defaults = array_values( array_intersect( array( 'front', 'back' ), array_column( $choice['sides'], 'placement' ) ) );
 		$defaults = PrintfulCatalog::SOURCE === $source && true !== ( $choice['flat'] ?? false ) ? $defaults : array_column( $choice['sides'], 'placement' );
 		$defaults = array() === $defaults ? array_slice( array_column( $choice['sides'], 'placement' ), 0, 1 ) : $defaults;
 
 		echo '<h2>' . esc_html( $choice['name'] ) . '</h2>';
+
+		if ( $inches ) {
+			$link = $in_cm ? '<a href="' . esc_url( add_query_arg( 'units', 'in' ) ) . '">' . esc_html__( 'Show the sizes in inches', 'merchboard' ) . '</a>' : '<a href="' . esc_url( remove_query_arg( 'units' ) ) . '">' . esc_html__( 'Show the sizes in centimetres', 'merchboard' ) . '</a>';
+			$note = $in_cm && SizeUnits::has_inches( $choice['sizes'] ) ? __( 'Two sizes would get the same name in whole centimetres, so they stay in inches.', 'merchboard' ) : ( $in_cm ? __( 'The sizes are shown in whole centimetres.', 'merchboard' ) : __( 'The sizes are shown in inches.', 'merchboard' ) );
+
+			echo '<p>' . esc_html( $note ) . ' ' . $link . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+		}
 
 		if ( '' !== $choice['image'] && 'https' === wp_parse_url( $choice['image'], PHP_URL_SCHEME ) ) {
 			echo '<img src="' . esc_url( $choice['image'] ) . '" alt="" style="max-width:12rem;max-height:12rem;object-fit:contain">';
@@ -1133,7 +1150,7 @@ final class BaseProductsPage {
 
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="catalog_create">';
-		echo '<input type="hidden" name="source" value="' . esc_attr( $source ) . '"><input type="hidden" name="ref" value="' . esc_attr( $ref ) . '"><input type="hidden" name="group" value="' . esc_attr( (string) ( $choice['group'] ?? 0 ) ) . '">';
+		echo '<input type="hidden" name="source" value="' . esc_attr( $source ) . '"><input type="hidden" name="ref" value="' . esc_attr( $ref ) . '"><input type="hidden" name="group" value="' . esc_attr( (string) ( $choice['group'] ?? 0 ) ) . '"><input type="hidden" name="units" value="' . esc_attr( $in_cm ? 'cm' : 'in' ) . '">';
 		wp_nonce_field( BaseProductActions::ACTION );
 		echo '<table class="form-table" role="presentation"><tbody>';
 		echo '<tr><th scope="row">' . esc_html__( 'Colours', 'merchboard' ) . '</th><td>';
@@ -1150,9 +1167,17 @@ final class BaseProductsPage {
 
 		echo '</td></tr><tr><th scope="row">' . esc_html__( 'Sides', 'merchboard' ) . '</th><td>';
 
+		$by_placement = array();
+
+		// One tick per placement: a placement with sides per group of sizes takes them all.
 		foreach ( $choice['sides'] as $side ) {
+			$by_placement[ $side['placement'] ][] = $side;
+		}
+
+		foreach ( $by_placement as $group ) {
+			$side = $group[0];
 			/* translators: 1: side name, 2: width in mm, 3: height in mm. */
-			$label    = sprintf( __( '%1$s (%2$d × %3$d mm)', 'merchboard' ), $side['name'], $side['width_mm'], $side['height_mm'] );
+			$label    = implode( '; ', array_map( static fn( array $one ): string => sprintf( __( '%1$s (%2$d × %3$d mm)', 'merchboard' ), $one['name'], $one['width_mm'], $one['height_mm'] ), $group ) );
 			$stitched = GelatoCatalog::SOURCE === $source && 1 === preg_match( '/embroider/i', $side['name'] . ' ' . $side['placement'] );
 			$first    = ThreadPacks::all()[0]['id'];
 			echo '<p style="margin:0 0 .4em"><label><input type="checkbox" name="sides[]" value="' . esc_attr( $side['placement'] ) . '"' . checked( in_array( $side['placement'], $defaults, true ), true, false ) . '> ' . esc_html( $label ) . '</label> ';
@@ -1162,6 +1187,11 @@ final class BaseProductsPage {
 			}
 
 			echo '</p>';
+		}
+
+		if ( count( $choice['sides'] ) > count( ImageProbe::MARKERS ) ) {
+			/* translators: 1: sides of the product, 2: the most sides of a base product. */
+			echo '<div class="notice notice-warning inline"><p>' . esc_html( sprintf( __( 'The product has %1$d sides with its groups of sizes, and a base product holds %2$d. Only the first ones of the ticked placements are imported: untick a placement you do not need.', 'merchboard' ), count( $choice['sides'] ), count( ImageProbe::MARKERS ) ) ) . '</p></div>';
 		}
 
 		echo '<p class="description">' . esc_html( $printed ? __( 'At most six sides. Each starts as a white sheet with the smallest print size of the sizes you can choose, which fits them all at 300 dpi.', 'merchboard' ) : ( $flat ? __( 'Each side is a flat part of the sewing pattern. Keep every part you want printed: an unticked part stays white on the product.', 'merchboard' ) : __( 'At most six sides. Each is rendered and measured; a side whose print area cannot be found on the photos is left out.', 'merchboard' ) ) ) . '</p></td></tr>';

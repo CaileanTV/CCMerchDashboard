@@ -123,8 +123,8 @@ class PrintfulMockups {
 			$sides = array_keys( SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null )['print'] );
 
 			if ( $provider['flat'] || array() !== $provider['photos'] ) {
-				if ( array() !== array_intersect( array_map( 'strval', $sides ), array_keys( $provider['placements'] ) ) ) {
-					$this->tasks->create( $id, 'printful', self::TASK_SIDE, '{}' );
+				foreach ( $this->all_tasks( $version, array_map( 'strval', $sides ), $provider ) as $task ) {
+					$this->tasks->create( $id, 'printful', $task, '{}' );
 				}
 			} else {
 				foreach ( $sides as $side ) {
@@ -150,6 +150,125 @@ class PrintfulMockups {
 				)
 			);
 		}
+	}
+
+	/**
+	 * The tasks of all sides of a version: one, or one per group of sizes
+	 * (`all:<n>`) the creator chose a size of when the base product's sides
+	 * belong to sizes, so each group's sides are made on a variant of its own
+	 * size.
+	 *
+	 * @phpstan-param list<string> $used
+	 *
+	 * @param array<string, mixed>                     $version  Version.
+	 * @param string[]                                 $used     The sides with a print file.
+	 * @param array{placements: array<string, string>} $provider The base product's provider data.
+	 * @return list<string>
+	 * @throws DatabaseException When the base product cannot be read.
+	 */
+	private function all_tasks( array $version, array $used, array $provider ): array {
+		$used = array_values( array_intersect( $used, array_keys( $provider['placements'] ) ) );
+		$base = array() === $used ? null : $this->bases->find( (int) $version['base_id'] );
+
+		if ( null === $base ) {
+			return array();
+		}
+
+		$groups = self::size_groups( $base );
+
+		if ( array() === $groups ) {
+			return array( self::TASK_SIDE );
+		}
+
+		$chosen = json_decode( (string) $version['sizes'], true );
+		$chosen = is_array( $chosen ) ? array_map( 'strval', $chosen ) : array();
+		$tasks  = array();
+
+		foreach ( $groups as $n => $sizes ) {
+			$keys = array();
+
+			foreach ( $base->views as $view ) {
+				if ( $view->sizes === $sizes || ( array() === $view->sizes && 0 === $n ) ) {
+					$keys[] = $view->key;
+				}
+			}
+
+			if ( array() !== array_intersect( $sizes, $chosen ) && array() !== array_intersect( $keys, $used ) ) {
+				$tasks[] = self::TASK_SIDE . ':' . $n;
+			}
+		}
+
+		return $tasks;
+	}
+
+	/**
+	 * The groups of sizes a base product's sides belong to, in its order;
+	 * none when no side belongs to some sizes only.
+	 *
+	 * @param BaseProduct $base Base product.
+	 * @return list<list<string>>
+	 */
+	public static function size_groups( BaseProduct $base ): array {
+		$groups = array();
+
+		foreach ( $base->views as $view ) {
+			if ( array() !== $view->sizes && ! in_array( $view->sizes, $groups, true ) ) {
+				$groups[] = array_values( $view->sizes );
+			}
+		}
+
+		return $groups;
+	}
+
+	/**
+	 * Whether a task is a group's task of all its sides (`all:<n>`).
+	 *
+	 * @param string $side The task's side.
+	 */
+	private static function grouped( string $side ): bool {
+		return str_starts_with( $side, self::TASK_SIDE . ':' );
+	}
+
+	/**
+	 * The sizes a task keeps to: its group's, a sized side's own, else null for any.
+	 *
+	 * @param BaseProduct $base Base product.
+	 * @param string      $side The task's side.
+	 * @return list<string>|null
+	 */
+	private static function task_sizes( BaseProduct $base, string $side ): ?array {
+		if ( self::grouped( $side ) ) {
+			return self::size_groups( $base )[ (int) substr( $side, strlen( self::TASK_SIDE ) + 1 ) ] ?? array();
+		}
+
+		foreach ( $base->views as $view ) {
+			if ( $view->key === $side && array() !== $view->sizes ) {
+				return array_values( $view->sizes );
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * The task of all sides that makes the chosen photos and the preview:
+	 * the group of the version's first chosen size, or `all`.
+	 *
+	 * @param BaseProduct          $base    Base product.
+	 * @param array<string, mixed> $version Version.
+	 */
+	private static function lead( BaseProduct $base, array $version ): string {
+		$chosen = json_decode( (string) $version['sizes'], true );
+
+		foreach ( is_array( $chosen ) ? $chosen : array() as $size ) {
+			foreach ( self::size_groups( $base ) as $n => $sizes ) {
+				if ( in_array( (string) $size, $sizes, true ) ) {
+					return self::TASK_SIDE . ':' . $n;
+				}
+			}
+		}
+
+		return self::TASK_SIDE;
 	}
 
 	/**
@@ -212,8 +331,9 @@ class PrintfulMockups {
 		$provider['options'] = self::with_stitch( $provider, $version );
 
 		$product  = (int) $provider['ref'];
-		$variants = array_slice( $this->variants( $product, $version, $base, $provider['variants'] ), 0, 1, true );
-		$sides    = $this->task_sides( $id, self::TASK_SIDE, $version, $base, $provider );
+		$side     = self::lead( $base, $version );
+		$variants = array_slice( $this->variants( $product, $version, $base, $provider['variants'], self::task_sizes( $base, $side ) ), 0, 1, true );
+		$sides    = $this->task_sides( $id, $side, $version, $base, $provider );
 
 		if ( array() === $variants || array() === $sides ) {
 			self::fail( PrintfulException::INVALID );
@@ -393,8 +513,14 @@ class PrintfulMockups {
 	private function create( int $id, int $product, array $version, BaseProduct $base, array $provider, array $task ): void {
 		$provider['options'] = self::with_stitch( $provider, $version );
 
-		$variants = $this->variants( $product, $version, $base, $provider['variants'] );
-		$sides    = $this->task_sides( $id, (string) $task['side'], $version, $base, $provider );
+		$side     = (string) $task['side'];
+		$variants = $this->variants( $product, $version, $base, $provider['variants'], self::task_sizes( $base, $side ) );
+		$sides    = $this->task_sides( $id, $side, $version, $base, $provider );
+
+		// The chosen photos come from the group of the first chosen size only, so another group's never replace them.
+		if ( self::grouped( $side ) && self::lead( $base, $version ) !== $side ) {
+			$provider['photos'] = array();
+		}
 
 		if ( array() === $variants || array() === $sides ) {
 			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'error' => 'no_variant' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
@@ -472,9 +598,12 @@ class PrintfulMockups {
 	private function task_sides( int $id, string $side, array $version, BaseProduct $base, array $provider ): array {
 		$used  = array_map( 'strval', array_keys( SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null )['print'] ) );
 		$sides = array();
+		$group = self::grouped( $side ) ? (int) substr( $side, strlen( self::TASK_SIDE ) + 1 ) : -1;
+		$sizes = $group >= 0 ? ( self::size_groups( $base )[ $group ] ?? array() ) : array();
 
 		foreach ( $base->views as $view ) {
-			$wanted = self::TASK_SIDE === $side ? in_array( $view->key, $used, true ) : $view->key === $side;
+			// A group's task takes its own sides, and the first group also the sides on every size.
+			$wanted = self::TASK_SIDE === $side ? in_array( $view->key, $used, true ) : ( $group >= 0 ? in_array( $view->key, $used, true ) && ( $view->sizes === $sizes || ( array() === $view->sizes && 0 === $group ) ) : $view->key === $side );
 
 			if ( ! $wanted || ! isset( $provider['placements'][ $view->key ] ) ) {
 				continue;
@@ -687,7 +816,7 @@ class PrintfulMockups {
 			} elseif ( '' !== $style && array() !== $photos ) {
 				// Printful adds styles nobody asked for (a real answer, 2026-10-31).
 				continue;
-			} elseif ( self::TASK_SIDE === $side ) {
+			} elseif ( self::TASK_SIDE === $side || self::grouped( $side ) ) {
 				$sides = array_keys( $placements, (string) ( $mockup['placement'] ?? '' ), true );
 			} else {
 				$sides = array( $side );
@@ -839,12 +968,14 @@ class PrintfulMockups {
 	 * @param array<string, mixed>                 $version Version.
 	 * @param BaseProduct                          $base    Base product.
 	 * @param array<string, array<string, string>> $known   Variant by colour key and size.
+	 * @param list<string>|null                    $only    The sizes a task keeps to; null for any.
 	 * @return array<int, string>
 	 * @throws PrintfulException When Printful refuses or fails.
 	 */
-	private function variants( int $product, array $version, BaseProduct $base, array $known = array() ): array {
+	private function variants( int $product, array $version, BaseProduct $base, array $known = array(), ?array $only = null ): array {
 		$chosen = json_decode( (string) $version['colors'], true );
 		$sizes  = json_decode( (string) $version['sizes'], true );
+		$sizes  = null === $only || ! is_array( $sizes ) ? $sizes : array_values( array_intersect( $sizes, $only ) );
 		$map    = array();
 
 		if ( array() !== $known ) {
