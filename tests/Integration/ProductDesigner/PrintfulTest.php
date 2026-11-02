@@ -228,6 +228,7 @@ final class PrintfulTest extends IntegrationTestCase {
 		self::assertSame( array(), $catalog->search( 'poster' ), 'Discontinued products are left out.' );
 		self::assertSame( array( '' ), array_column( $catalog->search( 'hoodie' ), 'image' ), 'Only https images are shown.' );
 		self::assertSame( array( 'Clothing', 'Mugs', 'T-shirts' ), array_column( $catalog->categories(), 'title' ) );
+		self::assertSame( array( 'Clothing', 'Clothing › T-shirts', 'Mugs' ), array_values( $catalog->category_labels() ), 'A category shows its parent, as names repeat.' );
 
 		$before = count( $this->calls );
 		$catalog->search( 'tee', 24 );

@@ -129,36 +129,114 @@ class PrintfulCatalog implements CatalogRenderer {
 	 *
 	 * @param string $query    Words.
 	 * @param int    $category Category; 0 for all.
-	 * @return list<array{id: int, title: string, type: string, brand: string, model: string, image: string, category: int}>
+	 * @return list<array{id: int, title: string, type: string, brand: string, model: string, image: string, category: int, techniques: list<string>}>
 	 * @throws PrintfulException When Printful refuses or fails.
 	 */
 	public function search( string $query, int $category = 0 ): array {
+		return array_slice( array_values( array_filter( $this->products(), $this->matcher( $query, $category ) ) ), 0, self::MAX_RESULTS );
+	}
+
+	/**
+	 * A page of the catalog: the products with every word, in a category (and
+	 * its subcategories) and made with a technique, when those are given.
+	 *
+	 * @param string $query     Words; '' for all.
+	 * @param int    $category  Category; 0 for all.
+	 * @param string $technique Technique key; '' for all.
+	 * @param int    $page      Page, from 1.
+	 * @return array{products: list<array{id: int, title: string, type: string, brand: string, model: string, image: string, category: int, techniques: list<string>}>, total: int, page: int, pages: int}
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	public function browse( string $query, int $category = 0, string $technique = '', int $page = 1 ): array {
+		$found = array_values( array_filter( $this->products(), $this->matcher( $query, $category ) ) );
+
+		if ( '' !== $technique ) {
+			$found = array_values( array_filter( $found, static fn( array $product ): bool => in_array( $technique, $product['techniques'], true ) ) );
+		}
+
+		$pages = max( 1, (int) ceil( count( $found ) / self::MAX_RESULTS ) );
+		$page  = min( max( 1, $page ), $pages );
+
+		return array(
+			'products' => array_slice( $found, ( $page - 1 ) * self::MAX_RESULTS, self::MAX_RESULTS ),
+			'total'    => count( $found ),
+			'page'     => $page,
+			'pages'    => $pages,
+		);
+	}
+
+	/**
+	 * The techniques the catalog's products are made with.
+	 *
+	 * @return list<string>
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	public function techniques(): array {
+		$keys = array();
+
+		foreach ( $this->products() as $product ) {
+			foreach ( $product['techniques'] as $key ) {
+				$keys[ $key ] = true;
+			}
+		}
+
+		$keys = array_map( 'strval', array_keys( $keys ) );
+
+		sort( $keys );
+
+		return $keys;
+	}
+
+	/**
+	 * The categories by id with their parent's name in front, as several
+	 * share a name ("3/4 sleeve shirts" under men's, women's and kids'),
+	 * sorted by that label.
+	 *
+	 * @return array<int, string>
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	public function category_labels(): array {
+		$categories = $this->categories();
+		$titles     = array_column( $categories, 'title', 'id' );
+		$labels     = array();
+
+		foreach ( $categories as $category ) {
+			$labels[ $category['id'] ] = isset( $titles[ $category['parent'] ] ) ? $titles[ $category['parent'] ] . ' › ' . $category['title'] : $category['title'];
+		}
+
+		asort( $labels, SORT_NATURAL | SORT_FLAG_CASE );
+
+		return $labels;
+	}
+
+	/**
+	 * Whether a product has every word and lies in the category.
+	 *
+	 * @param string $query    Words.
+	 * @param int    $category Category; 0 for all.
+	 * @return \Closure(array{id: int, title: string, type: string, brand: string, model: string, image: string, category: int, techniques: list<string>}): bool
+	 * @throws PrintfulException When Printful refuses or fails.
+	 */
+	private function matcher( string $query, int $category ): \Closure {
 		$split    = preg_split( '/\s+/u', mb_strtolower( trim( $query ) ) );
 		$words    = array_values( array_filter( false === $split ? array() : $split, static fn( string $word ): bool => '' !== $word ) );
 		$included = $category > 0 ? $this->descendants( $category ) : array();
-		$found    = array();
 
-		foreach ( $this->products() as $product ) {
+		return static function ( array $product ) use ( $words, $included ): bool {
 			if ( array() !== $included && ! isset( $included[ $product['category'] ] ) ) {
-				continue;
+				return false;
 			}
 
 			$text = mb_strtolower( $product['title'] . ' ' . $product['type'] . ' ' . $product['brand'] . ' ' . $product['model'] );
 
 			foreach ( $words as $word ) {
 				if ( ! str_contains( $text, $word ) ) {
-					continue 2;
+					return false;
 				}
 			}
 
-			$found[] = $product;
-
-			if ( count( $found ) >= self::MAX_RESULTS ) {
-				break;
-			}
-		}
-
-		return $found;
+			return true;
+		};
 	}
 
 	/**
@@ -535,7 +613,7 @@ class PrintfulCatalog implements CatalogRenderer {
 	/**
 	 * The catalog's products that are not discontinued (cached).
 	 *
-	 * @return list<array{id: int, title: string, type: string, brand: string, model: string, image: string, category: int}>
+	 * @return list<array{id: int, title: string, type: string, brand: string, model: string, image: string, category: int, techniques: list<string>}>
 	 * @throws PrintfulException When Printful refuses or fails.
 	 */
 	private function products(): array {
@@ -545,12 +623,14 @@ class PrintfulCatalog implements CatalogRenderer {
 	/**
 	 * The catalog (cached) and whether it is limited to Europe.
 	 *
-	 * @return array{eu: bool, products: list<array{id: int, title: string, type: string, brand: string, model: string, image: string, category: int}>}
+	 * @return array{eu: bool, products: list<array{id: int, title: string, type: string, brand: string, model: string, image: string, category: int, techniques: list<string>}>}
 	 * @throws PrintfulException When Printful refuses or fails.
 	 */
 	private function catalog(): array {
 		$cached = get_transient( self::CACHE );
-		$valid  = is_array( $cached ) && is_array( $cached['products'] ?? null );
+		$first  = is_array( $cached ) && is_array( $cached['products'] ?? null ) ? reset( $cached['products'] ) : null;
+		// A list kept by an earlier version has no techniques: it is read again.
+		$valid = is_array( $cached ) && is_array( $cached['products'] ?? null ) && ( false === $first || ( is_array( $first ) && array_key_exists( 'techniques', $first ) ) );
 
 		if ( $valid ) {
 			$eu   = true === ( $cached['eu'] ?? false );
@@ -570,13 +650,14 @@ class PrintfulCatalog implements CatalogRenderer {
 
 			$category   = $product['main_category_id'] ?? $product['category'] ?? 0;
 			$products[] = array(
-				'id'       => (int) $product['id'],
-				'title'    => $text( $product, isset( $product['title'] ) ? 'title' : 'name' ),
-				'type'     => $text( $product, isset( $product['type_name'] ) ? 'type_name' : 'type' ),
-				'brand'    => $text( $product, 'brand' ),
-				'model'    => $text( $product, 'model' ),
-				'image'    => is_string( $product['image'] ?? null ) && 'https' === wp_parse_url( $product['image'], PHP_URL_SCHEME ) ? $product['image'] : '',
-				'category' => is_numeric( $category ) ? (int) $category : 0,
+				'id'         => (int) $product['id'],
+				'title'      => $text( $product, isset( $product['title'] ) ? 'title' : 'name' ),
+				'type'       => $text( $product, isset( $product['type_name'] ) ? 'type_name' : 'type' ),
+				'brand'      => $text( $product, 'brand' ),
+				'model'      => $text( $product, 'model' ),
+				'image'      => is_string( $product['image'] ?? null ) && 'https' === wp_parse_url( $product['image'], PHP_URL_SCHEME ) ? $product['image'] : '',
+				'category'   => is_numeric( $category ) ? (int) $category : 0,
+				'techniques' => self::technique_keys( $product ),
 			);
 		}
 
@@ -657,6 +738,27 @@ class PrintfulCatalog implements CatalogRenderer {
 		}
 
 		return $first;
+	}
+
+	/**
+	 * A product's technique keys, from Printful's answer or the cache.
+	 *
+	 * @param array<mixed> $product Product.
+	 * @return list<string>
+	 */
+	private static function technique_keys( array $product ): array {
+		$keys = array();
+
+		foreach ( is_array( $product['techniques'] ?? null ) ? $product['techniques'] : array() as $technique ) {
+			$key = is_array( $technique ) ? ( $technique['key'] ?? '' ) : $technique;
+			$key = is_string( $key ) ? sanitize_key( strtolower( $key ) ) : '';
+
+			if ( '' !== $key && ! in_array( $key, $keys, true ) ) {
+				$keys[] = $key;
+			}
+		}
+
+		return $keys;
 	}
 
 	/**

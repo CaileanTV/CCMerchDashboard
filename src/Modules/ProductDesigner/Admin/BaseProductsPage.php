@@ -644,15 +644,19 @@ final class BaseProductsPage {
 		}
 
 		// Read-only parameters; nothing is changed by this request.
-		$query    = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
-		$category = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
-		$pick     = isset( $_GET['pick'] ) ? absint( $_GET['pick'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
-		$group    = isset( $_GET['group'] ) ? absint( $_GET['group'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$query     = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$category  = isset( $_GET['category'] ) ? absint( $_GET['category'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$pick      = isset( $_GET['pick'] ) ? absint( $_GET['pick'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$group     = isset( $_GET['group'] ) ? absint( $_GET['group'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$technique = isset( $_GET['technique'] ) ? sanitize_key( wp_unslash( $_GET['technique'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$page      = isset( $_GET['catalog_page'] ) ? absint( $_GET['catalog_page'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 
 		$search = array(
-			'source'   => PrintfulCatalog::SOURCE,
-			'q'        => $query,
-			'category' => $category,
+			'source'       => PrintfulCatalog::SOURCE,
+			'q'            => $query,
+			'category'     => $category,
+			'technique'    => $technique,
+			'catalog_page' => $page > 1 ? $page : 0,
 		);
 
 		if ( $pick > 0 ) {
@@ -661,67 +665,121 @@ final class BaseProductsPage {
 			return;
 		}
 
-		echo '<p>' . esc_html__( 'Search Printful\'s catalog and pick the product. Only products sold in Europe that can be sent to Denmark are listed. Printful renders it without a design in every colour you tick; those photos are what creators design on, and the print areas are measured on them. All-over products are designed on their flat sewing pattern instead.', 'merchboard' ) . '</p>';
-
 		try {
-			$categories = $printful->categories();
+			$labels     = $printful->category_labels();
+			$techniques = $printful->techniques();
+			$technique  = in_array( $technique, $techniques, true ) ? $technique : '';
+			$found      = $printful->browse( $query, isset( $labels[ $category ] ) ? $category : 0, $technique, $page );
+			$limited    = $printful->limited_to_eu();
 		} catch ( PrintfulException $e ) {
 			$this->provider_error( $e->reason(), $e->call, $e->detail );
 
 			return;
 		}
 
+		echo '<p>' . esc_html__( 'Pick the product. Only products sold in Europe that can be sent to Denmark are listed. Printful renders it without a design in every colour you tick; those photos are what creators design on, and the print areas are measured on them. All-over products are designed on their flat sewing pattern instead.', 'merchboard' ) . '</p>';
 		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( DesignerMenu::SLUG ) . '"><input type="hidden" name="tab" value="' . esc_attr( DesignerMenu::BASES ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( PrintfulCatalog::SOURCE ) . '">';
 		echo '<p><label>' . esc_html__( 'Search', 'merchboard' ) . ' <input type="search" name="q" value="' . esc_attr( $query ) . '" class="regular-text"></label> ';
 		echo '<label>' . esc_html__( 'Category', 'merchboard' ) . ' <select name="category"><option value="0">' . esc_html__( '— All —', 'merchboard' ) . '</option>';
 
-		foreach ( $categories as $entry ) {
-			echo '<option value="' . esc_attr( (string) $entry['id'] ) . '"' . selected( $category, $entry['id'], false ) . '>' . esc_html( $entry['title'] ) . '</option>';
+		foreach ( $labels as $id => $label ) {
+			echo '<option value="' . esc_attr( (string) $id ) . '"' . selected( $category, $id, false ) . '>' . esc_html( $label ) . '</option>';
 		}
 
-		echo '</select></label> <button type="submit" class="button">' . esc_html__( 'Search', 'merchboard' ) . '</button></p></form>';
+		echo '</select></label> ';
 
-		if ( '' === $query && 0 === $category ) {
-			return;
+		if ( array() !== $techniques ) {
+			echo '<label>' . esc_html__( 'Technique', 'merchboard' ) . ' <select name="technique"><option value="">' . esc_html__( '— All —', 'merchboard' ) . '</option>';
+
+			foreach ( $techniques as $key ) {
+				echo '<option value="' . esc_attr( $key ) . '"' . selected( $technique, $key, false ) . '>' . esc_html( self::technique_label( $key ) ) . '</option>';
+			}
+
+			echo '</select></label> ';
 		}
 
-		try {
-			$products = $printful->search( $query, $category );
-			$limited  = $printful->limited_to_eu();
-		} catch ( PrintfulException $e ) {
-			$this->provider_error( $e->reason(), $e->call, $e->detail );
-
-			return;
-		}
+		echo '<button type="submit" class="button">' . esc_html__( 'Show', 'merchboard' ) . '</button></p></form>';
 
 		if ( ! $limited ) {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Printful\'s newest API does not answer right now, so the list is not limited to Europe. A product you pick is still checked.', 'merchboard' ) . '</p></div>';
 		}
 
-		if ( array() === $products ) {
+		/* translators: %d: number of products. */
+		echo '<p class="description">' . esc_html( sprintf( _n( '%d product.', '%d products.', $found['total'], 'merchboard' ), $found['total'] ) ) . '</p>';
+
+		if ( array() === $found['products'] ) {
 			echo '<p>' . esc_html__( 'No products found.', 'merchboard' ) . '</p>';
 
 			return;
 		}
 
-		echo '<div style="display:flex;flex-wrap:wrap;gap:1em">';
+		echo '<ul style="display:grid;grid-template-columns:repeat(auto-fill,minmax(10rem,1fr));gap:12px;list-style:none;margin:1em 0;padding:0">';
 
-		foreach ( $products as $product ) {
-			echo '<div class="card" style="margin:0;width:11rem;padding:.6em">';
+		foreach ( $found['products'] as $product ) {
+			echo '<li class="card" style="margin:0;padding:8px;min-width:0"><a href="' . esc_url( self::new_url( array_merge( $search, array( 'pick' => $product['id'] ) ) ) ) . '" style="display:block;text-decoration:none">';
 
 			if ( '' !== $product['image'] ) {
-				echo '<img src="' . esc_url( $product['image'] ) . '" alt="" loading="lazy" style="width:100%;height:9rem;object-fit:contain">';
+				echo '<img src="' . esc_url( $product['image'] ) . '" alt="" loading="lazy" style="display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain">';
 			}
 
-			echo '<p><strong>' . esc_html( $product['title'] ) . '</strong><br><span class="description">' . esc_html( trim( $product['brand'] . ' ' . $product['model'] ) ) . '</span></p>';
-			echo '<p><a class="button" href="' . esc_url( self::new_url( array_merge( $search, array( 'pick' => $product['id'] ) ) ) ) . '">' . esc_html__( 'Pick', 'merchboard' ) . '</a></p></div>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			echo '<strong style="display:block;margin-top:6px">' . esc_html( $product['title'] ) . '</strong><span class="description">' . esc_html( trim( $product['brand'] . ' ' . $product['model'] ) ) . '</span>';
+
+			if ( array() !== $product['techniques'] ) {
+				echo '<p class="description" style="margin:4px 0 0;font-size:12px">' . esc_html( implode( ', ', array_map( array( self::class, 'technique_label' ), $product['techniques'] ) ) ) . '</p>';
+			}
+
+			echo '</a></li>';
 		}
 
-		echo '</div>';
+		echo '</ul>';
+		echo self::pager( $search, $found['page'], $found['pages'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pager() escapes.
+	}
 
-		if ( count( $products ) >= PrintfulCatalog::MAX_RESULTS ) {
-			echo '<p class="description">' . esc_html__( 'Only the first results are shown. Add words to narrow the search.', 'merchboard' ) . '</p>';
+	/**
+	 * A technique of Printful's for the administrator.
+	 *
+	 * @param string $key Technique key.
+	 */
+	private static function technique_label( string $key ): string {
+		return match ( $key ) {
+			'dtg'         => __( 'Direct-to-garment print', 'merchboard' ),
+			'embroidery'  => __( 'Embroidery', 'merchboard' ),
+			'cut-sew'     => __( 'All-over print (cut and sewn)', 'merchboard' ),
+			'sublimation' => __( 'Sublimation', 'merchboard' ),
+			'dtfilm'      => __( 'Print on film (DTF)', 'merchboard' ),
+			'digital'     => __( 'Digital print', 'merchboard' ),
+			'uv'          => __( 'UV print', 'merchboard' ),
+			'knitwear'    => __( 'Knitwear', 'merchboard' ),
+			default       => ucfirst( str_replace( array( '-', '_' ), ' ', $key ) ),
+		};
+	}
+
+	/**
+	 * Links to the previous and next page of a catalog.
+	 *
+	 * @param array<string, int|string> $args  The catalog's query arguments.
+	 * @param int                       $page  Page.
+	 * @param int                       $pages Pages.
+	 */
+	private static function pager( array $args, int $page, int $pages ): string {
+		if ( $pages < 2 ) {
+			return '';
 		}
+
+		$links = array();
+
+		if ( $page > 1 ) {
+			$links[] = '<a class="button" href="' . esc_url( self::new_url( array_merge( $args, array( 'catalog_page' => $page - 1 ) ) ) ) . '">' . esc_html__( '← Previous', 'merchboard' ) . '</a>';
+		}
+
+		/* translators: 1: page, 2: pages. */
+		$links[] = '<span>' . esc_html( sprintf( __( 'Page %1$d of %2$d', 'merchboard' ), $page, $pages ) ) . '</span>';
+
+		if ( $page < $pages ) {
+			$links[] = '<a class="button" href="' . esc_url( self::new_url( array_merge( $args, array( 'catalog_page' => $page + 1 ) ) ) ) . '">' . esc_html__( 'Next →', 'merchboard' ) . '</a>';
+		}
+
+		return '<p style="display:flex;gap:1em;align-items:center">' . implode( ' ', $links ) . '</p>';
 	}
 
 	/**
@@ -901,22 +959,7 @@ final class BaseProductsPage {
 
 		echo '</ul>';
 
-		if ( $found['pages'] > 1 ) {
-			$links = array();
-
-			if ( $found['page'] > 1 ) {
-				$links[] = '<a class="button" href="' . esc_url( self::new_url( array_merge( $args, array( 'catalog_page' => $found['page'] - 1 ) ) ) ) . '">' . esc_html__( '← Previous', 'merchboard' ) . '</a>';
-			}
-
-			/* translators: 1: page, 2: pages. */
-			$links[] = '<span>' . esc_html( sprintf( __( 'Page %1$d of %2$d', 'merchboard' ), $found['page'], $found['pages'] ) ) . '</span>';
-
-			if ( $found['page'] < $found['pages'] ) {
-				$links[] = '<a class="button" href="' . esc_url( self::new_url( array_merge( $args, array( 'catalog_page' => $found['page'] + 1 ) ) ) ) . '">' . esc_html__( 'Next →', 'merchboard' ) . '</a>';
-			}
-
-			echo '<p style="display:flex;gap:1em;align-items:center">' . implode( ' ', $links ) . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
-		}
+		echo self::pager( $args, $found['page'], $found['pages'] ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pager() escapes.
 	}
 
 	/**

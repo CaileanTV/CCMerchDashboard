@@ -144,6 +144,31 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		self::assertTrue( $catalog->limited_to_eu() );
 		self::assertSame( array( 'T-shirts' ), array_column( $catalog->categories(), 'title' ) );
 		self::assertNull( $this->call( 'GET', self::API . '/products' ), 'v1 is only the fallback.' );
+
+		// The overview: everything at once, by technique, by page.
+		self::assertSame( array( 71 ), array_column( $catalog->browse( '' )['products'], 'id' ) );
+		self::assertSame( array( 'dtg' ), $catalog->techniques() );
+		self::assertSame( array( 71 ), array_column( $catalog->browse( '', 0, 'dtg' )['products'], 'id' ) );
+		self::assertSame( array(), $catalog->browse( '', 0, 'embroidery' )['products'] );
+		self::assertSame( array( 1, 1, 1 ), array_values( array_intersect_key( $catalog->browse( '', 0, '', 5 ), array_flip( array( 'total', 'page', 'pages' ) ) ) ) );
+		self::assertSame( array( 24 => 'T-shirts' ), $catalog->category_labels() );
+
+		// A list kept by an earlier version, without techniques, is read again.
+		set_transient(
+			PrintfulCatalog::CACHE,
+			array(
+				'eu'       => true,
+				'products' => array(
+					array(
+						'id'    => 71,
+						'title' => 'Old',
+					),
+				),
+			),
+			HOUR_IN_SECONDS
+		);
+
+		self::assertSame( array( 'dtg' ), ( new PrintfulCatalog( $this->api ) )->browse( '' )['products'][0]['techniques'] );
 	}
 
 	public function test_v1_takes_over_when_v2_fails_and_says_so(): void {
