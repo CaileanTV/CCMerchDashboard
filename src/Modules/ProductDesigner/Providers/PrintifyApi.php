@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\ProductDesigner\Providers;
 
 use Closure;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use WP_Error;
 
 defined( 'ABSPATH' ) || exit;
@@ -22,7 +23,8 @@ defined( 'ABSPATH' ) || exit;
  * - `/catalog/blueprints.json` and `/catalog/blueprints/{id}.json`;
  * - `/catalog/blueprints/{id}/print_providers.json`;
  * - `/catalog/blueprints/{id}/print_providers/{id}/variants.json`;
- * - `/catalog/print_providers.json`.
+ * - `/catalog/print_providers.json` and `/catalog/print_providers/{id}.json`;
+ * - a product's picture on `https://images.printify.com`, without the token.
  *
  * Never products, uploads, mockups, orders or webhooks: the token needs no
  * more than `catalog.read` and `print_providers.read`. Every call uses
@@ -49,6 +51,11 @@ class PrintifyApi {
 	 * Printify requires a user agent.
 	 */
 	private const USER_AGENT = 'MerchDashboard';
+
+	/**
+	 * The address of a product's picture.
+	 */
+	public const IMAGES = '#^https://images\.printify\.com/[A-Za-z0-9/_.-]{1,200}$#';
 
 	/**
 	 * The HTTP call: (method, url, args) → WordPress response or WP_Error.
@@ -107,6 +114,58 @@ class PrintifyApi {
 	 */
 	public function print_providers(): array {
 		return array_values( $this->call( '/catalog/print_providers.json' ) );
+	}
+
+	/**
+	 * A producer with the products it makes (`blueprints`, each with `id`).
+	 *
+	 * @param int $id Producer.
+	 * @return array<mixed>
+	 * @throws PrintifyException When the call fails.
+	 */
+	public function print_provider( int $id ): array {
+		return $this->call( '/catalog/print_providers/' . $id . '.json' );
+	}
+
+	/**
+	 * A product's picture: https on Printify's image host only, sent without
+	 * the token, at most the designer's file size.
+	 *
+	 * @param string $url URL from the product list.
+	 * @return string Bytes.
+	 * @throws PrintifyException When it cannot be fetched.
+	 */
+	public function image( string $url ): string {
+		if ( ! $this->available() ) {
+			self::fail( PrintifyException::NOT_CONFIGURED );
+		}
+
+		if ( 1 !== preg_match( self::IMAGES, $url ) ) {
+			self::fail( PrintifyException::INVALID );
+		}
+
+		$response = ( $this->http )(
+			'GET',
+			$url,
+			array(
+				'timeout'             => self::TIMEOUT,
+				'redirection'         => 0,
+				'user-agent'          => self::USER_AGENT,
+				'limit_response_size' => DesignerFiles::MAX_BYTES,
+			)
+		);
+
+		if ( $response instanceof WP_Error || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+			self::fail( PrintifyException::FAILED, 'GET ' . $url );
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+
+		if ( '' === $body || strlen( $body ) >= DesignerFiles::MAX_BYTES ) {
+			self::fail( PrintifyException::INVALID );
+		}
+
+		return $body;
 	}
 
 	/**

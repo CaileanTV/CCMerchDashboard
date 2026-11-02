@@ -189,6 +189,24 @@ class DesignerFiles {
 	}
 
 	/**
+	 * Stores bytes the plugin made itself under a name of the folder's
+	 * pattern (e.g. a cached small picture).
+	 *
+	 * @param string $name  Name (NAME_PATTERN).
+	 * @param string $bytes Contents.
+	 * @throws DesignerException When the name is refused or it cannot be written.
+	 */
+	public function write( string $name, string $bytes ): void {
+		if ( 1 !== preg_match( self::NAME_PATTERN, $name ) || '' === $bytes ) {
+			self::refuse( DesignerException::FILE_MISSING );
+		}
+
+		if ( false === file_put_contents( self::prepare_directory() . '/' . $name, $bytes ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- A file the plugin made, in its own folder.
+			self::refuse( DesignerException::FILE_MISSING );
+		}
+	}
+
+	/**
 	 * Deletes a stored file (nothing when it is gone).
 	 *
 	 * @param string $name Stored name.

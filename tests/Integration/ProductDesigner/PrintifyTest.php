@@ -15,6 +15,7 @@ use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\ProductDesigner\Admin\PrintifyThumbnails;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
@@ -40,6 +41,7 @@ use WP_Error;
 #[CoversClass( PrintifyAccount::class )]
 #[CoversClass( PrintifyApi::class )]
 #[CoversClass( PrintifyCatalog::class )]
+#[CoversClass( PrintifyThumbnails::class )]
 final class PrintifyTest extends IntegrationTestCase {
 
 	private const API = 'https://api.printify.com/v1';
@@ -78,6 +80,8 @@ final class PrintifyTest extends IntegrationTestCase {
 		Settings::save( array_merge( Settings::all(), array( Settings::DESIGNER_ENABLED => true, Settings::PRINTIFY_ENABLED => true ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		delete_transient( PrintifyCatalog::BLUEPRINTS );
 		delete_transient( PrintifyCatalog::PRODUCERS );
+		delete_transient( PrintifyCatalog::PRODUCER_PRODUCTS . '26' );
+		delete_transient( PrintifyCatalog::PRODUCER_PRODUCTS . '29' );
 
 		$this->account = new PrintifyAccount( $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
 
@@ -101,6 +105,8 @@ final class PrintifyTest extends IntegrationTestCase {
 		delete_option( PrintifyAccount::TOKEN_OPTION );
 		delete_transient( PrintifyCatalog::BLUEPRINTS );
 		delete_transient( PrintifyCatalog::PRODUCERS );
+		delete_transient( PrintifyCatalog::PRODUCER_PRODUCTS . '26' );
+		delete_transient( PrintifyCatalog::PRODUCER_PRODUCTS . '29' );
 		Settings::save( array_merge( Settings::all(), array( Settings::DESIGNER_ENABLED => false, Settings::PRINTIFY_ENABLED => false ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		DesignerFiles::remove_all();
 		parent::tearDown();
@@ -130,7 +136,7 @@ final class PrintifyTest extends IntegrationTestCase {
 		Settings::save( array_merge( Settings::all(), array( Settings::PRINTIFY_ENABLED => false ) ) );
 
 		try {
-			( new PrintifyCatalog( $this->api ) )->search( 'hoodie' );
+			( new PrintifyCatalog( $this->api ) )->browse( 'hoodie' );
 			self::fail( 'Off.' );
 		} catch ( PrintifyException $e ) {
 			self::assertSame( PrintifyException::NOT_CONFIGURED, $e->reason() );
@@ -142,7 +148,7 @@ final class PrintifyTest extends IntegrationTestCase {
 	public function test_calls_only_read_and_carry_the_token_and_a_429_waits(): void {
 		$catalog = new PrintifyCatalog( $this->api );
 
-		$catalog->search( 'hoodie' );
+		$catalog->browse( 'hoodie', '', true );
 		$catalog->producers( 77 );
 		$catalog->choice( '77-26' );
 
@@ -165,24 +171,68 @@ final class PrintifyTest extends IntegrationTestCase {
 		}
 	}
 
-	public function test_the_whole_catalog_is_searched_and_producers_anywhere_are_offered_the_eu_first(): void {
+	public function test_the_whole_catalog_is_browsed_by_words_group_eu_and_producer(): void {
 		$catalog = new PrintifyCatalog( $this->api );
+		$ids     = static fn( array $found ): array => array_column( $found['products'], 'id' );
 
-		self::assertSame( array( 77 ), array_column( $catalog->search( 'gildan HOODED' ), 'id' ) );
-		self::assertSame( array(), $catalog->search( '  ' ) );
+		self::assertSame( array( 5, 77, 443 ), $ids( $catalog->browse( '' ) ), 'Everything shows at once.' );
+		self::assertSame( array( 77 ), $ids( $catalog->browse( 'gildan HOODED' ) ) );
+		self::assertSame( array( 77 ), $ids( $catalog->browse( '', 'hoodies' ) ) );
+		self::assertSame( array( 5 ), $ids( $catalog->browse( '', 'tshirts' ) ) );
+		self::assertSame( array( 'tshirts', 'hoodies', 'wall', 'other' ), array_map( array( PrintifyCatalog::class, 'group_of' ), array( 'Unisex Cotton Crew Tee', 'Unisex Heavy Blend™ Hooded Sweatshirt', 'Posters (EU)', 'Golf Balls' ) ) );
+		self::assertSame( array( 77 ), $ids( $catalog->browse( '', '', true ) ), 'Only what the producer in Germany makes.' );
+		self::assertSame( array( 5, 77 ), $ids( $catalog->browse( '', '', false, 1, 29 ) ), 'Only what the producer in the US makes.' );
+		self::assertSame( array( 'Textildruck Europa' ), array_column( $catalog->all_producers( true ), 'title' ) );
+		self::assertSame( array( 'Textildruck Europa', 'Monster Digital' ), array_column( $catalog->all_producers(), 'title' ) );
+
+		$page = $catalog->browse( '', '', false, 9 );
+
+		self::assertSame( array( 3, 1, 1 ), array( $page['total'], $page['page'], $page['pages'] ), 'A page past the end shows the last one.' );
 
 		$producers = $catalog->producers( 77 );
 
 		self::assertSame( array( 'Textildruck Europa', 'Monster Digital' ), array_column( $producers, 'title' ) );
 		self::assertSame( array( 'DE', 'US' ), array_column( $producers, 'country' ) );
 
-		// The second search reads no list again: it is 5.5 MB.
+		self::assertSame( array( 'Textildruck Europa' ), array_column( $catalog->producers( 77, true ), 'title' ) );
+
+		// Nothing is read again: the list is 5.5 MB, and the producers' products are kept too.
 		$calls = count( $this->calls );
 
-		$catalog->search( 'tee' );
+		$catalog->browse( 'tee', '', true );
+		$catalog->browse( '', '', false, 1, 29 );
 		$catalog->producers( 77 );
 
 		self::assertSame( $calls + 1, count( $this->calls ), 'Only the producers of the product are asked again.' );
+	}
+
+	public function test_a_small_picture_is_made_once_without_the_token_and_only_for_the_administrator(): void {
+		$catalog    = new PrintifyCatalog( $this->api, $this->files );
+		$thumbnails = new PrintifyThumbnails( $catalog );
+		$input      = array(
+			'product'  => '77',
+			'_wpnonce' => wp_create_nonce( PrintifyThumbnails::ACTION ),
+		);
+		$response   = $thumbnails->response( $input );
+		$size       = getimagesizefromstring( $response['body'] );
+
+		self::assertSame( array( 200, 'image/jpeg' ), array( $response['status'], $response['headers']['Content-Type'] ) );
+		self::assertSame( array( PrintifyCatalog::THUMB, PrintifyCatalog::THUMB ), is_array( $size ) ? array( $size[0], $size[1] ) : array() );
+
+		$picture = array_values( array_filter( $this->calls, static fn( array $call ): bool => str_starts_with( $call[1], 'https://images.printify.com/' ) ) );
+
+		self::assertCount( 1, $picture );
+		self::assertArrayNotHasKey( 'headers', $picture[0][2], 'The picture host never gets the token.' );
+
+		$thumbnails->response( $input );
+
+		self::assertCount( 1, array_filter( $this->calls, static fn( array $call ): bool => str_starts_with( $call[1], 'https://images.printify.com/' ) ), 'It is kept.' );
+		self::assertSame( 403, $thumbnails->response( array_merge( $input, array( '_wpnonce' => 'wrong' ) ) )['status'] );
+		self::assertSame( 404, $thumbnails->response( array_merge( $input, array( 'product' => '443' ) ) )['status'], 'A product without a picture.' );
+
+		wp_set_current_user( 0 );
+
+		self::assertSame( 403, $thumbnails->response( $input )['status'] );
 	}
 
 	public function test_a_side_holds_the_smallest_print_size_and_every_size_is_kept(): void {
@@ -331,22 +381,30 @@ final class PrintifyTest extends IntegrationTestCase {
 		);
 
 		return array(
-			self::API . '/catalog/blueprints.json'      => self::answer(
+			self::API . '/catalog/blueprints.json'         => self::answer(
 				array(
 					array(
 						'id'          => 5,
 						'title'       => 'Unisex Cotton Crew Tee',
 						'brand'       => 'Next Level',
 						'description' => '<p>Long.</p>',
+						'images'      => array( 'https://images.printify.com/tee' ),
 					),
 					array(
-						'id'    => 77,
-						'title' => 'Unisex Heavy Blend™ Hooded Sweatshirt',
-						'brand' => 'Gildan',
+						'id'     => 77,
+						'title'  => 'Unisex Heavy Blend™ Hooded Sweatshirt',
+						'brand'  => 'Gildan',
+						'images' => array( 'https://images.printify.com/66c32f6ebb0d2981ff0aa7f3', 'https://images.printify.com/second' ),
+					),
+					array(
+						'id'     => 443,
+						'title'  => 'Posters (EU)',
+						'brand'  => 'Generic brand',
+						'images' => array( 'https://elsewhere.example/poster.png' ),
 					),
 				)
 			),
-			self::API . '/catalog/blueprints/77.json'   => self::answer(
+			self::API . '/catalog/blueprints/77.json'      => self::answer(
 				array(
 					'id'          => 77,
 					'title'       => 'Unisex Heavy Blend™ Hooded Sweatshirt',
@@ -367,7 +425,7 @@ final class PrintifyTest extends IntegrationTestCase {
 					),
 				)
 			),
-			self::API . '/catalog/print_providers.json' => self::answer(
+			self::API . '/catalog/print_providers.json'    => self::answer(
 				array(
 					array(
 						'id'       => 26,
@@ -386,6 +444,23 @@ final class PrintifyTest extends IntegrationTestCase {
 						),
 					),
 				)
+			),
+			self::API . '/catalog/print_providers/26.json' => self::answer(
+				array(
+					'id'         => 26,
+					'blueprints' => array( array( 'id' => 77 ) ),
+				)
+			),
+			self::API . '/catalog/print_providers/29.json' => self::answer(
+				array(
+					'id'         => 29,
+					'blueprints' => array( array( 'id' => 5 ), array( 'id' => 77 ) ),
+				)
+			),
+			'https://images.printify.com/66c32f6ebb0d2981ff0aa7f3' => array(
+				'response' => array( 'code' => 200 ),
+				'headers'  => array(),
+				'body'     => AlertImagesTest::png( 600, 300 ),
 			),
 			self::API . '/catalog/blueprints/77/print_providers/26/variants.json' => self::answer(
 				array(

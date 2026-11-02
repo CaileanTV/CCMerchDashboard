@@ -28,6 +28,7 @@ use MerchBoard\Modules\ProductDesigner\Admin\BaseProductsPage;
 use MerchBoard\Modules\ProductDesigner\Admin\CampaignActions;
 use MerchBoard\Modules\ProductDesigner\Admin\CampaignsPage;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerAssetDownload;
+use MerchBoard\Modules\ProductDesigner\Admin\PrintifyThumbnails;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerNotificationActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerReviewActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerVersionFiles;
@@ -150,7 +151,8 @@ final class ProductDesignerModule implements Module {
 		// Printify (ADR-087): the token, the API and the catalog.
 		$container->set( PrintifyAccount::class, static fn( Container $c ): PrintifyAccount => new PrintifyAccount( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( PrintifyApi::class, static fn( Container $c ): PrintifyApi => new PrintifyApi( $c->get( PrintifyAccount::class ) ) );
-		$container->set( PrintifyCatalog::class, static fn( Container $c ): PrintifyCatalog => new PrintifyCatalog( $c->get( PrintifyApi::class ) ) );
+		$container->set( PrintifyCatalog::class, static fn( Container $c ): PrintifyCatalog => new PrintifyCatalog( $c->get( PrintifyApi::class ), $c->get( DesignerFiles::class ) ) );
+		$container->set( PrintifyThumbnails::class, static fn( Container $c ): PrintifyThumbnails => new PrintifyThumbnails( $c->get( PrintifyCatalog::class ) ) );
 		// Prodigi (ADR-084): the key, the API, the catalogue and the mockups.
 		$container->set( ProdigiAccount::class, static fn( Container $c ): ProdigiAccount => new ProdigiAccount( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( ProdigiApi::class, static fn( Container $c ): ProdigiApi => new ProdigiApi( $c->get( ProdigiAccount::class ) ) );
@@ -488,6 +490,7 @@ final class ProductDesignerModule implements Module {
 				$container->get( CampaignActions::class )->register();
 				$container->get( BaseProductActions::class )->register();
 				$container->get( DesignerAssetDownload::class )->register();
+				$container->get( PrintifyThumbnails::class )->register();
 				$container->get( DesignerNotificationActions::class )->register();
 				$container->get( DesignerReviewActions::class )->register();
 				$container->get( DesignerVersionFiles::class )->register();

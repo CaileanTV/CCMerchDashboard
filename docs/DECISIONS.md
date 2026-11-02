@@ -5060,11 +5060,12 @@ Rigtige svar 2026-11-01: varianter har printmål i pixels, men ingen farvekoder.
 
 ## Decision
 1. **Ekstra tjeneste.** Printify erstatter ikke nogen tjeneste og ændrer intet ved andre tjenester.
-2. **Kun kataloget.** Tilladte kald, alle `GET` på `https://api.printify.com/v1`: `/catalog/blueprints.json`, `/catalog/blueprints/{id}.json`, `/catalog/blueprints/{id}/print_providers.json`, `/catalog/blueprints/{id}/print_providers/{id}/variants.json` og `/catalog/print_providers.json`. Ingen produkter, uploads, mockups, ordrer eller webhooks. Nøglen behøver kun `catalog.read` og `print_providers.read`.
-3. **Hele kataloget.** Administratoren søger på ord, vælger produkt og derefter producent. Producenter overalt tilbydes, dem i EU står først, og stedet vises. Adressen beviser ikke, hvor varen laves.
-4. **Egne fotos.** Importen giver navn, farver, størrelser og printmål. Hver side starter som et hvidt ark på 1000 × 1000 px, så virksomhedens egne fotos passer (farvefotos), og printfeltet tegnes på dem. Printifys billeder hentes ikke. Designs får mockups fra browseren og gennemsigtig printfil: en side er ikke `flat`.
-5. **Ét printmål pr. side.** En side får det mindste printmål blandt størrelserne, så ét grundprodukt dækker dem alle. Der regnes med 300 dpi, som Printify ikke selv oplyser. Kataloget har ingen farvekoder: farver starter hvide, og et foto med farvens navn giver farven sin kode.
-6. **Kill switch og nøgle:** `printify_enabled` er slået fra som standard. Nøglen krypteres med sodium i nøgledomænet `designer-printify`, ligger uden autoload og auditeres kun som "sat" eller "fjernet". Creators og kunder ser aldrig navnet Printify.
+2. **Kun kataloget.** Tilladte kald, alle `GET` på `https://api.printify.com/v1`: `/catalog/blueprints.json`, `/catalog/blueprints/{id}.json`, `/catalog/blueprints/{id}/print_providers.json`, `/catalog/blueprints/{id}/print_providers/{id}/variants.json`, `/catalog/print_providers.json` og `/catalog/print_providers/{id}.json`, samt et produkts billede på `https://images.printify.com` uden nøglen. Ingen produkter, uploads, mockups, ordrer eller webhooks. Nøglen behøver kun `catalog.read` og `print_providers.read`.
+3. **Hele kataloget som oversigt (projektejerens ønske 2026-11-02).** Kun på admin-siden: alle produkter vises med det samme, 48 pr. side med et lille billede, og kan afgrænses med søgning, egne kategorier ud fra produktnavnet (kataloget har ingen), "Kun producenter i EU" og en bestemt producent. Med en producent valgt går et produkt direkte til importen, ellers vælges producenten bagefter, dem i EU først. Adressen beviser ikke, hvor varen laves.
+4. **Små billeder.** Printifys billeder er PNG'er på 2048 px og ca. 4,5 MB, uden en mindre udgave. Første gang et produkt vises, henter serveren billedet og gemmer en JPEG på 240 px i designerens private mappe. Den vises kun for `merchboard_manage_designer` og slettes ved afinstallation med mappen.
+5. **Egne fotos.** Importen giver navn, farver, størrelser og printmål. Hver side starter som et hvidt ark på 1000 × 1000 px, så virksomhedens egne fotos passer (farvefotos), og printfeltet tegnes på dem. Printifys billeder hentes ikke. Designs får mockups fra browseren og gennemsigtig printfil: en side er ikke `flat`.
+6. **Ét printmål pr. side.** En side får det mindste printmål blandt størrelserne, så ét grundprodukt dækker dem alle. Der regnes med 300 dpi, som Printify ikke selv oplyser. Kataloget har ingen farvekoder: farver starter hvide, og et foto med farvens navn giver farven sin kode.
+7. **Kill switch og nøgle:** `printify_enabled` er slået fra som standard. Nøglen krypteres med sodium i nøgledomænet `designer-printify`, ligger uden autoload og auditeres kun som "sat" eller "fjernet". Creators og kunder ser aldrig navnet Printify.
 
 ## Alternatives considered
 - **Erstatte en anden tjeneste:** fravalgt af projektejeren.
@@ -5084,7 +5085,7 @@ Scopes uden skrivning betyder, at en lækket nøgle ikke kan oprette produkter e
 - **Automatisk adgang:** H.9.14 forbyder adgang med "automated means" for at hente data og nævner ikke API'et. Vi bruger kun det API, Printify selv udstiller, inden for dets dokumenterede grænser. Der skrabes ikke fra hjemmesiden.
 - **Creators:** licensen er til "Your own individual use" (H.1), og adgang må ikke deles (H.9.4). Virksomheden er sælger og eneste bruger af kontoen. Creators får aldrig adgang til Printify.
 - **Mockups:** Printify ejer mockups og skabeloner (L.3). De bruges ikke.
-- **Billede i admin:** produktets billede vises kun for administratoren, mens produktet vælges, og gemmes ikke.
+- **Billeder i admin:** produkternes billeder vises kun for administratoren, mens et produkt vælges. Et lille billede gemmes for at spare 4,5 MB pr. visning. Produktsider, creators og kunder ser dem aldrig.
 
 Stadig åbent eller en risiko:
 - **Produktion:** intet sendes til Printify, så en vare fra kataloget produceres som i dag, manuelt. Sendes ordrer dertil senere, kræver det en ny ADR, herunder om pakker er neutrale, og at automatisk godkendelse efter 24 timer er slået fra.

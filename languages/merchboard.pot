@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-01T21:48:40+00:00\n"
+"POT-Creation-Date: 2026-11-02T19:06:24+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -155,6 +155,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:103
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:163
 #: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:143
+#: src/Modules/ProductDesigner/Admin/PrintifyThumbnails.php:97
 #: src/Modules/Settings/Admin/SettingsActions.php:136
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:256
@@ -1302,7 +1303,7 @@ msgstr ""
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1416
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1494
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:217
 #: build/dashboard.js:61
 #: build/dashboard.js:62
@@ -2063,7 +2064,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:321
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:377
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:429
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1352
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1430
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:160
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:198
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:203
@@ -2107,7 +2108,7 @@ msgstr[1] ""
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:334
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:458
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:473
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1061
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1139
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:205
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:217
 #: build/dashboard.js:86
@@ -3139,6 +3140,7 @@ msgstr ""
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:170
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:670
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:758
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:846
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:199
 msgid "Category"
 msgstr ""
@@ -3164,7 +3166,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:676
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:757
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:764
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:830
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:845
 msgid "Search"
 msgstr ""
 
@@ -3985,7 +3987,7 @@ msgstr ""
 #: src/Modules/News/Admin/NewsAdminPage.php:334
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:208
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:321
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1237
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1315
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:160
 #: src/Modules/ProductDesigner/Admin/DesignerFeesSection.php:122
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:177
@@ -4081,7 +4083,7 @@ msgid "Deactivate"
 msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorsListTable.php:241
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1372
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1450
 #: build/alerts-global-admin.js:12
 #: build/alerts-global-admin.js:18
 #: build/alerts-presets-admin.js:12
@@ -4351,7 +4353,7 @@ msgid "Withdrawn"
 msgstr ""
 
 #: src/Modules/News/Admin/NewsAdminPage.php:417
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1418
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1496
 #: build/dashboard.js:58
 #: build/dashboard.js:78
 msgid "Draft"
@@ -6055,6 +6057,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:157
 #: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:133
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:120
+#: src/Modules/ProductDesigner/Admin/PrintifyThumbnails.php:89
 msgid "Sorry, you are not allowed to manage the product designer."
 msgstr ""
 
@@ -6329,21 +6332,21 @@ msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:321
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:388
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:960
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1038
 #: build/dashboard.js:58
 msgid "Colours"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:321
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:389
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:966
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1044
 #: build/dashboard.js:58
 msgid "Sizes"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:321
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:392
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:972
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1050
 #: build/dashboard.js:55
 msgid "Sides"
 msgstr ""
@@ -6391,7 +6394,7 @@ msgstr ""
 
 #. translators: %s: currency code, e.g. "DKK".
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:381
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1005
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1083
 #, php-format
 msgid "Base price incl. VAT (%s)"
 msgstr ""
@@ -6415,14 +6418,14 @@ msgstr ""
 
 #. translators: %s: currency code, e.g. "DKK".
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:386
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1007
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1085
 #, php-format
 msgid "Price per extra design area incl. VAT (%s)"
 msgstr ""
 
 #. translators: %s: currency code, e.g. "DKK".
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:386
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1007
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1085
 msgid "What the company keeps for each design area after the first. 0 means extra areas cost nothing."
 msgstr ""
 
@@ -6525,7 +6528,7 @@ msgid "Print file: %1$d × %2$d px"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:515
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:982
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1060
 msgid "Embroidery pack"
 msgstr ""
 
@@ -6607,6 +6610,8 @@ msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:670
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:758
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:846
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:852
 msgid "— All —"
 msgstr ""
 
@@ -6616,7 +6621,7 @@ msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:696
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:779
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:844
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:865
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:313
 msgid "No products found."
 msgstr ""
@@ -6627,7 +6632,6 @@ msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:717
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:793
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:858
 msgid "Only the first results are shown. Add words to narrow the search."
 msgstr ""
 
@@ -6643,124 +6647,229 @@ msgstr ""
 msgid "Enter the Printify access token under Settings → Product designer first."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:828
-msgid "Search Printify's catalog and pick the product and its producer. The import brings the colours, sizes and print areas. You add your own photos afterwards and draw the print area on them."
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:843
+msgid "Pick a product, then its producer. The import brings the colours, sizes and print areas. You add your own photos afterwards and draw the print area on them."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:873
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:852
+msgid "Producer"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:858
+msgid "Only producers in the EU"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:859
+#: build/dashboard.js:55
+#: build/dashboard.js:89
+msgid "Show"
+msgstr ""
+
+#. translators: %d: number of products.
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:862
+#, php-format
+msgid "%d product."
+msgid_plural "%d products."
+msgstr[0] ""
+msgstr[1] ""
+
+#. translators: %d: number of products.
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:862
+msgid "A producer is in the EU by the address Printify shows for it."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:898
+msgid "← Previous"
+msgstr ""
+
+#. translators: 1: page, 2: pages.
+#. translators: 1: page number, 2: number of pages.
+#. translators: 1: current page number, 2: number of pages.
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:902
+#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1116
+#: build/dashboard.js:23
+#, php-format,js-format
+msgid "Page %1$d of %2$d"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:905
+msgid "Next →"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:919
+msgid "T-shirts"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:920
+msgid "Hoodies"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:921
+msgid "Sweatshirts"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:922
+msgid "Other clothing and shoes"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:923
+msgid "Caps and hats"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:924
+msgid "Mugs and bottles"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:925
+msgid "Bags"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:926
+msgid "Posters and wall art"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:927
+msgid "Phone and tech"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:928
+msgid "Home and kitchen"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:929
+msgid "Stickers and paper"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:930
+msgid "Jewellery and accessories"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:931
+msgid "Pets"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:932
+msgid "Other"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:947
+msgid "← Back to the catalog"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:951
 msgid "No producer makes this product."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:878
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:956
 msgid "Choose the producer. Colours, sizes and print areas differ between them. The ones in the EU are listed first; the place is the address Printify shows for the producer."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:895
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:973
 msgid "Enter the Gelato API key and store id under Settings → Product designer first."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:909
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:987
 msgid "Gelato renders products only from a template. Make one template in the Gelato dashboard of the product you want, with the colours and sizes creators may choose, one named image layer per side and at least one mockup: Gelato makes the photos from the mockups in the template. Any design in it is never shown: we replace it with an empty file and later with the creators' print files. The template id is in the template's address at Gelato."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:911
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:989
 msgid "Gelato template id"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:911
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:989
 msgid "Fetch"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:952
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1030
 msgid "The print size depends on the size. A base product holds one print size: make one base product per size you want to offer."
 msgstr ""
 
 #. translators: 1: side name, 2: width in mm, 3: height in mm.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:976
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:995
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1054
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1073
 #, php-format
 msgid "%1$s (%2$d × %3$d mm)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:988
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1066
 msgid "At most six sides. Each starts as a white sheet with the smallest print size of the sizes you can choose, which fits them all at 300 dpi."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:988
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1066
 msgid "Each side is a flat part of the sewing pattern. Keep every part you want printed: an unticked part stays white on the product."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:988
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1066
 msgid "At most six sides. Each is rendered and measured; a side whose print area cannot be found on the photos is left out."
 msgstr ""
 
 #. translators: %s: the template's image layers with their sizes.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1000
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1078
 #, php-format
 msgid "Image layers in the template: %s"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1001
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1079
 msgid "Check in Gelato that each image layer fills the whole print area. Creators can only design on this size, and we cannot check it ourselves, because Gelato does not tell us the largest area. If you change the template, make a new import."
 msgstr ""
 
 #. translators: %s: currency code, e.g. "DKK".
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1007
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1085
 msgid "What the company keeps for each part after the first. An all-over design usually covers every part: 0 means they cost nothing extra."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1009
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1087
 msgid "The base product is created as a draft at once. Then choose your own photos on each side and draw the print area on them."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1009
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1087
 msgid "The base product is created as a draft at once. Its sewing patterns, if it has any, are fetched in the background. Creators design on the flat parts; the provider makes their mockups when they are sent for approval."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1009
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1087
 msgid "The base product is created as a draft at once. The provider then renders its photos without a design and with a marker per side, from which the photos per colour and the print areas are taken, in the background (a few minutes). Check them and activate it."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1010
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1088
 msgid "Create and import"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1029
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1107
 msgid "Mockups"
 msgstr ""
 
 #. translators: %d: the most photos of a design.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1044
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1122
 #, php-format
 msgid "The photos Printful makes of each design sent for approval. They become the product's images in the shop, in place of the mockups the creator's browser made, and each is made per colour. At most %d: more are left out."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1057
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1135
 msgid "Mockup PSD"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1060
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1138
 msgid "Imported."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1067
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1145
 msgid "Let creators see this mockup while they design (\"See the finished product\")"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1068
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1146
 msgid "For a product whose mockup wraps the design, like a mug. Smart objects with \"design\" in their name take the print file: \"højre\" shows its right end, \"venstre\" its left end. Each design then gets this mockup instead of the one drawn on the template."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1092
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1170
 msgid "Order of the mockups"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1093
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1171
 msgid "The order of the photos in the shop. The first is the main image. Designs already sent keep theirs."
 msgstr ""
 
 #. translators: %s: the photo's id.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1102
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1180
 #, php-format
 msgid "Mockup %s"
 msgstr ""
@@ -6769,7 +6878,7 @@ msgstr ""
 #. translators: %s: name of a side.
 #. translators: %s: a size.
 #. translators: %s: colour name.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1106
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1184
 #: build/base-products-admin.js:8
 #: build/base-products-admin.js:13
 #: build/dashboard.js:58
@@ -6781,7 +6890,7 @@ msgstr ""
 #. translators: %s: name of a side.
 #. translators: %s: a size.
 #. translators: %s: colour name.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1108
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1186
 #: build/base-products-admin.js:10
 #: build/base-products-admin.js:14
 #: build/dashboard.js:58
@@ -6790,18 +6899,18 @@ msgid "Move %s down"
 msgstr ""
 
 #. translators: %s: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1133
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1211
 #, php-format
 msgid "The photos and print areas are being imported from %s in the background. The status below updates by itself; the base product cannot be activated meanwhile."
 msgstr ""
 
 #. translators: 1: Printful or Gelato, 2: reason.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1136
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1214
 #, php-format
 msgid "The import from %1$s failed: %2$s"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1146
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1224
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:197
 #: build/alerts-global-admin.js:1
 #: build/alerts-page-admin.js:1
@@ -6811,132 +6920,132 @@ msgid "Try again"
 msgstr ""
 
 #. translators: %s: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1149
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1227
 #, php-format
 msgid "Imported from %s: colours, sizes and print sizes. Add your own photos on each side, draw the print area on them, and check everything before you activate the base product."
 msgstr ""
 
 #. translators: %s: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1149
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1227
 #, php-format
 msgid "Imported from %s: the flat parts with their print areas. Check them before you activate the base product."
 msgstr ""
 
 #. translators: %s: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1149
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1227
 #, php-format
 msgid "Imported from %s: one photo per colour and a measured print area per side. Check each print area before you activate the base product."
 msgstr ""
 
 #. translators: 1: names of sides, 2: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1153
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1231
 #, php-format
 msgid "Left out because %2$s's photos do not show them: %1$s."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1166
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1244
 msgid "Show the provider's answer"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1180
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1258
 msgid "The provider's answer (no keys)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1219
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1297
 msgid "The provider renders the product"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1220
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1298
 msgid "The print areas are measured"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1221
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1299
 msgid "The photos are downloaded"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1222
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1300
 msgid "The sides are saved"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1237
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1315
 msgid "Render"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1237
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1315
 msgid "The provider says"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1237
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1315
 msgid "Picture"
 msgstr ""
 
 #. translators: %d: minutes.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1252
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1330
 #, php-format
 msgid "The background job has not run for %d minutes. Check that WP-Cron or Action Scheduler runs on this site."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1265
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1343
 msgid "Product with markers"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1265
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1343
 msgid "Blank product"
 msgstr ""
 
 #. translators: 1: looks so far, 2: most looks.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1276
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1354
 msgid "Ready"
 msgstr ""
 
 #. translators: 1: looks so far, 2: most looks.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1276
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1354
 #, php-format
 msgid "Waiting (look %1$d of %2$d)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1316
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1394
 msgid "importing…"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1317
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1395
 msgid "import failed"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1348
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1426
 msgid "Images every creator can use in the designer. PNG, JPG or WebP; use PNG for transparency."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1354
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1432
 msgid "Add clipart"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1359
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1437
 #: build/dashboard.js:55
 msgid "No cliparts yet."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1391
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1469
 msgid "— None —"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1417
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1495
 msgid "Retired"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1429
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1507
 msgid "Background"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1430
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1508
 msgid "Colour mask"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1431
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1509
 msgid "Shading"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1432
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1510
 msgid "Highlight"
 msgstr ""
 
@@ -7603,6 +7712,10 @@ msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:327
 msgid "To the creator"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/PrintifyThumbnails.php:103
+msgid "The picture could not be fetched."
 msgstr ""
 
 #: src/Modules/ProductDesigner/DesignerNotifications.php:125
@@ -11644,14 +11757,6 @@ msgstr ""
 msgid "Created automatically from the data registered in the system. Template version %d."
 msgstr ""
 
-#. translators: 1: page number, 2: number of pages.
-#. translators: 1: current page number, 2: number of pages.
-#: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1116
-#: build/dashboard.js:23
-#, php-format,js-format
-msgid "Page %1$d of %2$d"
-msgstr ""
-
 #: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:109
 #: src/Modules/WooCommerce/ProtectedMetaEntryPoints.php:182
 msgid "The creator of a product can only be changed in Merch Dashboard."
@@ -14507,11 +14612,6 @@ msgstr ""
 #: build/dashboard.js:55
 #: build/dashboard.js:58
 msgid "Backward"
-msgstr ""
-
-#: build/dashboard.js:55
-#: build/dashboard.js:89
-msgid "Show"
 msgstr ""
 
 #: build/dashboard.js:55

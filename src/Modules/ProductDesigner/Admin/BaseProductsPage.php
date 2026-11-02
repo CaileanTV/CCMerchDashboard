@@ -811,6 +811,12 @@ final class BaseProductsPage {
 		$query     = isset( $_GET['q'] ) ? sanitize_text_field( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$pick      = isset( $_GET['pick'] ) ? sanitize_text_field( wp_unslash( $_GET['pick'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$blueprint = isset( $_GET['blueprint'] ) ? absint( $_GET['blueprint'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$group     = isset( $_GET['group'] ) ? sanitize_key( wp_unslash( $_GET['group'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$eu_only   = isset( $_GET['eu'] ) && '1' === $_GET['eu']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$page      = isset( $_GET['catalog_page'] ) ? absint( $_GET['catalog_page'] ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$producer  = isset( $_GET['producer'] ) ? absint( $_GET['producer'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$groups    = self::printify_groups();
+		$group     = isset( $groups[ $group ] ) ? $group : '';
 
 		if ( '' !== $pick ) {
 			$this->render_pick( $printify, PrintifyCatalog::SOURCE, $pick );
@@ -820,43 +826,111 @@ final class BaseProductsPage {
 
 		try {
 			if ( $blueprint > 0 ) {
-				$this->render_printify_producers( $printify, $blueprint );
+				$this->render_printify_producers( $printify, $blueprint, $eu_only );
 
 				return;
 			}
 
-			echo '<p>' . esc_html__( 'Search Printify\'s catalog and pick the product and its producer. The import brings the colours, sizes and print areas. You add your own photos afterwards and draw the print area on them.', 'merchboard' ) . '</p>';
-			echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( DesignerMenu::SLUG ) . '"><input type="hidden" name="tab" value="' . esc_attr( DesignerMenu::BASES ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( PrintifyCatalog::SOURCE ) . '">';
-			echo '<p><label>' . esc_html__( 'Search', 'merchboard' ) . ' <input type="search" name="q" value="' . esc_attr( $query ) . '" class="regular-text"></label> <button type="submit" class="button">' . esc_html__( 'Search', 'merchboard' ) . '</button></p></form>';
-
-			if ( '' === $query ) {
-				return;
-			}
-
-			$products = $printify->search( $query );
+			$producers = $printify->all_producers( $eu_only );
+			$producer  = in_array( $producer, array_column( $producers, 'id' ), true ) ? $producer : 0;
+			$found     = $printify->browse( $query, $group, $eu_only, $page, $producer );
 		} catch ( PrintifyException $e ) {
 			$this->provider_error( $e->reason(), $e->call, $e->detail );
 
 			return;
 		}
 
-		if ( array() === $products ) {
+		echo '<p>' . esc_html__( 'Pick a product, then its producer. The import brings the colours, sizes and print areas. You add your own photos afterwards and draw the print area on them.', 'merchboard' ) . '</p>';
+		echo '<form method="get" action="' . esc_url( admin_url( 'admin.php' ) ) . '"><input type="hidden" name="page" value="' . esc_attr( DesignerMenu::SLUG ) . '"><input type="hidden" name="tab" value="' . esc_attr( DesignerMenu::BASES ) . '"><input type="hidden" name="view" value="new"><input type="hidden" name="source" value="' . esc_attr( PrintifyCatalog::SOURCE ) . '">';
+		echo '<p><label>' . esc_html__( 'Search', 'merchboard' ) . ' <input type="search" name="q" value="' . esc_attr( $query ) . '" class="regular-text"></label> ';
+		echo '<label>' . esc_html__( 'Category', 'merchboard' ) . ' <select name="group"><option value="">' . esc_html__( '— All —', 'merchboard' ) . '</option>';
+
+		foreach ( $groups as $key => $label ) {
+			echo '<option value="' . esc_attr( $key ) . '"' . selected( $group, $key, false ) . '>' . esc_html( $label ) . '</option>';
+		}
+
+		echo '</select></label> <label>' . esc_html__( 'Producer', 'merchboard' ) . ' <select name="producer"><option value="">' . esc_html__( '— All —', 'merchboard' ) . '</option>';
+
+		foreach ( $producers as $entry ) {
+			echo '<option value="' . esc_attr( (string) $entry['id'] ) . '"' . selected( $producer, $entry['id'], false ) . '>' . esc_html( trim( $entry['title'] . ' (' . $entry['country'] . ')', ' ()' ) ) . '</option>';
+		}
+
+		echo '</select></label> <label><input type="checkbox" name="eu" value="1"' . checked( $eu_only, true, false ) . '> ' . esc_html__( 'Only producers in the EU', 'merchboard' ) . '</label> ';
+		echo '<button type="submit" class="button">' . esc_html__( 'Show', 'merchboard' ) . '</button></p></form>';
+
+		/* translators: %d: number of products. */
+		echo '<p class="description">' . esc_html( sprintf( _n( '%d product.', '%d products.', $found['total'], 'merchboard' ), $found['total'] ) ) . ( $eu_only ? ' ' . esc_html__( 'A producer is in the EU by the address Printify shows for it.', 'merchboard' ) : '' ) . '</p>';
+
+		if ( array() === $found['products'] ) {
 			echo '<p>' . esc_html__( 'No products found.', 'merchboard' ) . '</p>';
 
 			return;
 		}
 
-		echo '<ul>';
+		$args = array(
+			'source'   => PrintifyCatalog::SOURCE,
+			'q'        => $query,
+			'group'    => $group,
+			'eu'       => $eu_only ? '1' : '',
+			'producer' => $producer,
+		);
 
-		foreach ( $products as $product ) {
-			echo '<li><a href="' . esc_url( self::new_url( array( 'source' => PrintifyCatalog::SOURCE, 'blueprint' => $product['id'] ) ) ) . '">' . esc_html( trim( $product['title'] . ' · ' . $product['brand'], ' ·' ) ) . '</a></li>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		echo '<ul style="display:grid;grid-template-columns:repeat(auto-fill,minmax(10rem,1fr));gap:12px;list-style:none;margin:1em 0;padding:0">';
+
+		foreach ( $found['products'] as $product ) {
+			// With a producer chosen, a product goes straight to the import.
+			$target = $producer > 0 ? array(
+				'source' => PrintifyCatalog::SOURCE,
+				'pick'   => $product['id'] . '-' . $producer,
+			) : array_merge( $args, array( 'blueprint' => $product['id'] ) );
+
+			echo '<li class="card" style="margin:0;padding:8px;min-width:0"><a href="' . esc_url( self::new_url( $target ) ) . '" style="display:block;text-decoration:none">';
+			echo '<img src="' . esc_url( PrintifyThumbnails::url( $product['id'] ) ) . '" alt="" loading="lazy" width="' . esc_attr( (string) PrintifyCatalog::THUMB ) . '" height="' . esc_attr( (string) PrintifyCatalog::THUMB ) . '" style="display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain">';
+			echo '<strong style="display:block;margin-top:6px">' . esc_html( $product['title'] ) . '</strong><span class="description">' . esc_html( $product['brand'] ) . '</span></a></li>';
 		}
 
 		echo '</ul>';
 
-		if ( count( $products ) >= PrintifyCatalog::MAX_RESULTS ) {
-			echo '<p class="description">' . esc_html__( 'Only the first results are shown. Add words to narrow the search.', 'merchboard' ) . '</p>';
+		if ( $found['pages'] > 1 ) {
+			$links = array();
+
+			if ( $found['page'] > 1 ) {
+				$links[] = '<a class="button" href="' . esc_url( self::new_url( array_merge( $args, array( 'catalog_page' => $found['page'] - 1 ) ) ) ) . '">' . esc_html__( '← Previous', 'merchboard' ) . '</a>';
+			}
+
+			/* translators: 1: page, 2: pages. */
+			$links[] = '<span>' . esc_html( sprintf( __( 'Page %1$d of %2$d', 'merchboard' ), $found['page'], $found['pages'] ) ) . '</span>';
+
+			if ( $found['page'] < $found['pages'] ) {
+				$links[] = '<a class="button" href="' . esc_url( self::new_url( array_merge( $args, array( 'catalog_page' => $found['page'] + 1 ) ) ) ) . '">' . esc_html__( 'Next →', 'merchboard' ) . '</a>';
+			}
+
+			echo '<p style="display:flex;gap:1em;align-items:center">' . implode( ' ', $links ) . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
 		}
+	}
+
+	/**
+	 * The groups of Printify's catalog by name, for the administrator.
+	 *
+	 * @return array<string, string>
+	 */
+	private static function printify_groups(): array {
+		return array(
+			'tshirts'     => __( 'T-shirts', 'merchboard' ),
+			'hoodies'     => __( 'Hoodies', 'merchboard' ),
+			'sweatshirts' => __( 'Sweatshirts', 'merchboard' ),
+			'clothing'    => __( 'Other clothing and shoes', 'merchboard' ),
+			'headwear'    => __( 'Caps and hats', 'merchboard' ),
+			'drinkware'   => __( 'Mugs and bottles', 'merchboard' ),
+			'bags'        => __( 'Bags', 'merchboard' ),
+			'wall'        => __( 'Posters and wall art', 'merchboard' ),
+			'tech'        => __( 'Phone and tech', 'merchboard' ),
+			'home'        => __( 'Home and kitchen', 'merchboard' ),
+			'paper'       => __( 'Stickers and paper', 'merchboard' ),
+			'accessories' => __( 'Jewellery and accessories', 'merchboard' ),
+			'pets'        => __( 'Pets', 'merchboard' ),
+			'other'       => __( 'Other', 'merchboard' ),
+		);
 	}
 
 	/**
@@ -864,10 +938,14 @@ final class BaseProductsPage {
 	 *
 	 * @param PrintifyCatalog $printify  Printify's catalog.
 	 * @param int             $blueprint The product.
+	 * @param bool            $eu_only   Only producers in the EU.
 	 * @throws PrintifyException When Printify refuses or fails.
 	 */
-	private function render_printify_producers( PrintifyCatalog $printify, int $blueprint ): void {
-		$producers = $printify->producers( $blueprint );
+	private function render_printify_producers( PrintifyCatalog $printify, int $blueprint, bool $eu_only ): void {
+		$producers = $printify->producers( $blueprint, $eu_only );
+
+		echo '<p><a href="' . esc_url( wp_get_referer() ? wp_get_referer() : self::new_url( array( 'source' => PrintifyCatalog::SOURCE ) ) ) . '">' . esc_html__( '← Back to the catalog', 'merchboard' ) . '</a></p>';
+		echo '<img src="' . esc_url( PrintifyThumbnails::url( $blueprint ) ) . '" alt="" width="' . esc_attr( (string) PrintifyCatalog::THUMB ) . '" height="' . esc_attr( (string) PrintifyCatalog::THUMB ) . '" style="max-width:100%;height:auto">';
 
 		if ( array() === $producers ) {
 			echo '<p>' . esc_html__( 'No producer makes this product.', 'merchboard' ) . '</p>';

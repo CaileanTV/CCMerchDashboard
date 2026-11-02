@@ -9,15 +9,19 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\ProductDesigner\Providers;
 
+use InvalidArgumentException;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
+use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * ADR-087: the administrator searches Printify's whole catalog, picks a
- * product and one of its producers, with no limit on where the producer is.
+ * ADR-087: the administrator browses Printify's whole catalog with small
+ * pictures, by our own groups of the product names, words and, if wanted,
+ * only the products of producers in the EU, then picks a product and one of
+ * its producers.
  * Only the catalog is used: the import brings in the name, colours, sizes and
  * print areas, and each side starts as a white sheet of the size of the
  * company's own photos. The administrator adds those and draws the print area
@@ -35,9 +39,39 @@ class PrintifyCatalog implements CatalogRenderer {
 	public const SOURCE = 'printify';
 
 	/**
-	 * Most search results shown.
+	 * Products on a page of the catalog.
 	 */
-	public const MAX_RESULTS = 48;
+	public const PER_PAGE = 48;
+
+	/**
+	 * The side of a small picture.
+	 */
+	public const THUMB = 240;
+
+	/**
+	 * Groups of the products by words in their names: the catalog has no
+	 * categories. The first that fits wins; a product without one is "other".
+	 */
+	public const GROUPS = array(
+		'hoodies'     => '/hood/i',
+		'sweatshirts' => '/sweat|crewneck|fleece/i',
+		'tshirts'     => '/\bt-?shirt|\btee\b|tank|jersey|v-neck/i',
+		'clothing'    => '/shirt|polo|jacket|pants|jogger|shorts|legging|dress|skirt|sock|bodysuit|onesie|romper|bikini|swim|brief|boxer|pajama|sneaker|shoe|slipper|sandal|flip flop|\btop\b/i',
+		'headwear'    => '/\bcap\b|hat\b|beanie|bucket|visor/i',
+		'drinkware'   => '/mug|tumbler|\bcup\b|glass|bottle|flask|stein|can cooler|can holder|mason jar/i',
+		'bags'        => '/\bbag|tote|backpack|pouch|duffel|fanny|handbag|sack/i',
+		'wall'        => '/poster|canvas|\bprint\b|frame|tapestry|wall|metal sign|acrylic|photo tile|gallery board/i',
+		'tech'        => '/phone|\bcase\b|mouse|desk mat|laptop|airpods|tablet|charger|\bpad\b|speaker|earbuds/i',
+		'home'        => '/pillow|blanket|towel|rug|\bmat\b|mats\b|curtain|coaster|candle|ornament|clock|puzzle|throw|duvet|sheet|shower|apron|comforter|stocking|cutting board|oven|lunch|tablecloth|storage|food/i',
+		'paper'       => '/sticker|decal|card|notebook|journal|calendar|magnet|postcard|paper|stationery|bookmark|note/i',
+		'accessories' => '/necklace|bracelet|earring|key|pin\b|button|lanyard|wallet|watch|scarf|mask|patch|necktie|tie\b|mirror|jewelry|luggage/i',
+		'pets'        => '/\bpet\b|\bdog\b|\bcat\b|collar|leash|bandana/i',
+	);
+
+	/**
+	 * The products of a producer (transient prefix).
+	 */
+	public const PRODUCER_PRODUCTS = 'merchboard_printify_producer_';
 
 	/**
 	 * The template of a side: the size of the company's photos.
@@ -76,9 +110,10 @@ class PrintifyCatalog implements CatalogRenderer {
 	/**
 	 * Constructor.
 	 *
-	 * @param PrintifyApi $api Printify.
+	 * @param PrintifyApi        $api   Printify.
+	 * @param DesignerFiles|null $files Where small pictures are kept.
 	 */
-	public function __construct( private PrintifyApi $api ) {
+	public function __construct( private PrintifyApi $api, private ?DesignerFiles $files = null ) {
 	}
 
 	/**
@@ -89,43 +124,133 @@ class PrintifyCatalog implements CatalogRenderer {
 	}
 
 	/**
-	 * Products of the catalog with all the words in their name or brand.
+	 * A page of the catalog: the products with all the words in their name or
+	 * brand, in a group, and only those of one producer or of producers in the
+	 * EU when asked.
 	 *
-	 * @param string $query Words.
-	 * @return list<array{id: int, title: string, brand: string}>
+	 * @param string $query    Words; '' for all.
+	 * @param string $group    A key of GROUPS, 'other' or '' for all.
+	 * @param bool   $eu_only  Only products a producer in the EU makes.
+	 * @param int    $page     Page, from 1.
+	 * @param int    $producer Only this producer's products; 0 for all.
+	 * @return array{products: list<array{id: int, title: string, brand: string}>, total: int, page: int, pages: int}
 	 * @throws PrintifyException When Printify refuses or fails.
 	 */
-	public function search( string $query ): array {
+	public function browse( string $query, string $group = '', bool $eu_only = false, int $page = 1, int $producer = 0 ): array {
 		$words = array_filter( explode( ' ', mb_strtolower( trim( $query ) ) ), static fn( string $word ): bool => '' !== $word );
+		$eu    = $eu_only ? array_flip( $this->eu_products() ) : array();
+		$made  = $producer > 0 ? array_flip( $this->producer_products( $producer ) ) : array();
 		$found = array();
-
-		if ( array() === $words ) {
-			return array();
-		}
 
 		foreach ( $this->blueprints() as $row ) {
 			$text = mb_strtolower( $row['title'] . ' ' . $row['brand'] );
 
-			if ( array() === array_filter( $words, static fn( string $word ): bool => ! str_contains( $text, $word ) ) ) {
-				$found[] = $row;
+			if ( ( '' === $group || self::group_of( $row['title'] ) === $group ) && ( ! $eu_only || isset( $eu[ $row['id'] ] ) ) && ( 0 === $producer || isset( $made[ $row['id'] ] ) ) && array() === array_filter( $words, static fn( string $word ): bool => ! str_contains( $text, $word ) ) ) {
+				$found[] = array(
+					'id'    => $row['id'],
+					'title' => $row['title'],
+					'brand' => $row['brand'],
+				);
 			}
+		}
 
-			if ( count( $found ) >= self::MAX_RESULTS ) {
+		$pages = max( 1, (int) ceil( count( $found ) / self::PER_PAGE ) );
+		$page  = min( max( 1, $page ), $pages );
+
+		return array(
+			'products' => array_slice( $found, ( $page - 1 ) * self::PER_PAGE, self::PER_PAGE ),
+			'total'    => count( $found ),
+			'page'     => $page,
+			'pages'    => $pages,
+		);
+	}
+
+	/**
+	 * Every producer by name, the ones in the EU first.
+	 *
+	 * @param bool $eu_only Only producers in the EU.
+	 * @return list<array{id: int, title: string, country: string, city: string, eu: bool}>
+	 * @throws PrintifyException When Printify refuses or fails.
+	 */
+	public function all_producers( bool $eu_only = false ): array {
+		$producers = array();
+
+		foreach ( $this->places() as $id => $place ) {
+			$eu = in_array( $place['country'], self::EU, true );
+
+			if ( '' !== $place['title'] && ( $eu || ! $eu_only ) ) {
+				$producers[] = array_merge( array( 'id' => $id ), $place, array( 'eu' => $eu ) );
+			}
+		}
+
+		usort( $producers, static fn( array $a, array $b ): int => array( $b['eu'], $a['title'] ) <=> array( $a['eu'], $b['title'] ) );
+
+		return $producers;
+	}
+
+	/**
+	 * The group of a product by its name: a key of GROUPS or 'other'.
+	 *
+	 * @param string $title Name.
+	 */
+	public static function group_of( string $title ): string {
+		foreach ( self::GROUPS as $key => $pattern ) {
+			if ( 1 === preg_match( $pattern, $title ) ) {
+				return $key;
+			}
+		}
+
+		return 'other';
+	}
+
+	/**
+	 * A product's small picture as a JPEG on white, made once and kept.
+	 *
+	 * @param int $product Product.
+	 * @return string JPEG bytes.
+	 * @throws PrintifyException When Printify refuses or fails, or the product has no picture.
+	 * @throws DesignerException When it cannot be kept.
+	 * @throws InvalidArgumentException When the picture cannot be read.
+	 */
+	public function thumbnail( int $product ): string {
+		$url = '';
+
+		foreach ( $this->blueprints() as $row ) {
+			if ( $product === $row['id'] ) {
+				$url = $row['image'];
 				break;
 			}
 		}
 
-		return $found;
+		if ( '' === $url ) {
+			self::fail( PrintifyException::NOT_FOUND );
+		}
+
+		$files = $this->files ?? new DesignerFiles();
+		$name  = md5( 'printify-thumb|' . self::THUMB . '|' . $url ) . '.jpg';
+		$path  = $files->path( $name );
+		$kept  = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A small local file.
+
+		if ( is_string( $kept ) && '' !== $kept ) {
+			return $kept;
+		}
+
+		$jpeg = self::small( $this->api->image( $url ) );
+
+		$files->write( $name, $jpeg );
+
+		return $jpeg;
 	}
 
 	/**
 	 * The producers of a product, the ones in the EU first.
 	 *
-	 * @param int $blueprint Product.
+	 * @param int  $blueprint Product.
+	 * @param bool $eu_only   Only producers in the EU.
 	 * @return list<array{id: int, title: string, country: string, city: string, eu: bool}>
 	 * @throws PrintifyException When Printify refuses or fails.
 	 */
-	public function producers( int $blueprint ): array {
+	public function producers( int $blueprint, bool $eu_only = false ): array {
 		$places    = $this->places();
 		$producers = array();
 
@@ -134,6 +259,7 @@ class PrintifyCatalog implements CatalogRenderer {
 
 			if ( $id > 0 ) {
 				$place       = $places[ $id ] ?? array(
+					'title'   => '',
 					'country' => '',
 					'city'    => '',
 				);
@@ -149,7 +275,7 @@ class PrintifyCatalog implements CatalogRenderer {
 
 		usort( $producers, static fn( array $a, array $b ): int => array( $b['eu'], $a['title'] ) <=> array( $a['eu'], $b['title'] ) );
 
-		return $producers;
+		return $eu_only ? array_values( array_filter( $producers, static fn( array $producer ): bool => $producer['eu'] ) ) : $producers;
 	}
 
 	/**
@@ -286,7 +412,7 @@ class PrintifyCatalog implements CatalogRenderer {
 	/**
 	 * The product list with what a search needs: the whole answer is too large to keep.
 	 *
-	 * @return list<array{id: int, title: string, brand: string}>
+	 * @return list<array{id: int, title: string, brand: string, image: string}>
 	 * @throws PrintifyException When Printify refuses or fails.
 	 */
 	private function blueprints(): array {
@@ -305,6 +431,7 @@ class PrintifyCatalog implements CatalogRenderer {
 					'id'    => (int) $row['id'],
 					'title' => mb_substr( sanitize_text_field( $row['title'] ), 0, 191 ),
 					'brand' => mb_substr( sanitize_text_field( is_string( $row['brand'] ?? null ) ? $row['brand'] : '' ), 0, 100 ),
+					'image' => self::image_of( $row ),
 				);
 			}
 		}
@@ -317,9 +444,99 @@ class PrintifyCatalog implements CatalogRenderer {
 	}
 
 	/**
+	 * A product's first picture from the list or the cache, or ''.
+	 *
+	 * @param array<mixed> $row Product.
+	 */
+	private static function image_of( array $row ): string {
+		$image = is_string( $row['image'] ?? null ) ? $row['image'] : ( is_array( $row['images'] ?? null ) ? reset( $row['images'] ) : '' );
+
+		return is_string( $image ) && 1 === preg_match( PrintifyApi::IMAGES, $image ) ? $image : '';
+	}
+
+	/**
+	 * The products the producers in the EU make.
+	 *
+	 * @return list<int>
+	 * @throws PrintifyException When Printify refuses or fails.
+	 */
+	private function eu_products(): array {
+		$products = array();
+
+		foreach ( $this->all_producers( true ) as $producer ) {
+			$products = array_merge( $products, $this->producer_products( $producer['id'] ) );
+		}
+
+		return array_values( array_unique( $products ) );
+	}
+
+	/**
+	 * The products a producer makes, cached like the list.
+	 *
+	 * @param int $producer Producer.
+	 * @return list<int>
+	 * @throws PrintifyException When Printify refuses or fails.
+	 */
+	private function producer_products( int $producer ): array {
+		$cached = get_transient( self::PRODUCER_PRODUCTS . $producer );
+
+		if ( is_array( $cached ) ) {
+			return array_values( array_filter( array_map( 'intval', $cached ) ) );
+		}
+
+		$products = array();
+		$provider = $this->api->print_provider( $producer );
+
+		foreach ( is_array( $provider['blueprints'] ?? null ) ? $provider['blueprints'] : array() as $row ) {
+			if ( is_array( $row ) && is_numeric( $row['id'] ?? null ) ) {
+				$products[ (int) $row['id'] ] = true;
+			}
+		}
+
+		$products = array_keys( $products );
+
+		set_transient( self::PRODUCER_PRODUCTS . $producer, $products, 12 * HOUR_IN_SECONDS );
+
+		return $products;
+	}
+
+	/**
+	 * A picture as a small JPEG on white.
+	 *
+	 * @param string $bytes Picture.
+	 * @throws InvalidArgumentException When it cannot be read or written.
+	 */
+	private static function small( string $bytes ): string {
+		$image = imagecreatefromstring( $bytes );
+		$thumb = imagecreatetruecolor( self::THUMB, self::THUMB );
+
+		if ( false === $image || false === $thumb ) {
+			throw new InvalidArgumentException( 'The picture cannot be read.' );
+		}
+
+		$width  = imagesx( $image );
+		$height = imagesy( $image );
+		$scale  = self::THUMB / max( 1, $width, $height );
+		$white  = imagecolorallocate( $thumb, 255, 255, 255 );
+
+		imagefilledrectangle( $thumb, 0, 0, self::THUMB, self::THUMB, false === $white ? 0 : $white );
+		imagecopyresampled( $thumb, $image, (int) ( ( self::THUMB - $width * $scale ) / 2 ), (int) ( ( self::THUMB - $height * $scale ) / 2 ), 0, 0, max( 1, (int) round( $width * $scale ) ), max( 1, (int) round( $height * $scale ) ), $width, $height );
+
+		ob_start();
+		$written = imagejpeg( $thumb, null, 80 );
+		$jpeg    = (string) ob_get_clean();
+
+		if ( ! $written || '' === $jpeg ) {
+			throw new InvalidArgumentException( 'The picture cannot be written.' );
+		}
+
+		return $jpeg;
+	}
+
+	/**
 	 * Where the producers are, by producer.
 	 *
-	 * @return array<int, array{country: string, city: string}>
+	 * @return array<int, array{title: string, country: string, city: string}>
 	 * @throws PrintifyException When Printify refuses or fails.
 	 */
 	private function places(): array {
@@ -342,6 +559,7 @@ class PrintifyCatalog implements CatalogRenderer {
 
 			if ( $id > 0 ) {
 				$places[ $id ] = array(
+					'title'   => mb_substr( sanitize_text_field( is_string( $row['title'] ?? null ) ? $row['title'] : '' ), 0, 100 ),
 					'country' => sanitize_text_field( is_string( $place['country'] ?? null ) ? $place['country'] : '' ),
 					'city'    => sanitize_text_field( is_string( $place['city'] ?? null ) ? $place['city'] : '' ),
 				);
