@@ -649,8 +649,14 @@ final class BaseProductsPage {
 		$pick     = isset( $_GET['pick'] ) ? absint( $_GET['pick'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$group    = isset( $_GET['group'] ) ? absint( $_GET['group'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 
+		$search = array(
+			'source'   => PrintfulCatalog::SOURCE,
+			'q'        => $query,
+			'category' => $category,
+		);
+
 		if ( $pick > 0 ) {
-			$this->render_pick( $printful, PrintfulCatalog::SOURCE, (string) $pick, $group );
+			$this->render_pick( $printful, PrintfulCatalog::SOURCE, (string) $pick, $group, $search, self::new_url( $search ) );
 
 			return;
 		}
@@ -708,7 +714,7 @@ final class BaseProductsPage {
 			}
 
 			echo '<p><strong>' . esc_html( $product['title'] ) . '</strong><br><span class="description">' . esc_html( trim( $product['brand'] . ' ' . $product['model'] ) ) . '</span></p>';
-			echo '<p><a class="button" href="' . esc_url( self::new_url( array( 'source' => PrintfulCatalog::SOURCE, 'pick' => $product['id'] ) ) ) . '">' . esc_html__( 'Pick', 'merchboard' ) . '</a></p></div>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			echo '<p><a class="button" href="' . esc_url( self::new_url( array_merge( $search, array( 'pick' => $product['id'] ) ) ) ) . '">' . esc_html__( 'Pick', 'merchboard' ) . '</a></p></div>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		}
 
 		echo '</div>';
@@ -818,16 +824,25 @@ final class BaseProductsPage {
 		$producer  = isset( $_GET['producer'] ) ? absint( $_GET['producer'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$groups    = self::printify_groups();
 		$group     = isset( $groups[ $group ] ) ? $group : '';
+		$args      = array(
+			'source'       => PrintifyCatalog::SOURCE,
+			'q'            => $query,
+			'group'        => $group,
+			'eu'           => $eu_only ? '1' : '',
+			'producer'     => $producer,
+			'catalog_page' => $page > 1 ? $page : 0,
+		);
 
 		if ( '' !== $pick ) {
-			$this->render_pick( $printify, PrintifyCatalog::SOURCE, $pick );
+			// From the producers of a product back to them, else back to the catalog.
+			$this->render_pick( $printify, PrintifyCatalog::SOURCE, $pick, 0, array(), self::new_url( array_merge( $args, array( 'printify_product' => $blueprint ) ) ) );
 
 			return;
 		}
 
 		try {
 			if ( $blueprint > 0 ) {
-				$this->render_printify_producers( $printify, $blueprint, $eu_only );
+				$this->render_printify_producers( $printify, $blueprint, $eu_only, $args );
 
 				return;
 			}
@@ -872,22 +887,11 @@ final class BaseProductsPage {
 			return;
 		}
 
-		$args = array(
-			'source'   => PrintifyCatalog::SOURCE,
-			'q'        => $query,
-			'group'    => $group,
-			'eu'       => $eu_only ? '1' : '',
-			'producer' => $producer,
-		);
-
 		echo '<ul style="display:grid;grid-template-columns:repeat(auto-fill,minmax(10rem,1fr));gap:12px;list-style:none;margin:1em 0;padding:0">';
 
 		foreach ( $found['products'] as $product ) {
 			// With a producer chosen, a product goes straight to the import.
-			$target = $producer > 0 ? array(
-				'source' => PrintifyCatalog::SOURCE,
-				'pick'   => $product['id'] . '-' . $producer,
-			) : array_merge( $args, array( 'printify_product' => $product['id'] ) );
+			$target = array_merge( $args, $producer > 0 ? array( 'pick' => $product['id'] . '-' . $producer ) : array( 'printify_product' => $product['id'] ) );
 
 			echo '<li class="card" style="margin:0;padding:8px;min-width:0"><a href="' . esc_url( self::new_url( $target ) ) . '" style="display:block;text-decoration:none">';
 			echo '<img src="' . esc_url( PrintifyThumbnails::url( $product['id'] ) ) . '" alt="" loading="lazy" width="' . esc_attr( (string) PrintifyCatalog::THUMB ) . '" height="' . esc_attr( (string) PrintifyCatalog::THUMB ) . '" style="display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain">';
@@ -934,6 +938,15 @@ final class BaseProductsPage {
 	}
 
 	/**
+	 * A button one step back while a base product is made.
+	 *
+	 * @param string $url The step before.
+	 */
+	private static function back_button( string $url ): string {
+		return '<p><a class="button" href="' . esc_url( $url ) . '">' . esc_html__( '← Back', 'merchboard' ) . '</a></p>';
+	}
+
+	/**
 	 * A producer's name with its country, when it has one.
 	 *
 	 * @param string $title   Name.
@@ -973,12 +986,15 @@ final class BaseProductsPage {
 	 * @param PrintifyCatalog $printify  Printify's catalog.
 	 * @param int             $blueprint The product.
 	 * @param bool            $eu_only   Only producers in the EU.
+	 * @param array           $args      The catalog's filters, which go along.
 	 * @throws PrintifyException When Printify refuses or fails.
+	 *
+	 * @phpstan-param array<string, int|string> $args
 	 */
-	private function render_printify_producers( PrintifyCatalog $printify, int $blueprint, bool $eu_only ): void {
+	private function render_printify_producers( PrintifyCatalog $printify, int $blueprint, bool $eu_only, array $args ): void {
 		$producers = $printify->producers( $blueprint, $eu_only );
 
-		echo '<p><a href="' . esc_url( wp_get_referer() ? wp_get_referer() : self::new_url( array( 'source' => PrintifyCatalog::SOURCE ) ) ) . '">' . esc_html__( '← Back to the catalog', 'merchboard' ) . '</a></p>';
+		echo self::back_button( self::new_url( $args ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- back_button() escapes.
 		echo '<img src="' . esc_url( PrintifyThumbnails::url( $blueprint ) ) . '" alt="" width="' . esc_attr( (string) PrintifyCatalog::THUMB ) . '" height="' . esc_attr( (string) PrintifyCatalog::THUMB ) . '" style="max-width:100%;height:auto">';
 
 		if ( array() === $producers ) {
@@ -990,7 +1006,7 @@ final class BaseProductsPage {
 		echo '<p>' . esc_html__( 'Choose the producer. Colours, sizes and print areas differ between them. The ones in the EU are listed first; the place is the address Printify shows for the producer.', 'merchboard' ) . '</p><ul>';
 
 		foreach ( $producers as $producer ) {
-			echo '<li><a href="' . esc_url( self::new_url( array( 'source' => PrintifyCatalog::SOURCE, 'pick' => $blueprint . '-' . $producer['id'] ) ) ) . '">' . esc_html( $producer['title'] ) . '</a> ' . esc_html( trim( $producer['city'] . ', ' . $producer['country'], ', ' ) ) . '</li>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			echo '<li><a href="' . esc_url( self::new_url( array_merge( $args, array( 'printify_product' => $blueprint, 'pick' => $blueprint . '-' . $producer['id'] ) ) ) ) . '">' . esc_html( $producer['title'] ) . '</a> ' . esc_html( trim( $producer['city'] . ', ' . $producer['country'], ', ' ) ) . '</li>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		}
 
 		echo '</ul>';
@@ -1013,7 +1029,7 @@ final class BaseProductsPage {
 		$template = isset( $_GET['template'] ) ? sanitize_text_field( wp_unslash( $_GET['template'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 
 		if ( '' !== $template ) {
-			$this->render_pick( $gelato, GelatoCatalog::SOURCE, $template );
+			$this->render_pick( $gelato, GelatoCatalog::SOURCE, $template, 0, array(), self::new_url( array( 'source' => GelatoCatalog::SOURCE ) ) );
 
 			return;
 		}
@@ -1031,8 +1047,16 @@ final class BaseProductsPage {
 	 * @param string          $source   `printful` or `gelato`.
 	 * @param string          $ref      The provider's product or template.
 	 * @param int             $group    The group of sizes with the same print sizes.
+	 * @param array           $keep     Query arguments that go along to another group of sizes.
+	 * @param string          $back     The step before; '' for no button.
+	 *
+	 * @phpstan-param array<string, int|string> $keep
 	 */
-	private function render_pick( CatalogRenderer $renderer, string $source, string $ref, int $group = 0 ): void {
+	private function render_pick( CatalogRenderer $renderer, string $source, string $ref, int $group = 0, array $keep = array(), string $back = '' ): void {
+		if ( '' !== $back ) {
+			echo self::back_button( $back ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- back_button() escapes.
+		}
+
 		try {
 			$choice = $renderer->choice( $ref, $group );
 		} catch ( PrintfulException | GelatoException | ProdigiException | PrintifyException $e ) {
@@ -1058,7 +1082,7 @@ final class BaseProductsPage {
 			$links = array();
 
 			foreach ( $choice['groups'] as $index => $label ) {
-				$links[] = ( $choice['group'] ?? 0 ) === $index ? '<strong>' . esc_html( $label ) . '</strong>' : '<a href="' . esc_url( self::new_url( array( 'source' => $source, 'pick' => $ref, 'group' => $index ) ) ) . '">' . esc_html( $label ) . '</a>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+				$links[] = ( $choice['group'] ?? 0 ) === $index ? '<strong>' . esc_html( $label ) . '</strong>' : '<a href="' . esc_url( self::new_url( array_merge( $keep, array( 'source' => $source, 'pick' => $ref, 'group' => $index ) ) ) ) . '">' . esc_html( $label ) . '</a>'; // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			}
 
 			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'The print size depends on the size. A base product holds one print size: make one base product per size you want to offer.', 'merchboard' ) . '</p><p>' . implode( ' | ', $links ) . '</p></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
