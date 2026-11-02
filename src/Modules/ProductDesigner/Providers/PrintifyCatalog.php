@@ -14,6 +14,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\WooCommerce\JobQueue;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -74,10 +75,15 @@ class PrintifyCatalog implements CatalogRenderer {
 	public const PRODUCER_PRODUCTS = 'merchboard_printify_producer_';
 
 	/**
-	 * Seconds a page may spend reading producers it does not know yet; the
-	 * rest come on the next page.
+	 * The background job that reads the producers' products a page did not
+	 * have time for.
 	 */
-	private const PRODUCER_BUDGET = 15;
+	public const HOOK = 'merchboard_designer_printify_producers';
+
+	/**
+	 * Seconds the job may spend before it queues itself again.
+	 */
+	private const JOB_BUDGET = 40;
 
 	/**
 	 * The template of a side: the size of the company's photos.
@@ -116,10 +122,33 @@ class PrintifyCatalog implements CatalogRenderer {
 	/**
 	 * Constructor.
 	 *
-	 * @param PrintifyApi        $api   Printify.
-	 * @param DesignerFiles|null $files Where small pictures are kept.
+	 * @param PrintifyApi        $api    Printify.
+	 * @param DesignerFiles|null $files  Where small pictures are kept.
+	 * @param JobQueue|null      $queue  The background job of the producers.
+	 * @param float              $budget Seconds a page may spend reading producers it does not know yet.
 	 */
-	public function __construct( private PrintifyApi $api, private ?DesignerFiles $files = null ) {
+	public function __construct( private PrintifyApi $api, private ?DesignerFiles $files = null, private ?JobQueue $queue = null, private float $budget = 3.0 ) {
+	}
+
+	/**
+	 * The background job: reads the producers no page had time for, and
+	 * queues itself again until all are read. A refusal ends it; the next
+	 * page queues it again.
+	 */
+	public function read_producers(): void {
+		try {
+			[ , $complete ] = $this->makers( self::JOB_BUDGET );
+		} catch ( PrintifyException $e ) {
+			if ( PrintifyException::RATE_LIMITED === $e->reason() ) {
+				$this->queue?->enqueue( self::HOOK, array(), max( 60, $e->retry_after ) );
+			}
+
+			return;
+		}
+
+		if ( ! $complete ) {
+			$this->queue?->enqueue( self::HOOK, array(), 0 );
+		}
 	}
 
 	/**
@@ -164,7 +193,12 @@ class PrintifyCatalog implements CatalogRenderer {
 		$page  = min( max( 1, $page ), $pages );
 		$shown = array_slice( $found, ( $page - 1 ) * self::PER_PAGE, self::PER_PAGE );
 
-		[ $makers, $complete ] = $this->makers();
+		[ $makers, $complete ] = $this->makers( $this->budget );
+
+		// The rest are read in the background, so the page need not wait.
+		if ( ! $complete && null !== $this->queue && ! $this->queue->has_any( self::HOOK ) ) {
+			$this->queue->enqueue( self::HOOK, array(), 0 );
+		}
 
 		foreach ( $shown as $index => $row ) {
 			$shown[ $index ]['producers'] = $makers[ $row['id'] ] ?? array();
@@ -471,19 +505,20 @@ class PrintifyCatalog implements CatalogRenderer {
 
 	/**
 	 * The producers of every product, the ones in the EU first. A producer
-	 * not read yet is read while the page's budget lasts; the others come on
-	 * a later page, which `complete` tells.
+	 * not read yet is read while the budget lasts; the others come later,
+	 * which `complete` tells.
 	 *
+	 * @param float $budget Seconds for producers not read yet.
 	 * @return array{0: array<int, list<array{id: int, title: string, country: string, eu: bool}>>, 1: bool}
 	 * @throws PrintifyException When Printify refuses or fails.
 	 */
-	private function makers(): array {
+	private function makers( float $budget ): array {
 		$started  = microtime( true );
 		$complete = true;
 		$makers   = array();
 
 		foreach ( $this->all_producers() as $producer ) {
-			if ( ! is_array( get_transient( self::PRODUCER_PRODUCTS . $producer['id'] ) ) && microtime( true ) - $started > self::PRODUCER_BUDGET ) {
+			if ( ! is_array( get_transient( self::PRODUCER_PRODUCTS . $producer['id'] ) ) && microtime( true ) - $started >= $budget ) {
 				$complete = false;
 				continue;
 			}

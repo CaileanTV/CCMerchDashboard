@@ -211,6 +211,32 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertSame( $calls + 1, count( $this->calls ), 'Only the producers of the product are asked again.' );
 	}
 
+	public function test_producers_a_page_has_no_time_for_are_read_in_the_background(): void {
+		$api     = $this->api;
+		$catalog = new PrintifyCatalog( $api, $this->files, $this->queue, 0.0 );
+		$first   = $catalog->browse( '' );
+
+		self::assertFalse( $first['complete'] );
+		self::assertSame( array( array(), array(), array() ), array_column( $first['products'], 'producers' ), 'The page does not wait.' );
+		self::assertSame( array( PrintifyCatalog::HOOK ), $this->queue->pending_hooks() );
+
+		$catalog->browse( '' );
+
+		self::assertCount( 1, $this->queue->pending_hooks(), 'Queued once.' );
+
+		$this->queue->drain(
+			static function ( string $hook ) use ( $api ): void {
+				unset( $hook );
+				( new PrintifyCatalog( $api, null, null, 60.0 ) )->read_producers();
+			}
+		);
+
+		$after = $catalog->browse( '' );
+
+		self::assertTrue( $after['complete'] );
+		self::assertSame( array( 'Textildruck Europa (DE)', 'Monster Digital (US)' ), array_map( static fn( array $producer ): string => $producer['title'] . ' (' . $producer['country'] . ')', $after['products'][1]['producers'] ) );
+	}
+
 	public function test_a_small_picture_is_made_once_without_the_token_and_only_for_the_administrator(): void {
 		$catalog    = new PrintifyCatalog( $this->api, $this->files );
 		$thumbnails = new PrintifyThumbnails( $catalog );

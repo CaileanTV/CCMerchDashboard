@@ -53,11 +53,12 @@ final class ScheduledJobs {
 	 * the repricing and the retirement (Modules\ProductDesigner\Designs\
 	 * DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerRetirement::HOOK and
 	 * Providers\PrintfulMockups::HOOK, Providers\GelatoMockups::HOOK,
-	 * Providers\ProdigiMockups::HOOK, Providers\CatalogImport::HOOK and
-	 * Fees\DesignerFees::HOOK; a test keeps them equal, ADR-080).
+	 * Providers\ProdigiMockups::HOOK, Providers\CatalogImport::HOOK,
+	 * Providers\PrintifyCatalog::HOOK and Fees\DesignerFees::HOOK; a test
+	 * keeps them equal, ADR-080).
 	 * Cancelled on uninstall with the opt-in.
 	 */
-	public const DESIGNER_HOOKS = array( 'merchboard_designer_fee_charge', 'merchboard_designer_apply', 'merchboard_designer_reprice', 'merchboard_designer_retire', 'merchboard_designer_printful', 'merchboard_designer_gelato', 'merchboard_designer_prodigi', 'merchboard_designer_import' );
+	public const DESIGNER_HOOKS = array( 'merchboard_designer_fee_charge', 'merchboard_designer_apply', 'merchboard_designer_reprice', 'merchboard_designer_retire', 'merchboard_designer_printful', 'merchboard_designer_gelato', 'merchboard_designer_prodigi', 'merchboard_designer_import', 'merchboard_designer_printify_producers' );
 
 	/**
 	 * Cancels the pending backfill pages; never throws.

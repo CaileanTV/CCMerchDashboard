@@ -852,7 +852,7 @@ final class BaseProductsPage {
 		echo '</select></label> <label>' . esc_html__( 'Producer', 'merchboard' ) . ' <select name="producer"><option value="">' . esc_html__( '— All —', 'merchboard' ) . '</option>';
 
 		foreach ( $producers as $entry ) {
-			echo '<option value="' . esc_attr( (string) $entry['id'] ) . '"' . selected( $producer, $entry['id'], false ) . '>' . esc_html( trim( $entry['title'] . ' (' . $entry['country'] . ')', ' ()' ) ) . '</option>';
+			echo '<option value="' . esc_attr( (string) $entry['id'] ) . '"' . selected( $producer, $entry['id'], false ) . '>' . esc_html( self::with_country( $entry['title'], $entry['country'] ) ) . '</option>';
 		}
 
 		echo '</select></label> <label><input type="checkbox" name="eu" value="1"' . checked( $eu_only, true, false ) . '> ' . esc_html__( 'Only producers in the EU', 'merchboard' ) . '</label> ';
@@ -862,7 +862,7 @@ final class BaseProductsPage {
 		echo '<p class="description">' . esc_html( sprintf( _n( '%d product.', '%d products.', $found['total'], 'merchboard' ), $found['total'] ) ) . ( $eu_only ? ' ' . esc_html__( 'A producer is in the EU by the address Printify shows for it.', 'merchboard' ) : '' ) . '</p>';
 
 		if ( ! $found['complete'] ) {
-			echo '<p class="description">' . esc_html__( 'Not every producer has been read yet: reload the page to see the rest.', 'merchboard' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'The producers are being read in the background. Reload the page in a minute to see all of them on the products.', 'merchboard' ) . '</p>';
 		}
 
 		if ( array() === $found['products'] ) {
@@ -925,11 +925,21 @@ final class BaseProductsPage {
 			return '';
 		}
 
-		$names = array_map( static fn( array $producer ): string => trim( $producer['title'] . ' (' . $producer['country'] . ')', ' ()' ), array_slice( $producers, 0, 3 ) );
+		$names = array_map( static fn( array $producer ): string => self::with_country( $producer['title'], $producer['country'] ), array_slice( $producers, 0, 3 ) );
 		$more  = count( $producers ) - count( $names );
 
 		/* translators: %d: number of further producers. */
 		return '<p class="description" style="margin:4px 0 0;font-size:12px">' . esc_html( implode( ', ', $names ) . ( $more > 0 ? ' ' . sprintf( __( '+%d more', 'merchboard' ), $more ) : '' ) ) . '</p>';
+	}
+
+	/**
+	 * A producer's name with its country, when it has one.
+	 *
+	 * @param string $title   Name.
+	 * @param string $country Country code.
+	 */
+	private static function with_country( string $title, string $country ): string {
+		return '' === $country ? $title : $title . ' (' . $country . ')';
 	}
 
 	/**
