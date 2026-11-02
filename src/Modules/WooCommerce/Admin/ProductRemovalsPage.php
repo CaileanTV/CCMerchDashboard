@@ -13,7 +13,8 @@ use DateTimeImmutable;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
-use MerchBoard\Modules\Admin\AdminMenu;
+use MerchBoard\Modules\Admin\Approvals\ApprovalTab;
+use MerchBoard\Modules\Admin\Approvals\ApprovalsPage;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\ProductRemovals\ProductRemovalException;
 use MerchBoard\Modules\WooCommerce\ProductRemovals\ProductRemovalRepository;
@@ -33,6 +34,11 @@ defined( 'ABSPATH' ) || exit;
 final class ProductRemovalsPage {
 
 	public const SLUG = 'merchboard-product-removals';
+
+	/**
+	 * The tab on "Merch Dashboard → Proposals".
+	 */
+	public const TAB = 'removals';
 
 	/**
 	 * Query argument of the outcome notice.
@@ -65,7 +71,7 @@ final class ProductRemovalsPage {
 	 * @param array<string, int|string> $args Extra query arguments.
 	 */
 	public static function url( array $args = array() ): string {
-		return add_query_arg( array_merge( array( 'page' => self::SLUG ), $args ), admin_url( 'admin.php' ) );
+		return ApprovalsPage::url( self::TAB, $args );
 	}
 
 	/**
@@ -98,20 +104,11 @@ final class ProductRemovalsPage {
 	}
 
 	/**
-	 * Adds "Removal requests" with the number waiting to the Merch Dashboard menu.
+	 * The tab on "Merch Dashboard → Proposals" with the number waiting; the
+	 * page's former address leads to it.
 	 */
-	public function add_menu(): void {
-		$count = $this->pending_count();
-		$title = __( 'Removal requests', 'merchboard' );
-
-		add_submenu_page(
-			AdminMenu::PARENT_SLUG,
-			__( 'Merch Dashboard Removal requests', 'merchboard' ),
-			$count > 0 ? esc_html( $title ) . ' <span class="awaiting-mod"><span class="pending-count">' . esc_html( number_format_i18n( $count ) ) . '</span></span>' : esc_html( $title ),
-			Capabilities::MANAGE_CREATORS,
-			self::SLUG,
-			array( $this, 'render' )
-		);
+	public function approval_tab(): ApprovalTab {
+		return new ApprovalTab( self::TAB, __( 'Removal requests', 'merchboard' ), Capabilities::MANAGE_CREATORS, fn(): int => $this->pending_count(), fn() => $this->render(), array( self::SLUG ) );
 	}
 
 	/**
@@ -126,8 +123,8 @@ final class ProductRemovalsPage {
 		$code   = isset( $_GET[ self::RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ self::RESULT_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$notice = self::result_message( $code );
 
-		echo '<div class="wrap merchboard-removals">';
-		echo '<h1>' . esc_html__( 'Removal requests', 'merchboard' ) . '</h1>';
+		echo '<div class="merchboard-removals">';
+		echo '<h2>' . esc_html__( 'Removal requests', 'merchboard' ) . '</h2>';
 
 		if ( null !== $notice ) {
 			printf( '<div class="notice notice-%1$s"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );

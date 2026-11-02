@@ -14,6 +14,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Admin\AdminMenu;
+use MerchBoard\Modules\Admin\Approvals\ApprovalTab;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviders;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardStatus;
@@ -247,6 +248,64 @@ final class PayoutsPage {
 		}
 
 		echo '</div>';
+	}
+
+	/**
+	 * The tab on "Merch Dashboard → Proposals": the payout requests waiting,
+	 * with a link to each on this page, where they are paid or rejected.
+	 */
+	public function approval_tab(): ApprovalTab {
+		return new ApprovalTab( 'payouts', __( 'Payout requests', 'merchboard' ), Capabilities::MANAGE_PAYOUTS, fn(): int => $this->payouts->count_for_admin( true ), fn() => $this->render_waiting() );
+	}
+
+	/**
+	 * The payout requests waiting, oldest first.
+	 */
+	public function render_waiting(): void {
+		if ( ! current_user_can( Capabilities::MANAGE_PAYOUTS ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to manage payouts.', 'merchboard' ), '', array( 'response' => 403 ) );
+		}
+
+		echo '<h2>' . esc_html__( 'Payout requests', 'merchboard' ) . '</h2>';
+		echo '<p class="description">' . esc_html__( 'Creators who asked to be paid out, oldest first. Open a request to register the transfer or reject it on the Payouts page.', 'merchboard' ) . '</p>';
+
+		try {
+			$total = $this->payouts->count_for_admin( true );
+			$rows  = $total > 0 ? $this->payouts->page_for_admin( true, self::PER_PAGE, 0 ) : array();
+		} catch ( DatabaseException ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'The payouts could not be read. Please try again later.', 'merchboard' ) . '</p></div>';
+
+			return;
+		}
+
+		if ( array() === $rows ) {
+			echo '<p>' . esc_html__( 'No pending payout requests.', 'merchboard' ) . '</p>';
+
+			return;
+		}
+
+		echo '<table class="widefat striped merchboard-payouts-table"><thead><tr>';
+
+		foreach ( array( __( 'Payout', 'merchboard' ), __( 'Creator', 'merchboard' ), __( 'Amount', 'merchboard' ), __( 'Method', 'merchboard' ), __( 'Requested', 'merchboard' ) ) as $heading ) {
+			echo '<th scope="col">' . esc_html( $heading ) . '</th>';
+		}
+
+		echo '</tr></thead><tbody>';
+
+		foreach ( $rows as $row ) {
+			echo '<tr><td><a href="' . esc_url( self::url( array( 'payout' => $row->id ) ) ) . '">' . esc_html( sprintf( '#%d', $row->id ) ) . '</a></td>';
+			echo '<td>' . esc_html( $this->creator_name( $row->creator_id ) ) . '</td>';
+			echo '<td>' . esc_html( self::money( $row ) ) . '</td>';
+			echo '<td>' . esc_html( self::method_label( $row->method ) ) . '</td>';
+			echo '<td>' . esc_html( self::date( $row->requested_at ) ) . '</td></tr>';
+		}
+
+		echo '</tbody></table>';
+
+		if ( $total > count( $rows ) ) {
+			/* translators: %s: number of requests. */
+			echo '<p><a href="' . esc_url( self::url() ) . '">' . esc_html( sprintf( __( 'See all %s on the Payouts page', 'merchboard' ), number_format_i18n( $total ) ) ) . '</a></p>';
+		}
 	}
 
 	/**

@@ -14,6 +14,7 @@ use DateTimeZone;
 use MerchBoard\Modules\Creators\Admin\CreatorDeletionActions;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
+use MerchBoard\Modules\Admin\Approvals\ApprovalsPage;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Logging\Logger;
@@ -191,12 +192,11 @@ final class CreatorsModule implements Module {
 		$container->set( CategoryProposalsPage::class, static fn( Container $c ): CategoryProposalsPage => new CategoryProposalsPage( $c->get( CategoryProposals::class ), $c->get( CategoryProposalRepository::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );
 		$container->set( CategoryProposalActions::class, static fn( Container $c ): CategoryProposalActions => new CategoryProposalActions( $c->get( CategoryProposals::class ), $c->get( Logger::class ) ) );
 		$container->set( ProposalImageDownload::class, static fn( Container $c ): ProposalImageDownload => new ProposalImageDownload( $c->get( CategoryProposals::class ), $c->get( ProposalFiles::class ) ) );
-		add_action(
-			'admin_menu',
-			static function () use ( $container ): void {
-				$container->get( CategoryProposalsPage::class )->add_menu();
-			},
-			CategoryProposalsPage::PRIORITY
+		add_filter(
+			ApprovalsPage::FILTER,
+			static function ( mixed $tabs ) use ( $container ): array {
+				return array_merge( is_array( $tabs ) ? $tabs : array(), array( $container->get( CategoryProposalsPage::class )->approval_tab() ) );
+			}
 		);
 		add_action(
 			'admin_init',

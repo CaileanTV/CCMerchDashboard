@@ -13,6 +13,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
+use MerchBoard\Modules\Admin\Approvals\ApprovalsPage;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
@@ -967,12 +968,11 @@ final class WooCommerceModule implements Module {
 			},
 			OrderHistoryPage::PRIORITY
 		);
-		add_action(
-			'admin_menu',
-			static function () use ( $container ): void {
-				$container->get( ProductRemovalsPage::class )->add_menu();
-			},
-			ProductRemovalsPage::PRIORITY
+		add_filter(
+			ApprovalsPage::FILTER,
+			static function ( mixed $tabs ) use ( $container ): array {
+				return array_merge( is_array( $tabs ) ? $tabs : array(), array( $container->get( ProductRemovalsPage::class )->approval_tab(), $container->get( PayoutsPage::class )->approval_tab() ) );
+			}
 		);
 		add_action(
 			'admin_menu',

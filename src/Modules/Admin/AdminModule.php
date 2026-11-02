@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Admin;
 
+use MerchBoard\Modules\Admin\Approvals\ApprovalsPage;
 use MerchBoard\Core\Audit\AuditRepository;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Logging\Logger;
@@ -82,6 +83,16 @@ final class AdminModule implements Module {
 				$container->get( AuditLogPage::class )->add_menu();
 			},
 			AuditLogPage::PRIORITY
+		);
+
+		// Everything waiting for the administrator's approval, a tab per kind from each module.
+		$container->set( ApprovalsPage::class, static fn(): ApprovalsPage => new ApprovalsPage() );
+		add_action(
+			'admin_menu',
+			static function () use ( $container ): void {
+				$container->get( ApprovalsPage::class )->add_menu();
+			},
+			ApprovalsPage::PRIORITY
 		);
 	}
 }

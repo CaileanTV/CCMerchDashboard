@@ -11,13 +11,16 @@ namespace MerchBoard\Modules\ProductDesigner\Admin;
 
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Admin\AdminMenu;
+use MerchBoard\Modules\Admin\Approvals\ApprovalsPage;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * Everything about the designer under one menu item (the owner's choice,
- * 2026-10-31): designs, base products, cliparts, campaigns, embroidery packs,
- * notifications and settings, each a tab. The pages keep their own forms and
+ * 2026-10-31): base products, cliparts, campaigns, embroidery packs, fees,
+ * notifications and settings, each a tab. The designs waiting for approval
+ * are a tab of "Merch Dashboard → Proposals" (2026-11-02), where the former
+ * Designs tab's addresses lead. The pages keep their own forms and
  * notices. The menu item is there while the designer is switched off, so the
  * switch can be reached. The former pages' addresses, as in e-mails already
  * sent, lead to their tabs.
@@ -54,7 +57,7 @@ final class DesignerMenu {
 	 * The former pages' tabs.
 	 */
 	private const FORMER_PAGES = array(
-		self::LINK_DESIGNS     => self::DESIGNS,
+		self::LINK_DESIGNS     => self::NOTIFICATIONS,
 		self::LINK_BASES       => self::BASES,
 		'merchboard-campaigns' => self::CAMPAIGNS,
 	);
@@ -90,8 +93,9 @@ final class DesignerMenu {
 			array( $this, 'render' )
 		);
 
-		// Read-only parameter; the redirect changes nothing.
+		// Read-only parameters; the redirect changes nothing.
 		$former = self::former_url( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized in former_url().
+		$former = $former ?? ( isset( $_GET['page'], $_GET['tab'] ) && self::SLUG === $_GET['page'] && self::DESIGNS === $_GET['tab'] ? ApprovalsPage::url( self::DESIGNS ) : null ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Compared only.
 
 		if ( null !== $former && current_user_can( Capabilities::MANAGE_DESIGNER ) ) {
 			wp_safe_redirect( $former );
@@ -134,6 +138,11 @@ final class DesignerMenu {
 			}
 		}
 
+		// The designs waiting are on "Proposals"; the former page's notification settings stay here.
+		if ( self::LINK_DESIGNS === $page && self::NOTIFICATIONS !== $view ) {
+			return ApprovalsPage::url( self::DESIGNS, $args );
+		}
+
 		return self::url( in_array( $view, array( self::NOTIFICATIONS, self::CLIPARTS ), true ) ? $view : $tab, $args );
 	}
 
@@ -148,7 +157,7 @@ final class DesignerMenu {
 		// Read-only parameter; nothing is changed by this request.
 		$asked = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$tabs  = self::tabs();
-		$open  = isset( $tabs[ $asked ] ) ? $asked : self::DESIGNS;
+		$open  = isset( $tabs[ $asked ] ) ? $asked : self::BASES;
 
 		echo '<div class="wrap"><h1>' . esc_html__( 'Product designer', 'merchboard' ) . '</h1>';
 		echo '<nav class="nav-tab-wrapper">';
@@ -165,7 +174,8 @@ final class DesignerMenu {
 			self::PACKS                 => $this->settings->render_packs(),
 			self::FEES                  => $this->fees->render(),
 			self::SETTINGS              => $this->settings->render(),
-			default                     => $this->designs->render(),
+			self::NOTIFICATIONS         => $this->designs->render(),
+			default                     => $this->bases->render(),
 		};
 
 		echo '</div>';
@@ -178,7 +188,6 @@ final class DesignerMenu {
 	 */
 	private static function tabs(): array {
 		$tabs = array(
-			self::DESIGNS       => __( 'Designs', 'merchboard' ),
 			self::BASES         => __( 'Base products', 'merchboard' ),
 			self::CLIPARTS      => __( 'Cliparts', 'merchboard' ),
 			self::CAMPAIGNS     => __( 'Campaigns', 'merchboard' ),

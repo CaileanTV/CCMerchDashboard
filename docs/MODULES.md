@@ -57,6 +57,7 @@ Rækkefølgen er kun vigtig for services, som andre moduler slår op. Den løses
 | --- | --- |
 | Services | `$container->set( FooService::class, fn( $c ) => new FooService( $c->get( FooRepository::class ) ) )` |
 | Admin-undermenu | `admin_menu` → `add_submenu_page( 'merchboard', … )` under Merch Dashboard-menuen |
+| Noget admin skal godkende | ✅ filter `merchboard_approval_tabs` (`ApprovalsPage::FILTER`): tilføj en `ApprovalTab` (nøgle, navn, capability, `fn(): int` med antal ventende, `fn(): void` der viser indholdet, gamle side-slugs), så det får en fane med rødt tal under "Merch Dashboard → Forslag" i stedet for et eget menupunkt |
 | REST-routes | `rest_api_init` → controller-klasse, der arver `MerchBoard\Core\Http\RestController` |
 | Dashboard-sektion | ✅ filter `merchboard_dashboard_sections` (`id`, `label`, `path`, `capability`) i `DashboardSections` og en komponent i `assets/src/dashboard/sections/` registreret i `app/pages.tsx`. Se [FRONTEND.md](FRONTEND.md) |
 | Settings | ✅ action `merchboard_settings_sections` på Settings-siden (efter capability-tjekket, mellem dashboard-slug og "Data on uninstall"); sektionen tjekker selv capability, har egen formular, nonce, admin-post-action og notices og escaper selv. Eksempel: `SalesLedgerSettingsSection` (WooCommerce) |

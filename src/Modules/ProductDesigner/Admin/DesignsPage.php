@@ -11,6 +11,8 @@ namespace MerchBoard\Modules\ProductDesigner\Admin;
 
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Modules\Admin\Approvals\ApprovalTab;
+use MerchBoard\Modules\Admin\Approvals\ApprovalsPage;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Notifications\Admin\NotificationSwitches;
 use MerchBoard\Modules\Notifications\NotificationsException;
@@ -110,6 +112,14 @@ final class DesignsPage {
 			'error'                                => array( __( 'A technical error occurred. Nothing was changed; try again or check the log.', 'merchboard' ), 'error' ),
 			default                                => null,
 		};
+	}
+
+	/**
+	 * The tab on "Merch Dashboard → Proposals": the designs waiting for
+	 * approval, with their number.
+	 */
+	public function approval_tab(): ApprovalTab {
+		return new ApprovalTab( DesignerMenu::DESIGNS, __( 'Designs to approve', 'merchboard' ), Capabilities::MANAGE_DESIGNER, fn(): int => count( $this->products->pending_queue() ), fn() => $this->render() );
 	}
 
 	/**
@@ -373,6 +383,6 @@ final class DesignsPage {
 			$args[ self::RESULT_ARG ] = $result;
 		}
 
-		return DesignerMenu::url( isset( $args['view'] ) ? DesignerMenu::NOTIFICATIONS : DesignerMenu::DESIGNS, $args );
+		return isset( $args['view'] ) ? DesignerMenu::url( DesignerMenu::NOTIFICATIONS, $args ) : ApprovalsPage::url( DesignerMenu::DESIGNS, $args );
 	}
 }

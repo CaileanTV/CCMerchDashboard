@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\ProductDesigner;
 use DateTimeImmutable;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
+use MerchBoard\Modules\Admin\Approvals\ApprovalsPage;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
@@ -487,6 +488,12 @@ final class ProductDesignerModule implements Module {
 				$container->get( DesignerMenu::class )->add_menu();
 			},
 			CampaignsPage::PRIORITY
+		);
+		add_filter(
+			ApprovalsPage::FILTER,
+			static function ( mixed $tabs ) use ( $container ): array {
+				return array_merge( is_array( $tabs ) ? $tabs : array(), array( $container->get( DesignsPage::class )->approval_tab() ) );
+			}
 		);
 		add_action(
 			'admin_init',

@@ -17,6 +17,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Notis i designeren (schema-version 41):** en tekst pr. grundprodukt, som creators ser, mens de designer.
 - **Pris pr. størrelse (schema-version 42):** et flueben på grundproduktet giver forskellig grundpris pr. størrelse, fra butikkens varianter til afregningen af hver ordrelinje.
 - **Broderi, der ligner broderi (ADR-085, eksperimentel):** en broderet side vises med rigtig stingoverflade på produktbilledet og på et nyt nærbillede pr. farve, i stedet for et fladt billede. Et design med kun broderede sider opretter intet produkt hos Gelato. "Se det færdige produkt" virker på disse produkter.
+- **Forslag:** alt, der venter på admins godkendelse, er samlet på "Merch Dashboard → Forslag" som faner med et rødt tal: kategoriforslag, sletteanmodninger, designs til godkendelse og udbetalingsanmodninger. De gamle menupunkter er væk, og deres adresser fører til fanerne.
 - **Størrelser samlet i ét grundprodukt (eksperimentel):** Printful- og Printify-produkter, hvor printmålet følger størrelsen, bliver ét grundprodukt med sider pr. størrelse i stedet for ét pr. størrelse. Printful laver mockups pr. gruppe af størrelser på en variant i gruppens egen størrelse.
 - **Tommer til cm (eksperimentel):** størrelser i tommer importeres i hele cm, medmindre tommer vælges.
 - **Rettet:** Printfuls skrivebordsmåtte i 16″×32″ kunne ikke importeres, fordi printfilen blev større end designeren tager; den får nu en lavere opløsning.
