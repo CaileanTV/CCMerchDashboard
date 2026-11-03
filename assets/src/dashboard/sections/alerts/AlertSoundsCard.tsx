@@ -297,6 +297,8 @@ interface Props {
 	readonly audio: AlertsAudio;
 	readonly onSaved: ( state: AlertsOverlayState ) => void;
 	readonly notify: ( message: string ) => void;
+	/** In the designer's side panel (ADR-088): no card, short help, the categories folded. */
+	readonly compact?: boolean;
 }
 
 /**
@@ -309,8 +311,14 @@ interface Props {
  * @param props.audio   The sounds.
  * @param props.onSaved Called with the answer after a change.
  * @param props.notify  Shows a short confirmation.
+ * @param props.compact In the designer's side panel.
  */
-export function AlertSoundsCard( { audio, onSaved, notify }: Props ) {
+export function AlertSoundsCard( {
+	audio,
+	onSaved,
+	notify,
+	compact = false,
+}: Props ) {
 	const api = useOverlayApi();
 	const id = useId();
 	const [ busy, setBusy ] = useState( false );
@@ -332,6 +340,86 @@ export function AlertSoundsCard( { audio, onSaved, notify }: Props ) {
 	const hasSound =
 		audio.defaultSound !== null ||
 		audio.categories.some( ( category ) => category.sound !== null );
+
+	const switchOn = (
+		<label className="merchboard-alerts__check" htmlFor={ `${ id }-on` }>
+			<input
+				id={ `${ id }-on` }
+				type="checkbox"
+				checked={ audio.enabled }
+				disabled={ busy }
+				onChange={ ( event ) => void toggle( event.target.checked ) }
+			/>{ ' ' }
+			{ __( 'Play sounds', 'merchboard' ) }
+		</label>
+	);
+	const defaultRow = (
+		<SoundRow
+			slot="default"
+			label={ __( 'Default sound', 'merchboard' ) }
+			sound={ audio.defaultSound }
+			audio={ audio }
+			onSaved={ onSaved }
+			notify={ notify }
+		/>
+	);
+	const categoryRows = audio.categories.map( ( category ) => (
+		<SoundRow
+			key={ category.termId }
+			slot={ category.termId }
+			label={ sprintf(
+				/* translators: %s: product category. */
+				__( 'Category: %s', 'merchboard' ),
+				category.name
+			) }
+			sound={ category.sound }
+			audio={ audio }
+			onSaved={ onSaved }
+			notify={ notify }
+		/>
+	) );
+
+	if ( compact ) {
+		return (
+			<div className="merchboard-alerts-sounds--compact">
+				{ error !== null && <ApiErrorState error={ error } /> }
+				{ switchOn }
+				{ ! audio.enabled && hasSound && (
+					<p className="merchboard-field__help">
+						{ __(
+							'Sounds are off, so your overlay plays no sound.',
+							'merchboard'
+						) }
+					</p>
+				) }
+				{ defaultRow }
+				{ categoryRows.length > 0 && (
+					<details className="merchboard-alerts__variables">
+						<summary>
+							{ __( 'Sound per category', 'merchboard' ) }
+						</summary>
+						{ categoryRows }
+					</details>
+				) }
+				<p className="merchboard-field__help">
+					{ sprintf(
+						/* translators: 1: size in MB, 2: seconds. */
+						__(
+							'MP3, WAV or OGG, at most %1$s MB and %2$d seconds.',
+							'merchboard'
+						),
+						( audio.maxBytes / 1048576 ).toLocaleString(
+							undefined,
+							{
+								maximumFractionDigits: 1,
+							}
+						),
+						audio.maxSeconds
+					) }
+				</p>
+			</div>
+		);
+	}
 
 	return (
 		<Card title={ __( 'Sounds', 'merchboard' ) }>
@@ -367,44 +455,9 @@ export function AlertSoundsCard( { audio, onSaved, notify }: Props ) {
 				</Alert>
 			) }
 			{ error !== null && <ApiErrorState error={ error } /> }
-			<label
-				className="merchboard-alerts__check"
-				htmlFor={ `${ id }-on` }
-			>
-				<input
-					id={ `${ id }-on` }
-					type="checkbox"
-					checked={ audio.enabled }
-					disabled={ busy }
-					onChange={ ( event ) =>
-						void toggle( event.target.checked )
-					}
-				/>{ ' ' }
-				{ __( 'Play sounds', 'merchboard' ) }
-			</label>
-			<SoundRow
-				slot="default"
-				label={ __( 'Default sound', 'merchboard' ) }
-				sound={ audio.defaultSound }
-				audio={ audio }
-				onSaved={ onSaved }
-				notify={ notify }
-			/>
-			{ audio.categories.map( ( category ) => (
-				<SoundRow
-					key={ category.termId }
-					slot={ category.termId }
-					label={ sprintf(
-						/* translators: %s: product category. */
-						__( 'Category: %s', 'merchboard' ),
-						category.name
-					) }
-					sound={ category.sound }
-					audio={ audio }
-					onSaved={ onSaved }
-					notify={ notify }
-				/>
-			) ) }
+			{ switchOn }
+			{ defaultRow }
+			{ categoryRows }
 		</Card>
 	);
 }

@@ -53,10 +53,9 @@ final class AlertsAdminPage {
 	 * @param OrderLogTab|null       $log     The order log (step 25.9.3), the first and default tab; null for none.
 	 * @param GlobalOverlayTab|null  $global_overlay The global overlay (step 25.9.4); null for none.
 	 * @param OverlayPresetsTab|null $presets The standard overlays (step 25.9.5); null for none.
-	 * @param CreatorPageTab|null    $creator_page The setup of the creator's page (step 25.9.6); null for none.
 	 * @param AlertApiTab|null       $api    The alert API (step 25.12.1); null for none.
 	 */
-	public function __construct( private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null, private ?OrderLogTab $log = null, private ?GlobalOverlayTab $global_overlay = null, private ?OverlayPresetsTab $presets = null, private ?CreatorPageTab $creator_page = null, private ?AlertApiTab $api = null ) {
+	public function __construct( private ?AlertSoundLibrary $library = null, private ?AlertImageLibrary $images = null, private ?ChatbotAdminTab $chatbot = null, private ?YouTubeLegalTab $legal = null, private ?OrderLogTab $log = null, private ?GlobalOverlayTab $global_overlay = null, private ?OverlayPresetsTab $presets = null, private ?AlertApiTab $api = null ) {
 	}
 
 	/**
@@ -161,7 +160,6 @@ final class AlertsAdminPage {
 			'fonts'  => 'fonts',
 			GlobalOverlayTab::TAB => null === $this->global_overlay ? 'fonts' : GlobalOverlayTab::TAB,
 			OverlayPresetsTab::TAB => null === $this->presets ? 'fonts' : OverlayPresetsTab::TAB,
-			CreatorPageTab::TAB => null === $this->creator_page ? 'fonts' : CreatorPageTab::TAB,
 			AlertApiTab::TAB => null === $this->api ? 'fonts' : AlertApiTab::TAB,
 			default  => null === $this->log ? 'fonts' : OrderLogTab::TAB,
 		};
@@ -181,10 +179,6 @@ final class AlertsAdminPage {
 
 		if ( null !== $this->presets ) {
 			echo '<a class="nav-tab' . ( OverlayPresetsTab::TAB === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( OverlayPresetsTab::TAB ) ) . '"' . ( OverlayPresetsTab::TAB === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Standard overlays', 'merchboard' ) . '</a>';
-		}
-
-		if ( null !== $this->creator_page ) {
-			echo '<a class="nav-tab' . ( CreatorPageTab::TAB === $tab ? ' nav-tab-active' : '' ) . '" href="' . esc_url( self::url( CreatorPageTab::TAB ) ) . '"' . ( CreatorPageTab::TAB === $tab ? ' aria-current="page"' : '' ) . '>' . esc_html__( 'Creator page', 'merchboard' ) . '</a>';
 		}
 
 		if ( null !== $this->library ) {
@@ -220,13 +214,6 @@ final class AlertsAdminPage {
 				echo '<div class="notice notice-error"><p>' . esc_html__( 'The API keys could not be read. Please try again.', 'merchboard' ) . '</p></div>';
 			}
 
-			echo '</div>';
-
-			return;
-		}
-
-		if ( CreatorPageTab::TAB === $tab && null !== $this->creator_page ) {
-			$this->creator_page->render();
 			echo '</div>';
 
 			return;

@@ -1219,65 +1219,6 @@
 	}
 }
 
-// The creator page's setup in wp-admin (step 25.9.6): a sketch of the page.
-.merchboard-page-setup__zone-box {
-	margin-bottom: var(--merchboard-space-4);
-	padding: var(--merchboard-space-3);
-	border: 1px dashed var(--merchboard-border-strong);
-	border-radius: var(--merchboard-radius);
-
-	h3 {
-		margin: 0 0 var(--merchboard-space-2);
-	}
-}
-
-.merchboard-page-setup__cards,
-.merchboard-page-setup__fields {
-	display: grid;
-	gap: var(--merchboard-space-2);
-	min-height: 2.5rem;
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
-
-.merchboard-page-setup__fields {
-	margin-top: var(--merchboard-space-2);
-	padding-left: var(--merchboard-space-4);
-}
-
-.merchboard-page-setup__card {
-	padding: var(--merchboard-space-2) var(--merchboard-space-3);
-	background: var(--merchboard-surface);
-	border: 1px solid var(--merchboard-border-strong);
-	border-radius: var(--merchboard-radius);
-	cursor: grab;
-}
-
-.merchboard-page-setup__item {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--merchboard-space-2);
-	align-items: center;
-	justify-content: space-between;
-	cursor: grab;
-}
-
-.merchboard-page-setup__name {
-	font-weight: 600;
-}
-
-.merchboard-page-setup__buttons {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--merchboard-space-1);
-	align-items: center;
-}
-
-.merchboard-page-setup__zone {
-	width: auto;
-}
-
 .merchboard-alerts__grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
@@ -2393,4 +2334,605 @@ input:disabled + .merchboard-sounds__upload {
 
 .merchboard-product-designer__drafts {
 	margin: var(--merchboard-space-3) 0 0;
+}
+
+/* Alert designer 2.0 (phase 31, ADR-088): a top bar, the side panel on the
+   left and the canvas on the right; on narrow screens the panel is above. */
+.merchboard-alert-editor {
+	display: grid;
+	gap: var(--merchboard-space-4);
+	min-width: 0;
+}
+
+.merchboard-alert-editor__bar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-3);
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--merchboard-space-3) var(--merchboard-space-4);
+	color: var(--merchboard-on-inverse);
+	background: var(--merchboard-inverse-surface);
+	border-radius: var(--merchboard-radius);
+}
+
+.merchboard-alert-editor__title {
+	margin: 0;
+	font-size: var(--merchboard-text-lg);
+}
+
+.merchboard-alert-editor__bar-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+}
+
+.merchboard-alert-editor__bar-button {
+	padding: var(--merchboard-space-1) var(--merchboard-space-3);
+	font: inherit;
+	font-size: var(--merchboard-text-sm);
+	color: var(--merchboard-on-inverse);
+	cursor: pointer;
+	background: transparent;
+	border: 1px solid var(--merchboard-on-inverse);
+	border-radius: var(--merchboard-radius-full);
+
+	&[aria-expanded="true"] {
+		color: var(--merchboard-inverse-surface);
+		background: var(--merchboard-on-inverse);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--merchboard-focus-on-inverse);
+		outline-offset: 2px;
+	}
+}
+
+.merchboard-alert-editor__status {
+	margin: 0;
+	font-size: var(--merchboard-text-sm);
+	opacity: 0.85;
+}
+
+.merchboard-alert-editor__drawer,
+.merchboard-alert-editor__help {
+	display: grid;
+	gap: var(--merchboard-space-3);
+	min-width: 0;
+}
+
+.merchboard-alert-editor__errors {
+	padding: var(--merchboard-space-3) var(--merchboard-space-6);
+	margin: 0;
+	color: var(--merchboard-danger);
+	background: var(--merchboard-danger-bg);
+	border-radius: var(--merchboard-radius-sm);
+}
+
+.merchboard-alert-editor__main {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--merchboard-space-4);
+	align-items: start;
+
+	@media (min-width: $merchboard-lg) {
+		grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+	}
+}
+
+.merchboard-alert-editor__side {
+	display: grid;
+	min-width: 0;
+	overflow: hidden;
+	background: var(--merchboard-surface);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius);
+}
+
+.merchboard-alert-editor__stage {
+	min-width: 0;
+
+	@media (min-width: $merchboard-lg) {
+		position: sticky;
+		top: var(--merchboard-space-4);
+	}
+}
+
+// A panel of the side bar and a section inside it.
+.merchboard-alert-panel {
+	border-bottom: 1px solid var(--merchboard-border);
+
+	&:last-child {
+		border-bottom: 0;
+	}
+}
+
+.merchboard-alert-panel__heading {
+	margin: 0;
+	font-size: var(--merchboard-text-md);
+}
+
+.merchboard-alert-panel--section .merchboard-alert-panel__heading {
+	font-size: var(--merchboard-text-sm);
+}
+
+.merchboard-alert-panel__toggle {
+	display: flex;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	padding: var(--merchboard-space-3) var(--merchboard-space-4);
+	font: inherit;
+	font-weight: 600;
+	color: var(--merchboard-text);
+	text-align: left;
+	cursor: pointer;
+	background: var(--merchboard-surface-muted);
+	border: 0;
+
+	&:focus-visible {
+		outline: 2px solid var(--merchboard-focus);
+		outline-offset: -2px;
+	}
+}
+
+.merchboard-alert-panel.is-open > .merchboard-alert-panel__heading .merchboard-alert-panel__toggle {
+	color: var(--merchboard-primary);
+}
+
+.merchboard-alert-panel__chevron {
+	width: 0.5rem;
+	height: 0.5rem;
+	border-right: 2px solid currentcolor;
+	border-bottom: 2px solid currentcolor;
+	transform: rotate(-45deg);
+	transition: transform 0.15s ease;
+
+	.is-open > .merchboard-alert-panel__heading & {
+		transform: rotate(45deg);
+	}
+}
+
+.merchboard-alert-panel__body {
+	display: grid;
+	gap: var(--merchboard-space-3);
+	padding: var(--merchboard-space-4);
+}
+
+.merchboard-alert-panel--section .merchboard-alert-panel__body {
+	padding: var(--merchboard-space-3);
+}
+
+.merchboard-alert-panel__sections {
+	margin: var(--merchboard-space-2) calc(-1 * var(--merchboard-space-4)) calc(-1 * var(--merchboard-space-4));
+	border-top: 1px solid var(--merchboard-border);
+}
+
+.merchboard-alert-fieldset {
+	display: grid;
+	gap: var(--merchboard-space-3);
+	min-width: 0;
+	padding: var(--merchboard-space-3);
+	margin: 0;
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius-sm);
+
+	legend {
+		padding: 0 var(--merchboard-space-1);
+		font-size: var(--merchboard-text-sm);
+		font-weight: 600;
+	}
+}
+
+.merchboard-alert-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(8rem, 100%), 1fr));
+	gap: var(--merchboard-space-3);
+}
+
+// Tabs inside a section (Text: "Text" and "Advanced").
+.merchboard-alert-tabs__list {
+	display: flex;
+	margin-bottom: var(--merchboard-space-3);
+	border-bottom: 1px solid var(--merchboard-border);
+}
+
+.merchboard-alert-tabs__tab {
+	flex: 1;
+	padding: var(--merchboard-space-2);
+	font: inherit;
+	font-size: var(--merchboard-text-sm);
+	color: var(--merchboard-text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	cursor: pointer;
+	background: none;
+	border: 0;
+	border-bottom: 2px solid transparent;
+
+	&[aria-selected="true"] {
+		color: var(--merchboard-primary);
+		border-bottom-color: var(--merchboard-primary);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--merchboard-focus);
+		outline-offset: -2px;
+	}
+}
+
+.merchboard-alert-tabs__panel {
+	display: grid;
+	gap: var(--merchboard-space-3);
+}
+
+// Controls: a number with its unit, a colour with its opacity, choices and a
+// switch.
+.merchboard-alert-control__number {
+	position: relative;
+	display: flex;
+	align-items: center;
+
+	input {
+		width: 100%;
+		padding-right: 2rem;
+	}
+}
+
+.merchboard-alert-control__unit {
+	position: absolute;
+	right: var(--merchboard-space-2);
+	font-size: var(--merchboard-text-xs);
+	color: var(--merchboard-text-subtle);
+	pointer-events: none;
+}
+
+.merchboard-alert-control__color {
+	display: flex;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+
+	.merchboard-alert-control__number {
+		max-width: 5.5rem;
+	}
+}
+
+.merchboard-alert-control__segmented {
+	display: flex;
+	overflow: hidden;
+	border: 1px solid var(--merchboard-control-border);
+	border-radius: var(--merchboard-radius-sm);
+
+	button {
+		flex: 1;
+		min-height: 2.25rem;
+		padding: var(--merchboard-space-1) var(--merchboard-space-2);
+		font: inherit;
+		color: var(--merchboard-text);
+		cursor: pointer;
+		background: var(--merchboard-control-bg);
+		border: 0;
+
+		+ button {
+			border-left: 1px solid var(--merchboard-border);
+		}
+
+		&[aria-checked="true"] {
+			color: var(--merchboard-selected-text);
+			background: var(--merchboard-selected-bg);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--merchboard-focus);
+			outline-offset: -2px;
+		}
+	}
+}
+
+.merchboard-alert-control__switch {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+
+	input {
+		width: 2.25rem;
+		height: 1.25rem;
+		margin: 0;
+		cursor: pointer;
+		accent-color: var(--merchboard-primary);
+	}
+
+	label {
+		cursor: pointer;
+	}
+
+	.merchboard-field__help {
+		flex-basis: 100%;
+		margin: 0;
+	}
+}
+
+// The layout tiles: a sketch of where the image and the text are.
+.merchboard-alert-layout-icon {
+	position: relative;
+	display: inline-flex;
+	gap: 3px;
+	width: 2.5rem;
+	height: 1.75rem;
+
+	span {
+		display: block;
+		border-radius: 2px;
+	}
+
+	span:first-child {
+		background: currentcolor;
+		opacity: 0.45;
+	}
+
+	span:last-child {
+		background: currentcolor;
+	}
+
+	&.is-above {
+		flex-direction: column;
+		align-items: center;
+
+		span:first-child {
+			flex: 1;
+			width: 60%;
+		}
+
+		span:last-child {
+			width: 100%;
+			height: 5px;
+		}
+	}
+
+	&.is-side {
+		align-items: center;
+
+		span:first-child {
+			width: 40%;
+			height: 100%;
+		}
+
+		span:last-child {
+			flex: 1;
+			height: 5px;
+		}
+	}
+
+	&.is-overlay {
+
+		span:first-child {
+			position: absolute;
+			inset: 0;
+		}
+
+		span:last-child {
+			position: absolute;
+			top: calc(50% - 3px);
+			left: 15%;
+			width: 70%;
+			height: 6px;
+		}
+	}
+
+	&.is-free {
+
+		span:first-child {
+			position: absolute;
+			top: 2px;
+			left: 2px;
+			width: 35%;
+			height: 60%;
+		}
+
+		span:last-child {
+			position: absolute;
+			right: 2px;
+			bottom: 3px;
+			width: 55%;
+			height: 5px;
+		}
+	}
+}
+
+// The canvas: the 1920 × 1080 overlay scaled to its place, and its toolbar.
+.merchboard-alert-canvas {
+	display: grid;
+	gap: var(--merchboard-space-3);
+	min-width: 0;
+}
+
+.merchboard-alert-canvas__viewport {
+	min-width: 0;
+	overflow: auto;
+	border-radius: var(--merchboard-radius);
+}
+
+.merchboard-alert-canvas__stage {
+	position: relative;
+	overflow: hidden;
+	touch-action: none;
+
+	// A checkerboard: the overlay is transparent in OBS.
+	background: repeating-conic-gradient(var(--merchboard-skeleton) 0 25%, var(--merchboard-surface-muted) 0 50%) 0 0 / 24px 24px;
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius);
+
+	&.has-grid {
+		background-image:
+			linear-gradient(var(--merchboard-border-strong) 1px, transparent 1px),
+			linear-gradient(90deg, var(--merchboard-border-strong) 1px, transparent 1px);
+		background-size: var(--alert-grid) var(--alert-grid);
+	}
+}
+
+.merchboard-alert-canvas__screen {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 1920px;
+	height: 1080px;
+	transform-origin: top left;
+	pointer-events: none;
+}
+
+// Without a real product: a calm placeholder in the image's place.
+.merchboard-alert-canvas__sample-image {
+	background: linear-gradient(135deg, var(--merchboard-primary), var(--merchboard-inverse-surface));
+}
+
+.merchboard-alert-canvas__frame,
+.merchboard-alert-canvas__element {
+	position: absolute;
+	cursor: move;
+	outline: 1px dashed var(--merchboard-primary);
+
+	&:focus-visible {
+		outline: 2px solid var(--merchboard-focus);
+	}
+}
+
+.merchboard-alert-canvas__frame {
+	outline-style: solid;
+}
+
+.merchboard-alert-canvas__element {
+	outline-color: var(--merchboard-text-subtle);
+}
+
+.merchboard-alert-canvas__size {
+	position: absolute;
+	right: 0;
+	bottom: 100%;
+	padding: 0 var(--merchboard-space-1);
+	font-size: var(--merchboard-text-xs);
+	color: var(--merchboard-on-inverse);
+	white-space: nowrap;
+	background: var(--merchboard-primary);
+	border-radius: 2px 2px 0 0;
+}
+
+.merchboard-alert-canvas__handle {
+	position: absolute;
+	width: 10px;
+	height: 10px;
+	background: var(--merchboard-surface);
+	border: 2px solid var(--merchboard-primary);
+	border-radius: 2px;
+
+	&.is-n,
+	&.is-s {
+		left: calc(50% - 5px);
+		cursor: ns-resize;
+	}
+
+	&.is-e,
+	&.is-w {
+		top: calc(50% - 5px);
+		cursor: ew-resize;
+	}
+
+	&.is-n,
+	&.is-ne,
+	&.is-nw {
+		top: -6px;
+	}
+
+	&.is-s,
+	&.is-se,
+	&.is-sw {
+		bottom: -6px;
+	}
+
+	&.is-e,
+	&.is-ne,
+	&.is-se {
+		right: -6px;
+	}
+
+	&.is-w,
+	&.is-nw,
+	&.is-sw {
+		left: -6px;
+	}
+
+	&.is-ne,
+	&.is-sw {
+		cursor: nesw-resize;
+	}
+
+	&.is-nw,
+	&.is-se {
+		cursor: nwse-resize;
+	}
+}
+
+.merchboard-alert-canvas__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-1);
+	align-items: center;
+	justify-self: center;
+	padding: var(--merchboard-space-1);
+	background: var(--merchboard-surface);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius);
+	box-shadow: var(--merchboard-shadow);
+}
+
+.merchboard-alert-canvas__tool {
+	min-width: 2.25rem;
+	min-height: 2.25rem;
+	padding: var(--merchboard-space-1) var(--merchboard-space-3);
+	font: inherit;
+	font-size: var(--merchboard-text-sm);
+	color: var(--merchboard-text);
+	cursor: pointer;
+	background: none;
+	border: 0;
+	border-radius: var(--merchboard-radius-sm);
+
+	&:hover:not(:disabled) {
+		background: var(--merchboard-surface-muted);
+	}
+
+	&[aria-pressed="true"] {
+		color: var(--merchboard-selected-text);
+		background: var(--merchboard-selected-bg);
+	}
+
+	&.is-primary {
+		font-weight: 600;
+		color: var(--merchboard-on-inverse);
+		background: var(--merchboard-primary);
+	}
+
+	&:disabled {
+		cursor: default;
+		opacity: 0.4;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--merchboard-focus);
+	}
+}
+
+.merchboard-alert-canvas__divider {
+	align-self: stretch;
+	width: 1px;
+	margin: var(--merchboard-space-1);
+	background: var(--merchboard-border);
+}
+
+// Sounds in the side panel.
+.merchboard-alerts-sounds--compact {
+	display: grid;
+	gap: var(--merchboard-space-2);
 }

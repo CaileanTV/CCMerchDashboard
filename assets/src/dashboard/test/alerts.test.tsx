@@ -14,7 +14,7 @@ import {
 import {
 	AUTOSAVE_DELAY,
 	validateOverlaySettings,
-} from '../sections/alerts/OverlaySettingsForm';
+} from '../sections/alerts/editor/AlertEditor';
 import { mockApi, response } from '../testing/api';
 import { CONFIG, ORIGIN, click, flush, render } from '../testing/helpers';
 import type { Rendered } from '../testing/helpers';
@@ -331,7 +331,6 @@ describe( 'validateOverlaySettings', () => {
 		).toEqual( {} );
 	} );
 } );
-
 describe( 'AlertsSection', () => {
 	let rendered: Rendered | null = null;
 
@@ -343,7 +342,11 @@ describe( 'AlertsSection', () => {
 	const button = ( label: string ) =>
 		Array.from(
 			rendered?.container.querySelectorAll( 'button' ) ?? []
-		).find( ( element ) => element.textContent === label ) ?? null;
+		).find(
+			( element ) =>
+				element.textContent === label ||
+				element.getAttribute( 'aria-label' ) === label
+		) ?? null;
 
 	const show = async () => {
 		rendered = render(
@@ -354,23 +357,7 @@ describe( 'AlertsSection', () => {
 		await flush();
 	};
 
-	// Saves the settings form at once, as Enter in a field does, instead of waiting for the automatic save.
-	const saveNow = async () => {
-		const form = rendered?.container.querySelector(
-			'form.merchboard-alerts__form'
-		);
-		act( () => {
-			form?.dispatchEvent(
-				new Event( 'submit', { bubbles: true, cancelable: true } )
-			);
-		} );
-		await act( async () => {
-			await new Promise( ( resolve ) => window.setTimeout( resolve, 0 ) );
-		} );
-		await flush();
-	};
-
-	// Waits for the automatic save of the form or the designer.
+	// Waits for the automatic save.
 	const waitForAutosave = async () => {
 		await act( async () => {
 			await new Promise( ( resolve ) =>
@@ -380,54 +367,68 @@ describe( 'AlertsSection', () => {
 		await flush();
 	};
 
-	const typeTemplate = ( value: string ) => {
-		const template = rendered?.container.querySelector( 'textarea' );
+	const typeInto = (
+		element: HTMLTextAreaElement | HTMLInputElement | null | undefined,
+		value: string
+	) => {
 		act( () => {
-			if ( template ) {
+			if ( element ) {
 				Object.getOwnPropertyDescriptor(
-					HTMLTextAreaElement.prototype,
+					Object.getPrototypeOf( element ),
 					'value'
-				)?.set?.call( template, value );
-				template.dispatchEvent(
+				)?.set?.call( element, value );
+				element.dispatchEvent(
 					new Event( 'input', { bubbles: true } )
 				);
 			}
 		} );
 	};
 
-	it( 'sets the overlay up on request and shows the OBS URL', async () => {
+	const field = ( label: string ) => {
+		const element = Array.from(
+			rendered?.container.querySelectorAll( 'label' ) ?? []
+		).find( ( candidate ) => candidate.textContent === label );
+		const id = element?.getAttribute( 'for' );
+
+		const input = id ? document.getElementById( id ) : null;
+
+		return input instanceof HTMLInputElement ? input : null;
+	};
+
+	const patches = < T extends { readonly method: string } >(
+		requests: readonly T[]
+	): T[] => requests.filter( ( r ) => r.method === 'PATCH' );
+
+	it( 'sets the overlay up on request and shows the OBS URL in the browser source', async () => {
 		const requests = mockApi( {
 			[ `GET ${ PATH }` ]: () => response( 200, body( null ) ),
 			[ `POST ${ PATH }` ]: () => response( 200, body( URL_A ) ),
 		} );
 
 		await show();
-
-		expect(
-			rendered?.container.querySelector( 'input[readonly]' )
-		).toBeNull();
-
 		click( button( 'Set up overlay' ) );
 		await flush();
 
 		expect( overlayRequests( requests ).map( ( r ) => r.method ) ).toEqual(
 			[ 'GET', 'POST' ]
 		);
-		const field = () =>
+		expect( rendered?.container.textContent ).toContain( 'Alert designer' );
+		expect(
+			rendered?.container.querySelector( 'input[readonly]' )
+		).toBeNull();
+
+		click( button( 'Browser source' ) );
+		const url = () =>
 			rendered?.container.querySelector< HTMLInputElement >(
 				'input[readonly]'
 			)?.value;
 
-		expect( field() ).toBe( maskOverlayUrl( URL_A ) );
-		expect( field() ).not.toContain( 'a'.repeat( 32 ) );
+		expect( url() ).toBe( maskOverlayUrl( URL_A ) );
 		expect( rendered?.container.innerHTML ).not.toContain(
 			'a'.repeat( 32 )
 		);
-
 		click( button( 'Show URL' ) );
-		expect( field() ).toBe( URL_A );
-		click( button( 'Hide URL' ) );
-		expect( field() ).toBe( maskOverlayUrl( URL_A ) );
+		expect( url() ).toBe( URL_A );
 
 		const open = jest
 			.spyOn( window, 'open' )
@@ -441,7 +442,7 @@ describe( 'AlertsSection', () => {
 		open.mockRestore();
 	} );
 
-	it( 'replaces the URL only after confirmation and sends test alerts', async () => {
+	it( 'replaces the URL only after confirmation and sends test alerts from the canvas', async () => {
 		const requests = mockApi( {
 			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
 			[ `POST ${ PATH }/regenerate` ]: () =>
@@ -451,13 +452,13 @@ describe( 'AlertsSection', () => {
 		const confirm = jest.spyOn( window, 'confirm' );
 
 		await show();
+		click( button( 'Browser source' ) );
 
 		confirm.mockReturnValueOnce( false );
 		click( button( 'Create new URL' ) );
 		await flush();
 		expect( overlayRequests( requests ) ).toHaveLength( 1 );
 
-		click( button( 'Show URL' ) );
 		confirm.mockReturnValueOnce( true );
 		click( button( 'Create new URL' ) );
 		await flush();
@@ -467,17 +468,49 @@ describe( 'AlertsSection', () => {
 			)?.value
 		).toBe( maskOverlayUrl( URL_B ) );
 
-		click( button( 'Send test alert' ) );
+		click( button( 'Test alert' ) );
 		await flush();
 		expect( requests.map( ( r ) => r.path ) ).toContain( `${ PATH }/test` );
 		expect( rendered?.container.textContent ).toContain(
 			'Test alert sent'
 		);
-
 		confirm.mockRestore();
 	} );
 
-	it( 'saves the settings and tells when alerts are switched off', async () => {
+	it( 'opens with "Merch alert" open and "Position, size and style" folded at the bottom', async () => {
+		mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		const toggles = Array.from(
+			rendered?.container.querySelectorAll< HTMLButtonElement >(
+				'.merchboard-alert-panel__toggle'
+			) ?? []
+		);
+		const state = Object.fromEntries(
+			toggles.map( ( toggle ) => [
+				toggle.textContent,
+				toggle.getAttribute( 'aria-expanded' ),
+			] )
+		);
+
+		expect( toggles.map( ( toggle ) => toggle.textContent ) ).toEqual( [
+			'Merch alert',
+			'Text',
+			'Animation',
+			'Position, size and style',
+		] );
+		expect( state ).toEqual( {
+			'Merch alert': 'true',
+			Text: 'false',
+			Animation: 'false',
+			'Position, size and style': 'false',
+		} );
+	} );
+
+	it( 'saves every change once, a moment after the last one, with the layout and without whether sounds play', async () => {
 		const requests = mockApi( {
 			[ `GET ${ PATH }` ]: () =>
 				response( 200, body( URL_A, { alerts_enabled: false } ) ),
@@ -485,106 +518,76 @@ describe( 'AlertsSection', () => {
 		} );
 
 		await show();
-
 		expect( rendered?.container.textContent ).toContain(
 			'Purchase alerts are switched off'
 		);
-
 		expect( rendered?.container.textContent ).toContain(
 			'Changes are saved automatically.'
 		);
-		await saveNow();
-		expect( requests.filter( ( r ) => r.method === 'PATCH' ) ).toHaveLength(
-			0
-		);
 
-		typeTemplate( 'Thanks $UserName!' );
-		await saveNow();
+		const template = rendered?.container.querySelector( 'textarea' );
+		typeInto( template, 'Thanks' );
+		typeInto( template, 'Thanks $UserName!' );
+		expect( rendered?.container.textContent ).toContain( 'Saving…' );
+		await waitForAutosave();
 
-		const patch = requests.find( ( r ) => r.method === 'PATCH' );
-		expect( patch?.data ).toEqual( {
-			...SETTINGS,
+		expect( patches( requests ) ).toHaveLength( 1 );
+		const { audio_enabled: audioEnabled, ...expected } = SETTINGS;
+		void audioEnabled;
+		expect( patches( requests )[ 0 ]?.data ).toEqual( {
+			...expected,
 			template: 'Thanks $UserName!',
+			layout: LAYOUT,
 		} );
 		expect( rendered?.container.textContent ).toContain(
 			'All changes are saved.'
 		);
 	} );
 
-	it( 'offers only approved fonts and keeps an unavailable font until another is chosen', async () => {
+	it( 'keeps an empty text unsaved and says why', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+		typeInto( rendered?.container.querySelector( 'textarea' ), '  ' );
+		await waitForAutosave();
+
+		expect( patches( requests ) ).toHaveLength( 0 );
+		expect( rendered?.container.textContent ).toContain(
+			'Enter a text for the alert.'
+		);
+	} );
+
+	it( 'keeps an unavailable font until another is chosen', async () => {
 		const requests = mockApi( {
 			[ `GET ${ PATH }` ]: () =>
 				response( 200, {
 					...body( URL_A ),
 					overlay: {
-						url: URL_A,
+						...body( URL_A ).overlay,
 						settings: { ...SETTINGS, font_family: 'Lobster' },
-						layout: LAYOUT,
 						font_approved: false,
-						audio: AUDIO,
 					},
 				} ),
 			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
 		} );
 
 		await show();
-
 		expect( rendered?.container.textContent ).toContain(
-			'Your font is no longer available'
+			'Your font is no longer available.'
 		);
-		act( () => {
-			rendered?.container
-				.querySelector< HTMLElement >( '[aria-haspopup="listbox"]' )
-				?.click();
-		} );
 
-		expect(
-			Array.from(
-				rendered?.container.querySelectorAll< HTMLElement >(
-					'[role="option"]'
-				) ?? []
-			)
-				.filter(
-					( option ) =>
-						option.getAttribute( 'aria-disabled' ) !== 'true'
-				)
-				.map( ( option ) => option.dataset.value )
-		).toEqual( [ 'inherit', 'Roboto' ] );
+		typeInto( rendered?.container.querySelector( 'textarea' ), 'Hi' );
+		await waitForAutosave();
 
-		typeTemplate( 'Hi $UserName!' );
-		await saveNow();
-
-		const patch = requests.find( ( r ) => r.method === 'PATCH' );
-		expect( patch?.data ).not.toHaveProperty( 'font_family' );
+		expect( patches( requests )[ 0 ]?.data ).not.toHaveProperty(
+			'font_family'
+		);
 	} );
 
-	it( 'shows the secondary text box only when it is switched on', async () => {
-		mockApi( {
-			[ `GET ${ PATH }` ]: () =>
-				response( 200, {
-					...body( URL_A ),
-					overlay: {
-						url: URL_A,
-						settings: { ...SETTINGS, show_secondary: true },
-						layout: LAYOUT,
-						font_approved: true,
-						audio: AUDIO,
-					},
-				} ),
-		} );
-
-		await show();
-
-		expect(
-			Array.from(
-				rendered?.container.querySelectorAll(
-					'.merchboard-designer__box'
-				) ?? []
-			).map( ( box ) => box.getAttribute( 'aria-label' ) )
-		).toEqual( [ 'Product image', 'Main text', 'Secondary text' ] );
-	} );
-
-	it( 'saves the designer layout', async () => {
+	it( 'chooses the layout and the extra line, and shows the alert on the canvas', async () => {
 		const requests = mockApi( {
 			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
 			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
@@ -592,52 +595,103 @@ describe( 'AlertsSection', () => {
 
 		await show();
 
-		// The secondary text is switched off, so its box is not shown.
-		expect(
-			Array.from(
-				rendered?.container.querySelectorAll(
-					'.merchboard-designer__box'
-				) ?? []
-			).map( ( box ) => box.getAttribute( 'aria-label' ) )
-		).toEqual( [ 'Product image', 'Main text' ] );
-
-		expect( button( 'Save layout' ) ).toBeNull();
-		await waitForAutosave();
-		expect( requests.filter( ( r ) => r.method === 'PATCH' ) ).toHaveLength(
-			0
+		const alert = rendered?.container.querySelector< HTMLElement >(
+			'.merchboard-alert-canvas .merchboard-alert'
+		);
+		expect( alert?.dataset.layout ).toBe( 'free' );
+		expect( alert?.textContent ).toContain(
+			'Hoodie was purchased by TestFan!'
 		);
 
-		const left = Array.from(
-			rendered?.container.querySelectorAll( 'label' ) ?? []
-		).find( ( label ) => label.textContent === 'Left (px)' );
-		const input = left ? document.getElementById( left.htmlFor ) : null;
-		act( () => {
-			if ( input instanceof HTMLInputElement ) {
-				Object.getOwnPropertyDescriptor(
-					HTMLInputElement.prototype,
-					'value'
-				)?.set?.call( input, '300' );
-				input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
-			}
-		} );
+		click( button( 'Image beside text' ) );
+		click( field( 'Show an extra line of text' ) );
+		expect( alert?.dataset.layout ).toBe( 'side' );
 		await waitForAutosave();
 
-		const patches = requests.filter( ( r ) => r.method === 'PATCH' );
-		expect( patches ).toHaveLength( 1 );
-		expect( patches[ 0 ]?.data ).toEqual( {
-			layout: {
-				...LAYOUT,
-				elements: {
-					...LAYOUT.elements,
-					main_text: { ...LAYOUT.elements.main_text, x: 300 },
-				},
-			},
+		const data = patches( requests )[ 0 ]?.data as Record<
+			string,
+			unknown
+		>;
+		expect( data.layout_mode ).toBe( 'side' );
+		expect( data.show_secondary ).toBe( true );
+		expect(
+			( data.layout as typeof LAYOUT ).elements.secondary_text.visible
+		).toBe( true );
+	} );
+
+	it( 'centres the alert, moving the free elements with it, and undoes it', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+		click( button( 'Position, size and style' ) );
+		click( button( 'Centre the alert' ) );
+
+		expect( field( 'X' )?.value ).toBe( '542' );
+		expect( field( 'Y' )?.value ).toBe( '480' );
+
+		click( button( 'Undo' ) );
+		expect( field( 'X' )?.value ).toBe( '40' );
+		click( button( 'Redo' ) );
+		await waitForAutosave();
+
+		const data = patches( requests ).at( -1 )?.data as Record<
+			string,
+			unknown
+		>;
+		expect( data.widget ).toEqual( {
+			x: 542,
+			y: 480,
+			w: 836,
+			h: 120,
+			opacity: 100,
+			rotation: 0,
 		} );
 		expect(
-			rendered?.container.querySelectorAll( '.merchboard-toast' )
-		).toHaveLength( 1 );
+			( data.layout as typeof LAYOUT ).elements.product_image.x
+		).toBe( 542 );
+	} );
+
+	it( 'highlights the inserted values on the canvas', async () => {
+		mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+		click( button( 'Text' ) );
+		click( field( 'Highlight the inserted values' ) );
+
+		const marked = Array.from(
+			rendered?.container.querySelectorAll(
+				'.merchboard-alert-canvas .merchboard-hl'
+			) ?? [],
+			( letter ) => letter.textContent
+		).join( '' );
+
+		expect( marked ).toBe( 'HoodieTestFan' );
+	} );
+
+	it( 'shows the saved designs in the top bar', async () => {
+		mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			'GET /merchboard/v1/me/alerts/designs': () =>
+				response( 200, { designs: [], max: 10 } ),
+			'GET /merchboard/v1/me/alerts/presets': () =>
+				response( 200, { presets: [] } ),
+		} );
+
+		await show();
+		expect( rendered?.container.textContent ).not.toContain(
+			'Save current design'
+		);
+
+		click( button( 'Designs' ) );
+		await flush();
 		expect( rendered?.container.textContent ).toContain(
-			'Settings saved.'
+			'Save current design'
 		);
 	} );
 
@@ -712,7 +766,7 @@ describe( 'AlertsSection', () => {
 
 		await show();
 		expect( rendered?.container.textContent ).toContain(
-			'Contact us to ask for other limits.'
+			'at most 10 MB and 30 seconds'
 		);
 
 		choose(
@@ -800,332 +854,6 @@ describe( 'AlertsSection', () => {
 		expect( rendered?.container.textContent ).toContain( 'Sound saved.' );
 	} );
 
-	it( 'selects several boxes with Shift and aligns them to each other', async () => {
-		const requests = mockApi( {
-			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
-			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
-		} );
-
-		await show();
-
-		const boxes = Array.from(
-			rendered?.container.querySelectorAll< HTMLElement >(
-				'.merchboard-designer__box'
-			) ?? []
-		);
-		const image = boxes[ 0 ] as HTMLElement;
-
-		act( () => {
-			image.dispatchEvent(
-				new KeyboardEvent( 'keydown', {
-					key: 'Enter',
-					shiftKey: true,
-					bubbles: true,
-				} )
-			);
-		} );
-
-		expect(
-			boxes.map( ( box ) => box.getAttribute( 'aria-pressed' ) )
-		).toEqual( [ 'true', 'true' ] );
-		expect( rendered?.container.textContent ).toContain(
-			'2 elements selected'
-		);
-
-		const target = rendered?.container.querySelector< HTMLSelectElement >(
-			'.merchboard-designer__align select'
-		);
-		act( () => {
-			if ( target ) {
-				target.value = 'selection';
-				target.dispatchEvent(
-					new Event( 'change', { bubbles: true } )
-				);
-			}
-		} );
-
-		click( button( 'Align top' ) );
-		await waitForAutosave();
-
-		const saved = requests.find( ( r ) => r.method === 'PATCH' )?.data as {
-			layout: typeof LAYOUT;
-		};
-		expect( saved.layout.elements.main_text.y ).toBe(
-			LAYOUT.elements.product_image.y
-		);
-		expect( saved.layout.elements.product_image.y ).toBe(
-			LAYOUT.elements.product_image.y
-		);
-	} );
-
-	it( 'undoes and redoes designer changes with the keyboard', async () => {
-		mockApi( {
-			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
-		} );
-
-		await show();
-
-		const leftField = () =>
-			Array.from(
-				rendered?.container.querySelectorAll< HTMLInputElement >(
-					'.merchboard-designer__properties input[type="number"]'
-				) ?? []
-			)[ 0 ];
-		const press = (
-			init: KeyboardEventInit,
-			target: EventTarget = window
-		) =>
-			act( () => {
-				target.dispatchEvent(
-					new KeyboardEvent( 'keydown', { bubbles: true, ...init } )
-				);
-			} );
-
-		expect( button( 'Undo' )?.hasAttribute( 'disabled' ) ).toBe( true );
-		expect( leftField()?.value ).toBe(
-			String( LAYOUT.elements.main_text.x )
-		);
-
-		click( button( 'Align left' ) );
-		expect( leftField()?.value ).toBe( '0' );
-		expect( button( 'Undo' )?.hasAttribute( 'disabled' ) ).toBe( false );
-
-		press( { key: 'z', ctrlKey: true } );
-		expect( leftField()?.value ).toBe(
-			String( LAYOUT.elements.main_text.x )
-		);
-
-		press( { key: 'z', ctrlKey: true, shiftKey: true } );
-		expect( leftField()?.value ).toBe( '0' );
-
-		// A text field of the settings form keeps the browser's own undo.
-		const template = rendered?.container.querySelector( 'textarea' );
-		expect( template ).not.toBeNull();
-		press( { key: 'z', ctrlKey: true }, template as HTMLTextAreaElement );
-		expect( leftField()?.value ).toBe( '0' );
-
-		click( button( 'Undo' ) );
-		expect( leftField()?.value ).toBe(
-			String( LAYOUT.elements.main_text.x )
-		);
-	} );
-
-	it( 'saves every change on its own, once, a moment after the last one', async () => {
-		const requests = mockApi( {
-			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
-			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
-		} );
-
-		await show();
-
-		typeTemplate( 'T' );
-		typeTemplate( 'Th' );
-		typeTemplate( 'Thanks!' );
-		expect( rendered?.container.textContent ).toContain( 'Saving…' );
-		expect( requests.filter( ( r ) => r.method === 'PATCH' ) ).toHaveLength(
-			0
-		);
-
-		await act( async () => {
-			await new Promise( ( resolve ) =>
-				window.setTimeout( resolve, AUTOSAVE_DELAY + 50 )
-			);
-		} );
-		await flush();
-
-		const patches = requests.filter( ( r ) => r.method === 'PATCH' );
-		expect( patches ).toHaveLength( 1 );
-		expect( patches[ 0 ]?.data ).toEqual( {
-			...SETTINGS,
-			template: 'Thanks!',
-		} );
-
-		// An invalid value is marked and not saved.
-		typeTemplate( '' );
-		await saveNow();
-		expect( requests.filter( ( r ) => r.method === 'PATCH' ) ).toHaveLength(
-			1
-		);
-		expect( rendered?.container.textContent ).toContain(
-			'Not saved: correct the marked fields.'
-		);
-	} );
-
-	it( 'previews the chosen font size in the designer', async () => {
-		mockApi( {
-			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
-		} );
-
-		await show();
-
-		const sizeField = Array.from(
-			rendered?.container.querySelectorAll( 'label' ) ?? []
-		).find( ( label ) => label.textContent === 'Font size (px)' );
-		const input = sizeField
-			? document.getElementById( sizeField.htmlFor )
-			: null;
-		const text = () =>
-			rendered?.container.querySelector< HTMLElement >(
-				'.merchboard-designer .merchboard-designer__text'
-			);
-
-		expect(
-			text()?.style.getPropertyValue( '--merchboard-preview-font-size' )
-		).toBe( `${ ( 32 / 1920 ) * 100 }cqw` );
-		expect( text()?.style.fontSize ).toBe( '' );
-
-		act( () => {
-			if ( input instanceof HTMLInputElement ) {
-				Object.getOwnPropertyDescriptor(
-					HTMLInputElement.prototype,
-					'value'
-				)?.set?.call( input, '64' );
-				input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
-			}
-		} );
-
-		expect(
-			text()?.style.getPropertyValue( '--merchboard-preview-font-size' )
-		).toBe( `${ ( 64 / 1920 ) * 100 }cqw` );
-	} );
-
-	it( 'shows the save status right above the designer, which is last', async () => {
-		mockApi( {
-			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
-		} );
-
-		await show();
-
-		const save = rendered?.container.querySelector(
-			'.merchboard-alerts__autosave'
-		);
-		const designer = rendered?.container.querySelector(
-			'.merchboard-designer'
-		);
-		const slot = save?.closest(
-			'.merchboard-form__actions'
-		)?.parentElement;
-
-		expect( button( 'Save overlay settings' ) ).toBeNull();
-		expect( save?.getAttribute( 'role' ) ).toBe( 'status' );
-		expect( save?.closest( '.merchboard-alerts__columns' ) ).toBeNull();
-		expect( slot?.nextElementSibling?.contains( designer ?? null ) ).toBe(
-			true
-		);
-		expect(
-			slot?.parentElement?.lastElementChild?.contains( designer ?? null )
-		).toBe( true );
-	} );
-
-	it( 'saves the text animations and offers to play them', async () => {
-		const requests = mockApi( {
-			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
-			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
-		} );
-
-		await show();
-
-		const fieldset = rendered?.container.querySelector(
-			'.merchboard-animation'
-		);
-		const inSelect = fieldset?.querySelector( 'select' ) ?? null;
-
-		expect( inSelect ).not.toBeNull();
-		act( () => {
-			if ( inSelect ) {
-				inSelect.value = 'typewriter';
-				inSelect.dispatchEvent(
-					new Event( 'change', { bubbles: true } )
-				);
-			}
-		} );
-
-		await saveNow();
-
-		const patch = requests.find( ( r ) => r.method === 'PATCH' )?.data as {
-			animations: { main_text: { in: string } };
-		};
-		expect( patch.animations.main_text.in ).toBe( 'typewriter' );
-		expect( button( 'Play animation' ) ).not.toBeNull();
-		expect(
-			rendered?.container.querySelectorAll( '.merchboard-animation' )
-		).toHaveLength( 1 );
-	} );
-
-	it( 'loops a sample of the chosen animation, which can be paused', async () => {
-		mockApi( {
-			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
-		} );
-
-		await show();
-
-		const sample = () =>
-			rendered?.container.querySelector(
-				'.merchboard-animation__text'
-			) ?? null;
-		const inSelect =
-			rendered?.container.querySelector(
-				'.merchboard-animation select'
-			) ?? null;
-
-		expect( sample()?.classList.contains( 'merchboard-anim' ) ).toBe(
-			true
-		);
-
-		act( () => {
-			if ( inSelect instanceof HTMLSelectElement ) {
-				inSelect.value = 'wave';
-				inSelect.dispatchEvent(
-					new Event( 'change', { bubbles: true } )
-				);
-			}
-		} );
-
-		const text = sample();
-		expect( text instanceof HTMLElement && text.dataset.in ).toBe( 'wave' );
-		expect(
-			text?.querySelectorAll( '.merchboard-anim__letter' ).length
-		).toBeGreaterThan( 0 );
-
-		click( button( 'Pause example' ) );
-
-		expect( sample()?.classList.contains( 'merchboard-anim' ) ).toBe(
-			false
-		);
-		expect( button( 'Play example' ) ).not.toBeNull();
-	} );
-
-	it( 'plays an unsaved animation in the designer', async () => {
-		const requests = mockApi( {
-			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
-		} );
-
-		await show();
-
-		const inSelect =
-			rendered?.container.querySelector(
-				'.merchboard-animation select'
-			) ?? null;
-
-		act( () => {
-			if ( inSelect instanceof HTMLSelectElement ) {
-				inSelect.value = 'typewriter';
-				inSelect.dispatchEvent(
-					new Event( 'change', { bubbles: true } )
-				);
-			}
-		} );
-
-		click( button( 'Play animation' ) );
-
-		const text = rendered?.container.querySelector(
-			'.merchboard-designer .merchboard-anim'
-		);
-		expect( text instanceof HTMLElement && text.dataset.in ).toBe(
-			'typewriter'
-		);
-		expect( requests.some( ( r ) => r.method === 'PATCH' ) ).toBe( false );
-	} );
 	it( 'refuses text fill images of another site', () => {
 		expect(
 			parseAlertsOverlay( imageBody( [ IMAGE ] ) )?.overlay?.images?.own
@@ -1135,212 +863,5 @@ describe( 'AlertsSection', () => {
 				imageBody( [ { ...IMAGE, url: 'https://evil.example/a.gif' } ] )
 			)
 		).toBeNull();
-	} );
-
-	it( 'fills a text with a preset or an image, shows it and saves it', async () => {
-		const requests = mockApi( {
-			[ `GET ${ PATH }` ]: () => response( 200, imageBody( [ IMAGE ] ) ),
-			[ `PATCH ${ PATH }` ]: () =>
-				response( 200, imageBody( [ IMAGE ] ) ),
-		} );
-
-		await show();
-
-		const field = ( label: string ) => {
-			const element = Array.from(
-				rendered?.container.querySelectorAll( 'label' ) ?? []
-			).find( ( item ) => item.textContent === label );
-			const control = element
-				? document.getElementById( element.htmlFor )
-				: null;
-
-			return control instanceof HTMLSelectElement ? control : null;
-		};
-		const change = ( select: HTMLSelectElement | null, value: string ) => {
-			expect( select ).not.toBeNull();
-			act( () => {
-				if ( select ) {
-					select.value = value;
-					select.dispatchEvent(
-						new Event( 'change', { bubbles: true } )
-					);
-				}
-			} );
-		};
-		const sample = () =>
-			rendered?.container.querySelector< HTMLElement >(
-				'.merchboard-animation__text'
-			) ?? null;
-
-		change( field( 'Text fill' ), 'preset' );
-		change( field( 'Gradient or pattern' ), 'gold' );
-		expect( sample()?.classList.contains( 'merchboard-fill' ) ).toBe(
-			true
-		);
-
-		change( field( 'Text fill' ), 'image' );
-		change( field( 'Image' ), '5' );
-		change( field( 'Fill motion' ), 'pan' );
-		expect(
-			sample()?.style.getPropertyValue( '--merchboard-fill-image' )
-		).toContain( 'stars.gif' );
-		expect(
-			rendered?.container
-				.querySelector( '.merchboard-designer .merchboard-fill' )
-				?.getAttribute( 'data-fill-motion' )
-		).toBe( 'pan' );
-
-		await saveNow();
-
-		const patch = requests.find( ( r ) => r.method === 'PATCH' )?.data as {
-			text_fills: { main_text: unknown };
-		};
-		expect( patch.text_fills.main_text ).toEqual( {
-			type: 'image',
-			preset: 'gold',
-			image: 5,
-			motion: 'pan',
-		} );
-	} );
-
-	it( 'uploads and deletes own images for text fills', async () => {
-		const requests = mockApi( {
-			[ `GET ${ PATH }` ]: () => response( 200, imageBody( [] ) ),
-			[ `POST ${ PATH }/images` ]: () =>
-				response( 200, imageBody( [ IMAGE ] ) ),
-			[ `DELETE ${ PATH }/images/5` ]: () =>
-				response( 200, imageBody( [] ) ),
-		} );
-		const confirm = jest.spyOn( window, 'confirm' ).mockReturnValue( true );
-
-		await show();
-
-		const imageInput = () =>
-			fileInputs().find( ( item ) =>
-				item.accept.includes( 'image/gif' )
-			);
-		const card = () =>
-			Array.from(
-				rendered?.container.querySelectorAll( 'h2, h3' ) ?? []
-			).some( ( heading ) => heading.textContent === 'Images for text' );
-
-		expect( card() ).toBe( false );
-		expect( imageInput() ).toBeUndefined();
-
-		// The card appears right below the text fill once a text is filled with an image.
-		const typeLabel = Array.from(
-			rendered?.container.querySelectorAll( 'label' ) ?? []
-		).find( ( item ) => item.textContent === 'Text fill' );
-		const typeSelect = typeLabel
-			? document.getElementById( typeLabel.htmlFor )
-			: null;
-		act( () => {
-			if ( typeSelect instanceof HTMLSelectElement ) {
-				typeSelect.value = 'image';
-				typeSelect.dispatchEvent(
-					new Event( 'change', { bubbles: true } )
-				);
-			}
-		} );
-		expect( card() ).toBe( true );
-
-		const headings = Array.from(
-			rendered?.container.querySelectorAll( 'h2, h3' ) ?? []
-		).map( ( heading ) => heading.textContent );
-		expect(
-			headings.indexOf( 'Images for text' ) -
-				headings.indexOf( 'Animations and text fill' )
-		).toBe( 1 );
-		const input = imageInput();
-		const file = new File( [ 'x' ], 'stars.gif', { type: 'image/gif' } );
-		choose( input as HTMLInputElement, file );
-		await flush();
-
-		const upload = requests.find( ( r ) => r.path === `${ PATH }/images` );
-		expect( upload?.method ).toBe( 'POST' );
-		expect( ( upload?.body as FormData ).get( 'file' ) ).toBe( file );
-		expect( rendered?.container.textContent ).toContain( 'stars.gif' );
-
-		click( button( 'Delete' ) );
-		await flush();
-
-		expect(
-			requests.some(
-				( r ) =>
-					r.method === 'DELETE' && r.path === `${ PATH }/images/5`
-			)
-		).toBe( true );
-		expect( rendered?.container.textContent ).toContain( 'Image deleted.' );
-		confirm.mockRestore();
-	} );
-
-	it( 'runs the main text round the image in the example, the designer and the saved settings', async () => {
-		const requests = mockApi( {
-			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
-			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
-		} );
-
-		await show();
-
-		const field = ( label: string ) => {
-			const element = Array.from(
-				rendered?.container.querySelectorAll( 'label' ) ?? []
-			).find( ( item ) => item.textContent === label );
-			const control = element
-				? document.getElementById( element.htmlFor )
-				: null;
-
-			return control instanceof HTMLSelectElement ? control : null;
-		};
-		const change = ( select: HTMLSelectElement | null, value: string ) => {
-			expect( select ).not.toBeNull();
-			act( () => {
-				if ( select ) {
-					select.value = value;
-					select.dispatchEvent(
-						new Event( 'change', { bubbles: true } )
-					);
-				}
-			} );
-		};
-		const boxes = () =>
-			Array.from(
-				rendered?.container.querySelectorAll(
-					'.merchboard-designer__box'
-				) ?? []
-			).map( ( box ) => box.getAttribute( 'aria-label' ) );
-
-		expect( boxes() ).toContain( 'Main text' );
-		expect( field( 'Direction' ) ).toBeNull();
-
-		change( field( 'Placement' ), 'frame' );
-		change( field( 'Direction' ), 'counterclockwise' );
-		change( field( 'Glide speed' ), 'fast' );
-
-		expect(
-			rendered?.container.querySelector(
-				'.merchboard-animation__ring .merchboard-frame'
-			)
-		).not.toBeNull();
-		expect( boxes() ).not.toContain( 'Main text' );
-		expect(
-			rendered?.container
-				.querySelector(
-					'.merchboard-designer__frame .merchboard-frame'
-				)
-				?.getAttribute( 'data-frame-direction' )
-		).toBe( 'counterclockwise' );
-
-		await saveNow();
-
-		const patch = requests.find( ( r ) => r.method === 'PATCH' )?.data as {
-			text_frame: unknown;
-		};
-		expect( patch.text_frame ).toEqual( {
-			enabled: true,
-			direction: 'counterclockwise',
-			speed: 'fast',
-			repeat: true,
-		} );
 	} );
 } );

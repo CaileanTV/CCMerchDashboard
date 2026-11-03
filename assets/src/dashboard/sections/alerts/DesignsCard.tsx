@@ -24,7 +24,7 @@ import type {
 	OverlayLayout,
 	OverlaySettings,
 } from '../../types/alerts';
-import { OverlayDesigner } from './OverlayDesigner';
+import { AlertPreview } from './editor/AlertPreview';
 import { useFontStylesheet } from './useFontStylesheet';
 
 interface Props {
@@ -382,18 +382,11 @@ export function DesignsCard( {
 						hidden={ compact && ! previewOpen }
 					>
 						{ ( ! compact || previewOpen ) && (
-							<OverlayDesigner
+							<AlertPreview
 								key={ choice.key }
 								layout={ choice.layout }
 								settings={ choice.settings }
 								images={ choice.images }
-								fontFamily={
-									font === undefined
-										? 'inherit'
-										: `"${ font.family }", sans-serif`
-								}
-								onSaved={ () => undefined }
-								readOnly
 							/>
 						) }
 					</div>

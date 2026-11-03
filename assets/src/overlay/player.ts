@@ -44,6 +44,8 @@ export interface PlayerHooks {
 	readonly fit?: ( element: HTMLElement ) => void;
 	/** Moves the image up as far as the main text grew up. */
 	readonly follow?: ( image: HTMLElement, text: HTMLElement ) => void;
+	/** Called when the last alert has gone (the designer's preview). */
+	readonly idle?: () => void;
 }
 
 export class AlertPlayer {
@@ -338,5 +340,9 @@ export class AlertPlayer {
 		this.textsOut = 0;
 		this.playing = false;
 		this.next();
+
+		if ( ! this.playing ) {
+			this.hooks.idle?.();
+		}
 	}
 }

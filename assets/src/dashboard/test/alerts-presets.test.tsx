@@ -187,7 +187,9 @@ describe( 'standard overlays (step 25.9.5)', () => {
 		);
 		await flush();
 
-		expect( rendered.container.textContent ).toContain( 'Preview' );
+		expect(
+			rendered.container.querySelector( '.merchboard-alert-canvas' )
+		).not.toBeNull();
 		expect(
 			rendered.container.querySelector( 'option' )?.textContent
 		).toBe( 'Neon' );

@@ -110,6 +110,31 @@ export function redo< T >( history: History< T > ): History< T > {
 			};
 }
 
+/**
+ * The undo or redo shortcut of a key press: Ctrl+Z (Cmd+Z) undoes, Ctrl+Y or
+ * Ctrl+Shift+Z redoes; null for anything else.
+ *
+ * @param event Key press.
+ */
+export function historyKey(
+	event: Pick<
+		KeyboardEvent,
+		'key' | 'ctrlKey' | 'metaKey' | 'shiftKey' | 'altKey'
+	>
+): 'undo' | 'redo' | null {
+	if ( ( ! event.ctrlKey && ! event.metaKey ) || event.altKey ) {
+		return null;
+	}
+
+	const key = event.key.toLowerCase();
+
+	if ( key === 'z' ) {
+		return event.shiftKey ? 'redo' : 'undo';
+	}
+
+	return key === 'y' ? 'redo' : null;
+}
+
 type Update< T > = T | ( ( current: T ) => T );
 
 function resolve< T >( update: Update< T >, current: T ): T {

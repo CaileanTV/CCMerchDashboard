@@ -33,7 +33,6 @@ use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
 use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayStore;
 use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
 use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
-use MerchBoard\Modules\Alerts\PageLayout\CreatorPageLayoutStore;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresetStore;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Creators\Proposals\ProposalFiles;
@@ -109,6 +108,12 @@ final class Uninstaller {
 	 * is this constant. Deleted with the protected product meta.
 	 */
 	public const DESIGNER_PENDING_META = '_merchboard_designer_pending';
+
+	/**
+	 * The option of the creator's alert page setup (step 25.9.6), retired in
+	 * step 31.4 (ADR-088); a site that had it still loses it on uninstall.
+	 */
+	public const RETIRED_CREATOR_PAGE_OPTION = 'merchboard_alert_creator_page';
 
 	/**
 	 * Order meta keys owned by the plugin: the sales ledger failure marker
@@ -244,7 +249,8 @@ final class Uninstaller {
 		delete_option( YouTubeLegal::OPTION );
 		delete_option( GlobalOverlayStore::OPTION );
 		delete_option( OverlayPresetStore::OPTION );
-		delete_option( CreatorPageLayoutStore::OPTION );
+		// The setup of the creator's alert page (step 25.9.6), retired in step 31.4 (ADR-088).
+		delete_option( self::RETIRED_CREATOR_PAGE_OPTION );
 		foreach ( RemoveImportOptions::OPTIONS as $option ) {
 			delete_option( $option );
 		}

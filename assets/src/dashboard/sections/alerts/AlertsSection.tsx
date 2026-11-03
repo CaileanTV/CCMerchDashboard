@@ -17,13 +17,10 @@ import { Skeleton } from '../../components/Skeleton';
 import { ToastStack, useToastStack } from '../../components/ToastStack';
 import { ConfigContext } from '../../app/config-context';
 import { useApi } from '../../hooks/useApi';
-import type { AlertsOverlayState, OverlaySettings } from '../../types/alerts';
+import type { AlertsOverlayState } from '../../types/alerts';
 import { AlertSoundsCard } from './AlertSoundsCard';
-import { OverlayDesigner } from './OverlayDesigner';
-import { OverlaySettingsForm } from './OverlaySettingsForm';
 import { DesignsCard } from './DesignsCard';
-import { DEFAULT_PAGE_LAYOUT } from './page-layout';
-import type { PageCard } from './page-layout';
+import { AlertEditor } from './editor/AlertEditor';
 import { useFontStylesheet } from './useFontStylesheet';
 import { useOverlayApi } from './overlay-api-context';
 
@@ -314,13 +311,14 @@ function Notices( {
 }
 
 /**
- * The overlay's cards: browser source, sounds, settings and designer. The
- * global overlay (step 25.9.4) shows its own controls above them.
+ * The overlay's designer (alert designer 2.0, ADR-088) with the browser
+ * source, the sounds and the saved designs in it. The global overlay (step
+ * 25.9.4) shows its own controls above it.
  *
  * @param props          Props.
  * @param props.initial  The overlay as loaded.
  * @param props.variant  Whose overlay it is.
- * @param props.controls Cards shown above the overlay's cards (the global overlay's switch and replay).
+ * @param props.controls Cards shown above the designer (the global overlay's switch and replay).
  */
 export function AlertsContent( {
 	initial,
@@ -332,115 +330,76 @@ export function AlertsContent( {
 	readonly controls?: ReactNode;
 } ) {
 	const [ state, setState ] = useState( initial );
-	// One stack for every card's messages, so they never overlap.
+	// One stack for every message, so they never overlap.
 	const { toasts, notify, dismiss } = useToastStack();
-	const [ saveSlot, setSaveSlot ] = useState< HTMLDivElement | null >( null );
-	// The settings form's unsaved values, previewed by the designer.
-	const [ draft, setDraft ] = useState< OverlaySettings | null >( null );
-	// A design or standard overlay taken into use changes the saved settings: the form and the designer start again.
+	// A design or standard overlay taken into use replaces the saved settings: the editor starts again.
 	const [ copies, setCopies ] = useState( 0 );
 	const applied = useCallback( ( next: AlertsOverlayState ) => {
 		setState( next );
-		setDraft( null );
 		setCopies( ( count ) => count + 1 );
 	}, [] );
 
 	useEffect( () => setState( initial ), [ initial ] );
 
-	const family =
-		( draft ?? state.overlay?.settings )?.font_family ?? 'inherit';
+	// Every approved font of the look is loaded for the canvas.
+	const family = state.overlay?.settings.font_family ?? 'inherit';
 	const font = state.fonts.find( ( option ) => option.family === family );
-	// The creator's page follows the administrator's setup as loaded (step
-	// 25.9.6); the global overlay and the standard overlays keep the default.
-	const layout =
-		variant === 'creator'
-			? ( initial.page ?? DEFAULT_PAGE_LAYOUT )
-			: DEFAULT_PAGE_LAYOUT;
 
 	useFontStylesheet( font?.url ?? null );
 
-	const extraCards: Partial< Record< PageCard, ReactNode > > = {};
-
-	if ( state.overlay !== null ) {
-		if ( variant === 'creator' ) {
-			extraCards.designs = (
-				<DesignsCard
-					fonts={ state.fonts }
-					onApplied={ applied }
-					notify={ notify }
-					compact={ layout.designsCompact }
-				/>
-			);
-		}
-
-		if ( variant !== 'preset' ) {
-			extraCards.browser_source = (
-				<BrowserSourceCard
-					url={ state.overlay.url }
-					onRegenerated={ setState }
-					notify={ notify }
-				/>
-			);
-		}
-
-		if ( state.overlay.audio !== null ) {
-			extraCards.sounds = (
-				<AlertSoundsCard
-					audio={ state.overlay.audio }
-					onSaved={ setState }
-					notify={ notify }
-				/>
-			);
-		}
-	}
+	const overlay = state.overlay;
 
 	return (
 		<>
 			<Notices state={ state } variant={ variant } />
-			{ state.overlay === null ? (
+			{ overlay === null ? (
 				<SetupCard onCreated={ setState } variant={ variant } />
 			) : (
-				<div className="merchboard-alerts">
-					{ controls }
-					<OverlaySettingsForm
-						key={ `form-${ state.overlay.url }` }
-						settings={ state.overlay.settings }
-						fonts={ state.fonts }
-						fontApproved={ state.overlay.fontApproved }
-						onSaved={ setState }
-						saveSlot={ saveSlot }
-						onDraft={ setDraft }
-						images={ state.overlay.images }
-						onNotify={ notify }
-						layout={ layout }
-						extraCards={ extraCards }
-						revision={ copies }
-					/>
-					{ /* The settings' save status, right above the designer, which is always last. */ }
-					<div ref={ setSaveSlot } />
-					<div>
-						<OverlayDesigner
-							key={ `designer-${ state.overlay.url }-${ copies }` }
-							layout={ state.overlay.layout }
-							settings={ state.overlay.settings }
-							preview={ draft }
-							images={ state.overlay.images }
-							fontFamily={
-								font === undefined
-									? 'inherit'
-									: `"${ font.family }", sans-serif`
-							}
-							onSaved={ setState }
-							onNotify={ notify }
-						/>
-					</div>
-				</div>
+				<AlertEditor
+					key={ `editor-${ copies }` }
+					settings={ overlay.settings }
+					layout={ overlay.layout }
+					fonts={ state.fonts }
+					fontApproved={ overlay.fontApproved }
+					images={ overlay.images }
+					sound={ overlay.audio?.defaultSound?.url ?? '' }
+					sounds={
+						overlay.audio === null ? null : (
+							<AlertSoundsCard
+								audio={ overlay.audio }
+								onSaved={ setState }
+								notify={ notify }
+								compact
+							/>
+						)
+					}
+					browserSource={
+						variant === 'preset' ? null : (
+							<BrowserSourceCard
+								url={ overlay.url }
+								onRegenerated={ setState }
+								notify={ notify }
+							/>
+						)
+					}
+					designs={
+						variant === 'creator' ? (
+							<DesignsCard
+								fonts={ state.fonts }
+								onApplied={ applied }
+								notify={ notify }
+							/>
+						) : null
+					}
+					controls={ controls }
+					onSaved={ setState }
+					notify={ notify }
+				/>
 			) }
 			<ToastStack toasts={ toasts } onDismiss={ dismiss } />
 		</>
 	);
 }
-
 /**
  * "Alerts" (ADR-065): the creator's OBS overlay. Set up, browser source URL
  * (copy, open, replace), test alert, the overlay's look and timing, the

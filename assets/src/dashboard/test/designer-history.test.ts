@@ -3,8 +3,8 @@
  */
 import { describe, expect, it } from '@jest/globals';
 
-import { historyKey } from '../sections/alerts/OverlayDesigner';
 import {
+	historyKey,
 	HISTORY_LIMIT,
 	checkpoint,
 	record,

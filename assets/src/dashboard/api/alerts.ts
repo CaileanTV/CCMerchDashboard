@@ -25,7 +25,6 @@ import {
 import { request } from './client';
 import type { ApiResult } from './client';
 import { isRecord, readSameOriginUrl } from './validate';
-import { parsePageLayout } from '../sections/alerts/page-layout';
 import {
 	BOX_LIMITS,
 	FONT_WEIGHTS,
@@ -575,7 +574,6 @@ export function parseAlertsOverlay( body: unknown ): AlertsOverlayState | null {
 		alertsEnabled: body.alerts_enabled,
 		merchalertActive: body.merchalert_active,
 		fonts,
-		...( 'page' in body ? { page: parsePageLayout( body.page ) } : {} ),
 	};
 
 	if ( body.overlay === null ) {
@@ -625,10 +623,9 @@ export interface OverlayApi {
 	readonly create: () => Promise< ApiResult< AlertsOverlayState > >;
 	/** Saves overlay settings (the form's fields, the font, the layout or whether sounds play). */
 	readonly update: (
-		changes:
-			| Partial< OverlaySettings >
-			| { readonly layout: OverlayLayout }
-			| { readonly audio_enabled: boolean }
+		changes: Partial< OverlaySettings > & {
+			readonly layout?: OverlayLayout;
+		}
 	) => Promise< ApiResult< AlertsOverlayState > >;
 	/** Replaces the secret overlay id; the old OBS URL stops working. */
 	readonly regenerate: () => Promise< ApiResult< AlertsOverlayState > >;
