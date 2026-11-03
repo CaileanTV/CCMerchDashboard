@@ -32,7 +32,7 @@ describe( 'alert designer 2.0 values', () => {
 	it( 'gives unknown animations and voices the default', () => {
 		expect(
 			parseAlertAnimation( { in: 'spin', in_ms: 200 }, 700 )
-		).toEqual( { in: 'fade', out: 'fade', in_ms: 200, out_ms: 700 } );
+		).toEqual( { in: 'rise', out: 'rise', in_ms: 200, out_ms: 700 } );
 		expect( parseTts( { voice: 'xx-Robot', enabled: 'yes' } ) ).toEqual( {
 			enabled: false,
 			voice: 'da-DK-Standard-A',

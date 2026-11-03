@@ -135,6 +135,10 @@
 	visibility: hidden;
 }
 
+.merchboard-alert[data-in="rise"] {
+	--merchboard-alert-in: merchboard-alert-rise-in;
+}
+
 .merchboard-alert[data-in="fade"] {
 	--merchboard-alert-in: merchboard-alert-fade-in;
 }
@@ -165,6 +169,10 @@
 
 .merchboard-alert[data-in="flip"] {
 	--merchboard-alert-in: merchboard-alert-flip-in;
+}
+
+.merchboard-alert[data-out="rise"] {
+	--merchboard-alert-out: merchboard-alert-rise-out;
 }
 
 .merchboard-alert[data-out="fade"] {
@@ -200,6 +208,23 @@
 }
 
 /* The keyframes move with "translate" and "scale", so the rotation stays. */
+// As the overlay's boxes moved before 2.0: 20 px up while fading in and out.
+@keyframes merchboard-alert-rise-in {
+
+	from {
+		opacity: 0;
+		translate: 0 20px;
+	}
+}
+
+@keyframes merchboard-alert-rise-out {
+
+	to {
+		opacity: 0;
+		translate: 0 -20px;
+	}
+}
+
 @keyframes merchboard-alert-fade-in {
 
 	from {

@@ -205,8 +205,8 @@ final class OverlaySettingsTest extends TestCase {
 		self::assertSame(
 			array(
 				'alert'          => array(
-					'in'     => 'fade',
-					'out'    => 'fade',
+					'in'     => 'rise',
+					'out'    => 'rise',
 					'in_ms'  => 500,
 					'out_ms' => 500,
 				),

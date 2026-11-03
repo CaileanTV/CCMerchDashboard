@@ -20,6 +20,7 @@ export const HIGHLIGHT_EFFECTS = [
 ] as const;
 export const ALERT_ANIMATIONS = [
 	'none',
+	'rise',
 	'fade',
 	'slide-up',
 	'slide-down',
@@ -277,8 +278,9 @@ export function parseAlertAnimation(
 	const data = isRecord( value ) ? value : {};
 
 	return {
-		in: oneOf( data.in, ALERT_ANIMATIONS, 'fade' ),
-		out: oneOf( data.out, ALERT_ANIMATIONS, 'fade' ),
+		// Fade and rise 20 px: every alert before 2.0 moved so.
+		in: oneOf( data.in, ALERT_ANIMATIONS, 'rise' ),
+		out: oneOf( data.out, ALERT_ANIMATIONS, 'rise' ),
 		in_ms: intIn( data.in_ms, 0, 10000, ms ),
 		out_ms: intIn( data.out_ms, 0, 10000, ms ),
 	};

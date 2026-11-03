@@ -306,6 +306,28 @@ describe( 'AlertPlayer', () => {
 		);
 	} );
 
+	it( 'never puts a late text into the next alert (30.15 review)', () => {
+		const { text, player, timers } = setup( {
+			display_duration: 1000,
+			text_timing: { show_after: 3000, hide_before: 0 },
+		} );
+
+		player.enqueue( [
+			alert( 1, { text: 'First' } ),
+			alert( 2, { text: 'Second' } ),
+		] );
+
+		const lateFirst = timers.shift();
+		expect( lateFirst?.delay ).toBe( 3000 );
+		// The box goes, then the second alert starts.
+		timers.shift()?.callback();
+		timers.shift()?.callback();
+		expect( player.waiting ).toBe( 0 );
+
+		lateFirst?.callback();
+		expect( text.textContent ).toBe( '' );
+	} );
+
 	it( 'marks the inserted values when the highlight is on', () => {
 		const { text, player } = setup( {
 			highlight: { enabled: true, color: '#ff0000', effect: 'pulse' },

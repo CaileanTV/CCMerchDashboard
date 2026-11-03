@@ -37,8 +37,8 @@ export const DESIGNER_DEFAULTS = {
 
 /** The default animation of the alert box. */
 export const ALERT_ANIMATION = {
-	in: 'fade' as const,
-	out: 'fade' as const,
+	in: 'rise' as const,
+	out: 'rise' as const,
 	in_ms: 500,
 	out_ms: 500,
 };

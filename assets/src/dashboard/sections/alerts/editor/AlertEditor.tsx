@@ -200,6 +200,14 @@ export function AlertEditor( {
 			? { settings: overlayValues, layout: doc.value.layout }
 			: variationView( overlayValues, doc.value.layout, variation );
 	const values = view.settings;
+	// An undone variation is no longer edited (30.15 review).
+	const editingId = variation === undefined ? '' : editing;
+
+	useEffect( () => {
+		if ( editing !== '' && variation === undefined ) {
+			setEditing( '' );
+		}
+	}, [ editing, variation ] );
 	const [ status, setStatus ] = useState< SaveStatus >( 'idle' );
 	const [ errors, setErrors ] = useState< Errors >( {} );
 	const [ saveError, setSaveError ] = useState< ApiError | null >( null );
@@ -236,7 +244,7 @@ export function AlertEditor( {
 			written.layout,
 			nextSettings.widget.x - values.widget.x,
 			nextSettings.widget.y - values.widget.y,
-			editing
+			editingId
 		);
 	};
 
@@ -356,7 +364,7 @@ export function AlertEditor( {
 
 	const test = async () => {
 		setTesting( true );
-		const result = await api.sendTest( editing );
+		const result = await api.sendTest( editingId );
 		setTesting( false );
 		notify(
 			result.ok

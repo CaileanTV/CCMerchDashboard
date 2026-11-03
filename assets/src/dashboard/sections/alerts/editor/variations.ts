@@ -179,9 +179,8 @@ export function followBox(
 			variations: settings.variations.map( ( variation ) => {
 				const own = parseLayout( variation.look.layout );
 
-				return variation.id === moved ||
-					own === null ||
-					variation.look.layout_mode !== 'free'
+				// Every look's elements follow the box, so a look switched to Free later still fits it.
+				return variation.id === moved || own === null
 					? variation
 					: {
 							...variation,
@@ -196,7 +195,7 @@ export function followBox(
 			} ),
 		},
 		layout:
-			moved !== '' && settings.layout_mode === 'free'
+			moved !== ''
 				? { ...layout, elements: shift( layout.elements ) }
 				: layout,
 	};

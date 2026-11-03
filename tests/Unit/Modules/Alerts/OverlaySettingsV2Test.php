@@ -179,7 +179,7 @@ final class OverlaySettingsV2Test extends TestCase {
 		)->animations();
 
 		self::assertSame( 'zoom', $animations['alert']['in'] );
-		self::assertSame( 'fade', $animations['alert']['out'], 'Unknown animations fall back.' );
+		self::assertSame( 'rise', $animations['alert']['out'], 'Unknown animations fall back to the fade and rise of before.' );
 		self::assertSame( 800, $animations['alert']['in_ms'] );
 		self::assertSame( 300, $animations['alert']['out_ms'] );
 		self::assertSame( 300, $animations['main_text']['in_ms'] );

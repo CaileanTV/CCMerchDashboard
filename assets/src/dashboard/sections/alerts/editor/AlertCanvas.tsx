@@ -57,8 +57,8 @@ const HANDLES = [ 'n', 'e', 's', 'w', 'ne', 'se', 'sw', 'nw' ] as const;
 type Handle = ( typeof HANDLES )[ number ];
 
 /**
- * The alert box moved; in the layout "free" the elements move with it, as
- * their boxes are on the canvas.
+ * The alert box moved; the elements move with it, as their boxes are on the
+ * canvas.
  *
  * @param settings Settings.
  * @param layout   Layout.
@@ -78,7 +78,9 @@ export function moveWidget(
 	const dy = ny - widget.y;
 	let next = layout;
 
-	if ( settings.layout_mode === 'free' && ( dx !== 0 || dy !== 0 ) ) {
+	// The elements' boxes are on the canvas: they follow the box in every layout,
+	// so a look switched to Free later still fits it (30.15 review).
+	if ( dx !== 0 || dy !== 0 ) {
 		for ( const element of [
 			'product_image',
 			'main_text',

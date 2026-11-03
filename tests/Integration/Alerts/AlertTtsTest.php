@@ -38,7 +38,7 @@ final class AlertTtsTest extends IntegrationTestCase {
 	/**
 	 * Requests sent to the fake Google.
 	 *
-	 * @var list<array{url: string, body: array<mixed>}>
+	 * @var list<array{url: string, body: array<mixed>, key: string}>
 	 */
 	private array $sent = array();
 
@@ -59,6 +59,10 @@ final class AlertTtsTest extends IntegrationTestCase {
 
 	protected function tearDown(): void {
 		AlertTts::remove_all();
+
+		foreach ( array( 'merchboard_tts_paused', 'merchboard_tts_cleaned', 'merchboard_tts_tests_1' ) as $transient ) {
+			delete_transient( $transient );
+		}
 
 		foreach ( array( TtsSettings::OPTION, TtsSettings::KEY_OPTION, TtsSettings::USAGE_OPTION ) as $option ) {
 			delete_option( $option );
@@ -88,7 +92,9 @@ final class AlertTtsTest extends IntegrationTestCase {
 		self::assertCount( 1, $this->sent );
 		self::assertSame( 'nova bought Hoodie', $this->sent[0]['body']['input']['text'] ?? null );
 		self::assertSame( 'en-GB-Standard-B', $this->sent[0]['body']['voice']['name'] ?? null );
-		self::assertStringContainsString( 'key=' . self::KEY, $this->sent[0]['url'] );
+		self::assertSame( self::KEY, $this->sent[0]['key'] );
+		self::assertStringNotContainsString( self::KEY, $this->sent[0]['url'], 'The key is a header, never in the URL.' );
+		self::assertStringNotContainsString( hash( 'sha256', 'en-GB-Standard-B|nova bought Hoodie' ), $url, 'The name cannot be guessed from the text.' );
 		self::assertSame( 18, $this->settings->used() );
 
 		$uploads = wp_upload_dir( null, false );
@@ -96,6 +102,21 @@ final class AlertTtsTest extends IntegrationTestCase {
 
 		self::assertSame( $url, $tts->url_for( self::look(), self::event(), 'nova bought Hoodie' ), 'The same text is not made again.' );
 		self::assertCount( 1, $this->sent );
+	}
+
+	public function test_test_alerts_make_at_most_ten_read_outs_an_hour(): void {
+		$this->settings->save( true, 100000, self::KEY );
+		$tts  = $this->tts();
+		$test = new AlertEvent( 1, 0, '0001', 0, 10, 0, 'Hoodie', '', 1, 0, array(), 'TestFan', new DateTimeImmutable(), 0, '249.0000', '249.0000', 'DKK' );
+
+		for ( $i = 0; $i < AlertTts::TESTS_PER_HOUR; $i++ ) {
+			self::assertNotSame( '', $tts->url_for( self::look(), $test, 'test ' . $i ) );
+		}
+
+		self::assertSame( '', $tts->url_for( self::look(), $test, 'one more test' ), 'The eleventh new test text is not made.' );
+		self::assertNotSame( '', $tts->url_for( self::look(), $test, 'test 3' ), 'A test already made is still played.' );
+		self::assertNotSame( '', $tts->url_for( self::look(), self::event(), 'a real purchase' ), 'Purchases are not limited by tests.' );
+		delete_transient( 'merchboard_tts_tests_1' );
 	}
 
 	public function test_the_least_amount_the_monthly_limit_and_failures_give_no_read_out(): void {
@@ -108,6 +129,8 @@ final class AlertTtsTest extends IntegrationTestCase {
 		$this->answer = array( 403, '{}' );
 		self::assertSame( '', $tts->url_for( self::look(), self::event(), 'refused' ) );
 		self::assertSame( 0, $this->settings->used(), 'A failure is not counted.' );
+		$this->answer = array( 200, (string) wp_json_encode( array( 'audioContent' => base64_encode( 'ID3' ) ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Google's answer.
+		self::assertSame( '', $tts->url_for( self::look(), self::event(), 'after the failure' ), 'Nothing is made for a while after a failure.' );
 		self::assertCount( 1, $this->sent );
 	}
 
@@ -136,11 +159,12 @@ final class AlertTtsTest extends IntegrationTestCase {
 		return new AlertTts(
 			$this->settings,
 			$this->service( Logger::class ),
-			function ( string $url, string $body ): ?array {
+			function ( string $url, string $body, string $key ): ?array {
 				$data         = json_decode( $body, true );
 				$this->sent[] = array(
 					'url'  => $url,
 					'body' => is_array( $data ) ? $data : array(),
+					'key'  => $key,
 				);
 
 				return $this->answer;

@@ -65,6 +65,12 @@ export class AlertPlayer {
 	/** Whether the current alert's texts are gone already. */
 	private textsLeft = false;
 
+	/**
+	 * The current alert's number: a timer of an earlier alert sees another
+	 * number and does nothing (30.15 review).
+	 */
+	private generation = 0;
+
 	private readonly schedule: ( callback: () => void, delay: number ) => void;
 
 	/**
@@ -130,6 +136,9 @@ export class AlertPlayer {
 		}
 
 		this.playing = true;
+		this.generation += 1;
+		const generation = this.generation;
+		const current = () => generation === this.generation;
 		arrange( this.elements, look );
 		this.fillImage( alert.image );
 
@@ -138,10 +147,11 @@ export class AlertPlayer {
 		if ( timing.show_after === 0 ) {
 			this.showTexts( alert, look, false );
 		} else {
-			this.schedule(
-				() => this.showTexts( alert, look, true ),
-				timing.show_after
-			);
+			this.schedule( () => {
+				if ( current() && ! this.textsLeft ) {
+					this.showTexts( alert, look, true );
+				}
+			}, timing.show_after );
 		}
 
 		const { alert: box } = this.elements;
@@ -167,7 +177,7 @@ export class AlertPlayer {
 
 		// The read-out starts after its delay; the alert stays until it has ended (ADR-089).
 		if ( alert.tts !== '' && look.tts.enabled ) {
-			waits.push( this.readOut( alert.tts, look ) );
+			waits.push( this.readOut( alert.tts, look, alert.text ) );
 		}
 
 		if ( waits.length === 0 ) {
@@ -194,9 +204,16 @@ export class AlertPlayer {
 	 *
 	 * @param url  The read-out's URL.
 	 * @param look Look.
+	 * @param text The text read out (its length estimates an unknown length).
 	 */
-	private readOut( url: string, look: AlertLook ): Promise< number > {
+	private readOut(
+		url: string,
+		look: AlertLook,
+		text: string
+	): Promise< number > {
 		const delay = look.tts.delay;
+		// About 70 ms a character when the file's length is not known in time.
+		const estimate = Array.from( text ).length * 70;
 
 		return new Promise( ( resolve ) => {
 			this.schedule( () => {
@@ -204,10 +221,10 @@ export class AlertPlayer {
 
 				if ( length instanceof Promise ) {
 					void length.then( ( ms ) =>
-						resolve( delay + ( ms ?? 0 ) + READ_OUT_PAUSE )
+						resolve( delay + ( ms ?? estimate ) + READ_OUT_PAUSE )
 					);
 				} else {
-					resolve( delay );
+					resolve( delay + estimate );
 				}
 			}, delay );
 		} );
@@ -332,12 +349,21 @@ export class AlertPlayer {
 	 */
 	private hide( look: AlertLook, delay: number ): void {
 		const early = look.text_timing.hide_before;
+		const generation = this.generation;
 
 		if ( early > 0 && delay - early > look.text_timing.show_after ) {
-			this.schedule( () => this.leaveTexts(), delay - early );
+			this.schedule( () => {
+				if ( generation === this.generation ) {
+					this.leaveTexts();
+				}
+			}, delay - early );
 		}
 
 		this.schedule( () => {
+			if ( generation !== this.generation ) {
+				return;
+			}
+
 			const { alert: box } = this.elements;
 
 			box.classList.replace( ALERT_ENTERING, ALERT_LEAVING );

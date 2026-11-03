@@ -36,13 +36,14 @@ final readonly class CreatorDesign {
 	}
 
 	/**
-	 * The sounds the design uses (attachment ids).
+	 * The sounds the design uses (attachment ids), its variations' too
+	 * (ADR-088).
 	 *
 	 * @return list<int>
 	 */
 	public function sounds(): array {
 		$values = $this->settings->to_array();
 
-		return array_values( array_filter( array_merge( array( $values['audio_default_sound'] ), array_values( $values['audio_category_map'] ) ), static fn( int $id ): bool => $id > 0 ) );
+		return array_values( array_filter( array_merge( array( $values['audio_default_sound'] ), array_values( $values['audio_category_map'] ), $this->settings->variation_sounds() ), static fn( int $id ): bool => $id > 0 ) );
 	}
 }

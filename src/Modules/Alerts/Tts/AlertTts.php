@@ -50,9 +50,35 @@ class AlertTts {
 	public const FOLDER = 'merchboard-alerts/tts';
 
 	/**
-	 * POSTs JSON: URL, body → [status, body] or null on a network error.
+	 * Most new read-outs a creator's test alerts may make in an hour (30.15
+	 * review): tests cannot use up the shared monthly limit.
+	 */
+	public const TESTS_PER_HOUR = 10;
+
+	/**
+	 * Most seconds one request spends making read-outs; the rest of its
+	 * alerts are shown without (30.15 review: a slow Google must not stall
+	 * the feed, which answers within 20 s).
+	 */
+	public const BUDGET = 6.0;
+
+	/**
+	 * After a failure no read-out is made for this many seconds.
+	 */
+	public const PAUSE = 5 * MINUTE_IN_SECONDS;
+
+	/**
+	 * Seconds this request spent making read-outs.
 	 *
-	 * @var Closure(string, string): (array{0: int, 1: string}|null)
+	 * @var float
+	 */
+	private float $spent = 0.0;
+
+	/**
+	 * POSTs JSON: URL, body, API key (sent as the `X-Goog-Api-Key` header,
+	 * never in the URL) → [status, body] or null on a network error.
+	 *
+	 * @var Closure(string, string, string): (array{0: int, 1: string}|null)
 	 */
 	private Closure $post;
 
@@ -62,16 +88,20 @@ class AlertTts {
 	 * @param TtsSettings  $settings The switch, key and limit.
 	 * @param Logger       $logger   Logger.
 	 * @param Closure|null $post     HTTP (tests); defaults to wp_remote_post() with a 5 s timeout.
-	 * @phpstan-param (Closure(string, string): (array{0: int, 1: string}|null))|null $post
+	 * @phpstan-param (Closure(string, string, string): (array{0: int, 1: string}|null))|null $post
 	 */
 	public function __construct( private TtsSettings $settings, private Logger $logger, ?Closure $post = null ) {
-		$this->post = $post ?? static function ( string $url, string $body ): ?array {
-			$response = wp_remote_post(
+		$this->post = $post ?? static function ( string $url, string $body, string $key ): ?array {
+			$response = wp_safe_remote_post(
 				$url,
 				array(
-					'timeout' => 5,
-					'headers' => array( 'Content-Type' => 'application/json' ),
-					'body'    => $body,
+					'timeout'     => 5,
+					'redirection' => 0,
+					'headers'     => array(
+						'Content-Type'   => 'application/json',
+						'X-Goog-Api-Key' => $key,
+					),
+					'body'        => $body,
 				)
 			);
 
@@ -87,6 +117,8 @@ class AlertTts {
 	 * @param string          $text  The alert's text.
 	 */
 	public function url_for( OverlaySettings $look, AlertEvent $event, string $text ): string {
+		self::clean_hourly();
+
 		$tts  = $look->to_array()['tts'];
 		$text = mb_substr( trim( preg_replace( '/\s+/u', ' ', $text ) ?? '' ), 0, self::MAX_CHARS );
 
@@ -99,7 +131,7 @@ class AlertTts {
 		}
 
 		try {
-			return $this->file( TtsVoices::clean( $tts['voice'] ), $text );
+			return $this->file( TtsVoices::clean( $tts['voice'] ), $text, 0 === $event->id ? $event->creator_id : null );
 		} catch ( Throwable $e ) {
 			$this->logger->error( 'An alert could not be read out.', array( 'error' => $e::class ) );
 
@@ -111,17 +143,19 @@ class AlertTts {
 	 * The URL of a stored read-out, made first when needed; '' when it
 	 * cannot be made.
 	 *
-	 * @param string $voice Voice.
-	 * @param string $text  Text.
+	 * @param string   $voice Voice.
+	 * @param string   $text  Text.
+	 * @param int|null $test  The creator of a test alert; null for a purchase.
 	 */
-	private function file( string $voice, string $text ): string {
+	private function file( string $voice, string $text, ?int $test ): string {
 		$uploads = wp_upload_dir( null, false );
 
 		if ( ! empty( $uploads['error'] ) ) {
 			return '';
 		}
 
-		$name = hash( 'sha256', $voice . '|' . $text ) . '.mp3';
+		// Keyed with the site's secret, so a file cannot be found by guessing an alert's text (30.15 review).
+		$name = hash_hmac( 'sha256', $voice . '|' . $text, wp_salt( 'nonce' ) ) . '.mp3';
 		$dir  = trailingslashit( $uploads['basedir'] ) . self::FOLDER;
 		$path = $dir . '/' . $name;
 		$url  = trailingslashit( $uploads['baseurl'] ) . self::FOLDER . '/' . $name;
@@ -132,18 +166,35 @@ class AlertTts {
 
 		$chars = mb_strlen( $text );
 
-		if ( ! $this->settings->allows( $chars ) ) {
+		// Over the limit, the request's time budget or during a pause after a failure: no new read-out.
+		if ( ! $this->settings->allows( $chars ) || $this->spent >= self::BUDGET || false !== get_transient( 'merchboard_tts_paused' ) || ( null !== $test && ! self::test_allowed( $test ) ) ) {
 			return '';
 		}
 
-		$audio = $this->synthesize( $voice, $text );
+		$start        = microtime( true );
+		$audio        = $this->synthesize( $voice, $text );
+		$this->spent += microtime( true ) - $start;
+
+		if ( null === $audio ) {
+			set_transient( 'merchboard_tts_paused', 1, self::PAUSE );
+		}
 
 		if ( null === $audio || ! wp_mkdir_p( $dir ) ) {
 			return '';
 		}
 
+		// No listing of the folder on servers that list folders.
+		if ( ! is_file( $dir . '/index.php' ) ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- The plugin's own folder.
+			file_put_contents(
+				$dir . '/index.php',
+				'<?php
+// Silence is golden.
+'
+			);
+		}
+
 		$this->settings->count( $chars );
-		self::clean( $dir );
 
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- A new file in the plugin's own uploads folder.
 		return false === file_put_contents( $path, $audio ) ? '' : $url;
@@ -163,7 +214,7 @@ class AlertTts {
 		}
 
 		$answer = ( $this->post )(
-			add_query_arg( 'key', rawurlencode( $key ), self::ENDPOINT ),
+			self::ENDPOINT,
 			(string) wp_json_encode(
 				array(
 					'input'       => array( 'text' => $text ),
@@ -173,7 +224,8 @@ class AlertTts {
 					),
 					'audioConfig' => array( 'audioEncoding' => 'MP3' ),
 				)
-			)
+			),
+			$key
 		);
 
 		if ( null === $answer || 200 !== $answer[0] ) {
@@ -186,6 +238,43 @@ class AlertTts {
 		$audio = is_array( $data ) && is_string( $data['audioContent'] ?? null ) ? base64_decode( $data['audioContent'], true ) : false; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Google sends the MP3 as base64.
 
 		return false === $audio || '' === $audio ? null : $audio;
+	}
+
+	/**
+	 * Whether a creator's test alerts may make another read-out this hour;
+	 * counts it when they may.
+	 *
+	 * @param int $creator_id Creator.
+	 */
+	private static function test_allowed( int $creator_id ): bool {
+		$key   = 'merchboard_tts_tests_' . $creator_id;
+		$count = get_transient( $key );
+		$count = is_int( $count ) ? $count : 0;
+
+		if ( $count >= self::TESTS_PER_HOUR ) {
+			return false;
+		}
+
+		set_transient( $key, $count + 1, HOUR_IN_SECONDS );
+
+		return true;
+	}
+
+	/**
+	 * Deletes old read-outs once an hour, also while read-out is off (ADR-089:
+	 * the files hold customers' usernames).
+	 */
+	private static function clean_hourly(): void {
+		if ( false !== get_transient( 'merchboard_tts_cleaned' ) ) {
+			return;
+		}
+
+		set_transient( 'merchboard_tts_cleaned', 1, HOUR_IN_SECONDS );
+		$uploads = wp_upload_dir( null, false );
+
+		if ( empty( $uploads['error'] ) ) {
+			self::clean( trailingslashit( $uploads['basedir'] ) . self::FOLDER );
+		}
 	}
 
 	/**
@@ -224,6 +313,10 @@ class AlertTts {
 
 		foreach ( self::files( $dir ) as $file ) {
 			wp_delete_file( $file );
+		}
+
+		if ( is_file( $dir . '/index.php' ) ) {
+			wp_delete_file( $dir . '/index.php' );
 		}
 
 		if ( is_dir( $dir ) ) {

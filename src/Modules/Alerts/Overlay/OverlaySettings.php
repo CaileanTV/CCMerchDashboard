@@ -129,7 +129,7 @@ final class OverlaySettings {
 	/**
 	 * In- and out-animations of the whole alert box.
 	 */
-	public const ALERT_ANIMATIONS = array( 'none', 'fade', 'slide-up', 'slide-down', 'slide-left', 'slide-right', 'zoom', 'bounce', 'flip' );
+	public const ALERT_ANIMATIONS = array( 'none', 'rise', 'fade', 'slide-up', 'slide-down', 'slide-left', 'slide-right', 'zoom', 'bounce', 'flip' );
 
 	/**
 	 * Longest display time in milliseconds (90 s, as StreamElements).
@@ -684,8 +684,9 @@ final class OverlaySettings {
 
 		return array(
 			'alert'          => array(
-				'in'     => self::choice( $alert['in'] ?? null, self::ALERT_ANIMATIONS, 'fade' ),
-				'out'    => self::choice( $alert['out'] ?? null, self::ALERT_ANIMATIONS, 'fade' ),
+				// The default fades and rises 20 px, as every alert did before 2.0 (30.15 review).
+				'in'     => self::choice( $alert['in'] ?? null, self::ALERT_ANIMATIONS, 'rise' ),
+				'out'    => self::choice( $alert['out'] ?? null, self::ALERT_ANIMATIONS, 'rise' ),
 				'in_ms'  => self::int( $alert['in_ms'] ?? null, 0, 10000, $anim ),
 				'out_ms' => self::int( $alert['out_ms'] ?? null, 0, 10000, $anim ),
 			),

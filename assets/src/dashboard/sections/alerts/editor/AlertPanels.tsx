@@ -82,6 +82,7 @@ function layoutLabel( mode: LayoutMode ): string {
 export function alertAnimationLabel( name: AlertAnimationName ): string {
 	const labels: Record< AlertAnimationName, string > = {
 		none: __( 'None', 'merchboard' ),
+		rise: __( 'Fade and rise', 'merchboard' ),
 		fade: __( 'Fade', 'merchboard' ),
 		'slide-up': __( 'Slide up', 'merchboard' ),
 		'slide-down': __( 'Slide down', 'merchboard' ),
