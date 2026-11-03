@@ -937,7 +937,12 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		// Cancelled: paid back, and the next sale of a version with the file charges it.
 		$this->fees->cancel( $fee );
 
-		self::assertSame( array( array( 'waiting', '149.5000', null ) ), $this->fee_rows() );
+		self::assertSame( array( array( 'waiting', '149.5000', '77' ) ), $this->fee_rows(), 'It remembers the order it was charged on.' );
+		self::assertSame( array( 'DKK' => 0 ), $adjustments->totals( $this->creator->id ) );
+
+		// The same order changing status (say, to completed) does not charge it again (30.15 review).
+		$this->fees->charge_version( $version, 77 );
+		self::assertSame( array( array( 'waiting', '149.5000', '77' ) ), $this->fee_rows() );
 		self::assertSame( array( 'DKK' => 0 ), $adjustments->totals( $this->creator->id ) );
 
 		try {

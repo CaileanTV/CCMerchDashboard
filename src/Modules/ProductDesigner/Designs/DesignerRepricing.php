@@ -218,10 +218,7 @@ class DesignerRepricing {
 		$this->writer->set_prices( $proof, $units, $this->decimals, array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $by_size ) );
 		$this->products->set_shop_price( $id, SalesAmount::format( $units ), SalesAmount::format( $price->base_units ), $bases );
 
-		if ( $previous === $units ) {
-			return;
-		}
-
+		// Audited also when only a size's own price changed (30.15 review); the creator hears of the main price.
 		$this->audit->record_system(
 			AuditAction::DesignerProductRepriced,
 			(int) $product['creator_id'],
@@ -231,10 +228,11 @@ class DesignerRepricing {
 				'previous_price'    => null === $previous ? null : SalesAmount::format( $previous ),
 				'price'             => SalesAmount::format( $units ),
 				'base_price'        => SalesAmount::format( $price->base_units ),
+				'size_base_prices'  => $bases,
 			)
 		);
 
-		if ( null !== $previous ) {
+		if ( null !== $previous && $previous !== $units ) {
 			do_action(
 				'merchboard_notify',
 				DesignerNotifications::PRICE_CHANGED,

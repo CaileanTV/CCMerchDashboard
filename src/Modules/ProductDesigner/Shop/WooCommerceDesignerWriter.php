@@ -212,11 +212,18 @@ class WooCommerceDesignerWriter {
 
 			if ( $variation instanceof WC_Product_Variation && $variation->get_parent_id( 'edit' ) === $product->wc_product_id ) {
 				$attributes = $variation->get_attributes( 'edit' );
-				$found      = $key( (string) ( $attributes[ $color_slug ] ?? '' ), (string) ( $attributes[ $size_slug ] ?? '' ) );
+				$size       = (string) ( $attributes[ $size_slug ] ?? '' );
+				$found      = $key( (string) ( $attributes[ $color_slug ] ?? '' ), $size );
+				// Down to one size, the variation that already has it is kept, so its open orders keep their size (30.15 review).
+				$keeps = ! $vary_size && 1 === count( $content->sizes ) && $size === $content->sizes[0];
 
-				if ( isset( $existing[ $found ] ) ) {
+				if ( isset( $existing[ $found ] ) && ! $keeps ) {
 					$retired[] = $variation;
 				} else {
+					if ( isset( $existing[ $found ] ) ) {
+						$retired[] = $existing[ $found ];
+					}
+
 					$existing[ $found ] = $variation;
 				}
 			}

@@ -127,7 +127,8 @@ final class DesignerFeesSection {
 			echo '<tr><td>' . esc_html( (string) ( $row['display_name'] ?? '' ) ) . '</td><td>' . esc_html( (string) $row['title'] ) . '</td><td>' . esc_html( (string) $row['side'] ) . '</td>';
 			echo '<td>' . esc_html( rtrim( rtrim( (string) $row['amount'], '0' ), '.' ) . ' ' . (string) $row['currency'] ) . '</td>';
 			echo '<td>' . esc_html( $charged ? __( 'Charged', 'merchboard' ) : __( 'Waiting for the first sale', 'merchboard' ) ) . '</td>';
-			echo '<td>' . esc_html( null === $row['order_id'] ? '' : '#' . (string) $row['order_id'] ) . '</td><td>';
+			// A waiting fee may remember the order it was charged on before it was cancelled; only a charged fee shows one.
+			echo '<td>' . esc_html( null === $row['order_id'] || DesignerFeeRepository::CHARGED !== $row['status'] ? '' : '#' . (string) $row['order_id'] ) . '</td><td>';
 
 			if ( $charged ) {
 				$id = (int) $row['id'];

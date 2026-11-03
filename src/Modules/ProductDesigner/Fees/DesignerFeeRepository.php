@@ -116,7 +116,8 @@ class DesignerFeeRepository {
 	}
 
 	/**
-	 * Moves a charged fee back to waiting on the lock's connection.
+	 * Moves a charged fee back to waiting on the lock's connection. It keeps
+	 * the order it was charged on, so only a later order charges it again.
 	 *
 	 * @param int $id         Fee.
 	 * @param int $connection The lock's connection.
@@ -126,7 +127,7 @@ class DesignerFeeRepository {
 	public function mark_waiting( int $id, int $connection ): bool {
 		$wpdb = $this->wpdb;
 
-		return 1 === $this->write( $wpdb->prepare( 'UPDATE %i SET status = %s, adjustment_id = NULL, order_id = NULL, charged_at = NULL WHERE id = %d AND status = %s AND CONNECTION_ID() = %d', $this->table( Tables::DESIGNER_FEES ), self::WAITING, $id, self::CHARGED, $connection ) );
+		return 1 === $this->write( $wpdb->prepare( 'UPDATE %i SET status = %s, adjustment_id = NULL, charged_at = NULL WHERE id = %d AND status = %s AND CONNECTION_ID() = %d', $this->table( Tables::DESIGNER_FEES ), self::WAITING, $id, self::CHARGED, $connection ) );
 	}
 
 	/**

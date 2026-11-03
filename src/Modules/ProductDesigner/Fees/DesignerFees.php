@@ -306,6 +306,12 @@ class DesignerFees {
 						return;
 					}
 
+					// A cancelled fee keeps the order it was charged on: only a later order charges it
+					// again (ADR-086, "the next sale"), never that order changing status (30.15 review).
+					if ( is_numeric( $current['order_id'] ?? null ) && $order_id <= (int) $current['order_id'] ) {
+						return;
+					}
+
 					$adjustment = $this->adjustments->insert_fee( $creator, (string) $fee['currency'], -SalesAmount::parse( (string) $fee['amount'] ), $id, null, $now, $connection );
 
 					if ( ! $this->fees->mark_charged( $id, $adjustment, $order_id, $now->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' ), $connection ) ) {
