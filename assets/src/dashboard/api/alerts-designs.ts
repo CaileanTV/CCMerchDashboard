@@ -51,8 +51,8 @@ function parseDesign( value: unknown ): CreatorDesign | null {
 		return null;
 	}
 
-	const settings = parseOverlaySettings( value.settings );
 	const layout = parseLayout( value.layout );
+	const settings = parseOverlaySettings( value.settings, layout );
 	const images = parseImages( value.images );
 
 	return settings === null || layout === null || images === undefined

@@ -7,6 +7,21 @@ import { parseAnimation } from '../../overlay/animations';
 import { parseTextFill } from '../../overlay/textfill';
 import { parseTextFrame } from '../../overlay/frame';
 import { isTextFit } from '../../overlay/fit';
+import {
+	NUMBER_FORMATS,
+	TEXT_CASES,
+	TEXT_DIRECTIONS,
+	hexColor,
+	intIn,
+	oneOf,
+	parseAlertAnimation,
+	parseHighlight,
+	parseMargin,
+	parseTextTiming,
+	parseTts,
+	parseVariations,
+	parseWidget,
+} from '../../overlay/look';
 import { request } from './client';
 import type { ApiResult } from './client';
 import { isRecord, readSameOriginUrl } from './validate';
@@ -16,6 +31,7 @@ import {
 	FONT_WEIGHTS,
 	LAYOUT_ELEMENTS,
 	NUMBER_FIELDS,
+	STYLE_NUMBER_FIELDS,
 	TEMPLATE_MAX_LENGTH,
 	TEXT_ALIGNS,
 } from '../types/alerts';
@@ -33,6 +49,7 @@ import type {
 	OverlayLayout,
 	OverlaySettings,
 	SoundSlot,
+	StyleNumberField,
 	TextAlign,
 } from '../types/alerts';
 
@@ -368,11 +385,17 @@ function isTemplate( value: unknown ): value is string {
 }
 
 /**
- * Validates the overlay settings of an answer.
+ * Validates the overlay settings of an answer. The fields of alert designer
+ * 2.0 (ADR-088) are read leniently: an answer without them gets the
+ * defaults, as the server gives settings stored before.
  *
- * @param value Candidate.
+ * @param value  Candidate.
+ * @param layout The layout, for the box of settings without one.
  */
-export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
+export function parseOverlaySettings(
+	value: unknown,
+	layout?: OverlayLayout | null
+): OverlaySettings | null {
 	if ( ! isRecord( value ) ) {
 		return null;
 	}
@@ -409,7 +432,20 @@ export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
 		return null;
 	}
 
+	const anim = value.anim_duration as number;
+	const styles = {} as Record< StyleNumberField, number >;
+
+	for ( const [ field, range ] of Object.entries( STYLE_NUMBER_FIELDS ) ) {
+		styles[ field as StyleNumberField ] = intIn(
+			value[ field ],
+			range.min,
+			range.max,
+			range.default
+		);
+	}
+
 	return {
+		...styles,
 		template: value.template,
 		secondary_template: value.secondary_template,
 		font_size: value.font_size as number,
@@ -429,13 +465,21 @@ export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
 		display_from_sound: value.display_from_sound,
 		// Unknown values become the default animation, as on the server.
 		animations: {
+			alert: parseAlertAnimation(
+				isRecord( value.animations ) ? value.animations.alert : null,
+				anim
+			),
 			main_text: parseAnimation(
-				isRecord( value.animations ) ? value.animations.main_text : null
+				isRecord( value.animations )
+					? value.animations.main_text
+					: null,
+				anim
 			),
 			secondary_text: parseAnimation(
 				isRecord( value.animations )
 					? value.animations.secondary_text
-					: null
+					: null,
+				anim
 			),
 		},
 		text_fills: {
@@ -450,6 +494,58 @@ export function parseOverlaySettings( value: unknown ): OverlaySettings | null {
 		},
 		text_frame: parseTextFrame( value.text_frame ),
 		font_family: value.font_family,
+		text_shadow_enabled:
+			typeof value.text_shadow_enabled === 'boolean'
+				? value.text_shadow_enabled
+				: value.text_shadow !== '',
+		text_direction: oneOf( value.text_direction, TEXT_DIRECTIONS, 'ltr' ),
+		italic: value.italic === true,
+		underline: value.underline === true,
+		text_case: oneOf( value.text_case, TEXT_CASES, 'none' ),
+		stroke_color: hexColor( value.stroke_color, '#000000' ),
+		highlight: parseHighlight( value.highlight ),
+		margin: parseMargin( value.margin ),
+		number_format: oneOf( value.number_format, NUMBER_FORMATS, 'shop' ),
+		audio_enabled: value.audio_enabled === true,
+		widget: parseWidget( value.widget, widgetAround( layout ) ),
+		layout_mode: oneOf(
+			value.layout_mode,
+			[ 'above', 'side', 'overlay', 'free' ] as const,
+			'free'
+		),
+		text_timing: parseTextTiming( value.text_timing ),
+		tts: parseTts( value.tts ),
+		variations: parseVariations( value.variations ),
+	};
+}
+
+/**
+ * The box around a layout's visible image and main text: the alert box of
+ * settings without one (the server sends one, so this is only a fallback).
+ *
+ * @param layout The layout.
+ */
+function widgetAround( layout: OverlayLayout | null | undefined ) {
+	const boxes = layout
+		? [ layout.elements.product_image, layout.elements.main_text ].filter(
+				( box ) => box.visible
+			)
+		: [];
+
+	if ( boxes.length === 0 ) {
+		return { x: 40, y: 880, w: 836, h: 120, opacity: 100, rotation: 0 };
+	}
+
+	const left = Math.min( ...boxes.map( ( box ) => box.x ) );
+	const top = Math.min( ...boxes.map( ( box ) => box.y ) );
+
+	return {
+		x: left,
+		y: top,
+		w: Math.max( ...boxes.map( ( box ) => box.x + box.w ) ) - left,
+		h: Math.max( ...boxes.map( ( box ) => box.y + box.h ) ) - top,
+		opacity: 100,
+		rotation: 0,
 	};
 }
 
@@ -491,8 +587,8 @@ export function parseAlertsOverlay( body: unknown ): AlertsOverlayState | null {
 	}
 
 	const url = readSameOriginUrl( body.overlay.url, window.location.origin );
-	const settings = parseOverlaySettings( body.overlay.settings );
 	const layout = parseLayout( body.overlay.layout );
+	const settings = parseOverlaySettings( body.overlay.settings, layout );
 	const fontApproved = body.overlay.font_approved;
 	const audio = parseAudio( body.overlay.audio );
 	const images = parseImages( body.overlay.images );

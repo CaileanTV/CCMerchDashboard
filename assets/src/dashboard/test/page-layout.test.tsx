@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { act } from 'react';
 
 import { DEFAULT_ANIMATION } from '../../overlay/animations';
+import { ALERT_ANIMATION, DESIGNER_DEFAULTS } from '../testing/alert-settings';
 import { DEFAULT_FILL } from '../../overlay/textfill';
 import { DEFAULT_FRAME } from '../../overlay/frame';
 import {
@@ -48,12 +49,14 @@ const SETTINGS = {
 	show_secondary: false,
 	display_from_sound: false,
 	animations: {
+		alert: ALERT_ANIMATION,
 		main_text: DEFAULT_ANIMATION,
 		secondary_text: DEFAULT_ANIMATION,
 	},
 	text_fills: { main_text: DEFAULT_FILL, secondary_text: DEFAULT_FILL },
 	text_frame: DEFAULT_FRAME,
 	font_family: 'inherit',
+	...DESIGNER_DEFAULTS,
 };
 
 const BOX = { visible: true, lock_aspect: false, border_radius: 0 };

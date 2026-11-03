@@ -16,16 +16,30 @@ export const FONT_WEIGHTS = [
 	'900',
 ] as const;
 
-export const TEXT_ALIGNS = [ 'left', 'center', 'right' ] as const;
-
 export type FontWeight = ( typeof FONT_WEIGHTS )[ number ] | 'normal' | 'bold';
-export type TextAlign = ( typeof TEXT_ALIGNS )[ number ];
 
 import type { PageLayout } from '../sections/alerts/page-layout';
 import type { TextAnimation } from '../../overlay/animations';
 import type { TextFit } from '../../overlay/fit';
 import type { TextFill } from '../../overlay/textfill';
 import type { TextFrame } from '../../overlay/frame';
+import type {
+	AlertAnimation,
+	Highlight,
+	LayoutMode,
+	Margin,
+	NumberFormat,
+	TextAlign,
+	TextCase,
+	TextDirection,
+	TextTiming,
+	Tts,
+	Variation,
+	Widget,
+} from '../../overlay/look';
+
+export { TEXT_ALIGNS } from '../../overlay/look';
+export type { TextAlign };
 
 export { TEXT_FITS } from '../../overlay/fit';
 export type { TextFit };
@@ -38,10 +52,27 @@ export const NUMBER_FIELDS = {
 	border_radius: { min: 0, max: 100 },
 	padding: { min: 0, max: 200 },
 	anim_duration: { min: 0, max: 5000 },
-	display_duration: { min: 1000, max: 30000 },
+	display_duration: { min: 1000, max: 90000 },
 } as const;
 
 export type NumberField = keyof typeof NUMBER_FIELDS;
+
+/**
+ * Number fields of alert designer 2.0 (ADR-088) with their ranges and
+ * defaults; an answer without them gets the default, as on the server.
+ */
+export const STYLE_NUMBER_FIELDS = {
+	text_opacity: { min: 0, max: 100, default: 100 },
+	line_height: { min: 50, max: 300, default: 130 },
+	letter_spacing: { min: -20, max: 100, default: 0 },
+	word_spacing: { min: -20, max: 200, default: 0 },
+	stroke_width: { min: 0, max: 20, default: 0 },
+	stroke_opacity: { min: 0, max: 100, default: 100 },
+	max_name_length: { min: 0, max: 100, default: 0 },
+	audio_volume: { min: 0, max: 100, default: 100 },
+} as const;
+
+export type StyleNumberField = keyof typeof STYLE_NUMBER_FIELDS;
 
 /** Longest template in characters. */
 export const TEMPLATE_MAX_LENGTH = 500;
@@ -66,8 +97,12 @@ export interface OverlaySettings {
 	readonly show_secondary: boolean;
 	/** Alerts with a sound are shown as long as the sound plays (step 25.6.8). */
 	readonly display_from_sound: boolean;
-	/** Text animations of the main and the secondary text (step 25.6.9). */
+	/**
+	 * Animations of the alert box (ADR-088) and of the main and the
+	 * secondary text (step 25.6.9).
+	 */
 	readonly animations: {
+		readonly alert: AlertAnimation;
 		readonly main_text: TextAnimation;
 		readonly secondary_text: TextAnimation;
 	};
@@ -80,6 +115,37 @@ export interface OverlaySettings {
 	readonly text_frame: TextFrame;
 	/** "inherit" (the default font) or an approved Google font (ADR-067). */
 	readonly font_family: string;
+
+	// Alert designer 2.0 (ADR-088).
+	/** Percent. */
+	readonly text_opacity: number;
+	readonly text_shadow_enabled: boolean;
+	/** Percent of the font size. */
+	readonly line_height: number;
+	readonly letter_spacing: number;
+	readonly word_spacing: number;
+	readonly text_direction: TextDirection;
+	readonly italic: boolean;
+	readonly underline: boolean;
+	readonly text_case: TextCase;
+	readonly stroke_width: number;
+	readonly stroke_color: string;
+	readonly stroke_opacity: number;
+	readonly highlight: Highlight;
+	readonly margin: Margin;
+	readonly number_format: NumberFormat;
+	/** Longest username; 0 for no limit. */
+	readonly max_name_length: number;
+	/** Percent. */
+	readonly audio_volume: number;
+	readonly audio_enabled: boolean;
+	/** The alert box on the canvas. */
+	readonly widget: Widget;
+	readonly layout_mode: LayoutMode;
+
+	readonly text_timing: TextTiming;
+	readonly tts: Tts;
+	readonly variations: readonly Variation[];
 }
 
 /** Elements of the 1920 × 1080 overlay canvas. */
