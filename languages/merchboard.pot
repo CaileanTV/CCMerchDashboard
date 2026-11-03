@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-03T20:49:19+00:00\n"
+"POT-Creation-Date: 2026-11-03T21:12:13+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -3575,40 +3575,40 @@ msgstr ""
 msgid "History"
 msgstr ""
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:119
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:146
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:121
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:148
 #: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:145
 #: src/Modules/Alerts/Rest/MeAlertsController.php:273
 msgid "The overlay settings are invalid."
 msgstr ""
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:125
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:127
 #: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:153
 #: src/Modules/Alerts/Rest/MeAlertsController.php:279
 msgid "The font is not available."
 msgstr ""
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:197
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:199
 msgid "There is no order with alerts yet."
 msgstr ""
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:226
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:228
 #: src/Modules/Alerts/Rest/MeAlertsController.php:564
 msgid "The sound was not saved."
 msgstr ""
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:271
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:273
 #: src/Modules/Alerts/Rest/MeAlertsController.php:609
 #: src/Modules/Dashboard/Rest/MeController.php:253
 msgid "The image was not saved."
 msgstr ""
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:298
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:300
 #: src/Modules/Alerts/Rest/MeAlertsController.php:637
 msgid "The image was not deleted."
 msgstr ""
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:359
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:363
 msgid "The global overlay is not set up yet."
 msgstr ""
 
@@ -15720,6 +15720,10 @@ msgstr ""
 
 #: build/dashboard.js:65
 msgid "Loading the designer…"
+msgstr ""
+
+#: build/dashboard.js:65
+msgid "Would you like some of your designs collected in one product, so customers choose between them instead of finding several products (for example several T-shirt designs)? Contact us, and we will put them together in one product. This works for every kind of product."
 msgstr ""
 
 #: build/dashboard.js:65

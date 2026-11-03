@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-03T20:49:28+00:00\n"
+"PO-Revision-Date: 2026-11-03T21:12:20+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -3575,40 +3575,40 @@ msgstr "Overlay-indstillinger"
 msgid "History"
 msgstr "Historik"
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:119
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:146
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:121
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:148
 #: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:145
 #: src/Modules/Alerts/Rest/MeAlertsController.php:273
 msgid "The overlay settings are invalid."
 msgstr "Overlay-indstillingerne er ugyldige."
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:125
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:127
 #: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:153
 #: src/Modules/Alerts/Rest/MeAlertsController.php:279
 msgid "The font is not available."
 msgstr "Fonten er ikke tilgængelig."
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:197
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:199
 msgid "There is no order with alerts yet."
 msgstr "Der er endnu ingen ordre med alerts."
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:226
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:228
 #: src/Modules/Alerts/Rest/MeAlertsController.php:564
 msgid "The sound was not saved."
 msgstr "Lyden blev ikke gemt."
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:271
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:273
 #: src/Modules/Alerts/Rest/MeAlertsController.php:609
 #: src/Modules/Dashboard/Rest/MeController.php:253
 msgid "The image was not saved."
 msgstr "Billedet blev ikke gemt."
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:298
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:300
 #: src/Modules/Alerts/Rest/MeAlertsController.php:637
 msgid "The image was not deleted."
 msgstr "Billedet blev ikke slettet."
 
-#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:359
+#: src/Modules/Alerts/GlobalOverlay/AdminGlobalOverlayController.php:363
 msgid "The global overlay is not set up yet."
 msgstr "Det globale overlay er ikke oprettet endnu."
 
@@ -15721,6 +15721,10 @@ msgstr "Taget ud af butikken"
 #: build/dashboard.js:65
 msgid "Loading the designer…"
 msgstr "Indlæser designeren …"
+
+#: build/dashboard.js:65
+msgid "Would you like some of your designs collected in one product, so customers choose between them instead of finding several products (for example several T-shirt designs)? Contact us, and we will put them together in one product. This works for every kind of product."
+msgstr "Vil du have nogle af dine designs samlet i ét produkt, så kunderne vælger mellem dem i stedet for at finde flere forskellige produkter (fx flere T-shirt-designs)? Kontakt os, så samler vi dem i ét produkt. Det gælder alle typer produkter."
 
 #: build/dashboard.js:65
 msgid "No designs yet."

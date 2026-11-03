@@ -203,6 +203,13 @@ export function DesignerSection() {
 	return (
 		<div className="merchboard-product-designer__page">
 			{ notice === null ? null : <Alert tone="danger">{ notice }</Alert> }
+			{ /* The owner's wish 2026-11-03: designs can be collected in one product by us. */ }
+			<Alert tone="info">
+				{ __(
+					'Would you like some of your designs collected in one product, so customers choose between them instead of finding several products (for example several T-shirt designs)? Contact us, and we will put them together in one product. This works for every kind of product.',
+					'merchboard'
+				) }
+			</Alert>
 			<Card title={ __( 'My designs', 'merchboard' ) }>
 				{ overview.products.length === 0 ? (
 					<EmptyState

@@ -393,6 +393,10 @@ describe( 'DesignerSection', () => {
 		const text = rendered.container.textContent ?? '';
 		expect( text ).toContain( 'Tee' );
 		expect( text ).toContain( 'Organic tee' );
+		// Above "My designs": designs can be collected in one product (the owner's wish 2026-11-03).
+		expect( text ).toContain(
+			'Contact us, and we will put them together in one product.'
+		);
 
 		click(
 			Array.from( rendered.container.querySelectorAll( 'button' ) ).find(
