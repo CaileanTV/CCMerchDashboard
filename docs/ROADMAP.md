@@ -820,7 +820,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - den fulde suite køres før bump;
   - bump og release sker efter projektejerens ønske.
 
-## Fase 31 – Alert-designer 2.0 📝 (plan godkendt 2026-11-03; ADR-088, ADR-089)
+## Fase 31 – Alert-designer 2.0 🔄 (plan godkendt 2026-11-03; ADR-088, ADR-089)
 
 **Projektejerens ønske (2026-11-03):** alert-designeren er blevet for kompliceret for creators. Den skal ligne StreamElements' stil, uden at være en kopi:
 - et lærred med en værktøjslinje;
@@ -836,21 +836,21 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **Variationer:** vælges tilfældigt med betingelser (mindstebeløb, mindste antal, kategorier).
 
 **Trin:**
-- **31.1 Beslutninger:** dette afsnit, ADR-088 (designer v2) og ADR-089 (Google Cloud TTS).
-- **31.2 Datamodel v2:**
+- **31.1 Beslutninger ✅ (2026-11-03):** dette afsnit, ADR-088 (designer v2) og ADR-089 (Google Cloud TTS).
+- **31.2 Datamodel v2 ✅ (2026-11-03, testet automatisk):**
   - PHP og TS;
   - gamle settings omregnes, når de læses;
   - REST;
   - valg af variation;
   - tekst som segmenter.
-- **31.3 Fælles renderer og player:** layouts, ny tekststil, alert- og tekstanimationer, tidsstyring og lydstyrke. Den samme kode viser alerten i overlayet og på lærredet.
-- **31.4 Editorens skal:**
+- **31.3 Fælles renderer og player ✅ (2026-11-03, testet automatisk og i headless Chrome):** layouts, ny tekststil, alert- og tekstanimationer, tidsstyring og lydstyrke. Den samme kode viser alerten i overlayet og på lærredet.
+- **31.4 Editorens skal ✅ (2026-11-03, testet automatisk):**
   - topbjælke, sidebjælke og lærred med værktøjslinje;
   - "Position, størrelse og stil" og "Merch alert";
   - admins opsætning af creator-siden udgår.
-- **31.5 Tekst og Animation:** fanerne Tekst og Avanceret og alle animationer samlet.
-- **31.6 Variationer:** liste, redigering, betingelser og test af en variation.
-- **31.7 TTS:**
+- **31.5 Tekst og Animation ✅ (2026-11-03, med 31.4):** fanerne Tekst og Avanceret og alle animationer samlet.
+- **31.6 Variationer ✅ (2026-11-03, testet automatisk):** liste, redigering, betingelser og test af en variation.
+- **31.7 TTS ✅ (2026-11-03, testet med falsk HTTP; ikke kørt mod Google):**
   - admin-indstillinger og månedligt loft;
   - syntese med cache og oprydning;
   - afspilning i overlayet;

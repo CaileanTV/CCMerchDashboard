@@ -554,7 +554,7 @@ final class AlertsModule implements Module {
 		);
 		$container->set(
 			AdminGlobalOverlayController::class,
-			static fn( Container $c ): AdminGlobalOverlayController => new AdminGlobalOverlayController( $c->get( GlobalOverlayService::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( GlobalOverlaySounds::class ), $c->get( GlobalOverlayImages::class ) )
+			static fn( Container $c ): AdminGlobalOverlayController => new AdminGlobalOverlayController( $c->get( GlobalOverlayService::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( GlobalOverlaySounds::class ), $c->get( GlobalOverlayImages::class ), $c->get( TtsSettings::class ) )
 		);
 		$container->set( GlobalOverlayFeedController::class, static fn( Container $c ): GlobalOverlayFeedController => new GlobalOverlayFeedController( $c->get( GlobalOverlayFeed::class ), new OverlayRateLimiter(), $c->get( Logger::class ) ) );
 		$container->set( GlobalOverlayRoute::class, static fn( Container $c ): GlobalOverlayRoute => new GlobalOverlayRoute( ! $c->get( AlertsAvailability::class )->merchalert_active() ) );

@@ -5109,6 +5109,8 @@ ADR-016, ADR-080, ADR-081, ADR-082, ADR-084
 ## Status
 Accepteret af projektejeren 2026-11-03 (plan for fase 31).
 
+**Statusnote 2026-11-03 (31.2–31.7):** bygget. Projektejerens feedback fra Local: editoren er én samlet boks i fuld bredde, og alle grupper af felter kan foldes; Variationer, Oplæsning, Tekst og Animation er egne paneler ved siden af Merch alert. En variations egen lyd er en lyd fra biblioteket (0: overlayets lyde); den spilles kun, når ejeren må bruge den.
+
 ## Context
 Alert-designeren fra fase 25 er blevet for kompliceret for creators:
 - mange kort i to kolonner, som admin kan flytte rundt;
@@ -5183,6 +5185,8 @@ ADR-065, ADR-067, ADR-073, ADR-089
 
 ## Status
 Accepteret af projektejeren 2026-11-03 som ekstern tjeneste efter ADR-016. **Projektejeren skal tage stilling til teksten i privatlivspolitikken, før oplæsning slås til på produktion.**
+
+**Statusnote 2026-11-03 (31.7):** bygget og testet med falsk HTTP; ikke kørt mod Google. Afvigelse fra pkt. 5: der er intet dagligt job; filer ældre end 2 dage slettes, hver gang en ny oplæsning laves (og alt ved afinstallation). Indstillingerne ligger under Settings → Alerts.
 
 ## Context
 Creators ønsker oplæsning af alerten (TTS), som de kender den fra StreamElements. Browserens egen oplæsning (`speechSynthesis`) virker ikke pålideligt i OBS' browserkilde.

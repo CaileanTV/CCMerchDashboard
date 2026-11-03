@@ -6,6 +6,13 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ### Added
 
+- **Alert-designer 2.0 (fase 31, ADR-088):** creatorens alert-side er én designer i fuld bredde med topbjælke, sidepanel og lærred i StreamElements' stil. Alle paneler og grupper af felter foldes ud og sammen. Alerten er én boks med fire layouts (billede over tekst, ved siden af, tekst på billedet, Fri); eksisterende alerts bliver til Fri og ser ud som før. Nye tekststile (gennemsigtighed, linjehøjde, bogstav- og ordafstand, lige margener, retning, kursiv, understregning, store/små bogstaver, kontur, skygge til/fra, margen), fremhævning af de indsatte værdier, talformat, længste brugernavn, lydstyrke, varighed op til 90 s, alertens egen ind- og ud-animation og tekstens timing. Lærredet tegnes af overlayets egen renderer, så forhåndsvisningen er det, OBS viser.
+- **Variationer (ADR-088):** højst 10 andre udseender af alerten med betingelser (mindstebeløb, mindste antal, kategorier) og egen lyd; et køb vises med en tilfældigt valgt, matchende variation. Testalerten viser den variation, der redigeres.
+- **Oplæsning af alerts (ADR-089):** med Google Cloud Text-to-Speech (standardstemmer). Administratoren slår det til under Settings → Alerts med API-nøgle og månedligt loft; creatoren vælger stemme, lydstyrke, forsinkelse og mindstebeløb.
+
+### Removed
+
+- **Admins opsætning af creator-siden (25.9.6):** fanen "Creator-siden" under Alerts, dens route og bundle; den faste designer erstatter den (ADR-088).
 - **Printful v2 og EU (ADR-081):** kataloget viser kun produkter, der sælges i Europa og kan sendes til Danmark, og kun varianter på lager i Europa tilbydes. Fejler v2 (undtagen 429), bruges v1 som reserve, og admin får besked. Mockups af designs går via v2.
 - **All-over-produkter (ADR-081):** produkter i teknikkerne `cut-sew` og `sublimation` designes på det flade syemønster, og Printful syr designet sammen til mockups efter indsendelse. Alle brugte dele går i samme mockup-opgave. Printfilen er en JPEG på hvid. Skifter printmålet med størrelsen, laves ét grundprodukt pr. gruppe af størrelser.
 - **Se det færdige produkt:** creatoren kan se rigtige billeder af et design, før det sendes til godkendelse. Dialogen viser en ventemarkør.

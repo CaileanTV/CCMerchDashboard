@@ -19,6 +19,7 @@ use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Alerts\Images\AlertImageException;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsController;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundException;
+use MerchBoard\Modules\Alerts\Tts\TtsSettings;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -55,8 +56,9 @@ final class AdminGlobalOverlayController extends RestController {
 	 * @param AlertFonts|null          $fonts        Approved fonts.
 	 * @param GlobalOverlaySounds|null $sounds       Sounds; null for none.
 	 * @param GlobalOverlayImages|null $images       Images; null for none.
+	 * @param TtsSettings|null         $tts          The read-out (ADR-089); null for none.
 	 */
-	public function __construct( private GlobalOverlayService $service, private AlertsAvailability $availability, Logger $logger, private ?AlertFonts $fonts = null, private ?GlobalOverlaySounds $sounds = null, private ?GlobalOverlayImages $images = null ) {
+	public function __construct( private GlobalOverlayService $service, private AlertsAvailability $availability, Logger $logger, private ?AlertFonts $fonts = null, private ?GlobalOverlaySounds $sounds = null, private ?GlobalOverlayImages $images = null, private ?TtsSettings $tts = null ) {
 		parent::__construct( $logger );
 	}
 
@@ -335,6 +337,8 @@ final class AdminGlobalOverlayController extends RestController {
 				),
 				'alerts_enabled'    => $this->availability->enabled(),
 				'merchalert_active' => $this->availability->merchalert_active(),
+				// Whether the administrator switched the read-out on (ADR-089).
+				'tts_available'     => true === $this->tts?->available(),
 				'fonts'             => array_values(
 					array_map(
 						static fn( AlertFont $font ): array => array(
