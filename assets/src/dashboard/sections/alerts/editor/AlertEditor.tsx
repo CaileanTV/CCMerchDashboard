@@ -39,6 +39,7 @@ import {
 	MerchAlertPanel,
 	PositionPanel,
 	TextSection,
+	TtsSection,
 } from './AlertPanels';
 import type { EditorFields } from './AlertPanels';
 import { lookOf, sampleParts } from './look';
@@ -133,6 +134,8 @@ interface Props {
 	readonly fonts: readonly AlertFontOption[];
 	readonly fontApproved: boolean;
 	readonly images: AlertsImages | null;
+	/** Whether an administrator switched the read-out on (ADR-089). */
+	readonly ttsAvailable?: boolean;
 	/** The sounds (the library and the categories); null when not available. */
 	readonly audio: AlertsAudio | null;
 	/** The default sound's URL, for the preview ('' for none). */
@@ -159,6 +162,7 @@ interface Props {
  * @param props.fontApproved  Whether the saved font is still approved.
  * @param props.images        Images a text can be filled with.
  * @param props.audio         The sounds.
+ * @param props.ttsAvailable  Whether the read-out is switched on.
  * @param props.sound         The default sound's URL.
  * @param props.sounds        The sound controls.
  * @param props.browserSource The browser source's card.
@@ -174,6 +178,7 @@ export function AlertEditor( {
 	fontApproved,
 	images,
 	audio,
+	ttsAvailable = false,
 	sound,
 	sounds,
 	browserSource,
@@ -423,154 +428,170 @@ export function AlertEditor( {
 		// eslint-disable-next-line jsx-a11y/no-static-element-interactions -- Undo and redo for the whole editor; every control has its own keys.
 		<div className="merchboard-alert-editor" onKeyDown={ keys }>
 			{ controls }
-			<div className="merchboard-alert-editor__bar">
-				<h2 className="merchboard-alert-editor__title">
-					{ __( 'Alert designer', 'merchboard' ) }
-				</h2>
-				<div className="merchboard-alert-editor__bar-actions">
-					{ drawerButton( 'help', __( 'Help', 'merchboard' ) ) }
-					{ browserSource !== null &&
-						drawerButton(
-							'source',
-							__( 'Browser source', 'merchboard' )
-						) }
-					{ designs !== null &&
-						drawerButton(
-							'designs',
-							__( 'Designs', 'merchboard' )
-						) }
-					<p
-						className="merchboard-alert-editor__status"
-						role="status"
-						aria-live="polite"
-					>
-						{ statusText( status ) }
-					</p>
+			<div className="merchboard-alert-editor__box">
+				<div className="merchboard-alert-editor__bar">
+					<h2 className="merchboard-alert-editor__title">
+						{ __( 'Alert designer', 'merchboard' ) }
+					</h2>
+					<div className="merchboard-alert-editor__bar-actions">
+						{ drawerButton( 'help', __( 'Help', 'merchboard' ) ) }
+						{ browserSource !== null &&
+							drawerButton(
+								'source',
+								__( 'Browser source', 'merchboard' )
+							) }
+						{ designs !== null &&
+							drawerButton(
+								'designs',
+								__( 'Designs', 'merchboard' )
+							) }
+						<p
+							className="merchboard-alert-editor__status"
+							role="status"
+							aria-live="polite"
+						>
+							{ statusText( status ) }
+						</p>
+					</div>
 				</div>
-			</div>
-			{ drawer !== null && (
-				<div className="merchboard-alert-editor__drawer">
-					{ drawer === 'help' && (
-						<div className="merchboard-alert-editor__help">
-							<p>
-								{ __(
-									'Design the alert on the right: drag the box to place it and its corners to size it. Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look.',
-									'merchboard'
-								) }
-							</p>
-							<p>
-								{ __(
-									'Play shows the alert here with its animations; Test alert sends one to your overlay in OBS.',
-									'merchboard'
-								) }
-							</p>
-						</div>
-					) }
-					{ drawer === 'source' && browserSource }
-					{ drawer === 'designs' && designs }
-				</div>
-			) }
-			{ saveError !== null && <ApiErrorState error={ saveError } /> }
-			{ Object.keys( errors ).length > 0 && (
-				<ul className="merchboard-alert-editor__errors" role="alert">
-					{ Object.values( errors ).map( ( message ) => (
-						<li key={ message }>{ message }</li>
-					) ) }
-				</ul>
-			) }
-			<div className="merchboard-alert-editor__main">
-				<aside
-					className="merchboard-alert-editor__side"
-					aria-label={ __( 'Alert settings', 'merchboard' ) }
-				>
-					{ variation !== undefined && (
-						<VariationHeader
-							variation={ variation }
-							audio={ audio }
-							categories={ audio?.categories ?? [] }
-							onChange={ ( next ) =>
-								setVariations(
-									overlayValues.variations.map( ( item ) =>
-										item.id === next.id ? next : item
-									)
-								)
-							}
-							onBack={ () => setEditing( '' ) }
-						/>
-					) }
-					<MerchAlertPanel
-						fields={ fields }
-						sounds={ variation === undefined ? sounds : null }
-						isDefault={ variation === undefined }
+				{ drawer !== null && (
+					<div className="merchboard-alert-editor__drawer">
+						{ drawer === 'help' && (
+							<div className="merchboard-alert-editor__help">
+								<p>
+									{ __(
+										'Design the alert on the right: drag the box to place it and its corners to size it. Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look.',
+										'merchboard'
+									) }
+								</p>
+								<p>
+									{ __(
+										'Play shows the alert here with its animations; Test alert sends one to your overlay in OBS.',
+										'merchboard'
+									) }
+								</p>
+							</div>
+						) }
+						{ drawer === 'source' && browserSource }
+						{ drawer === 'designs' && designs }
+					</div>
+				) }
+				{ saveError !== null && <ApiErrorState error={ saveError } /> }
+				{ Object.keys( errors ).length > 0 && (
+					<ul
+						className="merchboard-alert-editor__errors"
+						role="alert"
 					>
-						{ variation === undefined && (
-							<VariationsSection
-								variations={ overlayValues.variations }
-								canAdd={ canAddVariation( overlayValues ) }
-								onAdd={ () => {
-									const added = newVariation(
-										overlayValues,
-										doc.value.layout,
-										sprintf(
-											/* translators: %d: number of the variation. */
-											__( 'Variation %d', 'merchboard' ),
-											overlayValues.variations.length + 1
+						{ Object.values( errors ).map( ( message ) => (
+							<li key={ message }>{ message }</li>
+						) ) }
+					</ul>
+				) }
+				<div className="merchboard-alert-editor__main">
+					<aside
+						className="merchboard-alert-editor__side"
+						aria-label={ __( 'Alert settings', 'merchboard' ) }
+					>
+						{ variation !== undefined && (
+							<VariationHeader
+								variation={ variation }
+								audio={ audio }
+								categories={ audio?.categories ?? [] }
+								onChange={ ( next ) =>
+									setVariations(
+										overlayValues.variations.map(
+											( item ) =>
+												item.id === next.id
+													? next
+													: item
 										)
-									);
-									setVariations( [
-										...overlayValues.variations,
-										added,
-									] );
-									setEditing( added.id );
-								} }
-								onEdit={ setEditing }
-								onChange={ setVariations }
+									)
+								}
+								onBack={ () => setEditing( '' ) }
 							/>
 						) }
-						<TextSection
+						<MerchAlertPanel
 							fields={ fields }
-							fonts={ fonts }
-							fontApproved={ fontApproved }
-						/>
-						<AnimationSection
-							fields={ fields }
-							images={ images }
-							onSaved={ onSaved }
-							notify={ notify }
-							onPlay={ () =>
-								setPlayRequest( ( count ) => count + 1 )
+							sounds={ variation === undefined ? sounds : null }
+							isDefault={ variation === undefined }
+						>
+							{ variation === undefined && (
+								<VariationsSection
+									variations={ overlayValues.variations }
+									canAdd={ canAddVariation( overlayValues ) }
+									onAdd={ () => {
+										const added = newVariation(
+											overlayValues,
+											doc.value.layout,
+											sprintf(
+												/* translators: %d: number of the variation. */
+												__(
+													'Variation %d',
+													'merchboard'
+												),
+												overlayValues.variations
+													.length + 1
+											)
+										);
+										setVariations( [
+											...overlayValues.variations,
+											added,
+										] );
+										setEditing( added.id );
+									} }
+									onEdit={ setEditing }
+									onChange={ setVariations }
+								/>
+							) }
+							<TtsSection
+								fields={ fields }
+								available={ ttsAvailable }
+							/>
+							<TextSection
+								fields={ fields }
+								fonts={ fonts }
+								fontApproved={ fontApproved }
+							/>
+							<AnimationSection
+								fields={ fields }
+								images={ images }
+								onSaved={ onSaved }
+								notify={ notify }
+								onPlay={ () =>
+									setPlayRequest( ( count ) => count + 1 )
+								}
+							/>
+						</MerchAlertPanel>
+						<PositionPanel fields={ fields } />
+					</aside>
+					<section
+						className="merchboard-alert-editor__stage"
+						aria-label={ __( 'Canvas', 'merchboard' ) }
+					>
+						<AlertCanvas
+							settings={ values }
+							layout={ view.layout }
+							look={ look }
+							sample={ sample }
+							sound={ sound }
+							onBegin={ doc.checkpoint }
+							onLive={ ( nextSettings, nextLayout ) =>
+								doc.live( apply( nextSettings, nextLayout ) )
 							}
+							onEnd={ doc.settle }
+							onChange={ ( nextSettings, nextLayout ) =>
+								doc.set( apply( nextSettings, nextLayout ) )
+							}
+							canUndo={ doc.canUndo }
+							canRedo={ doc.canRedo }
+							onUndo={ doc.undo }
+							onRedo={ doc.redo }
+							onTest={ () => void test() }
+							testing={ testing }
+							playRequest={ playRequest }
 						/>
-					</MerchAlertPanel>
-					<PositionPanel fields={ fields } />
-				</aside>
-				<section
-					className="merchboard-alert-editor__stage"
-					aria-label={ __( 'Canvas', 'merchboard' ) }
-				>
-					<AlertCanvas
-						settings={ values }
-						layout={ view.layout }
-						look={ look }
-						sample={ sample }
-						sound={ sound }
-						onBegin={ doc.checkpoint }
-						onLive={ ( nextSettings, nextLayout ) =>
-							doc.live( apply( nextSettings, nextLayout ) )
-						}
-						onEnd={ doc.settle }
-						onChange={ ( nextSettings, nextLayout ) =>
-							doc.set( apply( nextSettings, nextLayout ) )
-						}
-						canUndo={ doc.canUndo }
-						canRedo={ doc.canRedo }
-						onUndo={ doc.undo }
-						onRedo={ doc.redo }
-						onTest={ () => void test() }
-						testing={ testing }
-						playRequest={ playRequest }
-					/>
-				</section>
+					</section>
+				</div>
 			</div>
 		</div>
 	);

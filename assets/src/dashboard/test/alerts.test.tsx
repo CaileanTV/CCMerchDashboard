@@ -486,7 +486,7 @@ describe( 'AlertsSection', () => {
 
 		const toggles = Array.from(
 			rendered?.container.querySelectorAll< HTMLButtonElement >(
-				'.merchboard-alert-panel__toggle'
+				':is(.merchboard-alert-panel--panel, .merchboard-alert-panel--section) > .merchboard-alert-panel__heading > .merchboard-alert-panel__toggle'
 			) ?? []
 		);
 		const state = Object.fromEntries(
@@ -499,6 +499,7 @@ describe( 'AlertsSection', () => {
 		expect( toggles.map( ( toggle ) => toggle.textContent ) ).toEqual( [
 			'Merch alert',
 			'Variations',
+			'Read-out (TTS)',
 			'Text',
 			'Animation',
 			'Position, size and style',
@@ -506,10 +507,24 @@ describe( 'AlertsSection', () => {
 		expect( state ).toEqual( {
 			'Merch alert': 'true',
 			Variations: 'false',
+			'Read-out (TTS)': 'false',
 			Text: 'false',
 			Animation: 'false',
 			'Position, size and style': 'false',
 		} );
+
+		// Every group of fields folds open and shut too.
+		const image = button( 'Product image' );
+		expect( image?.getAttribute( 'aria-expanded' ) ).toBe( 'false' );
+		click( image );
+		expect( image?.getAttribute( 'aria-expanded' ) ).toBe( 'true' );
+		expect( button( 'Message' )?.getAttribute( 'aria-expanded' ) ).toBe(
+			'true'
+		);
+		click( button( 'Message' ) );
+		expect( button( 'Message' )?.getAttribute( 'aria-expanded' ) ).toBe(
+			'false'
+		);
 	} );
 
 	it( 'saves every change once, a moment after the last one, with the layout and without whether sounds play', async () => {

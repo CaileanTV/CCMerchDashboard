@@ -58,6 +58,8 @@ final class AlertSettingsException extends DomainException {
 	 * The creator does not exist (a creator's own sound limits).
 	 */
 	public const CREATOR_NOT_FOUND = 'creator_not_found';
+	public const INVALID_TTS_LIMIT = 'invalid_tts_limit';
+	public const INVALID_TTS_KEY   = 'invalid_tts_key';
 
 	/**
 	 * Constructor.

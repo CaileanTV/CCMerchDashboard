@@ -23,6 +23,8 @@ export interface OverlayAlert {
 	parts: TextPart[];
 	secondaryParts: TextPart[];
 	sound: string;
+	/** The read-out of the text (ADR-089); '' for none. */
+	tts: string;
 }
 
 /** An answer of `GET merchboard/v1/alerts/overlay/{id}/feed`. */
@@ -156,6 +158,10 @@ export function parseAnswer( value: unknown ): FeedAnswer | null {
 			parts: parseParts( item.parts, item.text ),
 			secondaryParts: parseParts( item.secondary_parts, item.secondary ),
 			sound: sameOrigin( item.sound ) ? item.sound : '',
+			tts:
+				typeof item.tts === 'string' && sameOrigin( item.tts )
+					? item.tts
+					: '',
 		} );
 	}
 

@@ -816,7 +816,7 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
 - **30.13 Gelato 🔄 (implementeret 2026-10-29, testet automatisk med falsk HTTP; ikke afprøvet mod Gelato):** krypteret API-nøgle og butiks-id med opsætningsvejledning under Settings, "Importér fra Gelato" på Grundprodukter (en skabelon bliver en kladde med farver, størrelser og en side pr. billedfelt), mockups via create-from-template i Gelato-butikken efter indsendelse (signeret URL til printfilen, polling, browserens mockups som reserve) og "mockups kunne ikke laves" til admin. Oprindelig plan: katalog, kobling til Gelato-skabelon og mockups via create-from-template (projektejerens valg 2026-10-28). Admin-siden for Gelato viser opsætningsvejledningen fra features/product-designer.md (projektejerens ønske 2026-10-28).
 - **30.14 Creatorens Produkter 🔄 (implementeret 2026-10-29, testet automatisk):** `GET /me/designer/products` og kortet "Dine designs" i sektionen Produkter: i butikken (pris og link), venter (ny eller ændring, pris efter godkendelse), afvist (admins note) og taget ud af butikken; kladder som antal med knap til designeren. Oprindelig plan: levende, ventende og afviste produkter.
 - **30.15 Review, runtime-test og release 1.5.0:**
-  - review og runtime-test på Local med "Test Creator Cailean" udføres automatisk (AI-DEVELOPMENT.md);
+  - review og runtime-test af fase 30 og 31 samlet, på Local med "Test Creator Cailean" og på stg.ccmerch.dk (projektejerens ønske 2026-11-03), udføres automatisk (AI-DEVELOPMENT.md);
   - den fulde suite køres før bump;
   - bump og release sker efter projektejerens ønske.
 
@@ -858,8 +858,11 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **31.8 Afslutning:**
   - det globale overlay og standard-overlays;
   - dansk oversættelse og docs;
-  - eksperimentel ZIP på stg;
-  - runtime-test på Local med "Test Creator Cailean".
+  - eksperimentel ZIP på stg.
+
+**Review og runtime-test (projektejerens ønske 2026-11-03):** fase 30 og 31 reviewes og runtime-testes samlet (30.15), og stg.ccmerch.dk må bruges til det.
+
+**Projektejerens feedback fra Local (2026-11-03):** editoren skal være én samlet boks, bredere end før, og alle grupper af felter skal kunne foldes ud og sammen (indbygget i 31.7).
 
 ## Senere (uprioriteret)
 

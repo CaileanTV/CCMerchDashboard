@@ -363,6 +363,7 @@ export function AlertsContent( {
 					fontApproved={ overlay.fontApproved }
 					images={ overlay.images }
 					audio={ overlay.audio }
+					ttsAvailable={ state.ttsAvailable === true }
 					sound={ overlay.audio?.defaultSound?.url ?? '' }
 					sounds={
 						overlay.audio === null ? null : (

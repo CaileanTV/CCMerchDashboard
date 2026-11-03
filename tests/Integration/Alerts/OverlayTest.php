@@ -137,6 +137,7 @@ final class OverlayTest extends IntegrationTestCase {
 					),
 					'secondary_parts' => array(),
 					'sound'           => '',
+					'tts'             => '',
 				),
 			),
 			$next['alerts']

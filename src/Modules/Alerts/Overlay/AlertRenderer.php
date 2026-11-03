@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\Alerts\Overlay;
 
 use Closure;
 use MerchBoard\Modules\Alerts\AlertEvent;
+use MerchBoard\Modules\Alerts\Tts\AlertTts;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -35,8 +36,9 @@ final class AlertRenderer {
 	 *
 	 * @param AlertTemplate                    $template  Text templates.
 	 * @param (Closure(int, int): string)|null $image_url Image URL; defaults to the Media Library on this site.
+	 * @param AlertTts|null                    $tts       The read-out (ADR-089); null for none.
 	 */
-	public function __construct( private AlertTemplate $template, ?Closure $image_url = null ) {
+	public function __construct( private AlertTemplate $template, ?Closure $image_url = null, private ?AlertTts $tts = null ) {
 		$this->image_url = $image_url ?? self::media_library_url( ... );
 	}
 
@@ -48,22 +50,26 @@ final class AlertRenderer {
 	 * @param AlertEvent      $event    Alert.
 	 * @param string          $sound    The sound's URL ('' for none).
 	 * @param string          $look     The chosen variation's id; '' for the default.
-	 * @return array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string}
+	 * @return array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string, tts: string}
 	 */
 	public function render( OverlaySettings $settings, AlertEvent $event, string $sound, string $look = '' ): array {
 		$values    = $settings->to_array();
 		$parts     = $this->template->segments( $settings->template(), $event, $values['number_format'], $values['max_name_length'] );
 		$secondary = $settings->shows_secondary() ? $this->template->segments( $settings->secondary_template(), $event, $values['number_format'], $values['max_name_length'] ) : array();
 
+		$text = implode( '', array_column( $parts, 'text' ) );
+
 		return array(
 			'id'              => $event->id,
 			'look'            => $look,
 			'image'           => $event->image_id > 0 ? ( $this->image_url )( $event->image_id, $settings->image_size() ) : '',
-			'text'            => implode( '', array_column( $parts, 'text' ) ),
+			'text'            => $text,
 			'secondary'       => implode( '', array_column( $secondary, 'text' ) ),
 			'parts'           => $parts,
 			'secondary_parts' => $secondary,
 			'sound'           => $sound,
+			// The read-out of the text (ADR-089); '' for none.
+			'tts'             => null === $this->tts ? '' : $this->tts->url_for( $settings, $event, $text ),
 		);
 	}
 

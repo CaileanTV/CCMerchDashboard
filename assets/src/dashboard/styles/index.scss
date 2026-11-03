@@ -2338,10 +2338,44 @@ input:disabled + .merchboard-sounds__upload {
 
 /* Alert designer 2.0 (phase 31, ADR-088): a top bar, the side panel on the
    left and the canvas on the right; on narrow screens the panel is above. */
+// The editor takes the page's whole width, as one box (the owner's wish
+// 2026-11-03): the bar on top, the side panel and the canvas below it.
+.merchboard-main:has(.merchboard-alert-editor) {
+	max-width: none;
+	padding-top: var(--merchboard-space-4);
+
+	// The page's heading stays for screen readers; the editor starts at the top.
+	.merchboard-main__title {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+}
+
+// Folded panels and tabs that are not chosen are hidden (their own display
+// would otherwise show them).
+.merchboard-alert-panel__body[hidden],
+.merchboard-alert-tabs__panel[hidden] {
+	display: none;
+}
+
 .merchboard-alert-editor {
 	display: grid;
 	gap: var(--merchboard-space-4);
 	min-width: 0;
+}
+
+.merchboard-alert-editor__box {
+	display: grid;
+	min-width: 0;
+	overflow: hidden;
+	background: var(--merchboard-surface);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius);
+	box-shadow: var(--merchboard-shadow);
 }
 
 .merchboard-alert-editor__bar {
@@ -2353,7 +2387,6 @@ input:disabled + .merchboard-sounds__upload {
 	padding: var(--merchboard-space-3) var(--merchboard-space-4);
 	color: var(--merchboard-on-inverse);
 	background: var(--merchboard-inverse-surface);
-	border-radius: var(--merchboard-radius);
 }
 
 .merchboard-alert-editor__title {
@@ -2395,7 +2428,15 @@ input:disabled + .merchboard-sounds__upload {
 	opacity: 0.85;
 }
 
-.merchboard-alert-editor__drawer,
+.merchboard-alert-editor__drawer {
+	display: grid;
+	gap: var(--merchboard-space-3);
+	min-width: 0;
+	padding: var(--merchboard-space-4);
+	background: var(--merchboard-surface-muted);
+	border-bottom: 1px solid var(--merchboard-border);
+}
+
 .merchboard-alert-editor__help {
 	display: grid;
 	gap: var(--merchboard-space-3);
@@ -2413,29 +2454,36 @@ input:disabled + .merchboard-sounds__upload {
 .merchboard-alert-editor__main {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
-	gap: var(--merchboard-space-4);
 	align-items: start;
 
 	@media (min-width: $merchboard-lg) {
-		grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+		grid-template-columns: minmax(20rem, 26rem) minmax(0, 1fr);
 	}
 }
 
+// The side panel scrolls on its own beside the canvas on wide screens.
 .merchboard-alert-editor__side {
 	display: grid;
+	align-content: start;
 	min-width: 0;
-	overflow: hidden;
-	background: var(--merchboard-surface);
-	border: 1px solid var(--merchboard-border);
-	border-radius: var(--merchboard-radius);
+	border-bottom: 1px solid var(--merchboard-border);
+
+	@media (min-width: $merchboard-lg) {
+		max-height: calc(100vh - 12rem);
+		overflow-y: auto;
+		border-right: 1px solid var(--merchboard-border);
+		border-bottom: 0;
+	}
 }
 
 .merchboard-alert-editor__stage {
 	min-width: 0;
+	padding: var(--merchboard-space-4);
+	background: var(--merchboard-surface-muted);
 
 	@media (min-width: $merchboard-lg) {
 		position: sticky;
-		top: var(--merchboard-space-4);
+		top: 0;
 	}
 }
 
@@ -2503,6 +2551,31 @@ input:disabled + .merchboard-sounds__upload {
 
 .merchboard-alert-panel--section .merchboard-alert-panel__body {
 	padding: var(--merchboard-space-3);
+}
+
+// A group of fields: a light heading that folds it open and shut.
+.merchboard-alert-panel--group {
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius-sm);
+
+	&:last-child {
+		border-bottom: 1px solid var(--merchboard-border);
+	}
+
+	.merchboard-alert-panel__heading {
+		font-size: var(--merchboard-text-sm);
+	}
+
+	.merchboard-alert-panel__toggle {
+		padding: var(--merchboard-space-2) var(--merchboard-space-3);
+		font-weight: 600;
+		background: transparent;
+		border-radius: var(--merchboard-radius-sm);
+	}
+
+	.merchboard-alert-panel__body {
+		padding: 0 var(--merchboard-space-3) var(--merchboard-space-3);
+	}
 }
 
 .merchboard-alert-panel__sections {

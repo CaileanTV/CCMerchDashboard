@@ -14,6 +14,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Modules\Alerts\AlertEvent;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
 use MerchBoard\Modules\Alerts\Sounds\AlertSounds;
+use MerchBoard\Modules\Alerts\Tts\AlertTts;
 use MerchBoard\Modules\Creators\CreatorRepository;
 
 defined( 'ABSPATH' ) || exit;
@@ -79,6 +80,7 @@ final class OverlayFeed {
 	 * @param (Closure(int): void)|null        $sleep     Sleep; defaults to sleep().
 	 * @param OverlayTestQueue|null            $tests     Test alerts; null for none.
 	 * @param AlertSounds|null                 $sounds    Alert sounds; null for none.
+	 * @param AlertTts|null                    $tts       The read-out (ADR-089); null for none.
 	 */
 	public function __construct(
 		private AlertOverlayRepository $overlays,
@@ -88,9 +90,10 @@ final class OverlayFeed {
 		?Closure $image_url = null,
 		?Closure $sleep = null,
 		private ?OverlayTestQueue $tests = null,
-		private ?AlertSounds $sounds = null
+		private ?AlertSounds $sounds = null,
+		?AlertTts $tts = null
 	) {
-		$this->renderer = new AlertRenderer( $template, $image_url );
+		$this->renderer = new AlertRenderer( $template, $image_url, $tts );
 		$this->sleep    = $sleep ?? static function ( int $seconds ): void {
 			sleep( $seconds );
 		};
@@ -102,7 +105,7 @@ final class OverlayFeed {
 	 * @param string   $overlay_id Secret overlay id.
 	 * @param int|null $after      Cursor; null for the first request.
 	 * @param bool     $wait       Whether to wait for new alerts.
-	 * @return array{cursor: int, version: string, alerts: list<array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string}>}|null
+	 * @return array{cursor: int, version: string, alerts: list<array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string, tts: string}>}|null
 	 * @throws DatabaseException When the database cannot be read.
 	 */
 	public function read( string $overlay_id, ?int $after, bool $wait ): ?array {
@@ -163,7 +166,7 @@ final class OverlayFeed {
 	 * @param AlertOverlay $overlay Overlay.
 	 * @param AlertEvent   $event   Alert.
 	 * @param string|null  $look    A variation to show it with (test alerts); null chooses one (ADR-088).
-	 * @return array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string}
+	 * @return array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string, tts: string}
 	 */
 	public function render( AlertOverlay $overlay, AlertEvent $event, ?string $look = null ): array {
 		$look     = $look ?? $overlay->settings->choose( $event );
@@ -175,10 +178,10 @@ final class OverlayFeed {
 	/**
 	 * The answer.
 	 *
-	 * @param int                                                                                                                                                                                                       $cursor  Cursor.
-	 * @param AlertOverlay                                                                                                                                                                                              $overlay Overlay.
-	 * @param list<array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string}> $alerts  Alerts.
-	 * @return array{cursor: int, version: string, alerts: list<array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string}>}
+	 * @param int                                                                                                                                                                                                                    $cursor  Cursor.
+	 * @param AlertOverlay                                                                                                                                                                                                           $overlay Overlay.
+	 * @param list<array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string, tts: string}> $alerts  Alerts.
+	 * @return array{cursor: int, version: string, alerts: list<array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string, tts: string}>}
 	 */
 	private static function answer( int $cursor, AlertOverlay $overlay, array $alerts ): array {
 		return array(

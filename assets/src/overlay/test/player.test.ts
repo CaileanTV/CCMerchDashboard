@@ -92,8 +92,16 @@ function alert(
 		parts: [ { text, value: false } ],
 		secondaryParts: [],
 		sound: '',
+		tts: '',
 		...extra,
 	};
+}
+
+/** Lets pending promises (sound lengths, read-outs) resolve. */
+async function settle(): Promise< void > {
+	for ( let i = 0; i < 6; i++ ) {
+		await Promise.resolve();
+	}
 }
 
 describe( 'AlertPlayer', () => {
@@ -184,8 +192,7 @@ describe( 'AlertPlayer', () => {
 		player.enqueue( [ alert( 1, { sound: '/ding.mp3' } ) ] );
 		expect( timers ).toHaveLength( 0 );
 
-		await Promise.resolve();
-		await Promise.resolve();
+		await settle();
 		expect( timers[ 0 ]?.delay ).toBe( 2750 );
 	} );
 
@@ -193,14 +200,33 @@ describe( 'AlertPlayer', () => {
 		const unknown = setup( { display_from_sound: true }, null );
 
 		unknown.player.enqueue( [ alert( 1, { sound: '/ding.mp3' } ) ] );
-		await Promise.resolve();
-		await Promise.resolve();
+		await settle();
 		expect( unknown.timers[ 0 ]?.delay ).toBe( 5000 );
 
 		const silent = setup( { display_from_sound: true }, 2750 );
 
 		silent.player.enqueue( [ alert( 2 ) ] );
 		expect( silent.timers[ 0 ]?.delay ).toBe( 5000 );
+	} );
+
+	it( 'reads the alert out after its delay and stays until the read-out ends', async () => {
+		const { player, timers, played } = setup(
+			{
+				display_duration: 3000,
+				tts: { enabled: true, delay: 800, volume: 50 },
+			},
+			4000
+		);
+
+		player.enqueue( [ alert( 1, { tts: '/tts.mp3' } ) ] );
+		expect( played ).toEqual( [] );
+		expect( timers[ 0 ]?.delay ).toBe( 800 );
+
+		timers.shift()?.callback();
+		expect( played ).toEqual( [ { url: '/tts.mp3', volume: 0.5 } ] );
+
+		await settle();
+		expect( timers[ 0 ]?.delay ).toBe( 800 + 4000 + 300 );
 	} );
 
 	it( 'draws each alert with its variation and places the box', () => {

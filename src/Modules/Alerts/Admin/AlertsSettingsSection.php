@@ -13,6 +13,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\AlertSettingsException;
 use MerchBoard\Modules\Alerts\AlertsAvailability;
+use MerchBoard\Modules\Alerts\Tts\TtsSettings;
 use MerchBoard\Modules\Alerts\Checkout\CheckoutUsername;
 use MerchBoard\Modules\Settings\Admin\SettingsPage;
 
@@ -37,8 +38,9 @@ final class AlertsSettingsSection {
 	 * Constructor.
 	 *
 	 * @param AlertsAvailability $availability Kill switch and MerchAlert guard.
+	 * @param TtsSettings|null   $tts          The read-out (ADR-089); null for none.
 	 */
-	public function __construct( private AlertsAvailability $availability ) {
+	public function __construct( private AlertsAvailability $availability, private ?TtsSettings $tts = null ) {
 	}
 
 	/**
@@ -113,6 +115,77 @@ final class AlertsSettingsSection {
 		echo '</form>';
 		self::render_checkout_username();
 		self::render_sound_limits();
+		$this->render_tts();
+	}
+
+	/**
+	 * Message and type for an outcome code of the read-out; null for unknown codes.
+	 *
+	 * @param string $code Outcome code.
+	 * @return array{0: string, 1: string}|null [message, 'success'|'info'|'error']
+	 */
+	public static function tts_result_message( string $code ): ?array {
+		return match ( $code ) {
+			'saved'                                   => array( __( 'The read-out settings were saved.', 'merchboard' ), 'success' ),
+			'key_removed'                             => array( __( 'The API key was removed. Alerts are not read out.', 'merchboard' ), 'success' ),
+			'no_changes'                              => array( __( 'No changes were made to the read-out settings.', 'merchboard' ), 'info' ),
+			AlertSettingsException::INVALID_TTS_KEY   => array( __( 'That is not a valid Google API key. Nothing was saved.', 'merchboard' ), 'error' ),
+			AlertSettingsException::INVALID_TTS_LIMIT => array( __( 'The monthly limit must be a whole number of characters. Nothing was saved.', 'merchboard' ), 'error' ),
+			AlertSettingsException::NOT_AUTHORIZED    => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
+			'error'                                   => array( __( 'A technical error occurred. The read-out settings were not changed.', 'merchboard' ), 'error' ),
+			default                                   => null,
+		};
+	}
+
+	/**
+	 * The read-out of alerts with Google Cloud Text-to-Speech (ADR-089): the
+	 * switch, the API key (never shown again), the monthly limit and the
+	 * characters read out this month.
+	 */
+	private function render_tts(): void {
+		if ( null === $this->tts ) {
+			return;
+		}
+
+		// Read-only outcome code; nothing is changed by this request.
+		$code   = isset( $_GET[ AlertsSettingsActions::TTS_RESULT_ARG ] ) ? sanitize_key( wp_unslash( $_GET[ AlertsSettingsActions::TTS_RESULT_ARG ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
+		$notice = self::tts_result_message( $code );
+		$has    = null !== $this->tts->key();
+
+		echo '<h3 id="merchboard-tts">' . esc_html__( 'Read-out (TTS)', 'merchboard' ) . '</h3>';
+
+		if ( null !== $notice ) {
+			printf( '<div class="notice notice-%1$s inline"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
+		}
+
+		echo '<p>' . esc_html__( 'Creators can have their alerts read out. The text is sent to Google Cloud Text-to-Speech, which turns it into speech with a standard voice; it contains the username the customer chose and the product. Mention this in your privacy policy before you switch it on.', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html(
+			sprintf(
+				/* translators: 1: characters read out this month, 2: monthly limit. */
+				__( 'Read out this month: %1$s of %2$s characters. At the limit, alerts are not read out until next month.', 'merchboard' ),
+				number_format_i18n( $this->tts->used() ),
+				number_format_i18n( $this->tts->limit() )
+			)
+		) . '</p>';
+
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( AlertsSettingsActions::TTS_ACTION ) . '">';
+		wp_nonce_field( AlertsSettingsActions::TTS_ACTION );
+		echo '<table class="form-table" role="presentation"><tbody>';
+		echo '<tr><th scope="row">' . esc_html__( 'Read-out', 'merchboard' ) . '</th><td><label><input type="checkbox" name="' . esc_attr( AlertsSettingsActions::FIELD_TTS_ENABLED ) . '" value="1"' . checked( $this->tts->enabled(), true, false ) . '> ' . esc_html__( 'Let creators have their alerts read out', 'merchboard' ) . '</label></td></tr>';
+		echo '<tr><th scope="row"><label for="merchboard-tts-key">' . esc_html__( 'Google API key', 'merchboard' ) . '</label></th><td><input type="password" id="merchboard-tts-key" class="regular-text" name="' . esc_attr( AlertsSettingsActions::FIELD_TTS_KEY ) . '" value="" autocomplete="off">';
+		echo '<p class="description">' . esc_html( $has ? __( 'A key is stored. Leave the field empty to keep it.', 'merchboard' ) : __( 'No key is stored.', 'merchboard' ) ) . ' ' . esc_html__( 'Create the key in Google Cloud with only the Text-to-Speech API allowed.', 'merchboard' ) . '</p>';
+
+		if ( $has ) {
+			echo '<label><input type="checkbox" name="' . esc_attr( AlertsSettingsActions::FIELD_TTS_REMOVE_KEY ) . '" value="1"> ' . esc_html__( 'Remove the stored key', 'merchboard' ) . '</label>';
+		}
+
+		echo '</td></tr>';
+		echo '<tr><th scope="row"><label for="merchboard-tts-limit">' . esc_html__( 'Monthly limit', 'merchboard' ) . '</label></th><td><input type="number" id="merchboard-tts-limit" class="regular-text" min="0" max="' . esc_attr( (string) TtsSettings::MAX_LIMIT ) . '" step="1" name="' . esc_attr( AlertsSettingsActions::FIELD_TTS_LIMIT ) . '" value="' . esc_attr( (string) $this->tts->limit() ) . '"> ' . esc_html__( 'characters', 'merchboard' );
+		echo '<p class="description">' . esc_html__( 'Standard voices are free up to about 4 million characters a month; above that Google charges.', 'merchboard' ) . '</p></td></tr>';
+		echo '</tbody></table>';
+		submit_button( __( 'Save read-out settings', 'merchboard' ), 'secondary' );
+		echo '</form>';
 	}
 
 	/**

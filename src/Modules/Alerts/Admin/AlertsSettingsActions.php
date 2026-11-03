@@ -14,6 +14,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Alerts\AlertSettings;
 use MerchBoard\Modules\Alerts\AlertSettingsException;
+use MerchBoard\Modules\Alerts\Tts\TtsSettings;
 use MerchBoard\Modules\Settings\Admin\SettingsPage;
 
 defined( 'ABSPATH' ) || exit;
@@ -91,6 +92,21 @@ final class AlertsSettingsActions {
 	public const FIELD_CHECKOUT_HELP = 'checkout_username_help';
 
 	/**
+	 * The admin-post action and nonce action of the read-out (ADR-089).
+	 */
+	public const TTS_ACTION = 'merchboard_save_alerts_tts';
+
+	/**
+	 * Query argument: outcome code of the read-out.
+	 */
+	public const TTS_RESULT_ARG = 'merchboard_tts_result';
+
+	public const FIELD_TTS_ENABLED    = 'tts_enabled';
+	public const FIELD_TTS_LIMIT      = 'tts_limit';
+	public const FIELD_TTS_KEY        = 'tts_key';
+	public const FIELD_TTS_REMOVE_KEY = 'tts_remove_key';
+
+	/**
 	 * The admin-post action and nonce action of the sound limits (step 25.9.2).
 	 */
 	public const SOUNDS_ACTION = 'merchboard_save_sound_limits';
@@ -139,10 +155,11 @@ final class AlertsSettingsActions {
 	/**
 	 * Constructor.
 	 *
-	 * @param AlertSettings $settings Saving.
-	 * @param Logger        $logger   Technical log.
+	 * @param AlertSettings    $settings Saving.
+	 * @param Logger           $logger   Technical log.
+	 * @param TtsSettings|null $tts      The read-out (ADR-089); null for none.
 	 */
-	public function __construct( private AlertSettings $settings, private Logger $logger ) {
+	public function __construct( private AlertSettings $settings, private Logger $logger, private ?TtsSettings $tts = null ) {
 	}
 
 	/**
@@ -162,6 +179,58 @@ final class AlertsSettingsActions {
 		add_action( 'admin_post_' . self::COMPANY_ACTION, array( $this, 'handle_company_request' ) );
 		add_action( 'admin_post_' . self::CHECKOUT_ACTION, array( $this, 'handle_checkout_request' ) );
 		add_action( 'admin_post_' . self::SOUNDS_ACTION, array( $this, 'handle_sounds_request' ) );
+		add_action( 'admin_post_' . self::TTS_ACTION, array( $this, 'handle_tts_request' ) );
+	}
+
+	/**
+	 * Handles the read-out form (ADR-089).
+	 */
+	public function handle_tts_request(): void {
+		// The nonce is verified in save_tts() before any input is used.
+		wp_safe_redirect( $this->save_tts( wp_unslash( $_POST ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified and the fields validated in save_tts() and TtsSettings.
+		exit;
+	}
+
+	/**
+	 * Processes the read-out form: the switch, the monthly limit and a new
+	 * key (empty keeps the stored one; "remove" removes it).
+	 *
+	 * @param array<mixed> $input Unslashed request data.
+	 * @return string Redirect URL.
+	 */
+	public function save_tts( array $input ): string {
+		if ( ! current_user_can( Capabilities::MANAGE_ALERTS ) || null === $this->tts ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to manage alerts.', 'merchboard' ), '', array( 'response' => 403 ) );
+		}
+
+		$nonce = is_scalar( $input['_wpnonce'] ?? null ) ? (string) $input['_wpnonce'] : '';
+
+		if ( 1 !== wp_verify_nonce( $nonce, self::TTS_ACTION ) ) {
+			wp_die( esc_html__( 'The link you followed has expired. Please try again.', 'merchboard' ), '', array( 'response' => 403 ) );
+		}
+
+		$text    = static fn( string $field ): string => is_scalar( $input[ $field ] ?? null ) ? trim( (string) $input[ $field ] ) : '';
+		$enabled = '1' === $text( self::FIELD_TTS_ENABLED );
+		$limit   = 1 === preg_match( '/^\d{1,9}$/', $text( self::FIELD_TTS_LIMIT ) ) ? (int) $text( self::FIELD_TTS_LIMIT ) : -1;
+		$url     = static fn( string $result ): string => add_query_arg( array( self::TTS_RESULT_ARG => $result ), SettingsPage::url( '', AlertsSettingsSection::TAB ) ) . '#merchboard-tts';
+
+		try {
+			if ( '1' === $text( self::FIELD_TTS_REMOVE_KEY ) ) {
+				$this->tts->clear_key();
+
+				return $url( 'key_removed' );
+			}
+
+			$changed = $this->tts->save( $enabled, $limit, $text( self::FIELD_TTS_KEY ) );
+		} catch ( AlertSettingsException $e ) {
+			return $url( $e->reason() );
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'Saving the read-out settings failed.', $e->context() );
+
+			return $url( 'error' );
+		}
+
+		return $url( $changed ? 'saved' : 'no_changes' );
 	}
 
 	/**

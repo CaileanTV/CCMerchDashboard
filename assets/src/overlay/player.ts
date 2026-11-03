@@ -24,6 +24,12 @@ import type { TextPart } from './look';
 /** Shortest display time when it comes from a sound, in milliseconds. */
 export const MIN_SOUND_DISPLAY = 1000;
 
+/** Longest display time (ms), also with a long read-out. */
+export const MAX_DISPLAY = 90000;
+
+/** Pause after a read-out before the alert goes (ms). */
+export const READ_OUT_PAUSE = 300;
+
 /** Longest queue; older alerts are dropped when a flood arrives. */
 export const MAX_QUEUE = 100;
 
@@ -146,21 +152,65 @@ export class AlertPlayer {
 			alert.sound === ''
 				? undefined
 				: this.hooks.play?.( alert.sound, look.audio_volume / 100 );
+		const waits: Array< Promise< number > > = [];
 
 		// With "as long as the sound plays", the sound's length is the display time.
 		if ( look.display_from_sound && length instanceof Promise ) {
-			void length.then( ( ms ) =>
-				this.hide(
-					look,
+			waits.push(
+				length.then( ( ms ) =>
 					ms === null
 						? look.display_duration
 						: Math.max( MIN_SOUND_DISPLAY, ms )
 				)
 			);
+		}
+
+		// The read-out starts after its delay; the alert stays until it has ended (ADR-089).
+		if ( alert.tts !== '' && look.tts.enabled ) {
+			waits.push( this.readOut( alert.tts, look ) );
+		}
+
+		if ( waits.length === 0 ) {
+			this.hide( look, look.display_duration );
 			return;
 		}
 
-		this.hide( look, look.display_duration );
+		const floor =
+			look.display_from_sound && length instanceof Promise
+				? 0
+				: look.display_duration;
+
+		void Promise.all( waits ).then( ( times ) =>
+			this.hide(
+				look,
+				Math.min( MAX_DISPLAY, Math.max( floor, ...times ) )
+			)
+		);
+	}
+
+	/**
+	 * Plays the read-out after its delay; resolves when it has ended (ms
+	 * after the alert came in), or after the delay when its length is unknown.
+	 *
+	 * @param url  The read-out's URL.
+	 * @param look Look.
+	 */
+	private readOut( url: string, look: AlertLook ): Promise< number > {
+		const delay = look.tts.delay;
+
+		return new Promise( ( resolve ) => {
+			this.schedule( () => {
+				const length = this.hooks.play?.( url, look.tts.volume / 100 );
+
+				if ( length instanceof Promise ) {
+					void length.then( ( ms ) =>
+						resolve( delay + ( ms ?? 0 ) + READ_OUT_PAUSE )
+					);
+				} else {
+					resolve( delay );
+				}
+			}, delay );
+		} );
 	}
 
 	/**

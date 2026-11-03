@@ -13,7 +13,7 @@ import type { KeyboardEvent, ReactNode } from 'react';
  * @param props             Props.
  * @param props.title       Heading.
  * @param props.defaultOpen Whether it starts open.
- * @param props.level       "panel" (the side bar's own) or "section" (inside a panel).
+ * @param props.level       "panel" (the side bar's own), "section" (inside a panel) or "group" (a group of fields).
  * @param props.children    Content.
  */
 export function Panel( {
@@ -24,12 +24,14 @@ export function Panel( {
 }: {
 	readonly title: string;
 	readonly defaultOpen?: boolean;
-	readonly level?: 'panel' | 'section';
+	readonly level?: 'panel' | 'section' | 'group';
 	readonly children: ReactNode;
 } ) {
 	const id = useId();
 	const [ open, setOpen ] = useState( defaultOpen );
-	const Heading = level === 'panel' ? 'h2' : 'h3';
+	const Heading = { panel: 'h2', section: 'h3', group: 'h4' }[
+		level
+	] as 'h2';
 
 	return (
 		<div

@@ -577,6 +577,7 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 					),
 					'secondary_parts' => array(),
 					'sound'           => '',
+					'tts'             => '',
 				),
 			),
 			$answer['alerts']

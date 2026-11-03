@@ -117,6 +117,7 @@ describe( 'parseAnswer', () => {
 					parts: [ { text: 'nova_fan bought Hoodie', value: false } ],
 					secondaryParts: [],
 					sound: `${ window.location.origin }/wp-content/uploads/ding.mp3`,
+					tts: '',
 				},
 				{
 					id: 12,
@@ -127,6 +128,7 @@ describe( 'parseAnswer', () => {
 					parts: [ { text: 'Anonymous bought Mug', value: false } ],
 					secondaryParts: [ { text: 'Thanks!', value: false } ],
 					sound: '',
+					tts: '',
 				},
 			],
 		} );

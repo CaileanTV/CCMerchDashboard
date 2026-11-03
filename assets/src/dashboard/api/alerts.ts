@@ -574,6 +574,9 @@ export function parseAlertsOverlay( body: unknown ): AlertsOverlayState | null {
 		alertsEnabled: body.alerts_enabled,
 		merchalertActive: body.merchalert_active,
 		fonts,
+		...( typeof body.tts_available === 'boolean'
+			? { ttsAvailable: body.tts_available }
+			: {} ),
 	};
 
 	if ( body.overlay === null ) {

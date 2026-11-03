@@ -186,6 +186,7 @@ final class GlobalOverlayTest extends IntegrationTestCase {
 				'parts'           => array(),
 				'secondary_parts' => array(),
 				'sound'           => '',
+				'tts'             => '',
 			)
 		);
 

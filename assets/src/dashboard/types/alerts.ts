@@ -279,6 +279,8 @@ export interface AlertsOverlayState {
 	readonly merchalertActive: boolean;
 	/** The fonts an administrator approved. */
 	readonly fonts: readonly AlertFontOption[];
+	/** Whether an administrator switched the read-out on (ADR-089); only in the creator's answers. */
+	readonly ttsAvailable?: boolean;
 }
 
 /** An alert of the history (step 25.7): only what the alert shows. */

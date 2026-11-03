@@ -34,6 +34,8 @@ use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayStore;
 use MerchBoard\Modules\Alerts\Legal\YouTubeLegal;
 use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresetStore;
+use MerchBoard\Modules\Alerts\Tts\AlertTts;
+use MerchBoard\Modules\Alerts\Tts\TtsSettings;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Creators\Proposals\ProposalFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
@@ -251,6 +253,12 @@ final class Uninstaller {
 		delete_option( OverlayPresetStore::OPTION );
 		// The setup of the creator's alert page (step 25.9.6), retired in step 31.4 (ADR-088).
 		delete_option( self::RETIRED_CREATOR_PAGE_OPTION );
+
+		// The read-out (ADR-089): switch, key, usage and the stored read-outs.
+		delete_option( TtsSettings::OPTION );
+		delete_option( TtsSettings::KEY_OPTION );
+		delete_option( TtsSettings::USAGE_OPTION );
+		AlertTts::remove_all();
 		foreach ( RemoveImportOptions::OPTIONS as $option ) {
 			delete_option( $option );
 		}

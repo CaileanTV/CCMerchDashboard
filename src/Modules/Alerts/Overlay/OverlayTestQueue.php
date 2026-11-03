@@ -44,8 +44,8 @@ final class OverlayTestQueue {
 	/**
 	 * Adds a rendered alert.
 	 *
-	 * @param int                                                                                                                                                                                                 $overlay Overlay row id.
-	 * @param array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string} $alert   Rendered alert.
+	 * @param int                                                                                                                                                                                                              $overlay Overlay row id.
+	 * @param array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string, tts: string} $alert   Rendered alert.
 	 */
 	public function push( int $overlay, array $alert ): void {
 		$queue   = $this->read( $overlay );
@@ -67,7 +67,7 @@ final class OverlayTestQueue {
 	 * Takes the waiting alerts, oldest first.
 	 *
 	 * @param int $overlay Overlay row id.
-	 * @return list<array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string}>
+	 * @return list<array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string, tts: string}>
 	 */
 	public function drain( int $overlay ): array {
 		$queue = $this->read( $overlay );
@@ -83,7 +83,7 @@ final class OverlayTestQueue {
 	 * The waiting alerts, read fresh.
 	 *
 	 * @param int $overlay Overlay row id.
-	 * @return list<array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string}>
+	 * @return list<array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string, tts: string}>
 	 */
 	private function read( int $overlay ): array {
 		$key = $this->key( $overlay );
@@ -106,6 +106,7 @@ final class OverlayTestQueue {
 					'parts'           => self::parts( $alert['parts'] ?? null, $alert['text'] ),
 					'secondary_parts' => self::parts( $alert['secondary_parts'] ?? null, $alert['secondary'] ),
 					'sound'           => $alert['sound'],
+					'tts'             => is_string( $alert['tts'] ?? null ) ? $alert['tts'] : '',
 				);
 			}
 		}

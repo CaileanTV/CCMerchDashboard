@@ -365,6 +365,7 @@ export function AlertCanvas( {
 				parts: [ ...sample.parts ],
 				secondaryParts: [ ...sample.secondaryParts ],
 				sound: muted ? '' : sound,
+				tts: '',
 			},
 		] );
 	}, [ elements, look, muted, playing, sample, sound ] );

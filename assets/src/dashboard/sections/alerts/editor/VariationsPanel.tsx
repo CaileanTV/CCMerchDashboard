@@ -189,8 +189,11 @@ export function VariationHeader( {
 					/>
 				) }
 			</Field>
-			<fieldset className="merchboard-alert-fieldset">
-				<legend>{ __( 'Conditions', 'merchboard' ) }</legend>
+			<Panel
+				level="group"
+				title={ __( 'Conditions', 'merchboard' ) }
+				defaultOpen
+			>
 				<div className="merchboard-alert-grid">
 					<NumberControl
 						label={ __( 'Least amount', 'merchboard' ) }
@@ -252,7 +255,7 @@ export function VariationHeader( {
 						) ) }
 					</fieldset>
 				) }
-			</fieldset>
+			</Panel>
 			{ audio !== null && (
 				<Field label={ __( 'Sound of the variation', 'merchboard' ) }>
 					{ ( control ) => (

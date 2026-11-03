@@ -59,6 +59,8 @@ use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayService;
 use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlaySounds;
 use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayStore;
 use MerchBoard\Modules\Alerts\Overlay\AlertRenderer;
+use MerchBoard\Modules\Alerts\Tts\AlertTts;
+use MerchBoard\Modules\Alerts\Tts\TtsSettings;
 use MerchBoard\Modules\Alerts\Admin\YouTubeLegalTab;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatCipher;
@@ -174,13 +176,16 @@ final class AlertsModule implements Module {
 			AlertSettings::class,
 			static fn( Container $c ): AlertSettings => new AlertSettings( $c->get( AuditTrail::class ), $c->get( Transaction::class ) )
 		);
+		// The read-out of alerts (ADR-089).
+		$container->set( TtsSettings::class, static fn( Container $c ): TtsSettings => new TtsSettings( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set( AlertTts::class, static fn( Container $c ): AlertTts => new AlertTts( $c->get( TtsSettings::class ), $c->get( Logger::class ) ) );
 		$container->set(
 			AlertsSettingsActions::class,
-			static fn( Container $c ): AlertsSettingsActions => new AlertsSettingsActions( $c->get( AlertSettings::class ), $c->get( Logger::class ) )
+			static fn( Container $c ): AlertsSettingsActions => new AlertsSettingsActions( $c->get( AlertSettings::class ), $c->get( Logger::class ), $c->get( TtsSettings::class ) )
 		);
 		$container->set(
 			AlertsSettingsSection::class,
-			static fn( Container $c ): AlertsSettingsSection => new AlertsSettingsSection( $c->get( AlertsAvailability::class ) )
+			static fn( Container $c ): AlertsSettingsSection => new AlertsSettingsSection( $c->get( AlertsAvailability::class ), $c->get( TtsSettings::class ) )
 		);
 
 		// Font library (phase 25, step 5; ADR-067).
@@ -250,7 +255,8 @@ final class AlertsModule implements Module {
 				null,
 				null,
 				$c->get( OverlayTestQueue::class ),
-				$c->get( AlertSounds::class )
+				$c->get( AlertSounds::class ),
+				$c->get( AlertTts::class )
 			)
 		);
 		// The creator's overlay in the dashboard (phase 25, step 4).
@@ -270,7 +276,7 @@ final class AlertsModule implements Module {
 		);
 		$container->set(
 			MeAlertsController::class,
-			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertSounds::class ), $c->get( AlertImages::class ), $c->get( OverlayPresets::class ), $c->get( CreatorDesigns::class ) )
+			static fn( Container $c ): MeAlertsController => new MeAlertsController( $c->get( CreatorContext::class ), $c->get( AlertOverlays::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( AlertSounds::class ), $c->get( AlertImages::class ), $c->get( OverlayPresets::class ), $c->get( CreatorDesigns::class ), $c->get( TtsSettings::class ) )
 		);
 		// The chatbot on Twitch, Kick and YouTube (phase 25, steps 8, 8.2 and 8.4; ADR-066, ADR-069, ADR-070).
 		$container->set( TwitchApi::class, static fn(): TwitchApi => new TwitchApi() );
@@ -540,7 +546,7 @@ final class AlertsModule implements Module {
 		$container->set( GlobalOverlayImages::class, static fn( Container $c ): GlobalOverlayImages => new GlobalOverlayImages( $c->get( GlobalOverlayStore::class ), $c->get( ImageFiles::class ), $c->get( AlertImageLibrary::class ) ) );
 		$container->set(
 			GlobalOverlayFeed::class,
-			static fn( Container $c ): GlobalOverlayFeed => new GlobalOverlayFeed( $c->get( GlobalOverlayStore::class ), $c->get( AlertEventRepository::class ), new AlertRenderer( $c->get( AlertTemplate::class ) ), $c->get( AlertsAvailability::class ), new OverlayTestQueue( 'global' ), $c->get( GlobalOverlaySounds::class ) )
+			static fn( Container $c ): GlobalOverlayFeed => new GlobalOverlayFeed( $c->get( GlobalOverlayStore::class ), $c->get( AlertEventRepository::class ), new AlertRenderer( $c->get( AlertTemplate::class ), null, $c->get( AlertTts::class ) ), $c->get( AlertsAvailability::class ), new OverlayTestQueue( 'global' ), $c->get( GlobalOverlaySounds::class ) )
 		);
 		$container->set(
 			GlobalOverlayService::class,
