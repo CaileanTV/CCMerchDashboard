@@ -2826,6 +2826,19 @@ input:disabled + .merchboard-sounds__upload {
 	min-width: 0;
 	overflow: auto;
 	border-radius: var(--merchboard-radius);
+
+	// On a wide screen the canvas fits the screen's height too, so the page
+	// does not scroll because of it (a scroll bar that comes and goes would
+	// change the width and the canvas with it).
+	@media (min-width: $merchboard-lg) {
+		max-width: calc((100vh - 15rem) * 16 / 9);
+		margin-inline: auto;
+	}
+}
+
+// The scroll bar's room is kept, so the page's width never jumps.
+html:has(.merchboard-alert-editor) {
+	scrollbar-gutter: stable;
 }
 
 .merchboard-alert-canvas__stage {

@@ -312,17 +312,28 @@ export function AlertCanvas( {
 			return undefined;
 		}
 
+		let frame = 0;
+		// Only a real change counts, once a frame: a change of a pixel or two
+		// (a scroll bar coming and going) must not start a loop of resizes.
 		const observer = new ResizeObserver( ( entries ) => {
-			const measured = entries[ 0 ]?.contentRect.width ?? 0;
+			const measured = Math.floor( entries[ 0 ]?.contentRect.width ?? 0 );
 
-			if ( measured > 0 ) {
-				setWidth( measured );
-			}
+			window.cancelAnimationFrame( frame );
+			frame = window.requestAnimationFrame( () =>
+				setWidth( ( current ) =>
+					measured > 0 && Math.abs( measured - current ) > 2
+						? measured
+						: current
+				)
+			);
 		} );
 
 		observer.observe( node );
 
-		return () => observer.disconnect();
+		return () => {
+			window.cancelAnimationFrame( frame );
+			observer.disconnect();
+		};
 	}, [] );
 
 	useLayoutEffect( () => {
