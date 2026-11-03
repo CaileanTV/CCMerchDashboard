@@ -265,6 +265,10 @@ function Editor( props: EditorProps ) {
 	const [ stageReady, setStageReady ] = useState( false );
 	const loading = useRef( new Set< number >() );
 	const sideRef = useRef( side );
+	// The side the canvas shows now: a change on it is written to that side only (30.15 review).
+	const shownSide = useRef< string | null >( null );
+	// A side whose threads could not be worked out is shown as it is.
+	const [ threadFailed, setThreadFailed ] = useState< string | null >( null );
 
 	const view =
 		base.views.find( ( candidate ) => candidate.key === side ) ??
@@ -437,10 +441,16 @@ function Editor( props: EditorProps ) {
 				}
 
 				current = new module.FabricStage( canvasElement.current, {
-					onChange: ( next ) =>
+					onChange: ( next ) => {
+						// Objects of another side, shown while the new side's threads load, are never saved to it.
+						if ( shownSide.current !== sideRef.current ) {
+							return;
+						}
+
 						history.set( ( present ) =>
 							withObjects( present, sideRef.current, next )
-						),
+						);
+					},
 					onSelect: setSelected,
 				} );
 				stage.current = current;
@@ -480,13 +490,17 @@ function Editor( props: EditorProps ) {
 
 		let cancelled = false;
 
-		void threadSide( objects, images, swaps ?? {}, embroidery ).then(
-			( result ) => {
+		threadSide( objects, images, swaps ?? {}, embroidery )
+			.then( ( result ) => {
 				if ( ! cancelled ) {
 					setThreaded( { ...result, side: view.key } );
 				}
-			}
-		);
+			} )
+			.catch( () => {
+				if ( ! cancelled ) {
+					setThreadFailed( view.key );
+				}
+			} );
 
 		return () => {
 			cancelled = true;
@@ -495,10 +509,19 @@ function Editor( props: EditorProps ) {
 	}, [ design, side, images, embroidery ] );
 
 	useEffect( () => {
-		if ( embroidery !== null && plan === null ) {
+		if (
+			embroidery !== null &&
+			plan === null &&
+			threadFailed !== view?.key
+		) {
+			// Until the threads are known the canvas shows nothing, not the previous side.
+			shownSide.current = null;
+			void stage.current?.render( [], images, null, null );
+
 			return;
 		}
 
+		shownSide.current = view?.key ?? null;
 		void stage.current?.render(
 			objects,
 			plan === null || threaded === null ? images : threaded.images,
@@ -512,7 +535,16 @@ function Editor( props: EditorProps ) {
 		);
 		// Fonts arriving re-render the texts.
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- objects is derived from design and side.
-	}, [ stageReady, design, side, images, threaded, selected, fontsReady ] );
+	}, [
+		stageReady,
+		design,
+		side,
+		images,
+		threaded,
+		threadFailed,
+		selected,
+		fontsReady,
+	] );
 
 	const setObjects = ( next: readonly DesignObject[] ) => {
 		if ( view !== undefined ) {

@@ -158,7 +158,7 @@ async function measure(
 
 	context?.drawImage( image, 0, 0, MEASURE, MEASURE );
 
-	return {
+	const measured = {
 		width: image.width,
 		height: image.height,
 		hex:
@@ -168,6 +168,11 @@ async function measure(
 						context.getImageData( 0, 0, MEASURE, MEASURE ).data
 					),
 	};
+
+	// The full-size picture is freed at once (30.15 review: hundreds of photos).
+	image.close?.();
+
+	return measured;
 }
 
 /**
@@ -255,7 +260,12 @@ export function attachColorPhotos(
 		say( index, __( 'Reading the photos…', 'merchboard' ) );
 
 		try {
-			const sizes = await Promise.all( files.map( measure ) );
+			// One photo at a time: hundreds of full-size pictures decoded together exhaust the memory.
+			const sizes: Array< Awaited< ReturnType< typeof measure > > > = [];
+
+			for ( const file of files ) {
+				sizes.push( await measure( file ) );
+			}
 			const [ first ] = sizes;
 
 			if (
