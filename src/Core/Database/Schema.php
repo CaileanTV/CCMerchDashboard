@@ -17,6 +17,7 @@ use MerchBoard\Core\Database\Migrations\AddDesignerBaseImport;
 use MerchBoard\Core\Database\Migrations\AddDesignerBaseNote;
 use MerchBoard\Core\Database\Migrations\AddDesignerExtraSidePrice;
 use MerchBoard\Core\Database\Migrations\AddDesignerSizePrices;
+use MerchBoard\Core\Database\Migrations\AddDesignerSmallSidePrice;
 use MerchBoard\Core\Database\Migrations\CreateDesignerFees;
 use MerchBoard\Core\Database\Migrations\AddDesignerShopPrice;
 use MerchBoard\Core\Database\Migrations\CreateAlertEventsTable;
@@ -113,6 +114,7 @@ final class Schema {
 			41 => new AddDesignerBaseNote(),
 			42 => new AddDesignerSizePrices(),
 			43 => new CreateDesignerFees(),
+			44 => new AddDesignerSmallSidePrice(),
 		);
 	}
 }

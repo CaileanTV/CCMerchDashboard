@@ -941,6 +941,7 @@ final class MeDesignerController extends RestController {
 			'size_prices'      => (object) array_map( array( SalesAmount::class, 'format' ), $base->size_prices ),
 			'base_price'       => SalesAmount::format( $base->base_units ),
 			'extra_side_price' => SalesAmount::format( $base->extra_side_units ),
+			'small_side_price' => SalesAmount::format( $base->small_side_units ),
 			'currency'         => $base->currency,
 			'colors'           => $base->colors,
 			'sizes'            => $base->sizes,
@@ -963,6 +964,7 @@ final class MeDesignerController extends RestController {
 						'dpi'          => $view->dpi,
 						'flat'         => $view->flat,
 						'sizes'        => $view->sizes,
+						'small'        => $view->small,
 						'scene'        => $view->scene,
 						'embroidery'   => null === $pack ? null : array(
 							'max'      => $pack['max'],

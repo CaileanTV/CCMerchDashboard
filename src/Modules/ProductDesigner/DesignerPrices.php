@@ -144,9 +144,10 @@ final class DesignerPrices implements DesignerPriceSource {
 	}
 
 	/**
-	 * What the company keeps of a design: the base price, which includes one
-	 * design area, and the price of every further used area (the owner's
-	 * choice 2026-10-30). A profit in percent is taken of this amount. A design
+	 * What the company keeps of a design: the base price, which includes the
+	 * most expensive used design area, and the price of every further used
+	 * area, a small one's or a large one's (the owner's choices 2026-10-30 and
+	 * 2026-11-03). A profit in percent is taken of this amount. A design
 	 * with one size has that size's base price. With sides per size, only the
 	 * areas of one size count: the other sizes' sides are other products.
 	 *
@@ -158,9 +159,9 @@ final class DesignerPrices implements DesignerPriceSource {
 		$decoded = is_string( $design ) ? json_decode( $design, true ) : $design;
 		$chosen  = is_string( $sizes ) ? json_decode( $sizes, true ) : $sizes;
 		$size    = is_array( $chosen ) && 1 === count( $chosen ) ? reset( $chosen ) : null;
-		$used    = is_array( $decoded ) ? $base->areas( SubmissionFiles::used_sides( $decoded ), is_array( $chosen ) ? array_values( array_filter( $chosen, 'is_string' ) ) : null ) : 0;
+		$extra   = is_array( $decoded ) ? $base->extra_amount( SubmissionFiles::used_sides( $decoded ), is_array( $chosen ) ? array_values( array_filter( $chosen, 'is_string' ) ) : null ) : 0;
 
-		return $base->price_of( is_string( $size ) ? $size : null ) + max( 0, $used - 1 ) * $base->extra_side_units;
+		return $base->price_of( is_string( $size ) ? $size : null ) + $extra;
 	}
 
 	/**

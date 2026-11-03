@@ -73,6 +73,8 @@ export interface DesignerView {
 	readonly flat: boolean;
 	/** The sizes the side belongs to; empty for every size. */
 	readonly sizes: readonly string[];
+	/** A small design area: as an extra area it costs `smallSidePrice`. */
+	readonly small: boolean;
 }
 
 export interface DesignerBase {
@@ -88,8 +90,10 @@ export interface DesignerBase {
 	/** The base price of a size that has its own. */
 	readonly sizePrices: Readonly< Record< string, string > >;
 	readonly basePrice: string;
-	/** What each used side after the first adds to the base price. */
+	/** What each further used large side adds to the base price. */
 	readonly extraSidePrice: string;
+	/** What each further used small side adds to the base price. */
+	readonly smallSidePrice: string;
 	readonly currency: string;
 	readonly colors: readonly DesignerColor[];
 	readonly sizes: readonly string[];
@@ -413,6 +417,7 @@ function parseView( value: unknown ): DesignerView | null {
 		sizes: Array.isArray( value.sizes )
 			? value.sizes.filter( isString )
 			: [],
+		small: value.small === true,
 	};
 }
 
@@ -431,6 +436,8 @@ function parseBase( value: unknown ): DesignerBase | null {
 		! DECIMAL.test( value.base_price ) ||
 		! isString( value.extra_side_price ) ||
 		! DECIMAL.test( value.extra_side_price ) ||
+		! isString( value.small_side_price ) ||
+		! DECIMAL.test( value.small_side_price ) ||
 		! isString( value.currency )
 	) {
 		return null;
@@ -460,6 +467,7 @@ function parseBase( value: unknown ): DesignerBase | null {
 					: {},
 				basePrice: value.base_price,
 				extraSidePrice: value.extra_side_price,
+				smallSidePrice: value.small_side_price,
 				currency: value.currency,
 				preview: value.preview === true,
 				stitches: strings( value.stitches ) ?? [],

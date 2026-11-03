@@ -228,8 +228,8 @@ class DesignerApply {
 
 		$now = $this->bases->find( $base->id ?? 0 );
 
-		// A price changed while the version was applied (also a size's own price, 30.15 review): the shop gets it now.
-		if ( null !== $now && ( $now->base_units !== $base->base_units || $now->extra_side_units !== $base->extra_side_units || $now->size_prices !== $base->size_prices ) && null !== $this->reprice ) {
+		// A price changed while the version was applied (also a size's own price or a side's area, 30.15): the shop gets it now.
+		if ( null !== $now && $now->price_terms() !== $base->price_terms() && null !== $this->reprice ) {
 			( $this->reprice )( $product_id );
 		}
 	}

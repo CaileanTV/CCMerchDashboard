@@ -1118,6 +1118,24 @@ final class DesignerReviewTest extends IntegrationTestCase {
 
 		self::assertSame( array( array( $shop, 2519400 ) ), $this->writer->prices, 'A new extra price reaches only the product that uses it: (149.95 + 60) + 20 %.' );
 		self::assertSame( '209.9500', $this->products->product( $two )['shop_base_price'] ?? null );
+
+		// The back becomes a small area at 20 (the owner's choice 2026-11-03): the shop follows.
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '149,95' ), array( 'extra_side_price' => '60', 'small_side_price' => '20' ) ), array( $this->base_views()[0], array_merge( $this->base_views()[0], array( 'key' => 'back', 'name' => 'Back', 'small' => '1' ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->queue->drain(
+			function ( string $hook, array $args ): void {
+				if ( DesignerRepricing::HOOK === $hook ) {
+					$this->repricing->run( ...$args );
+				}
+			}
+		);
+
+		self::assertSame( array( true, 200000 ), array( $this->bases_row()->views[1]->small ?? null, $this->bases_row()->small_side_units ) );
+		self::assertSame( array( $shop, 2039400 ), $this->writer->prices[ array_key_last( $this->writer->prices ) ] ?? null, 'The front is included and the small back costs 20: (149.95 + 20) + 20 %.' );
+		self::assertSame( '169.9500', $this->products->product( $two )['shop_base_price'] ?? null );
+
+		// Left out of the form, a side stays small.
+		$this->bases->save( $this->base, $this->base_fields( '149,95' ), array( $this->base_views()[0], array_merge( $this->base_views()[0], array( 'key' => 'back', 'name' => 'Back' ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertTrue( $this->bases_row()->views[1]->small ?? null );
 	}
 
 	public function test_a_retired_base_product_takes_its_products_out_of_the_shop(): void {

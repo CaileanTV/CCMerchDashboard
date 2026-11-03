@@ -21,9 +21,10 @@ defined( 'ABSPATH' ) || exit;
  * `version` grows with every change of a template or print area (from step
  * 30.11 not with a new price; the designer products follow a new price).
  * Creators design only on an `active` base product; a `retired` one is
- * out of the shop for good. One design area is included in the base price;
- * every further used area adds `extra_side_units` to what the company keeps
- * (the owner's choice 2026-10-30, DesignerPrices::secured_base()).
+ * out of the shop for good. The most expensive used design area is included
+ * in the base price; every further used area adds `extra_side_units`, or
+ * `small_side_units` on a small side, to what the company keeps (the owner's
+ * choices 2026-10-30 and 2026-11-03, DesignerPrices::secured_base()).
  */
 final readonly class BaseProduct {
 
@@ -63,9 +64,10 @@ final readonly class BaseProduct {
 	 * @param string[]           $sizes       Sizes.
 	 * @param BaseView[]         $views       Sides.
 	 * @param int                $version     Version.
-	 * @param int                $extra_side_units Price incl. VAT of each used side after the first.
+	 * @param int                $extra_side_units Price incl. VAT of each further used large side.
 	 * @param string             $note             What creators read in the designer; may be empty.
 	 * @param array<string, int> $size_prices The price of a size that has its own; empty with one price for all.
+	 * @param int                $small_side_units Price incl. VAT of each further used small side.
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -83,9 +85,10 @@ final readonly class BaseProduct {
 		public int $version = 1,
 		public int $extra_side_units = 0,
 		public string $note = '',
-		public array $size_prices = array()
+		public array $size_prices = array(),
+		public int $small_side_units = 0
 	) {
-		if ( ( null !== $id && $id < 1 ) || ! in_array( $status, array( self::DRAFT, self::ACTIVE, self::RETIRED ), true ) || ! in_array( $source, self::SOURCES, true ) || $version < 1 || $extra_side_units < 0 ) {
+		if ( ( null !== $id && $id < 1 ) || ! in_array( $status, array( self::DRAFT, self::ACTIVE, self::RETIRED ), true ) || ! in_array( $source, self::SOURCES, true ) || $version < 1 || $extra_side_units < 0 || $small_side_units < 0 ) {
 			throw new InvalidArgumentException( 'Invalid base product.' );
 		}
 
@@ -187,6 +190,65 @@ final readonly class BaseProduct {
 
 		foreach ( $sizes ?? $this->sizes as $size ) {
 			$most = max( $most, count( array_intersect( $used, $this->sides_of( $size ) ) ) );
+		}
+
+		return $most;
+	}
+
+	/**
+	 * Everything a design's price depends on: when it changes, the shop gets a new price.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function price_terms(): array {
+		return array(
+			'base'  => $this->base_units,
+			'sizes' => $this->size_prices,
+			'large' => $this->extra_side_units,
+			'small' => $this->small_side_units,
+			'sides' => array_map( static fn( BaseView $view ): bool => $view->small, $this->views ),
+		);
+	}
+
+	/**
+	 * The price of a side as an extra design area: a small side's or a large one's.
+	 *
+	 * @param BaseView $view Side.
+	 */
+	public function extra_of( BaseView $view ): int {
+		return $view->small ? $this->small_side_units : $this->extra_side_units;
+	}
+
+	/**
+	 * What the extra design areas of one product cost: the most expensive used
+	 * area is included in the base price and every other one adds its price.
+	 * With sides per size, the size that costs most, so the company never gets
+	 * less than it set (the owner's choice 2026-11-03).
+	 *
+	 * @param string[]      $used  The used sides.
+	 * @param string[]|null $sizes The chosen sizes; null for all of them.
+	 */
+	public function extra_amount( array $used, ?array $sizes = null ): int {
+		$views = array();
+		$most  = 0;
+
+		foreach ( $this->views as $view ) {
+			$views[ $view->key ] = $view;
+		}
+
+		foreach ( $this->sized() ? ( $sizes ?? $this->sizes ) : array( null ) as $size ) {
+			$prices = array();
+
+			foreach ( array_unique( $used ) as $key ) {
+				$view = $views[ $key ] ?? null;
+
+				// Without sides per size, a side the base product no longer has counts as a large area, as before.
+				if ( null === $size || ( null !== $view && $view->on_size( $size ) ) ) {
+					$prices[] = null === $view ? $this->extra_side_units : $this->extra_of( $view );
+				}
+			}
+
+			$most = max( $most, array() === $prices ? 0 : array_sum( $prices ) - max( $prices ) );
 		}
 
 		return $most;

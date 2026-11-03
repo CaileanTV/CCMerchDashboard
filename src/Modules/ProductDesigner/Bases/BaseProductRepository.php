@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class BaseProductRepository {
 
-	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price, creator_note, size_prices';
+	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price, creator_note, size_prices, small_side_price';
 
 	/**
 	 * Constructor.
@@ -410,6 +410,7 @@ class BaseProductRepository {
 			'extra_side_price' => SalesAmount::format( $base->extra_side_units ),
 			'creator_note'     => $base->note,
 			'size_prices'      => array() === $base->size_prices ? null : (string) wp_json_encode( array_map( array( SalesAmount::class, 'format' ), $base->size_prices ) ),
+			'small_side_price' => SalesAmount::format( $base->small_side_units ),
 		);
 	}
 
@@ -470,7 +471,8 @@ class BaseProductRepository {
 				is_numeric( $row['version'] ?? null ) ? (int) $row['version'] : 0,
 				SalesAmount::parse( (string) ( $row['extra_side_price'] ?? '0' ) ),
 				(string) ( $row['creator_note'] ?? '' ),
-				self::size_prices( $row['size_prices'] ?? null )
+				self::size_prices( $row['size_prices'] ?? null ),
+				SalesAmount::parse( (string) ( $row['small_side_price'] ?? '0' ) )
 			);
 		} catch ( InvalidArgumentException ) {
 			throw new DatabaseException( 'Invalid base product row.' );

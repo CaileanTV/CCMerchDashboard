@@ -151,6 +151,7 @@ final readonly class BaseView {
 	 * @param bool                                           $flat        Whether the side is a flat part of an all-over product.
 	 * @param array<string, mixed>|null                      $scene       The side's PSD scene; it comes with the layer `scene`.
 	 * @param string[]                                       $sizes       The sizes the side belongs to; empty for every size.
+	 * @param bool                                           $small       Whether the side is a small design area, with the price of small extra areas.
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -166,7 +167,8 @@ final readonly class BaseView {
 		public string $thread_pack = '',
 		public bool $flat = false,
 		public ?array $scene = null,
-		public array $sizes = array()
+		public array $sizes = array(),
+		public bool $small = false
 	) {
 		if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9-]{0,31}$/', $key ) || '' === $name || mb_strlen( $name ) > 60 ) {
 			throw new InvalidArgumentException( 'Invalid side.' );
@@ -325,6 +327,10 @@ final readonly class BaseView {
 			$side['sizes'] = $this->sizes;
 		}
 
+		if ( $this->small ) {
+			$side['small'] = true;
+		}
+
 		return $side;
 	}
 
@@ -364,7 +370,8 @@ final readonly class BaseView {
 			is_string( $data['thread_pack'] ?? null ) ? $data['thread_pack'] : '',
 			true === ( $data['flat'] ?? false ),
 			is_array( $data['scene'] ?? null ) ? $data['scene'] : null,
-			is_array( $data['sizes'] ?? null ) ? array_values( array_filter( $data['sizes'], 'is_string' ) ) : array()
+			is_array( $data['sizes'] ?? null ) ? array_values( array_filter( $data['sizes'], 'is_string' ) ) : array(),
+			true === ( $data['small'] ?? false )
 		);
 	}
 }

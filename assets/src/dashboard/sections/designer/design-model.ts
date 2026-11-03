@@ -515,6 +515,95 @@ export function usedAreas(
 	);
 }
 
+/** A side with what it costs as an extra design area. */
+export interface PricedSide extends SizedSide {
+	readonly name: string;
+	readonly small: boolean;
+}
+
+/** A design area that costs extra. */
+export interface ExtraArea {
+	readonly key: string;
+	readonly name: string;
+	readonly price: number;
+}
+
+/**
+ * The design areas that cost extra: the most expensive used area is included
+ * in the base price, and every other one costs a large or a small area's
+ * price. With sides per size, those of the size that costs most (the server's
+ * `BaseProduct::extra_amount()`).
+ *
+ * @param views  The sides of the base product.
+ * @param design The document.
+ * @param sizes  The chosen sizes.
+ * @param large  Price of an extra large area (decimal string).
+ * @param small  Price of an extra small area (decimal string).
+ */
+export function extraAreas(
+	views: readonly PricedSide[],
+	design: DesignDocument,
+	sizes: readonly string[],
+	large: string,
+	small: string
+): ExtraArea[] {
+	const used = usedSides( design );
+	// Without sides per size, a side the base product no longer has is a large area, as on the server.
+	const groups = views.every( ( view ) => view.sizes.length === 0 )
+		? [
+				used.map(
+					( key ) =>
+						views.find( ( view ) => view.key === key ) ?? {
+							key,
+							name: key,
+							small: false,
+							sizes: [],
+						}
+				),
+			]
+		: sizes.map( ( size ) =>
+				views.filter(
+					( view ) =>
+						used.includes( view.key ) &&
+						( view.sizes.length === 0 ||
+							view.sizes.includes( size ) )
+				)
+			);
+	let best: ExtraArea[] = [];
+	let most = -1;
+
+	for ( const group of groups ) {
+		const areas = group.map( ( view ) => ( {
+			key: view.key,
+			name: view.name,
+			price: Number( view.small ? small : large ),
+		} ) );
+		const included = areas.reduce(
+			( top, area, index ) =>
+				area.price > ( areas[ top ]?.price ?? 0 ) ? index : top,
+			0
+		);
+		const paid = areas.filter( ( _, index ) => index !== included );
+		const sum = paid.reduce( ( total, area ) => total + area.price, 0 );
+
+		if ( sum > most ) {
+			best = paid;
+			most = sum;
+		}
+	}
+
+	return best;
+}
+
+/**
+ * What the extra design areas cost together.
+ *
+ * @param areas The design areas that cost extra.
+ */
+export function extraTotal( areas: readonly ExtraArea[] ): number {
+	return areas.reduce( ( total, area ) => total + area.price, 0 );
+}
+
 /**
  * Whether a design fits the chosen sizes: with sides per size each chosen size
  * has a design, and no design lies on a size that is not chosen (the server's
@@ -707,20 +796,17 @@ export function moveObject(
  * @param kind      `percent` of the base price or `fixed` amount.
  * @param value     Percent or amount as entered (comma or point).
  * @param decimals  Store price decimals.
- * @param extra     Price of each used side after the first (decimal string).
- * @param sides     Used sides; one is included in the base price.
+ * @param extra     What the extra design areas cost together (extraTotal()).
  */
 export function quotePrice(
 	basePrice: string,
 	kind: 'percent' | 'fixed',
 	value: string,
 	decimals: number,
-	extra = '0',
-	sides = 1
+	extra = 0
 ): number | null {
 	const parsed = Number( value.trim().replace( ',', '.' ) );
-	const base =
-		Number( basePrice ) + Number( extra ) * Math.max( 0, sides - 1 );
+	const base = Number( basePrice ) + extra;
 
 	if (
 		value.trim() === '' ||

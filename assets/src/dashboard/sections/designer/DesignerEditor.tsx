@@ -54,7 +54,8 @@ import {
 	objectsOf,
 	quotePrice,
 	updateObject,
-	usedAreas,
+	extraAreas,
+	extraTotal,
 	usedSides,
 	withKnownThreads,
 	withObjects,
@@ -63,6 +64,7 @@ import {
 import type {
 	DesignDocument,
 	DesignObject,
+	ExtraArea,
 	ShapeType,
 	TextObject,
 } from './design-model';
@@ -295,7 +297,13 @@ function Editor( props: EditorProps ) {
 		[ overview ]
 	);
 	const fonts = overview.fonts;
-	const areas = usedAreas( base.views, design, sizes );
+	const extras = extraAreas(
+		base.views,
+		design,
+		sizes,
+		base.extraSidePrice,
+		base.smallSidePrice
+	);
 	const feeText =
 		Number( overview.digitizationFee ) > 0
 			? moneyText( overview.digitizationFee, base.currency, locale )
@@ -305,8 +313,7 @@ function Editor( props: EditorProps ) {
 		profitKind,
 		profitValue,
 		overview.priceDecimals,
-		base.extraSidePrice,
-		areas
+		extraTotal( extras )
 	);
 	const scenePreview = base.views.some(
 		( candidate ) =>
@@ -1491,9 +1498,17 @@ function Editor( props: EditorProps ) {
 						profitKind={ profitKind }
 						profitValue={ profitValue }
 						price={ price }
-						areas={ areas }
-						sizeAreas={ ( size ) =>
-							usedAreas( base.views, design, [ size ] )
+						extras={ extras }
+						sizeExtra={ ( size ) =>
+							extraTotal(
+								extraAreas(
+									base.views,
+									design,
+									[ size ],
+									base.extraSidePrice,
+									base.smallSidePrice
+								)
+							)
 						}
 						sizes={ sizes }
 						onProfitKind={ setProfitKind }
@@ -1557,8 +1572,8 @@ function NextSteps() {
  * @param props.profitKind    Amount or percent.
  * @param props.profitValue   The profit as entered.
  * @param props.price         The customer's price; null when the profit is invalid.
- * @param props.areas         Used design areas; one is included in the base price.
- * @param props.sizeAreas     The used design areas of a size.
+ * @param props.extras        The design areas that cost extra.
+ * @param props.sizeExtra     What the extra design areas of a size cost.
  * @param props.sizes         The chosen sizes.
  * @param props.onProfitKind  Changes the kind.
  * @param props.onProfitValue Changes the value.
@@ -1570,22 +1585,29 @@ function PricePanel( props: {
 	readonly profitKind: ProfitKind;
 	readonly profitValue: string;
 	readonly price: number | null;
-	readonly areas: number;
-	readonly sizeAreas: ( size: string ) => number;
+	readonly extras: readonly ExtraArea[];
+	readonly sizeExtra: ( size: string ) => number;
 	readonly sizes: readonly string[];
 	readonly onProfitKind: ( value: ProfitKind ) => void;
 	readonly onProfitValue: ( value: string ) => void;
 } ) {
 	const { base, locale, price, decimals } = props;
-	const extra = Math.max( 0, props.areas - 1 );
-	const secured =
-		Number( base.basePrice ) + extra * Number( base.extraSidePrice );
+	const extra = extraTotal( props.extras );
+	const secured = Number( base.basePrice ) + extra;
 	const money = ( value: number | string ): string =>
 		moneyText(
 			typeof value === 'number' ? value.toFixed( decimals ) : value,
 			base.currency,
 			locale
 		);
+	// What each side costs as a further design area, when anything does.
+	const prices = base.views
+		.map( ( view ) => ( {
+			name: view.name,
+			price: view.small ? base.smallSidePrice : base.extraSidePrice,
+		} ) )
+		.filter( ( side ) => Number( side.price ) > 0 )
+		.map( ( side ) => `${ side.name } ${ money( side.price ) }` );
 
 	return (
 		<section className="merchboard-product-designer__card">
@@ -1644,23 +1666,22 @@ function PricePanel( props: {
 					<dt>{ __( 'Base price', 'merchboard' ) }</dt>
 					<dd>{ money( base.basePrice ) }</dd>
 				</div>
-				{ extra > 0 && Number( base.extraSidePrice ) > 0 ? (
-					<div>
-						<dt>
-							{ sprintf(
-								/* translators: 1: extra design areas, 2: price of one. */ __(
-									'Extra design areas: %1$d × %2$s',
-									'merchboard'
-								),
-								extra,
-								money( base.extraSidePrice )
-							) }
-						</dt>
-						<dd>
-							{ money( extra * Number( base.extraSidePrice ) ) }
-						</dd>
-					</div>
-				) : null }
+				{ props.extras
+					.filter( ( area ) => area.price > 0 )
+					.map( ( area ) => (
+						<div key={ area.key }>
+							<dt>
+								{ sprintf(
+									/* translators: %s: side, e.g. "Sleeve". */ __(
+										'Extra design area: %s',
+										'merchboard'
+									),
+									area.name
+								) }
+							</dt>
+							<dd>{ money( area.price ) }</dd>
+						</div>
+					) ) }
 				<div>
 					<dt>{ __( 'Your profit', 'merchboard' ) }</dt>
 					<dd>{ price === null ? '–' : money( price - secured ) }</dd>
@@ -1677,8 +1698,7 @@ function PricePanel( props: {
 								props.profitKind,
 								props.profitValue,
 								decimals,
-								base.extraSidePrice,
-								props.sizeAreas( size )
+								props.sizeExtra( size )
 							);
 
 							return (
@@ -1704,14 +1724,14 @@ function PricePanel( props: {
 					{ __( 'Enter a profit of at least 0.', 'merchboard' ) }
 				</p>
 			) : null }
-			{ extra === 0 && Number( base.extraSidePrice ) > 0 ? (
+			{ prices.length > 0 ? (
 				<p className="merchboard-product-designer__hint">
 					{ sprintf(
-						/* translators: %s: price of one extra design area. */ __(
-							'One design area is included. Each extra area costs %s.',
+						/* translators: %s: sides with their prices, e.g. "Back 50.00 kr., Sleeve 20.00 kr.". */ __(
+							'The most expensive design area you use is included in the base price. Each further area costs: %s.',
 							'merchboard'
 						),
-						money( base.extraSidePrice )
+						prices.join( ', ' )
 					) }
 				</p>
 			) : null }

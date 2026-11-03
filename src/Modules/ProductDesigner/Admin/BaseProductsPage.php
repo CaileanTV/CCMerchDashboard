@@ -330,7 +330,7 @@ final class BaseProductsPage {
 				esc_url( self::edit_url( (int) $base->id ) ),
 				esc_html( $base->name ),
 				esc_html( self::status( $base->status ) . self::import_label( $this->bases->import( (int) $base->id )['state'] ?? CatalogImport::NONE ) ),
-				esc_html( $this->money( $base->base_units ) . ' ' . $base->currency . ( $base->extra_side_units > 0 ? ' + ' . $this->money( $base->extra_side_units ) : '' ) ),
+				esc_html( $this->money( $base->base_units ) . ' ' . $base->currency . ( $base->extra_side_units > 0 ? ' + ' . $this->money( $base->extra_side_units ) : '' ) . ( $base->small_side_units > 0 ? ' / ' . $this->money( $base->small_side_units ) : '' ) ),
 				esc_html( (string) count( $base->colors ) ),
 				esc_html( implode( ', ', $base->sizes ) ),
 				esc_html( implode( ', ', array_map( static fn( BaseView $view ): string => $view->name, $base->views ) ) ),
@@ -387,7 +387,9 @@ final class BaseProductsPage {
 		echo '<div id="merchboard-base-size-prices" data-prices="' . esc_attr( (string) wp_json_encode( array_map( array( $this, 'money' ), $base->size_prices ?? array() ) ) ) . '"></div>';
 		echo '<p class="description">' . esc_html__( 'Without the tick, every size has the base price above. With it, a size left empty has that price too. A creator\'s percent is taken of each size\'s price; a fixed profit is the same for every size.', 'merchboard' ) . '</p></td></tr>';
 		/* translators: %s: currency code, e.g. "DKK". */
-		echo '<tr><th scope="row"><label for="merchboard-base-extra">' . esc_html( sprintf( __( 'Price per extra design area incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-extra" name="extra_side_price" value="' . esc_attr( null === $base ? '0' : $this->money( $base->extra_side_units ) ) . '"><p class="description">' . esc_html__( 'What the company keeps for each design area after the first. 0 means extra areas cost nothing.', 'merchboard' ) . '</p></td></tr>';
+		echo '<tr><th scope="row"><label for="merchboard-base-extra">' . esc_html( sprintf( __( 'Price per extra large design area incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-extra" name="extra_side_price" value="' . esc_attr( null === $base ? '0' : $this->money( $base->extra_side_units ) ) . '"><p class="description">' . esc_html__( 'What the company keeps for each further large design area. The most expensive area used is included in the base price. 0 means extra areas cost nothing.', 'merchboard' ) . '</p></td></tr>';
+		/* translators: %s: currency code, e.g. "DKK". */
+		echo '<tr><th scope="row"><label for="merchboard-base-small">' . esc_html( sprintf( __( 'Price per extra small design area incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-small" name="small_side_price" value="' . esc_attr( null === $base ? '0' : $this->money( $base->small_side_units ) ) . '"><p class="description">' . esc_html__( 'The same for each further small design area, e.g. a sleeve or the neck. Each side is large or small under Sides.', 'merchboard' ) . '</p></td></tr>';
 		echo '<tr><th scope="row"><label for="merchboard-base-category">' . esc_html__( 'Default category', 'merchboard' ) . '</label></th><td>' . $this->category_select( $base->category_id ?? null ) . '<p class="description">' . esc_html__( 'Used for a creator without their own product category.', 'merchboard' ) . '</p></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- category_select() escapes.
 		echo '<tr><th scope="row"><label for="merchboard-base-colors">' . esc_html__( 'Colours', 'merchboard' ) . '</label></th><td><textarea id="merchboard-base-colors" name="colors" rows="5" class="large-text code">' . esc_textarea( $colors ) . '</textarea><p class="description">' . esc_html__( 'One per line: a name and a colour code, e.g. "Black #111111".', 'merchboard' ) . '</p></td></tr>';
 		echo '<tr><th scope="row"><label for="merchboard-base-sizes">' . esc_html__( 'Sizes', 'merchboard' ) . '</label></th><td><input type="text" id="merchboard-base-sizes" name="sizes" class="regular-text" value="' . esc_attr( implode( ', ', $base->sizes ?? array() ) ) . '"><p class="description">' . esc_html__( 'Separated by commas, e.g. "S, M, L, XL". Creators and customers see them in this order.', 'merchboard' ) . '</p><div id="merchboard-base-size-order"></div></td></tr>';
@@ -518,6 +520,14 @@ final class BaseProductsPage {
 
 		echo '</p><p><label>' . esc_html__( 'Embroidery pack', 'merchboard' ) . ' ' . self::pack_select( $field( 'thread_pack' ), $view->thread_pack ?? '' ) . '</label> '; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- pack_select() escapes.
 		echo '<span class="description">' . esc_html__( 'On an embroidered side, the design keeps to the threads of the pack.', 'merchboard' ) . '</span>';
+
+		// A small design area costs the price of small extra areas (the owner's choice 2026-11-03).
+		$small = true === $view?->small;
+
+		echo '</p><p>' . esc_html__( 'Design area:', 'merchboard' ) . ' ';
+		echo '<label><input type="radio" name="' . esc_attr( $field( 'small' ) ) . '" value="0"' . checked( $small, false, false ) . '> ' . esc_html__( 'Large', 'merchboard' ) . '</label> ';
+		echo '<label><input type="radio" name="' . esc_attr( $field( 'small' ) ) . '" value="1"' . checked( $small, true, false ) . '> ' . esc_html__( 'Small', 'merchboard' ) . '</label> ';
+		echo '<span class="description">' . esc_html__( 'As an extra design area, the side costs the base product\'s price for a large or a small area. The most expensive area used is included in the base price.', 'merchboard' ) . '</span>';
 
 		if ( $psd && $own ) {
 			echo '</p><div data-merchboard-side-sizes="' . esc_attr( 'views[' . $index . ']' ) . '" data-chosen="' . esc_attr( (string) wp_json_encode( $view->sizes ?? array() ) ) . '"></div><p>';

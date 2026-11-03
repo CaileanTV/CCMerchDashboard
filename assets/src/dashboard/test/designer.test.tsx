@@ -12,6 +12,8 @@ import { CONFIG, click, flush, render } from '../testing/helpers';
 import type { Rendered } from '../testing/helpers';
 import {
 	EMPTY_DESIGN,
+	extraAreas,
+	extraTotal,
 	moveObject,
 	newImage,
 	newShape,
@@ -72,6 +74,7 @@ const OVERVIEW = {
 			description: '',
 			base_price: '149.9500',
 			extra_side_price: '0.0000',
+			small_side_price: '0.0000',
 			currency: 'DKK',
 			colors: [ { key: 'black', name: 'Black', hex: '#111111' } ],
 			sizes: [ 'S', 'M' ],
@@ -325,20 +328,86 @@ describe( 'the design model', () => {
 		expect( quotePrice( '149.9500', 'percent', '20', 2 ) ).toBe( 179.94 );
 		expect( quotePrice( '150.0000', 'fixed', '49,995', 2 ) ).toBe( 200 );
 		expect( quotePrice( '149.1000', 'fixed', '50', 0 ) ).toBe( 200 );
-		expect(
-			quotePrice( '150.0000', 'percent', '20', 2, '50.0000', 2 )
-		).toBe( 240 );
-		expect( quotePrice( '150.0000', 'fixed', '10', 2, '50.0000', 3 ) ).toBe(
-			260
-		);
-		expect( quotePrice( '150.0000', 'fixed', '10', 2, '50.0000', 1 ) ).toBe(
-			160
-		);
-		expect( quotePrice( '150.0000', 'fixed', '10', 2, '50.0000', 0 ) ).toBe(
-			160
-		);
+		expect( quotePrice( '150.0000', 'percent', '20', 2, 50 ) ).toBe( 240 );
+		expect( quotePrice( '150.0000', 'fixed', '10', 2, 100 ) ).toBe( 260 );
+		expect( quotePrice( '150.0000', 'fixed', '10', 2, 0 ) ).toBe( 160 );
+		expect( quotePrice( '150.0000', 'fixed', '10', 2 ) ).toBe( 160 );
 		expect( quotePrice( '150.0000', 'fixed', '-1', 2 ) ).toBeNull();
 		expect( quotePrice( '150.0000', 'fixed', '', 2 ) ).toBeNull();
+	} );
+
+	it( 'includes the most expensive area and prices the others as large or small', () => {
+		const side = ( key: string, small = false, sizes: string[] = [] ) => ( {
+			key,
+			name: key,
+			small,
+			sizes,
+		} );
+		const views = [
+			side( 'front' ),
+			side( 'back' ),
+			side( 'sleeve', true ),
+			side( 'neck', true ),
+		];
+		const used = ( ...keys: string[] ) =>
+			keys.reduce(
+				( design, key ) =>
+					withObjects( design, key, [
+						newShape( 'rect', 300, 300 ),
+					] ),
+				EMPTY_DESIGN
+			);
+		const total = ( ...keys: string[] ) =>
+			extraTotal(
+				extraAreas( views, used( ...keys ), [], '50.0000', '20.0000' )
+			);
+
+		expect( total( 'front', 'sleeve' ) ).toBe( 20 );
+		expect( total( 'front', 'back' ) ).toBe( 50 );
+		expect( total( 'front', 'back', 'sleeve' ) ).toBe( 70 );
+		expect( total( 'sleeve' ) ).toBe( 0 );
+		expect( total( 'sleeve', 'neck' ) ).toBe( 20 );
+		expect(
+			extraAreas(
+				views,
+				used( 'sleeve', 'front' ),
+				[],
+				'50.0000',
+				'20.0000'
+			).map( ( area ) => area.key )
+		).toEqual( [ 'sleeve' ] );
+		// Equal prices: the same as one included area and the rest at the price.
+		expect(
+			extraTotal(
+				extraAreas(
+					views,
+					used( 'front', 'back', 'sleeve' ),
+					[],
+					'50.0000',
+					'50.0000'
+				)
+			)
+		).toBe( 100 );
+
+		// Sides per size: the size that costs most.
+		const sized = [
+			side( 'front-s', false, [ 'S' ] ),
+			side( 'sleeve-s', true, [ 'S' ] ),
+			side( 'front-l', false, [ 'L' ] ),
+			side( 'back-l', false, [ 'L' ] ),
+		];
+		const design = used( 'front-s', 'sleeve-s', 'front-l', 'back-l' );
+
+		expect(
+			extraTotal(
+				extraAreas( sized, design, [ 'S', 'L' ], '50.0000', '20.0000' )
+			)
+		).toBe( 50 );
+		expect(
+			extraTotal(
+				extraAreas( sized, design, [ 'S' ], '50.0000', '20.0000' )
+			)
+		).toBe( 20 );
 	} );
 } );
 

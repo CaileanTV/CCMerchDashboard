@@ -70,6 +70,17 @@ final class BaseProductTest extends TestCase {
 		self::assertFalse( BaseView::from_array( self::view()->to_array() )->flat, 'A side stored before flat sides.' );
 	}
 
+	public function test_a_small_side_stays_small_and_a_large_side_does_not_store_it(): void {
+		$small = new BaseView( 'sleeve', 'Sleeve', 1000, 1000, array( 'background' => 1 ), array( 'x' => 0, 'y' => 0, 'width' => 100, 'height' => 100 ), 80, 80, 150, '', false, null, array(), true ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		self::assertTrue( BaseView::from_array( json_decode( (string) wp_json_encode( $small->to_array() ), true ) )->small );
+		self::assertArrayNotHasKey( 'small', self::view()->to_array() );
+		self::assertFalse( BaseView::from_array( self::view()->to_array() )->small, 'A side stored before small sides is large.' );
+
+		$this->expectException( InvalidArgumentException::class );
+		new BaseProduct( null, BaseProduct::DRAFT, 'own', 'Tee', '', 1499500, 'DKK', null, array(), array(), array(), 1, 0, '', array(), -1 );
+	}
+
 	public function test_invalid_sides_are_refused(): void {
 		$invalid = array(
 			'no background or mask' => static fn() => self::view( layers: array( 'shading' => 3 ) ),

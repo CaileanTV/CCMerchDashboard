@@ -117,6 +117,7 @@ class BaseProductService {
 		$sizes    = self::sizes( $fields['sizes'] ?? '' );
 		$extra    = isset( $fields['extra_side_price'] ) ? $this->extra_price( $fields['extra_side_price'] ) : ( $existing->extra_side_units ?? 0 );
 		$by_size  = isset( $fields['size_prices'] ) ? $this->size_prices( $fields['size_prices'], $sizes ) : array_intersect_key( $existing->size_prices ?? array(), array_flip( $sizes ) );
+		$small    = isset( $fields['small_side_price'] ) ? $this->extra_price( $fields['small_side_price'] ) : ( $existing->small_side_units ?? 0 );
 
 		if ( '' === $name || mb_strlen( $name ) > 191 ) {
 			self::reject( DesignerException::BASE_NAME );
@@ -128,7 +129,7 @@ class BaseProductService {
 			$plans = $this->plan_views( $existing, $views, $stored, array_column( $colors, 'key' ), $sizes );
 
 			$saved = $this->transaction->run(
-				function () use ( $id, $existing, $name, $fields, $price, $extra, $by_size, $category, $colors, $sizes, $plans ): array {
+				function () use ( $id, $existing, $name, $fields, $price, $extra, $by_size, $small, $category, $colors, $sizes, $plans ): array {
 					$sides = array();
 
 					foreach ( $plans as $plan ) {
@@ -141,7 +142,7 @@ class BaseProductService {
 						$sides[] = $this->view( $plan, $layers );
 					}
 
-					$base = $this->base( $existing, $name, $fields, $price, $category, $colors, $sizes, $sides, $extra, $by_size );
+					$base = $this->base( $existing, $name, $fields, $price, $category, $colors, $sizes, $sides, $extra, $by_size, $small );
 
 					if ( null === $existing ) {
 						$new_id = $this->bases->insert( $base );
@@ -184,7 +185,7 @@ class BaseProductService {
 
 		$this->forget_layers( $saved[1] );
 
-		if ( null !== $existing && ( $existing->base_units !== $price || $existing->extra_side_units !== $extra || $existing->size_prices !== $by_size ) ) {
+		if ( null !== $existing && ( $existing->base_units !== $price || $existing->extra_side_units !== $extra || $existing->size_prices !== $by_size || $existing->small_side_units !== $small || self::small_sides( $existing->views ) !== array_keys( array_filter( array_column( $plans, 'small', 'key' ) ) ) ) ) {
 			do_action( 'merchboard_designer_base_price_changed', $saved[0] );
 		}
 
@@ -515,7 +516,7 @@ class BaseProductService {
 	 * @param string[]                                                                     $colors   Colour keys of the base product (a colour's own background).
 	 * @param string[]                                                                     $sizes   The base product's sizes (a side keeps to them).
 	 * @param-out list<array{file: string, mime: string, width: int, height: int, bytes: int}> $stored
-	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null}>
+	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool}>
 	 * @throws DesignerException When a side or file is refused.
 	 */
 	private function plan_views( ?BaseProduct $existing, array $views, array &$stored, array $colors = array(), array $sizes = array() ): array {
@@ -619,6 +620,8 @@ class BaseProductService {
 				// A flat side stays flat; only an import makes one.
 				'flat'   => true === ( $input['flat'] ?? false ) || true === $old?->flat,
 				'scene'  => $scene,
+				// A small design area has the price of small extra areas; a field left out keeps its value.
+				'small'  => is_scalar( $input['small'] ?? null ) ? '1' === (string) $input['small'] : true === $old?->small,
 			);
 		}
 
@@ -662,8 +665,8 @@ class BaseProductService {
 	/**
 	 * A side from its plan.
 	 *
-	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null} $plan   Plan.
-	 * @param array<string, int>                                                                                                                                                                                                             $layers Asset id by layer.
+	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool} $plan   Plan.
+	 * @param array<string, int>                                                                                                                                                                                                                          $layers Asset id by layer.
 	 * @throws DesignerException When the side is invalid.
 	 */
 	private function view( array $plan, array $layers ): BaseView {
@@ -702,7 +705,8 @@ class BaseProductService {
 				$plan['pack'],
 				$plan['flat'],
 				$plan['scene'],
-				$plan['sizes']
+				$plan['sizes'],
+				$plan['small']
 			);
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_VIEW );
@@ -733,9 +737,10 @@ class BaseProductService {
 	 * @param BaseView[]            $views    Sides.
 	 * @param int                   $extra    Price of each used side after the first.
 	 * @param array<string, int>    $size_prices The price of a size that has its own.
+	 * @param int                   $small    Price of each further used small side.
 	 * @throws DesignerException When the base product is invalid (an active one must stay complete).
 	 */
-	private function base( ?BaseProduct $existing, string $name, array $fields, int $price, ?int $category, array $colors, array $sizes, array $views, int $extra, array $size_prices = array() ): BaseProduct {
+	private function base( ?BaseProduct $existing, string $name, array $fields, int $price, ?int $category, array $colors, array $sizes, array $views, int $extra, array $size_prices = array(), int $small = 0 ): BaseProduct {
 		$version = $existing->version ?? 1;
 
 		// A changed template, or a colour or size that is renamed or removed (the owner's choice
@@ -760,7 +765,8 @@ class BaseProductService {
 				$version,
 				$extra,
 				mb_substr( sanitize_textarea_field( $fields['note'] ?? $existing->note ?? '' ), 0, 1000 ),
-				$size_prices
+				$size_prices,
+				$small
 			);
 		} catch ( InvalidArgumentException ) {
 			self::reject( BaseProduct::ACTIVE === ( $existing->status ?? '' ) ? DesignerException::BASE_INCOMPLETE : DesignerException::BASE_VIEW );
@@ -776,7 +782,7 @@ class BaseProductService {
 	 */
 	private function with_status( BaseProduct $base, string $status ): BaseProduct {
 		try {
-			return new BaseProduct( $base->id, $status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $base->views, $base->version, $base->extra_side_units, $base->note, $base->size_prices );
+			return new BaseProduct( $base->id, $status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $base->views, $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units );
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_INCOMPLETE );
 		}
@@ -794,10 +800,10 @@ class BaseProductService {
 		$view = $base->views[ $index ];
 
 		try {
-			$side  = new BaseView( $view->key, $view->name, $view->width, $view->height, $layers, $view->area, $view->width_mm, $view->height_mm, $view->dpi, $view->thread_pack, $view->flat, $view->scene, $view->sizes );
+			$side  = new BaseView( $view->key, $view->name, $view->width, $view->height, $layers, $view->area, $view->width_mm, $view->height_mm, $view->dpi, $view->thread_pack, $view->flat, $view->scene, $view->sizes, $view->small );
 			$views = array_map( static fn( BaseView $other ): BaseView => $other->key === $side->key ? $side : $other, $base->views );
 
-			return new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version + 1, $base->extra_side_units, $base->note, $base->size_prices );
+			return new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version + 1, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units );
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_VIEW );
 		}
@@ -937,6 +943,16 @@ class BaseProductService {
 	}
 
 	/**
+	 * The keys of the small design areas.
+	 *
+	 * @param BaseView[] $views Sides.
+	 * @return list<string>
+	 */
+	private static function small_sides( array $views ): array {
+		return array_values( array_map( static fn( BaseView $view ): string => $view->key, array_filter( $views, static fn( BaseView $view ): bool => $view->small ) ) );
+	}
+
+	/**
 	 * What changed, for the audit (field names only).
 	 *
 	 * @param BaseProduct $before Before.
@@ -951,6 +967,8 @@ class BaseProductService {
 			'size_prices'      => array( $before->size_prices, $after->size_prices ),
 			'base_price'       => array( $before->base_units, $after->base_units ),
 			'extra_side_price' => array( $before->extra_side_units, $after->extra_side_units ),
+			'small_side_price' => array( $before->small_side_units, $after->small_side_units ),
+			'small_sides'      => array( self::small_sides( $before->views ), self::small_sides( $after->views ) ),
 			'category_id'      => array( $before->category_id, $after->category_id ),
 			'colors'           => array( $before->colors, $after->colors ),
 			'sizes'            => array( $before->sizes, $after->sizes ),

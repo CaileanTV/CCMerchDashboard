@@ -11,6 +11,7 @@ namespace MerchBoard\Tests\Unit\Modules\ProductDesigner;
 
 use InvalidArgumentException;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use MerchBoard\Tests\Unit\TestCase;
@@ -76,6 +77,29 @@ final class DesignerPricesTest extends TestCase {
 		$price = DesignerPrices::compute( 1, SalesAmount::format( DesignerPrices::secured_base( $base, $design( array( 'front' => array( $object ), 'back' => array( $object ) ) ) ) ), 'percent', '20', 'DKK', 2 ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 		self::assertSame( array( 2000000, 400000, 2400000 ), array( $price->base_units, $price->profit_units, $price->price_units() ), 'The owner\'s example: 150 + 50, 20 % gives 40 and 240.' );
+	}
+
+	public function test_the_most_expensive_area_is_included_and_small_areas_have_their_own_price(): void {
+		$side   = static fn( string $key, bool $small = false, array $sizes = array() ): BaseView => new BaseView( $key, $key, 1000, 1000, array( 'background' => 1 ), array( 'x' => 0, 'y' => 0, 'width' => 500, 'height' => 500 ), 300, 300, 150, '', false, null, $sizes, $small ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$base   = new BaseProduct( null, BaseProduct::DRAFT, 'own', 'Tee', '', 1500000, 'DKK', null, array(), array(), array( $side( 'front' ), $side( 'back' ), $side( 'sleeve', true ), $side( 'neck', true ) ), 1, 500000, '', array(), 200000 );
+		$object = array( 'id' => 'a' );
+		$price  = static fn( string ...$keys ): int => DesignerPrices::secured_base( $base, array( 'version' => 1, 'sides' => array_fill_keys( $keys, array( $object ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		self::assertSame( 1700000, $price( 'front', 'sleeve' ), 'The owner\'s example: 150 + a sleeve at 20.' );
+		self::assertSame( 2000000, $price( 'front', 'back' ) );
+		self::assertSame( 2200000, $price( 'front', 'back', 'sleeve' ) );
+		self::assertSame( 1500000, $price( 'sleeve' ), 'A sleeve alone is included.' );
+		self::assertSame( 1700000, $price( 'sleeve', 'neck' ) );
+		self::assertSame( 1700000, $price( 'sleeve', 'front' ), 'The large area is included whatever the order.' );
+		self::assertSame( 1500000, $price( 'front' ) );
+
+		// Sides per size: the size that costs most.
+		$sized = new BaseProduct( null, BaseProduct::DRAFT, 'own', 'Tee', '', 1500000, 'DKK', null, array(), array( 'S', 'L' ), array( $side( 'front-s', false, array( 'S' ) ), $side( 'sleeve-s', true, array( 'S' ) ), $side( 'front-l', false, array( 'L' ) ), $side( 'back-l', false, array( 'L' ) ) ), 1, 500000, '', array(), 200000 );
+		$all   = array( 'front-s', 'sleeve-s', 'front-l', 'back-l' );
+
+		self::assertSame( 500000, $sized->extra_amount( $all, array( 'S', 'L' ) ) );
+		self::assertSame( 200000, $sized->extra_amount( $all, array( 'S' ) ) );
+		self::assertSame( 500000, $sized->extra_amount( $all ) );
 	}
 
 	public function test_invalid_settings_are_refused(): void {

@@ -99,7 +99,7 @@ final class BaseProductActions {
 				case 'save':
 					$fields = array();
 
-					foreach ( array( 'name', 'description', 'note', 'base_price', 'extra_side_price', 'category_id', 'colors', 'sizes' ) as $key ) {
+					foreach ( array( 'name', 'description', 'note', 'base_price', 'extra_side_price', 'small_side_price', 'category_id', 'colors', 'sizes' ) as $key ) {
 						$fields[ $key ] = $text( $key );
 					}
 
@@ -265,6 +265,10 @@ final class BaseProductActions {
 				'scene'         => $value( 'scene' ),
 				'scene_preview' => $value( 'scene_preview' ),
 			);
+
+			if ( array_key_exists( 'small', $view ) ) {
+				$views[ array_key_last( $views ) ]['small'] = $value( 'small' );
+			}
 
 			if ( array_key_exists( 'thread_pack', $view ) ) {
 				$views[ array_key_last( $views ) ]['thread_pack'] = sanitize_key( $value( 'thread_pack' ) );

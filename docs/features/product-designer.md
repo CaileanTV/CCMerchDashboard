@@ -150,6 +150,22 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
 - Kundens pris er grundpris + fortjeneste.
 - Broderi ændrer ikke prisen (se "Broderi").
 - **Ekstra designområder (2026-10-30):** ét område er med i grundprisen. Hvert ekstra område, creatoren bruger, lægger grundproduktets "Pris pr. ekstra designområde" oveni (0 som standard). Beløbet tilfalder virksomheden og er sikret som grundprisen. Eksempel: grundpris 150, ekstra 50, to områder og 20 % giver sikret grundpris 200, fortjeneste 40 og kundepris 240. Et område tæller, når det har mindst ét synligt objekt, og prisen i designeren følger med. Et nyt beløb når produkterne i butikken som en ny grundpris.
+- **Store og små områder (projektejerens valg 2026-11-03):**
+  - Hver side er et "stort" (standard) eller "lille" område. Det vælges på siden under Grundprodukter.
+  - Grundproduktet har "Pris pr. ekstra stort designområde" (det hidtidige felt) og "Pris pr. ekstra lille designområde".
+  - Det dyreste område, creatoren bruger, er altid med i grundprisen. Hvert andet brugt område koster prisen for et stort eller et lille område.
+  - Med sider pr. størrelse gælder den størrelse, der koster mest.
+  - Eksempel med grundpris 150, stort 50 og lille 20 (ærme):
+
+    | Design | Sikret grundpris |
+    | --- | --- |
+    | forside + ærme | 170 |
+    | forside + bagside | 200 |
+    | kun ærme | 150 |
+    | to ærmer | 170 |
+  - Eksisterende sider er store, så eksisterende priser er uændrede.
+  - Designerens prisboks viser hvert betalt område med navn og pris og nævner, hvad hver side koster som ekstra område.
+  - En ny pris eller en side, der skifter mellem stort og lille, når butikken som en ny grundpris.
 - **Uden for kampagner** får virksomheden altid grundprisen:
   - en rabat tages fra creatorens fortjeneste;
   - fortjenesten bliver aldrig negativ.
