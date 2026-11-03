@@ -498,12 +498,14 @@ describe( 'AlertsSection', () => {
 
 		expect( toggles.map( ( toggle ) => toggle.textContent ) ).toEqual( [
 			'Merch alert',
+			'Variations',
 			'Text',
 			'Animation',
 			'Position, size and style',
 		] );
 		expect( state ).toEqual( {
 			'Merch alert': 'true',
+			Variations: 'false',
 			Text: 'false',
 			Animation: 'false',
 			'Position, size and style': 'false',
@@ -672,6 +674,65 @@ describe( 'AlertsSection', () => {
 		).join( '' );
 
 		expect( marked ).toBe( 'HoodieTestFan' );
+	} );
+
+	it( 'adds a variation, edits its own text and conditions, and tests it', async () => {
+		const requests = mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `POST ${ PATH }/test` ]: () => response( 200, { sent: true } ),
+		} );
+
+		await show();
+		click( button( 'Variations' ) );
+		click( button( '+ New variation' ) );
+
+		expect( rendered?.container.textContent ).toContain(
+			'Editing: Variation 1'
+		);
+		expect( button( '+ New variation' ) ).toBeNull();
+
+		typeInto(
+			rendered?.container.querySelector< HTMLTextAreaElement >(
+				'.merchboard-alert-panel textarea'
+			),
+			'Big one from $UserName'
+		);
+		typeInto( field( 'Least amount' ), '500' );
+		expect(
+			rendered?.container.querySelector(
+				'.merchboard-alert-canvas .merchboard-alert'
+			)?.textContent
+		).toContain( 'Big one from TestFan' );
+
+		click( button( 'Test alert' ) );
+		await flush();
+		expect(
+			requests.find( ( r ) => r.path === `${ PATH }/test` )?.data
+		).toEqual( { look: expect.stringMatching( /^v[0-9a-f]{12}$/ ) } );
+
+		click( button( 'Back to the default' ) );
+		expect( rendered?.container.querySelector( 'textarea' )?.value ).toBe(
+			SETTINGS.template
+		);
+		await waitForAutosave();
+
+		const data = patches( requests ).at( -1 )?.data as {
+			template: string;
+			variations: Array< {
+				name: string;
+				conditions: { min_amount: number };
+				look: { template: string; audio_default_sound: number };
+			} >;
+		};
+		expect( data.template ).toBe( SETTINGS.template );
+		expect( data.variations ).toHaveLength( 1 );
+		expect( data.variations[ 0 ]?.name ).toBe( 'Variation 1' );
+		expect( data.variations[ 0 ]?.conditions.min_amount ).toBe( 500 );
+		expect( data.variations[ 0 ]?.look.template ).toBe(
+			'Big one from $UserName'
+		);
+		expect( data.variations[ 0 ]?.look.audio_default_sound ).toBe( 0 );
 	} );
 
 	it( 'shows the saved designs in the top bar', async () => {

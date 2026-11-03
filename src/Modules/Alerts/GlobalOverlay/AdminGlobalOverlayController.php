@@ -166,12 +166,17 @@ final class AdminGlobalOverlayController extends RestController {
 	}
 
 	/**
-	 * A test alert.
+	 * A test alert, with a variation when `look` names one (ADR-088).
+	 *
+	 * @param WP_REST_Request|null $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>>|null $request
 	 */
-	public function send_test(): WP_REST_Response|WP_Error {
+	public function send_test( ?WP_REST_Request $request = null ): WP_REST_Response|WP_Error {
+		$look = null === $request ? '' : MeAlertsController::test_look( $request );
+
 		return $this->run(
 			self::ROUTE . '/test',
-			fn(): WP_REST_Response|WP_Error => $this->service->send_test() ? new WP_REST_Response( array( 'sent' => true ), 200 ) : self::not_set_up()
+			fn(): WP_REST_Response|WP_Error => $this->service->send_test( $look ) ? new WP_REST_Response( array( 'sent' => true ), 200 ) : self::not_set_up()
 		);
 	}
 

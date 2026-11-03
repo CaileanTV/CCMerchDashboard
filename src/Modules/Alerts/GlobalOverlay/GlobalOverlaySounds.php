@@ -135,9 +135,9 @@ final class GlobalOverlaySounds {
 			return '';
 		}
 
-		$own = null === $look ? 0 : $look->to_array()['audio_default_sound'];
+		$own = null === $look || $look === $overlay->settings ? 0 : $look->to_array()['audio_default_sound'];
 
-		if ( $own > 0 && $own !== $values['audio_default_sound'] ) {
+		if ( $own > 0 ) {
 			$sound = $this->sound( $own );
 
 			if ( null !== $sound ) {
@@ -280,7 +280,7 @@ final class GlobalOverlaySounds {
 		}
 
 		$changed = $this->store->update_settings( $overlay, OverlaySettings::from_array( $values ) );
-		$in_use  = in_array( $previous, $values['audio_category_map'], true ) || $previous === $values['audio_default_sound'];
+		$in_use  = in_array( $previous, $values['audio_category_map'], true ) || $previous === $values['audio_default_sound'] || in_array( $previous, OverlaySettings::from_array( $values )->variation_sounds(), true );
 
 		if ( $previous > 0 && ! $in_use && self::owns( $previous ) ) {
 			wp_delete_attachment( $previous, true );

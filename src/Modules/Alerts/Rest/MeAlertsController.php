@@ -507,13 +507,32 @@ final class MeAlertsController extends RestController {
 	}
 
 	/**
-	 * `POST /me/alerts/overlay/test`: `{ "sent": true }`.
+	 * `POST /me/alerts/overlay/test`: `{ "sent": true }`. An optional `look`
+	 * shows it with that variation (ADR-088).
+	 *
+	 * @param WP_REST_Request|null $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>>|null $request
 	 */
-	public function send_test(): WP_REST_Response|WP_Error {
+	public function send_test( ?WP_REST_Request $request = null ): WP_REST_Response|WP_Error {
+		$look = null === $request ? '' : self::test_look( $request );
+
 		return $this->with_creator(
 			self::ROUTE . '/test',
-			fn( int $creator_id ): WP_REST_Response|WP_Error => $this->overlays->send_test( $creator_id ) ? new WP_REST_Response( array( 'sent' => true ), 200 ) : self::not_set_up()
+			fn( int $creator_id ): WP_REST_Response|WP_Error => $this->overlays->send_test( $creator_id, $look ) ? new WP_REST_Response( array( 'sent' => true ), 200 ) : self::not_set_up()
 		);
+	}
+
+	/**
+	 * The variation a test alert is shown with: `look` of the body when it
+	 * is a variation id, else '' (the default; an unknown id is the default too).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public static function test_look( WP_REST_Request $request ): string {
+		$look = ( (array) $request->get_json_params() )['look'] ?? $request->get_param( 'look' );
+
+		return is_string( $look ) && 1 === preg_match( '/^[a-z0-9]{6,32}$/', $look ) ? $look : '';
 	}
 
 	/**

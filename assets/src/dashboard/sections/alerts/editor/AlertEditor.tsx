@@ -24,6 +24,7 @@ import { ApiErrorState } from '../../../components/ApiErrorState';
 import { NUMBER_FIELDS, TEMPLATE_MAX_LENGTH } from '../../../types/alerts';
 import type {
 	AlertFontOption,
+	AlertsAudio,
 	AlertsImages,
 	AlertsOverlayState,
 	NumberField,
@@ -41,6 +42,14 @@ import {
 } from './AlertPanels';
 import type { EditorFields } from './AlertPanels';
 import { lookOf, sampleParts } from './look';
+import {
+	canAddVariation,
+	followBox,
+	newVariation,
+	variationView,
+	writeVariation,
+} from './variations';
+import { VariationHeader, VariationsSection } from './VariationsPanel';
 
 /** Waiting time after the last change before it is saved (ms). */
 export const AUTOSAVE_DELAY = 800;
@@ -124,6 +133,8 @@ interface Props {
 	readonly fonts: readonly AlertFontOption[];
 	readonly fontApproved: boolean;
 	readonly images: AlertsImages | null;
+	/** The sounds (the library and the categories); null when not available. */
+	readonly audio: AlertsAudio | null;
 	/** The default sound's URL, for the preview ('' for none). */
 	readonly sound: string;
 	/** The sound controls (null when sounds are not available). */
@@ -147,6 +158,7 @@ interface Props {
  * @param props.fonts         The approved fonts.
  * @param props.fontApproved  Whether the saved font is still approved.
  * @param props.images        Images a text can be filled with.
+ * @param props.audio         The sounds.
  * @param props.sound         The default sound's URL.
  * @param props.sounds        The sound controls.
  * @param props.browserSource The browser source's card.
@@ -161,6 +173,7 @@ export function AlertEditor( {
 	fonts,
 	fontApproved,
 	images,
+	audio,
 	sound,
 	sounds,
 	browserSource,
@@ -171,7 +184,17 @@ export function AlertEditor( {
 }: Props ) {
 	const api = useOverlayApi();
 	const doc = useHistory< Document >( { settings, layout } );
-	const values = doc.value.settings;
+	const overlayValues = doc.value.settings;
+	// The variation being edited (ADR-088); '' for the default.
+	const [ editing, setEditing ] = useState( '' );
+	const variation = overlayValues.variations.find(
+		( item ) => item.id === editing
+	);
+	const view =
+		variation === undefined
+			? { settings: overlayValues, layout: doc.value.layout }
+			: variationView( overlayValues, doc.value.layout, variation );
+	const values = view.settings;
 	const [ status, setStatus ] = useState< SaveStatus >( 'idle' );
 	const [ errors, setErrors ] = useState< Errors >( {} );
 	const [ saveError, setSaveError ] = useState< ApiError | null >( null );
@@ -186,17 +209,46 @@ export function AlertEditor( {
 
 	latest.current = doc.value;
 
+	// A change as shown, written to the default or the edited variation; free
+	// elements elsewhere move with the alert box.
+	const apply = (
+		nextSettings: OverlaySettings,
+		nextLayout: OverlayLayout
+	): Document => {
+		const written =
+			variation === undefined
+				? { settings: nextSettings, layout: nextLayout }
+				: writeVariation(
+						overlayValues,
+						doc.value.layout,
+						variation,
+						nextSettings,
+						nextLayout
+					);
+
+		return followBox(
+			written.settings,
+			written.layout,
+			nextSettings.widget.x - values.widget.x,
+			nextSettings.widget.y - values.widget.y,
+			editing
+		);
+	};
+
 	const fields: EditorFields = {
 		values,
-		layout: doc.value.layout,
+		layout: view.layout,
 		set: ( change ) =>
-			doc.set( ( current ) => ( {
-				...current,
-				settings: { ...current.settings, ...change },
-			} ) ),
+			doc.set( apply( { ...values, ...change }, view.layout ) ),
 		setBoth: ( nextSettings, nextLayout ) =>
-			doc.set( { settings: nextSettings, layout: nextLayout } ),
+			doc.set( apply( nextSettings, nextLayout ) ),
 	};
+
+	const setVariations = ( variations: OverlaySettings[ 'variations' ] ) =>
+		doc.set( ( current ) => ( {
+			...current,
+			settings: { ...current.settings, variations },
+		} ) );
 
 	const schedule = useCallback( ( delay: number ) => {
 		if ( timer.current !== null ) {
@@ -299,7 +351,7 @@ export function AlertEditor( {
 
 	const test = async () => {
 		setTesting( true );
-		const result = await api.sendTest();
+		const result = await api.sendTest( editing );
 		setTesting( false );
 		notify(
 			result.ok
@@ -332,8 +384,8 @@ export function AlertEditor( {
 	};
 
 	const look = useMemo(
-		() => lookOf( values, doc.value.layout, images ),
-		[ values, doc.value.layout, images ]
+		() => lookOf( values, view.layout, images ),
+		[ values, view.layout, images ]
 	);
 	const sample = useMemo(
 		() => ( {
@@ -431,7 +483,50 @@ export function AlertEditor( {
 					className="merchboard-alert-editor__side"
 					aria-label={ __( 'Alert settings', 'merchboard' ) }
 				>
-					<MerchAlertPanel fields={ fields } sounds={ sounds }>
+					{ variation !== undefined && (
+						<VariationHeader
+							variation={ variation }
+							audio={ audio }
+							categories={ audio?.categories ?? [] }
+							onChange={ ( next ) =>
+								setVariations(
+									overlayValues.variations.map( ( item ) =>
+										item.id === next.id ? next : item
+									)
+								)
+							}
+							onBack={ () => setEditing( '' ) }
+						/>
+					) }
+					<MerchAlertPanel
+						fields={ fields }
+						sounds={ variation === undefined ? sounds : null }
+						isDefault={ variation === undefined }
+					>
+						{ variation === undefined && (
+							<VariationsSection
+								variations={ overlayValues.variations }
+								canAdd={ canAddVariation( overlayValues ) }
+								onAdd={ () => {
+									const added = newVariation(
+										overlayValues,
+										doc.value.layout,
+										sprintf(
+											/* translators: %d: number of the variation. */
+											__( 'Variation %d', 'merchboard' ),
+											overlayValues.variations.length + 1
+										)
+									);
+									setVariations( [
+										...overlayValues.variations,
+										added,
+									] );
+									setEditing( added.id );
+								} }
+								onEdit={ setEditing }
+								onChange={ setVariations }
+							/>
+						) }
 						<TextSection
 							fields={ fields }
 							fonts={ fonts }
@@ -455,23 +550,17 @@ export function AlertEditor( {
 				>
 					<AlertCanvas
 						settings={ values }
-						layout={ doc.value.layout }
+						layout={ view.layout }
 						look={ look }
 						sample={ sample }
 						sound={ sound }
 						onBegin={ doc.checkpoint }
 						onLive={ ( nextSettings, nextLayout ) =>
-							doc.live( {
-								settings: nextSettings,
-								layout: nextLayout,
-							} )
+							doc.live( apply( nextSettings, nextLayout ) )
 						}
 						onEnd={ doc.settle }
 						onChange={ ( nextSettings, nextLayout ) =>
-							doc.set( {
-								settings: nextSettings,
-								layout: nextLayout,
-							} )
+							doc.set( apply( nextSettings, nextLayout ) )
 						}
 						canUndo={ doc.canUndo }
 						canRedo={ doc.canRedo }

@@ -225,18 +225,21 @@ function HighlightFields( { fields }: { readonly fields: EditorFields } ) {
  * the timing. Open from the start; its sections (variations, read-out, text
  * and animation) are folded below.
  *
- * @param props          Props.
- * @param props.fields   The edited values.
- * @param props.sounds   The sound controls.
- * @param props.children The sections below.
+ * @param props           Props.
+ * @param props.fields    The edited values.
+ * @param props.sounds    The sound controls (the default's only).
+ * @param props.isDefault Whether the default is edited, not a variation.
+ * @param props.children  The sections below.
  */
 export function MerchAlertPanel( {
 	fields,
 	sounds,
+	isDefault = true,
 	children,
 }: {
 	readonly fields: EditorFields;
 	readonly sounds: ReactNode;
+	readonly isDefault?: boolean;
 	readonly children: ReactNode;
 } ) {
 	const id = useId();
@@ -285,7 +288,14 @@ export function MerchAlertPanel( {
 
 			<fieldset className="merchboard-alert-fieldset">
 				<legend>{ __( 'Sound', 'merchboard' ) }</legend>
-				{ sounds }
+				{ sounds ?? (
+					<p className="merchboard-field__help">
+						{ __(
+							"The sound files are set in the default; choose the variation's own sound above.",
+							'merchboard'
+						) }
+					</p>
+				) }
 				<NumberControl
 					label={ __( 'Sound volume', 'merchboard' ) }
 					unit="%"
@@ -413,12 +423,14 @@ export function MerchAlertPanel( {
 					}
 				/>
 			</div>
-			<p id={ `${ id }-default` } className="merchboard-field__help">
-				{ __(
-					'These are the default settings, used when no variation is chosen.',
-					'merchboard'
-				) }
-			</p>
+			{ isDefault && (
+				<p id={ `${ id }-default` } className="merchboard-field__help">
+					{ __(
+						'These are the default settings, used when no variation is chosen.',
+						'merchboard'
+					) }
+				</p>
+			) }
 			<div className="merchboard-alert-panel__sections">{ children }</div>
 		</Panel>
 	);

@@ -281,6 +281,26 @@ final class OverlaySettings {
 	}
 
 	/**
+	 * The variations' own sounds (attachment ids); a variation without one
+	 * plays the overlay's sounds.
+	 *
+	 * @return list<int>
+	 */
+	public function variation_sounds(): array {
+		$sounds = array();
+
+		foreach ( $this->values['variations'] as $variation ) {
+			$sound = $variation['look']['audio_default_sound'] ?? 0;
+
+			if ( is_int( $sound ) && $sound > 0 ) {
+				$sounds[] = $sound;
+			}
+		}
+
+		return $sounds;
+	}
+
+	/**
 	 * The settings an alert is shown with when a variation is chosen: the
 	 * overlay's with the variation's look. The default ('') or an unknown
 	 * id gives these settings.
@@ -869,6 +889,11 @@ final class OverlaySettings {
 
 			foreach ( self::LOOK_KEYS as $key ) {
 				$clean[ $key ] = $look[ $key ];
+			}
+
+			// Without its own sound (0) a variation plays the overlay's sounds, also after they change.
+			if ( ! is_array( $raw['look'] ?? null ) || ! array_key_exists( 'audio_default_sound', $raw['look'] ) ) {
+				$clean['audio_default_sound'] = 0;
 			}
 
 			$variations[] = array(

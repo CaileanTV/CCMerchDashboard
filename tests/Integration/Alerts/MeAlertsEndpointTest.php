@@ -339,7 +339,7 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		self::assertSame( 'en-GB-Standard-B', $saved['tts']['voice'] );
 		self::assertSame( 'Wow $UserName!', $saved['variations'][0]['look']['template'] );
 		self::assertSame( 'Roboto', $saved['variations'][0]['look']['font_family'] );
-		self::assertSame( 0, $saved['variations'][0]['look']['audio_default_sound'], 'A sound changes only through the sound routes.' );
+		self::assertSame( 12345, $saved['variations'][0]['look']['audio_default_sound'], 'Its own sound; the overlay plays it only when the creator may use it.' );
 		self::assertArrayNotHasKey( 'layout', $saved, 'The layout is answered as its own key.' );
 		self::assertSame( 'big001', $this->overlays->find_for_creator( $creator )?->settings->variations()[0]['id'] );
 
@@ -383,11 +383,22 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 
 		( new AlertEventRepository( $this->wpdb ) )->insert( new AlertEvent( $creator, 501, '501', 9001, 10, 0, 'Hoodie', '', 1, 0, array(), 'nova_fan', new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ), 0, '450.0000', '450.0000', 'DKK' ) );
 
-		$alerts = $this->feed->read( $id, $start['cursor'], false )['alerts'] ?? array();
+		$read   = $this->feed->read( $id, $start['cursor'], false );
+		$after  = $read['cursor'] ?? 0;
+		$alerts = $read['alerts'] ?? array();
 		self::assertCount( 1, $alerts );
 		self::assertSame( 'big001', $alerts[0]['look'] );
 		self::assertStringStartsWith( 'Huge: ', $alerts[0]['text'] );
 		self::assertTrue( $alerts[0]['parts'][1]['value'], 'The amount is marked as a value.' );
+
+		// A test alert of the variation the designer edits.
+		self::assertSame( 200, $this->call( 'POST', self::ROUTE . '/test', array( 'look' => 'big001' ) )->get_status() );
+		$tests = $this->feed->read( $id, $after, false )['alerts'] ?? array();
+		self::assertCount( 1, $tests );
+		self::assertSame( 'big001', $tests[0]['look'] );
+		self::assertStringStartsWith( 'Huge: ', $tests[0]['text'] );
+		self::assertSame( 200, $this->call( 'POST', self::ROUTE . '/test', array( 'look' => '../x' ) )->get_status() );
+		self::assertSame( '', ( $this->feed->read( $id, $after, false )['alerts'] ?? array() )[0]['look'] ?? null, 'An invalid id gives the default.' );
 	}
 
 	public function test_sounds_are_uploaded_switched_on_and_deleted_through_the_routes(): void {

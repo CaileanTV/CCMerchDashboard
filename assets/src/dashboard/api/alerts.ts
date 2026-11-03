@@ -651,8 +651,8 @@ export interface OverlayApi {
 	readonly removeImage: (
 		imageId: number
 	) => Promise< ApiResult< AlertsOverlayState > >;
-	/** Sends a test alert to the overlay. */
-	readonly sendTest: () => Promise< ApiResult< true > >;
+	/** Sends a test alert to the overlay, shown with a variation ('' or none: the default, ADR-088). */
+	readonly sendTest: ( look?: string ) => Promise< ApiResult< true > >;
 }
 
 /**
@@ -723,9 +723,13 @@ export function overlayApi( path: string ): OverlayApi {
 				},
 				parseAlertsOverlay
 			),
-		sendTest: () =>
+		sendTest: ( look = '' ) =>
 			request(
-				{ path: `${ path }/test`, method: 'POST' },
+				{
+					path: `${ path }/test`,
+					method: 'POST',
+					...( look === '' ? {} : { data: { look } } ),
+				},
 				parseTestSent
 			),
 	};

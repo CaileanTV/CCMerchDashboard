@@ -229,8 +229,9 @@ final class AlertOverlays {
 	/**
 	 * Submitted variations with an approved font each (a variation that
 	 * keeps a font no longer approved keeps it, as the overlay's own font
-	 * does until it is changed) and their own sound unchanged: sounds change
-	 * only through AlertSounds.
+	 * does until it is changed). A variation's own sound is one of the
+	 * overlay's sounds or a library sound; the overlay plays it only when
+	 * the owner may use it (AlertSounds::url_for()).
 	 *
 	 * @param array<mixed>    $variations Submitted variations.
 	 * @param OverlaySettings $current    Current settings.
@@ -257,8 +258,6 @@ final class AlertOverlays {
 			if ( array_key_exists( 'font_family', $look ) && ( null === $was || $look['font_family'] !== $was['font_family'] ) ) {
 				$look['font_family'] = self::approved_family( $look['font_family'], $fonts );
 			}
-
-			$look['audio_default_sound'] = null === $was ? $current->to_array()['audio_default_sound'] : $was['audio_default_sound'];
 
 			$variations[ $index ]['look'] = $look;
 		}
@@ -307,20 +306,22 @@ final class AlertOverlays {
 
 	/**
 	 * Queues a test alert with a random published product of the creator
-	 * (a placeholder product when there is none).
+	 * (a placeholder product when there is none), shown with a variation
+	 * (ADR-088): the one the designer edits.
 	 *
-	 * @param int $creator_id Creator.
+	 * @param int    $creator_id Creator.
+	 * @param string $look       The variation's id; '' for the default.
 	 * @return bool False before the overlay is set up.
 	 * @throws DatabaseException When the database cannot be read.
 	 */
-	public function send_test( int $creator_id ): bool {
+	public function send_test( int $creator_id, string $look = '' ): bool {
 		$overlay = $this->overlays->find_for_creator( $creator_id );
 
 		if ( null === $overlay ) {
 			return false;
 		}
 
-		$this->tests->push( $overlay->id, $this->feed->render( $overlay, $this->test_event( $creator_id ) ) );
+		$this->tests->push( $overlay->id, $this->feed->render( $overlay, $this->test_event( $creator_id ), $look ) );
 
 		return true;
 	}

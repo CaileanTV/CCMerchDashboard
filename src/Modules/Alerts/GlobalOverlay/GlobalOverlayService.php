@@ -170,13 +170,14 @@ final class GlobalOverlayService {
 
 	/**
 	 * A test alert: the newest alert's product with the test username, or a
-	 * test product when there is none yet.
+	 * test product when there is none yet, shown with a variation (ADR-088).
 	 *
+	 * @param string $look The variation's id; '' for the default.
 	 * @return bool False before it is set up.
 	 * @throws DatabaseException When the alerts cannot be read.
 	 * @throws AlertSettingsException When the current user lacks the alerts capability.
 	 */
-	public function send_test(): bool {
+	public function send_test( string $look = '' ): bool {
 		self::authorize();
 
 		$overlay = $this->store->find();
@@ -209,7 +210,7 @@ final class GlobalOverlayService {
 			$model->currency ?? ''
 		);
 
-		$this->tests->push( GlobalOverlay::QUEUE, $this->feed->render( $overlay, $event ) );
+		$this->tests->push( GlobalOverlay::QUEUE, $this->feed->render( $overlay, $event, $look ) );
 
 		return true;
 	}

@@ -143,9 +143,9 @@ final class AlertSounds {
 			return '';
 		}
 
-		$own = null === $look ? 0 : $look->to_array()['audio_default_sound'];
+		$own = null === $look || $look === $overlay->settings ? 0 : $look->to_array()['audio_default_sound'];
 
-		if ( $own > 0 && $own !== $values['audio_default_sound'] ) {
+		if ( $own > 0 ) {
 			$sound = $this->sound( $own, $overlay->creator_id );
 
 			if ( null !== $sound ) {
@@ -281,10 +281,11 @@ final class AlertSounds {
 			}
 		}
 
-		$this->overlays->update_settings( $overlay->id, OverlaySettings::from_array( $values ) );
+		$changed = OverlaySettings::from_array( $values );
+		$this->overlays->update_settings( $overlay->id, $changed );
 
-		// A sound one of the creator's saved designs uses stays.
-		$in_use = in_array( $previous, $values['audio_category_map'], true ) || $previous === $values['audio_default_sound'] || in_array( $previous, ( $this->kept )( $overlay->creator_id ), true );
+		// A sound a variation or one of the creator's saved designs uses stays.
+		$in_use = in_array( $previous, $values['audio_category_map'], true ) || $previous === $values['audio_default_sound'] || in_array( $previous, $changed->variation_sounds(), true ) || in_array( $previous, ( $this->kept )( $overlay->creator_id ), true );
 
 		if ( $previous > 0 && ! $in_use && $this->owns( $previous, $overlay->creator_id ) ) {
 			wp_delete_attachment( $previous, true );

@@ -2936,3 +2936,56 @@ input:disabled + .merchboard-sounds__upload {
 	display: grid;
 	gap: var(--merchboard-space-2);
 }
+
+// Variations (ADR-088): the list and the variation being edited.
+.merchboard-alert-variations {
+	display: grid;
+	gap: var(--merchboard-space-2);
+	padding: 0;
+	margin: 0;
+	list-style: none;
+
+	li {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--merchboard-space-2);
+		align-items: center;
+		justify-content: space-between;
+	}
+}
+
+.merchboard-alert-variations__actions {
+	display: inline-flex;
+	gap: var(--merchboard-space-1);
+}
+
+.merchboard-alert-variation {
+	display: grid;
+	gap: var(--merchboard-space-3);
+	padding: var(--merchboard-space-4);
+	background: var(--merchboard-selected-bg);
+	border-bottom: 1px solid var(--merchboard-border);
+}
+
+.merchboard-alert-variation__editing {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+	justify-content: space-between;
+	margin: 0;
+	font-weight: 600;
+}
+
+.merchboard-alert-variation__categories {
+	display: grid;
+	gap: var(--merchboard-space-1);
+	padding: 0;
+	margin: 0;
+	border: 0;
+
+	legend {
+		margin-bottom: var(--merchboard-space-1);
+		font-size: var(--merchboard-text-sm);
+	}
+}
