@@ -24,6 +24,8 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | Oprydning og admin-værktøjer | 27 | Importen fra MerchAlert og migreringen fra Product Vendors fjernes igen; "Se som creator" (impersonation) og sletning af creators (planlagt) |
 | Kategori og rabatkode | 28 | Creatorens forslag til produktkategorien med godkendelse og den plugin-styrede rabatkode (✅ udgivet i 1.3.0/1.3.1) |
 | Notifikationer | 29 | E-mail i butikkens design og klokken i dashboardet, admin-side med til/fra og eksempler (plan godkendt 2026-10-27; udgives som 1.4.0; ADR-079) |
+| Produktdesigner | 30 | Creatorens egen produktdesigner med grundprodukter, godkendelse og kataloger (plan godkendt 2026-10-28; ADR-080–087) |
+| Alert-designer 2.0 | 31 | Enklere alert-designer: lærred, sidebjælke, layouts, variationer og oplæsning (plan godkendt 2026-11-03; ADR-088–089) |
 | Senere | – | Integrations, campaigns, support, reporting, hardening og E2E |
 
 ---
@@ -817,6 +819,47 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - review og runtime-test på Local med "Test Creator Cailean" udføres automatisk (AI-DEVELOPMENT.md);
   - den fulde suite køres før bump;
   - bump og release sker efter projektejerens ønske.
+
+## Fase 31 – Alert-designer 2.0 📝 (plan godkendt 2026-11-03; ADR-088, ADR-089)
+
+**Projektejerens ønske (2026-11-03):** alert-designeren er blevet for kompliceret for creators. Den skal ligne StreamElements' stil, uden at være en kopi:
+- et lærred med en værktøjslinje;
+- en sidebjælke med panelet "Merch alert", som er åbent fra start, og "Position, størrelse og stil" nederst;
+- inde i "Merch alert" foldbare afsnit for Variationer, TTS, Tekst (fanerne Tekst og Avanceret) og Animation. Alle animationer samles der, også baggrundsbillede i teksten og tekst rundt om billedet.
+
+Det gøres færdigt før review og test af fase 30 (30.15).
+
+**Projektejerens valg (2026-11-03):**
+- **Placering:** alerten er én boks med layoutet billede over tekst, billede ved siden af tekst eller tekst på billedet. Eksisterende alerts bliver til layoutet "Fri", som beholder dagens trækbare felter, så intet ændrer sig på produktion.
+- **TTS:** Google Cloud Text-to-Speech med standardstemmer (ADR-089).
+- **Billede:** kun produktbilledet; ingen egne billeder eller videoer.
+- **Variationer:** vælges tilfældigt med betingelser (mindstebeløb, mindste antal, kategorier).
+
+**Trin:**
+- **31.1 Beslutninger:** dette afsnit, ADR-088 (designer v2) og ADR-089 (Google Cloud TTS).
+- **31.2 Datamodel v2:**
+  - PHP og TS;
+  - gamle settings omregnes, når de læses;
+  - REST;
+  - valg af variation;
+  - tekst som segmenter.
+- **31.3 Fælles renderer og player:** layouts, ny tekststil, alert- og tekstanimationer, tidsstyring og lydstyrke. Den samme kode viser alerten i overlayet og på lærredet.
+- **31.4 Editorens skal:**
+  - topbjælke, sidebjælke og lærred med værktøjslinje;
+  - "Position, størrelse og stil" og "Merch alert";
+  - admins opsætning af creator-siden udgår.
+- **31.5 Tekst og Animation:** fanerne Tekst og Avanceret og alle animationer samlet.
+- **31.6 Variationer:** liste, redigering, betingelser og test af en variation.
+- **31.7 TTS:**
+  - admin-indstillinger og månedligt loft;
+  - syntese med cache og oprydning;
+  - afspilning i overlayet;
+  - creatorens TTS-afsnit.
+- **31.8 Afslutning:**
+  - det globale overlay og standard-overlays;
+  - dansk oversættelse og docs;
+  - eksperimentel ZIP på stg;
+  - runtime-test på Local med "Test Creator Cailean".
 
 ## Senere (uprioriteret)
 

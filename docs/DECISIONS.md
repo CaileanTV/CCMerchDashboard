@@ -5098,3 +5098,131 @@ Stadig åbent eller en risiko:
 
 ## Related
 ADR-016, ADR-080, ADR-081, ADR-082, ADR-084
+
+---
+
+# ADR-088: Alert-designer 2.0: én boks, layouts, variationer og en fælles renderer
+
+## Date
+2026-11-03
+
+## Status
+Accepteret af projektejeren 2026-11-03 (plan for fase 31).
+
+## Context
+Alert-designeren fra fase 25 er blevet for kompliceret for creators:
+- mange kort i to kolonner, som admin kan flytte rundt;
+- et 1920×1080-lærred med tre frie felter (produktbillede, hovedtekst og ekstra tekst);
+- animationer, tekstfyld og "tekst rundt om billedet" spredt over flere kort.
+
+Projektejeren ønsker en opbygning i StreamElements' stil, uden at kopiere den:
+- et lærred med en værktøjslinje;
+- en sidebjælke, hvor "Merch alert" er åbent fra start, og "Position, størrelse og stil" ligger nederst;
+- foldbare afsnit for Variationer, TTS, Tekst og Animation.
+
+Alerten vises i dag ud fra CSS, som serveren bygger (`OverlaySettings::element_style()`), mens designeren tegner sin egen forhåndsvisning. De to kan glide fra hinanden.
+
+## Decision
+1. **Én boks.** Alerten er én boks (`widget`: x, y, bredde, højde, gennemsigtighed, rotation) på lærredet. Inde i den vælges et layout:
+   - billede over tekst;
+   - billede til venstre for tekst;
+   - tekst på billedet;
+   - **Fri**, hvor billede og tekster placeres frit i boksen som i dag.
+2. **Ingen migrering i databasen.** Gamle settings omregnes, når de læses. Det gælder også gemte designs og standard-overlays.
+   - Boksen bliver den samlede omkreds af de synlige felter.
+   - Layoutet bliver Fri, og felterne gemmes relativt til boksen.
+   - Tempo og varighed i millisekunder bliver til sekunder.
+   - En eksisterende alert ser derfor ud som før.
+3. **Look og variationer.**
+   - Det, en alert kan se ud som, er en *look*: lyd, layout, besked, varighed, oplæsning, tekst og animation.
+   - Standardopsætningen er én look. En creator kan lave højst 10 variationer, hver med sin egen look og sit navn og til/fra. Boksens placering deles.
+   - Betingelser: mindstebeløb (linjetotal), mindste antal og kategorier.
+4. **Valg af variation.**
+   1. Passer aktive variationer *med* betingelser, vælges tilfældigt blandt dem.
+   2. Ellers vælges tilfældigt blandt standardopsætningen og aktive variationer *uden* betingelser.
+
+   Valget er stabilt pr. alert (hash af alertens id), så to åbne overlays viser det samme. Valget sker på serveren, når feedet renderer alerten.
+5. **Tekst som segmenter.** Serveren sender teksten som en liste af almindelig tekst og indsatte værdier, aldrig som HTML. Så kan værdierne fremhæves (farve og effekt). Talformat og afkortning af brugernavne sker på serveren.
+6. **Én fælles renderer.** Én TypeScript-renderer bygger alerten ud fra en look, både i overlayet og på designerens lærred. Det sikrer, at forhåndsvisningen er den samme som i OBS. Serverens inline-CSS for felterne udgår.
+7. **Udvidet tekststil og animation.**
+   - Tekst: gennemsigtighed, linjehøjde, bogstav- og ordafstand, lige margener, retning, kursiv, understregning, store/små bogstaver, kontur, skygge til/fra, margen og talformat.
+   - Animation: ind- og ud-animation for hele boksen med varighed, tekstens ind og ud i sekunder, og "vis tekst efter / skjul før slut".
+   - Varigheden kan være op til 90 s.
+   - Lyden får en lydstyrke.
+8. **Kun produktbilledet.** Creatoren kan ikke uploade egne billeder eller videoer til alerten (projektejerens valg). Billeder til tekstfyld er uændrede.
+9. **Admins opsætning af creator-siden udgår** (25.9.6): den faste sidebjælke erstatter zoner og rækkefølge. Optionen slettes stadig ved afinstallation.
+
+## Alternatives considered
+- **Kun tre layouts, hvor gamle alerts omregnes til det nærmeste:** fravalgt. Creators på produktion ville se deres alert ændre sig.
+- **Variationer kun tilfældigt eller med vægt:** fravalgt; projektejeren valgte tilfældigt med betingelser.
+- **Valget i overlayet:** fravalgt. To åbne overlays kunne vælge forskelligt, og testalerts kunne ikke vælge en bestemt variation.
+- **Egen CSS fra creatoren:** ikke med. Det er svært at supportere, og CSS'en kan hente indhold udefra.
+
+## Reason
+Én boks med færdige layouts er det enkleste for en ny creator. "Fri" og omregningen ved læsning bevarer alle eksisterende alerts uændret. En fælles renderer fjerner forskellen mellem forhåndsvisning og overlay.
+
+## Security
+- **Tekst:** indsatte værdier sendes som tekst og sættes med `textContent`. Der er ingen HTML fra creatoren eller kunden.
+- **Grænser:** alle nye værdier har grænser, og serveren normaliserer dem som i dag. Ugyldige værdier falder tilbage til standard.
+- **Lagring:** variationer gemmes i samme JSON-kolonne under samme ejerskab som i dag (`/me`).
+
+## Consequences
+- `AlertOverlay::version()` følger de nye nøgler, så åbne overlays genindlæses.
+- Gamle klienter af API'et og webhooks (ADR-073) berøres ikke.
+- Lyd pr. kategori findes kun i standardopsætningen. En variation har én lyd.
+
+## Related
+ADR-065, ADR-067, ADR-073, ADR-089
+
+---
+
+# ADR-089: Oplæsning af alerts med Google Cloud Text-to-Speech
+
+## Date
+2026-11-03
+
+## Status
+Accepteret af projektejeren 2026-11-03 som ekstern tjeneste efter ADR-016. **Projektejeren skal tage stilling til teksten i privatlivspolitikken, før oplæsning slås til på produktion.**
+
+## Context
+Creators ønsker oplæsning af alerten (TTS), som de kender den fra StreamElements. Browserens egen oplæsning (`speechSynthesis`) virker ikke pålideligt i OBS' browserkilde.
+
+Alternativer:
+- **Piper:** en open source-stemmemotor i browseren. Den har få stemmer, og OBS skal hente cirka 60 MB.
+- **Google Cloud Text-to-Speech:** gode stemmer på dansk og andre sprog. Standardstemmer er gratis op til cirka 4 mio. tegn om måneden, og derefter koster de cirka 4 dollar pr. million tegn. Det kræver en Google Cloud-konto med fakturering slået til.
+
+## Decision
+1. **Tjeneste:** Google Cloud Text-to-Speech, REST `POST https://texttospeech.googleapis.com/v1/text:synthesize` med en API-nøgle. Andre kald bruges ikke, undtagen `GET /v1/voices` til at kontrollere stemmelisten.
+2. **Stemmer:** kun standardstemmer fra en fast liste (dansk, engelsk UK/US, tysk, svensk og norsk). Creatoren vælger blandt dem.
+3. **Admin:**
+   - kill switch, slået fra som standard;
+   - API-nøgle, krypteret med sodium i nøgledomænet `alerts-tts`, uden autoload, og auditeres kun som "sat" eller "fjernet";
+   - månedligt loft for tegn, standard 3 mio., under den gratis kvote;
+   - tegn brugt denne måned.
+4. **Creator:** til/fra, stemme, lydstyrke, forsinkelse og mindstebeløb pr. look (ADR-088).
+5. **Syntese:**
+   - Sker på serveren, når feedet renderer en alert.
+   - Teksten er alertbeskeden med afkortet brugernavn, højst 200 tegn, og timeout er 5 s.
+   - MP3'en gemmes i `uploads/merchboard-alerts/tts/` under en hash af stemme og tekst, så samme tekst kun syntetiseres én gang. Et dagligt job sletter filer, der er ældre end 2 dage.
+6. **Fejl eller nået loft:** alerten vises uden oplæsning, og det logges uden tekst og nøgle.
+
+## Alternatives considered
+- **Browserens oplæsning:** fravalgt; den virker ikke pålideligt i OBS.
+- **Piper i browseren:** fravalgt af projektejeren (få stemmer og stor download).
+- **Betalte stemmer (WaveNet, Neural2):** ikke med. Den gratis kvote er mindre, og prisen er højere.
+
+## Reason
+Google giver gode stemmer på dansk inden for en gratis kvote. Loftet sikrer, at kvoten ikke overskrides uden admins valg.
+
+## Security
+- **Data til Google:** kun den tekst, der læses op, med kundens brugernavn og produktets navn. Det er persondata, og Google er databehandler. Privatlivspolitikken skal nævne det (åbent, se Status).
+- **Nøgle:** aldrig i chat, commits, ZIP'er eller logs. Den bør begrænses til Text-to-Speech API'et i Google Cloud.
+- **Filer:** ligger under et navn, der er en hash, og slettes efter 2 dage. De indeholder kun oplæsningen.
+
+## Consequences
+- Oplæsning kan forsinke feedets svar med op til 5 s første gang. Feedet venter i forvejen op til 8 s.
+- Når loftet nås, stopper oplæsningen for alle creators resten af måneden.
+- Afinstallation sletter nøglen, tælleren og mappen.
+
+## Related
+ADR-016, ADR-065, ADR-088
