@@ -208,7 +208,8 @@
 }
 
 /* The keyframes move with "translate" and "scale", so the rotation stays. */
-// As the overlay's boxes moved before 2.0: 20 px up while fading in and out.
+
+/* As the overlay's boxes moved before 2.0: 20 px up while fading in and out. */
 @keyframes merchboard-alert-rise-in {
 
 	from {
