@@ -855,10 +855,10 @@ Det gøres færdigt før review og test af fase 30 (30.15).
   - syntese med cache og oprydning;
   - afspilning i overlayet;
   - creatorens TTS-afsnit.
-- **31.8 Afslutning:**
-  - det globale overlay og standard-overlays;
-  - dansk oversættelse og docs;
-  - eksperimentel ZIP på stg.
+- **31.8 Afslutning ✅ (2026-11-03):**
+  - det globale overlay og standard-overlays bruger den samme editor (det globale overlays svar fortæller også, om oplæsning er slået til);
+  - dansk oversættelse (149 nye tekster) og docs;
+  - eksperimentel ZIP `a871e00` på stg: indstillingerne for oplæsning vises under Indstillinger → Alerts, og nøglefeltet er tomt. Editoren blev ikke åbnet på stg, fordi der hverken er et globalt overlay, standard-overlays eller en testcreator, og ingen data blev oprettet. Den runtime-testes med fase 30 i 30.15.
 
 **Review og runtime-test (projektejerens ønske 2026-11-03):** fase 30 og 31 reviewes og runtime-testes samlet (30.15), og stg.ccmerch.dk må bruges til det.
 
