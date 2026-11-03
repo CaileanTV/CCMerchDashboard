@@ -2501,10 +2501,6 @@ input:disabled + .merchboard-sounds__upload {
 	font-size: var(--merchboard-text-md);
 }
 
-.merchboard-alert-panel--section .merchboard-alert-panel__heading {
-	font-size: var(--merchboard-text-sm);
-}
-
 .merchboard-alert-panel__toggle {
 	display: flex;
 	gap: var(--merchboard-space-2);
@@ -2549,10 +2545,6 @@ input:disabled + .merchboard-sounds__upload {
 	padding: var(--merchboard-space-4);
 }
 
-.merchboard-alert-panel--section .merchboard-alert-panel__body {
-	padding: var(--merchboard-space-3);
-}
-
 // A group of fields: a light heading that folds it open and shut.
 .merchboard-alert-panel--group {
 	border: 1px solid var(--merchboard-border);
@@ -2576,11 +2568,6 @@ input:disabled + .merchboard-sounds__upload {
 	.merchboard-alert-panel__body {
 		padding: 0 var(--merchboard-space-3) var(--merchboard-space-3);
 	}
-}
-
-.merchboard-alert-panel__sections {
-	margin: var(--merchboard-space-2) calc(-1 * var(--merchboard-space-4)) calc(-1 * var(--merchboard-space-4));
-	border-top: 1px solid var(--merchboard-border);
 }
 
 .merchboard-alert-fieldset {

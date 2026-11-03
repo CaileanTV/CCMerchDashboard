@@ -514,54 +514,49 @@ export function AlertEditor( {
 							fields={ fields }
 							sounds={ variation === undefined ? sounds : null }
 							isDefault={ variation === undefined }
-						>
-							{ variation === undefined && (
-								<VariationsSection
-									variations={ overlayValues.variations }
-									canAdd={ canAddVariation( overlayValues ) }
-									onAdd={ () => {
-										const added = newVariation(
-											overlayValues,
-											doc.value.layout,
-											sprintf(
-												/* translators: %d: number of the variation. */
-												__(
-													'Variation %d',
-													'merchboard'
-												),
-												overlayValues.variations
-													.length + 1
-											)
-										);
-										setVariations( [
-											...overlayValues.variations,
-											added,
-										] );
-										setEditing( added.id );
-									} }
-									onEdit={ setEditing }
-									onChange={ setVariations }
-								/>
-							) }
-							<TtsSection
-								fields={ fields }
-								available={ ttsAvailable }
+						/>
+						{ variation === undefined && (
+							<VariationsSection
+								variations={ overlayValues.variations }
+								canAdd={ canAddVariation( overlayValues ) }
+								onAdd={ () => {
+									const added = newVariation(
+										overlayValues,
+										doc.value.layout,
+										sprintf(
+											/* translators: %d: number of the variation. */
+											__( 'Variation %d', 'merchboard' ),
+											overlayValues.variations.length + 1
+										)
+									);
+									setVariations( [
+										...overlayValues.variations,
+										added,
+									] );
+									setEditing( added.id );
+								} }
+								onEdit={ setEditing }
+								onChange={ setVariations }
 							/>
-							<TextSection
-								fields={ fields }
-								fonts={ fonts }
-								fontApproved={ fontApproved }
-							/>
-							<AnimationSection
-								fields={ fields }
-								images={ images }
-								onSaved={ onSaved }
-								notify={ notify }
-								onPlay={ () =>
-									setPlayRequest( ( count ) => count + 1 )
-								}
-							/>
-						</MerchAlertPanel>
+						) }
+						<TtsSection
+							fields={ fields }
+							available={ ttsAvailable }
+						/>
+						<TextSection
+							fields={ fields }
+							fonts={ fonts }
+							fontApproved={ fontApproved }
+						/>
+						<AnimationSection
+							fields={ fields }
+							images={ images }
+							onSaved={ onSaved }
+							notify={ notify }
+							onPlay={ () =>
+								setPlayRequest( ( count ) => count + 1 )
+							}
+						/>
 						<PositionPanel fields={ fields } />
 					</aside>
 					<section

@@ -1,6 +1,6 @@
 /**
  * The side panel's contents (alert designer 2.0, ADR-088): "Merch alert"
- * (image, sound, layout, message and timing), its sections Text (tabs Text
+ * (image, sound, layout, message and timing), the panels Text (tabs Text
  * and Advanced) and Animation (every animation: the box, the texts, the
  * fill of the letters and the text around the image), and "Position, size
  * and style" at the bottom.
@@ -223,25 +223,22 @@ function HighlightFields( { fields }: { readonly fields: EditorFields } ) {
 
 /**
  * "Merch alert": the product image, the sound, the layout, the message and
- * the timing. Open from the start; its sections (variations, read-out, text
- * and animation) are folded below.
+ * the timing. Open from the start; the panels Variations, Read-out, Text
+ * and Animation follow it.
  *
  * @param props           Props.
  * @param props.fields    The edited values.
  * @param props.sounds    The sound controls (the default's only).
  * @param props.isDefault Whether the default is edited, not a variation.
- * @param props.children  The sections below.
  */
 export function MerchAlertPanel( {
 	fields,
 	sounds,
 	isDefault = true,
-	children,
 }: {
 	readonly fields: EditorFields;
 	readonly sounds: ReactNode;
 	readonly isDefault?: boolean;
-	readonly children: ReactNode;
 } ) {
 	const id = useId();
 	const { values, layout, set, setBoth } = fields;
@@ -440,7 +437,6 @@ export function MerchAlertPanel( {
 					) }
 				</p>
 			) }
-			<div className="merchboard-alert-panel__sections">{ children }</div>
 		</Panel>
 	);
 }
@@ -786,7 +782,7 @@ export function TextSection( {
 	);
 
 	return (
-		<Panel title={ __( 'Text', 'merchboard' ) } level="section">
+		<Panel title={ __( 'Text', 'merchboard' ) }>
 			<Tabs
 				label={ __( 'Text settings', 'merchboard' ) }
 				tabs={ [
@@ -857,7 +853,7 @@ export function AnimationSection( {
 			values.text_fills.secondary_text.type === 'image' );
 
 	return (
-		<Panel title={ __( 'Animation', 'merchboard' ) } level="section">
+		<Panel title={ __( 'Animation', 'merchboard' ) }>
 			<Panel
 				level="group"
 				title={ __( 'Alert', 'merchboard' ) }
@@ -1228,7 +1224,7 @@ export function TtsSection( {
 		set( { tts: { ...tts, ...change } } );
 
 	return (
-		<Panel title={ __( 'Read-out (TTS)', 'merchboard' ) } level="section">
+		<Panel title={ __( 'Read-out (TTS)', 'merchboard' ) }>
 			{ ! available && (
 				<p className="merchboard-field__help">
 					{ __(

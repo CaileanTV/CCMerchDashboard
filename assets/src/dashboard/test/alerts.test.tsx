@@ -486,7 +486,7 @@ describe( 'AlertsSection', () => {
 
 		const toggles = Array.from(
 			rendered?.container.querySelectorAll< HTMLButtonElement >(
-				':is(.merchboard-alert-panel--panel, .merchboard-alert-panel--section) > .merchboard-alert-panel__heading > .merchboard-alert-panel__toggle'
+				'.merchboard-alert-panel--panel > .merchboard-alert-panel__heading > .merchboard-alert-panel__toggle'
 			) ?? []
 		);
 		const state = Object.fromEntries(

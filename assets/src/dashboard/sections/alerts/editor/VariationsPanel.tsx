@@ -54,7 +54,7 @@ export function VariationsSection( {
 	};
 
 	return (
-		<Panel title={ __( 'Variations', 'merchboard' ) } level="section">
+		<Panel title={ __( 'Variations', 'merchboard' ) }>
 			<p className="merchboard-field__help">
 				{ __(
 					'Other looks of your alert. A purchase is shown with one of them at random. A variation with conditions is only used when they are met, and then before the others.',
