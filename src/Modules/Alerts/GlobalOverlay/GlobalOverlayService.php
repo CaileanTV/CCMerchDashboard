@@ -112,10 +112,8 @@ final class GlobalOverlayService {
 		$settings = AlertOverlays::merge( $overlay->settings, $input, $this->fonts );
 
 		// A fill keeps only the global overlay's own image or a library image.
-		if ( is_array( $input['text_fills'] ?? null ) && null !== $this->images ) {
-			$values               = $settings->to_array();
-			$values['text_fills'] = $this->images->clean( $values['text_fills'] );
-			$settings             = OverlaySettings::from_array( $values );
+		if ( ( is_array( $input['text_fills'] ?? null ) || is_array( $input['variations'] ?? null ) ) && null !== $this->images ) {
+			$settings = $settings->with_fills( fn( array $fills ): array => $this->images->clean( $fills ) );
 		}
 
 		return $this->store->update_settings( $overlay, $settings );

@@ -114,24 +114,11 @@ final class GlobalOverlayImages {
 		$overlay = $this->store->find();
 
 		if ( null !== $overlay ) {
-			$values = $overlay->settings->to_array();
-			$fills  = $values['text_fills'];
+			// The default's and every variation's fills (ADR-088).
+			$settings = $overlay->settings->with_fills( static fn( array $fills ): array => OverlaySettings::fills_without( $fills, $attachment ) );
 
-			foreach ( $fills as $text => $fill ) {
-				if ( 'image' === $fill['type'] && $attachment === $fill['image'] ) {
-					$fills[ $text ] = array_merge(
-						$fill,
-						array(
-							'type'  => 'none',
-							'image' => 0,
-						)
-					);
-				}
-			}
-
-			if ( $fills !== $values['text_fills'] ) {
-				$values['text_fills'] = $fills;
-				$this->store->update_settings( $overlay, OverlaySettings::from_array( $values ) );
+			if ( $settings->to_array() !== $overlay->settings->to_array() ) {
+				$this->store->update_settings( $overlay, $settings );
 			}
 		}
 

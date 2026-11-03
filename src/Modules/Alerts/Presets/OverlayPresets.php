@@ -160,12 +160,10 @@ final class OverlayPresets {
 	public function update_settings( string $id, array $input ): OverlayPreset {
 		self::authorize();
 
-		$preset = $this->require( $id );
-		$values = AlertOverlays::merge( $preset->settings, $input, $this->fonts )->to_array();
+		$preset   = $this->require( $id );
+		$settings = AlertOverlays::merge( $preset->settings, $input, $this->fonts )->with_fills( fn( array $fills ): array => $this->library_fills( $fills ) );
 
-		$values['text_fills'] = $this->library_fills( $values['text_fills'] );
-
-		return $this->store->replace( new OverlayPreset( $preset->id, $preset->name, OverlaySettings::from_array( $values ) ) );
+		return $this->store->replace( new OverlayPreset( $preset->id, $preset->name, $settings ) );
 	}
 
 	/**
@@ -211,14 +209,12 @@ final class OverlayPresets {
 
 		$values = OverlaySettings::from_array( $copied )->to_array();
 
-		// A font that is no longer approved gives the default font.
-		if ( 'inherit' !== $values['font_family'] && null === $this->fonts?->find( $values['font_family'] ) ) {
-			$values['font_family'] = 'inherit';
-		}
+		// A font that is no longer approved gives the default font; a fill keeps only images the creator may use.
+		$settings = OverlaySettings::from_array( $values )
+			->with_fonts( fn( string $family ): bool => null !== $this->fonts?->find( $family ) )
+			->with_fills( fn( array $fills ): array => null === $this->images ? AlertImages::without_images( $fills ) : $this->images->clean( $creator_id, $fills ) );
 
-		$values['text_fills'] = null === $this->images ? AlertImages::without_images( $values['text_fills'] ) : $this->images->clean( $creator_id, $values['text_fills'] );
-
-		$this->overlays->update_settings( $overlay->id, OverlaySettings::from_array( $values ) );
+		$this->overlays->update_settings( $overlay->id, $settings );
 
 		return $this->overlays->find_for_creator( $creator_id );
 	}

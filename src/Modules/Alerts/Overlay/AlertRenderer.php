@@ -41,20 +41,29 @@ final class AlertRenderer {
 	}
 
 	/**
-	 * One alert as the page shows it.
+	 * One alert as the page shows it: the texts whole and in pieces (the
+	 * inserted values marked, ADR-088), and the variation it is shown with.
 	 *
-	 * @param OverlaySettings $settings The overlay's settings.
+	 * @param OverlaySettings $settings The settings of the chosen look (OverlaySettings::look()).
 	 * @param AlertEvent      $event    Alert.
 	 * @param string          $sound    The sound's URL ('' for none).
-	 * @return array{id: int, image: string, text: string, secondary: string, sound: string}
+	 * @param string          $look     The chosen variation's id; '' for the default.
+	 * @return array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string}
 	 */
-	public function render( OverlaySettings $settings, AlertEvent $event, string $sound ): array {
+	public function render( OverlaySettings $settings, AlertEvent $event, string $sound, string $look = '' ): array {
+		$values    = $settings->to_array();
+		$parts     = $this->template->segments( $settings->template(), $event, $values['number_format'], $values['max_name_length'] );
+		$secondary = $settings->shows_secondary() ? $this->template->segments( $settings->secondary_template(), $event, $values['number_format'], $values['max_name_length'] ) : array();
+
 		return array(
-			'id'        => $event->id,
-			'image'     => $event->image_id > 0 ? ( $this->image_url )( $event->image_id, $settings->image_size() ) : '',
-			'text'      => $this->template->render( $settings->template(), $event ),
-			'secondary' => $settings->shows_secondary() ? $this->template->render( $settings->secondary_template(), $event ) : '',
-			'sound'     => $sound,
+			'id'              => $event->id,
+			'look'            => $look,
+			'image'           => $event->image_id > 0 ? ( $this->image_url )( $event->image_id, $settings->image_size() ) : '',
+			'text'            => implode( '', array_column( $parts, 'text' ) ),
+			'secondary'       => implode( '', array_column( $secondary, 'text' ) ),
+			'parts'           => $parts,
+			'secondary_parts' => $secondary,
+			'sound'           => $sound,
 		);
 	}
 

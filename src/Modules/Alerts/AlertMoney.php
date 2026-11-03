@@ -30,8 +30,11 @@ final class AlertMoney {
 	 *
 	 * @param string|null $amount   Four-decimal amount, null when unknown.
 	 * @param string      $currency Currency code ('' for the shop's).
+	 * @param string      $style    `shop` (as the shop shows it), `whole` (no
+	 *                              decimals) or `plain` (the number without
+	 *                              the currency); OverlaySettings::NUMBER_FORMATS.
 	 */
-	public static function format( ?string $amount, string $currency ): string {
+	public static function format( ?string $amount, string $currency, string $style = 'shop' ): string {
 		if ( null === $amount ) {
 			return '';
 		}
@@ -42,7 +45,7 @@ final class AlertMoney {
 			return '';
 		}
 
-		$decimals = function_exists( 'wc_get_price_decimals' ) ? max( 0, min( 4, (int) wc_get_price_decimals() ) ) : 2;
+		$decimals = 'whole' === $style ? 0 : ( function_exists( 'wc_get_price_decimals' ) ? max( 0, min( 4, (int) wc_get_price_decimals() ) ) : 2 );
 		$point    = function_exists( 'wc_get_price_decimal_separator' ) ? (string) wc_get_price_decimal_separator() : '.';
 		$thousand = function_exists( 'wc_get_price_thousand_separator' ) ? (string) wc_get_price_thousand_separator() : ',';
 		$divisor  = 10 ** ( SalesAmount::DECIMALS - $decimals );
@@ -50,6 +53,10 @@ final class AlertMoney {
 		$scale    = 10 ** $decimals;
 		$whole    = number_format( intdiv( $rounded, $scale ), 0, '', $thousand );
 		$number   = ( $units < 0 && 0 !== $rounded ? '-' : '' ) . $whole . ( $decimals > 0 ? $point . str_pad( (string) ( $rounded % $scale ), $decimals, '0', STR_PAD_LEFT ) : '' );
+
+		if ( 'plain' === $style ) {
+			return $number;
+		}
 
 		return self::with_currency( $number, '' === $currency && function_exists( 'get_woocommerce_currency' ) ? (string) get_woocommerce_currency() : $currency );
 	}

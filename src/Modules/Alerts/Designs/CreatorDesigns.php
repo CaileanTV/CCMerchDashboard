@@ -188,14 +188,12 @@ final class CreatorDesigns {
 		$previous = ( new CreatorDesign( '', '', $overlay->settings, '' ) )->sounds();
 		$values   = $design->settings->to_array();
 
-		// A font that is no longer approved gives the default font.
-		if ( 'inherit' !== $values['font_family'] && null === $this->fonts?->find( $values['font_family'] ) ) {
-			$values['font_family'] = 'inherit';
-		}
+		// A font that is no longer approved gives the default font; a fill keeps only images the creator may use.
+		$settings = OverlaySettings::from_array( $values )
+			->with_fonts( fn( string $family ): bool => null !== $this->fonts?->find( $family ) )
+			->with_fills( fn( array $fills ): array => null === $this->images ? AlertImages::without_images( $fills ) : $this->images->clean( $creator_id, $fills ) );
 
-		$values['text_fills'] = null === $this->images ? AlertImages::without_images( $values['text_fills'] ) : $this->images->clean( $creator_id, $values['text_fills'] );
-
-		$this->overlays->update_settings( $overlay->id, OverlaySettings::from_array( $values ) );
+		$this->overlays->update_settings( $overlay->id, $settings );
 		$changed = $this->overlays->find_for_creator( $creator_id ) ?? $overlay;
 		$this->clean_sounds( $creator_id, $previous, $changed );
 

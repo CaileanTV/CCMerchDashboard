@@ -44,8 +44,8 @@ final class OverlayTestQueue {
 	/**
 	 * Adds a rendered alert.
 	 *
-	 * @param int                                                                           $overlay Overlay row id.
-	 * @param array{id: int, image: string, text: string, secondary: string, sound: string} $alert   Rendered alert.
+	 * @param int                                                                                                                                                                                                 $overlay Overlay row id.
+	 * @param array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string} $alert   Rendered alert.
 	 */
 	public function push( int $overlay, array $alert ): void {
 		$queue   = $this->read( $overlay );
@@ -67,7 +67,7 @@ final class OverlayTestQueue {
 	 * Takes the waiting alerts, oldest first.
 	 *
 	 * @param int $overlay Overlay row id.
-	 * @return list<array{id: int, image: string, text: string, secondary: string, sound: string}>
+	 * @return list<array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string}>
 	 */
 	public function drain( int $overlay ): array {
 		$queue = $this->read( $overlay );
@@ -83,7 +83,7 @@ final class OverlayTestQueue {
 	 * The waiting alerts, read fresh.
 	 *
 	 * @param int $overlay Overlay row id.
-	 * @return list<array{id: int, image: string, text: string, secondary: string, sound: string}>
+	 * @return list<array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string}>
 	 */
 	private function read( int $overlay ): array {
 		$key = $this->key( $overlay );
@@ -98,16 +98,54 @@ final class OverlayTestQueue {
 		foreach ( is_array( $stored ) ? $stored : array() as $alert ) {
 			if ( is_array( $alert ) && is_string( $alert['text'] ?? null ) && is_string( $alert['image'] ?? null ) && is_string( $alert['secondary'] ?? null ) && is_string( $alert['sound'] ?? null ) ) {
 				$queue[] = array(
-					'id'        => 0,
-					'image'     => $alert['image'],
-					'text'      => $alert['text'],
-					'secondary' => $alert['secondary'],
-					'sound'     => $alert['sound'],
+					'id'              => 0,
+					'look'            => is_string( $alert['look'] ?? null ) ? $alert['look'] : '',
+					'image'           => $alert['image'],
+					'text'            => $alert['text'],
+					'secondary'       => $alert['secondary'],
+					'parts'           => self::parts( $alert['parts'] ?? null, $alert['text'] ),
+					'secondary_parts' => self::parts( $alert['secondary_parts'] ?? null, $alert['secondary'] ),
+					'sound'           => $alert['sound'],
 				);
 			}
 		}
 
 		return $queue;
+	}
+
+	/**
+	 * Stored text pieces; the whole text as one piece when they are missing
+	 * or broken.
+	 *
+	 * @param mixed  $stored Stored pieces.
+	 * @param string $text   The whole text.
+	 * @return list<array{text: string, value: bool}>
+	 */
+	private static function parts( mixed $stored, string $text ): array {
+		$parts = array();
+
+		foreach ( is_array( $stored ) ? $stored : array() as $part ) {
+			if ( ! is_array( $part ) || ! is_string( $part['text'] ?? null ) || ! is_bool( $part['value'] ?? null ) ) {
+				$parts = null;
+				break;
+			}
+
+			$parts[] = array(
+				'text'  => $part['text'],
+				'value' => $part['value'],
+			);
+		}
+
+		if ( null === $parts || ( array() === $parts && '' !== $text ) ) {
+			return '' === $text ? array() : array(
+				array(
+					'text'  => $text,
+					'value' => false,
+				),
+			);
+		}
+
+		return $parts;
 	}
 
 	/**

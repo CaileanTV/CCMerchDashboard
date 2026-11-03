@@ -128,7 +128,7 @@ final class OverlaySettingsTest extends TestCase {
 			'shadow with url'            => array( 'text_shadow', '2px 2px url(x) #000', '' ),
 			'color as a name'            => array( 'text_color', 'red', '#ffffff' ),
 			'color with expression'      => array( 'bg_color', '#000;}', '#000000' ),
-			'align outside the list'     => array( 'text_align', 'justify', 'center' ),
+			'align outside the list'     => array( 'text_align', 'stretch', 'center' ),
 			'fit outside the list'       => array( 'text_fit', 'stretch', 'fixed' ),
 			'weight outside the list'    => array( 'font_weight', '950', '700' ),
 			'size as text'               => array( 'font_size', '32px', 32 ),
@@ -213,10 +213,18 @@ final class OverlaySettingsTest extends TestCase {
 			'out'    => 'fade',
 			'color'  => '#ff2bd6',
 			'speed'  => 'normal',
+			'in_ms'  => 500,
+			'out_ms' => 500,
 		);
 
 		self::assertSame(
 			array(
+				'alert'          => array(
+					'in'     => 'fade',
+					'out'    => 'fade',
+					'in_ms'  => 500,
+					'out_ms' => 500,
+				),
 				'main_text'      => $default,
 				'secondary_text' => $default,
 			),
@@ -245,6 +253,8 @@ final class OverlaySettingsTest extends TestCase {
 				'out'    => 'wave',
 				'color'  => '#00ff00',
 				'speed'  => 'fast',
+				'in_ms'  => 500,
+				'out_ms' => 500,
 			),
 			$settings->animations()['main_text']
 		);

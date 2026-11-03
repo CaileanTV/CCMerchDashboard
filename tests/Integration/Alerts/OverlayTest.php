@@ -116,11 +116,27 @@ final class OverlayTest extends IntegrationTestCase {
 		self::assertSame(
 			array(
 				array(
-					'id'        => $new,
-					'image'     => '',
-					'text'      => 'nova_fan bought Hoodie',
-					'secondary' => '',
-					'sound'     => '',
+					'id'              => $new,
+					'look'            => '',
+					'image'           => '',
+					'text'            => 'nova_fan bought Hoodie',
+					'secondary'       => '',
+					'parts'           => array(
+						array(
+							'text'  => 'nova_fan',
+							'value' => true,
+						),
+						array(
+							'text'  => ' bought ',
+							'value' => false,
+						),
+						array(
+							'text'  => 'Hoodie',
+							'value' => true,
+						),
+					),
+					'secondary_parts' => array(),
+					'sound'           => '',
 				),
 			),
 			$next['alerts']

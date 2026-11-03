@@ -716,12 +716,15 @@ final class MeAlertsController extends RestController {
 			$settings[ $key ] = $values[ $key ];
 		}
 
-		$settings['show_secondary']     = $values['layout']['elements']['secondary_text']['visible'];
-		$settings['display_from_sound'] = $values['display_from_sound'];
-		$settings['font_family']        = $values['font_family'];
-		$settings['animations']         = $values['animations'];
-		$settings['text_fills']         = $values['text_fills'];
-		$settings['text_frame']         = $values['text_frame'];
+		foreach ( array_merge( AlertOverlays::EDITABLE_GROUPS, AlertOverlays::EDITABLE_FLAGS ) as $key ) {
+			$settings[ $key ] = $values[ $key ];
+		}
+
+		$settings['show_secondary'] = $values['layout']['elements']['secondary_text']['visible'];
+		$settings['font_family']    = $values['font_family'];
+
+		// The layout is answered as its own key.
+		unset( $settings['layout'] );
 
 		return array(
 			'settings'      => $settings,
@@ -768,7 +771,7 @@ final class MeAlertsController extends RestController {
 			$input['font_family'] = $body['font_family'];
 		}
 
-		foreach ( array( 'layout', 'animations', 'text_fills', 'text_frame' ) as $key ) {
+		foreach ( AlertOverlays::EDITABLE_GROUPS as $key ) {
 			if ( ! array_key_exists( $key, $body ) ) {
 				continue;
 			}
@@ -780,7 +783,7 @@ final class MeAlertsController extends RestController {
 			$input[ $key ] = $body[ $key ];
 		}
 
-		foreach ( array( 'show_secondary', 'audio_enabled', 'display_from_sound' ) as $key ) {
+		foreach ( array_merge( array( 'show_secondary' ), AlertOverlays::EDITABLE_FLAGS ) as $key ) {
 			if ( ! array_key_exists( $key, $body ) ) {
 				continue;
 			}

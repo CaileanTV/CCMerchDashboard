@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\Alerts;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
@@ -16,6 +18,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\ImpersonationSession;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Access\Impersonation;
+use MerchBoard\Modules\Alerts\AlertEvent;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
 use MerchBoard\Modules\Alerts\AlertsAvailability;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
@@ -279,6 +282,114 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'layout' => 'big' ) )->get_status() );
 	}
 
+	public function test_the_designer_2_fields_and_variations_are_saved_normalized(): void {
+		$creator = $this->creator( 'nova' );
+		$this->call( 'POST', self::ROUTE );
+		update_option(
+			AlertFonts::APPROVED_OPTION,
+			array(
+				array(
+					'family'   => 'Roboto',
+					'category' => 'sans-serif',
+					'weights'  => array( 400 ),
+				),
+			),
+			false
+		);
+
+		$saved = $this->data(
+			$this->call(
+				'PATCH',
+				self::ROUTE,
+				array(
+					'layout_mode'    => 'side',
+					'widget'         => array(
+						'x'        => 500,
+						'y'        => 300,
+						'w'        => 800,
+						'h'        => 200,
+						'rotation' => 400,
+					),
+					'letter_spacing' => 4,
+					'italic'         => true,
+					'tts'            => array(
+						'enabled' => true,
+						'voice'   => 'en-GB-Standard-B',
+					),
+					'variations'     => array(
+						array(
+							'id'         => 'big001',
+							'name'       => 'Big buyers',
+							'conditions' => array( 'min_amount' => 500 ),
+							'look'       => array(
+								'template'            => 'Wow $UserName!',
+								'font_family'         => 'Roboto',
+								'audio_default_sound' => 12345,
+							),
+						),
+					),
+				)
+			)
+		)['overlay']['settings'];
+
+		self::assertSame( 'side', $saved['layout_mode'] );
+		self::assertSame( 180, $saved['widget']['rotation'] );
+		self::assertSame( 4, $saved['letter_spacing'] );
+		self::assertTrue( $saved['italic'] );
+		self::assertSame( 'en-GB-Standard-B', $saved['tts']['voice'] );
+		self::assertSame( 'Wow $UserName!', $saved['variations'][0]['look']['template'] );
+		self::assertSame( 'Roboto', $saved['variations'][0]['look']['font_family'] );
+		self::assertSame( 0, $saved['variations'][0]['look']['audio_default_sound'], 'A sound changes only through the sound routes.' );
+		self::assertArrayNotHasKey( 'layout', $saved, 'The layout is answered as its own key.' );
+		self::assertSame( 'big001', $this->overlays->find_for_creator( $creator )?->settings->variations()[0]['id'] );
+
+		$refused = $this->call(
+			'PATCH',
+			self::ROUTE,
+			array(
+				'variations' => array(
+					array(
+						'id'   => 'big001',
+						'look' => array( 'font_family' => 'Lobster' ),
+					),
+				),
+			)
+		);
+		self::assertSame( 400, $refused->get_status(), 'A variation\'s font must be approved too.' );
+		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'variations' => 'many' ) )->get_status() );
+		self::assertSame( 400, $this->call( 'PATCH', self::ROUTE, array( 'italic' => 'yes' ) )->get_status() );
+	}
+
+	public function test_the_feed_shows_an_alert_with_the_chosen_variation(): void {
+		$creator = $this->creator( 'nova' );
+		$this->call( 'POST', self::ROUTE );
+		$this->call(
+			'PATCH',
+			self::ROUTE,
+			array(
+				'template'   => '$UserName bought $Product',
+				'variations' => array(
+					array(
+						'id'         => 'big001',
+						'conditions' => array( 'min_amount' => 100 ),
+						'look'       => array( 'template' => 'Huge: $LineTotal' ),
+					),
+				),
+			)
+		);
+		$id    = (string) $this->overlays->find_for_creator( $creator )?->overlay_id;
+		$start = $this->feed->read( $id, null, false );
+		self::assertNotNull( $start );
+
+		( new AlertEventRepository( $this->wpdb ) )->insert( new AlertEvent( $creator, 501, '501', 9001, 10, 0, 'Hoodie', '', 1, 0, array(), 'nova_fan', new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ), 0, '450.0000', '450.0000', 'DKK' ) );
+
+		$alerts = $this->feed->read( $id, $start['cursor'], false )['alerts'] ?? array();
+		self::assertCount( 1, $alerts );
+		self::assertSame( 'big001', $alerts[0]['look'] );
+		self::assertStringStartsWith( 'Huge: ', $alerts[0]['text'] );
+		self::assertTrue( $alerts[0]['parts'][1]['value'], 'The amount is marked as a value.' );
+	}
+
 	public function test_sounds_are_uploaded_switched_on_and_deleted_through_the_routes(): void {
 		$this->creator( 'nova' );
 		$user = get_current_user_id();
@@ -434,11 +545,27 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 		self::assertSame(
 			array(
 				array(
-					'id'        => 0,
-					'image'     => '',
-					'text'      => 'TestFan tested Hoodie',
-					'secondary' => '',
-					'sound'     => '',
+					'id'              => 0,
+					'look'            => '',
+					'image'           => '',
+					'text'            => 'TestFan tested Hoodie',
+					'secondary'       => '',
+					'parts'           => array(
+						array(
+							'text'  => 'TestFan',
+							'value' => true,
+						),
+						array(
+							'text'  => ' tested ',
+							'value' => false,
+						),
+						array(
+							'text'  => 'Hoodie',
+							'value' => true,
+						),
+					),
+					'secondary_parts' => array(),
+					'sound'           => '',
 				),
 			),
 			$answer['alerts']

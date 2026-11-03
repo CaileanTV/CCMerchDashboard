@@ -48,7 +48,18 @@ final class AlertOverlays {
 	/**
 	 * Form fields a creator can change.
 	 */
-	public const EDITABLE = array( 'template', 'secondary_template', 'font_size', 'font_weight', 'text_color', 'text_shadow', 'text_align', 'text_fit', 'image_size', 'bg_color', 'bg_opacity', 'border_radius', 'padding', 'anim_duration', 'display_duration' );
+	public const EDITABLE = array( 'template', 'secondary_template', 'font_size', 'font_weight', 'text_color', 'text_shadow', 'text_align', 'text_fit', 'image_size', 'bg_color', 'bg_opacity', 'border_radius', 'padding', 'anim_duration', 'display_duration', 'text_opacity', 'line_height', 'letter_spacing', 'word_spacing', 'text_direction', 'text_case', 'stroke_width', 'stroke_color', 'stroke_opacity', 'number_format', 'max_name_length', 'audio_volume', 'layout_mode' );
+
+	/**
+	 * Groups of fields a creator can change, each sent whole (alert designer
+	 * 2.0, ADR-088, besides the layout, animations, fills and frame).
+	 */
+	public const EDITABLE_GROUPS = array( 'layout', 'animations', 'text_fills', 'text_frame', 'widget', 'highlight', 'margin', 'text_timing', 'tts', 'variations' );
+
+	/**
+	 * Switches a creator can change (besides the visibility of the secondary text).
+	 */
+	public const EDITABLE_FLAGS = array( 'audio_enabled', 'display_from_sound', 'italic', 'underline', 'text_shadow_enabled' );
 
 	/**
 	 * Username shown by test alerts.
@@ -156,10 +167,8 @@ final class AlertOverlays {
 		$settings = self::merge( $overlay->settings, $input, $this->fonts );
 
 		// A fill keeps only the creator's own image or a library image; any other is cleared.
-		if ( is_array( $input['text_fills'] ?? null ) ) {
-			$normalized               = $settings->to_array();
-			$normalized['text_fills'] = null === $this->images ? AlertImages::without_images( $normalized['text_fills'] ) : $this->images->clean( $creator_id, $normalized['text_fills'] );
-			$settings                 = OverlaySettings::from_array( $normalized );
+		if ( is_array( $input['text_fills'] ?? null ) || is_array( $input['variations'] ?? null ) ) {
+			$settings = $settings->with_fills( fn( array $fills ): array => null === $this->images ? AlertImages::without_images( $fills ) : $this->images->clean( $creator_id, $fills ) );
 		}
 
 		$this->overlays->update_settings( $overlay->id, $settings );
@@ -190,38 +199,71 @@ final class AlertOverlays {
 			$values['font_family'] = self::approved_family( $input['font_family'], $fonts );
 		}
 
-		// The designer saves the whole layout; the form only the visibility of the secondary text.
-		if ( is_array( $input['layout'] ?? null ) ) {
-			$values['layout'] = $input['layout'];
+		// Groups are sent whole and normalized by OverlaySettings: the designer's layout (the form
+		// changes only the visibility of the secondary text), the text animations (step 25.6.9), the
+		// text fills (25.6.10), the text around the image (25.6.11) and the groups of 2.0 (ADR-088).
+		foreach ( self::EDITABLE_GROUPS as $group ) {
+			if ( is_array( $input[ $group ] ?? null ) ) {
+				$values[ $group ] = $input[ $group ];
+			}
 		}
 
-		// The text animations of both texts (step 25.6.9), normalized by OverlaySettings.
-		if ( is_array( $input['animations'] ?? null ) ) {
-			$values['animations'] = $input['animations'];
-		}
-
-		// The text fills of both texts (step 25.6.10).
-		if ( is_array( $input['text_fills'] ?? null ) ) {
-			$values['text_fills'] = $input['text_fills'];
-		}
-
-		// The main text around the image (step 25.6.11).
-		if ( is_array( $input['text_frame'] ?? null ) ) {
-			$values['text_frame'] = $input['text_frame'];
+		if ( is_array( $input['variations'] ?? null ) ) {
+			$values['variations'] = self::approved_variations( $input['variations'], $current, $fonts );
 		}
 
 		if ( array_key_exists( 'show_secondary', $input ) ) {
 			$values['layout']['elements']['secondary_text']['visible'] = true === $input['show_secondary'];
 		}
 
-		// The sound files themselves change only through AlertSounds.
-		foreach ( array( 'audio_enabled', 'display_from_sound' ) as $flag ) {
+		// The sound files themselves change only through AlertSounds; a variation's sound is kept.
+		foreach ( self::EDITABLE_FLAGS as $flag ) {
 			if ( array_key_exists( $flag, $input ) ) {
 				$values[ $flag ] = true === $input[ $flag ];
 			}
 		}
 
 		return OverlaySettings::from_array( $values );
+	}
+
+	/**
+	 * Submitted variations with an approved font each (a variation that
+	 * keeps a font no longer approved keeps it, as the overlay's own font
+	 * does until it is changed) and their own sound unchanged: sounds change
+	 * only through AlertSounds.
+	 *
+	 * @param array<mixed>    $variations Submitted variations.
+	 * @param OverlaySettings $current    Current settings.
+	 * @param AlertFonts|null $fonts      Approved fonts.
+	 * @return array<mixed>
+	 * @throws InvalidArgumentException When a font is not approved (message: the field).
+	 */
+	private static function approved_variations( array $variations, OverlaySettings $current, ?AlertFonts $fonts ): array {
+		$stored = array();
+
+		foreach ( $current->variations() as $variation ) {
+			$stored[ $variation['id'] ] = $variation['look'];
+		}
+
+		foreach ( $variations as $index => $variation ) {
+			if ( ! is_array( $variation ) || ! is_array( $variation['look'] ?? null ) ) {
+				continue;
+			}
+
+			$id   = is_string( $variation['id'] ?? null ) ? $variation['id'] : '';
+			$was  = $stored[ $id ] ?? null;
+			$look = $variation['look'];
+
+			if ( array_key_exists( 'font_family', $look ) && ( null === $was || $look['font_family'] !== $was['font_family'] ) ) {
+				$look['font_family'] = self::approved_family( $look['font_family'], $fonts );
+			}
+
+			$look['audio_default_sound'] = null === $was ? $current->to_array()['audio_default_sound'] : $was['audio_default_sound'];
+
+			$variations[ $index ]['look'] = $look;
+		}
+
+		return $variations;
 	}
 
 	/**

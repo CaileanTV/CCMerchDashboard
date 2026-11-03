@@ -65,31 +65,79 @@ final class AlertTemplate {
 	/**
 	 * The text of an alert.
 	 *
-	 * @param string     $template Template.
-	 * @param AlertEvent $event    Alert.
+	 * @param string     $template      Template.
+	 * @param AlertEvent $event         Alert.
+	 * @param string     $number_format How amounts are written (OverlaySettings::NUMBER_FORMATS).
+	 * @param int        $max_name      Longest username in characters; 0 for no limit.
 	 */
-	public function render( string $template, AlertEvent $event ): string {
+	public function render( string $template, AlertEvent $event, string $number_format = 'shop', int $max_name = 0 ): string {
+		return implode( '', array_column( $this->segments( $template, $event, $number_format, $max_name ), 'text' ) );
+	}
+
+	/**
+	 * The text of an alert in pieces: the template's own text and the
+	 * inserted values (`value`), so the overlay can highlight the values
+	 * (ADR-088). Values that are empty are left out. Plain text, never HTML.
+	 *
+	 * @param string     $template      Template.
+	 * @param AlertEvent $event         Alert.
+	 * @param string     $number_format How amounts are written (OverlaySettings::NUMBER_FORMATS).
+	 * @param int        $max_name      Longest username in characters; 0 for no limit.
+	 * @return list<array{text: string, value: bool}>
+	 */
+	public function segments( string $template, AlertEvent $event, string $number_format = 'shop', int $max_name = 0 ): array {
 		if ( '' === $template ) {
-			return '';
+			return array();
 		}
 
+		$values = $this->values( $event, $number_format, $max_name );
+		$parts  = preg_split( '/(' . implode( '|', array_map( static fn( string $name ): string => preg_quote( $name, '/' ), array_keys( $values ) ) ) . ')/', $template, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY );
+
+		$segments = array();
+
+		foreach ( false === $parts ? array( $template ) : $parts as $part ) {
+			$value = array_key_exists( $part, $values );
+			$text  = $value ? $values[ $part ] : $part;
+
+			if ( '' !== $text ) {
+				$segments[] = array(
+					'text'  => $text,
+					'value' => $value,
+				);
+			}
+		}
+
+		return $segments;
+	}
+
+	/**
+	 * The variables and their values. No name is the start of another, so
+	 * the order does not matter.
+	 *
+	 * @param AlertEvent $event         Alert.
+	 * @param string     $number_format How amounts are written.
+	 * @param int        $max_name      Longest username; 0 for no limit.
+	 * @return array<string, string>
+	 */
+	private function values( AlertEvent $event, string $number_format, int $max_name ): array {
 		$username = '' !== $event->customer_username ? $event->customer_username : self::ANONYMOUS;
 
-		return strtr(
-			$template,
-			array(
-				'$UserName'    => $username,
-				'$FirstName'   => $username,
-				// Removed (the project owner's choice 2026-10-23): shows nothing.
-				'$OrderNumber' => '',
-				'$Product'     => $event->product_name,
-				'$Quantity'    => (string) $event->quantity,
-				'$Category'    => $this->categories( $event->category_ids ),
-				'$Variation'   => $event->variation,
-				'$Price'       => AlertMoney::format( AlertMoney::per_item( $event->line_total, $event->quantity ), $event->currency ),
-				'$LineTotal'   => AlertMoney::format( $event->line_total, $event->currency ),
-				'$Total'       => AlertMoney::format( $event->creator_total, $event->currency ),
-			)
+		if ( $max_name > 0 && mb_strlen( $username ) > $max_name ) {
+			$username = mb_substr( $username, 0, $max_name ) . '…';
+		}
+
+		return array(
+			// Removed (the project owner's choice 2026-10-23): shows nothing.
+			'$OrderNumber' => '',
+			'$UserName'    => $username,
+			'$FirstName'   => $username,
+			'$LineTotal'   => AlertMoney::format( $event->line_total, $event->currency, $number_format ),
+			'$Variation'   => $event->variation,
+			'$Quantity'    => (string) $event->quantity,
+			'$Category'    => $this->categories( $event->category_ids ),
+			'$Product'     => $event->product_name,
+			'$Price'       => AlertMoney::format( AlertMoney::per_item( $event->line_total, $event->quantity ), $event->currency, $number_format ),
+			'$Total'       => AlertMoney::format( $event->creator_total, $event->currency, $number_format ),
 		);
 	}
 

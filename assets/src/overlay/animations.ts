@@ -15,6 +15,7 @@
  * - The default (fade, no effect, fade) adds nothing: the overlay's own
  *   fade is used, exactly as before this step.
  */
+import { intIn, oneOf } from './look';
 
 export const IN_ANIMATIONS = [
 	'fade',
@@ -72,6 +73,10 @@ export interface TextAnimation {
 	/** Colour of glow, shadow and similar effects: #rrggbb. */
 	readonly color: string;
 	readonly speed: Speed;
+	/** In-time of the whole text in milliseconds (ADR-088). */
+	readonly in_ms: number;
+	/** Out-time of the whole text in milliseconds (ADR-088). */
+	readonly out_ms: number;
 }
 
 export const DEFAULT_ANIMATION: TextAnimation = {
@@ -80,6 +85,8 @@ export const DEFAULT_ANIMATION: TextAnimation = {
 	out: 'fade',
 	color: '#ff2bd6',
 	speed: 'normal',
+	in_ms: 500,
+	out_ms: 500,
 };
 
 /** Animations that need one span per letter. */
@@ -114,22 +121,16 @@ export const EFFECT_CYCLE: Readonly< Record< Speed, number > > = {
 	fast: 1100,
 };
 
-function oneOf< T extends string >(
-	value: unknown,
-	list: readonly T[],
-	fallback: T
-): T {
-	return ( list as readonly unknown[] ).includes( value )
-		? ( value as T )
-		: fallback;
-}
-
 /**
  * A text animation from untrusted data; unknown values get the default.
  *
  * @param value Candidate.
+ * @param ms    In- and out-time when one is missing (the old anim_duration).
  */
-export function parseAnimation( value: unknown ): TextAnimation {
+export function parseAnimation(
+	value: unknown,
+	ms: number = DEFAULT_ANIMATION.in_ms
+): TextAnimation {
 	const data =
 		typeof value === 'object' && value !== null
 			? ( value as Record< string, unknown > )
@@ -145,6 +146,8 @@ export function parseAnimation( value: unknown ): TextAnimation {
 				? data.color
 				: DEFAULT_ANIMATION.color,
 		speed: oneOf( data.speed, SPEEDS, DEFAULT_ANIMATION.speed ),
+		in_ms: intIn( data.in_ms, 0, 10000, ms ),
+		out_ms: intIn( data.out_ms, 0, 10000, ms ),
 	};
 }
 

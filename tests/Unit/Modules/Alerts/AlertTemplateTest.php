@@ -68,6 +68,41 @@ final class AlertTemplateTest extends TestCase {
 		self::assertSame( 'Shirt:  /  / ', $this->template->render( '$Product: $Price / $LineTotal / $Total', $event ) );
 	}
 
+	public function test_segments_mark_the_inserted_values(): void {
+		self::assertSame(
+			array(
+				array(
+					'text'  => 'nova_fan',
+					'value' => true,
+				),
+				array(
+					'text'  => ' bought ',
+					'value' => false,
+				),
+				array(
+					'text'  => 'Hoodie',
+					'value' => true,
+				),
+				array(
+					'text'  => ' $Unknown',
+					'value' => false,
+				),
+			),
+			$this->template->segments( '$UserName bought $Product$OrderNumber $Unknown', self::event( 'nova_fan' ) ),
+			'An empty value ($OrderNumber) is left out.'
+		);
+		self::assertSame( array(), $this->template->segments( '', self::event( 'nova_fan' ) ) );
+	}
+
+	public function test_amounts_follow_the_number_format_and_long_names_are_cut(): void {
+		$event = self::event( 'a_very_long_username' );
+
+		self::assertSame( '498 DKK', $this->template->render( '$LineTotal', $event, 'whole' ) );
+		self::assertSame( '498.00', $this->template->render( '$LineTotal', $event, 'plain' ) );
+		self::assertSame( 'a_very…', $this->template->render( '$UserName', $event, 'shop', 6 ) );
+		self::assertSame( 'a_very_long_username', $this->template->render( '$UserName', $event, 'shop', 0 ) );
+	}
+
 	public function test_deleted_categories_are_left_out(): void {
 		$event = new AlertEvent( 1, 7, '7', 70, 10, 0, 'Shirt', '', 1, 0, array( 99, 6 ), '', new DateTimeImmutable() );
 

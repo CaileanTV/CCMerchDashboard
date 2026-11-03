@@ -205,7 +205,7 @@ final class AlertHistory {
 	 *
 	 * @param AlertOverlay $overlay Overlay.
 	 * @param AlertEvent   $event   Alert.
-	 * @return array{id: int, image: string, text: string, secondary: string, sound: string}
+	 * @return array{id: int, look: string, image: string, text: string, secondary: string, parts: list<array{text: string, value: bool}>, secondary_parts: list<array{text: string, value: bool}>, sound: string}
 	 */
 	private function render( AlertOverlay $overlay, AlertEvent $event ): array {
 		return array_merge( $this->feed->render( $overlay, $event ), array( 'id' => 0 ) );

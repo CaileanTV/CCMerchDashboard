@@ -135,20 +135,68 @@ describe( 'parseAnswer', () => {
 			alerts: [
 				{
 					id: 11,
+					look: '',
 					image: `${ window.location.origin }/wp-content/uploads/a.jpg`,
 					text: 'nova_fan bought Hoodie',
 					secondary: '',
+					parts: [ { text: 'nova_fan bought Hoodie', value: false } ],
+					secondaryParts: [],
 					sound: `${ window.location.origin }/wp-content/uploads/ding.mp3`,
 				},
 				{
 					id: 12,
+					look: '',
 					image: '',
 					text: 'Anonymous bought Mug',
 					secondary: 'Thanks!',
+					parts: [ { text: 'Anonymous bought Mug', value: false } ],
+					secondaryParts: [ { text: 'Thanks!', value: false } ],
 					sound: '',
 				},
 			],
 		} );
+	} );
+
+	it( 'keeps the variation and the marked values, and falls back to the whole text', () => {
+		const answer = parseAnswer( {
+			cursor: 3,
+			version: 'v',
+			alerts: [
+				{
+					id: 3,
+					look: 'big001',
+					image: '',
+					text: 'nova bought Hoodie',
+					secondary: '',
+					parts: [
+						{ text: 'nova', value: true },
+						{ text: ' bought ', value: false },
+						{ text: 'Hoodie', value: true },
+					],
+					secondary_parts: [],
+					sound: '',
+				},
+				{
+					id: 4,
+					look: '../evil',
+					image: '',
+					text: 'Shown',
+					secondary: '',
+					parts: [ { text: 'Other', value: true } ],
+					sound: '',
+				},
+			],
+		} );
+
+		expect( answer?.alerts[ 0 ]?.look ).toBe( 'big001' );
+		expect( answer?.alerts[ 0 ]?.parts[ 2 ] ).toEqual( {
+			text: 'Hoodie',
+			value: true,
+		} );
+		expect( answer?.alerts[ 1 ]?.look ).toBe( '' );
+		expect( answer?.alerts[ 1 ]?.parts ).toEqual( [
+			{ text: 'Shown', value: false },
+		] );
 	} );
 
 	it( 'rejects malformed answers as a whole', () => {

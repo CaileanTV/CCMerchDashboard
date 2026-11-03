@@ -66,9 +66,12 @@ function alert(
 ): OverlayAlert {
 	return {
 		id,
+		look: '',
 		image: '',
 		text: `Alert ${ id }`,
 		secondary: '',
+		parts: [ { text: `Alert ${ id }`, value: false } ],
+		secondaryParts: [],
 		sound: '',
 		...extra,
 	};

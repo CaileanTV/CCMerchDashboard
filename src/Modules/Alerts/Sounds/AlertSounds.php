@@ -128,16 +128,29 @@ final class AlertSounds {
 	}
 
 	/**
-	 * The URL of the sound an alert plays, or '' for none.
+	 * The URL of the sound an alert plays, or '' for none: a variation's own
+	 * sound (ADR-088), else the sound of the product's category, else the
+	 * default sound.
 	 *
-	 * @param AlertOverlay $overlay Overlay.
-	 * @param AlertEvent   $event   Alert.
+	 * @param AlertOverlay         $overlay Overlay.
+	 * @param AlertEvent           $event   Alert.
+	 * @param OverlaySettings|null $look    The chosen variation's settings; null for the default.
 	 */
-	public function url_for( AlertOverlay $overlay, AlertEvent $event ): string {
+	public function url_for( AlertOverlay $overlay, AlertEvent $event, ?OverlaySettings $look = null ): string {
 		$values = $overlay->settings->to_array();
 
 		if ( ! $values['audio_enabled'] ) {
 			return '';
+		}
+
+		$own = null === $look ? 0 : $look->to_array()['audio_default_sound'];
+
+		if ( $own > 0 && $own !== $values['audio_default_sound'] ) {
+			$sound = $this->sound( $own, $overlay->creator_id );
+
+			if ( null !== $sound ) {
+				return $sound->url;
+			}
 		}
 
 		$map = $values['audio_category_map'];

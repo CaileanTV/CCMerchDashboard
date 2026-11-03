@@ -178,11 +178,14 @@ final class GlobalOverlayTest extends IntegrationTestCase {
 		$creator_queue->push(
 			GlobalOverlay::QUEUE,
 			array(
-				'id'        => 0,
-				'image'     => '',
-				'text'      => 'A creator\'s test',
-				'secondary' => '',
-				'sound'     => '',
+				'id'              => 0,
+				'look'            => '',
+				'image'           => '',
+				'text'            => 'A creator\'s test',
+				'secondary'       => '',
+				'parts'           => array(),
+				'secondary_parts' => array(),
+				'sound'           => '',
 			)
 		);
 

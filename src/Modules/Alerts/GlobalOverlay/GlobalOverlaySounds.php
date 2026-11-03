@@ -122,15 +122,27 @@ final class GlobalOverlaySounds {
 	/**
 	 * The URL of the sound an alert plays, or '' for none: the first of the
 	 * product's categories (or their parents) with a sound, else the default.
+	 * A variation's own sound comes first (ADR-088).
 	 *
-	 * @param GlobalOverlay $overlay Overlay.
-	 * @param AlertEvent    $event   Alert.
+	 * @param GlobalOverlay        $overlay Overlay.
+	 * @param AlertEvent           $event   Alert.
+	 * @param OverlaySettings|null $look    The chosen variation's settings; null for the default.
 	 */
-	public function url_for( GlobalOverlay $overlay, AlertEvent $event ): string {
+	public function url_for( GlobalOverlay $overlay, AlertEvent $event, ?OverlaySettings $look = null ): string {
 		$values = $overlay->settings->to_array();
 
 		if ( ! $values['audio_enabled'] ) {
 			return '';
+		}
+
+		$own = null === $look ? 0 : $look->to_array()['audio_default_sound'];
+
+		if ( $own > 0 && $own !== $values['audio_default_sound'] ) {
+			$sound = $this->sound( $own );
+
+			if ( null !== $sound ) {
+				return $sound->url;
+			}
 		}
 
 		$map = $values['audio_category_map'];

@@ -12,16 +12,22 @@ import { parseTextFrame } from './frame';
 import type { TextFrame } from './frame';
 import { parseFillLook } from './textfill';
 import type { FillLook } from './textfill';
+import { parseParts } from './look';
+import type { TextPart } from './look';
 
 /**
- * One alert as the server renders it: plain text, and an image and a sound
- * URL of this site or ''.
+ * One alert as the server renders it: plain text (whole and in pieces, the
+ * inserted values marked), the variation it is shown with ('' for the
+ * default, ADR-088), and an image and a sound URL of this site or ''.
  */
 export interface OverlayAlert {
 	id: number;
+	look: string;
 	image: string;
 	text: string;
 	secondary: string;
+	parts: TextPart[];
+	secondaryParts: TextPart[];
 	sound: string;
 }
 
@@ -170,9 +176,16 @@ export function parseAnswer( value: unknown ): FeedAnswer | null {
 
 		alerts.push( {
 			id: item.id,
+			look:
+				typeof item.look === 'string' &&
+				/^[a-z0-9]{6,32}$/.test( item.look )
+					? item.look
+					: '',
 			image: sameOrigin( item.image ) ? item.image : '',
 			text: item.text,
 			secondary: item.secondary,
+			parts: parseParts( item.parts, item.text ),
+			secondaryParts: parseParts( item.secondary_parts, item.secondary ),
 			sound: sameOrigin( item.sound ) ? item.sound : '',
 		} );
 	}

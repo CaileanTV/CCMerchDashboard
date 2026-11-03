@@ -133,24 +133,11 @@ final class AlertImages {
 		$overlay = $this->overlays->find_for_creator( $creator_id );
 
 		if ( null !== $overlay ) {
-			$values = $overlay->settings->to_array();
-			$fills  = $values['text_fills'];
+			// The default's and every variation's fills (ADR-088).
+			$settings = $overlay->settings->with_fills( static fn( array $fills ): array => OverlaySettings::fills_without( $fills, $attachment ) );
 
-			foreach ( $fills as $text => $fill ) {
-				if ( 'image' === $fill['type'] && $attachment === $fill['image'] ) {
-					$fills[ $text ] = array_merge(
-						$fill,
-						array(
-							'type'  => 'none',
-							'image' => 0,
-						)
-					);
-				}
-			}
-
-			if ( $fills !== $values['text_fills'] ) {
-				$values['text_fills'] = $fills;
-				$this->overlays->update_settings( $overlay->id, OverlaySettings::from_array( $values ) );
+			if ( $settings->to_array() !== $overlay->settings->to_array() ) {
+				$this->overlays->update_settings( $overlay->id, $settings );
 			}
 		}
 

@@ -23,6 +23,7 @@ describe( 'text animations', () => {
 				out: 'wave',
 				color: '#00FF00',
 				speed: 'fast',
+				in_ms: 99999,
 			} )
 		).toEqual( {
 			in: 'typewriter',
@@ -30,6 +31,8 @@ describe( 'text animations', () => {
 			out: 'wave',
 			color: DEFAULT_ANIMATION.color,
 			speed: 'fast',
+			in_ms: 10000,
+			out_ms: 500,
 		} );
 		expect( isDefault( DEFAULT_ANIMATION ) ).toBe( true );
 		expect( needsLetters( { ...DEFAULT_ANIMATION, effect: 'melt' } ) ).toBe(
