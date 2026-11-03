@@ -1,46 +1,25 @@
 /**
- * Shows alerts one after the other (ADR-065 pkt. 3), as MerchAlert does:
- * fade in, stay for the display time (which includes the fade-in), fade out
- * for the animation time, then the next alert. The alert's sound starts
- * with the fade-in. Texts are inserted as text, never as HTML. With text
- * animations (step 25.6.9), the texts animate in and out instead of fading,
- * and the next alert waits for the out-animation. With text fills (step
- * 25.6.10), the letters are filled once the text has its final size. With
- * the main text around the image (step 25.6.11), its letters run along the
- * frame instead of filling the box.
+ * Shows alerts one after the other (ADR-065 pkt. 3). Each alert is drawn
+ * with its look (the default or a variation, ADR-088) by render.ts: the box
+ * comes in with its in-animation, stays for the display time (which
+ * includes the in-animation), goes with its out-animation, then the next
+ * alert follows. The alert's sound starts with the box. Texts are inserted
+ * as text, never as HTML.
+ *
+ * - **Texts** animate in and out with their own animations (step 25.6.9);
+ *   they can come later and go earlier than the box (text timing).
+ * - **Highlight:** the inserted values' letters are marked.
+ * - **Fills** (step 25.6.10) are laid out once the text has its final size;
+ *   **around the image** (step 25.6.11) the main text runs along the frame
+ *   instead of filling its box.
  */
 import { applyFrame, clearFrame } from './frame';
-import type { TextFrame } from './frame';
 import { leaveText, renderText, resetText } from './animations';
-import type { TextAnimation } from './animations';
 import { applyFill, clearFill, layoutFill } from './textfill';
-import type { FillLook } from './textfill';
+import { arrange, highlight } from './render';
+import type { AlertElements, AlertLook } from './render';
 import type { OverlayAlert } from './feed';
-
-export interface OverlayElements {
-	image: HTMLElement;
-	text: HTMLElement;
-	secondary: HTMLElement;
-}
-
-export interface Timing {
-	displayDuration: number;
-	animDuration: number;
-	/** Whether an alert with a sound is shown as long as the sound plays. */
-	displayFromSound?: boolean;
-	/** Text animations of the main and the secondary text. */
-	animations?: {
-		readonly main: TextAnimation;
-		readonly secondary: TextAnimation;
-	};
-	/** The main text around the image; null when it is in its box. */
-	frame?: TextFrame | null;
-	/** Text fills of the main and the secondary text; null for none. */
-	fills?: {
-		readonly main: FillLook | null;
-		readonly secondary: FillLook | null;
-	};
-}
+import type { TextPart } from './look';
 
 /** Shortest display time when it comes from a sound, in milliseconds. */
 export const MIN_SOUND_DISPLAY = 1000;
@@ -48,38 +27,56 @@ export const MIN_SOUND_DISPLAY = 1000;
 /** Longest queue; older alerts are dropped when a flood arrives. */
 export const MAX_QUEUE = 100;
 
-const HIDDEN = 'merchboard-overlay__el--hidden';
-const VISIBLE = 'merchboard-overlay__el--visible';
-const HIDING = 'merchboard-overlay__el--hiding';
+export const ALERT_HIDDEN = 'merchboard-alert--hidden';
+export const ALERT_ENTERING = 'merchboard-alert--entering';
+export const ALERT_LEAVING = 'merchboard-alert--leaving';
+
+/** What the player needs from the page; defaults do nothing. */
+export interface PlayerHooks {
+	/** Runs a callback after a delay (ms). */
+	readonly schedule?: ( callback: () => void, delay: number ) => void;
+	/** Plays a sound at a volume (0–1); resolves its length (ms) when known. */
+	readonly play?: (
+		url: string,
+		volume: number
+	) => Promise< number | null > | void;
+	/** Shrinks a text to its box ("shrink"). */
+	readonly fit?: ( element: HTMLElement ) => void;
+	/** Moves the image up as far as the main text grew up. */
+	readonly follow?: ( image: HTMLElement, text: HTMLElement ) => void;
+}
 
 export class AlertPlayer {
 	private readonly queue: OverlayAlert[] = [];
 
 	private playing = false;
 
-	/** How long the current alert's out-animation takes (ms). */
-	private outTime = 0;
+	/** How long the current alert's texts take to go (ms). */
+	private textsOut = 0;
 
+	/** Whether the current alert's texts are gone already. */
+	private textsLeft = false;
+
+	private readonly schedule: ( callback: () => void, delay: number ) => void;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param elements The alert's elements.
+	 * @param looks    The look of a variation id ('' for the default).
+	 * @param hooks    Timers, sound, fitting.
+	 */
 	constructor(
-		private readonly elements: OverlayElements,
-		private readonly timing: Timing,
-		private readonly isShown: ( element: HTMLElement ) => boolean = (
-			element
-		) => window.getComputedStyle( element ).display !== 'none',
-		private readonly schedule: (
-			callback: () => void,
-			delay: number
-		) => void = ( callback, delay ) => {
-			window.setTimeout( callback, delay );
-		},
-		private readonly play: (
-			url: string
-		) => Promise< number | null > | void = () => undefined,
-		private readonly fit: ( element: HTMLElement ) => void = () =>
-			undefined,
-		private readonly arrange: ( elements: OverlayElements ) => void = () =>
-			undefined
-	) {}
+		private readonly elements: AlertElements,
+		private readonly looks: ( id: string ) => AlertLook,
+		private readonly hooks: PlayerHooks = {}
+	) {
+		this.schedule =
+			hooks.schedule ??
+			( ( callback, delay ) => {
+				window.setTimeout( callback, delay );
+			} );
+	}
 
 	/** Number of alerts waiting. */
 	get waiting(): number {
@@ -112,139 +109,233 @@ export class AlertPlayer {
 			return;
 		}
 
-		this.playing = true;
-		this.fill( alert );
+		const look = this.looks( alert.look );
+		const shows = [
+			look.elements.product_image.visible && alert.image !== '',
+			look.elements.main_text.visible && alert.text !== '',
+			look.show_secondary && alert.secondary !== '',
+		];
 
-		const { image, text, secondary } = this.elements;
-		const animated = [
-			alert.image !== '' && this.isShown( image ) ? image : null,
-			this.isShown( text ) ? text : null,
-			alert.secondary !== '' && this.isShown( secondary )
-				? secondary
-				: null,
-		].filter( ( element ): element is HTMLElement => element !== null );
-
-		if ( animated.length === 0 ) {
-			this.finish();
+		if ( ! shows.some( Boolean ) ) {
+			this.next();
 			return;
 		}
 
-		const length =
-			alert.sound === '' ? undefined : this.play( alert.sound );
+		this.playing = true;
+		arrange( this.elements, look );
+		this.fillImage( alert.image );
 
-		for ( const element of animated ) {
-			element.classList.remove( HIDDEN, HIDING );
-			element.classList.add( VISIBLE );
+		const timing = look.text_timing;
+
+		if ( timing.show_after === 0 ) {
+			this.showTexts( alert, look, false );
+		} else {
+			this.schedule(
+				() => this.showTexts( alert, look, true ),
+				timing.show_after
+			);
 		}
 
+		const { alert: box } = this.elements;
+		box.classList.remove( ALERT_HIDDEN, ALERT_LEAVING );
+		box.classList.add( ALERT_ENTERING );
+
+		const length =
+			alert.sound === ''
+				? undefined
+				: this.hooks.play?.( alert.sound, look.audio_volume / 100 );
+
 		// With "as long as the sound plays", the sound's length is the display time.
-		if (
-			this.timing.displayFromSound === true &&
-			length instanceof Promise
-		) {
+		if ( look.display_from_sound && length instanceof Promise ) {
 			void length.then( ( ms ) =>
 				this.hide(
-					animated,
+					look,
 					ms === null
-						? this.timing.displayDuration
+						? look.display_duration
 						: Math.max( MIN_SOUND_DISPLAY, ms )
 				)
 			);
 			return;
 		}
 
-		this.hide( animated, this.timing.displayDuration );
+		this.hide( look, look.display_duration );
 	}
 
 	/**
-	 * Fades the shown elements out after a delay, then shows the next alert.
+	 * Puts the texts in with their animations, highlight, fill and frame.
 	 *
-	 * @param animated The shown elements.
-	 * @param delay    Display time in milliseconds.
+	 * @param alert  Alert.
+	 * @param look   Look.
+	 * @param always Animate the default animation too (texts that come later).
 	 */
-	private hide( animated: HTMLElement[], delay: number ): void {
-		this.schedule( () => {
-			for ( const element of animated ) {
-				element.classList.replace( VISIBLE, HIDING );
-				leaveText( element );
-			}
-
-			this.schedule(
-				() => {
-					for ( const element of animated ) {
-						element.classList.replace( HIDING, HIDDEN );
-					}
-
-					this.finish();
-				},
-				Math.max( this.timing.animDuration, this.outTime )
-			);
-		}, delay );
-	}
-
-	private fill( alert: OverlayAlert ): void {
+	private showTexts(
+		alert: OverlayAlert,
+		look: AlertLook,
+		always: boolean
+	): void {
 		const { image, text, secondary } = this.elements;
 
-		image.replaceChildren();
+		this.textsLeft = false;
+		this.textsOut = Math.max(
+			this.putText( text, alert.text, alert.parts, look, 'main', always ),
+			this.putText(
+				secondary,
+				look.show_secondary ? alert.secondary : '',
+				alert.secondaryParts,
+				look,
+				'secondary',
+				always
+			)
+		);
 
-		if ( alert.image !== '' ) {
-			const img = document.createElement( 'img' );
-			img.src = alert.image;
-			img.alt = '';
-			img.className = 'merchboard-overlay__thumb';
-			image.append( img );
-		}
-
-		this.outTime = 0;
-
-		if ( this.timing.animations === undefined ) {
-			text.textContent = alert.text;
-			secondary.textContent = alert.secondary;
-		} else {
-			const duration = this.timing.animDuration;
-
-			this.outTime = Math.max(
-				renderText(
-					text,
-					alert.text,
-					this.timing.animations.main,
-					duration
-				).outTotal,
-				renderText(
-					secondary,
-					alert.secondary,
-					this.timing.animations.secondary,
-					duration
-				).outTotal
-			);
-		}
-
-		applyFill( text, this.timing.fills?.main ?? null );
-		applyFill( secondary, this.timing.fills?.secondary ?? null );
+		applyFill( text, look.fills.main );
+		applyFill( secondary, look.fills.secondary );
 
 		// Around the image, the frame sizes the text; it is not fitted to a box.
-		if ( this.timing.frame ) {
-			applyFrame( text, this.timing.frame );
-		} else {
-			this.fit( text );
+		if ( look.frame ) {
+			applyFrame( text, look.frame );
+		} else if ( look.text_fit === 'shrink' ) {
+			this.hooks.fit?.( text );
 		}
 
-		this.fit( secondary );
-		this.arrange( this.elements );
+		if ( look.text_fit === 'shrink' ) {
+			this.hooks.fit?.( secondary );
+		}
+
+		if ( text.dataset.growsUp === '1' ) {
+			this.hooks.follow?.( image, text );
+		}
+
 		// The letters' places are final only now.
 		layoutFill( text );
 		layoutFill( secondary );
 	}
 
+	/**
+	 * Puts one text in; returns how long it takes to go (ms).
+	 *
+	 * @param element Text box.
+	 * @param value   Text.
+	 * @param parts   The text in pieces.
+	 * @param look    Look.
+	 * @param which   Main or secondary text.
+	 * @param always  Animate the default animation too.
+	 */
+	private putText(
+		element: HTMLElement,
+		value: string,
+		parts: readonly TextPart[],
+		look: AlertLook,
+		which: 'main' | 'secondary',
+		always: boolean
+	): number {
+		const animation = look.animations[ which ];
+		const times = renderText(
+			element,
+			value,
+			animation,
+			animation.in_ms,
+			always
+		);
+
+		element.dataset.outTime = String( animation.out_ms );
+		highlight( element, parts, look );
+
+		return times.outTotal - animation.in_ms + animation.out_ms;
+	}
+
+	/**
+	 * Lets the texts go with their out-animations.
+	 */
+	private leaveTexts(): void {
+		if ( this.textsLeft ) {
+			return;
+		}
+
+		this.textsLeft = true;
+
+		for ( const element of [
+			this.elements.text,
+			this.elements.secondary,
+		] ) {
+			const out = element.dataset.outTime;
+
+			if ( out !== undefined ) {
+				element.style.setProperty(
+					'--merchboard-anim-time',
+					`${ out }ms`
+				);
+			}
+
+			leaveText( element );
+		}
+	}
+
+	/**
+	 * Lets the texts go before the end (text timing), the box at the end of
+	 * the display time, then shows the next alert.
+	 *
+	 * @param look  Look.
+	 * @param delay Display time in milliseconds.
+	 */
+	private hide( look: AlertLook, delay: number ): void {
+		const early = look.text_timing.hide_before;
+
+		if ( early > 0 && delay - early > look.text_timing.show_after ) {
+			this.schedule( () => this.leaveTexts(), delay - early );
+		}
+
+		this.schedule( () => {
+			const { alert: box } = this.elements;
+
+			box.classList.replace( ALERT_ENTERING, ALERT_LEAVING );
+
+			const textsOut = this.textsLeft ? 0 : this.textsOut;
+			this.leaveTexts();
+
+			this.schedule(
+				() => this.finish(),
+				Math.max( look.animations.alert.out_ms, textsOut )
+			);
+		}, delay );
+	}
+
+	/**
+	 * Shows an image, or none.
+	 *
+	 * @param url Image URL; '' for none.
+	 */
+	private fillImage( url: string ): void {
+		const { image } = this.elements;
+
+		image.replaceChildren();
+
+		if ( url !== '' ) {
+			const img = document.createElement( 'img' );
+			img.src = url;
+			img.alt = '';
+			image.append( img );
+		}
+	}
+
 	private finish(): void {
-		this.elements.image.replaceChildren();
-		resetText( this.elements.text );
-		resetText( this.elements.secondary );
-		clearFill( this.elements.text );
-		clearFrame( this.elements.text );
-		clearFill( this.elements.secondary );
-		this.elements.text.textContent = '';
-		this.elements.secondary.textContent = '';
+		const { alert, image, text, secondary } = this.elements;
+
+		alert.classList.remove( ALERT_ENTERING, ALERT_LEAVING );
+		alert.classList.add( ALERT_HIDDEN );
+		image.replaceChildren();
+
+		for ( const element of [ text, secondary ] ) {
+			resetText( element );
+			clearFill( element );
+			clearFrame( element );
+			element.style.removeProperty( 'font-size' );
+			element.textContent = '';
+			delete element.dataset.outTime;
+		}
+
+		image.style.removeProperty( 'margin-top' );
+		this.textsOut = 0;
 		this.playing = false;
 		this.next();
 	}

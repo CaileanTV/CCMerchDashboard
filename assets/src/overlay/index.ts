@@ -10,11 +10,13 @@ import './overlay.css';
 import './animations.css';
 import './textfill.css';
 import './frame.css';
+import './render.css';
 import {
 	REQUEST_TIMEOUT,
 	SHORT_POLL_INTERVAL,
 	backoff,
 	feedUrl,
+	lookOf,
 	parseAnswer,
 	takeCursor,
 	parseConfig,
@@ -124,13 +126,17 @@ async function run(
 
 function start(): void {
 	const source = document.getElementById( 'merchboard-overlay-config' );
+	const alert = document.getElementById( 'merchboard-overlay-alert' );
 	const image = document.getElementById( 'merchboard-overlay-image' );
+	const texts = document.getElementById( 'merchboard-overlay-texts' );
 	const text = document.getElementById( 'merchboard-overlay-text' );
 	const secondary = document.getElementById( 'merchboard-overlay-secondary' );
 
 	if (
 		source === null ||
+		alert === null ||
 		image === null ||
+		texts === null ||
 		text === null ||
 		secondary === null
 	) {
@@ -155,18 +161,18 @@ function start(): void {
 		}
 	} );
 
+	const looks = config;
+
 	void run(
 		config,
 		new AlertPlayer(
-			{ image, text, secondary },
-			config,
-			undefined,
-			undefined,
-			( url ) => playSound( url ),
-			config.textFit === 'shrink' ? fitText : undefined,
-			config.imageFollows
-				? ( elements ) => followText( elements.image, elements.text )
-				: undefined
+			{ alert, image, texts, text, secondary },
+			( id ) => lookOf( looks, id ),
+			{
+				play: ( url, volume ) => playSound( url, volume ),
+				fit: fitText,
+				follow: followText,
+			}
 		)
 	);
 }

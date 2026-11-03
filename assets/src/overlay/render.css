@@ -1,0 +1,420 @@
+/*
+ * The alert box, its layouts, its in- and out-animations and the highlight
+ * of inserted values (ADR-088); see render.ts. Used by the overlay page and
+ * the designer's canvas.
+ *
+ * Variables on the box: --merchboard-alert-opacity, -rotation, -in-time and
+ * -out-time; on a text box --merchboard-hl-color.
+ */
+
+.merchboard-alert {
+	position: absolute;
+	opacity: var(--merchboard-alert-opacity, 1);
+	transform: rotate(var(--merchboard-alert-rotation, 0deg));
+	pointer-events: none;
+}
+
+.merchboard-alert__image {
+	overflow: hidden;
+	border-radius: var(--merchboard-img-border-radius, 4px);
+}
+
+.merchboard-alert__image > img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: var(--merchboard-img-border-radius, 4px);
+}
+
+.merchboard-alert__text {
+	font-size: var(--merchboard-font-size, 32px);
+	white-space: pre-line;
+	overflow-wrap: anywhere;
+	overflow: hidden;
+}
+
+.merchboard-alert__text:empty {
+	display: none;
+}
+
+/* ------------------------------------------------------------ Free. */
+
+.merchboard-alert[data-layout="free"] .merchboard-alert__texts {
+	display: contents;
+}
+
+.merchboard-alert[data-layout="free"] :is(.merchboard-alert__image, .merchboard-alert__text) {
+	position: absolute;
+}
+
+/* ------------------------------------------------- Image above text. */
+
+.merchboard-alert[data-layout="above"] {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+}
+
+.merchboard-alert[data-layout="above"] .merchboard-alert__image {
+	flex: 1 1 0;
+	min-height: 0;
+	aspect-ratio: 1;
+	max-width: 100%;
+}
+
+.merchboard-alert[data-layout="above"] .merchboard-alert__image > img {
+	object-fit: contain;
+}
+
+.merchboard-alert[data-layout="above"] .merchboard-alert__texts {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	width: 100%;
+}
+
+/* ----------------------------------------------- Image beside text. */
+
+.merchboard-alert[data-layout="side"] {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 16px;
+}
+
+.merchboard-alert[data-layout="side"] .merchboard-alert__image {
+	flex: none;
+	height: 100%;
+	aspect-ratio: 1;
+	max-width: 45%;
+}
+
+.merchboard-alert[data-layout="side"] .merchboard-alert__texts {
+	display: flex;
+	flex: 1 1 0;
+	flex-direction: column;
+	justify-content: center;
+	gap: 4px;
+	min-width: 0;
+}
+
+/* --------------------------------------------------- Text on image. */
+
+.merchboard-alert[data-layout="overlay"] .merchboard-alert__image {
+	position: absolute;
+	inset: 0;
+}
+
+.merchboard-alert[data-layout="overlay"] .merchboard-alert__texts {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 4px;
+}
+
+/* In a layout, texts are positioned for their letters (fills, frames). */
+.merchboard-alert:not([data-layout="free"]) .merchboard-alert__text {
+	position: relative;
+}
+
+/* ---------------------------------------------- Box in and out. */
+
+.merchboard-alert--entering {
+	animation: var(--merchboard-alert-in, none) var(--merchboard-alert-in-time, 0.5s) cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.merchboard-alert--leaving {
+	animation: var(--merchboard-alert-out, none) var(--merchboard-alert-out-time, 0.5s) ease-in both;
+}
+
+.merchboard-alert--hidden {
+	visibility: hidden;
+}
+
+.merchboard-alert[data-in="fade"] {
+	--merchboard-alert-in: merchboard-alert-fade-in;
+}
+
+.merchboard-alert[data-in="slide-up"] {
+	--merchboard-alert-in: merchboard-alert-from-below;
+}
+
+.merchboard-alert[data-in="slide-down"] {
+	--merchboard-alert-in: merchboard-alert-from-above;
+}
+
+.merchboard-alert[data-in="slide-left"] {
+	--merchboard-alert-in: merchboard-alert-from-right;
+}
+
+.merchboard-alert[data-in="slide-right"] {
+	--merchboard-alert-in: merchboard-alert-from-left;
+}
+
+.merchboard-alert[data-in="zoom"] {
+	--merchboard-alert-in: merchboard-alert-zoom-in;
+}
+
+.merchboard-alert[data-in="bounce"] {
+	--merchboard-alert-in: merchboard-alert-bounce-in;
+}
+
+.merchboard-alert[data-in="flip"] {
+	--merchboard-alert-in: merchboard-alert-flip-in;
+}
+
+.merchboard-alert[data-out="fade"] {
+	--merchboard-alert-out: merchboard-alert-fade-out;
+}
+
+.merchboard-alert[data-out="slide-up"] {
+	--merchboard-alert-out: merchboard-alert-to-above;
+}
+
+.merchboard-alert[data-out="slide-down"] {
+	--merchboard-alert-out: merchboard-alert-to-below;
+}
+
+.merchboard-alert[data-out="slide-left"] {
+	--merchboard-alert-out: merchboard-alert-to-left;
+}
+
+.merchboard-alert[data-out="slide-right"] {
+	--merchboard-alert-out: merchboard-alert-to-right;
+}
+
+.merchboard-alert[data-out="zoom"] {
+	--merchboard-alert-out: merchboard-alert-zoom-out;
+}
+
+.merchboard-alert[data-out="bounce"] {
+	--merchboard-alert-out: merchboard-alert-bounce-out;
+}
+
+.merchboard-alert[data-out="flip"] {
+	--merchboard-alert-out: merchboard-alert-flip-out;
+}
+
+/* The keyframes move with "translate" and "scale", so the rotation stays. */
+@keyframes merchboard-alert-fade-in {
+
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes merchboard-alert-fade-out {
+
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes merchboard-alert-from-below {
+
+	from {
+		opacity: 0;
+		translate: 0 60px;
+	}
+}
+
+@keyframes merchboard-alert-from-above {
+
+	from {
+		opacity: 0;
+		translate: 0 -60px;
+	}
+}
+
+@keyframes merchboard-alert-from-right {
+
+	from {
+		opacity: 0;
+		translate: 80px 0;
+	}
+}
+
+@keyframes merchboard-alert-from-left {
+
+	from {
+		opacity: 0;
+		translate: -80px 0;
+	}
+}
+
+@keyframes merchboard-alert-to-above {
+
+	to {
+		opacity: 0;
+		translate: 0 -60px;
+	}
+}
+
+@keyframes merchboard-alert-to-below {
+
+	to {
+		opacity: 0;
+		translate: 0 60px;
+	}
+}
+
+@keyframes merchboard-alert-to-left {
+
+	to {
+		opacity: 0;
+		translate: -80px 0;
+	}
+}
+
+@keyframes merchboard-alert-to-right {
+
+	to {
+		opacity: 0;
+		translate: 80px 0;
+	}
+}
+
+@keyframes merchboard-alert-zoom-in {
+
+	from {
+		opacity: 0;
+		scale: 0.3;
+	}
+}
+
+@keyframes merchboard-alert-zoom-out {
+
+	to {
+		opacity: 0;
+		scale: 0.3;
+	}
+}
+
+@keyframes merchboard-alert-bounce-in {
+
+	0% {
+		opacity: 0;
+		scale: 0.3;
+	}
+
+	55% {
+		opacity: 1;
+		scale: 1.08;
+	}
+
+	75% {
+		scale: 0.95;
+	}
+}
+
+@keyframes merchboard-alert-bounce-out {
+
+	25% {
+		scale: 1.08;
+	}
+
+	to {
+		opacity: 0;
+		scale: 0.3;
+	}
+}
+
+@keyframes merchboard-alert-flip-in {
+
+	from {
+		opacity: 0;
+		transform: rotate(var(--merchboard-alert-rotation, 0deg)) perspective(800px) rotateY(90deg);
+	}
+}
+
+@keyframes merchboard-alert-flip-out {
+
+	to {
+		opacity: 0;
+		transform: rotate(var(--merchboard-alert-rotation, 0deg)) perspective(800px) rotateY(-90deg);
+	}
+}
+
+/* ------------------------------------------------------ Highlight. */
+
+.merchboard-hl {
+	display: inline-block;
+	color: var(--merchboard-hl-color);
+}
+
+/* The highlight's effect joins the letter's own animations. */
+:is(.merchboard-anim, .merchboard-fill, .merchboard-frame, [data-highlight]) .merchboard-anim__letter.merchboard-hl {
+	animation: var(--merchboard-l-in, none), var(--merchboard-l-fx, none), var(--merchboard-l-fill, none), var(--merchboard-l-frame, none), var(--merchboard-l-hl, none);
+}
+
+[data-highlight="pulse"] .merchboard-hl {
+	--merchboard-l-hl: merchboard-hl-pulse 1.2s ease-in-out infinite;
+}
+
+[data-highlight="glow"] .merchboard-hl {
+	--merchboard-l-hl: merchboard-hl-glow 1.6s ease-in-out infinite;
+}
+
+[data-highlight="bounce"] .merchboard-hl {
+	--merchboard-l-hl: merchboard-hl-bounce 1s ease-in-out calc(var(--i, 0) * 40ms) infinite;
+}
+
+[data-highlight="shake"] .merchboard-hl {
+	--merchboard-l-hl: merchboard-hl-shake 0.6s linear infinite;
+}
+
+@keyframes merchboard-hl-pulse {
+
+	50% {
+		scale: 1.15;
+	}
+}
+
+@keyframes merchboard-hl-glow {
+
+	50% {
+		filter: drop-shadow(0 0 8px var(--merchboard-hl-color));
+	}
+}
+
+@keyframes merchboard-hl-bounce {
+
+	30% {
+		translate: 0 -0.2em;
+	}
+
+	60% {
+		translate: 0;
+	}
+}
+
+@keyframes merchboard-hl-shake {
+
+	25% {
+		translate: -2px 0;
+	}
+
+	75% {
+		translate: 2px 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.merchboard-alert--entering,
+	.merchboard-alert--leaving {
+		animation-name: merchboard-alert-fade-in;
+	}
+
+	.merchboard-alert--leaving {
+		animation-name: merchboard-alert-fade-out;
+	}
+
+	[data-highlight] .merchboard-hl {
+		--merchboard-l-hl: none;
+	}
+}

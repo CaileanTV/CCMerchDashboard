@@ -237,8 +237,7 @@ final class OverlayTest extends IntegrationTestCase {
 		$image   = OverlaySettings::default_layout()['elements']['product_image'];
 
 		self::assertStringContainsString( '"frame":{"enabled":true,"direction":"clockwise","speed":"slow","repeat":true}', $html );
-		self::assertStringContainsString( sprintf( 'left:%dpx;top:%dpx;width:%dpx;height:%dpx;', $image['x'] - 36, $image['y'] - 36, $image['w'] + 72, $image['h'] + 72 ), $html, 'The main text box is the image with a margin.' );
-		self::assertStringContainsString( '"imageFollows":false', $html );
+		self::assertStringContainsString( sprintf( '"widget":{"x":%d,"y":%d,"w":%d,"h":%d,', $image['x'] - 36, $image['y'] - 36, $image['w'] + 72, $image['h'] + 72 ), $html, 'The alert box is the image with the text\'s margin.' );
 	}
 
 	public function test_the_page_carries_only_validated_values_and_no_unknown_overlay(): void {
@@ -254,19 +253,20 @@ final class OverlayTest extends IntegrationTestCase {
 		$page    = $this->page();
 		$html    = (string) $page->render( $id, 'nonce123' );
 
-		self::assertStringContainsString( '--merchboard-font-family:inherit;', $html );
-		self::assertStringContainsString( '--merchboard-text-color:#aabbcc;', $html );
-		self::assertStringContainsString( '--merchboard-text-shadow:none;', $html );
+		self::assertStringContainsString( '"font_family":"inherit"', $html );
+		self::assertStringContainsString( '"text_color":"#aabbcc"', $html );
+		self::assertStringContainsString( '"text_shadow":""', $html );
 		self::assertStringNotContainsString( '<script>alert', $html );
 		self::assertStringContainsString( '<meta name="robots" content="noindex, nofollow">', $html );
 		self::assertStringNotContainsString( '<button', $html, 'Sounds play without a click (OBS allows autoplay).' );
 		self::assertMatchesRegularExpression( '#<script type="application/json" id="merchboard-overlay-config">\{.*"feed":"[^"]+/merchboard/v1/alerts/overlay/' . $id . '/feed".*\}</script>#', $html );
-		self::assertStringContainsString( '"textFit":"fixed"', $html, 'The overlay script knows how text meets its box.' );
-		self::assertStringContainsString( '"imageFollows":false', $html );
-		self::assertStringContainsString( '"displayFromSound":false', $html );
-		self::assertStringContainsString( '"animations":{"main":{"in":"fade","effect":"none","out":"fade"', $html, 'The text animations reach the overlay script.' );
+		self::assertStringContainsString( '"looks":{"":{', $html, 'The default look reaches the overlay script (ADR-088).' );
+		self::assertStringContainsString( '"text_fit":"fixed"', $html, 'The overlay script knows how text meets its box.' );
+		self::assertStringContainsString( '"display_from_sound":false', $html );
+		self::assertStringContainsString( '"main_text":{"in":"fade","effect":"none","out":"fade"', $html, 'The text animations reach the overlay script.' );
 		self::assertStringContainsString( '"fills":{"main":null,"secondary":null}', $html, 'No text fill by default.' );
 		self::assertStringContainsString( '"frame":null', $html, 'The main text is in its box by default.' );
+		self::assertStringNotContainsString( '<style>', $html, 'No style sheet is built from the settings.' );
 		self::assertNull( $page->render( OverlayId::generate(), 'nonce123' ) );
 
 		$headers = OverlayPage::security_headers( 'nonce123' );
@@ -294,7 +294,7 @@ final class OverlayTest extends IntegrationTestCase {
 		try {
 			$html = (string) $this->page( $fonts )->render( $id, 'nonce123' );
 			self::assertStringContainsString( "href='https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&#038;display=swap'", $html );
-			self::assertStringContainsString( '--merchboard-font-family:"Open Sans", sans-serif;', $html );
+			self::assertStringContainsString( '"font_family":"Open Sans"', $html );
 
 			update_option(
 				AlertFonts::APPROVED_OPTION,
@@ -309,7 +309,27 @@ final class OverlayTest extends IntegrationTestCase {
 			);
 			$html = (string) $this->page( $fonts )->render( $id, 'nonce123' );
 			self::assertStringNotContainsString( 'fonts.googleapis.com', $html, 'A removed font is never loaded.' );
-			self::assertStringContainsString( '--merchboard-font-family:inherit;', $html );
+			self::assertStringContainsString( '"font_family":"inherit"', $html );
+
+			// A variation's own font is loaded too, and its look reaches the page (ADR-088).
+			$varied = $this->overlay(
+				$this->creators->create( 'Vera', CreatorStatus::Active )->id,
+				array(
+					'variations' => array(
+						array(
+							'id'   => 'big001',
+							'look' => array(
+								'font_family' => 'Oswald',
+								'template'    => 'Big!',
+							),
+						),
+					),
+				)
+			);
+			$html   = (string) $this->page( $fonts )->render( $varied, 'nonce123' );
+			self::assertStringContainsString( 'family=Oswald', $html );
+			self::assertStringContainsString( '"big001":{', $html );
+			self::assertStringContainsString( '"font_family":"Oswald"', $html );
 		} finally {
 			delete_option( AlertFonts::APPROVED_OPTION );
 		}

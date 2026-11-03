@@ -13,7 +13,7 @@ describe( 'playSound', () => {
 	it( 'plays the sound at once, without a click (OBS allows autoplay)', async () => {
 		const played: string[] = [];
 
-		playSound( '/ding.mp3', ( url ) => ( {
+		playSound( '/ding.mp3', 1, ( url ) => ( {
 			play: () => {
 				played.push( url );
 				return Promise.resolve();
@@ -27,7 +27,7 @@ describe( 'playSound', () => {
 
 	it( 'ignores a blocked sound and missing audio support', async () => {
 		expect( () =>
-			playSound( '/ding.mp3', () => ( {
+			playSound( '/ding.mp3', 1, () => ( {
 				play: () =>
 					Promise.reject(
 						new DOMException( 'Blocked', 'NotAllowedError' )
@@ -35,7 +35,7 @@ describe( 'playSound', () => {
 			} ) )
 		).not.toThrow();
 		expect( () =>
-			playSound( '/ding.mp3', () => {
+			playSound( '/ding.mp3', 1, () => {
 				throw new Error( 'No Audio' );
 			} )
 		).not.toThrow();
@@ -53,6 +53,7 @@ describe( 'playSound', () => {
 		};
 		const length = playSound(
 			'/ding.mp3',
+			1,
 			() => sound,
 			() => undefined
 		);
@@ -66,6 +67,7 @@ describe( 'playSound', () => {
 		const waited: number[] = [];
 		const unknown = playSound(
 			'/ding.mp3',
+			1,
 			() => ( { play: () => Promise.resolve() } ),
 			( callback, delay ) => {
 				fallback = callback;

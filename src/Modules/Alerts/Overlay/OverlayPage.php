@@ -132,41 +132,31 @@ final class OverlayPage {
 	 * @throws Throwable When the template fails (after its output is discarded).
 	 */
 	public function page( OverlaySettings $settings, string $feed, string $version, Closure $fill, string $nonce ): string {
-		$family = $settings->to_array()['font_family'];
-		$font   = 'inherit' === $family ? null : $this->fonts?->find( $family );
-
 		// A font that is no longer approved is never loaded; the default font is shown instead (ADR-067).
-		if ( null === $font && 'inherit' !== $family ) {
-			$settings = OverlaySettings::from_array( array_merge( $settings->to_array(), array( 'font_family' => 'inherit' ) ) );
+		$settings = $settings->with_fonts( fn( string $family ): bool => null !== $this->fonts?->find( $family ) );
+		$looks    = array( '' => $settings->render_look( $fill ) );
+		$fonts    = array();
+
+		// Each variation's look (ADR-088); the feed names the one an alert is shown with.
+		foreach ( $settings->variations() as $variation ) {
+			$looks[ $variation['id'] ] = $settings->look( $variation['id'] )->render_look( $fill );
+		}
+
+		foreach ( $looks as $look ) {
+			$font = is_string( $look['font_family'] ) && 'inherit' !== $look['font_family'] ? $this->fonts?->find( $look['font_family'] ) : null;
+
+			if ( null !== $font ) {
+				$fonts[ $font->family ] = $font->css_url();
+			}
 		}
 
 		$merchboard_view = array(
-			'font_url'  => null === $font ? '' : $font->css_url(),
+			'font_urls' => array_values( $fonts ),
 			'ready'     => $this->assets->register(),
-			'variables' => $settings->css_variables(),
-			'boxes'     => array(
-				'image'     => $settings->element_style( 'product_image' ),
-				'text'      => $settings->element_style( 'main_text' ),
-				'secondary' => $settings->element_style( 'secondary_text' ),
-			),
 			'config'    => array(
-				'feed'             => $feed,
-				'version'          => $version,
-				'displayDuration'  => $settings->display_duration(),
-				'animDuration'     => $settings->anim_duration(),
-				'textFit'          => $settings->text_fit(),
-				'imageFollows'     => $settings->grows_up( 'main_text' ),
-				'displayFromSound' => $settings->display_from_sound(),
-				'animations'       => array(
-					'main'      => $settings->animations()['main_text'],
-					'secondary' => $settings->animations()['secondary_text'],
-				),
-				// The main text around the image (step 6.11); null when it is in its box.
-				'frame'            => $settings->frames_image() ? $settings->text_frame() : null,
-				'fills'            => array(
-					'main'      => $fill( $settings->text_fills()['main_text'] ),
-					'secondary' => $fill( $settings->text_fills()['secondary_text'] ),
-				),
+				'feed'    => $feed,
+				'version' => $version,
+				'looks'   => $looks,
 			),
 		);
 

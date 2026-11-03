@@ -7,99 +7,74 @@ import {
 	RELOAD_CURSOR_TTL,
 	backoff,
 	feedUrl,
+	lookOf,
 	parseAnswer,
 	parseConfig,
 	reloadUrl,
 	takeCursor,
 } from '../feed';
-import { DEFAULT_ANIMATION } from '../animations';
 
 const FEED = `${ window.location.origin }/wp-json/merchboard/v1/alerts/overlay/${ 'a'.repeat( 32 ) }/feed`;
 
 describe( 'parseConfig', () => {
-	it( 'accepts the page configuration', () => {
-		expect(
-			parseConfig( {
-				feed: FEED,
-				version: 'v1',
-				displayDuration: 5000,
-				animDuration: 500,
-				textFit: 'shrink',
-				imageFollows: true,
-			} )
-		).toEqual( {
+	it( 'accepts the page configuration with its looks', () => {
+		const config = parseConfig( {
 			feed: FEED,
 			version: 'v1',
-			displayDuration: 5000,
-			animDuration: 500,
-			textFit: 'shrink',
-			imageFollows: true,
-			displayFromSound: false,
-			animations: {
-				main: DEFAULT_ANIMATION,
-				secondary: DEFAULT_ANIMATION,
+			looks: {
+				'': { text_fit: 'shrink', frame: { speed: 'warp' } },
+				big001: {
+					font_size: 60,
+					fills: {
+						main: { kind: 'preset', preset: 'gold', motion: 'pan' },
+						secondary: {
+							kind: 'image',
+							url: 'https://evil.example/x.png',
+							width: 10,
+							height: 10,
+							motion: 'none',
+						},
+					},
+				},
+				'../evil': { font_size: 99 },
 			},
-			frame: null,
-			fills: { main: null, secondary: null },
 		} );
-		expect(
-			parseConfig( {
-				feed: FEED,
-				version: 'v1',
-				displayDuration: 5000,
-				animDuration: 500,
-				frame: { direction: 'counterclockwise', speed: 'warp' },
-			} )?.frame
-		).toEqual( {
+
+		expect( config?.feed ).toBe( FEED );
+		expect( [ ...( config?.looks.keys() ?? [] ) ] ).toEqual( [
+			'',
+			'big001',
+		] );
+		expect( config?.looks.get( '' )?.text_fit ).toBe( 'shrink' );
+		expect( config?.looks.get( '' )?.frame ).toEqual( {
 			enabled: true,
-			direction: 'counterclockwise',
+			direction: 'clockwise',
 			speed: 'normal',
 			repeat: true,
 		} );
-		expect(
-			parseConfig( {
-				feed: FEED,
-				version: 'v1',
-				displayDuration: 5000,
-				animDuration: 500,
-				fills: {
-					main: { kind: 'preset', preset: 'gold', motion: 'pan' },
-					secondary: {
-						kind: 'image',
-						url: 'https://evil.example/x.png',
-						width: 10,
-						height: 10,
-						motion: 'none',
-					},
-				},
-			} )?.fills
-		).toEqual( {
+		expect( config?.looks.get( 'big001' )?.fills ).toEqual( {
 			main: { kind: 'preset', preset: 'gold', motion: 'pan' },
 			secondary: null,
 		} );
 		expect(
-			parseConfig( {
-				feed: FEED,
-				version: 'v1',
-				displayDuration: 5000,
-				animDuration: 500,
-				textFit: 'stretch',
-			} )?.textFit
-		).toBe( 'fixed' );
+			config === null ? null : lookOf( config, 'gone01' ).font_size
+		).toBe( 32 );
+		expect(
+			config === null ? null : lookOf( config, 'big001' ).font_size
+		).toBe( 60 );
 	} );
 
 	it( 'rejects a feed on another origin and invalid values', () => {
 		const base = {
 			feed: FEED,
 			version: 'v1',
-			displayDuration: 5000,
-			animDuration: 500,
+			looks: { '': {} },
 		};
 
 		expect(
 			parseConfig( { ...base, feed: 'https://evil.example/feed' } )
 		).toBeNull();
-		expect( parseConfig( { ...base, displayDuration: -1 } ) ).toBeNull();
+		expect( parseConfig( { ...base, looks: {} } ) ).toBeNull();
 		expect( parseConfig( { ...base, version: 1 } ) ).toBeNull();
 		expect( parseConfig( null ) ).toBeNull();
 		expect( parseConfig( [] ) ).toBeNull();

@@ -4,10 +4,10 @@
  *
  * A complete HTML page without the theme: no get_header() and no wp_head().
  * Only the overlay bundle is printed, by explicit handle. Rendered by
- * OverlayPage after the secret overlay id was found. The CSS values come
- * from OverlaySettings, which only produces validated values (hex colors,
- * integers, a plain font name, one checked text shadow); the configuration
- * is JSON with every HTML-significant character escaped.
+ * OverlayPage after the secret overlay id was found. The alert is drawn by
+ * the overlay script from the looks in the configuration (ADR-088), which
+ * validates every value; the configuration is JSON with every
+ * HTML-significant character escaped.
  *
  * @package MerchBoard
  *
@@ -21,21 +21,8 @@ use MerchBoard\Modules\Alerts\Overlay\OverlayAssets;
 defined( 'ABSPATH' ) || exit;
 
 $merchboard_ready     = true === ( $merchboard_view['ready'] ?? false );
-$merchboard_font_url  = is_string( $merchboard_view['font_url'] ?? null ) ? $merchboard_view['font_url'] : '';
-$merchboard_variables = is_array( $merchboard_view['variables'] ?? null ) ? $merchboard_view['variables'] : array();
-$merchboard_boxes     = is_array( $merchboard_view['boxes'] ?? null ) ? $merchboard_view['boxes'] : array();
+$merchboard_font_urls = is_array( $merchboard_view['font_urls'] ?? null ) ? array_filter( $merchboard_view['font_urls'], 'is_string' ) : array();
 $merchboard_config    = wp_json_encode( $merchboard_view['config'] ?? array(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES );
-$merchboard_css       = ':root{';
-
-foreach ( $merchboard_variables as $merchboard_name => $merchboard_value ) {
-	$merchboard_css .= '--merchboard-' . preg_replace( '/[^a-z-]/', '', (string) $merchboard_name ) . ':' . str_replace( array( '<', '>', '{', '}', ';' ), '', (string) $merchboard_value ) . ';';
-}
-
-$merchboard_css .= '}';
-
-foreach ( array( 'image', 'text', 'secondary' ) as $merchboard_box ) {
-	$merchboard_css .= '#merchboard-overlay-' . $merchboard_box . '{' . str_replace( array( '<', '>', '{', '}' ), '', (string) ( $merchboard_boxes[ $merchboard_box ] ?? '' ) ) . '}';
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,23 +32,26 @@ foreach ( array( 'image', 'text', 'secondary' ) as $merchboard_box ) {
 <meta name="robots" content="noindex, nofollow">
 <title>Merch Dashboard alerts</title>
 <?php
-if ( '' !== $merchboard_font_url ) {
-	// The approved Google font (ADR-067); no version argument, Google answers 400 to unknown parameters.
-	wp_register_style( 'merchboard-overlay-font', $merchboard_font_url, array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- See above.
-	wp_print_styles( array( 'merchboard-overlay-font' ) );
+foreach ( $merchboard_font_urls as $merchboard_font_url ) {
+	// The approved Google fonts of the looks (ADR-067), one handle per font; no version argument, Google answers 400 to unknown parameters.
+	$merchboard_handle = 'merchboard-overlay-font-' . substr( md5( $merchboard_font_url ), 0, 12 );
+	wp_register_style( $merchboard_handle, $merchboard_font_url, array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- See above.
+	wp_print_styles( array( $merchboard_handle ) );
 }
-?>
-<style><?php echo $merchboard_css; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Validated values, with characters that could leave a declaration or the style element removed. ?></style>
-<?php
+
 if ( $merchboard_ready ) {
 	wp_print_styles( array( OverlayAssets::HANDLE ) );
 }
 ?>
 </head>
 <body class="merchboard-overlay">
-<div id="merchboard-overlay-image" class="merchboard-overlay__el merchboard-overlay__el--hidden"></div>
-<div id="merchboard-overlay-text" class="merchboard-overlay__el merchboard-overlay__el--hidden merchboard-overlay__text"></div>
-<div id="merchboard-overlay-secondary" class="merchboard-overlay__el merchboard-overlay__el--hidden merchboard-overlay__text"></div>
+<div id="merchboard-overlay-alert" class="merchboard-alert merchboard-alert--hidden">
+<div id="merchboard-overlay-image" class="merchboard-alert__image"></div>
+<div id="merchboard-overlay-texts" class="merchboard-alert__texts">
+<div id="merchboard-overlay-text" class="merchboard-overlay__el merchboard-alert__text"></div>
+<div id="merchboard-overlay-secondary" class="merchboard-overlay__el merchboard-alert__text"></div>
+</div>
+</div>
 <script type="application/json" id="merchboard-overlay-config"><?php echo false === $merchboard_config ? '{}' : $merchboard_config; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON with <, >, &, ' and " escaped. ?></script>
 <?php
 if ( $merchboard_ready ) {

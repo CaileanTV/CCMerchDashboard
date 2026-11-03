@@ -4,16 +4,10 @@
  * Pure functions without DOM or network access, so they can be tested alone.
  * Every value from the page or the server is validated before use.
  */
-import { parseAnimation } from './animations';
-import type { TextAnimation } from './animations';
-import { isTextFit } from './fit';
-import type { TextFit } from './fit';
-import { parseTextFrame } from './frame';
-import type { TextFrame } from './frame';
-import { parseFillLook } from './textfill';
-import type { FillLook } from './textfill';
 import { parseParts } from './look';
 import type { TextPart } from './look';
+import { parseLook } from './render';
+import type { AlertLook } from './render';
 
 /**
  * One alert as the server renders it: plain text (whole and in pieces, the
@@ -42,26 +36,8 @@ export interface FeedAnswer {
 export interface OverlayConfig {
 	feed: string;
 	version: string;
-	displayDuration: number;
-	animDuration: number;
-	/** How text meets its box; anything unknown is "fixed". */
-	textFit: TextFit;
-	/** Whether the image follows the main text when it grows up. */
-	imageFollows: boolean;
-	/** Whether an alert with a sound is shown as long as the sound plays. */
-	displayFromSound: boolean;
-	/** Text animations of the main and the secondary text (step 25.6.9). */
-	animations: {
-		readonly main: TextAnimation;
-		readonly secondary: TextAnimation;
-	};
-	/** The main text around the image (step 25.6.11); null when it is in its box. */
-	frame: TextFrame | null;
-	/** Text fills of the main and the secondary text (step 25.6.10); null for none. */
-	fills: {
-		readonly main: FillLook | null;
-		readonly secondary: FillLook | null;
-	};
+	/** The looks by variation id; '' is the default (ADR-088). */
+	looks: ReadonlyMap< string, AlertLook >;
 }
 
 /** Longest wait between retries after errors, in milliseconds. */
@@ -95,8 +71,8 @@ export function parseConfig( value: unknown ): OverlayConfig | null {
 		! isRecord( value ) ||
 		typeof value.feed !== 'string' ||
 		typeof value.version !== 'string' ||
-		! isCount( value.displayDuration ) ||
-		! isCount( value.animDuration )
+		! isRecord( value.looks ) ||
+		! isRecord( value.looks[ '' ] )
 	) {
 		return null;
 	}
@@ -111,36 +87,29 @@ export function parseConfig( value: unknown ): OverlayConfig | null {
 		return null;
 	}
 
-	return {
-		feed: value.feed,
-		version: value.version,
-		displayDuration: value.displayDuration,
-		animDuration: value.animDuration,
-		textFit: isTextFit( value.textFit ) ? value.textFit : 'fixed',
-		imageFollows: value.imageFollows === true,
-		displayFromSound: value.displayFromSound === true,
-		animations: {
-			main: parseAnimation(
-				isRecord( value.animations ) ? value.animations.main : null
-			),
-			secondary: parseAnimation(
-				isRecord( value.animations ) ? value.animations.secondary : null
-			),
-		},
-		frame: isRecord( value.frame )
-			? { ...parseTextFrame( value.frame ), enabled: true }
-			: null,
-		fills: {
-			main: parseFillLook(
-				isRecord( value.fills ) ? value.fills.main : null,
-				window.location.origin
-			),
-			secondary: parseFillLook(
-				isRecord( value.fills ) ? value.fills.secondary : null,
-				window.location.origin
-			),
-		},
-	};
+	const looks = new Map< string, AlertLook >();
+
+	for ( const [ id, look ] of Object.entries( value.looks ) ) {
+		if ( id === '' || /^[a-z0-9]{6,32}$/.test( id ) ) {
+			looks.set( id, parseLook( look, window.location.origin ) );
+		}
+	}
+
+	return { feed: value.feed, version: value.version, looks };
+}
+
+/**
+ * The look of a variation; the default for '' or an unknown id.
+ *
+ * @param config The page configuration.
+ * @param id     Variation id.
+ */
+export function lookOf( config: OverlayConfig, id: string ): AlertLook {
+	return (
+		config.looks.get( id ) ??
+		config.looks.get( '' ) ??
+		parseLook( {}, window.location.origin )
+	);
 }
 
 /**

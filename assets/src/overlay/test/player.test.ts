@@ -1,49 +1,66 @@
 /**
- * Tests for the alert player (ADR-065 pkt. 3).
+ * Tests for the alert player (ADR-065 pkt. 3, ADR-088).
  */
 import { describe, expect, it } from '@jest/globals';
-import { AlertPlayer, MAX_QUEUE } from '../player';
+import {
+	ALERT_ENTERING,
+	ALERT_HIDDEN,
+	ALERT_LEAVING,
+	AlertPlayer,
+	MAX_QUEUE,
+} from '../player';
+import type { PlayerHooks } from '../player';
 import type { OverlayAlert } from '../feed';
-import { DEFAULT_ANIMATION, LETTER_STEP } from '../animations';
+import { LETTER_STEP } from '../animations';
+import { parseLook } from '../render';
+import type { AlertElements, AlertLook } from '../render';
 
-function setup(
-	hidden: string[] = [],
-	fromSound = false,
-	length: number | null = null
-) {
+function elements(): AlertElements {
+	const box = document.createElement( 'div' );
 	const image = document.createElement( 'div' );
+	const texts = document.createElement( 'div' );
 	const text = document.createElement( 'div' );
 	const secondary = document.createElement( 'div' );
-	const timers: Array< { callback: () => void; delay: number } > = [];
-	const played: string[] = [];
-	const names = new Map< HTMLElement, string >( [
-		[ image, 'image' ],
-		[ text, 'text' ],
-		[ secondary, 'secondary' ],
-	] );
 
-	for ( const element of [ image, text, secondary ] ) {
-		element.className =
-			'merchboard-overlay__el merchboard-overlay__el--hidden';
-	}
+	box.className = `merchboard-alert ${ ALERT_HIDDEN }`;
+	texts.append( text, secondary );
+	box.append( image, texts );
 
-	const player = new AlertPlayer(
-		{ image, text, secondary },
+	return { alert: box, image, texts, text, secondary };
+}
+
+function look( data: Record< string, unknown > = {} ): AlertLook {
+	return parseLook(
 		{
-			displayDuration: 5000,
-			animDuration: 500,
-			displayFromSound: fromSound,
+			show_secondary: true,
+			elements: { secondary_text: { visible: true } },
+			...data,
 		},
-		( element ) => ! hidden.includes( names.get( element ) ?? '' ),
-		( callback, delay ) => {
+		window.location.origin
+	);
+}
+
+function setup(
+	data: Record< string, unknown > = {},
+	length: number | null = null,
+	hooks: PlayerHooks = {},
+	variations: Record< string, AlertLook > = {}
+) {
+	const parts = elements();
+	const timers: Array< { callback: () => void; delay: number } > = [];
+	const played: Array< { url: string; volume: number } > = [];
+	const base = look( data );
+	const player = new AlertPlayer( parts, ( id ) => variations[ id ] ?? base, {
+		schedule: ( callback, delay ) => {
 			timers.push( { callback, delay } );
 		},
-		( url ) => {
-			played.push( url );
+		play: ( url, volume ) => {
+			played.push( { url, volume } );
 
 			return Promise.resolve( length );
-		}
-	);
+		},
+		...hooks,
+	} );
 
 	const tick = (): number => {
 		const timer = timers.shift();
@@ -57,20 +74,22 @@ function setup(
 		return timer.delay;
 	};
 
-	return { image, text, secondary, player, timers, played, tick };
+	return { ...parts, player, timers, played, tick };
 }
 
 function alert(
 	id: number,
 	extra: Partial< OverlayAlert > = {}
 ): OverlayAlert {
+	const text = extra.text ?? `Alert ${ id }`;
+
 	return {
 		id,
 		look: '',
 		image: '',
-		text: `Alert ${ id }`,
+		text,
 		secondary: '',
-		parts: [ { text: `Alert ${ id }`, value: false } ],
+		parts: [ { text, value: false } ],
 		secondaryParts: [],
 		sound: '',
 		...extra,
@@ -78,46 +97,39 @@ function alert(
 }
 
 describe( 'AlertPlayer', () => {
-	it( 'shows alerts one at a time: display, then fade out, then the next', () => {
-		const { text, player, tick } = setup();
+	it( 'shows alerts one at a time: in, display, out, then the next', () => {
+		const { alert: box, text, player, tick } = setup();
 
 		player.enqueue( [ alert( 1 ), alert( 2 ) ] );
 
 		expect( text.textContent ).toBe( 'Alert 1' );
-		expect(
-			text.classList.contains( 'merchboard-overlay__el--visible' )
-		).toBe( true );
+		expect( box.classList.contains( ALERT_ENTERING ) ).toBe( true );
+		expect( box.classList.contains( ALERT_HIDDEN ) ).toBe( false );
 		expect( player.waiting ).toBe( 1 );
 
 		expect( tick() ).toBe( 5000 );
-		expect(
-			text.classList.contains( 'merchboard-overlay__el--hiding' )
-		).toBe( true );
+		expect( box.classList.contains( ALERT_LEAVING ) ).toBe( true );
 
 		expect( tick() ).toBe( 500 );
 		expect( text.textContent ).toBe( 'Alert 2' );
-		expect(
-			text.classList.contains( 'merchboard-overlay__el--visible' )
-		).toBe( true );
+		expect( box.classList.contains( ALERT_ENTERING ) ).toBe( true );
 		expect( player.waiting ).toBe( 0 );
 
 		tick();
 		tick();
 		expect( text.textContent ).toBe( '' );
-		expect(
-			text.classList.contains( 'merchboard-overlay__el--hidden' )
-		).toBe( true );
+		expect( box.classList.contains( ALERT_HIDDEN ) ).toBe( true );
 	} );
 
-	it( "plays each alert's sound once when it is shown", () => {
-		const { player, played, tick } = setup();
+	it( "plays each alert's sound once, at the look's volume", () => {
+		const { player, played, tick } = setup( { audio_volume: 40 } );
 
 		player.enqueue( [ alert( 1, { sound: '/ding.mp3' } ), alert( 2 ) ] );
-		expect( played ).toEqual( [ '/ding.mp3' ] );
+		expect( played ).toEqual( [ { url: '/ding.mp3', volume: 0.4 } ] );
 
 		tick();
 		tick();
-		expect( played ).toEqual( [ '/ding.mp3' ] );
+		expect( played ).toHaveLength( 1 );
 	} );
 
 	it( 'inserts text as text and the image as an img element', () => {
@@ -128,6 +140,7 @@ describe( 'AlertPlayer', () => {
 				text: '<b>bold</b>',
 				image: '/img.jpg',
 				secondary: 'Thanks',
+				secondaryParts: [ { text: 'Thanks', value: false } ],
 			} ),
 		] );
 
@@ -137,32 +150,18 @@ describe( 'AlertPlayer', () => {
 		);
 		expect( image.querySelector( 'img' )?.alt ).toBe( '' );
 		expect( secondary.textContent ).toBe( 'Thanks' );
-		expect(
-			secondary.classList.contains( 'merchboard-overlay__el--visible' )
-		).toBe( true );
 	} );
 
-	it( 'skips hidden boxes, an empty image and an empty secondary text', () => {
-		const { image, secondary, player } = setup( [ 'secondary' ] );
+	it( 'moves on at once when nothing would be shown', () => {
+		const { text, player, timers } = setup( {
+			elements: {
+				product_image: { visible: false },
+				main_text: { visible: false },
+			},
+			show_secondary: false,
+		} );
 
-		player.enqueue( [ alert( 1, { secondary: 'Thanks' } ) ] );
-
-		expect(
-			image.classList.contains( 'merchboard-overlay__el--hidden' )
-		).toBe( true );
-		expect(
-			secondary.classList.contains( 'merchboard-overlay__el--hidden' )
-		).toBe( true );
-	} );
-
-	it( 'moves on at once when no box is shown', () => {
-		const { text, player, timers } = setup( [
-			'image',
-			'text',
-			'secondary',
-		] );
-
-		player.enqueue( [ alert( 1 ), alert( 2 ) ] );
+		player.enqueue( [ alert( 1, { secondary: 'Hi' } ), alert( 2 ) ] );
 
 		expect( timers ).toHaveLength( 0 );
 		expect( player.waiting ).toBe( 0 );
@@ -180,7 +179,7 @@ describe( 'AlertPlayer', () => {
 	} );
 
 	it( 'shows an alert with a sound as long as the sound plays', async () => {
-		const { player, timers } = setup( [], true, 2750 );
+		const { player, timers } = setup( { display_from_sound: true }, 2750 );
 
 		player.enqueue( [ alert( 1, { sound: '/ding.mp3' } ) ] );
 		expect( timers ).toHaveLength( 0 );
@@ -191,50 +190,57 @@ describe( 'AlertPlayer', () => {
 	} );
 
 	it( 'uses the display time without a sound, or when its length is unknown', async () => {
-		const unknown = setup( [], true, null );
+		const unknown = setup( { display_from_sound: true }, null );
 
 		unknown.player.enqueue( [ alert( 1, { sound: '/ding.mp3' } ) ] );
 		await Promise.resolve();
 		await Promise.resolve();
 		expect( unknown.timers[ 0 ]?.delay ).toBe( 5000 );
 
-		const silent = setup( [], true, 2750 );
+		const silent = setup( { display_from_sound: true }, 2750 );
 
 		silent.player.enqueue( [ alert( 2 ) ] );
 		expect( silent.timers[ 0 ]?.delay ).toBe( 5000 );
+	} );
 
-		const off = setup( [], false, 2750 );
+	it( 'draws each alert with its variation and places the box', () => {
+		const big = look( {
+			widget: { x: 100, y: 50, w: 600, h: 300, rotation: 10 },
+			layout_mode: 'side',
+			display_duration: 8000,
+			animations: { alert: { in: 'zoom', out: 'flip', out_ms: 900 } },
+		} );
+		const {
+			alert: box,
+			player,
+			tick,
+		} = setup(
+			{},
+			null,
+			{},
+			{
+				big001: big,
+			}
+		);
 
-		off.player.enqueue( [ alert( 3, { sound: '/ding.mp3' } ) ] );
-		expect( off.timers[ 0 ]?.delay ).toBe( 5000 );
+		player.enqueue( [ alert( 1, { look: 'big001' } ) ] );
+
+		expect( box.dataset.layout ).toBe( 'side' );
+		expect( box.dataset.in ).toBe( 'zoom' );
+		expect( box.style.left ).toBe( '100px' );
+		expect(
+			box.style.getPropertyValue( '--merchboard-alert-rotation' )
+		).toBe( '10deg' );
+		expect( tick() ).toBe( 8000 );
+		expect( tick() ).toBe( 900 );
 	} );
 
 	it( 'animates the texts and waits for a letter out-animation', () => {
-		const text = document.createElement( 'div' );
-		const timers: Array< { callback: () => void; delay: number } > = [];
-		const player = new AlertPlayer(
-			{
-				image: document.createElement( 'div' ),
-				text,
-				secondary: document.createElement( 'div' ),
+		const { text, player, timers } = setup( {
+			animations: {
+				main_text: { in: 'pop', out: 'typewriter', out_ms: 300 },
 			},
-			{
-				displayDuration: 5000,
-				animDuration: 500,
-				animations: {
-					main: {
-						...DEFAULT_ANIMATION,
-						in: 'pop',
-						out: 'typewriter',
-					},
-					secondary: DEFAULT_ANIMATION,
-				},
-			},
-			() => true,
-			( callback, delay ) => {
-				timers.push( { callback, delay } );
-			}
-		);
+		} );
 
 		player.enqueue( [ alert( 1, { text: 'Hello' } ) ] );
 		expect( text.dataset.in ).toBe( 'pop' );
@@ -246,33 +252,75 @@ describe( 'AlertPlayer', () => {
 		expect( text.classList.contains( 'merchboard-anim--out' ) ).toBe(
 			true
 		);
-		expect( timers[ 0 ]?.delay ).toBe( 500 + 5 * LETTER_STEP.normal );
+		expect( text.style.getPropertyValue( '--merchboard-anim-time' ) ).toBe(
+			'300ms'
+		);
+		expect( timers[ 0 ]?.delay ).toBe( 300 + 5 * LETTER_STEP.normal );
 
 		timers.shift()?.callback();
 		expect( text.classList.contains( 'merchboard-anim' ) ).toBe( false );
 		expect( text.textContent ).toBe( '' );
 	} );
-	it( 'fills the texts and removes the fill after the alert (step 25.6.10)', () => {
-		const text = document.createElement( 'div' );
-		const secondary = document.createElement( 'div' );
-		const timers: Array< { callback: () => void; delay: number } > = [];
-		const player = new AlertPlayer(
-			{ image: document.createElement( 'div' ), text, secondary },
-			{
-				displayDuration: 5000,
-				animDuration: 500,
-				fills: {
-					main: { kind: 'preset', preset: 'gold', motion: 'pan' },
-					secondary: null,
-				},
-			},
-			() => true,
-			( callback, delay ) => {
-				timers.push( { callback, delay } );
-			}
-		);
 
-		player.enqueue( [ alert( 1, { text: 'Hey', secondary: 'You' } ) ] );
+	it( 'shows the texts later and lets them go earlier than the box', () => {
+		const { text, player, tick } = setup( {
+			text_timing: { show_after: 1000, hide_before: 2000 },
+		} );
+
+		player.enqueue( [ alert( 1, { text: 'Later' } ) ] );
+		expect( text.textContent ).toBe( '' );
+
+		expect( tick() ).toBe( 1000 );
+		expect( text.textContent ).toBe( 'Later' );
+		expect( text.dataset.in ).toBe( 'fade' );
+
+		expect( tick() ).toBe( 3000 );
+		expect( text.classList.contains( 'merchboard-anim--out' ) ).toBe(
+			true
+		);
+	} );
+
+	it( 'marks the inserted values when the highlight is on', () => {
+		const { text, player } = setup( {
+			highlight: { enabled: true, color: '#ff0000', effect: 'pulse' },
+		} );
+
+		player.enqueue( [
+			alert( 1, {
+				text: 'Ann bought Cap',
+				parts: [
+					{ text: 'Ann', value: true },
+					{ text: ' bought ', value: false },
+					{ text: 'Cap', value: true },
+				],
+			} ),
+		] );
+
+		const marked = Array.from(
+			text.querySelectorAll( '.merchboard-hl' ),
+			( letter ) => letter.textContent
+		).join( '' );
+
+		expect( marked ).toBe( 'AnnCap' );
+		expect( text.dataset.highlight ).toBe( 'pulse' );
+		expect( text.style.getPropertyValue( '--merchboard-hl-color' ) ).toBe(
+			'#ff0000'
+		);
+		expect( text.textContent ).toBe( 'Ann bought Cap' );
+	} );
+
+	it( 'fills the texts and removes the fill after the alert (step 25.6.10)', () => {
+		const { text, secondary, player, tick } = setup( {
+			fills: { main: { kind: 'preset', preset: 'gold', motion: 'pan' } },
+		} );
+
+		player.enqueue( [
+			alert( 1, {
+				text: 'Hey',
+				secondary: 'You',
+				secondaryParts: [ { text: 'You', value: false } ],
+			} ),
+		] );
 		expect( text.classList.contains( 'merchboard-fill' ) ).toBe( true );
 		expect(
 			text.querySelectorAll( '.merchboard-anim__letter' )
@@ -282,39 +330,38 @@ describe( 'AlertPlayer', () => {
 		);
 		expect( secondary.textContent ).toBe( 'You' );
 
-		timers.shift()?.callback();
-		timers.shift()?.callback();
+		tick();
+		tick();
 		expect( text.classList.contains( 'merchboard-fill' ) ).toBe( false );
 		expect( text.textContent ).toBe( '' );
 	} );
+
 	it( 'runs the main text round the image instead of fitting it (step 25.6.11)', () => {
-		const text = document.createElement( 'div' );
-		const secondary = document.createElement( 'div' );
 		const fitted: HTMLElement[] = [];
-		const timers: Array< { callback: () => void; delay: number } > = [];
-		const player = new AlertPlayer(
-			{ image: document.createElement( 'div' ), text, secondary },
+		const { text, secondary, player, tick } = setup(
 			{
-				displayDuration: 5000,
-				animDuration: 500,
+				text_fit: 'shrink',
 				frame: {
-					enabled: true,
 					direction: 'clockwise',
 					speed: 'slow',
 					repeat: true,
 				},
 			},
-			() => true,
-			( callback, delay ) => {
-				timers.push( { callback, delay } );
-			},
-			() => undefined,
-			( element ) => {
-				fitted.push( element );
+			null,
+			{
+				fit: ( element ) => {
+					fitted.push( element );
+				},
 			}
 		);
 
-		player.enqueue( [ alert( 1, { text: 'Hey you', secondary: 'Hi' } ) ] );
+		player.enqueue( [
+			alert( 1, {
+				text: 'Hey you',
+				secondary: 'Hi',
+				secondaryParts: [ { text: 'Hi', value: false } ],
+			} ),
+		] );
 		expect( text.classList.contains( 'merchboard-frame' ) ).toBe( true );
 		expect( text.dataset.frameSpeed ).toBe( 'slow' );
 		expect( fitted ).toEqual( [ secondary ] );
@@ -322,8 +369,8 @@ describe( 'AlertPlayer', () => {
 			false
 		);
 
-		timers.shift()?.callback();
-		timers.shift()?.callback();
+		tick();
+		tick();
 		expect( text.classList.contains( 'merchboard-frame' ) ).toBe( false );
 		expect( text.textContent ).toBe( '' );
 	} );

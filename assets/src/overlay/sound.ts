@@ -12,6 +12,8 @@ export const LENGTH_WAIT = 3000;
 /** Something that can play a sound once and tell its length. */
 export interface Playable {
 	play: () => Promise< void >;
+	/** Volume from 0 to 1. */
+	volume?: number;
 	/** Length in seconds, once known (NaN before). */
 	readonly duration?: number;
 	addEventListener?: (
@@ -27,11 +29,13 @@ export interface Playable {
  * when it is unknown within LENGTH_WAIT.
  *
  * @param url    Sound URL of this site.
+ * @param volume Volume from 0 to 1 (ADR-088).
  * @param create Creates a sound; defaults to an Audio element.
  * @param wait   Schedules the fallback; defaults to setTimeout.
  */
 export function playSound(
 	url: string,
+	volume = 1,
 	create: ( url: string ) => Playable = ( source ) => new Audio( source ),
 	wait: ( callback: () => void, delay: number ) => void = (
 		callback,
@@ -73,6 +77,7 @@ export function playSound(
 		}
 	} );
 
+	sound.volume = Math.max( 0, Math.min( 1, volume ) );
 	sound.play().catch( () => undefined );
 
 	return length;

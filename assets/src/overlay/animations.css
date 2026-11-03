@@ -23,13 +23,6 @@
 	animation: var(--merchboard-l-in, none), var(--merchboard-l-fx, none), var(--merchboard-l-fill, none), var(--merchboard-l-frame, none);
 }
 
-/* In the overlay, the animation decides opacity and movement. */
-.merchboard-anim.merchboard-overlay__el--visible,
-.merchboard-anim.merchboard-overlay__el--hiding {
-	opacity: 1;
-	transform: none;
-}
-
 /* ------------------------------------------------------------- In. */
 
 .merchboard-anim[data-in="fade"] {

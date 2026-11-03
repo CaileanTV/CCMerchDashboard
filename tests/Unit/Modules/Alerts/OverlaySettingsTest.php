@@ -153,57 +153,42 @@ final class OverlaySettingsTest extends TestCase {
 		self::assertSame( 'Open Sans', OverlaySettings::from_array( array( 'font_family' => 'Open Sans' ) )->to_array()['font_family'] );
 	}
 
-	public function test_css_variables_and_boxes_use_only_validated_values(): void {
+	public function test_the_rendered_look_carries_only_validated_values(): void {
 		$settings = OverlaySettings::from_array(
 			array(
 				'font_family'        => 'Open Sans',
-				'text_shadow'        => '',
+				'text_shadow'        => '1px 1px #000',
 				'bg_color'           => '#102030',
 				'bg_opacity'         => 45,
 				'anim_duration'      => 250,
 				'secondary_template' => 'For $UserName',
 				'layout'             => array( 'elements' => array( 'secondary_text' => array( 'visible' => true ) ) ),
+				'text_fills'         => array( 'main_text' => array( 'type' => 'preset' ) ),
 			)
 		);
+		$look     = $settings->render_look( static fn( array $fill ): ?array => 'none' === $fill['type'] ? null : array( 'kind' => 'preset' ) );
 
-		self::assertSame(
-			array(
-				'anim'              => '0.25s',
-				'font-family'       => '"Open Sans", sans-serif',
-				'font-size'         => '32px',
-				'font-weight'       => '700',
-				'text-color'        => '#ffffff',
-				'text-shadow'       => 'none',
-				'text-align'        => 'center',
-				'img-border-radius' => '4px',
-			),
-			$settings->css_variables()
-		);
-		self::assertSame( 'left:40px;top:880px;width:120px;height:120px;', $settings->element_style( 'product_image' ) );
-		self::assertSame( 'left:176px;top:895px;width:700px;height:80px;background:rgba(16,32,48,0.45);border-radius:8px;padding:20px;', $settings->element_style( 'main_text' ) );
-		self::assertTrue( $settings->shows_secondary() );
-		self::assertStringNotContainsString( 'display:none', $settings->element_style( 'secondary_text' ) );
-	}
+		self::assertSame( 'Open Sans', $look['font_family'] );
+		self::assertSame( '1px 1px #000', $look['text_shadow'] );
+		self::assertSame( '#102030', $look['bg_color'] );
+		self::assertSame( 45, $look['bg_opacity'] );
+		self::assertTrue( $look['show_secondary'] );
+		self::assertSame( 250, $look['animations']['alert']['in_ms'] );
+		self::assertSame( array( 'kind' => 'preset' ), $look['fills']['main'] );
+		self::assertNull( $look['fills']['secondary'] );
+		self::assertNull( $look['frame'] );
+		self::assertSame( 'free', $look['layout_mode'] );
+		self::assertSame( $settings->to_array()['layout']['elements'], $look['elements'] );
+		self::assertArrayNotHasKey( 'template', $look, 'Texts come with each alert.' );
 
-	public function test_a_growing_box_keeps_its_height_as_the_least_and_grows_up_near_the_bottom(): void {
-		$top    = OverlaySettings::from_array(
+		$off = OverlaySettings::from_array(
 			array(
-				'text_fit' => 'grow',
-				'layout'   => array( 'elements' => array( 'main_text' => array( 'x' => 176, 'y' => 40, 'w' => 700, 'h' => 80 ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Short box.
+				'text_shadow'         => '1px 1px #000',
+				'text_shadow_enabled' => false,
 			)
-		);
-		$grow   = OverlaySettings::from_array( array( 'text_fit' => 'grow' ) );
-		$shrink = OverlaySettings::from_array( array( 'text_fit' => 'shrink' ) );
+		)->render_look( static fn(): ?array => null );
 
-		self::assertSame( 'grow', $grow->text_fit() );
-		self::assertTrue( $grow->grows_up( 'main_text' ), 'The default box is near the bottom.' );
-		self::assertStringStartsWith( 'left:176px;bottom:105px;width:700px;height:auto;min-height:80px;', $grow->element_style( 'main_text' ), 'It keeps its bottom edge (1080 - 895 - 80).' );
-		self::assertFalse( $top->grows_up( 'main_text' ) );
-		self::assertStringStartsWith( 'left:176px;top:40px;width:700px;height:auto;min-height:80px;', $top->element_style( 'main_text' ), 'Near the top it grows down.' );
-		self::assertFalse( $grow->grows_up( 'product_image' ) );
-		self::assertFalse( OverlaySettings::defaults()->grows_up( 'main_text' ), 'Only with grow.' );
-		self::assertSame( 'left:40px;top:880px;width:120px;height:120px;', $grow->element_style( 'product_image' ), 'The image never grows.' );
-		self::assertStringStartsWith( 'left:176px;top:895px;width:700px;height:80px;', $shrink->element_style( 'main_text' ), 'Shrinking happens in the overlay script.' );
+		self::assertSame( '', $off['text_shadow'], 'A shadow switched off is no shadow.' );
 	}
 
 	public function test_text_animations_default_to_the_fade_and_are_normalized(): void {
@@ -367,15 +352,13 @@ final class OverlaySettingsTest extends TestCase {
 			$settings->text_frame()
 		);
 		self::assertTrue( $settings->frames_image() );
-		// The image with a margin of 1.2 font sizes (48 px) on every side; no "grow".
-		self::assertSame( 'left:52px;top:752px;width:296px;height:296px;', $settings->element_style( 'main_text' ) );
-		self::assertFalse( $settings->grows_up( 'main_text' ), 'The text follows the image, it does not grow.' );
+		self::assertSame( $settings->text_frame(), $settings->render_look( static fn(): ?array => null )['frame'] );
 		self::assertSame( $settings->text_frame(), OverlaySettings::from_json( $settings->to_json() )->text_frame(), 'Stored and read back unchanged.' );
 	}
 
 	public function test_the_secondary_text_needs_a_template_and_visibility(): void {
 		self::assertFalse( OverlaySettings::defaults()->shows_secondary() );
-		self::assertStringEndsWith( 'display:none;', OverlaySettings::defaults()->element_style( 'secondary_text' ) );
+		self::assertFalse( OverlaySettings::defaults()->render_look( static fn(): ?array => null )['show_secondary'] );
 		self::assertFalse( OverlaySettings::from_array( array( 'secondary_template' => 'x' ) )->shows_secondary(), 'Hidden in the default layout.' );
 	}
 

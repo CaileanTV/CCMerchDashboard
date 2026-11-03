@@ -516,28 +516,11 @@ final class OverlaySettings {
 	 * How text meets its box (phase 25, step 6.5): `fixed` (the font size;
 	 * longer text is cut off), `shrink` (the font size is the largest; the
 	 * overlay shrinks the text until it fits) or `grow` (the box keeps its
-	 * width and grows with the text; its height is the least; see grows_up()).
+	 * width and grows with the text; its height is the least; near the
+	 * bottom of the canvas it grows up, see assets/src/overlay/render.ts).
 	 */
 	public function text_fit(): string {
 		return $this->values['text_fit'];
-	}
-
-	/**
-	 * Whether a text box grows upward: with `grow`, a box whose middle is in
-	 * the lower half of the canvas keeps its bottom edge and grows up; others
-	 * keep their top and grow down. When the main text grows up, the overlay
-	 * moves the image up as much, so their distance stays (step 6.5).
-	 *
-	 * @param string $element One of ELEMENTS.
-	 */
-	public function grows_up( string $element ): bool {
-		$box = $this->values['layout']['elements'][ $element ] ?? null;
-
-		if ( 'main_text' === $element && $this->frames_image() ) {
-			return false;
-		}
-
-		return 'product_image' !== $element && 'grow' === $this->values['text_fit'] && null !== $box && 2 * $box['y'] + $box['h'] > self::CANVAS_HEIGHT;
 	}
 
 	/**
@@ -555,66 +538,35 @@ final class OverlaySettings {
 	}
 
 	/**
-	 * The CSS custom properties of the overlay page, every value validated.
+	 * Everything the overlay page draws an alert with (ADR-088): the box,
+	 * the layout, the text style, timing, sound volume, read-out,
+	 * animations, the frame and the fills. assets/src/overlay/render.ts
+	 * draws it, in the overlay and on the designer's canvas; it validates
+	 * every value again.
 	 *
-	 * @return array<string, string> Property name (without `--merchboard-`) → value.
+	 * @param \Closure $fill A text fill's look (AlertImages::look()).
+	 * @phpstan-param \Closure(Fill): (array<string, mixed>|null) $fill
+	 * @return array<string, mixed>
 	 */
-	public function css_variables(): array {
-		$v      = $this->values;
-		$family = 'inherit' === $v['font_family'] ? 'inherit' : '"' . $v['font_family'] . '", sans-serif';
+	public function render_look( \Closure $fill ): array {
+		$v    = $this->values;
+		$look = array();
 
-		return array(
-			'anim'              => ( $v['anim_duration'] / 1000 ) . 's',
-			'font-family'       => $family,
-			'font-size'         => $v['font_size'] . 'px',
-			'font-weight'       => $v['font_weight'],
-			'text-color'        => $v['text_color'],
-			'text-shadow'       => '' === $v['text_shadow'] ? 'none' : $v['text_shadow'],
-			'text-align'        => $v['text_align'],
-			'img-border-radius' => $v['layout']['elements']['product_image']['border_radius'] . 'px',
+		foreach ( array( 'widget', 'layout_mode', 'font_family', 'font_size', 'font_weight', 'text_color', 'text_opacity', 'text_align', 'text_fit', 'line_height', 'letter_spacing', 'word_spacing', 'text_direction', 'italic', 'underline', 'text_case', 'stroke_width', 'stroke_color', 'stroke_opacity', 'highlight', 'margin', 'bg_color', 'bg_opacity', 'border_radius', 'padding', 'display_duration', 'display_from_sound', 'audio_volume', 'text_timing', 'tts', 'animations' ) as $key ) {
+			$look[ $key ] = $v[ $key ];
+		}
+
+		$look['elements']       = $v['layout']['elements'];
+		$look['show_secondary'] = $this->shows_secondary();
+		$look['text_shadow']    = $v['text_shadow_enabled'] ? $v['text_shadow'] : '';
+		// The main text around the image (step 6.11); null when it is in its box.
+		$look['frame'] = $this->frames_image() ? $v['text_frame'] : null;
+		$look['fills'] = array(
+			'main'      => $fill( $v['text_fills']['main_text'] ),
+			'secondary' => $fill( $v['text_fills']['secondary_text'] ),
 		);
-	}
 
-	/**
-	 * The box of a layout element as CSS declarations (validated integers only).
-	 *
-	 * @param string $element One of ELEMENTS.
-	 */
-	public function element_style( string $element ): string {
-		$box = $this->values['layout']['elements'][ $element ] ?? self::default_layout()['elements']['main_text'];
-
-		// Around the image (step 6.11): the image's box with a margin that holds the text.
-		if ( 'main_text' === $element && $this->frames_image() ) {
-			$image  = $this->values['layout']['elements']['product_image'];
-			$margin = (int) round( $this->values['font_size'] * self::FRAME_MARGIN );
-
-			return sprintf( 'left:%dpx;top:%dpx;width:%dpx;height:%dpx;', $image['x'] - $margin, $image['y'] - $margin, $image['w'] + 2 * $margin, $image['h'] + 2 * $margin ) . ( $box['visible'] ? '' : 'display:none;' );
-		}
-
-		if ( $this->grows_up( $element ) ) {
-			$style = sprintf( 'left:%dpx;bottom:%dpx;width:%dpx;height:auto;min-height:%dpx;', $box['x'], self::CANVAS_HEIGHT - $box['y'] - $box['h'], $box['w'], $box['h'] );
-		} elseif ( 'product_image' !== $element && 'grow' === $this->values['text_fit'] ) {
-			$style = sprintf( 'left:%dpx;top:%dpx;width:%dpx;height:auto;min-height:%dpx;', $box['x'], $box['y'], $box['w'], $box['h'] );
-		} else {
-			$style = sprintf( 'left:%dpx;top:%dpx;width:%dpx;height:%dpx;', $box['x'], $box['y'], $box['w'], $box['h'] );
-		}
-
-		if ( 'product_image' !== $element ) {
-			$style .= sprintf( 'background:%s;border-radius:%dpx;padding:%dpx;', $this->background(), $this->values['border_radius'], $this->values['padding'] );
-		}
-
-		$visible = 'secondary_text' === $element ? $this->shows_secondary() : $box['visible'];
-
-		return $style . ( $visible ? '' : 'display:none;' );
-	}
-
-	/**
-	 * The text box background as rgba().
-	 */
-	private function background(): string {
-		$hex = ltrim( $this->values['bg_color'], '#' );
-
-		return sprintf( 'rgba(%d,%d,%d,%s)', hexdec( substr( $hex, 0, 2 ) ), hexdec( substr( $hex, 2, 2 ) ), hexdec( substr( $hex, 4, 2 ) ), rtrim( rtrim( number_format( $this->values['bg_opacity'] / 100, 2, '.', '' ), '0' ), '.' ) );
+		return $look;
 	}
 
 	/**
