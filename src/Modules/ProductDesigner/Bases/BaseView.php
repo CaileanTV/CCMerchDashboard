@@ -74,6 +74,21 @@ final readonly class BaseView {
 	private const MAX_SCENE_SIDE = 2000;
 
 	/**
+	 * A side's key from its name: lowercase letters, digits and hyphens, at
+	 * most 32 characters, as a key must be (30.15 review: a name with inch
+	 * marks gave a key the side was refused for).
+	 *
+	 * @param string $name Side name.
+	 */
+	public static function key_of( string $name ): string {
+		// Inch marks and times signs become letters: "16″×16″" gives "16inx16in", not "%e2%80%b3".
+		$slug = sanitize_title( str_replace( array( '″', '"', '×' ), array( 'in', 'in', 'x' ), $name ) );
+		$slug = preg_replace( '/[^a-z0-9-]+/', '', $slug ) ?? '';
+
+		return trim( substr( $slug, 0, 32 ), '-' );
+	}
+
+	/**
 	 * The layer key of a colour's own background.
 	 *
 	 * @param string $color Colour key.

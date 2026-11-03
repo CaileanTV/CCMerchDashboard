@@ -89,6 +89,11 @@ final class BaseProductActions {
 			wp_die( esc_html__( 'The link you followed has expired. Please try again.', 'merchboard' ), '', array( 'response' => 403 ) );
 		}
 
+		// While an import runs it replaces the sides: changes made meanwhile would be lost (30.15 review).
+		if ( $id > 0 && in_array( $do, array( 'save', 'color_photos', 'photo_move', 'retire' ), true ) && true === $this->catalog?->running( $id ) ) {
+			return BaseProductsPage::edit_url( $id, DesignerException::IMPORT_RUNNING );
+		}
+
 		try {
 			switch ( $do ) {
 				case 'save':

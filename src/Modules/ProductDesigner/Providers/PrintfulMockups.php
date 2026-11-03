@@ -754,7 +754,7 @@ class PrintfulMockups {
 			return;
 		}
 
-		$this->store( $id, self::mockup_urls( (string) $task['side'], is_array( $answer['mockups'] ?? null ) ? $answer['mockups'] : array(), $map ), is_array( $map['photos'] ?? null ) ? $map['photos'] : array() );
+		$this->store( $id, (string) $task['side'], self::mockup_urls( (string) $task['side'], is_array( $answer['mockups'] ?? null ) ? $answer['mockups'] : array(), $map ), is_array( $map['photos'] ?? null ) ? $map['photos'] : array() );
 		$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::DONE, 'attempts' => $attempts ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	}
 
@@ -838,13 +838,14 @@ class PrintfulMockups {
 	 * Downloads the mockups and puts them in place of the browser's.
 	 *
 	 * @param int                                  $id     Version.
+	 * @param string                               $task   The task's side.
 	 * @param array<string, array<string, string>> $urls   URL by side and colour.
 	 * @param array<mixed>                         $photos The base product's photos in their order.
 	 * @throws PrintfulException When a mockup cannot be downloaded.
 	 * @throws DatabaseException When it cannot be stored.
 	 * @throws DesignerException When a mockup is not a valid image.
 	 */
-	private function store( int $id, array $urls, array $photos ): void {
+	private function store( int $id, string $task, array $urls, array $photos ): void {
 		$stored = array();
 		$names  = array();
 		$done   = false;
@@ -877,11 +878,14 @@ class PrintfulMockups {
 			}
 		}
 
-		// A colour with chosen photos shows only them.
+		// A colour with chosen photos shows only them. Other size groups' sides keep theirs: they are
+		// their sizes' images, made by their own tasks (30.15 review).
+		$others = $this->other_groups( $version, $task );
+
 		foreach ( $stored as $side => $colors ) {
 			foreach ( str_starts_with( (string) $side, SubmissionFiles::PHOTO ) ? array_keys( $colors ) : array() as $color ) {
 				foreach ( $files['mockups'] as $key => $by_color ) {
-					if ( ! str_starts_with( (string) $key, SubmissionFiles::PHOTO ) && isset( $by_color[ $color ] ) ) {
+					if ( ! str_starts_with( (string) $key, SubmissionFiles::PHOTO ) && isset( $by_color[ $color ] ) && ! in_array( (string) $key, $others, true ) ) {
 						$replaced[] = $by_color[ $color ]['file'] ?? null;
 						unset( $files['mockups'][ $key ][ $color ] );
 					}
@@ -898,6 +902,33 @@ class PrintfulMockups {
 		foreach ( array_filter( $replaced, 'is_string' ) as $name ) {
 			$this->files->delete( $name );
 		}
+	}
+
+	/**
+	 * The sides of the size groups other than a group task's own.
+	 *
+	 * @param array<string, mixed>|null $version Version.
+	 * @param string                    $task    The task's side.
+	 * @return list<string>
+	 * @throws DatabaseException When the base product cannot be read.
+	 */
+	private function other_groups( ?array $version, string $task ): array {
+		$base = self::grouped( $task ) && null !== $version ? $this->bases->find( (int) $version['base_id'] ) : null;
+
+		if ( null === $base ) {
+			return array();
+		}
+
+		$sizes = self::task_sizes( $base, $task );
+		$keys  = array();
+
+		foreach ( $base->views as $view ) {
+			if ( array() !== $view->sizes && $view->sizes !== $sizes ) {
+				$keys[] = $view->key;
+			}
+		}
+
+		return $keys;
 	}
 
 	/**

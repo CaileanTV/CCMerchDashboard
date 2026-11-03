@@ -136,8 +136,10 @@ final class BaseProductsPage {
 			);
 		}
 
+		$base_id = absint( is_scalar( $input['base'] ?? null ) ? $input['base'] : 0 );
+
 		try {
-			$import = $this->bases->import( absint( is_scalar( $input['base'] ?? null ) ? $input['base'] : 0 ) );
+			$import = $this->bases->import( $base_id );
 		} catch ( DatabaseException ) {
 			$import = null;
 		}
@@ -153,7 +155,7 @@ final class BaseProductsPage {
 			'status' => 200,
 			'data'   => array(
 				'state' => $import['state'],
-				'html'  => self::import_progress( $import['state'], $import['data'] ),
+				'html'  => self::import_progress( $import['state'], $import['data'], $base_id ),
 			),
 		);
 	}
@@ -1366,7 +1368,7 @@ final class BaseProductsPage {
 		}
 
 		// Everything is escaped in import_progress().
-		echo '<div id="merchboard-import-status">' . self::import_progress( $state, $data ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- import_progress() escapes.
+		echo '<div id="merchboard-import-status">' . self::import_progress( $state, $data, (int) $base->id ) . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- import_progress() escapes.
 
 		// Read-only parameter; nothing is changed by this request.
 		$diagnose = isset( $_GET['diagnose'] ) && '1' === $_GET['diagnose']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
@@ -1419,10 +1421,11 @@ final class BaseProductsPage {
 	 * The import's progress: the steps and each render with the provider's
 	 * own state and picture. Everything is escaped.
 	 *
-	 * @param string               $state Import state.
-	 * @param array<string, mixed> $data  Import data.
+	 * @param string               $state   Import state.
+	 * @param array<string, mixed> $data    Import data.
+	 * @param int                  $base_id Base product.
 	 */
-	private static function import_progress( string $state, array $data ): string {
+	private static function import_progress( string $state, array $data, int $base_id ): string {
 		$phase   = is_string( $data['phase'] ?? null ) ? $data['phase'] : 'render';
 		$steps   = array(
 			'render'   => __( 'The provider renders the product', 'merchboard' ),
@@ -1458,7 +1461,14 @@ final class BaseProductsPage {
 
 		if ( CatalogImport::RUNNING === $state && $updated > self::STALE_IMPORT ) {
 			/* translators: %d: minutes. */
-			$html .= '<div class="notice notice-warning inline"><p>' . esc_html( sprintf( __( 'The background job has not run for %d minutes. Check that WP-Cron or Action Scheduler runs on this site.', 'merchboard' ), (int) floor( $updated / 60 ) ) ) . '</p></div>';
+			$html .= '<div class="notice notice-warning inline"><p>' . esc_html( sprintf( __( 'The background job has not run for %d minutes. Check that WP-Cron or Action Scheduler runs on this site.', 'merchboard' ), (int) floor( $updated / 60 ) ) ) . '</p>';
+
+			// A round that died queues no next one: after a while the import can be started over (30.15 review).
+			if ( $updated > CatalogImport::STALE ) {
+				$html .= '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="import_retry"><input type="hidden" name="base_id" value="' . esc_attr( (string) $base_id ) . '">' . wp_nonce_field( BaseProductActions::ACTION, '_wpnonce', true, false ) . '<p><button type="submit" class="button">' . esc_html__( 'Start the import over', 'merchboard' ) . '</button></p></form>';
+			}
+
+			$html .= '</div>';
 		}
 
 		return $html;

@@ -375,6 +375,21 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		self::assertStringContainsString( '/front-print-l', urldecode( (string) ( $tasks[1]['placements'][0]['layers'][0]['url'] ?? '' ) ), 'The large group sends its own print file.' );
 		self::assertSame( array( 15710 ), $tasks[0]['mockup_style_ids'] ?? null, 'The chosen photo comes from the group of the first chosen size.' );
 		self::assertArrayNotHasKey( 'mockup_style_ids', $tasks[1] );
+
+		// The first group's photos arrive after the large group's mockups: these stay (30.15 review).
+		$large = array_values( array_map( static fn( $view ): string => $view->key, array_filter( $views, static fn( $view ): bool => array( 'L' ) === $view->sizes ) ) );
+		$rows  = new ProviderTaskRepository( $this->wpdb );
+		$lead  = $rows->for_version( $version )[0] ?? array();
+
+		self::assertNotSame( array(), $large );
+		self::assertSame( PrintfulMockups::TASK_SIDE . ':0', $lead['side'] ?? null );
+
+		$rows->update( (int) $lead['id'], array( 'status' => ProviderTaskRepository::PENDING ) );
+		$mockups->run( $version );
+
+		$kept = SubmissionFiles::decode( (string) ( $this->products->version( $version )['files'] ?? '' ) )['mockups'];
+
+		self::assertSame( array( '_photo-15710', ...$large ), array_keys( $kept ), 'The chosen photo, and the large sizes keep their own images.' );
 	}
 
 	public function test_a_large_print_area_gets_a_lower_resolution_instead_of_being_left_out(): void {

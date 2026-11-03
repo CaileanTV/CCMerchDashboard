@@ -138,7 +138,7 @@ class GelatoCatalog implements CatalogRenderer {
 		}
 
 		return array(
-			'name'        => mb_substr( trim( sanitize_text_field( (string) ( $template['title'] ?? $template['templateName'] ?? 'Gelato ' . $ref ) ) ), 0, 191 ),
+			'name'        => mb_substr( trim( sanitize_text_field( (string) ( $template['title'] ?? $template['templateName'] ?? 'Product ' . $ref ) ) ), 0, 191 ), // The provider's name never reaches creators or customers.
 			'description' => PrintfulCatalog::description( (string) ( $template['description'] ?? '' ) ),
 			'image'       => is_string( $template['previewUrl'] ?? null ) ? $template['previewUrl'] : '',
 			'colors'      => array_values( $colors ),

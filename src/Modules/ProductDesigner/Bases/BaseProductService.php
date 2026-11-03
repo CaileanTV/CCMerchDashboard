@@ -538,7 +538,7 @@ class BaseProductService {
 			}
 
 			if ( null === $old ) {
-				$key = substr( sanitize_title( $name ), 0, 32 );
+				$key = BaseView::key_of( $name );
 			}
 
 			if ( '' === $name || '' === $key || isset( $keys[ $key ] ) ) {

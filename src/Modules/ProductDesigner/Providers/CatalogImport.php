@@ -70,6 +70,13 @@ class CatalogImport {
 
 	public const RUNNING = 'running';
 
+	/**
+	 * Seconds without a round before a running import may be started over:
+	 * a round that died (a fatal error, a timeout) queues no next round
+	 * (30.15 review).
+	 */
+	public const STALE = 30 * MINUTE_IN_SECONDS;
+
 	public const READY = 'ready';
 
 	public const FAILED = 'failed';
@@ -238,7 +245,7 @@ class CatalogImport {
 		$packs = is_array( $picked['packs'] ?? null ) ? $picked['packs'] : array();
 
 		foreach ( $choice['sides'] as $side ) {
-			$key  = substr( sanitize_title( $side['name'] ), 0, 32 );
+			$key  = BaseView::key_of( $side['name'] );
 			$pack = $packs[ $side['placement'] ] ?? '';
 			// A side of some sizes only comes with the ticked ones of them, and not at all without any.
 			$own  = $side['sizes'] ?? array();
@@ -345,7 +352,8 @@ class CatalogImport {
 	}
 
 	/**
-	 * Starts a failed import over.
+	 * Starts a failed import over, or one that has not moved for STALE
+	 * seconds.
 	 *
 	 * @param int $id Base product.
 	 * @throws DesignerException When the user may not or the base product is unknown.
@@ -360,7 +368,10 @@ class CatalogImport {
 			self::stop( DesignerException::BASE_UNKNOWN );
 		}
 
-		if ( self::FAILED !== $import['state'] ) {
+		$updated = is_numeric( $import['data']['updated'] ?? null ) ? (int) $import['data']['updated'] : 0;
+		$stuck   = self::RUNNING === $import['state'] && time() - $updated > self::STALE;
+
+		if ( self::FAILED !== $import['state'] && ! $stuck ) {
 			return;
 		}
 
