@@ -1102,7 +1102,7 @@ function Editor( props: EditorProps ) {
 				<Alert tone="info">
 					{ sprintf(
 						/* translators: 1: number of files, 2: the customer's price. */ __(
-							'Your design is saved and sent with %1$d images (a print file per side and a product image per colour). It waits for our approval; until then it cannot be changed, but you can withdraw it. Customer price incl. VAT: %2$s.',
+							'Your design is saved and sent with %1$d images (a print file per side and a product image per colour). It waits for our approval (customer price incl. VAT: %2$s); until then it cannot be changed, but you can withdraw it.',
 							'merchboard'
 						),
 						submissionSize( design, colors, base.views ),
