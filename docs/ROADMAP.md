@@ -823,6 +823,24 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
   - review og runtime-test af fase 30 og 31 samlet, på Local med "Test Creator Cailean" og på stg.ccmerch.dk (projektejerens ønske 2026-11-03), udføres automatisk (AI-DEVELOPMENT.md);
   - den fulde suite køres før bump;
   - bump og release sker efter projektejerens ønske.
+  - **Review ✅ (2026-11-03):** fem uafhængige reviews (penge, designer-server, designer-klient, alerts og sikkerhed). Fundene er rettet med tests (`6752198`, `7a61c2b`, `2e055d1`, `18552dc`), og det, projektejeren skal beslutte, står i `docs/reports/2026-11-03-fase-30-31-review.md`.
+  - **Runtime-test ✅ (2026-11-04):**
+    - Local med Test Creator Cailean, efter verificeret backup:
+      - store og små områder fra designer til afregning;
+      - Forslag, testordre med refusion og sletteanmodning;
+      - alert-editor og overlay med variation og rigtig oplæsning;
+      - legacy-fingeraftrykket er uændret, og der er ingen bilag eller udbetalinger.
+    - stg med en midlertidig testcreator, slettet bagefter:
+      - rigtige Printful-mockups;
+      - den broderede beanie;
+      - alerts.
+    - Tre fund er rettet:
+      - overlayets CSS ramte dashboardets beskeder (`2bfca09`);
+      - dobbelt punktum efter prisen (`e6576e6`);
+      - tekst blev ikke tegnet om, når fonten kom (`04d2f9b`).
+    - Kørslen ligger i `MerchBoard-r2-runtime/runs/2026-11-04-fase30-31-runtime`.
+  - **Fuld integrationssuite ✅ (2026-11-04):** 1290 tests grønne på `04d2f9b` (seed 1793815445), og CI er grøn.
+  - **Venter på projektejeren:** versionsbump til 1.5.0 og release, standardfonten i OBS og de små UX-punkter i rapporten.
 
 ## Fase 31 – Alert-designer 2.0 🔄 (plan godkendt 2026-11-03; ADR-088, ADR-089)
 
