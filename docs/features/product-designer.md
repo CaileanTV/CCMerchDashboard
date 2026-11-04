@@ -258,6 +258,11 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
       - pris pr. mockup;
       - hvor længe `result.url` virker;
       - om polling tæller med i grænsen på 1.000 kald i timen.
+    - **Gaming-måtter (projektejerens ønske 2026-11-04):** ifølge Prodigis offentlige produktside (`prodigi.com/products/technology/gaming/gaming-mats/`) er der tre SKU'er:
+      - `GLOBAL-GAMINGMAT`, stor, 78,7 × 38 cm, produceret i UK;
+      - `DESK-MAT-SML` og `DESK-MAT-MED`, produceret i US.
+      - Dye sublimation på hvid neopren, én printflade og ingen farvevarianter, så `fromConfig` dækker mockups uden farveproblemet.
+      - **Men ingen af dem produceres i EU.** Med ADR-084 pkt. 3 (kun `EU` i `manufacturingRegions`) tilbyder importen dem ikke. Det kræver projektejerens beslutning (en undtagelse for UK eller en anden leverandør). Fra UK kommer told og moms ved levering i Danmark.
     - **Andre nyttige kald i Assets:**
       - `POST /assets/{id}/validate` tjekker opløsning og format mod variant og printflade (`resolution_low`, `aspect_mismatch`, `print_area_unfilled`);
       - `POST /assets` med `PUT` til `uploadUrl` lægger filen op uden en offentlig URL, så det også virker fra Local;
