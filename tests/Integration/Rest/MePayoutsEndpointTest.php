@@ -468,11 +468,12 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 		);
 
 		$data = array_map( static fn( array $row ): array => (array) json_decode( (string) $row['data'], true ), $rows );
-		self::assertSame( array( 'MB-PAY line', '1', '80.0000' ), array_values( $data[1]['items'][0] ?? array() ) );
+		// Incl. VAT, as the customer paid it: 80.00 + 20.00 (the owner's wish 2026-11-04).
+		self::assertSame( array( 'MB-PAY line', '1', '100.0000' ), array_values( $data[1]['items'][0] ?? array() ) );
 		// Owner's rule 2026-10-28: the customer's data (e-mail, name, address) never reaches the creator.
 		self::assertSame( array( 'order_number', 'currency', 'items', 'total' ), array_keys( $data[1] ) );
 		self::assertSame( array( 'name', 'quantity', 'amount' ), array_keys( $data[1]['items'][0] ?? array() ) );
-		self::assertSame( array( '80.0000', 'DKK' ), array( $data[1]['total'] ?? null, $data[1]['currency'] ?? null ) );
+		self::assertSame( array( '100.0000', 'DKK' ), array( $data[1]['total'] ?? null, $data[1]['currency'] ?? null ) );
 		self::assertSame( array( '15.0000', 'DKK', 'AFR-000001' ), array( $data[7]['amount'] ?? null, $data[7]['currency'] ?? null, $data[7]['document_number'] ?? null ) );
 		self::assertSame( 'The account is closed.', $data[8]['reason'] ?? null );
 		self::assertSame( array( 'AFR-000001', 'AFR-000001-K1', '-10.0000', 'The markup was wrong.' ), array( $data[9]['document_number'] ?? null, $data[9]['correction_number'] ?? null, $data[9]['difference'] ?? null, $data[9]['reason'] ?? null ) );
