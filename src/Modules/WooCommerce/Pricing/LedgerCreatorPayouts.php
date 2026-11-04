@@ -119,7 +119,7 @@ final class LedgerCreatorPayouts {
 	 * documents are never changed) or its order is not excluded by a
 	 * creator code. Needs `d` and OrderExclusionRepository::JOIN.
 	 */
-	private const COUNTED = '( d.event_key IS NOT NULL OR ' . OrderExclusionRepository::COUNTS . ' )';
+	public const COUNTED = '( d.event_key IS NOT NULL OR ' . OrderExclusionRepository::COUNTS . ' )';
 
 	/**
 	 * D2: when a row is released. Placeholders: now, then now minus the
@@ -322,7 +322,7 @@ final class LedgerCreatorPayouts {
 	 * @param DateTimeImmutable|null $start Settlement start, null for the whole history.
 	 * @return literal-string
 	 */
-	private static function known( ?DateTimeImmutable $start ): string {
+	public static function known( ?DateTimeImmutable $start ): string {
 		return null === $start ? self::KNOWN : '( ' . self::KNOWN . ' AND s.id IS NOT NULL )';
 	}
 
@@ -334,7 +334,7 @@ final class LedgerCreatorPayouts {
 	 * @param DateTimeImmutable|null $start Settlement start, null for the whole history.
 	 * @return literal-string
 	 */
-	private static function window( ?DateTimeImmutable $start ): string {
+	public static function window( ?DateTimeImmutable $start ): string {
 		return null === $start ? '' : ' AND ( s.id IS NULL OR s.occurred_at >= %s )';
 	}
 
@@ -344,7 +344,7 @@ final class LedgerCreatorPayouts {
 	 * @param DateTimeImmutable|null $start Settlement start, null for the whole history.
 	 * @return list<string>
 	 */
-	private static function window_args( ?DateTimeImmutable $start ): array {
+	public static function window_args( ?DateTimeImmutable $start ): array {
 		return null === $start ? array() : array( self::utc( $start ) );
 	}
 

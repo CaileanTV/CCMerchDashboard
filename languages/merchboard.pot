@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-04T19:56:18+00:00\n"
+"POT-Creation-Date: 2026-11-04T20:50:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -1101,7 +1101,7 @@ msgid "Failures by code: %s"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:500
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:353
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:355
 msgid "Registered"
 msgstr ""
 
@@ -1229,7 +1229,7 @@ msgstr ""
 #. translators: 1: product name, 2: product id.
 #: src/Modules/Admin/AuditLogFormatter.php:704
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:587
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:589
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:421
 #, php-format
 msgid "%1$s (#%2$d)"
@@ -1238,7 +1238,7 @@ msgstr ""
 #. translators: 1: name, 2: id.
 #: src/Modules/Admin/AuditLogFormatter.php:704
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:584
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:586
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:418
 msgid "(no name)"
 msgstr ""
@@ -2124,7 +2124,7 @@ msgstr ""
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:120
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:170
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:204
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:399
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:401
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
 #: build/dashboard.js:83
 msgid "Actions"
@@ -3040,7 +3040,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:169
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:199
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:203
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:369
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:371
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:707
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:674
 #: build/dashboard.js:74
@@ -3064,7 +3064,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:169
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:199
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:204
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:369
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:371
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:707
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:675
 #: build/dashboard.js:74
@@ -4588,7 +4588,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/DesignerNotifications.php:370
 #: src/Modules/ProductDesigner/DesignerNotifications.php:411
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:208
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:353
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:355
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:525
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:815
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:925
@@ -4809,7 +4809,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:229
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:279
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:250
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:399
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:401
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:182
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:325
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
@@ -8799,7 +8799,7 @@ msgstr ""
 #. translators: %d: number of products shown.
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:261
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:298
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:415
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:417
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:225
 #, php-format
 msgid "Only the first %d products are shown."
@@ -9248,7 +9248,7 @@ msgid "Coupon ID"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:207
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:353
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:355
 msgid "Registered by"
 msgstr ""
 
@@ -9410,7 +9410,7 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:197
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:202
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:353
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:355
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:865
 msgid "VAT registered"
 msgstr ""
@@ -9422,17 +9422,17 @@ msgid "Current VAT status: %s. New order lines get this status."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:205
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:353
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:355
 msgid "Applies from"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:206
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:353
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:355
 msgid "Checked on"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:207
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:353
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:355
 msgid "Documentation reference"
 msgstr ""
 
@@ -9477,7 +9477,7 @@ msgid "Sold"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:250
-msgid "Sale excl. VAT"
+msgid "The sale excl. VAT"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:250
@@ -9493,205 +9493,211 @@ msgid "VAT status"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:250
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:290
-#: src/Modules/WooCommerce/Admin/PayoutsPage.php:358
-msgid "Payout"
+msgid "Payout of the sale, not VAT registered"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:276
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:250
+msgid "Payout of the sale, VAT registered"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:277
 msgid "None of these order lines can be filled in; the reason is shown for each."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:284
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:285
 msgid "VAT status of the order lines"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:285
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:286
 msgid "By the VAT history on the sale date, otherwise not VAT registered"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:286
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:287
 msgid "Not VAT registered for every line"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:287
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:288
 msgid "VAT registered for every line"
 msgstr ""
 
 #. translators: %d: number of order lines.
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:289
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:290
 #, php-format
 msgid "I have checked the %d order line that will be filled in."
 msgid_plural "I have checked the %d order lines that will be filled in."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:290
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:291
 msgid "Fill in pricing snapshots"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:301
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:302
 msgid "The VAT status is filled in"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:302
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:303
 msgid "A pricing snapshot is made"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:303
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:304
 msgid "The snapshot of the withdrawn pricing model is replaced"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:305
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:306
 msgid "Not filled in: a settlement document covers it"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:306
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:307
 msgid "Not filled in: its VAT was not recorded, so the amount paid is unknown"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:307
-msgid "Not filled in: a designer product"
-msgstr ""
-
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:308
-msgid "Not filled in: the product or snapshot belongs to someone else"
+msgid "Not filled in: its sale is not in the ledger, so it cannot be placed after the settlement start"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:309
-msgid "Not filled in: no markup applies to the product; set the creator markup first"
+msgid "Not filled in: a designer product"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:310
-msgid "Not filled in: the stored snapshot cannot be read"
+msgid "Not filled in: the product or snapshot belongs to someone else"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:311
+msgid "Not filled in: no markup, or a markup of 0 %, applies to the product; set the creator markup first"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:312
+msgid "Not filled in: the stored snapshot cannot be read"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:313
 msgid "Not filled in: the payout cannot be calculated from the stored data"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:323
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:325
 msgid "Not VAT registered (no history)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:326
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:328
 msgid "VAT registered (history)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:326
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:328
 msgid "Not VAT registered (history)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:341
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:343
 msgid "VAT status history"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:345
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:347
 msgid "No VAT status has been registered in the history yet. The current status was set before the history was introduced; earlier changes are in the audit log."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:366
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:368
 msgid "Applies today"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:388
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:390
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:32
 msgid "Product markup"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:391
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:393
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:177
 msgid "No products are linked to this creator yet."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:395
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:397
 msgid "The examples use the current WooCommerce price as stored and the creator's current VAT status. Actual profit and payout are calculated per order line from the amount paid."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:399
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:401
 msgid "Markup"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:399
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:401
 msgid "WooCommerce prices"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:399
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:401
 msgid "Example profit"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:399
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:401
 msgid "Example payout"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:450
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:452
 msgid "Variable product: one markup for all variations"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:468
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:470
 msgid "Excluding VAT; calculated per order line"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:471
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:473
 msgid "Parent markup"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:509
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:511
 msgid "Edit markup"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:512
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:514
 msgid "Product markup (%)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:513
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:515
 msgid "Replaces the creator markup for this product and all its variations. It does not change the WooCommerce price."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:514
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:516
 msgid "Save product markup"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:519
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:521
 msgid "A product markup set for a previous creator is ignored."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:524
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:526
 msgid "Use creator markup"
 msgstr ""
 
 #. translators: %s: price.
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:550
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:552
 #, php-format
 msgid "Regular: %s"
 msgstr ""
 
 #. translators: %s: price.
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:553
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:555
 #, php-format
 msgid "Sale: %s"
 msgstr ""
 
 #. translators: %s: price.
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:556
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:558
 #, php-format
 msgid "Active: %s"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:597
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:599
 msgid "Simple product"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:598
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:600
 msgid "Variation"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:599
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:601
 msgid "Variable product without variations"
 msgstr ""
 
 #. translators: %s: WooCommerce product type.
-#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:601
+#: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:603
 #, php-format
 msgid "Product type: %s"
 msgstr ""
@@ -11127,6 +11133,11 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:283
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:352
 msgid "No pending payout requests."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:290
+#: src/Modules/WooCommerce/Admin/PayoutsPage.php:358
+msgid "Payout"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:290

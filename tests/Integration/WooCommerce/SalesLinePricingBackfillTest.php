@@ -77,6 +77,8 @@ final class SalesLinePricingBackfillTest extends IntegrationTestCase {
 
 	private CreatorPricingActions $actions;
 
+	private MarkupResolver $resolver;
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->install();
@@ -88,6 +90,7 @@ final class SalesLinePricingBackfillTest extends IntegrationTestCase {
 		$this->history  = new CreatorVatHistoryRepository( $this->wpdb );
 		$links          = new ProductCreatorLink( new PostMetaProductStore(), $creators, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( ProtectedProductMeta::class ) );
 		$resolver       = new MarkupResolver( $links, $markups, new ProductMarkupRepository( $this->wpdb ) );
+		$this->resolver = $resolver;
 		$this->recorder = new SalesLinePricingRecorder( new PostMetaPricingProductStore(), $resolver, new SalesLinePricingRepository( $this->wpdb ), new RecordingLogger(), new CreatorVatRepository( $this->wpdb ) );
 		$this->reader   = new FakeOrderReader();
 		$this->sync     = new SalesSynchronizer(
@@ -221,6 +224,24 @@ final class SalesLinePricingBackfillTest extends IntegrationTestCase {
 		self::assertNull( ( new SalesLinePricingRepository( $this->wpdb ) )->find( $late ), 'Nothing was filled in.' );
 	}
 
+	public function test_only_lines_in_the_balance_window_are_listed_and_a_zero_share_is_skipped(): void {
+		$kenny = $this->creator( 'Kenny' );
+		$zero  = $this->creator( 'Zero', true, 0 );
+		$old   = $this->order( $kenny, false );
+
+		// The settlement start lies after the sale (2026-09-01): the balance does not count it (30.15 review).
+		$items = static fn( array $plan ): array => array_map( static fn( PricingBackfillLine $line ): int => $line->order_item_id, $plan );
+
+		self::assertSame( array( $old ), $items( $this->backfill->plan( $kenny ) ), 'Without a start the whole history counts.' );
+		self::assertSame( array( $old ), $items( $this->windowed( '2026-08-01 00:00:00' )->plan( $kenny ) ), 'After the start: listed.' );
+		self::assertSame( array(), $this->windowed( '2026-10-01 00:00:00' )->plan( $kenny ), 'Before the start: not in the balance, not listed.' );
+
+		$this->order( $zero, false );
+		$plan = $this->backfill->plan( $zero );
+
+		self::assertSame( array( PricingBackfillLine::SKIP, PricingBackfillLine::NO_MARKUP ), array( $plan[0]->outcome ?? null, $plan[0]->reason ?? null ), 'A 0 % share would make the payout a known 0: set the markup first.' );
+	}
+
 	public function test_a_new_order_line_is_not_vat_registered_by_default(): void {
 		$kenny = $this->creator( 'Kenny', null );
 		$line  = $this->order( $kenny, true );
@@ -246,6 +267,15 @@ final class SalesLinePricingBackfillTest extends IntegrationTestCase {
 	 * @param bool $snapshot Whether the line gets its snapshot when it is created.
 	 * @return int The order item.
 	 */
+	/**
+	 * The backfill with a settlement start for every creator.
+	 *
+	 * @param string $start Start (UTC).
+	 */
+	private function windowed( string $start ): SalesLinePricingBackfill {
+		return new SalesLinePricingBackfill( $this->wpdb, new SalesLinePricingRepository( $this->wpdb ), $this->resolver, new PostMetaPricingProductStore(), $this->history, $this->service( AuditTrail::class ), $this->service( Transaction::class ), null, static fn(): DateTimeImmutable => new DateTimeImmutable( $start, new DateTimeZone( 'UTC' ) ) );
+	}
+
 	private function order( int $creator, bool $snapshot ): int {
 		$order   = $this->next_order++;
 		$item    = 5000 + $order;
@@ -270,14 +300,15 @@ final class SalesLinePricingBackfillTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * An active creator with 20 % markup.
+	 * An active creator with a markup (20 % by default).
 	 *
 	 * @param string    $name Name.
 	 * @param bool|null $vat  Current VAT status; null leaves the default.
+	 * @param int       $bps  Markup in basis points.
 	 */
-	private function creator( string $name, ?bool $vat = true ): int {
+	private function creator( string $name, ?bool $vat = true, int $bps = 2000 ): int {
 		$creator = $this->service( CreatorService::class )->create( $name, CreatorStatus::Active, null );
-		( new CreatorMarkupRepository( $this->wpdb ) )->save( $creator->id, new MarkupBps( 2000 ) );
+		( new CreatorMarkupRepository( $this->wpdb ) )->save( $creator->id, new MarkupBps( $bps ) );
 
 		if ( null !== $vat ) {
 			( new CreatorVatRepository( $this->wpdb ) )->save( $creator->id, $vat );

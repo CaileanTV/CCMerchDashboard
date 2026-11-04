@@ -108,7 +108,8 @@ final class SalesLinePricingRepository {
 
 	/**
 	 * Replaces a snapshot of ADR-047's withdrawn model (no share) with a share
-	 * snapshot (ADR-090). Only such a snapshot is replaced.
+	 * snapshot (ADR-090). Only such a snapshot is replaced; its old amount
+	 * columns stay as they were (only a designer row reads them).
 	 *
 	 * @param SalesLinePricing $snapshot The share snapshot.
 	 * @return bool Whether exactly that snapshot was replaced.
@@ -121,7 +122,7 @@ final class SalesLinePricingRepository {
 
 		$wpdb    = $this->wpdb;
 		$sql     = $wpdb->prepare(
-			"UPDATE %i SET status = %s, captured_at = %s, share_bps = %d, share_source = %s, price_decimals = %d, vat_registered = %d, base_unit = NULL, profit_unit = NULL, price_unit = NULL WHERE order_item_id = %d AND share_bps IS NULL AND status IN ( 'priced', 'unpriced' )",
+			"UPDATE %i SET status = %s, captured_at = %s, share_bps = %d, share_source = %s, price_decimals = %d, vat_registered = %d WHERE order_item_id = %d AND share_bps IS NULL AND status IN ( 'priced', 'unpriced' )",
 			$this->table(),
 			$snapshot->status->value,
 			PricingRows::datetime( $snapshot->captured_at ),

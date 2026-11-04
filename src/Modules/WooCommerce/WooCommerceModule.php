@@ -480,7 +480,9 @@ final class WooCommerceModule implements Module {
 				new CreatorVatHistoryRepository( $c->get( wpdb::class ) ),
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
-				new ContainerDesignerSources( $c )
+				new ContainerDesignerSources( $c ),
+				// The balance's window (ADR-054 D1): only lines that count in it are listed.
+				static fn( int $creator_id ): ?DateTimeImmutable => $c->get( PayoutRepository::class )->settlement_start( $creator_id )
 			)
 		);
 

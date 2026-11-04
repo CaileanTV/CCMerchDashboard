@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\WooCommerce\Pricing;
 
+use Closure;
 use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Audit\AuditAction;
@@ -61,6 +62,8 @@ class SalesLinePricingBackfill {
 	 * @param AuditTrail                  $audit     Audit.
 	 * @param Transaction                 $transaction Transaction.
 	 * @param DesignerPriceSource|null    $designer  Designer products' prices; null: none.
+	 * @param Closure|null                $start     The creator's settlement start (PayoutRepository::settlement_start()); null: the whole history.
+	 * @phpstan-param (Closure(int): ?DateTimeImmutable)|null $start
 	 */
 	public function __construct(
 		private wpdb $wpdb,
@@ -70,13 +73,18 @@ class SalesLinePricingBackfill {
 		private CreatorVatHistoryRepository $history,
 		private AuditTrail $audit,
 		private Transaction $transaction,
-		private ?DesignerPriceSource $designer = null
+		private ?DesignerPriceSource $designer = null,
+		private ?Closure $start = null
 	) {
 	}
 
 	/**
-	 * The creator's order lines with a ledger row whose payout is unknown,
-	 * oldest first, each with what filling in would do.
+	 * The creator's order lines with a ledger row whose payout is unknown in
+	 * the balance, oldest first, each with what filling in would do. The lines
+	 * are chosen exactly as LedgerCreatorPayouts::earned() counts unknown
+	 * rows: the settlement start's window, creator-code exclusions and the
+	 * known rule with the start (30.15 review), so history before the start is
+	 * never listed.
 	 *
 	 * @param int $creator_id Creator.
 	 * @return list<PricingBackfillLine>
@@ -87,8 +95,9 @@ class SalesLinePricingBackfill {
 			return array();
 		}
 
-		$wpdb = $this->wpdb;
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Constant SQL fragments of the ledger classes (their placeholders are tables); every value is a placeholder.
+		$wpdb  = $this->wpdb;
+		$start = null === $this->start ? null : ( $this->start )( $creator_id );
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Constant SQL fragments of the ledger classes (their placeholders are tables and the window's start); every value is a placeholder.
 		$sql = $wpdb->prepare(
 			"SELECT r.order_item_id, MIN( r.order_id ) AS order_id, MIN( r.product_id ) AS product_id, MIN( r.variation_id ) AS variation_id,
 				MIN( r.item_name ) AS item_name, MIN( r.currency ) AS currency, COUNT( DISTINCT r.currency ) AS currencies,
@@ -96,22 +105,29 @@ class SalesLinePricingBackfill {
 				SUM( CASE WHEN r.type = 'sale' THEN r.net_amount ELSE 0 END ) AS net,
 				SUM( CASE WHEN r.type = 'sale' THEN COALESCE( t.tax_amount, 0 ) ELSE 0 END ) AS tax,
 				SUM( CASE WHEN t.event_key IS NULL OR t.currency <> r.currency THEN 1 ELSE 0 END ) AS no_tax,
+				SUM( CASE WHEN s.id IS NULL THEN 1 ELSE 0 END ) AS no_sale,
 				SUM( CASE WHEN d.event_key IS NOT NULL THEN 1 ELSE 0 END ) AS settled
-			" . LedgerCreatorProfits::FROM . ' LEFT JOIN %i d ON d.event_key = r.event_key' . OrderExclusionRepository::JOIN . '
-			WHERE r.creator_id = %d AND ( d.event_key IS NOT NULL OR ' . OrderExclusionRepository::COUNTS . ' )
+			" . LedgerCreatorPayouts::FROM . ' LEFT JOIN %i d ON d.event_key = r.event_key' . OrderExclusionRepository::JOIN . '
+			WHERE r.creator_id = %d AND ' . LedgerCreatorPayouts::COUNTED . LedgerCreatorPayouts::window( $start ) . '
 			GROUP BY r.order_item_id
-			HAVING SUM( CASE WHEN ' . LedgerCreatorPayouts::KNOWN . ' THEN 0 ELSE 1 END ) > 0
+			HAVING SUM( CASE WHEN ' . LedgerCreatorPayouts::known( $start ) . ' THEN 0 ELSE 1 END ) > 0
 			ORDER BY first_at, r.order_item_id
 			LIMIT %d',
-			Tables::name( $wpdb, Tables::SALES ),
-			Tables::name( $wpdb, Tables::SALES_LINE_PRICING ),
-			Tables::name( $wpdb, Tables::SALES_TAX ),
-			Tables::name( $wpdb, Tables::SETTLEMENT_ROWS ),
-			OrderExclusionRepository::table_name( $wpdb ),
-			$creator_id,
-			self::MAX_LINES
+			...array_merge(
+				array(
+					Tables::name( $wpdb, Tables::SALES ),
+					Tables::name( $wpdb, Tables::SALES_LINE_PRICING ),
+					Tables::name( $wpdb, Tables::SALES_TAX ),
+					Tables::name( $wpdb, Tables::SALES ),
+					Tables::name( $wpdb, Tables::SETTLEMENT_ROWS ),
+					OrderExclusionRepository::table_name( $wpdb ),
+					$creator_id,
+				),
+				LedgerCreatorPayouts::window_args( $start ),
+				array( self::MAX_LINES )
+			)
 		);
-		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 		$rows = is_string( $sql ) ? $wpdb->get_results( $sql, ARRAY_A ) : null; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared above; read for an administrator's page only.
 
 		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
@@ -121,7 +137,14 @@ class SalesLinePricingBackfill {
 		$lines = array();
 
 		foreach ( $rows as $row ) {
-			$lines[] = $this->line( $creator_id, (array) $row );
+			$row = (array) $row;
+
+			// Only with a start does a row without its sale row stay unknown (it cannot be placed).
+			if ( null === $start ) {
+				$row['no_sale'] = 0;
+			}
+
+			$lines[] = $this->line( $creator_id, $row );
 		}
 
 		return $lines;
@@ -286,6 +309,10 @@ class SalesLinePricingBackfill {
 			return $skip( PricingBackfillLine::NO_TAX );
 		}
 
+		if ( (int) $row['no_sale'] > 0 ) {
+			return $skip( PricingBackfillLine::NO_SALE );
+		}
+
 		try {
 			$snapshot = $this->snapshots->find( $item );
 		} catch ( DatabaseException ) {
@@ -316,7 +343,8 @@ class SalesLinePricingBackfill {
 
 		$markup = $this->markups->resolve( $product );
 
-		if ( null === $markup ) {
+		// A share of 0 % would make the payout a known 0 without a warning: set the markup first (30.15 review).
+		if ( null === $markup || 0 === $markup->markup->bps ) {
 			return $skip( PricingBackfillLine::NO_MARKUP );
 		}
 

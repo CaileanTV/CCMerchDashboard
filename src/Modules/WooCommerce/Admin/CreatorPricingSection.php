@@ -247,7 +247,7 @@ final class CreatorPricingSection {
 		echo '<p class="description">' . esc_html__( 'Filling in gives each line the creator share that applies to its product now and the VAT status by the VAT history on the sale date, otherwise "not VAT registered". Settlement documents, earlier payouts and WooCommerce prices are not changed, and the filling in is audited.', 'merchboard' ) . '</p>';
 		echo '<table class="widefat striped"><thead><tr>';
 
-		foreach ( array( __( 'Order', 'merchboard' ), __( 'Sold', 'merchboard' ), __( 'Product', 'merchboard' ), __( 'Sale excl. VAT', 'merchboard' ), __( 'What happens', 'merchboard' ), __( 'Share', 'merchboard' ), __( 'VAT status', 'merchboard' ), __( 'Payout', 'merchboard' ) ) as $heading ) {
+		foreach ( array( __( 'Order', 'merchboard' ), __( 'Sold', 'merchboard' ), __( 'Product', 'merchboard' ), __( 'The sale excl. VAT', 'merchboard' ), __( 'What happens', 'merchboard' ), __( 'Share', 'merchboard' ), __( 'VAT status', 'merchboard' ), __( 'Payout of the sale, not VAT registered', 'merchboard' ), __( 'Payout of the sale, VAT registered', 'merchboard' ) ) as $heading ) {
 			echo '<th scope="col">' . esc_html( $heading ) . '</th>';
 		}
 
@@ -266,7 +266,8 @@ final class CreatorPricingSection {
 			echo '<td>' . esc_html( self::backfill_outcome( $line ) ) . '</td>';
 			echo '<td>' . ( $line->acts() ? esc_html( PricingLabels::markup( $line->share_bps ) ) . '<br><span class="description">' . esc_html( PricingLabels::source( $line->share_source ) ) . '</span>' : '—' ) . '</td>';
 			echo '<td>' . esc_html( $line->acts() ? self::backfill_vat( $line ) : '—' ) . '</td>';
-			echo '<td>' . esc_html( PricingLabels::money( $line->payout_units( null ), $line->currency, $decimals ) ) . '</td>';
+			echo '<td>' . esc_html( PricingLabels::money( $line->payout_units( false ), $line->currency, $decimals ) ) . '</td>';
+			echo '<td>' . esc_html( PricingLabels::money( $line->payout_units( true ), $line->currency, $decimals ) ) . '</td>';
 			echo '</tr>';
 		}
 
@@ -304,9 +305,10 @@ final class CreatorPricingSection {
 			default                        => match ( $line->reason ) {
 				PricingBackfillLine::SETTLED    => __( 'Not filled in: a settlement document covers it', 'merchboard' ),
 				PricingBackfillLine::NO_TAX     => __( 'Not filled in: its VAT was not recorded, so the amount paid is unknown', 'merchboard' ),
+				PricingBackfillLine::NO_SALE    => __( 'Not filled in: its sale is not in the ledger, so it cannot be placed after the settlement start', 'merchboard' ),
 				PricingBackfillLine::DESIGNER   => __( 'Not filled in: a designer product', 'merchboard' ),
 				PricingBackfillLine::MISMATCH   => __( 'Not filled in: the product or snapshot belongs to someone else', 'merchboard' ),
-				PricingBackfillLine::NO_MARKUP  => __( 'Not filled in: no markup applies to the product; set the creator markup first', 'merchboard' ),
+				PricingBackfillLine::NO_MARKUP  => __( 'Not filled in: no markup, or a markup of 0 %, applies to the product; set the creator markup first', 'merchboard' ),
 				PricingBackfillLine::UNREADABLE => __( 'Not filled in: the stored snapshot cannot be read', 'merchboard' ),
 				default                         => __( 'Not filled in: the payout cannot be calculated from the stored data', 'merchboard' ),
 			},

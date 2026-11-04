@@ -38,6 +38,8 @@ final readonly class PricingBackfillLine {
 
 	public const NO_TAX = 'no_tax';
 
+	public const NO_SALE = 'no_sale';
+
 	public const DESIGNER = 'designer';
 
 	public const MISMATCH = 'mismatch';
