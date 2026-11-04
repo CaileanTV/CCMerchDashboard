@@ -18,10 +18,12 @@ use wpdb;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * `merchboard_sales_line_pricing` (ADR-047, ADR-049). Insert and read only: there is no
- * update or delete, so a snapshot can never change after it was captured
- * (only opt-in uninstall drops the table). A second insert for the same order
- * item keeps the first snapshot.
+ * `merchboard_sales_line_pricing` (ADR-047, ADR-049). Insert and read; there is no
+ * delete and no general update, so a known snapshot never changes after it was
+ * captured (only opt-in uninstall drops the table). A second insert for the
+ * same order item keeps the first snapshot. The only later writes fill in what
+ * is missing (ADR-090): a VAT status that is NULL, or a snapshot of the
+ * withdrawn model without a share.
  */
 final class SalesLinePricingRepository {
 
@@ -81,6 +83,61 @@ final class SalesLinePricingRepository {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Fills in the VAT status of a snapshot with a share that has none
+	 * (ADR-090). Nothing else of the snapshot changes.
+	 *
+	 * @param int  $order_item_id  Order item.
+	 * @param bool $vat_registered VAT status to fill in.
+	 * @return bool Whether exactly that snapshot was filled in.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function fill_vat( int $order_item_id, bool $vat_registered ): bool {
+		$wpdb    = $this->wpdb;
+		$sql     = $wpdb->prepare( 'UPDATE %i SET vat_registered = %d WHERE order_item_id = %d AND vat_registered IS NULL AND share_bps IS NOT NULL', $this->table(), $vat_registered ? 1 : 0, $order_item_id );
+		$updated = is_string( $sql ) ? $wpdb->query( $sql ) : false; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared above; own table, written once per order line.
+
+		if ( false === $updated ) {
+			throw new DatabaseException( 'Could not fill in the VAT status of a sales line pricing.' );
+		}
+
+		return 1 === $updated;
+	}
+
+	/**
+	 * Replaces a snapshot of ADR-047's withdrawn model (no share) with a share
+	 * snapshot (ADR-090). Only such a snapshot is replaced.
+	 *
+	 * @param SalesLinePricing $snapshot The share snapshot.
+	 * @return bool Whether exactly that snapshot was replaced.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function replace_withdrawn( SalesLinePricing $snapshot ): bool {
+		if ( ! $snapshot->has_share() || $snapshot->is_designer() ) {
+			return false;
+		}
+
+		$wpdb    = $this->wpdb;
+		$sql     = $wpdb->prepare(
+			"UPDATE %i SET status = %s, captured_at = %s, share_bps = %d, share_source = %s, price_decimals = %d, vat_registered = %d, base_unit = NULL, profit_unit = NULL, price_unit = NULL WHERE order_item_id = %d AND share_bps IS NULL AND status IN ( 'priced', 'unpriced' )",
+			$this->table(),
+			$snapshot->status->value,
+			PricingRows::datetime( $snapshot->captured_at ),
+			$snapshot->share_bps,
+			$snapshot->share_source->value,
+			$snapshot->price_decimals,
+			true === $snapshot->vat_registered ? 1 : 0,
+			$snapshot->order_item_id
+		);
+		$updated = is_string( $sql ) ? $wpdb->query( $sql ) : false; // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared above; own table, written once per order line.
+
+		if ( false === $updated ) {
+			throw new DatabaseException( 'Could not replace a withdrawn sales line pricing.' );
+		}
+
+		return 1 === $updated;
 	}
 
 	/**

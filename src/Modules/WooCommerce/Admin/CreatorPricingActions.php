@@ -14,6 +14,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorPricingSettings;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingException;
+use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingBackfill;
 use Throwable;
 
 defined( 'ABSPATH' ) || exit;
@@ -43,12 +44,14 @@ final class CreatorPricingActions {
 	public const INVALID_VAT_STATUS           = 'invalid_vat_status';
 	public const PRODUCT_MARKUP_ACTION        = 'merchboard_save_product_markup';
 	public const REMOVE_PRODUCT_MARKUP_ACTION = 'merchboard_remove_product_markup';
+	public const BACKFILL_ACTION              = 'merchboard_backfill_pricing';
+	public const BACKFILL_UNCONFIRMED         = 'backfill_unconfirmed';
 	public const RESULTS_ARG                  = 'merchboard_pricing_results';
 
 	/**
 	 * Every admin-post action of the section.
 	 */
-	private const ACTIONS = array( self::MARKUP_ACTION, self::VAT_ACTION, self::PRODUCT_MARKUP_ACTION, self::REMOVE_PRODUCT_MARKUP_ACTION );
+	private const ACTIONS = array( self::MARKUP_ACTION, self::VAT_ACTION, self::PRODUCT_MARKUP_ACTION, self::REMOVE_PRODUCT_MARKUP_ACTION, self::BACKFILL_ACTION );
 
 	/**
 	 * Most outcomes parsed from a redirect.
@@ -58,12 +61,14 @@ final class CreatorPricingActions {
 	/**
 	 * Constructor.
 	 *
-	 * @param CreatorPricingSettings $settings Pricing configuration.
-	 * @param Logger                 $logger   Technical log.
+	 * @param CreatorPricingSettings        $settings Pricing configuration.
+	 * @param Logger                        $logger   Technical log.
+	 * @param SalesLinePricingBackfill|null $backfill Fills in missing pricing snapshots (ADR-090).
 	 */
 	public function __construct(
 		private CreatorPricingSettings $settings,
-		private Logger $logger
+		private Logger $logger,
+		private ?SalesLinePricingBackfill $backfill = null
 	) {
 	}
 
@@ -115,13 +120,14 @@ final class CreatorPricingActions {
 			wp_die( esc_html__( 'The link you followed has expired. Please try again.', 'merchboard' ), '', array( 'response' => 403 ) );
 		}
 
-		$creator_level = in_array( $action, array( self::MARKUP_ACTION, self::VAT_ACTION ), true );
+		$creator_level = in_array( $action, array( self::MARKUP_ACTION, self::VAT_ACTION, self::BACKFILL_ACTION ), true );
 		$id            = absint( self::scalar( $input, $creator_level ? 'creator_id' : 'product_id' ) );
 
 		try {
 			$code = match ( $action ) {
 				self::MARKUP_ACTION         => $this->settings->set_markup( $creator_id, sanitize_text_field( self::scalar( $input, 'markup' ) ) ) ? 'markup_saved' : 'markup_unchanged',
 				self::VAT_ACTION            => $this->save_vat( $creator_id, $input ),
+				self::BACKFILL_ACTION       => $this->backfill( $creator_id, $input ),
 				self::PRODUCT_MARKUP_ACTION => $this->settings->set_product_markup( $id, $creator_id, sanitize_text_field( self::scalar( $input, 'product_markup' ) ) ) ? 'product_markup_saved' : 'product_markup_unchanged',
 				default                     => $this->settings->remove_product_markup( $id, $creator_id ) ? 'product_markup_removed' : 'product_markup_none',
 			};
@@ -169,6 +175,35 @@ final class CreatorPricingActions {
 			sanitize_text_field( self::scalar( $input, 'documentation_reference' ) ),
 			sanitize_textarea_field( self::scalar( $input, 'reason' ) )
 		);
+	}
+
+	/**
+	 * Fills in the creator's missing pricing snapshots the administrator saw
+	 * (ADR-090): only after the confirmation, with the page's fingerprint, by
+	 * the VAT history (`history`) or one status for every line (`0`, `1`).
+	 *
+	 * @param int          $creator_id Creator.
+	 * @param array<mixed> $input      Request data.
+	 * @return string Outcome code.
+	 * @throws PricingException When the service rejects the request.
+	 */
+	private function backfill( int $creator_id, array $input ): string {
+		if ( null === $this->backfill ) {
+			return 'error';
+		}
+
+		if ( '1' !== self::scalar( $input, 'confirm' ) ) {
+			return self::BACKFILL_UNCONFIRMED;
+		}
+
+		$chosen = match ( self::scalar( $input, 'vat_source' ) ) {
+			'1'     => true,
+			'0'     => false,
+			default => null,
+		};
+		$done = $this->backfill->apply( $creator_id, sanitize_text_field( self::scalar( $input, 'fingerprint' ) ), $chosen );
+
+		return array_sum( $done ) > 0 ? 'backfill_done' : 'backfill_nothing';
 	}
 
 	/**

@@ -40,7 +40,7 @@ final class SalesLinePricingRecorder {
 	 * @param MarkupResolver             $markups   The share that applies now.
 	 * @param SalesLinePricingRepository $snapshots Append-only storage.
 	 * @param Logger                     $logger    Logger.
-	 * @param CreatorVatRepository|null  $vat       Creators' VAT status (ADR-048); null leaves it unknown.
+	 * @param CreatorVatRepository|null  $vat       Creators' VAT status (ADR-048); null: not VAT registered.
 	 * @param DesignerPriceSource|null   $designer  Designer products' prices (ADR-080); null: none.
 	 */
 	public function __construct(
@@ -102,7 +102,7 @@ final class SalesLinePricingRecorder {
 					$order_currency,
 					$designer,
 					$this->products->decimals(),
-					null === $this->vat ? null : $this->vat->find( $designer->creator_id ),
+					self::vat( $this->vat, $designer->creator_id ),
 					PricingRows::now()
 				);
 
@@ -124,7 +124,7 @@ final class SalesLinePricingRecorder {
 				$order_currency,
 				$markup,
 				$this->products->decimals(),
-				null === $this->vat ? null : $this->vat->find( $markup->creator_id ),
+				self::vat( $this->vat, $markup->creator_id ),
 				PricingRows::now()
 			);
 
@@ -141,5 +141,18 @@ final class SalesLinePricingRecorder {
 
 			return null;
 		}
+	}
+
+	/**
+	 * The owner's VAT status for a new snapshot: "not VAT registered" unless
+	 * the creator is registered, so a new order line never has an unknown
+	 * status and its payout is always known (the owner's wish 2026-11-04,
+	 * ADR-090).
+	 *
+	 * @param CreatorVatRepository|null $vat        Creators' VAT status.
+	 * @param int                       $creator_id Creator.
+	 */
+	private static function vat( ?CreatorVatRepository $vat, int $creator_id ): bool {
+		return null !== $vat && true === $vat->find( $creator_id );
 	}
 }

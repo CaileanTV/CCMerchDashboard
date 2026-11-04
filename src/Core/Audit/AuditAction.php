@@ -790,4 +790,12 @@ enum AuditAction: string {
 	 * An administrator cancelled a charged digitization fee (ADR-086). Context: fee_id, adjustment_id, amount, currency.
 	 */
 	case DesignerFeeCancelled = 'designer_fee_cancelled';
+
+	/**
+	 * An administrator filled in missing pricing snapshots of a creator's
+	 * order lines (ADR-090). Context: vat_filled, snapshots_created,
+	 * withdrawn_replaced, vat_source (`history`, `registered` or
+	 * `not_registered`) and order_item_ids. No amounts, no customer data.
+	 */
+	case SalesLinePricingBackfilled = 'sales_line_pricing_backfilled';
 }

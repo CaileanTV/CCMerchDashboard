@@ -5237,3 +5237,58 @@ Google giver gode stemmer på dansk inden for en gratis kvote. Loftet sikrer, at
 
 ## Related
 ADR-016, ADR-065, ADR-088
+
+---
+
+# ADR-090: Udfyld manglende prisbilleder bagud
+
+## Date
+2026-11-04
+
+## Status
+Accepteret af projektejeren 2026-11-04. Det er en undtagelse fra ADR-051, hvor intet udfyldes bagud.
+
+## Context
+- En ledger-rækkes udbetaling er kun kendt, når ordrelinjens prisbillede (`merchboard_sales_line_pricing`, ADR-049) har en andel og en momsstatus (`LedgerCreatorPayouts::KNOWN`).
+- Mangler en af delene, er creatorens saldo "Ukendt", og der kan ikke anmodes om udbetaling.
+- På produktion havde en creator 7 salg uden komplet prisbillede. Ifølge projektejeren skyldtes det, at momsstatus ikke var sat.
+- Prisbilledet tages kun, når ordrelinjen oprettes. Mangler det, kan det i dag ikke rettes.
+
+## Decision
+1. **Hvor:** et afsnit på creatorens side under Prissætning, "Ordrelinjer uden komplet prisbillede", der kræver `merchboard_manage_creator_pricing`.
+   - Det viser creatorens ordrelinjer med en ukendt udbetaling: salgsdato, nettobeløb, hvad der sker, andel, momsstatus og udbetaling bagefter.
+   - Udbetalinger → Saldi linker til afsnittet.
+2. **Tre slags udfyldning:**
+   - et prisbillede med andel, men uden momsstatus, får momsstatus;
+   - en linje uden prisbillede får et med den andel, der gælder for produktet nu (produktets egen markup eller creatorens);
+   - et prisbillede fra ADR-047's trukne model uden andel erstattes på samme måde.
+   - `captured_at` sættes til tidspunktet for udfyldningen.
+3. **Momsstatus:** creatorens status ifølge momshistorikken (ADR-062 K06) på salgsdatoen, ellers "ikke momsregistreret". Admin kan i stedet vælge én status for alle linjerne.
+4. **Rører aldrig:**
+   - en linje med en afregnet række, fordi bilag aldrig ændres;
+   - en designer-linje (ADR-080);
+   - et prisbillede fra en anden creator, ordre, et andet produkt eller en anden valuta;
+   - en linje uden gemt moms. Her er beløbet inkl. moms ukendt, så udbetalingen forbliver ukendt.
+   - Kendte linjer og andre creators rører den heller aldrig.
+5. **Bekræftelse:** admin skal bekræfte ("Jeg har tjekket linjerne").
+   - Siden sender et fingeraftryk af listen. Har linjerne ændret sig, afvises det (`backfill_changed`).
+   - Alt sker i én transaktion under låsen på creatoren.
+6. **Audit:** `sales_line_pricing_backfilled` med antal pr. slags, momskilde og ordrelinjer. Ingen beløb og ingen kundedata.
+7. **Fremover:** en ny ordrelinje får altid creatorens momsstatus, med "ikke momsregistreret" som standard (`SalesLinePricingRecorder`). Momsstatus er aldrig ukendt.
+
+## Alternatives considered
+- **Automatisk udfyldning uden visning:** fravalgt; udbetalinger må ikke ændre sig, uden at admin har set linjerne.
+- **Flytte afregningsstarten forbi salgene:** muligt i forvejen, men så bliver salgene aldrig udbetalt via pluginet.
+
+## Reason
+Saldoen skal kunne blive kendt igen uden manuelle databaseændringer, men kun efter et bevidst og auditeret valg.
+
+## Security
+Kun med capability, nonce bundet til creatoren og fingeraftryk. Intet sendes ud, og WooCommerce ændres ikke.
+
+## Consequences
+- Andelen er den, der gælder nu, ikke nødvendigvis den, der gjaldt ved salget. Det står på siden, og admin bekræfter.
+- Linjer uden gemt moms kan stadig ikke beregnes.
+
+## Related
+ADR-047, ADR-049, ADR-051, ADR-054, ADR-060, ADR-062, ADR-064

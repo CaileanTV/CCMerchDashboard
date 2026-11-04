@@ -15,6 +15,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Admin\AdminMenu;
 use MerchBoard\Modules\Admin\Approvals\ApprovalTab;
+use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviders;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardStatus;
@@ -442,6 +443,8 @@ final class PayoutsPage {
 				if ( PayoutBalance::UNKNOWN === $balance->status() ) {
 					/* translators: %d: number of ledger rows. */
 					echo '<br><span class="description">' . esc_html( sprintf( _n( '%d ledger row cannot be calculated', '%d ledger rows cannot be calculated', $balance->unknown_rows, 'merchboard' ), $balance->unknown_rows ) ) . '</span>';
+					// Filling in the missing pricing snapshots happens on the creator's page (ADR-090).
+					echo '<br><a href="' . esc_url( CreatorsAdminPage::edit_url( $creator->id ) . '#merchboard-pricing-backfill' ) . '">' . esc_html__( 'See the order lines', 'merchboard' ) . '</a>';
 				}
 
 				echo '</td>';

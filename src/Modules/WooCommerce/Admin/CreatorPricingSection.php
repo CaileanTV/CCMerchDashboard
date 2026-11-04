@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\WooCommerce\Admin;
 
 use DateTimeImmutable;
+use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorMarkupRepository;
@@ -20,10 +21,12 @@ use MerchBoard\Modules\WooCommerce\Pricing\CreatorVatRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\EffectiveMarkup;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupResolver;
 use MerchBoard\Modules\WooCommerce\Pricing\MarkupSource;
+use MerchBoard\Modules\WooCommerce\Pricing\PricingBackfillLine;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingException;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingProductStore;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingUnitRecord;
+use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingBackfill;
 use MerchBoard\Modules\WooCommerce\ProductRecord;
 use MerchBoard\Modules\WooCommerce\ProductStore;
 
@@ -54,6 +57,7 @@ final class CreatorPricingSection {
 	 * @param CreatorMarkupRepository          $markups  Default markups.
 	 * @param CreatorVatRepository|null        $vat      Creators' VAT status (ADR-048).
 	 * @param CreatorVatHistoryRepository|null $history  History of the VAT status (ADR-062 K06).
+	 * @param SalesLinePricingBackfill|null    $backfill Fills in missing pricing snapshots (ADR-090); null: not offered.
 	 */
 	public function __construct(
 		private ProductStore $products,
@@ -61,7 +65,8 @@ final class CreatorPricingSection {
 		private MarkupResolver $resolver,
 		private CreatorMarkupRepository $markups,
 		private ?CreatorVatRepository $vat = null,
-		private ?CreatorVatHistoryRepository $history = null
+		private ?CreatorVatHistoryRepository $history = null,
+		private ?SalesLinePricingBackfill $backfill = null
 	) {
 	}
 
@@ -94,6 +99,10 @@ final class CreatorPricingSection {
 			'product_markup_unchanged'                => array( __( 'The product markup was not changed.', 'merchboard' ), 'info' ),
 			'product_markup_removed'                  => array( __( 'Product markup removed: the creator markup applies again to order lines created from now on.', 'merchboard' ), 'success' ),
 			'product_markup_none'                     => array( __( 'The product has no product markup.', 'merchboard' ), 'info' ),
+			'backfill_done'                           => array( __( 'The pricing snapshots were filled in, and the payout of those order lines is now known. Settlement documents, earlier payouts and WooCommerce prices were not changed.', 'merchboard' ), 'success' ),
+			'backfill_nothing'                        => array( __( 'Nothing was filled in: none of the order lines can be.', 'merchboard' ), 'info' ),
+			CreatorPricingActions::BACKFILL_UNCONFIRMED => array( __( 'Nothing was filled in: tick that you have checked the order lines.', 'merchboard' ), 'error' ),
+			PricingException::BACKFILL_CHANGED        => array( __( 'Nothing was filled in: the order lines changed after the page was shown. Check them again.', 'merchboard' ), 'warning' ),
 			PricingException::NOT_AUTHORIZED          => array( __( 'You are not allowed to change the pricing of this product.', 'merchboard' ), 'error' ),
 			PricingException::PRODUCT_NOT_FOUND       => array( __( 'The product does not exist.', 'merchboard' ), 'error' ),
 			PricingException::CREATOR_NOT_FOUND       => array( __( 'The creator does not exist.', 'merchboard' ), 'error' ),
@@ -128,6 +137,7 @@ final class CreatorPricingSection {
 		$this->render_results( $results );
 		$this->render_markup( $creator );
 		$this->render_vat( $creator );
+		$this->render_backfill( $creator );
 		$this->render_products( $creator );
 	}
 
@@ -204,6 +214,116 @@ final class CreatorPricingSection {
 		echo '</form>';
 
 		$this->render_vat_history( $creator, $today );
+	}
+
+	/**
+	 * The creator's order lines whose payout is unknown, and the form that
+	 * fills in their pricing snapshots (ADR-090). Shown only when there are
+	 * any.
+	 *
+	 * @param Creator $creator Creator.
+	 */
+	private function render_backfill( Creator $creator ): void {
+		if ( null === $this->backfill ) {
+			return;
+		}
+
+		try {
+			$lines = $this->backfill->plan( $creator->id );
+		} catch ( DatabaseException ) {
+			echo '<div class="notice notice-error inline"><p>' . esc_html__( 'The order lines without a complete pricing snapshot could not be read.', 'merchboard' ) . '</p></div>';
+
+			return;
+		}
+
+		if ( array() === $lines ) {
+			return;
+		}
+
+		$acting = array_filter( $lines, static fn( PricingBackfillLine $line ): bool => $line->acts() );
+
+		echo '<h3 id="merchboard-pricing-backfill">' . esc_html__( 'Order lines without a complete pricing snapshot', 'merchboard' ) . '</h3>';
+		echo '<p class="description">' . esc_html__( 'The payout of these order lines cannot be calculated, so the creator\'s balance is unknown and no payout can be requested.', 'merchboard' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Filling in gives each line the creator share that applies to its product now and the VAT status by the VAT history on the sale date, otherwise "not VAT registered". Settlement documents, earlier payouts and WooCommerce prices are not changed, and the filling in is audited.', 'merchboard' ) . '</p>';
+		echo '<table class="widefat striped"><thead><tr>';
+
+		foreach ( array( __( 'Order', 'merchboard' ), __( 'Sold', 'merchboard' ), __( 'Product', 'merchboard' ), __( 'Sale excl. VAT', 'merchboard' ), __( 'What happens', 'merchboard' ), __( 'Share', 'merchboard' ), __( 'VAT status', 'merchboard' ), __( 'Payout', 'merchboard' ) ) as $heading ) {
+			echo '<th scope="col">' . esc_html( $heading ) . '</th>';
+		}
+
+		echo '</tr></thead><tbody>';
+
+		foreach ( $lines as $line ) {
+			$decimals = $line->price_decimals ?? $this->units->decimals();
+
+			echo '<tr>';
+			echo '<td><a href="' . esc_url( OrderHistoryPage::url( array( 'order' => $line->order_id ) ) ) . '">#' . esc_html( (string) $line->order_id ) . '</a></td>';
+			$sold = null === $line->sold_at ? false : wp_date( (string) get_option( 'date_format' ), $line->sold_at->getTimestamp() );
+
+			echo '<td>' . esc_html( false === $sold ? '—' : $sold ) . '</td>';
+			echo '<td>' . esc_html( '' === $line->item_name ? '#' . $line->product_id : $line->item_name ) . '</td>';
+			echo '<td>' . esc_html( PricingLabels::money( $line->net_units, $line->currency, $decimals ) ) . '</td>';
+			echo '<td>' . esc_html( self::backfill_outcome( $line ) ) . '</td>';
+			echo '<td>' . ( $line->acts() ? esc_html( PricingLabels::markup( $line->share_bps ) ) . '<br><span class="description">' . esc_html( PricingLabels::source( $line->share_source ) ) . '</span>' : '—' ) . '</td>';
+			echo '<td>' . esc_html( $line->acts() ? self::backfill_vat( $line ) : '—' ) . '</td>';
+			echo '<td>' . esc_html( PricingLabels::money( $line->payout_units( null ), $line->currency, $decimals ) ) . '</td>';
+			echo '</tr>';
+		}
+
+		echo '</tbody></table>';
+
+		if ( array() === $acting ) {
+			echo '<p>' . esc_html__( 'None of these order lines can be filled in; the reason is shown for each.', 'merchboard' ) . '</p>';
+
+			return;
+		}
+
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="merchboard-pricing-backfill">';
+		self::hidden( CreatorPricingActions::BACKFILL_ACTION, $creator->id );
+		echo '<input type="hidden" name="fingerprint" value="' . esc_attr( SalesLinePricingBackfill::fingerprint( $lines ) ) . '">';
+		echo '<fieldset><legend>' . esc_html__( 'VAT status of the order lines', 'merchboard' ) . '</legend>';
+		echo '<label><input type="radio" name="vat_source" value="history" checked> ' . esc_html__( 'By the VAT history on the sale date, otherwise not VAT registered', 'merchboard' ) . '</label><br>';
+		echo '<label><input type="radio" name="vat_source" value="0"> ' . esc_html__( 'Not VAT registered for every line', 'merchboard' ) . '</label><br>';
+		echo '<label><input type="radio" name="vat_source" value="1"> ' . esc_html__( 'VAT registered for every line', 'merchboard' ) . '</label></fieldset>';
+		/* translators: %d: number of order lines. */
+		echo '<p><label><input type="checkbox" name="confirm" value="1" required> ' . esc_html( sprintf( _n( 'I have checked the %d order line that will be filled in.', 'I have checked the %d order lines that will be filled in.', count( $acting ), 'merchboard' ), count( $acting ) ) ) . '</label></p>';
+		echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Fill in pricing snapshots', 'merchboard' ) . '</button></p>';
+		echo '</form>';
+	}
+
+	/**
+	 * What filling in does to a line.
+	 *
+	 * @param PricingBackfillLine $line Line.
+	 */
+	private static function backfill_outcome( PricingBackfillLine $line ): string {
+		return match ( $line->outcome ) {
+			PricingBackfillLine::VAT       => __( 'The VAT status is filled in', 'merchboard' ),
+			PricingBackfillLine::SNAPSHOT  => __( 'A pricing snapshot is made', 'merchboard' ),
+			PricingBackfillLine::WITHDRAWN => __( 'The snapshot of the withdrawn pricing model is replaced', 'merchboard' ),
+			default                        => match ( $line->reason ) {
+				PricingBackfillLine::SETTLED    => __( 'Not filled in: a settlement document covers it', 'merchboard' ),
+				PricingBackfillLine::NO_TAX     => __( 'Not filled in: its VAT was not recorded, so the amount paid is unknown', 'merchboard' ),
+				PricingBackfillLine::DESIGNER   => __( 'Not filled in: a designer product', 'merchboard' ),
+				PricingBackfillLine::MISMATCH   => __( 'Not filled in: the product or snapshot belongs to someone else', 'merchboard' ),
+				PricingBackfillLine::NO_MARKUP  => __( 'Not filled in: no markup applies to the product; set the creator markup first', 'merchboard' ),
+				PricingBackfillLine::UNREADABLE => __( 'Not filled in: the stored snapshot cannot be read', 'merchboard' ),
+				default                         => __( 'Not filled in: the payout cannot be calculated from the stored data', 'merchboard' ),
+			},
+		};
+	}
+
+	/**
+	 * The VAT status a line gets by the history, and where it comes from.
+	 *
+	 * @param PricingBackfillLine $line Line that acts.
+	 */
+	private static function backfill_vat( PricingBackfillLine $line ): string {
+		if ( null === $line->history_vat ) {
+			return __( 'Not VAT registered (no history)', 'merchboard' );
+		}
+
+		return $line->history_vat ? __( 'VAT registered (history)', 'merchboard' ) : __( 'Not VAT registered (history)', 'merchboard' );
 	}
 
 	/**

@@ -53,6 +53,12 @@ final class PricingException extends DomainException {
 	public const INVALID_REASON = 'invalid_vat_reason';
 
 	/**
+	 * Filling in missing pricing snapshots (ADR-090): the order lines changed
+	 * after the page was shown; nothing was filled in.
+	 */
+	public const BACKFILL_CHANGED = 'backfill_changed';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $code_name One of the class constants.

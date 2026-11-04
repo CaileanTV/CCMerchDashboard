@@ -19,6 +19,7 @@ use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Security\ProtectedProductMeta;
+use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutActions;
@@ -201,7 +202,7 @@ final class PayoutsAdminTest extends IntegrationTestCase {
 		$this->sync->sync( 8100 );
 
 		$html = $this->render( array( 'view' => 'balances' ) );
-		self::assertStringContainsString( '<tr><td>Payout Admin Alpha</td><td>DKK</td><td><strong>Unknown</strong><br><span class="description">1 ledger row cannot be calculated</span></td><td>10.00 DKK</td><td>15.00 DKK</td><td><strong>Unknown</strong></td><td><strong>Unknown</strong></td><td><strong>Unknown</strong></td></tr>', $html );
+		self::assertStringContainsString( '<tr><td>Payout Admin Alpha</td><td>DKK</td><td><strong>Unknown</strong><br><span class="description">1 ledger row cannot be calculated</span><br><a href="' . esc_url( CreatorsAdminPage::edit_url( $this->creator ) . '#merchboard-pricing-backfill' ) . '">See the order lines</a></td><td>10.00 DKK</td><td>15.00 DKK</td><td><strong>Unknown</strong></td><td><strong>Unknown</strong></td><td><strong>Unknown</strong></td></tr>', $html, 'The unknown row links to the creator\'s order lines to fill in (ADR-090).' );
 		self::assertStringNotContainsString( '35.00 DKK', $html );
 		self::assertStringNotContainsString( '60.00 DKK', $html );
 	}

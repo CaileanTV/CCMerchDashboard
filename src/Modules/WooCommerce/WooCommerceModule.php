@@ -112,6 +112,7 @@ use MerchBoard\Modules\WooCommerce\Pricing\PricingProductStore;
 use MerchBoard\Modules\WooCommerce\Pricing\ProductMarkupRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingHooks;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRecorder;
+use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingBackfill;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesProfit;
 use MerchBoard\Modules\WooCommerce\Pricing\WooCommercePricingProductStore;
@@ -468,11 +469,27 @@ final class WooCommerceModule implements Module {
 			)
 		);
 
+		// Filling in missing pricing snapshots from the creator's page (ADR-090).
+		$container->set(
+			SalesLinePricingBackfill::class,
+			static fn( Container $c ): SalesLinePricingBackfill => new SalesLinePricingBackfill(
+				$c->get( wpdb::class ),
+				new SalesLinePricingRepository( $c->get( wpdb::class ) ),
+				$c->get( MarkupResolver::class ),
+				$c->get( PricingProductStore::class ),
+				new CreatorVatHistoryRepository( $c->get( wpdb::class ) ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				new ContainerDesignerSources( $c )
+			)
+		);
+
 		$container->set(
 			CreatorPricingActions::class,
 			static fn( Container $c ): CreatorPricingActions => new CreatorPricingActions(
 				$c->get( CreatorPricingSettings::class ),
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				$c->get( SalesLinePricingBackfill::class )
 			)
 		);
 
@@ -484,7 +501,8 @@ final class WooCommerceModule implements Module {
 				$c->get( MarkupResolver::class ),
 				new CreatorMarkupRepository( $c->get( wpdb::class ) ),
 				new CreatorVatRepository( $c->get( wpdb::class ) ),
-				new CreatorVatHistoryRepository( $c->get( wpdb::class ) )
+				new CreatorVatHistoryRepository( $c->get( wpdb::class ) ),
+				$c->get( SalesLinePricingBackfill::class )
 			)
 		);
 

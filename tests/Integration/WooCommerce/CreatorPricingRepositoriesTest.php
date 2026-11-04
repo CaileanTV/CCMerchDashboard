@@ -178,7 +178,12 @@ final class CreatorPricingRepositoriesTest extends IntegrationTestCase {
 
 		$public = array_map( static fn ( ReflectionMethod $m ): string => $m->getName(), ( new ReflectionClass( SalesLinePricingRepository::class ) )->getMethods( ReflectionMethod::IS_PUBLIC ) );
 		sort( $public );
-		self::assertSame( array( '__construct', 'find', 'insert' ), $public, 'No update or delete API.' );
+		// No delete API. The only writes after an insert fill in what is missing (ADR-090): a VAT
+		// status that is NULL, or a snapshot of the withdrawn model without a share.
+		self::assertSame( array( '__construct', 'fill_vat', 'find', 'insert', 'replace_withdrawn' ), $public, 'No delete API and no general update.' );
+		self::assertFalse( $snapshots->fill_vat( 9001, false ), 'A known VAT status is never changed.' );
+		self::assertFalse( $snapshots->replace_withdrawn( new SalesLinePricing( 9001, 9000, $this->creator_a, 200, 0, SnapshotStatus::Share, 'DKK', self::time( '2026-10-10 10:00:00' ), 5000, MarkupSource::Creator, 2, true ) ), 'A share snapshot is never replaced.' );
+		self::assertEquals( $first, $snapshots->find( 9001 ) );
 	}
 
 	public function test_snapshot_survives_a_deleted_product_a_deactivated_creator_and_changed_rules(): void {
