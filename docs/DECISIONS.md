@@ -4927,7 +4927,12 @@ Schema-version 40: tabellen `merchboard_product_removal_requests`. Tabellen slet
 2026-10-31
 
 ## Status
-Accepteret. Projektejeren har godkendt Prodigi som ny tjeneste 2026-10-31, og at den bygges ind i produktdesigneren, mens den faktiske opsætning (konto, nøgle, rigtige kald) venter. **Eksperimentel: skrevet ud fra Prodigis OpenAPI-fil og testet med falsk HTTP. Intet kald er kørt mod Prodigi.** **Statusnote 2026-11-01:** adgangen til v5 er ikke bevist. Projektejerens dashboard viser kun en `test_`-nøgle, og Prodigis officielle dokumentation dækker kun v4. Projektejeren afventer svar fra Prodigi. Lukker v5, skal import og mockups laves på v4 eller med egne mockups.
+Accepteret. Projektejeren har godkendt Prodigi som ny tjeneste 2026-10-31, og at den bygges ind i produktdesigneren, mens den faktiske opsætning (konto, nøgle, rigtige kald) venter. **Eksperimentel: skrevet ud fra Prodigis OpenAPI-fil og testet med falsk HTTP. Intet kald er kørt mod Prodigi.** **Statusnote 2026-11-01:** adgangen til v5 er ikke bevist. Projektejerens dashboard viser kun en `test_`-nøgle, og Prodigis officielle dokumentation dækker kun v4. Projektejeren afventer svar fra Prodigi. Lukker v5, skal import og mockups laves på v4 eller med egne mockups. **Statusnote 2026-11-04:**
+- Prodigi har svaret projektejeren og peger på `POST /assets/{assetId}/mockups:fromConfig`. Endpointet laver en mockup af et asset ud fra en katalogvariant, en printflade og en valgfri scene, uden et gemt produkt.
+- Svaret kalder det "v4 api", men endpointet findes kun i v5. Det er tjekket i den offentlige specifikation `https://www.prodigi.com/print-api/docs/openapi.yml` (version 5.0.0, hentet 2026-11-04).
+- v5 er nu Prodigis hoveddokumentation, og v4 står som "continues to be supported".
+- Nøgler: v5 kræver `sandbox_<nøgle>` eller `live_<nøgle>`. **`test_`-nøgler understøttes ikke.** Det forklarer, at projektejerens `test_`-nøgle ikke gav adgang. Nøglen hentes i sandkassens dashboard (`sandbox-beta-dashboard.pwinty.com`) eller i live-dashboardet (`dashboard.prodigi.com`).
+- Endpointet er ikke med i de tilladte kald i pkt. 1, og koden bruger stadig `mockups:fromProduct`. Et skift kræver projektejerens godkendelse, når arbejdet med Prodigi genoptages. Se features/product-designer.md, "Prodigi".
 
 ## Context
 Printful og Gelato dækker ikke alt, projektejeren vil tilbyde, og Prodigi har egen produktion i EU. Prodigis v4-dokumentation viser hverken katalogliste eller mockups, men v5-specifikationen (`https://www.prodigi.com/print-api/reference/v5/openapi.yml`) har begge dele. Grænsen er 1.000 kald i timen pr. nøgle.

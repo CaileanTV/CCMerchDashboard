@@ -227,6 +227,31 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
 - **Grundprodukter:** kun produkter produceret i EU. Kataloget har hverken fotos eller farvekoder, så creatoren designer på et hvidt ark, og admin retter farverne.
 - **Mockups:** efter indsendelse sendes printfilen til Prodigi, et gemt produkt oprettes, og mockups hentes. Det gemte slettes igen.
 - **Ved første nøgle skal det afprøves:** svarenes form, om tøj understøtter mockups, om mockups koster penge, og hvilke scener der findes.
+- **Prodigis svar om mockups (2026-11-04, ikke bygget):** Prodigi anbefaler `POST /assets/{assetId}/mockups:fromConfig`. Det passer til vores flow: vi laver selv designet og printfilen og beder kun Prodigi om billedet. Svaret siger "v4", men endpointet findes kun i v5 (offentlig specifikation `https://www.prodigi.com/print-api/docs/openapi.yml`, version 5.0.0).
+  - **Nøgle:** `X-API-Key` med `sandbox_<nøgle>` eller `live_<nøgle>` på `https://api.prodigi.com/v5`. `test_`-nøgler virker ikke. Sandkassen deler assets og gemte produkter med live-kontoen, så alt, vi sender, skal slettes igen.
+  - **Asset først:**
+    - enten `POST /assets:ingest` med en offentlig `https://`-URL (Prodigi afviser private og interne adresser, så det virker fra stg, ikke fra Local);
+    - eller `POST /assets` med filnavn, type og størrelse og derefter `PUT` af filen til den returnerede `uploadUrl`, højst 100 MB.
+    - Assettet får status `pending`, `processing`, `ready` eller `failed`.
+  - **Mockup:** `mockups:fromConfig` tager kun `catalogueVariantId` (påkrævet), `printArea` (påkrævet) og `scene` (valgfri, standard `default`).
+    - Der er **ingen placering eller skalering**. Assettet skal være den færdige printfil til hele printfladen, som designeren allerede laver.
+    - Én mockup pr. side og farve er derfor ét kald pr. side og katalogvariant.
+  - **Asynkront:** svaret er `202` med en mockup med `status` `pending`, `processing`, `completed` eller `failed`.
+    - Vi skal polle `GET /assets/{assetId}/mockups/{mockupId}`, indtil den er `completed`.
+    - Billedet ligger i `result.url` med `widthPx` og `heightPx`, eller hentes via `…/download` som PNG eller JPEG.
+    - Mockups og assets kan slettes med `DELETE`.
+  - **I forhold til i dag:** koden bruger `mockups:fromProduct`, som kræver, at vi opretter et gemt produkt, binder filen og sletter produktet igen. `fromConfig` springer det gemte produkt over: færre kald, mindre at rydde op og ingen produkter i Prodigi-kontoen. Kun assettet og mockuppen skal slettes.
+  - **Stadig uvist:**
+    - hvilke scener der findes (specifikationen har ingen liste over scener);
+    - om tøj og andre produkter understøtter mockups;
+    - om mockups koster penge;
+    - hvor længe `result.url` virker;
+    - om printfladens navn er det samme som katalogets `printAreas`.
+  - **Grænser:** 1.000 kald i timen pr. nøgle med `Retry-After` efter `429`, som i ADR-084.
+  - **Næste skridt:** først når projektejeren genoptager Prodigi, og der er en `sandbox_`- eller `live_`-nøgle:
+    1. afprøv `fromConfig` med én printfil;
+    2. opdatér de tilladte kald i ADR-084 (projektejerens godkendelse);
+    3. skift mockup-flowet fra `fromProduct` til `fromConfig`.
 
 ## Opsætning af Printful og Gelato (projektejeren)
 Nøglerne indtastes i Merch Dashboard → Produktdesigner → Indstillinger (Printful fra trin 30.12, Gelato fra 30.13). De gemmes krypteret og vises aldrig igen. Vejledningen herunder står også på Settings-siden.
