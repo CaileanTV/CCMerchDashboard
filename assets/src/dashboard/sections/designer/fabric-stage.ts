@@ -8,6 +8,7 @@
  * side's print file for the submission (step 30.9) with the same objects.
  */
 import {
+	cache,
 	Canvas,
 	Ellipse,
 	FabricImage,
@@ -69,6 +70,8 @@ export class FabricStage {
 	private imagesKey = '';
 
 	private paintKey = '';
+
+	private fonts = 0;
 
 	private generation = 0;
 
@@ -145,6 +148,15 @@ export class FabricStage {
 	): Promise< void > {
 		this.imagesKey = Array.from( images.keys() ).join( ',' );
 		this.paintKey = threads?.key ?? '';
+
+		// A font that arrived after its texts were built: Fabric measured them in the fallback (30.15 runtime test).
+		const fonts = loadedFonts();
+
+		if ( fonts !== this.fonts ) {
+			this.fonts = fonts;
+			cache.clearFontCache();
+		}
+
 		const key = this.keyOf( objects );
 
 		this.objects = objects;
@@ -253,7 +265,7 @@ export class FabricStage {
 	 * @param objects Objects.
 	 */
 	private keyOf( objects: readonly DesignObject[] ): string {
-		return `${ JSON.stringify( objects ) }|${ this.imagesKey }|${ this.paintKey }`;
+		return `${ JSON.stringify( objects ) }|${ this.imagesKey }|${ this.paintKey }|${ this.fonts }`;
 	}
 }
 
@@ -458,4 +470,23 @@ function readBack( object: DesignObject, shown: Tagged ): DesignObject {
 	}
 
 	return { ...object, ...geometry } as DesignObject;
+}
+
+/**
+ * How many font faces the page has loaded: it grows when a face arrives.
+ */
+function loadedFonts(): number {
+	if ( typeof document === 'undefined' || document.fonts === undefined ) {
+		return 0;
+	}
+
+	let count = 0;
+
+	document.fonts.forEach( ( face ) => {
+		if ( 'loaded' === face.status ) {
+			count++;
+		}
+	} );
+
+	return count;
 }
