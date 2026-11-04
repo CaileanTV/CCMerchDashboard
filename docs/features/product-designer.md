@@ -248,6 +248,20 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
     - hvor længe `result.url` virker;
     - om printfladens navn er det samme som katalogets `printAreas`.
   - **Grænser:** 1.000 kald i timen pr. nøgle med `Retry-After` efter `429`, som i ADR-084.
+  - **Gennemgang mod vores behov (2026-11-04, Prodigi bad om eksempler):**
+    - **Farve og andre attributer mangler:** én katalogvariant kan have flere kombinationer (`attributeOptions`, fx `color` på tøj og `framecolour` på rammer). Ordrer og gemte produkter sender `attributes` med, men `fromConfig` har kun `catalogueVariantId`, `printArea` og `scene`. Vi kan derfor ikke vælge farven på en mockup. Det er derfor, ADR-084 bruger et gemt produkt (`fromProduct`). Prodigi er spurgt.
+    - **Andet til Prodigi:**
+      - hvilke scener der findes pr. SKU;
+      - om en side uden design vises blank på et produkt med flere printflader;
+      - om gennemsigtighed i PNG bevares;
+      - hvilke produkttyper der har mockups;
+      - pris pr. mockup;
+      - hvor længe `result.url` virker;
+      - om polling tæller med i grænsen på 1.000 kald i timen.
+    - **Andre nyttige kald i Assets:**
+      - `POST /assets/{id}/validate` tjekker opløsning og format mod variant og printflade (`resolution_low`, `aspect_mismatch`, `print_area_unfilled`);
+      - `POST /assets` med `PUT` til `uploadUrl` lægger filen op uden en offentlig URL, så det også virker fra Local;
+      - et gemt produkts binding (`POST /products/{id}/assets`) kan placere filen i mm (`x`, `y`, `width`, `height`, `rotation`) eller med `fillPrintArea`, `fitPrintArea` eller `stretchToPrintArea`.
   - **Næste skridt:** først når projektejeren genoptager Prodigi, og der er en `sandbox_`- eller `live_`-nøgle:
     1. afprøv `fromConfig` med én printfil;
     2. opdatér de tilladte kald i ADR-084 (projektejerens godkendelse);
