@@ -262,7 +262,9 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
       - `GLOBAL-GAMINGMAT`, stor, 78,7 × 38 cm, produceret i UK;
       - `DESK-MAT-SML` og `DESK-MAT-MED`, produceret i US.
       - Dye sublimation på hvid neopren, én printflade og ingen farvevarianter, så `fromConfig` dækker mockups uden farveproblemet.
-      - **Men ingen af dem produceres i EU.** Med ADR-084 pkt. 3 (kun `EU` i `manufacturingRegions`) tilbyder importen dem ikke. Det kræver projektejerens beslutning (en undtagelse for UK eller en anden leverandør). Fra UK kommer told og moms ved levering i Danmark.
+      - **Ingen af dem produceres i EU.** ADR-084 pkt. 3 kræver `EU` i `manufacturingRegions`.
+      - **Beslutning 2026-11-04:** projektejeren tillader UK-produktion for gaming-måtter (statusnote på ADR-084), så `GLOBAL-GAMINGMAT` må tilbydes. US-SKU'erne er stadig udelukket. Told og moms ved levering fra UK er accepteret.
+      - Importen tilbyder endnu kun `EU`. Undtagelsen bygges, når Prodigi genoptages.
     - **Andre nyttige kald i Assets:**
       - `POST /assets/{id}/validate` tjekker opløsning og format mod variant og printflade (`resolution_low`, `aspect_mismatch`, `print_area_unfilled`);
       - `POST /assets` med `PUT` til `uploadUrl` lægger filen op uden en offentlig URL, så det også virker fra Local;
