@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-04T17:39:02+00:00\n"
+"PO-Revision-Date: 2026-11-04T19:20:52+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1139,7 +1139,6 @@ msgid "%1$s: %2$d"
 msgstr "%1$s: %2$d"
 
 #: src/Modules/Admin/AuditLogFormatter.php:528
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:158
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:72
 msgid "Sale"
@@ -5259,6 +5258,10 @@ msgstr "Du har solgt noget"
 msgid "Your products were sold in order #%s. Here is what was bought:"
 msgstr "Dine produkter er solgt i ordre #%s. Her er, hvad der blev købt:"
 
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:158
+msgid "Sale incl. VAT"
+msgstr "Salg inkl. moms"
+
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:159
 #: build/dashboard.js:63
 msgid "Your profit"
@@ -5272,9 +5275,9 @@ msgid "Quantity"
 msgstr "Antal"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:165
-#: build/dashboard.js:88
-msgid "Price"
-msgstr "Pris"
+#: build/dashboard.js:86
+msgid "Price incl. VAT"
+msgstr "Pris inkl. moms"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:169
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:207
@@ -5306,8 +5309,8 @@ msgid "An order with your products was refunded, cancelled or changed. Your sale
 msgstr "En ordre med dine produkter er refunderet, annulleret eller ændret. Dit salg og din fortjeneste er opdateret."
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:203
-msgid "Change in sales"
-msgstr "Ændring i salg"
+msgid "Change in sales incl. VAT"
+msgstr "Ændring i salg inkl. moms"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:221
 msgid "Balance ready for payout"
@@ -16272,10 +16275,6 @@ msgstr "Dine designs"
 msgid "Note: %s"
 msgstr "Note: %s"
 
-#: build/dashboard.js:86
-msgid "Price incl. VAT"
-msgstr "Pris inkl. moms"
-
 #. translators: 1: price in the shop, 2: price after the change is approved.
 #: build/dashboard.js:87
 #, js-format
@@ -16321,6 +16320,10 @@ msgstr "Dine produkter"
 #: build/dashboard.js:88
 msgid "Private"
 msgstr "Privat"
+
+#: build/dashboard.js:88
+msgid "Price"
+msgstr "Pris"
 
 #: build/dashboard.js:88
 msgid "No price"

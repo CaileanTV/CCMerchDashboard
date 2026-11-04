@@ -155,14 +155,14 @@ final class CreatorTypes {
 				array_values(
 					array_filter(
 						array(
-							array( __( 'Sale', 'merchboard' ), $d->money( 'total' ) ),
+							array( __( 'Sale incl. VAT', 'merchboard' ), $d->money( 'total' ) ),
 							array( __( 'Your profit', 'merchboard' ), $d->money( 'profit' ) ),
 						),
 						static fn( array $line ): bool => '' !== $line[1]
 					)
 				),
 				array(
-					'head' => array( __( 'Product', 'merchboard' ), __( 'Quantity', 'merchboard' ), __( 'Price', 'merchboard' ) ),
+					'head' => array( __( 'Product', 'merchboard' ), __( 'Quantity', 'merchboard' ), __( 'Price incl. VAT', 'merchboard' ) ),
 					'rows' => array_map( static fn( array $row ): array => array( $row[0], '×' . $row[1], is_numeric( $row[2] ) ? NotificationData::format_money( (float) $row[2], $d->text( 'currency' ) ) : '' ), $d->rows( 'items', array( 'name', 'quantity', 'amount' ) ) ),
 				),
 				null,
@@ -200,7 +200,7 @@ final class CreatorTypes {
 				array( __( 'An order with your products was refunded, cancelled or changed. Your sales and profit are updated.', 'merchboard' ) ),
 				array(
 					array( __( 'Order', 'merchboard' ), '#' . $d->text( 'order_number' ) ),
-					array( __( 'Change in sales', 'merchboard' ), $d->money( 'amount' ) ),
+					array( __( 'Change in sales incl. VAT', 'merchboard' ), $d->money( 'amount' ) ),
 				),
 				null,
 				null,

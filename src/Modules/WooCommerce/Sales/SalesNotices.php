@@ -20,6 +20,10 @@ defined( 'ABSPATH' ) || exit;
  * - `sale_reversed`: refund, reversal and correction rows of one
  *   synchronization, per creator, with the summed change.
  *
+ * Amounts are incl. VAT, as the customer paid them: a row's net amount plus
+ * its actual tax (the owner's wish 2026-11-04). Only a line from before the
+ * tax was recorded (schema version 7) has no known tax and counts its net.
+ *
  * The lines of creators excluded by their own code (ADR-068) are not in the
  * write, so they are never notified. Only names, quantities and amounts are
  * passed: never customer data.
@@ -43,17 +47,20 @@ final class SalesNotices {
 			}
 		}
 
+		// A row as the customer paid it: net plus its actual tax.
+		$gross = static fn( SalesEntry $entry ): int => SalesAmount::add( SalesAmount::parse( $entry->net_amount ), $write->taxes[ $entry->event_key ] ?? 0 );
+
 		foreach ( $sales as $key => $entries ) {
 			$first = $entries[0];
 			$total = 0;
 			$items = array();
 
 			foreach ( $entries as $entry ) {
-				$total   = SalesAmount::add( $total, SalesAmount::parse( $entry->net_amount ) );
+				$total   = SalesAmount::add( $total, $gross( $entry ) );
 				$items[] = array(
 					'name'     => $entry->item_name,
 					'quantity' => (string) $entry->quantity,
-					'amount'   => $entry->net_amount,
+					'amount'   => SalesAmount::format( $gross( $entry ) ),
 				);
 			}
 
@@ -76,7 +83,7 @@ final class SalesNotices {
 			$amount = 0;
 
 			foreach ( $entries as $entry ) {
-				$amount = SalesAmount::add( $amount, SalesAmount::parse( $entry->net_amount ) );
+				$amount = SalesAmount::add( $amount, $gross( $entry ) );
 			}
 
 			do_action(
