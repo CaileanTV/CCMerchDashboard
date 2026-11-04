@@ -7,7 +7,9 @@
  * -out-time; on a text box --merchboard-hl-color.
  */
 
-.merchboard-alert {
+/* Only the overlay page's and the designer canvas's box: the dashboard's
+   notices share the class name (30.15 runtime test). */
+:where(.merchboard-overlay, .merchboard-alert-canvas) .merchboard-alert {
 	position: absolute;
 	opacity: var(--merchboard-alert-opacity, 1);
 	transform: rotate(var(--merchboard-alert-rotation, 0deg));

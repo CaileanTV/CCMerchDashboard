@@ -430,6 +430,19 @@ final class DesignTokensTest extends TestCase {
 		}
 	}
 
+	public function test_the_overlay_box_never_styles_the_dashboard_notices(): void {
+		$overlay = __DIR__ . '/../../../../assets/src/overlay/';
+
+		foreach ( (array) glob( $overlay . '*.css' ) as $file ) {
+			$css = (string) file_get_contents( (string) $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Local test fixture.
+
+			// The dashboard's notices are `.merchboard-alert` too: a bare rule would move them (30.15 runtime test).
+			self::assertDoesNotMatchRegularExpression( '/^\.merchboard-alert\s*\{/m', $css, basename( (string) $file ) );
+			// A "//" line is no comment in CSS and broke the overlay's build (30.15).
+			self::assertDoesNotMatchRegularExpression( '#^\s*//#m', $css, basename( (string) $file ) );
+		}
+	}
+
 	public function test_rejected_step_1_accents_do_not_return(): void {
 		foreach ( self::REJECTED_ACCENTS as $theme => $rejected ) {
 			self::assertLessThan( 15.0, self::oklab_distance( $rejected, self::color( $theme, 'danger' ) ), $theme . ': the rejected draft would still break ADR-043 (guard is meaningful).' );
