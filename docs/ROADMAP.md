@@ -840,7 +840,9 @@ Mål: de vendors, der i dag er oprettet i WooCommerce Product Vendors, flyttes t
       - tekst blev ikke tegnet om, når fonten kom (`04d2f9b`).
     - Kørslen ligger i `MerchBoard-r2-runtime/runs/2026-11-04-fase30-31-runtime`.
   - **Fuld integrationssuite ✅ (2026-11-04):** 1290 tests grønne på `04d2f9b` (seed 1793815445), og CI er grøn.
-  - **Venter på projektejeren:** versionsbump til 1.5.0 og release, standardfonten i OBS og de små UX-punkter i rapporten.
+  - **Rettelser til 1.5.0 (2026-11-04):** salgsmails inkl. moms (`f69d44c`) og ADR-090 (`606fb5e`), reviewet uafhængigt og rettet (`8e3c556`), runtime-testet på Local.
+  - **Release 1.5.0 ✅ (2026-11-04, projektejerens ønske samme dag):** CI med hele integrationssuiten grøn, versionsbump og tag `v1.5.0` (draft-release). Den fulde lokale kørsel er droppet (projektejerens beslutning 2026-11-04). Projektejeren installerer på live (DEVELOPMENT.md "Release 1.5.0").
+  - **Venter på projektejeren:** standardfonten i OBS og de små UX-punkter i rapporten.
 
 ## Fase 31 – Alert-designer 2.0 🔄 (plan godkendt 2026-11-03; ADR-088, ADR-089)
 

@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-04
+
+Fase 30 og 31: produktdesigneren (eksperimentel, slået fra som standard), alert-designer 2.0 med variationer og oplæsning, sletteanmodninger, salgsmails inkl. moms og udfyldning af manglende prisbilleder (ADR-090). Schema-version 44 (migration 35–44 ved opdatering fra 1.4.0; ingen manuelle trin i databasen). Fase 30 og 31 er reviewet og runtime-testet på Local og stg 2026-11-03–04. Opdateringen står i DEVELOPMENT.md ("Release 1.5.0").
+
 ### Added
 
 - **Alert-designer 2.0 (fase 31, ADR-088):** creatorens alert-side er én designer i fuld bredde med topbjælke, sidepanel og lærred i StreamElements' stil. Alle paneler og grupper af felter foldes ud og sammen. Alerten er én boks med fire layouts (billede over tekst, ved siden af, tekst på billedet, Fri); eksisterende alerts bliver til Fri og ser ud som før. Nye tekststile (gennemsigtighed, linjehøjde, bogstav- og ordafstand, lige margener, retning, kursiv, understregning, store/små bogstaver, kontur, skygge til/fra, margen), fremhævning af de indsatte værdier, talformat, længste brugernavn, lydstyrke, varighed op til 90 s, alertens egen ind- og ud-animation og tekstens timing. Lærredet tegnes af overlayets egen renderer, så forhåndsvisningen er det, OBS viser.
@@ -11,9 +15,6 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Designs samlet i ét produkt:** over "Mine designs" i produktdesigneren står, at creatoren kan kontakte os for at få flere designs samlet i ét produkt, hvor kunden vælger mellem dem (fx flere T-shirt-designs); det gælder alle typer produkter (projektejerens ønske 2026-11-03).
 - **Oplæsning af alerts (ADR-089):** med Google Cloud Text-to-Speech (standardstemmer). Administratoren slår det til under Settings → Alerts med API-nøgle og månedligt loft; creatoren vælger stemme, lydstyrke, forsinkelse og mindstebeløb.
 
-### Removed
-
-- **Admins opsætning af creator-siden (25.9.6):** fanen "Creator-siden" under Alerts, dens route og bundle; den faste designer erstatter den (ADR-088).
 - **Printful v2 og EU (ADR-081):** kataloget viser kun produkter, der sælges i Europa og kan sendes til Danmark, og kun varianter på lager i Europa tilbydes. Fejler v2 (undtagen 429), bruges v1 som reserve, og admin får besked. Mockups af designs går via v2.
 - **All-over-produkter (ADR-081):** produkter i teknikkerne `cut-sew` og `sublimation` designes på det flade syemønster, og Printful syr designet sammen til mockups efter indsendelse. Alle brugte dele går i samme mockup-opgave. Printfilen er en JPEG på hvid. Skifter printmålet med størrelsen, laves ét grundprodukt pr. gruppe af størrelser.
 - **Se det færdige produkt:** creatoren kan se rigtige billeder af et design, før det sendes til godkendelse. Dialogen viser en ventemarkør.
@@ -67,9 +68,17 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Produktdesigner, samlet admin:** Designs, Grundprodukter, Kliparts, Kampagner, Broderipakker, Notifikationer og designerens indstillinger ligger nu som faner under ét menupunkt, Produktdesigner. Fanen i Indstillinger er væk, og gamle adresser, også i sendte mails, fører til den rigtige fane.
 - **Produktdesigner, broderi (eksperimentel):** en side kan broderes med en broderipakke, som admin sætter op under Produktdesigner → Broderipakker og vælger pr. side, også ved katalogimport. Pakken "Gelato" har de 15 tråde og højst 6 pr. side. Designerens farver bliver til nærmeste tråd, creatoren kan vælge en anden tråd for hver, og printfilen holder kun trådfarver. Serveren afviser en printfil, der ikke holder sig til pakken. Andre sider og produkter er uændrede.
 - **Produktdesigner, ekstra designområder (eksperimentel, schema-version 39):** ét designområde er med i grundprisen, og hvert ekstra område koster et fast beløb oveni, som sættes på grundproduktet. Beløbet tilfalder virksomheden, og designeren viser det i prisen. "Nyt grundprodukt" fra Gelato viser billedlagenes mål med en påmindelse om at tjekke, at de fylder hele området.
+- **Store og små designområder (schema-version 44, eksperimentel):** hver side på et grundprodukt er et stort (standard) eller et lille område, valgt på siden, og grundproduktet har en pris pr. ekstra stort og pr. ekstra lille område. Det dyreste område, creatoren bruger, er med i grundprisen, og hvert andet brugt område lægger sin pris oveni som sikret grundpris for virksomheden. Designeren viser prisen (projektejerens valg 2026-11-03).
+- **Udfyld manglende prisbilleder (ADR-090):** har en creator salg, hvis udbetaling er ukendt, fordi ordrelinjens prisbillede mangler momsstatus eller helt mangler, viser creatorens side under "Priser" linjerne med, hvad der sker med hver, og udbetalingen som ikke momsregistreret og som momsregistreret. Efter et flueben udfylder admin dem: momsstatus efter creatorens momshistorik på salgsdatoen, ellers "ikke momsregistreret" (eller én valgt status for alle), og et manglende prisbillede får den andel, der gælder nu. Afregnede linjer, designer-produkter, linjer uden gemt moms og salg før afregningsstarten røres ikke. Én transaktion under creatorens lås, audit `sales_line_pricing_backfilled`. Siden Udbetalinger linker dertil. Ingen migration.
+
+### Removed
+
+- **Admins opsætning af creator-siden (25.9.6):** fanen "Creator-siden" under Alerts, dens route og bundle; den faste designer erstatter den (ADR-088).
 
 ### Changed
 
+- **Salgsmails viser beløb inkl. moms:** mailen og klokken "Nyt salg" til creatoren viser salget, prisen og ændringer i salget inkl. moms (fx 330,00 kr. i stedet for 264,00 kr.), som kunden betalte.
+- **Momsstatus er altid kendt på nye ordrelinjer:** en ny ordrelinjes prisbillede får "ikke momsregistreret", medmindre creatoren er registreret som momsregistreret, så dens udbetaling aldrig bliver ukendt af den grund.
 - **Beskrivelser fra leverandører:** en HTML-tag efterlader nu et mellemrum, så ord ikke klistres sammen (fx "GeneralTo").
 
 - **Produktdesigner:** "Importér fra Printful" (produkt-id) og "Importér fra Gelato" (skabelon-id med skabelonens forhåndsvisning som baggrund) er erstattet af katalogvalget. Printfuls layout-skabeloner bruges ikke længere.

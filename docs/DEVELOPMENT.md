@@ -205,7 +205,7 @@ Workflow: [.github/workflows/release.yml](../.github/workflows/release.yml) (✅
 2. Sæt versionen tre steder: `Version:` i headeren i `merchboard.php`, `MERCHBOARD_VERSION` i samme fil og `version` i `package.json` og `package-lock.json` (`npm version X.Y.Z --no-git-tag-version`).
 3. Kør `npm run i18n`, så `Project-Id-Version` i `languages/` får den nye version.
 4. Flyt punkterne under `## [Unreleased]` i [CHANGELOG.md](CHANGELOG.md) til en ny sektion `## [X.Y.Z] - ÅÅÅÅ-MM-DD`. Workflowet bruger sektionen som release notes og fejler, hvis den mangler eller er tom.
-5. `npm run lint`, `npm test`, den fulde integrationssuite (`npm run test:integration`; kun her køres hele suiten lokalt, projektejerens beslutning 2026-10-25) og `npm run package` lokalt. Commit som `chore(release): vX.Y.Z`, push, og vent på grøn CI.
+5. `npm run lint`, `npm test` og `npm run package` lokalt. Commit som `chore(release): vX.Y.Z`, push, og vent på grøn CI. CI kører hele integrationssuiten mod MySQL, og den er porten for et release; den fulde suite køres ikke længere lokalt (projektejerens beslutning 2026-11-04).
 
 ### 2. Tag
 
@@ -246,6 +246,33 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 5. **MVP-flow:** Opret eller redigér en creator som admin. Log ind som creator. `/creator-dashboard/` viser Overview og Profile på sitets sprog, profilen kan gemmes, og audit-loggen viser ændringen.
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
+
+## Release 1.5.0: produktdesigner og alert-designer 2.0 (fase 30 og 31)
+
+**Versions-bump, CHANGELOG-sektion og tagget `v1.5.0` 2026-11-04** efter projektejerens ønske samme dag ("lav review og sidste test, så vi kan bumpe version og få på live").
+- Det er en minor, fordi den indeholder nye features.
+- Fase 30 og 31 er reviewet og runtime-testet på Local og stg.ccmerch.dk (ROADMAP 30.15). Rettelserne efter 30.15 (salgsmails inkl. moms og ADR-090) er reviewet uafhængigt, rettet (`8e3c556`) og runtime-testet på Local.
+- CI er grøn med hele integrationssuiten på den taggede commit (den fulde lokale kørsel er droppet, projektejerens beslutning 2026-11-04).
+
+**Schema-version 44:**
+- Migration 35–39 og 41–44 opretter og udvider produktdesignerens tabeller (43 med digitaliseringsgebyrerne), og migration 40 opretter tabellen til sletteanmodninger. Migration 36 tilføjer kolonner til `merchboard_sales_tax`, som er tomme for alle eksisterende rækker. Eksisterende salg, bilag og udbetalinger ændres ikke.
+- Der er ingen manuelle trin i databasen.
+- Produktdesigneren, Printful, Gelato, Prodigi, Printify og oplæsning af alerts er slået fra som standard. Legacy-produkter berøres ikke (legacy-værnet, ADR-080 pkt. 7).
+- Eksisterende alerts får layoutet "Fri" og ser ud som før (ADR-088).
+
+Tagget giver en draft-release. Projektejeren tester den på staging og udgiver den. AI-agenter har ingen adgang til produktion.
+
+1. **Backup:** tag backup af filer og database via hostingen. Notér den installerede version.
+2. **Opdatér** med release-ZIP'en ("Erstat nuværende med uploadet"). Overview skal vise version 1.5.0 og schema-version 44 uden advarsler.
+3. **nginx:** kører sitet på nginx, så tilføj `location ^~ /wp-content/uploads/merchboard-designer/ { deny all; }`. `.htaccess` i mappen virker kun på Apache (SECURITY.md).
+4. **PHP-udvidelsen GD** skal være aktiv, før grundprodukter importeres fra et katalog.
+5. **Alerts:** åbn en creators alert-side og testalerten. Alerten skal se ud som før opdateringen.
+6. **Salgsmail:** en testordre giver creatoren "Nyt salg" med beløb inkl. moms.
+7. **Ukendt saldo (ADR-090):** på Udbetalinger fører "N ledger-rækker kan ikke beregnes" til creatorens side. Tjek linjerne og deres udbetaling under "Ordrelinjer uden komplet prisbillede", vælg momsstatus, sæt fluebenet og tryk "Udfyld prisbilleder". Saldoen skal derefter være kendt. Det gælder fx Kenny's Garage & Værksted.
+8. **Produktdesigneren** slås til under Indstillinger, når projektejeren vil, først med en testcreator.
+9. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 1.4.0-ZIP'en igen. De nye tabeller og kolonner bliver liggende uden at blive brugt, og 1.4.0 virker med schema-version 44. Prisbilleder udfyldt med ADR-090 bevares. Salg af designer-produkter kan 1.4.0 ikke beregne udbetaling for. Alerts, der er gemt med den nye designer, kan se anderledes ud i 1.4.0; tag derfor backup før opdateringen.
 
 ## Release 1.4.0: notifikationer (fase 29)
 
