@@ -204,7 +204,7 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
 - **Implementeret (trin 30.5):** markøren `_merchboard_designer_token`, `DesignerProductGuard`, `WooCommerceDesignerWriter` og arkitekturtesten `LegacyGuardArchitectureTest`.
 - **Kontrol:** runtime-testen i 30.15 sammenligner alle legacy-produkter før og efter (pris, billeder, varianter, meta).
 
-## Baggrundsfarve på AOP-produkter (fase 33, ADR-095, planlagt)
+## Baggrundsfarve på AOP-produkter (fase 33, ADR-095, 2026-11-07)
 
 Admin markerer et grundprodukt med "Baggrundsfarve (AOP)". Kun på de produkter har designeren fanen "Baggrund".
 
@@ -212,6 +212,7 @@ Admin markerer et grundprodukt med "Baggrundsfarve (AOP)". Kun på de produkter 
 - **Lærredet og printfilen:** farven dækker hele printområdet og ligger altid bagerst.
 - **Pris:** en side med kun farve printes, men koster ikke som et ekstra område.
 - **Broderede sider** har ingen baggrund.
+- **Duplikér lag:** knappen i lagpanelet laver en kopi af et lag lige over det, lidt forskudt, ulåst og vist. Den gælder alle grundprodukter og følger loftet på 100 elementer pr. side.
 
 Funktionen bygger på projektejerens Lumise-snippet (31658), men er bygget direkte i designeren.
 

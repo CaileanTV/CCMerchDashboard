@@ -2062,6 +2062,76 @@ input:disabled + .merchboard-sounds__upload {
 	}
 }
 
+/* The background colour of an all-over product (ADR-095). */
+.merchboard-product-designer__background-current {
+	display: flex;
+	gap: var(--merchboard-space-2);
+	align-items: center;
+	margin: 0;
+	font-size: var(--merchboard-text-sm);
+}
+
+.merchboard-product-designer__background-swatches {
+	display: grid;
+	grid-template-columns: repeat(8, minmax(0, 1fr));
+	gap: var(--merchboard-space-1);
+
+	.merchboard-product-designer__swatch {
+		width: 100%;
+		height: auto;
+		aspect-ratio: 1;
+		border-radius: var(--merchboard-radius-sm);
+	}
+}
+
+.merchboard-product-designer__background-row {
+	display: flex;
+	gap: var(--merchboard-space-1);
+	align-items: center;
+	font-size: var(--merchboard-text-sm);
+
+	> label,
+	> span {
+		flex: none;
+		width: 2.75rem;
+		font-weight: 600;
+	}
+
+	input[type="text"],
+	input[type="number"] {
+		width: 100%;
+		min-width: 0;
+	}
+
+	input[type="color"] {
+		flex: none;
+		width: 2.25rem;
+		height: 2rem;
+		padding: 0;
+		cursor: pointer;
+	}
+}
+
+.merchboard-product-designer__background-all {
+	display: inline-flex;
+	gap: var(--merchboard-space-1);
+	align-items: center;
+	font-size: var(--merchboard-text-sm);
+	cursor: pointer;
+}
+
+.merchboard-product-designer__background-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
+}
+
+.merchboard-product-designer__background-error {
+	margin: 0;
+	font-size: var(--merchboard-text-sm);
+	color: var(--merchboard-danger);
+}
+
 .merchboard-product-designer__viewport {
 	display: grid;
 	max-width: 100%;

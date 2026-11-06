@@ -28,6 +28,15 @@ const ICONS = {
 	ellipse: <circle { ...stroke } cx="8" cy="8" r="5.5" />,
 	triangle: <path { ...stroke } d="M8 3 14 13H2Z" />,
 	up: <path { ...stroke } d="M8 13V3M4 7l4-4 4 4" />,
+	duplicate: (
+		<>
+			<rect { ...stroke } x="5.5" y="5.5" width="8" height="8" rx="1" />
+			<path
+				{ ...stroke }
+				d="M10.5 3.5V3a.5.5 0 0 0-.5-.5H3a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h.5"
+			/>
+		</>
+	),
 	down: <path { ...stroke } d="M8 3v10M4 9l4 4 4-4" />,
 	shown: (
 		<>
@@ -140,13 +149,14 @@ function layerName( object: DesignObject ): string {
 /**
  * The layers of a side, front first.
  *
- * @param props          Props.
- * @param props.objects  Objects, bottom first.
- * @param props.selected Selected id.
- * @param props.onSelect Selects.
- * @param props.onChange Changes an object.
- * @param props.onMove   Moves an object.
- * @param props.onRemove Removes an object.
+ * @param props             Props.
+ * @param props.objects     Objects, bottom first.
+ * @param props.selected    Selected id.
+ * @param props.onSelect    Selects.
+ * @param props.onChange    Changes an object.
+ * @param props.onMove      Moves an object.
+ * @param props.onDuplicate Copies an object.
+ * @param props.onRemove    Removes an object.
  */
 export function LayerList( props: {
 	readonly objects: readonly DesignObject[];
@@ -154,6 +164,7 @@ export function LayerList( props: {
 	readonly onSelect: ( id: string ) => void;
 	readonly onChange: ( id: string, change: Partial< DesignObject > ) => void;
 	readonly onMove: ( id: string, direction: 1 | -1 ) => void;
+	readonly onDuplicate: ( id: string ) => void;
 	readonly onRemove: ( id: string ) => void;
 } ) {
 	const front = [ ...props.objects ].reverse();
@@ -225,6 +236,11 @@ export function LayerList( props: {
 										locked: ! object.locked,
 									} )
 								}
+							/>
+							<IconButton
+								icon="duplicate"
+								label={ __( 'Duplicate layer', 'merchboard' ) }
+								onClick={ () => props.onDuplicate( object.id ) }
 							/>
 							<IconButton
 								icon="remove"

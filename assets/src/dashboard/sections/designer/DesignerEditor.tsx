@@ -46,6 +46,9 @@ import { Button } from '../../components/Button';
 import { useHistory } from '../alerts/history';
 import { moneyText } from '../sales/format';
 import {
+	backgroundOf,
+	duplicateObject,
+	withBackground,
 	moveObject,
 	newImage,
 	newShape,
@@ -79,12 +82,14 @@ import {
 	submitWithFiles,
 	uploadFiles,
 } from './submission';
+import { BackgroundPanel } from './BackgroundPanel';
 import { IconButton, LayerList } from './LayerList';
 import { TemplateLayers } from './TemplateLayers';
 import { threadObject, threadSide } from './threads';
 import type { ThreadedSide, ThreadPlan } from './threads';
 
-type Tab = 'product' | 'text' | 'shapes' | 'cliparts' | 'uploads';
+type Tab =
+	'product' | 'text' | 'shapes' | 'cliparts' | 'uploads' | 'background';
 
 /** The canvas at zoom 1 until the space for it is known (CSS px). */
 const DISPLAY_WIDTH = 560;
@@ -538,7 +543,10 @@ function Editor( props: EditorProps ) {
 				: {
 						key: plan.signature,
 						object: ( object ) => threadObject( object, plan ),
-					}
+					},
+			view === undefined || embroidery !== null || ! base.backgroundColor
+				? null
+				: backgroundOf( design, view.key )
 		);
 		// Fonts arriving re-render the texts.
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- objects is derived from design and side.
@@ -590,6 +598,56 @@ function Editor( props: EditorProps ) {
 	const remove = ( id: string ) => {
 		setObjects( objects.filter( ( object ) => object.id !== id ) );
 		setSelected( null );
+	};
+
+	const duplicate = ( id: string ) => {
+		if ( view === undefined ) {
+			return;
+		}
+
+		if ( objects.length >= overview.maxObjects ) {
+			setMessage( {
+				tone: 'danger',
+				text: sprintf(
+					/* translators: %d: most objects per side. */ __(
+						'A side can have at most %d elements.',
+						'merchboard'
+					),
+					overview.maxObjects
+				),
+			} );
+
+			return;
+		}
+
+		const copied = duplicateObject(
+			objects,
+			id,
+			view.printWidth,
+			view.printHeight
+		);
+
+		if ( copied !== null ) {
+			setObjects( copied.objects );
+			setSelected( copied.id );
+		}
+	};
+
+	// The sides that can have a background colour: every printed side (ADR-095).
+	const printed = base.views
+		.filter( ( candidate ) => candidate.embroidery === null )
+		.map( ( candidate ) => candidate.key );
+
+	const setBackground = ( chosen: string | null, allSides: boolean ) => {
+		if ( view !== undefined ) {
+			history.set( ( present ) =>
+				withBackground(
+					present,
+					allSides ? printed : [ view.key ],
+					chosen
+				)
+			);
+		}
 	};
 
 	const swapThread = ( found: string, used: string | null ) => {
@@ -951,6 +1009,14 @@ function Editor( props: EditorProps ) {
 		{ id: 'shapes', label: __( 'Shapes', 'merchboard' ) },
 		{ id: 'cliparts', label: __( 'Cliparts', 'merchboard' ) },
 		{ id: 'uploads', label: __( 'Upload', 'merchboard' ) },
+		...( base.backgroundColor
+			? [
+					{
+						id: 'background' as const,
+						label: __( 'Background', 'merchboard' ),
+					},
+				]
+			: [] ),
 	];
 
 	return (
@@ -1245,6 +1311,20 @@ function Editor( props: EditorProps ) {
 									onPick={ addImage }
 								/>
 							) : null }
+							{ tab === 'background' && base.backgroundColor ? (
+								<BackgroundPanel
+									current={ backgroundOf( design, view.key ) }
+									side={ view.name }
+									allowed={ view.embroidery === null }
+									others={ printed.length > 1 }
+									onApply={ ( chosen, allSides ) =>
+										setBackground( chosen, allSides )
+									}
+									onRemove={ ( allSides ) =>
+										setBackground( null, allSides )
+									}
+								/>
+							) : null }
 							{ tab === 'uploads' ? (
 								<div className="merchboard-product-designer__stack">
 									<Labelled
@@ -1303,6 +1383,7 @@ function Editor( props: EditorProps ) {
 						onMove={ ( id, direction ) =>
 							setObjects( moveObject( objects, id, direction ) )
 						}
+						onDuplicate={ duplicate }
 						onRemove={ remove }
 					/>
 				</div>

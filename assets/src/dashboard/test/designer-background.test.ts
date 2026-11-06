@@ -1,8 +1,16 @@
 import { describe, expect, it } from '@jest/globals';
 
 import {
+	cmykToRgb,
+	hexToRgb,
+	normHex,
+	rgbToCmyk,
+	rgbToHex,
+} from '../sections/designer/color-convert';
+import {
 	backgroundOf,
 	designedSides,
+	duplicateObject,
 	EMPTY_DESIGN,
 	extraAreas,
 	newShape,
@@ -73,6 +81,46 @@ describe( 'designer background colour (ADR-095)', () => {
 				'0.0000'
 			).length
 		).toBe( 1 );
+	} );
+
+	it( "converts colours as the owner's module does", () => {
+		expect( normHex( 'ABC' ) ).toBe( '#aabbcc' );
+		expect( normHex( '#05707A' ) ).toBe( '#05707a' );
+		expect( normHex( '#05707' ) ).toBeNull();
+		expect( hexToRgb( '#05707a' ) ).toEqual( [ 5, 112, 122 ] );
+		expect( rgbToHex( 5, 112, 122 ) ).toBe( '#05707a' );
+		expect( rgbToHex( 300, -4, 'x' ) ).toBe( '#ff0000' );
+		expect( rgbToCmyk( 0, 0, 0 ) ).toEqual( [ 0, 0, 0, 100 ] );
+		expect( rgbToCmyk( 5, 112, 122 ) ).toEqual( [ 96, 8, 0, 52 ] );
+		expect( rgbToHex( ...cmykToRgb( 0, 100, 100, 0 ) ) ).toBe( '#ff0000' );
+	} );
+
+	it( 'duplicates a layer right above it, a little moved and unlocked', () => {
+		const first = { ...newShape( 'rect', 1000, 1000 ), locked: true };
+		const second = newShape( 'ellipse', 1000, 1000 );
+		const copied = duplicateObject(
+			[ first, second ],
+			first.id,
+			1000,
+			1000
+		);
+
+		expect( copied?.objects.map( ( object ) => object.type ) ).toEqual( [
+			'rect',
+			'rect',
+			'ellipse',
+		] );
+
+		const copy = copied?.objects[ 1 ];
+
+		expect( copy?.id ).toBe( copied?.id );
+		expect( copy?.id ).not.toBe( first.id );
+		expect( [ copy?.x, copy?.y, copy?.locked ] ).toEqual( [
+			first.x + 30,
+			first.y + 30,
+			false,
+		] );
+		expect( duplicateObject( [ first ], 'nope', 1000, 1000 ) ).toBeNull();
 	} );
 
 	it( 'reads the stored colours and keeps their sides', () => {

@@ -769,6 +769,53 @@ export function withObjects(
 }
 
 /**
+ * The objects with a copy of one right above it, moved a little down and to
+ * the right, and the copy's id; null when there is no such object. The copy
+ * is unlocked and shown, so it can be moved at once; an image keeps its file
+ * (the owner's wish 2026-11-07).
+ *
+ * @param objects     Objects, bottom first.
+ * @param id          The object to copy.
+ * @param printWidth  Print file width (px).
+ * @param printHeight Print file height (px).
+ */
+export function duplicateObject(
+	objects: readonly DesignObject[],
+	id: string,
+	printWidth: number,
+	printHeight: number
+): { readonly objects: DesignObject[]; readonly id: string } | null {
+	const index = objects.findIndex( ( object ) => object.id === id );
+	const original = objects[ index ];
+
+	if ( original === undefined ) {
+		return null;
+	}
+
+	const step = Math.max(
+		1,
+		Math.round( Math.min( printWidth, printHeight ) * 0.03 )
+	);
+	const copy = {
+		...original,
+		id: newId(),
+		x: Math.min( 20000, original.x + step ),
+		y: Math.min( 20000, original.y + step ),
+		locked: false,
+		hidden: false,
+	} as DesignObject;
+
+	return {
+		objects: [
+			...objects.slice( 0, index + 1 ),
+			copy,
+			...objects.slice( index + 1 ),
+		],
+		id: copy.id,
+	};
+}
+
+/**
  * The design with a thread swapped; null goes back to the thread found.
  *
  * @param design Design.

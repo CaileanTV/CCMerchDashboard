@@ -75,6 +75,12 @@ export class FabricStage {
 
 	private generation = 0;
 
+	/** The background colour of the side shown, or null (ADR-095). */
+	private background: string | null = null;
+
+	/** The print file size of the side shown. */
+	private print = { width: 0, height: 0 };
+
 	/**
 	 * Constructor.
 	 *
@@ -105,6 +111,7 @@ export class FabricStage {
 	 * @param view The side's geometry.
 	 */
 	public setView( view: StageView ): void {
+		this.print = { width: view.printWidth, height: view.printHeight };
 		const scale = ( view.displayWidth / view.templateWidth ) * view.zoom;
 		const k = ( view.area.width / view.printWidth ) * scale;
 
@@ -135,19 +142,22 @@ export class FabricStage {
 	/**
 	 * Shows a side's objects (nothing happens when they are unchanged).
 	 *
-	 * @param objects  Objects, bottom first.
-	 * @param images   `data:` URL by asset id.
-	 * @param selected Selected object id.
-	 * @param threads  The threads of an embroidered side.
+	 * @param objects    Objects, bottom first.
+	 * @param images     `data:` URL by asset id.
+	 * @param selected   Selected object id.
+	 * @param threads    The threads of an embroidered side.
+	 * @param background The side's background colour, or null (ADR-095).
 	 */
 	public async render(
 		objects: readonly DesignObject[],
 		images: ReadonlyMap< number, string >,
 		selected: string | null,
-		threads: StagePaint | null = null
+		threads: StagePaint | null = null,
+		background: string | null = null
 	): Promise< void > {
 		this.imagesKey = Array.from( images.keys() ).join( ',' );
 		this.paintKey = threads?.key ?? '';
+		this.background = background;
 
 		// A font that arrived after its texts were built: Fabric measured them in the fallback (30.15 runtime test).
 		const fonts = loadedFonts();
@@ -184,6 +194,16 @@ export class FabricStage {
 
 		this.canvas.discardActiveObject();
 		this.canvas.remove( ...this.canvas.getObjects() );
+
+		if ( background !== null ) {
+			this.canvas.add(
+				backgroundRect(
+					background,
+					this.print.width,
+					this.print.height
+				)
+			);
+		}
 
 		for ( const object of built ) {
 			if ( object !== null ) {
@@ -265,7 +285,7 @@ export class FabricStage {
 	 * @param objects Objects.
 	 */
 	private keyOf( objects: readonly DesignObject[] ): string {
-		return `${ JSON.stringify( objects ) }|${ this.imagesKey }|${ this.paintKey }|${ this.fonts }`;
+		return `${ JSON.stringify( objects ) }|${ this.imagesKey }|${ this.paintKey }|${ this.fonts }|${ this.background ?? '' }|${ this.print.width }x${ this.print.height }`;
 	}
 }
 
@@ -273,16 +293,18 @@ export class FabricStage {
  * A side's print file: its visible objects at their print file pixels on a
  * transparent canvas of the print file's size (step 30.9, ADR-080 pkt. 5).
  *
- * @param objects Objects, bottom first.
- * @param images  `data:` URL by asset id (every image of the objects).
- * @param width   Print file width (px).
- * @param height  Print file height (px).
+ * @param objects    Objects, bottom first.
+ * @param images     `data:` URL by asset id (every image of the objects).
+ * @param width      Print file width (px).
+ * @param height     Print file height (px).
+ * @param background The side's background colour over the whole file, or null (ADR-095).
  */
 export async function renderPrintFile(
 	objects: readonly DesignObject[],
 	images: ReadonlyMap< number, string >,
 	width: number,
-	height: number
+	height: number,
+	background: string | null = null
 ): Promise< HTMLCanvasElement > {
 	const canvas = new StaticCanvas( undefined, {
 		width,
@@ -297,6 +319,10 @@ export async function renderPrintFile(
 				.filter( ( object ) => ! object.hidden )
 				.map( ( object ) => build( object, images ) )
 		);
+
+		if ( background !== null ) {
+			canvas.add( backgroundRect( background, width, height ) );
+		}
 
 		for ( const object of built ) {
 			if ( object !== null ) {
@@ -470,6 +496,33 @@ function readBack( object: DesignObject, shown: Tagged ): DesignObject {
 	}
 
 	return { ...object, ...geometry } as DesignObject;
+}
+
+/**
+ * The background colour as one layer under the objects over the whole print
+ * area (ADR-095). It is not a design object: it cannot be selected, moved or
+ * read back.
+ *
+ * @param fill   Colour.
+ * @param width  Print file width (px).
+ * @param height Print file height (px).
+ */
+function backgroundRect( fill: string, width: number, height: number ): Rect {
+	return new Rect( {
+		left: 0,
+		top: 0,
+		width,
+		height,
+		originX: 'left',
+		originY: 'top',
+		fill,
+		strokeWidth: 0,
+		selectable: false,
+		evented: false,
+		hasControls: false,
+		hasBorders: false,
+		objectCaching: false,
+	} );
 }
 
 /**

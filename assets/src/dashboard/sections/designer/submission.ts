@@ -16,7 +16,12 @@ import type {
 	DesignerView,
 	LayerKind,
 } from '../../api/designer';
-import { coversSizes, objectsOf, usedSides } from './design-model';
+import {
+	backgroundOf,
+	coversSizes,
+	objectsOf,
+	usedSides,
+} from './design-model';
 import type { DesignDocument } from './design-model';
 import {
 	closeBox,
@@ -209,7 +214,9 @@ async function printOf(
 		threaded?.objects ?? objects,
 		threaded?.images ?? images,
 		view.printWidth,
-		view.printHeight
+		view.printHeight,
+		// An embroidered side has no background (ADR-095).
+		view.embroidery === null ? backgroundOf( input.design, view.key ) : null
 	);
 
 	if ( threaded !== null ) {

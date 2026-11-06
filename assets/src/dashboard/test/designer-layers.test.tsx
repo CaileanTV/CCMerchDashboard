@@ -32,9 +32,10 @@ const shape = ( id: string, hidden = false ): DesignObject => ( {
 /**
  * Renders the box.
  *
- * @param objects  Objects, bottom first.
- * @param onChange Changes an object.
- * @param onMove   Moves an object.
+ * @param objects     Objects, bottom first.
+ * @param onChange    Changes an object.
+ * @param onMove      Moves an object.
+ * @param onDuplicate Copies an object.
  */
 function render(
 	objects: readonly DesignObject[],
@@ -42,7 +43,8 @@ function render(
 		id: string,
 		change: Partial< DesignObject >
 	) => void = jest.fn(),
-	onMove: ( id: string, direction: 1 | -1 ) => void = jest.fn()
+	onMove: ( id: string, direction: 1 | -1 ) => void = jest.fn(),
+	onDuplicate: ( id: string ) => void = jest.fn()
 ): HTMLElement {
 	const container = document.createElement( 'div' );
 
@@ -55,6 +57,7 @@ function render(
 				onSelect={ jest.fn() }
 				onChange={ onChange }
 				onMove={ onMove }
+				onDuplicate={ onDuplicate }
 				onRemove={ jest.fn() }
 			/>
 		);
@@ -104,5 +107,19 @@ describe( 'the box of layers', () => {
 		act( () => buttons( rows[ 0 ], 'Show' )?.click() );
 
 		expect( onChange ).toHaveBeenCalledWith( 'a', { hidden: false } );
+	} );
+
+	it( 'duplicates an element with its button', () => {
+		const onDuplicate = jest.fn();
+		const rows = render(
+			[ shape( 'a' ), shape( 'b' ) ],
+			jest.fn(),
+			jest.fn(),
+			onDuplicate
+		).querySelectorAll( 'li' );
+
+		act( () => buttons( rows[ 1 ], 'Duplicate layer' )?.click() );
+
+		expect( onDuplicate ).toHaveBeenCalledWith( 'a' );
 	} );
 } );
