@@ -198,7 +198,12 @@ final class DesignsPage {
 			echo '<td>' . esc_html( $this->creator_name( (int) $row['creator_id'], $names ) ) . '</td>';
 			/* translators: %d: version number. */
 			echo '<td>' . esc_html( (string) $row['title'] ) . ' ' . esc_html( sprintf( __( '(version %d)', 'merchboard' ), (int) $row['number'] ) ) . '</td>';
-			$status = DesignerProductRepository::APPLY_FAILED === $row['apply_state'] ? DesignerNotifications::reason( (string) $row['apply_error'] ) : ( $failed ? __( 'It stopped on the way to the shop (more than 10 minutes ago). Try again.', 'merchboard' ) : __( 'Being put in the shop…', 'merchboard' ) );
+			$status = match ( true ) {
+				DesignerProductRepository::APPLY_FAILED === $row['apply_state'] => DesignerNotifications::reason( (string) $row['apply_error'] ),
+				DesignerProductRepository::APPLY_WAITING === $row['apply_state'] => __( 'Waits until the creator goes live in the shop.', 'merchboard' ),
+				$failed => __( 'It stopped on the way to the shop (more than 10 minutes ago). Try again.', 'merchboard' ),
+				default => __( 'Being put in the shop…', 'merchboard' ),
+			};
 
 			echo '<td>' . esc_html( $status ) . '</td>';
 			echo '<td>';

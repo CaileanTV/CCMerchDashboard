@@ -303,6 +303,22 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertCount( 1, $this->writer->contents, 'A done version is never applied again.' );
 	}
 
+	public function test_an_approved_design_of_a_creator_who_is_not_live_waits_without_a_shop_product(): void {
+		$product = $this->submitted();
+		$version = $this->pending_id( $product );
+		$this->wpdb->update( $this->wpdb->prefix . 'merchboard_creators', array( 'awaiting_live' => 1 ), array( 'id' => $this->creator->id ) );
+
+		$this->review->approve( $version );
+		$this->drain();
+
+		self::assertSame( array( 'approved', 'waiting', '179.9400' ), $this->state( $version ), 'Waits until the creator goes live (ADR-091).' );
+		self::assertSame( array(), $this->writer->contents, 'Nothing in WooCommerce: no product, media or name.' );
+		self::assertSame( array(), $this->links );
+		self::assertNull( $this->products->find( $this->creator->id, $product )['wc_product_id'] ?? null );
+		self::assertSame( array( $version ), $this->products->waiting_for_creator( $this->creator->id ) );
+		self::assertSame( array( 'approved' ), array_column( array_filter( $this->states(), static fn( array $row ): bool => $row['id'] === $product ), 'state' ) );
+	}
+
 	public function test_the_shop_shows_the_colours_in_the_creator_s_order(): void {
 		$product = $this->drafts->create( $this->creator, $this->base );
 

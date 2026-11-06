@@ -34,6 +34,7 @@ final class CreatorCodeException extends DomainException {
 	public const COUPON_NOT_CREATED   = 'coupon_not_created';
 	public const COUPON_NOT_RETIRED   = 'coupon_not_retired';
 	public const RESET_LIMIT          = 'reset_limit';
+	public const NOT_LIVE             = 'not_live';
 
 	/**
 	 * Constructor.

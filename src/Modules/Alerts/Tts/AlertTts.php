@@ -88,9 +88,11 @@ class AlertTts {
 	 * @param TtsSettings  $settings The switch, key and limit.
 	 * @param Logger       $logger   Logger.
 	 * @param Closure|null $post     HTTP (tests); defaults to wp_remote_post() with a 5 s timeout.
+	 * @param Closure|null $live     Whether a creator is live in the shop; the read-out opens only then (ADR-091). Null: always.
 	 * @phpstan-param (Closure(string, string, string): (array{0: int, 1: string}|null))|null $post
+	 * @phpstan-param (Closure(int): bool)|null $live
 	 */
-	public function __construct( private TtsSettings $settings, private Logger $logger, ?Closure $post = null ) {
+	public function __construct( private TtsSettings $settings, private Logger $logger, ?Closure $post = null, private ?Closure $live = null ) {
 		$this->post = $post ?? static function ( string $url, string $body, string $key ): ?array {
 			$response = wp_safe_remote_post(
 				$url,
@@ -123,6 +125,10 @@ class AlertTts {
 		$text = mb_substr( trim( preg_replace( '/\s+/u', ' ', $text ) ?? '' ), 0, self::MAX_CHARS );
 
 		if ( ! $tts['enabled'] || '' === $text || ! $this->settings->available() ) {
+			return '';
+		}
+
+		if ( null !== $this->live && ! ( $this->live )( $event->creator_id ) ) {
 			return '';
 		}
 

@@ -302,6 +302,26 @@ final class Tables {
 	public const DESIGNER_CAMPAIGNS = 'merchboard_designer_campaigns';
 
 	/**
+	 * Published versions of the creators' agreement (ADR-092), never changed.
+	 */
+	public const AGREEMENT_VERSIONS = 'merchboard_agreement_versions';
+
+	/**
+	 * Which creator accepted which agreement version and when (ADR-092).
+	 */
+	public const AGREEMENT_ACCEPTANCES = 'merchboard_agreement_acceptances';
+
+	/**
+	 * Creators who signed themselves up, until the e-mail is verified (ADR-091).
+	 */
+	public const CREATOR_SIGNUPS = 'merchboard_creator_signups';
+
+	/**
+	 * Creators' requests to go live in the shop (ADR-091).
+	 */
+	public const GO_LIVE_REQUESTS = 'merchboard_go_live_requests';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -353,6 +373,10 @@ final class Tables {
 		self::PRODUCT_REMOVAL_REQUESTS,
 		self::DESIGNER_FEES,
 		self::DESIGNER_FEE_VERSIONS,
+		self::AGREEMENT_VERSIONS,
+		self::AGREEMENT_ACCEPTANCES,
+		self::CREATOR_SIGNUPS,
+		self::GO_LIVE_REQUESTS,
 	);
 
 	/**
@@ -368,8 +392,9 @@ final class Tables {
 	 * code registrations with the order exclusions (ADR-068, K2), which explain
 	 * why an order is missing from sales and settlement documents; and the
 	 * digitization fees (ADR-086), which explain adjustments on settlement
-	 * documents. Everything else, including the encrypted payout details, is
-	 * dropped.
+	 * documents; and the agreement versions with their acceptances (ADR-092),
+	 * which document what each creator accepted. Everything else, including the
+	 * encrypted payout details, is dropped.
 	 */
 	private const RETAINED_ON_UNINSTALL = array(
 		self::CREATORS,
@@ -392,6 +417,8 @@ final class Tables {
 		self::CREATOR_CODES,
 		self::ORDER_EXCLUSIONS,
 		self::DESIGNER_FEES,
+		self::AGREEMENT_VERSIONS,
+		self::AGREEMENT_ACCEPTANCES,
 	);
 
 	/**

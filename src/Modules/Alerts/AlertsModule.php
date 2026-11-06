@@ -126,6 +126,7 @@ use MerchBoard\Modules\WooCommerce\JobQueue;
 use MerchBoard\Modules\WooCommerce\CreatorCategoryRepository;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductStore;
+use Throwable;
 use WP_Term;
 use wpdb;
 
@@ -178,7 +179,21 @@ final class AlertsModule implements Module {
 		);
 		// The read-out of alerts (ADR-089).
 		$container->set( TtsSettings::class, static fn( Container $c ): TtsSettings => new TtsSettings( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
-		$container->set( AlertTts::class, static fn( Container $c ): AlertTts => new AlertTts( $c->get( TtsSettings::class ), $c->get( Logger::class ) ) );
+		$container->set(
+			AlertTts::class,
+			static fn( Container $c ): AlertTts => new AlertTts(
+				$c->get( TtsSettings::class ),
+				$c->get( Logger::class ),
+				null,
+				static function ( int $creator_id ) use ( $c ): bool {
+					try {
+						return true === $c->get( CreatorRepository::class )->find( $creator_id )?->is_live();
+					} catch ( Throwable ) {
+						return false;
+					}
+				}
+			)
+		);
 		$container->set(
 			AlertsSettingsActions::class,
 			static fn( Container $c ): AlertsSettingsActions => new AlertsSettingsActions( $c->get( AlertSettings::class ), $c->get( Logger::class ), $c->get( TtsSettings::class ) )

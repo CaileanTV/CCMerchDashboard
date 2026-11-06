@@ -214,6 +214,14 @@ final class UninstallerTest extends TestCase {
 				),
 				array(
 					'query' => 'DROP TABLE IF EXISTS %i',
+					'args'  => array( 'wp_3_merchboard_creator_signups' ),
+				),
+				array(
+					'query' => 'DROP TABLE IF EXISTS %i',
+					'args'  => array( 'wp_3_merchboard_go_live_requests' ),
+				),
+				array(
+					'query' => 'DROP TABLE IF EXISTS %i',
 					'args'  => array( 'wp_3_merchboard_item_pricing' ),
 				),
 			),
@@ -221,7 +229,7 @@ final class UninstallerTest extends TestCase {
 			'Kept (ADR-059): creators, audit log, payouts, settlement documents, rows and counters. The encrypted details are dropped.'
 		);
 		self::assertSame(
-			array( 'merchboard_creators', 'merchboard_audit_log', 'merchboard_payouts', 'merchboard_settlement_documents', 'merchboard_settlement_document_rows', 'merchboard_settlement_counters', 'merchboard_order_gift_card_assessments', 'merchboard_order_gift_card_payouts', 'merchboard_order_gift_card_attempts', 'merchboard_g1_state', 'merchboard_operations', 'merchboard_payout_recalculations', 'merchboard_payout_recalculation_items', 'merchboard_payout_adjustments', 'merchboard_payout_adjustment_rows', 'merchboard_payout_recalculation_exports', 'merchboard_creator_vat_history', 'merchboard_creator_codes', 'merchboard_order_exclusions', 'merchboard_designer_fees' ),
+			array( 'merchboard_creators', 'merchboard_audit_log', 'merchboard_payouts', 'merchboard_settlement_documents', 'merchboard_settlement_document_rows', 'merchboard_settlement_counters', 'merchboard_order_gift_card_assessments', 'merchboard_order_gift_card_payouts', 'merchboard_order_gift_card_attempts', 'merchboard_g1_state', 'merchboard_operations', 'merchboard_payout_recalculations', 'merchboard_payout_recalculation_items', 'merchboard_payout_adjustments', 'merchboard_payout_adjustment_rows', 'merchboard_payout_recalculation_exports', 'merchboard_creator_vat_history', 'merchboard_creator_codes', 'merchboard_order_exclusions', 'merchboard_designer_fees', 'merchboard_agreement_versions', 'merchboard_agreement_acceptances' ),
 			Tables::retained_on_uninstall()
 		);
 	}

@@ -577,6 +577,11 @@ final class ProductCreatorLink {
 			throw new ProductCreatorLinkException( ProductCreatorLinkException::CREATOR_INACTIVE );
 		}
 
+		// Nothing of a creator who signed up reaches the shop before going live (ADR-091).
+		if ( ! $creator->is_live() ) {
+			throw new ProductCreatorLinkException( ProductCreatorLinkException::CREATOR_NOT_LIVE );
+		}
+
 		return $creator;
 	}
 

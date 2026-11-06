@@ -736,6 +736,61 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
 
 Indeks: `creator_status` og `status_requested`. Sagerne slettes med creatoren og ved opt-in-afinstallation.
 
+### Selvoprettelse, aftalepapir og go-live 🔄 (schema-version 45, ADR-091 og ADR-092)
+
+**`merchboard_creators`** får to kolonner. Begge er 0 som standard, så eksisterende og admin-oprettede creators er live uden aftalekrav.
+
+| Kolonne | Type | Beskrivelse |
+| --- | --- | --- |
+| `awaiting_live` | tinyint(1) unsigned | 1, mens en selvoprettet creator ikke er gået live. Creatoren får ingen kategori, produktkobling, rabatkode, designer-produkter i butikken eller oplæsning |
+| `agreement_required` | tinyint(1) unsigned | 1, når creatoren skal acceptere aftalepapiret |
+
+**`merchboard_agreement_versions`**: de udgivne versioner af aftalepapiret. En version ændres aldrig.
+
+| Kolonne | Type | Beskrivelse |
+| --- | --- | --- |
+| `version` | int unsigned, PK | 1, 2, … |
+| `body` | longtext | Teksten, renset med `wp_kses_post` |
+| `material` | tinyint(1) unsigned | Om ændringen er væsentlig, så creators med krav skal acceptere igen |
+| `published_at`, `published_by` | datetime, bigint unsigned NULL | Hvornår og hvem (UTC) |
+
+**`merchboard_agreement_acceptances`**: hvem accepterede hvilken version. Tabellen får kun tilføjelser.
+
+| Kolonne | Type | Beskrivelse |
+| --- | --- | --- |
+| `id` | bigint unsigned, PK | |
+| `creator_id` | bigint unsigned | Creatoren |
+| `user_id` | bigint unsigned NULL | Brugeren, der accepterede |
+| `version` | int unsigned | Versionen |
+| `adult_confirmed` | tinyint(1) unsigned | Bekræftelsen af at være fyldt 18 år |
+| `accepted_at` | datetime | UTC |
+
+Indeks: `creator_version`. Begge aftaletabeller bevares ved opt-in-afinstallation (som afregningsbilagene, ADR-059).
+
+**`merchboard_creator_signups`**: en selvoprettelse, indtil e-mailen er bekræftet.
+
+| Kolonne | Type | Beskrivelse |
+| --- | --- | --- |
+| `creator_id` | bigint unsigned, PK | Creatoren |
+| `user_id` | bigint unsigned, UNIQUE | WordPress-brugeren |
+| `channel_url` | varchar(255) | Kanal-linket fra oprettelsen |
+| `created_user` | tinyint(1) unsigned | 1, når pluginet oprettede brugeren. Kun da må en ubekræftet oprettelse slette den |
+| `created_at`, `expires_at`, `verified_at` | datetime (NULL) | UTC. Ubekræftede oprettelser slettes efter `expires_at` (7 dage) |
+
+**`merchboard_go_live_requests`**: creatorens anmodninger om at gå live, samme mønster som sletteanmodningerne.
+
+| Kolonne | Type | Beskrivelse |
+| --- | --- | --- |
+| `id` | bigint unsigned, PK | |
+| `creator_id` | bigint unsigned | Creatoren |
+| `active_creator_id` | bigint unsigned NULL, UNIQUE | Creatoren, mens anmodningen er åben; giver højst én åben pr. creator |
+| `status` | varchar(16) | `pending`, `approved` eller `declined` |
+| `note` | varchar(500) NULL | Admins note ved afvisning |
+| `requested_at`, `requested_by` | datetime, bigint unsigned NULL | Hvornår og hvem (UTC) |
+| `decided_at`, `decided_by` | datetime NULL, bigint unsigned NULL | Hvornår og hvem besluttede (UTC). Ved godkendelse er det tidspunktet for go-live |
+
+Signups og anmodninger slettes ved opt-in-afinstallation. Designer-versioner har den nye `apply_state` `waiting`, når de er godkendt for en creator, der ikke er live.
+
 ### Fremtidige (ikke designet i detaljer)
 
 - `merchboard_creator_members` – hvis flere brugere (fx en manager) skal have adgang til samme creator. Erstatter `user_id`-kolonnen. Ændringen bliver lokal, fordi al opslag af "nuværende creator" går gennem `CreatorContext`.

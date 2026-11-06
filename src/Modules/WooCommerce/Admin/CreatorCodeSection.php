@@ -67,6 +67,7 @@ final class CreatorCodeSection {
 			CreatorCodeException::CODE_TAKEN           => array( __( 'No free code was found. Nothing was changed; try again.', 'merchboard' ), 'error' ),
 			CreatorCodeException::COUPON_NOT_CREATED   => array( __( 'The WooCommerce coupon could not be created. Nothing was changed; try again later.', 'merchboard' ), 'error' ),
 			CreatorCodeException::COUPON_NOT_RETIRED   => array( __( 'The earlier coupon could not be moved to the trash. Nothing was changed; try again later.', 'merchboard' ), 'error' ),
+			CreatorCodeException::NOT_LIVE             => array( __( 'Not created: the creator is not live in the shop yet.', 'merchboard' ), 'error' ),
 			CreatorCodeException::NO_ACTIVE_CODE       => array( __( 'The creator has no active discount code.', 'merchboard' ), 'info' ),
 			CreatorCodeException::BUSY                 => array( __( 'Another change of this code is in progress. Nothing was changed; try again.', 'merchboard' ), 'error' ),
 			CreatorCodeException::NOT_AUTHORIZED       => array( __( 'You are not allowed to manage creator discount codes.', 'merchboard' ), 'error' ),

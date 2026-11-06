@@ -194,7 +194,13 @@ export interface DesignerRejection {
 
 /** A designer product's state in the section Products (step 30.14). */
 export type DesignerShopState =
-	'in_shop' | 'hidden' | 'waiting' | 'rejected' | 'retired' | 'draft';
+	| 'in_shop'
+	| 'hidden'
+	| 'waiting'
+	| 'approved'
+	| 'rejected'
+	| 'retired'
+	| 'draft';
 
 /** A designer product as the section Products shows it. */
 export interface DesignerShopProduct {
@@ -801,6 +807,7 @@ const SHOP_STATES: readonly DesignerShopState[] = [
 	'in_shop',
 	'hidden',
 	'waiting',
+	'approved',
 	'rejected',
 	'retired',
 	'draft',

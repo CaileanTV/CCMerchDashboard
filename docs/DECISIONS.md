@@ -5312,13 +5312,13 @@ Accepteret af projektejeren 2026-11-06 (fase 32). Bevidst undtagelse fra "ingen 
    - Felter: creatornavn, e-mail, kanal-link, "Jeg er fyldt 18 år" og accept af aftalepapiret (ADR-092).
    - En logget ind bruger, der ikke er creator, kobles direkte. E-mailfeltet udelades.
 3. **Konto:**
-   - Pluginet opretter en WordPress-bruger uden rolle og en creator med status `active`, `live_since` NULL og `agreement_required` 1.
+   - Pluginet opretter en WordPress-bruger uden rolle og en creator med status `active`, `awaiting_live` 1 og `agreement_required` 1.
    - Mailen "Bekræft e-mail og vælg adgangskode" bruger WordPress' eget link til ny adgangskode (`get_password_reset_key`).
    - Når adgangskoden er valgt første gang, er e-mailen bekræftet. Først da får brugeren rollen `merchboard_creator`, som er den eneste rolle, pluginet nogensinde giver. Uden rollen er der ingen adgang (ADR-006).
 4. **Ingen afsløring:** findes e-mailen allerede, er svaret det samme. Ejeren af e-mailen får en mail om at logge ind og oprette sig derfra.
 5. **Spam:** honeypot, mindste udfyldningstid, rate limit pr. hash af IP-adressen (5 pr. time) og pr. e-mail. Ingen CAPTCHA, fordi det er en ekstern tjeneste (ADR-016).
 6. **Oprydning:** en ubekræftet oprettelse slettes efter 7 dage, både bruger, creator og accept. Det sker kun for brugere, pluginet selv har oprettet, som aldrig er bekræftet og ikke har fået andre roller.
-7. **Live:** ny kolonne `live_since` på `merchboard_creators`.
+7. **Live:** ny kolonne `awaiting_live` på `merchboard_creators` (0 som standard). Tidspunktet for go-live står på den godkendte anmodning.
    - Eksisterende creators og creators oprettet af admin er live fra oprettelsen.
    - En creator, der ikke er live, kan bruge dashboardet (profil, kategoriforslag, designer og alerts), men intet når butikken.
 8. **Forhindring frem for filtrering:** en creator, der ikke er live, får aldrig:
@@ -5330,8 +5330,8 @@ Accepteret af projektejeren 2026-11-06 (fase 32). Bevidst undtagelse fra "ingen 
    - Oplæsning (ADR-089) åbner først, når creatoren er live.
    - Derfor er der intet at skjule i shop-lister, søgning, sitemaps, menuer, REST eller Store API.
 9. **Gå live:** creatoren anmoder fra dashboardet, når den gældende aftale er accepteret. Admin godkender eller afviser med note på fanen "Go-live" under Forslag (`merchboard_manage_creators`).
-   - **Godkendelse** sætter `live_since` og tillægget. Efter commit oprettes kategorien (ADR-093), og ventende designs anvendes.
-   - `live_since` sættes kun én gang. At stoppe en creator sker som i dag med status `inactive`.
+   - **Godkendelse** sætter `awaiting_live` til 0 og sætter tillægget. Efter commit oprettes kategorien (ADR-093), og ventende designs anvendes.
+   - Go-live sker kun én gang. At stoppe en creator sker som i dag med status `inactive`.
 10. **Notifikationer:**
     - admin: ny creator og anmodning om at gå live;
     - creator: bekræft e-mail, godkendt og afvist.
@@ -5352,7 +5352,7 @@ En creator skal kunne komme i gang uden admin, men butikken må ikke vise noget,
 
 ## Migration/data implications
 Migration 45:
-- `live_since` og `agreement_required` på `merchboard_creators`; eksisterende rækker får `live_since = created_at`;
+- `awaiting_live` og `agreement_required` på `merchboard_creators`, begge 0 som standard, så eksisterende og admin-oprettede creators er live uden aftalekrav;
 - tabellerne `merchboard_creator_signups` og `merchboard_go_live_requests`.
 
 Alle slettes ved opt-in-afinstallation.
@@ -5408,7 +5408,7 @@ Accepten skal kunne dokumenteres: præcis hvilken tekst, hvem og hvornår.
 Teksten renses (`wp_kses_post`) og vises kun i dashboardet og på oprettelsessiden. Kun `merchboard_manage_creators` kan udgive.
 
 ## Migration/data implications
-Migration 45: tabellerne `merchboard_agreement_versions` og `merchboard_agreement_acceptances`. De slettes ved opt-in-afinstallation.
+Migration 45: tabellerne `merchboard_agreement_versions` og `merchboard_agreement_acceptances`. De bevares ved opt-in-afinstallation, fordi de dokumenterer, hvad den enkelte creator har accepteret (som afregningsbilagene, ADR-059).
 
 ## Consequences
 - Aftaleteksten er ikke juridisk gennemgået (som ADR-061's forbehold).

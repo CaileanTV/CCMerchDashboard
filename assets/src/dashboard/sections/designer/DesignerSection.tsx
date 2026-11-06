@@ -47,6 +47,11 @@ function statusLabel( product: DesignerProductSummary ): string {
 			return __( 'Not in the shop', 'merchboard' );
 		case 'waiting':
 			return __( 'Waiting for approval', 'merchboard' );
+		case 'approved':
+			return __(
+				'Approved · in the shop when you go live',
+				'merchboard'
+			);
 		case 'rejected':
 			return __( 'Rejected', 'merchboard' );
 		case 'retired':

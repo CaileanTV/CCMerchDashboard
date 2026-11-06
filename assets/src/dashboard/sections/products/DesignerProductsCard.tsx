@@ -62,6 +62,11 @@ function stateText( product: DesignerShopProduct, locale: string ): string {
 				__( 'Waiting for approval (sent %s)', 'merchboard' ),
 				sent
 			);
+		case 'approved':
+			return __(
+				'Approved · in the shop when you go live',
+				'merchboard'
+			);
 		case 'rejected':
 			return __( 'Rejected', 'merchboard' );
 		case 'retired':

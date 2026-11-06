@@ -21,6 +21,7 @@ final class CreatorCategoryException extends RuntimeException {
 	public const NOT_AUTHORIZED            = 'not_authorized';
 	public const CREATOR_NOT_FOUND         = 'creator_not_found';
 	public const CREATOR_INACTIVE          = 'creator_inactive';
+	public const CREATOR_NOT_LIVE          = 'creator_not_live';
 	public const TERM_NOT_FOUND            = 'term_not_found';
 	public const NOT_PRODUCT_CATEGORY      = 'not_product_category';
 	public const DEFAULT_CATEGORY          = 'default_category';

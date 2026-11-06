@@ -911,7 +911,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
   - ADR-091 (selvoprettelse og go-live), ADR-092 (aftalepapir), ADR-093 (kategori ved go-live) og ADR-094 (prisvarsel);
   - [features/creator-signup.md](features/creator-signup.md) med udkastet til aftalepapiret;
   - SECURITY, USER-ROLES og ADMIN.
-- **32.2 Live-status og forhindring:** migration 45 (`live_since`, `agreement_required` og de nye tabeller). En creator, der ikke er live, får ingen kategori, produktkobling, rabatkode, designer-produkter i butikken eller oplæsning. Kategoriforslag kan først godkendes efter go-live.
+- **32.2 Live-status og forhindring ✅ (2026-11-06, testet automatisk):** migration 45 (`awaiting_live`, `agreement_required` og de nye tabeller; aftaletabellerne bevares ved afinstallation). En creator, der ikke er live, får ingen kategori, produktkobling, rabatkode, designer-produkter i butikken eller oplæsning. Kategoriforslag kan først godkendes efter go-live.
 - **32.3 Aftalepapir:**
   - admin-editor med versioner;
   - accept i dashboardet og `/me/agreement`;

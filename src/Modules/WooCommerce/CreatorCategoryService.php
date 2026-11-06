@@ -391,6 +391,11 @@ final class CreatorCategoryService {
 			throw new CreatorCategoryException( CreatorCategoryException::CREATOR_INACTIVE );
 		}
 
+		// A creator who signed up gets a category only by going live (ADR-091, ADR-093).
+		if ( ! $creator->is_live() ) {
+			throw new CreatorCategoryException( CreatorCategoryException::CREATOR_NOT_LIVE );
+		}
+
 		if ( array() !== $this->mappings->for_creator( $creator->id ) ) {
 			throw new CreatorCategoryException( CreatorCategoryException::CREATOR_HAS_CATEGORY );
 		}

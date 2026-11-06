@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+### Added
+
+- **Creators, der ikke er live (fase 32, schema-version 45, ADR-091):** grundlaget for selvoprettelse. En creator, der har oprettet sig selv, er aktiv i dashboardet, men når ikke butikken, før admin godkender, at creatoren går live: ingen produktkategori, ingen produktkobling, ingen rabatkode og ingen oplæsning. Et godkendt design venter uden WooCommerce-produkt ("Godkendt · kommer i butikken, når du går live"). Eksisterende creators og creators oprettet af admin er live som før. Migration 45 opretter også tabellerne til aftalepapiret, oprettelser og go-live-anmodninger; aftaletabellerne bevares ved afinstallation.
+
 ## [1.5.0] - 2026-11-04
 
 Fase 30 og 31: produktdesigneren (eksperimentel, slået fra som standard), alert-designer 2.0 med variationer og oplæsning, sletteanmodninger, salgsmails inkl. moms og udfyldning af manglende prisbilleder (ADR-090). Schema-version 44 (migration 35–44 ved opdatering fra 1.4.0; ingen manuelle trin i databasen). Fase 30 og 31 er reviewet og runtime-testet på Local og stg 2026-11-03–04. Opdateringen står i DEVELOPMENT.md ("Release 1.5.0").

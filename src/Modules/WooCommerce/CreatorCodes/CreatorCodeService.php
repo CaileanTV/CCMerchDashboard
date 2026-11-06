@@ -128,6 +128,11 @@ final class CreatorCodeService {
 		$creator    = $this->creator( $creator_id );
 		$by_creator = self::SOURCE_CREATOR === $source || self::SOURCE_FIRST === $source;
 
+		// The code carries the creator's name: none before going live (ADR-091).
+		if ( ! $creator->is_live() ) {
+			self::refuse( CreatorCodeException::NOT_LIVE );
+		}
+
 		if ( $by_creator ) {
 			self::authorize_creator( $creator );
 			$this->assert_creator_may_issue( $creator->id, $source, $this->codes->active_for_creator( $creator->id ) );

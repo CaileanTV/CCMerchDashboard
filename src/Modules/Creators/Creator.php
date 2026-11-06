@@ -33,6 +33,8 @@ final readonly class Creator {
 	 * @param DateTimeImmutable      $created_at   Creation time (UTC).
 	 * @param DateTimeImmutable      $updated_at   Last change (UTC).
 	 * @param DateTimeImmutable|null $deleted_at When the creator was deleted and anonymized (UTC; phase 27, ADR-076), or null.
+	 * @param bool                   $awaiting_live      Whether the creator signed up and has not gone live in the shop yet (ADR-091).
+	 * @param bool                   $agreement_required Whether the creator must accept the agreement (ADR-092).
 	 * @throws InvalidArgumentException When an id is not a positive integer.
 	 */
 	public function __construct(
@@ -42,7 +44,9 @@ final readonly class Creator {
 		public CreatorStatus $status,
 		public DateTimeImmutable $created_at,
 		public DateTimeImmutable $updated_at,
-		public ?DateTimeImmutable $deleted_at = null
+		public ?DateTimeImmutable $deleted_at = null,
+		public bool $awaiting_live = false,
+		public bool $agreement_required = false
 	) {
 		if ( $id < 1 ) {
 			throw new InvalidArgumentException( 'Creator id must be a positive integer.' );
@@ -58,6 +62,15 @@ final readonly class Creator {
 	 */
 	public function is_active(): bool {
 		return CreatorStatus::Active === $this->status;
+	}
+
+	/**
+	 * Whether the creator is live in the shop. A creator who signed up stays
+	 * out of the shop until an administrator approves going live (ADR-091):
+	 * no category, product link, discount code or designer product.
+	 */
+	public function is_live(): bool {
+		return ! $this->awaiting_live;
 	}
 
 	/**

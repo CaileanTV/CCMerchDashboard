@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\Alerts;
 
+use Closure;
 use DateTimeImmutable;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
@@ -104,6 +105,22 @@ final class AlertTtsTest extends IntegrationTestCase {
 		self::assertCount( 1, $this->sent );
 	}
 
+	public function test_a_creator_who_is_not_live_gets_no_read_out(): void {
+		$this->settings->save( true, 1000, self::KEY );
+		$live = false;
+		$tts  = $this->tts(
+			static function () use ( &$live ): bool {
+				return $live;
+			}
+		);
+
+		self::assertSame( '', $tts->url_for( self::look(), self::event(), 'nova bought Hoodie' ), 'Not live yet (ADR-091).' );
+		self::assertCount( 0, $this->sent, 'Nothing is sent to the read-out service.' );
+
+		$live = true;
+		self::assertNotSame( '', $tts->url_for( self::look(), self::event(), 'nova bought Hoodie' ) );
+	}
+
 	public function test_test_alerts_make_at_most_ten_read_outs_an_hour(): void {
 		$this->settings->save( true, 100000, self::KEY );
 		$tts  = $this->tts();
@@ -154,8 +171,11 @@ final class AlertTtsTest extends IntegrationTestCase {
 
 	/**
 	 * The service with the fake Google.
+	 *
+	 * @param Closure|null $live Whether a creator is live; null: always.
+	 * @phpstan-param (Closure(int): bool)|null $live
 	 */
-	private function tts(): AlertTts {
+	private function tts( ?Closure $live = null ): AlertTts {
 		return new AlertTts(
 			$this->settings,
 			$this->service( Logger::class ),
@@ -168,7 +188,8 @@ final class AlertTtsTest extends IntegrationTestCase {
 				);
 
 				return $this->answer;
-			}
+			},
+			$live
 		);
 	}
 

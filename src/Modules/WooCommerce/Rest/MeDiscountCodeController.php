@@ -212,6 +212,10 @@ final class MeDiscountCodeController extends RestController {
 	 * @param CreatorCodeException $e The refusal.
 	 */
 	private static function refused( CreatorCodeException $e ): WP_Error {
+		if ( CreatorCodeException::NOT_LIVE === $e->reason() ) {
+			return self::error( 'merchboard_code_refused', __( 'You get your discount code when you are live in the shop.', 'merchboard' ), 400, array( 'reason' => $e->reason() ) );
+		}
+
 		return CreatorCodeException::NOT_AUTHORIZED === $e->reason()
 			? self::error( 'merchboard_forbidden', __( 'You do not have access to this resource.', 'merchboard' ), 403 )
 			: self::error( 'merchboard_code_refused', __( 'The discount code was not reset.', 'merchboard' ), 400, array( 'reason' => $e->reason() ) );

@@ -74,6 +74,12 @@ class DesignerProductRepository {
 
 	public const APPLY_DONE = 'done';
 
+	/**
+	 * `apply_state` of a version approved for a creator who signed up and is
+	 * not live yet: nothing is in WooCommerce until they go live (ADR-091).
+	 */
+	public const APPLY_WAITING = 'waiting';
+
 	private const PRODUCT_COLUMNS = 'id, creator_id, base_id, wc_product_id, live_version_id, status, shop_price, shop_base_price, shop_base_prices, created_at, updated_at';
 
 	private const VERSION_COLUMNS = 'id, design_product_id, creator_id, number, status, base_version, title, description, colors, sizes, sides, design, profit_kind, profit_value, quoted_price, fee_quote, files, mockup_state, apply_state, apply_step, apply_error, note, updated_at, submitted_at, decided_at, decided_by';
@@ -684,6 +690,43 @@ class DesignerProductRepository {
 		}
 
 		return (int) $count > 0;
+	}
+
+	/**
+	 * Whether a product has an approved version waiting for its creator to go
+	 * live (ADR-091).
+	 *
+	 * @param int $product_id Designer product.
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	public function waiting_for_live( int $product_id ): bool {
+		$wpdb  = $this->wpdb;
+		$count = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE design_product_id = %d AND status = %s AND apply_state = %s', $this->table( Tables::DESIGNER_VERSIONS ), $product_id, self::APPROVED, self::APPLY_WAITING ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table; a live check.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the versions of the design.' );
+		}
+
+		return (int) $count > 0;
+	}
+
+	/**
+	 * A creator's approved versions waiting for them to go live, oldest
+	 * first, of products that are not deleted or retired (ADR-091).
+	 *
+	 * @param int $creator_id Creator.
+	 * @return list<int>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function waiting_for_creator( int $creator_id ): array {
+		$wpdb = $this->wpdb;
+		$ids  = $wpdb->get_col( $wpdb->prepare( 'SELECT v.id FROM %i v JOIN %i p ON p.id = v.design_product_id WHERE v.creator_id = %d AND v.status = %s AND v.apply_state = %s AND p.status NOT IN ( %s, %s, %s ) ORDER BY v.decided_at ASC, v.id ASC', $this->table( Tables::DESIGNER_VERSIONS ), $this->table( Tables::DESIGNER_PRODUCTS ), $creator_id, self::APPROVED, self::APPLY_WAITING, self::DELETED, self::PURGED, self::RETIRED ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own tables.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the designs waiting for the creator to go live.' );
+		}
+
+		return array_map( 'intval', $ids );
 	}
 
 	/**

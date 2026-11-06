@@ -50,6 +50,7 @@ use MerchBoard\Core\Database\Migrations\AddAlertEventImportedFlag;
 use MerchBoard\Core\Database\Migrations\RemoveImportOptions;
 use MerchBoard\Core\Database\Migrations\AddCreatorDeletedAt;
 use MerchBoard\Core\Database\Migrations\CreateCategoryProposalsTable;
+use MerchBoard\Core\Database\Migrations\CreateCreatorSignupTables;
 use MerchBoard\Core\Database\Migrations\CreateProductRemovalRequestsTable;
 use MerchBoard\Core\Database\Migrations\MoveProfileToProposals;
 use MerchBoard\Core\Database\Migrations\WidenChatbotChannels;
@@ -115,6 +116,7 @@ final class Schema {
 			42 => new AddDesignerSizePrices(),
 			43 => new CreateDesignerFees(),
 			44 => new AddDesignerSmallSidePrice(),
+			45 => new CreateCreatorSignupTables(),
 		);
 	}
 }

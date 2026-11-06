@@ -4,7 +4,7 @@
 Creators skal selv kunne oprette sig, acceptere aftalepapiret og forberede deres shop uden at vente på admin. Butikken viser dem først, når en administrator har godkendt, at de går live (projektejerens ønske 2026-11-06).
 
 ## Current status
-Planlagt (fase 32, ADR-091–094). Implementeres i trin 32.2–32.6.
+I gang (fase 32, ADR-091–094). 32.2 (live-status og spærringer) er implementeret 2026-11-06; 32.3–32.6 mangler.
 
 ## User-facing functionality
 - **Oprettelse** på `/<dashboard-slug>/opret`:
@@ -37,7 +37,7 @@ Se ADR-091–094. Hovedprincippet er forhindring frem for filtrering: en creator
 
 ## Database/data used
 Migration 45 (planlagt):
-- `merchboard_creators.live_since` og `agreement_required`;
+- `merchboard_creators.awaiting_live` og `agreement_required` (begge 0 som standard);
 - tabellerne `merchboard_agreement_versions`, `merchboard_agreement_acceptances`, `merchboard_creator_signups` og `merchboard_go_live_requests`.
 
 ## Permissions

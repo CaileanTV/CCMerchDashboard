@@ -63,7 +63,9 @@ defined( 'ABSPATH' ) || exit;
  *    changed meanwhile reprices the product.
  *
  * A version that a newer live version overtook (e.g. a failed one tried
- * again after a later change) is put aside, never applied.
+ * again after a later change) is put aside, never applied. A version of a
+ * creator who signed up and is not live yet waits (`waiting`) without any
+ * step, until going live queues it (ADR-091).
  *
  * Every step can be repeated: an interrupted or failed run continues where
  * it stopped when it runs again ("Try again" under Designs). No transaction
@@ -187,6 +189,13 @@ class DesignerApply {
 
 		if ( null !== $live && (int) $live['number'] > (int) $version['number'] ) {
 			$this->products->supersede( $id );
+
+			return;
+		}
+
+		// A creator who signed up is not in the shop yet: the version waits until they go live (ADR-091).
+		if ( $this->awaiting_live( $creator_id ) ) {
+			$this->products->set_apply( $id, DesignerProductRepository::APPLY_WAITING, null, null );
 
 			return;
 		}
@@ -413,6 +422,18 @@ class DesignerApply {
 		}
 
 		return $base;
+	}
+
+	/**
+	 * Whether the creator signed up and has not gone live yet (ADR-091).
+	 *
+	 * @param int $creator_id Creator.
+	 * @throws DatabaseException When the creator cannot be read.
+	 */
+	private function awaiting_live( int $creator_id ): bool {
+		$creator = $this->creators->find( $creator_id );
+
+		return null !== $creator && ! $creator->is_live();
 	}
 
 	/**

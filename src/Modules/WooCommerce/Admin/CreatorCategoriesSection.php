@@ -85,6 +85,7 @@ final class CreatorCategoriesSection {
 			CreatorCategoryException::NOT_AUTHORIZED               => array( __( 'You are not allowed to manage creators.', 'merchboard' ), 'error' ),
 			CreatorCategoryException::CREATOR_NOT_FOUND            => array( __( 'The creator does not exist.', 'merchboard' ), 'error' ),
 			CreatorCategoryException::CREATOR_INACTIVE             => array( __( 'Only active creators can get a product category. Activate the creator first.', 'merchboard' ), 'error' ),
+			CreatorCategoryException::CREATOR_NOT_LIVE             => array( __( 'The creator is not live in the shop yet. The product category is created when you approve going live.', 'merchboard' ), 'error' ),
 			CreatorCategoryException::TERM_NOT_FOUND               => array( __( 'The product category does not exist.', 'merchboard' ), 'error' ),
 			CreatorCategoryException::NOT_PRODUCT_CATEGORY         => array( __( 'Only WooCommerce product categories can be mapped.', 'merchboard' ), 'error' ),
 			CreatorCategoryException::DEFAULT_CATEGORY             => array( __( 'The default product category cannot be mapped.', 'merchboard' ), 'error' ),

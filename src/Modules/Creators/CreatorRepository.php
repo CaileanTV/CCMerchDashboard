@@ -115,27 +115,35 @@ final class CreatorRepository {
 	 * @param string        $display_name Display name (stored as given, escaped on output).
 	 * @param CreatorStatus $status       Initial status.
 	 * @param int|null      $user_id      WordPress user to link, or null.
+	 * @param bool          $signed_up    Whether the creator signed up (ADR-091): not live yet and the agreement must be accepted.
 	 * @throws InvalidArgumentException|DatabaseException On invalid input (column constraints) or when the insert fails, e.g. the user is already linked.
 	 */
-	public function create( string $display_name, CreatorStatus $status, ?int $user_id = null ): Creator {
+	public function create( string $display_name, CreatorStatus $status, ?int $user_id = null, bool $signed_up = false ): Creator {
 		$display_name = self::normalize_display_name( $display_name );
 
 		if ( null !== $user_id ) {
 			self::assert_positive_id( $user_id, 'User id' );
 		}
 
-		$now = current_time( 'mysql', true );
+		$now  = current_time( 'mysql', true );
+		$data = array(
+			'user_id'      => $user_id,
+			'display_name' => $display_name,
+			'status'       => $status->value,
+			'created_at'   => $now,
+			'updated_at'   => $now,
+		);
+
+		// Written only for a signup, so a creator an administrator creates is live on every schema.
+		if ( $signed_up ) {
+			$data['awaiting_live']      = 1;
+			$data['agreement_required'] = 1;
+		}
 
 		$inserted = $this->wpdb->insert(
 			$this->table(),
-			array(
-				'user_id'      => $user_id,
-				'display_name' => $display_name,
-				'status'       => $status->value,
-				'created_at'   => $now,
-				'updated_at'   => $now,
-			),
-			array( '%d', '%s', '%s', '%s', '%s' )
+			$data,
+			array_merge( array( '%d', '%s', '%s', '%s', '%s' ), $signed_up ? array( '%d', '%d' ) : array() )
 		);
 
 		if ( false === $inserted ) {
@@ -161,6 +169,38 @@ final class CreatorRepository {
 	 */
 	public function rename( int $id, string $display_name ): Creator {
 		return $this->update( $id, array( 'display_name' => self::normalize_display_name( $display_name ) ), array( '%s' ) );
+	}
+
+	/**
+	 * Marks a creator who signed up as live in the shop (ADR-091). Only once:
+	 * a creator who is live already is left as is.
+	 *
+	 * @param int $id Creator id.
+	 * @return bool Whether the creator went live now.
+	 * @throws InvalidArgumentException|DatabaseException When the id is invalid or the update fails.
+	 */
+	public function go_live( int $id ): bool {
+		self::assert_positive_id( $id, 'Creator id' );
+
+		$updated = $this->wpdb->update(
+			$this->table(),
+			array(
+				'awaiting_live' => 0,
+				'updated_at'    => current_time( 'mysql', true ),
+			),
+			array(
+				'id'            => $id,
+				'awaiting_live' => 1,
+			),
+			array( '%d', '%s' ),
+			array( '%d', '%d' )
+		);
+
+		if ( false === $updated ) {
+			throw new DatabaseException( 'Could not mark the creator as live.' );
+		}
+
+		return 1 === $updated;
 	}
 
 	/**
@@ -472,7 +512,8 @@ final class CreatorRepository {
 	/**
 	 * Builds a Creator from a database row, validating every column. Rows are
 	 * read with `SELECT *`, so a schema before version 31 (no `deleted_at`,
-	 * e.g. during tests of old schemas) reads as not deleted.
+	 * e.g. during tests of old schemas) reads as not deleted, and one before
+	 * version 45 as live without an agreement to accept.
 	 *
 	 * @param array<string, mixed> $row Row from get_row( …, ARRAY_A ).
 	 * @throws DatabaseException When the row does not match the schema.
@@ -493,7 +534,10 @@ final class CreatorRepository {
 			$status,
 			self::utc( $row['created_at'] ?? null ),
 			self::utc( $row['updated_at'] ?? null ),
-			null === ( $row['deleted_at'] ?? null ) ? null : self::utc( $row['deleted_at'] )
+			null === ( $row['deleted_at'] ?? null ) ? null : self::utc( $row['deleted_at'] ),
+			// Before schema version 45 every creator was live and needed no agreement.
+			'1' === (string) ( $row['awaiting_live'] ?? '0' ),
+			'1' === (string) ( $row['agreement_required'] ?? '0' )
 		);
 	}
 

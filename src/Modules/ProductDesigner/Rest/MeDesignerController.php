@@ -799,6 +799,7 @@ final class MeDesignerController extends RestController {
 			DesignerProductRepository::RETIRED === $row['status'] => 'retired',
 			null !== $this->products->live( $id ) => $wc_id > 0 && 'publish' === get_post_status( $wc_id ) ? 'in_shop' : 'hidden',
 			null !== $this->products->pending( $id ) => 'waiting',
+			$this->products->waiting_for_live( $id ) => 'approved',
 			null !== $this->products->last_rejection( $id ) => 'rejected',
 			default => 'draft',
 		};

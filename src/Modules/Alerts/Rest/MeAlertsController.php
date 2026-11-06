@@ -682,8 +682,8 @@ final class MeAlertsController extends RestController {
 				'overlay'           => null === $overlay ? null : $this->overlay( $overlay ),
 				'alerts_enabled'    => $this->availability->enabled(),
 				'merchalert_active' => $this->availability->merchalert_active(),
-				// Whether the administrator switched the read-out on (ADR-089).
-				'tts_available'     => true === $this->tts?->available(),
+				// Whether the administrator switched the read-out on (ADR-089), for a creator who is live (ADR-091).
+				'tts_available'     => true === $this->tts?->available() && true === $this->context->current()?->is_live(),
 				'fonts'             => array_values(
 					array_map(
 						static fn( AlertFont $font ): array => array(
