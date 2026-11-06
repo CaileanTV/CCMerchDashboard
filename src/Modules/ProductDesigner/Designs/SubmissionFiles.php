@@ -110,12 +110,29 @@ final class SubmissionFiles {
 	}
 
 	/**
-	 * The used sides of a design document, in its order.
+	 * The used sides of a design document, in its order: a side with a
+	 * visible object or a background colour (ADR-095). They get print files
+	 * and mockups.
 	 *
 	 * @param array<string, mixed> $design Design document (stored JSON, decoded).
 	 * @return list<string>
 	 */
 	public static function used_sides( array $design ): array {
+		$background = is_array( $design['background'] ?? null ) ? $design['background'] : array();
+		$designed   = self::designed_sides( $design );
+
+		return array_values( array_filter( array_map( 'strval', array_keys( is_array( $design['sides'] ?? null ) ? $design['sides'] : array() ) ), static fn( string $side ): bool => in_array( $side, $designed, true ) || is_string( $background[ $side ] ?? null ) ) );
+	}
+
+	/**
+	 * The sides with a visible object, in the document's order: the sides that
+	 * count for the price of extra design areas. A side with only a background
+	 * colour is free (the owner's choice 2026-11-07, ADR-095).
+	 *
+	 * @param array<string, mixed> $design Design document (stored JSON, decoded).
+	 * @return list<string>
+	 */
+	public static function designed_sides( array $design ): array {
 		$used = array();
 
 		foreach ( is_array( $design['sides'] ?? null ) ? $design['sides'] : array() as $side => $objects ) {

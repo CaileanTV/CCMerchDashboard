@@ -29,6 +29,12 @@ defined( 'ABSPATH' ) || exit;
  * keys are dropped, anything else invalid refuses the whole design. The
  * normalized document is what is stored, so a stored design is always
  * valid.
+ *
+ * ADR-095: on a base product that offers it, `background` gives a side a
+ * colour (`#rrggbb`) under its objects; never on an embroidered side. A
+ * side with a background is kept in `sides`, also without objects. On
+ * another base product the key is dropped (a draft from before the tick was
+ * removed).
  */
 final class DesignValidator {
 
@@ -72,7 +78,7 @@ final class DesignValidator {
 	 * @param mixed       $design   Decoded design.
 	 * @param BaseProduct $base     The base product it is designed on.
 	 * @param string[]    $stitches The stitch colours the base product has; the first without a choice.
-	 * @return array{version: int, sides: array<string, list<array<string, mixed>>>, threads?: array<string, array<string, string>>, stitch?: string}
+	 * @return array{version: int, sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>, stitch?: string}
 	 * @throws DesignerException When the design is invalid (DESIGN_INVALID).
 	 */
 	public function validate( mixed $design, BaseProduct $base, array $stitches = array() ): array {
@@ -91,11 +97,23 @@ final class DesignValidator {
 			$sides[ $key ] = array_map( fn( mixed $item ): array => $this->object( $item ), $items );
 		}
 
+		$background = self::background( $design['background'] ?? array(), $base );
+
+		// A side with only a background is a side of the design too.
+		foreach ( array_keys( $background ) as $key ) {
+			$sides[ $key ] ??= array();
+		}
+
 		$normalized = array(
 			'version' => self::VERSION,
 			'sides'   => $sides,
 		);
-		$threads    = $this->threads( $design['threads'] ?? array(), $base );
+
+		if ( array() !== $background ) {
+			$normalized['background'] = $background;
+		}
+
+		$threads = $this->threads( $design['threads'] ?? array(), $base );
 
 		if ( array() !== $threads ) {
 			$normalized['threads'] = $threads;
@@ -113,6 +131,43 @@ final class DesignValidator {
 
 		if ( false === $json || strlen( $json ) > self::MAX_BYTES ) {
 			self::refuse();
+		}
+
+		return $normalized;
+	}
+
+	/**
+	 * The background colour by side (ADR-095), in the base product's order of
+	 * sides. Empty on a base product that offers none.
+	 *
+	 * @param mixed       $background Input.
+	 * @param BaseProduct $base       The base product.
+	 * @return array<string, string>
+	 * @throws DesignerException When a side or colour is refused.
+	 */
+	private static function background( mixed $background, BaseProduct $base ): array {
+		if ( ! $base->background_color ) {
+			return array();
+		}
+
+		if ( ! is_array( $background ) ) {
+			self::refuse();
+		}
+
+		$normalized = array();
+
+		foreach ( $background as $key => $color ) {
+			$found = array_values( array_filter( $base->views, static fn( $view ): bool => (string) $key === $view->key ) );
+
+			if ( array() === $found || '' !== $found[0]->thread_pack || ! is_string( $color ) || 1 !== preg_match( '/^#[0-9a-fA-F]{6}$/', $color ) ) {
+				self::refuse();
+			}
+		}
+
+		foreach ( $base->views as $view ) {
+			if ( is_string( $background[ $view->key ] ?? null ) ) {
+				$normalized[ $view->key ] = strtolower( $background[ $view->key ] );
+			}
 		}
 
 		return $normalized;

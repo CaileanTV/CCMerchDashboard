@@ -159,7 +159,7 @@ final class DesignerPrices implements DesignerPriceSource {
 		$decoded = is_string( $design ) ? json_decode( $design, true ) : $design;
 		$chosen  = is_string( $sizes ) ? json_decode( $sizes, true ) : $sizes;
 		$size    = is_array( $chosen ) && 1 === count( $chosen ) ? reset( $chosen ) : null;
-		$extra   = is_array( $decoded ) ? $base->extra_amount( SubmissionFiles::used_sides( $decoded ), is_array( $chosen ) ? array_values( array_filter( $chosen, 'is_string' ) ) : null ) : 0;
+		$extra   = is_array( $decoded ) ? $base->extra_amount( SubmissionFiles::designed_sides( $decoded ), is_array( $chosen ) ? array_values( array_filter( $chosen, 'is_string' ) ) : null ) : 0;
 
 		return $base->price_of( is_string( $size ) ? $size : null ) + $extra;
 	}

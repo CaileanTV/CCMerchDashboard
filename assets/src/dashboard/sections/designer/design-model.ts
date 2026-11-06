@@ -72,6 +72,11 @@ export interface DesignDocument {
 	>;
 	/** The stitch colour of a product with a choice of stitching. */
 	readonly stitch?: string;
+	/**
+	 * The background colour (`#rrggbb`) by side, under the side's objects, on
+	 * a base product that offers it (ADR-095).
+	 */
+	readonly background?: Readonly< Record< string, string > >;
 }
 
 export const EMPTY_DESIGN: DesignDocument = {
@@ -254,10 +259,16 @@ export function parseDesign( value: unknown ): DesignDocument | null {
 	}
 
 	const threads = parseThreads( value.threads );
+	const background = parseBackground( value.background );
+
+	for ( const side of Object.keys( background ?? {} ) ) {
+		sides[ side ] ??= [];
+	}
 
 	return {
 		version: DESIGN_VERSION,
 		sides,
+		...( background === undefined ? {} : { background } ),
 		...( threads === undefined ? {} : { threads } ),
 		...( typeof value.stitch === 'string' ? { stitch: value.stitch } : {} ),
 	};
@@ -455,18 +466,105 @@ export interface SizedSide {
 }
 
 /**
- * The sides that show something (at least one visible object), in the
- * document's order: the sides a submission renders (the server's
+ * The background colours of a stored design; undefined without any.
+ *
+ * @param value Value.
+ */
+function parseBackground( value: unknown ): DesignDocument[ 'background' ] {
+	if ( ! isRecord( value ) ) {
+		return undefined;
+	}
+
+	const background: Record< string, string > = {};
+
+	for ( const [ side, hex ] of Object.entries( value ) ) {
+		if ( typeof hex === 'string' && COLOR.test( hex ) ) {
+			background[ side ] = hex;
+		}
+	}
+
+	return Object.keys( background ).length === 0 ? undefined : background;
+}
+
+/**
+ * The sides that show something (a visible object or a background colour),
+ * in the document's order: the sides a submission renders (the server's
  * `SubmissionFiles::used_sides()`).
  *
  * @param design The document.
  */
 export function usedSides( design: DesignDocument ): string[] {
 	return Object.entries( design.sides )
+		.filter(
+			( [ side, objects ] ) =>
+				design.background?.[ side ] !== undefined ||
+				objects.some( ( object ) => ! object.hidden )
+		)
+		.map( ( [ side ] ) => side );
+}
+
+/**
+ * The sides with a visible object, in the document's order: the sides that
+ * count for the price of extra design areas; a side with only a background
+ * colour is free (the server's `SubmissionFiles::designed_sides()`).
+ *
+ * @param design The document.
+ */
+export function designedSides( design: DesignDocument ): string[] {
+	return Object.entries( design.sides )
 		.filter( ( [ , objects ] ) =>
 			objects.some( ( object ) => ! object.hidden )
 		)
 		.map( ( [ side ] ) => side );
+}
+
+/**
+ * The background colour of a side, or null.
+ *
+ * @param design Design.
+ * @param side   Side key.
+ */
+export function backgroundOf(
+	design: DesignDocument,
+	side: string
+): string | null {
+	return design.background?.[ side ] ?? null;
+}
+
+/**
+ * The design with a background colour on some sides; null removes it.
+ *
+ * @param design Design.
+ * @param sides  Side keys.
+ * @param hex    `#rrggbb`, or null.
+ */
+export function withBackground(
+	design: DesignDocument,
+	sides: readonly string[],
+	hex: string | null
+): DesignDocument {
+	const background: Record< string, string > = { ...design.background };
+	const parts = { ...design.sides };
+	const wanted = hex === null ? null : hex.toLowerCase();
+
+	for ( const side of sides ) {
+		if ( wanted === null || ! COLOR.test( wanted ) ) {
+			delete background[ side ];
+
+			if ( ( parts[ side ] ?? [] ).length === 0 ) {
+				delete parts[ side ];
+			}
+		} else {
+			background[ side ] = wanted;
+			parts[ side ] ??= [];
+		}
+	}
+
+	const { background: _old, ...rest } = design;
+
+	return Object.keys( background ).length === 0
+		? { ...rest, version: DESIGN_VERSION, sides: parts }
+		: { ...rest, version: DESIGN_VERSION, sides: parts, background };
 }
 
 /**
@@ -547,7 +645,8 @@ export function extraAreas(
 	large: string,
 	small: string
 ): ExtraArea[] {
-	const used = usedSides( design );
+	// A side with only a background colour is free (ADR-095).
+	const used = designedSides( design );
 	// Without sides per size, a side the base product no longer has is a large area, as on the server.
 	const groups = views.every( ( view ) => view.sizes.length === 0 )
 		? [
@@ -659,7 +758,8 @@ export function withObjects(
 ): DesignDocument {
 	const sides = { ...design.sides };
 
-	if ( objects.length === 0 ) {
+	// A side with a background colour stays in the document without objects (ADR-095).
+	if ( objects.length === 0 && design.background?.[ side ] === undefined ) {
 		delete sides[ side ];
 	} else {
 		sides[ side ] = objects;
