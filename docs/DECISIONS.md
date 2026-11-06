@@ -5371,7 +5371,7 @@ ADR-006, ADR-007, ADR-016, ADR-020, ADR-026, ADR-033, ADR-076, ADR-077, ADR-080,
 2026-11-06
 
 ## Status
-Accepteret af projektejeren 2026-11-06 (fase 32). **Ændrer ADR-061 pkt. 4 og 5:**
+Accepteret af projektejeren 2026-11-06 (fase 32). **Implementeret i 32.3 (2026-11-06):** Indstillinger → Aftale, `/me/agreement`, boksen i dashboardet og spærringen af udbetalinger (`agreement_required`). **Ændrer ADR-061 pkt. 4 og 5:**
 - Eksisterende creators skal ikke acceptere standardaftalen.
 - Nye, selvoprettede creators accepterer den i Merch Dashboard.
 

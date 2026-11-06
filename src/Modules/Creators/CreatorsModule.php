@@ -12,6 +12,11 @@ namespace MerchBoard\Modules\Creators;
 use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Modules\Creators\Admin\CreatorDeletionActions;
+use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Creators\Admin\AgreementSettingsSection;
+use MerchBoard\Modules\Creators\Agreement\Agreement;
+use MerchBoard\Modules\Creators\Agreement\AgreementRepository;
+use MerchBoard\Modules\Creators\Rest\MeAgreementController;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
 use MerchBoard\Modules\Admin\Approvals\ApprovalsPage;
@@ -67,6 +72,24 @@ final class CreatorsModule implements Module {
 		$container->set(
 			UserAccounts::class,
 			static fn(): UserAccounts => new WordPressUserAccounts()
+		);
+
+		// The creators' agreement (ADR-092): versions, acceptances, the admin tab and /me/agreement.
+		$container->set( AgreementRepository::class, static fn( Container $c ): AgreementRepository => new AgreementRepository( $c->get( wpdb::class ) ) );
+		$container->set( Agreement::class, static fn( Container $c ): Agreement => new Agreement( $c->get( AgreementRepository::class ), $c->get( CreatorRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set( AgreementSettingsSection::class, static fn( Container $c ): AgreementSettingsSection => new AgreementSettingsSection( $c->get( Agreement::class ), $c->get( AgreementRepository::class ), $c->get( Logger::class ) ) );
+		$container->set( MeAgreementController::class, static fn( Container $c ): MeAgreementController => new MeAgreementController( $c->get( CreatorContext::class ), $c->get( Agreement::class ), $c->get( Logger::class ) ) );
+		add_action(
+			'rest_api_init',
+			static function () use ( $container ): void {
+				$container->get( MeAgreementController::class )->register_routes();
+			}
+		);
+		add_action(
+			'admin_init',
+			static function () use ( $container ): void {
+				$container->get( AgreementSettingsSection::class )->register();
+			}
 		);
 
 		$container->set(

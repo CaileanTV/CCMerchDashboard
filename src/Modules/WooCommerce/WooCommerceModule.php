@@ -19,6 +19,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Creators\Agreement\Agreement;
 use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Admin\CategorySyncActions;
@@ -816,7 +817,12 @@ final class WooCommerceModule implements Module {
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
 				$clock,
-				$c->get( GiftCardProviders::class )
+				$c->get( GiftCardProviders::class ),
+				static function ( int $creator_id ) use ( $c ): bool {
+					$creator = $c->get( CreatorRepository::class )->find( $creator_id );
+
+					return null === $creator || $c->get( Agreement::class )->satisfied( $creator );
+				}
 			)
 		);
 		$container->set(

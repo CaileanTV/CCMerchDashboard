@@ -66,6 +66,11 @@ export function refusalMessage( error: ApiError ): string | null {
 				'The amount is more than you can request right now.',
 				'merchboard'
 			);
+		case 'agreement_required':
+			return __(
+				'Please accept our agreement first. You find it at the top of your dashboard.',
+				'merchboard'
+			);
 		case 'balance_unknown':
 			return __(
 				'Your balance cannot be calculated right now, because some sales lack the data needed. No payout can be requested until it is known.',

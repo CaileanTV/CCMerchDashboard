@@ -518,7 +518,8 @@ Kræver WooCommerce ≥ 10.3. Med en ældre version vises kun en requirements-no
   - Ingen AJAX-, REST- eller `nopriv`-rute, og ingen ny persistent tilstand.
 
 ## Selvoprettelse og go-live (fase 32, planlagt, ADR-091–094)
-- **Indstillinger:** "Creators kan oprette sig selv" (fra som standard), "Overkategori for creators" og fanen "Aftale" med aftalepapirets versioner.
+- **Indstillinger:** "Creators kan oprette sig selv" (fra som standard) og "Overkategori for creators".
+- **Indstillinger → Aftale ✅ (32.3):** aftalepapiret som tekst (HTML) med pladsholderne [COMPANY], [ADDRESS], [CVR] og [EMAIL], som udfyldes fra firmaoplysningerne, når creators læser den. "Gem kladde" gemmer uden at vise noget; "Udgiv" gør teksten til næste version (kun når hver pladsholder har en værdi). Afkryds "væsentlig ændring", når creators skal acceptere igen; uden afkrydsning får de kun besked. Tabellen viser versionerne og antal accepter. Kræver `merchboard_manage_creators`; audit `agreement_published`.
 - **Forslag → Go-live:** godkend med tillæg og kategorinavn, eller afvis med note.
 - **Grundprodukter:** en prisstigning kræver en dato mindst 14 dage frem (ADR-094).
 - **Legacy-produkter:** pluginet sætter ikke deres priser. Aftalepapiret lover 14 dages varsel før prisstigninger, så varsel creatoren selv, før du hæver prisen på et legacy-produkt i WooCommerce.

@@ -13,6 +13,7 @@ use MerchBoard\Core\Database\Migrator;
 use MerchBoard\Core\Database\SchemaEraser;
 use MerchBoard\Core\Database\Migrations\RemoveImportOptions;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Modules\Creators\Agreement\Agreement;
 use MerchBoard\Modules\Notifications\NotificationSettings;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyAccount;
@@ -249,6 +250,7 @@ final class Uninstaller {
 		delete_option( KickAccount::OPTION );
 		delete_option( YouTubeAccount::OPTION );
 		delete_option( YouTubeLegal::OPTION );
+		delete_option( Agreement::DRAFT_OPTION );
 		delete_option( GlobalOverlayStore::OPTION );
 		delete_option( OverlayPresetStore::OPTION );
 		// The setup of the creator's alert page (step 25.9.6), retired in step 31.4 (ADR-088).

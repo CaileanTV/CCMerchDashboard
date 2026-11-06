@@ -76,6 +76,8 @@ final class PayoutRequests {
 	 * @param Transaction            $transaction Transactions.
 	 * @param Closure                $clock       Current time (`Closure(): DateTimeImmutable`).
 	 * @param GiftCardProviders|null $gift_cards  Gift card providers; null = gift cards unavailable.
+	 * @param Closure|null           $agreement   Whether a creator has accepted what the agreement requires (ADR-092); null: always.
+	 * @phpstan-param (Closure(int): bool)|null $agreement
 	 */
 	public function __construct(
 		private PayoutRepository $payouts,
@@ -85,7 +87,8 @@ final class PayoutRequests {
 		private AuditTrail $audit,
 		private Transaction $transaction,
 		private Closure $clock,
-		private ?GiftCardProviders $gift_cards = null
+		private ?GiftCardProviders $gift_cards = null,
+		private ?Closure $agreement = null
 	) {
 	}
 
@@ -118,6 +121,11 @@ final class PayoutRequests {
 	public function request( int $creator_id, string $currency, string $amount, string $method, array $details, string $idempotency_key, ?int $user_id ): Payout {
 		if ( 1 !== preg_match( '/^[A-Za-z0-9-]{8,64}$/', $idempotency_key ) ) {
 			throw new PayoutException( PayoutException::INVALID_KEY );
+		}
+
+		// A creator who signed up must have accepted the current agreement (ADR-092).
+		if ( null !== $this->agreement && ! ( $this->agreement )( $creator_id ) ) {
+			throw new PayoutException( PayoutException::AGREEMENT_REQUIRED );
 		}
 
 		try {

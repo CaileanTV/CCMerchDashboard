@@ -446,6 +446,23 @@ final class CreatorRepository {
 	}
 
 	/**
+	 * Active, not deleted creators who must accept the agreement (ADR-092).
+	 *
+	 * @return list<int>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function agreement_required_ids(): array {
+		$wpdb = $this->wpdb;
+		$ids  = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE agreement_required = 1 AND status = %s AND deleted_at IS NULL ORDER BY id', $this->table(), CreatorStatus::Active->value ) );
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the creators who must accept the agreement.' );
+		}
+
+		return array_map( 'intval', $ids );
+	}
+
+	/**
 	 * Updates columns of one creator and refreshes updated_at.
 	 *
 	 * @param int                  $id      Creator id.

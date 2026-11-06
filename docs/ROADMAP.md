@@ -912,7 +912,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
   - [features/creator-signup.md](features/creator-signup.md) med udkastet til aftalepapiret;
   - SECURITY, USER-ROLES og ADMIN.
 - **32.2 Live-status og forhindring ✅ (2026-11-06, testet automatisk):** migration 45 (`awaiting_live`, `agreement_required` og de nye tabeller; aftaletabellerne bevares ved afinstallation). En creator, der ikke er live, får ingen kategori, produktkobling, rabatkode, designer-produkter i butikken eller oplæsning. Kategoriforslag kan først godkendes efter go-live.
-- **32.3 Aftalepapir:**
+- **32.3 Aftalepapir ✅ (2026-11-06, testet automatisk):**
   - admin-editor med versioner;
   - accept i dashboardet og `/me/agreement`;
   - porte for go-live og udbetaling;

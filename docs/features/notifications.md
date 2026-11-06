@@ -45,6 +45,7 @@ I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog
 | Rabatkode | Din rabatkode er afsluttet | administratorens afslutning | M+D | ✓ |
 | Konto | Velkommen til Merch Dashboard (med login-link) | creator oprettet med bruger eller bruger tilknyttet | M | ✓ |
 | Konto | Kontoen er deaktiveret eller genaktiveret | statusskift | M+D | ✓ |
+| Konto | Ny version af aftalen (væsentlig: acceptér igen; mindre: kun besked) | admin udgiver version 2 eller senere af aftalepapiret; kun creators, der har oprettet sig selv (ADR-092) | M+D | ✓ |
 | Konto | Din fortjeneste er ændret (standard eller pr. produkt) | prisindstillinger | M+D | ✓ |
 | Konto | Din momsstatus er ændret | momsstatus | M+D | ✓ |
 | Konto | Dine stamdata til afregning er ændret | administratorens ændring | M+D | ✓ |

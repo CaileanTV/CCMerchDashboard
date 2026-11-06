@@ -6,6 +6,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ### Added
 
+- **Aftalepapir (fase 32, ADR-092):** Indstillinger → Aftale med et dansk udkast skrevet ud fra den hidtidige samarbejdsaftale, firmaoplysninger som pladsholdere, kladde og udgivne versioner med antal accepter. Creators, der har oprettet sig selv, ser aftalen øverst i dashboardet, bekræfter at være fyldt 18 år og accepterer den; indtil da kan de ikke anmode om udbetaling. En væsentlig ny version skal accepteres igen, en mindre meddeles kun (notifikationen "Ny version af aftalen"). Eksisterende creators og creators oprettet af admin accepterer intet. Audit `agreement_published` og `agreement_accepted`.
 - **Creators, der ikke er live (fase 32, schema-version 45, ADR-091):** grundlaget for selvoprettelse. En creator, der har oprettet sig selv, er aktiv i dashboardet, men når ikke butikken, før admin godkender, at creatoren går live: ingen produktkategori, ingen produktkobling, ingen rabatkode og ingen oplæsning. Et godkendt design venter uden WooCommerce-produkt ("Godkendt · kommer i butikken, når du går live"). Eksisterende creators og creators oprettet af admin er live som før. Migration 45 opretter også tabellerne til aftalepapiret, oprettelser og go-live-anmodninger; aftaletabellerne bevares ved afinstallation.
 
 ## [1.5.0] - 2026-11-04

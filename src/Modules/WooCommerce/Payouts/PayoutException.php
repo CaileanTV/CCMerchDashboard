@@ -216,6 +216,11 @@ final class PayoutException extends DomainException {
 	public const CORRECTION_LIMIT = 'correction_limit';
 
 	/**
+	 * The creator must accept the current agreement first (ADR-092).
+	 */
+	public const AGREEMENT_REQUIRED = 'agreement_required';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $reason One of the class constants.

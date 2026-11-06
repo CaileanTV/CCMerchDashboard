@@ -190,6 +190,8 @@ final class AuditLogFormatter {
 			AuditAction::DesignerFeeCharged => __( 'Digitization fee charged', 'merchboard' ),
 			AuditAction::DesignerFeeCancelled => __( 'Digitization fee cancelled', 'merchboard' ),
 			AuditAction::SalesLinePricingBackfilled => __( 'Missing pricing snapshots filled in', 'merchboard' ),
+			AuditAction::AgreementPublished => __( 'Agreement published', 'merchboard' ),
+			AuditAction::AgreementAccepted => __( 'Agreement accepted', 'merchboard' ),
 			AuditAction::DesignerProductCreated => __( 'Creator started a designer product', 'merchboard' ),
 			AuditAction::DesignerProductDeleted => __( 'Creator deleted a designer draft', 'merchboard' ),
 			AuditAction::DesignerVersionSubmitted => __( 'Creator submitted a design for approval', 'merchboard' ),

@@ -52,6 +52,7 @@ final class CreatorTypes {
 			self::code_ended(),
 			self::account_welcome(),
 			self::account_status(),
+			self::agreement_updated(),
 			self::pricing_changed(),
 			self::vat_changed(),
 			self::billing_details_changed(),
@@ -1119,6 +1120,37 @@ final class CreatorTypes {
 				null,
 				null,
 				__( 'Read and accept', 'merchboard' ),
+				'',
+				self::closing()
+			)
+		);
+	}
+
+	/**
+	 * A new version of the creators' agreement (ADR-092): to accept again
+	 * when it is material, else only for information. Only creators who must
+	 * accept the agreement get it.
+	 */
+	private static function agreement_updated(): NotificationType {
+		return self::type(
+			'account_agreement_updated',
+			'account',
+			static fn(): string => __( 'New version of the agreement', 'merchboard' ),
+			static fn(): string => __( 'When an administrator publishes a new version of the agreement for creators; sent to creators who signed up themselves.', 'merchboard' ),
+			true,
+			true,
+			true,
+			'',
+			array( 'material' => true ),
+			static fn( NotificationData $d ): string => $d->flag( 'material' ) ? __( 'Our agreement was changed. Please read and accept the new version.', 'merchboard' ) : __( 'Our agreement was updated. You can read the new version in your dashboard.', 'merchboard' ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				$d->flag( 'material' ) ? __( 'Please accept our new agreement', 'merchboard' ) : __( 'Our agreement was updated', 'merchboard' ),
+				__( 'New version of the agreement', 'merchboard' ),
+				array( $d->flag( 'material' ) ? __( 'We changed our agreement with you. Please read and accept the new version in your dashboard; until then you cannot request a payout.', 'merchboard' ) : __( 'We made a minor update to our agreement with you. You can read the new version in your dashboard; you do not need to do anything.', 'merchboard' ) ),
+				array(),
+				null,
+				null,
+				__( 'Open your dashboard', 'merchboard' ),
 				'',
 				self::closing()
 			)

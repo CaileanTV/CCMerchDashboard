@@ -1,6 +1,7 @@
 import { useEffect } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 
+import { AgreementNotice } from '../components/AgreementNotice';
 import { ApiErrorState } from '../components/ApiErrorState';
 import { Skeleton } from '../components/Skeleton';
 import type { DashboardConfig } from '../types/config';
@@ -27,7 +28,12 @@ function CurrentPage() {
 			siteName === '' ? page.title : `${ page.title } · ${ siteName }`;
 	}, [ page.title, siteName ] );
 
-	let content = page.content;
+	let content = (
+		<>
+			<AgreementNotice />
+			{ page.content }
+		</>
+	);
 
 	if ( state.status === 'loading' ) {
 		content = (

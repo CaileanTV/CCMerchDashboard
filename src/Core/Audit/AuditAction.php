@@ -798,4 +798,17 @@ enum AuditAction: string {
 	 * `not_registered`) and order_item_ids. No amounts, no customer data.
 	 */
 	case SalesLinePricingBackfilled = 'sales_line_pricing_backfilled';
+
+	/**
+	 * An administrator published a version of the creators' agreement
+	 * (ADR-092). Context: version and material (whether creators must accept
+	 * it again). The text is stored in its own table, never in the log.
+	 */
+	case AgreementPublished = 'agreement_published';
+
+	/**
+	 * A creator accepted a version of the agreement (ADR-092). Context:
+	 * version.
+	 */
+	case AgreementAccepted = 'agreement_accepted';
 }

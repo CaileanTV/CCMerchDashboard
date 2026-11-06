@@ -731,7 +731,7 @@ final class MePayoutsController extends RestController {
 		}
 
 		$status = match ( $reason ) {
-			PayoutException::BALANCE_UNKNOWN, PayoutException::INSUFFICIENT_BALANCE, PayoutException::NOT_PENDING, PayoutException::BUSY => 409,
+			PayoutException::BALANCE_UNKNOWN, PayoutException::INSUFFICIENT_BALANCE, PayoutException::NOT_PENDING, PayoutException::BUSY, PayoutException::AGREEMENT_REQUIRED => 409,
 			PayoutException::TOO_MANY_PENDING, PayoutException::TOO_MANY_REQUESTS => 429,
 			PayoutException::GIFT_CARDS_UNAVAILABLE => 503,
 			default => 400,
