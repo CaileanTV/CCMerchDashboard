@@ -249,7 +249,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.5.0: produktdesigner og alert-designer 2.0 (fase 30 og 31)
 
-**Versions-bump, CHANGELOG-sektion og tagget `v1.5.0` 2026-11-04** efter projektejerens ønske samme dag ("lav review og sidste test, så vi kan bumpe version og få på live").
+**Versions-bump og CHANGELOG-sektion (`701691b`) og tagget `v1.5.0` (på `701691b`) 2026-11-04** efter projektejerens ønske samme dag ("lav review og sidste test, så vi kan bumpe version og få på live"). Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `7f205284177b80623a7d05b8a4c0ca3405c1860467025ac37388bd3735e86fb4`).
 - Det er en minor, fordi den indeholder nye features.
 - Fase 30 og 31 er reviewet og runtime-testet på Local og stg.ccmerch.dk (ROADMAP 30.15). Rettelserne efter 30.15 (salgsmails inkl. moms og ADR-090) er reviewet uafhængigt, rettet (`8e3c556`) og runtime-testet på Local.
 - CI er grøn med hele integrationssuiten på den taggede commit (den fulde lokale kørsel er droppet, projektejerens beslutning 2026-11-04).
