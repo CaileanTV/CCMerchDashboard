@@ -6,7 +6,7 @@
 
 | Aktør | Mål | Primært forsvar |
 | --- | --- | --- |
-| Anonym besøgende | Tilgå dashboard/API, enumerere creators | Login-krav, permission callbacks, 401/404, ingen offentlige endpoints |
+| Anonym besøgende | Tilgå dashboard/API, enumerere creators, spamme oprettelsen | Login-krav, permission callbacks, 401/404; eneste offentlige skrivende endpoint er oprettelsessiden (fra fase 32, slået fra som standard) med nonce, honeypot, rate limit og ens svar |
 | Creator A | Se/ændre Creator B's data (IDOR) | `/me`-API uden ID'er, `CreatorContext`, ejerskabs-tjek i services, 404 |
 | Creator | Eskalere til admin-rettigheder | Minimal rolle, ingen rolle-/meta-skrivning fra creator-input, felt-whitelist |
 | Inaktiv creator med aktiv session | Fortsætte adgang | Status tjekkes på **hver** request (ingen caching af adgang i sessionen) |
@@ -369,3 +369,24 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 - **Product Vendors læses kun**, gennem sit eget API, mens det er aktivt. Intet skrives i dets data (en undtagelse lig ADR-065 pkt. 5).
 - **Økonomi:** kommission, udbetalinger og betalingsoplysninger flyttes ikke. Nye creators får afregningsstart = migreringens tidspunkt, så salg, som Product Vendors har afregnet, aldrig udbetales igen.
 - **Roller (26.3):** kun Product Vendors' tre roller fjernes, kun hos den bruger, migreringen koblede til en creator (mens creatoren er aktiv og stadig har brugeren), kun hos bekræftede brugere og kun med `merchboard_manage_creators`, WordPress' `promote_users` og `promote_user` for hver bruger (undtagelse fra ADR-022). Hver ændring auditeres (`vendor_roles_removed`).
+
+## Selvoprettelse og go-live (fase 32, planlagt, ADR-091–093)
+- **Offentlig formular:** oprettelsessiden `/<dashboard-slug>/opret` er en bevidst undtagelse fra "ingen offentlige endpoints". Den er slået fra som standard og har:
+  - nonce, honeypot og en mindste udfyldningstid;
+  - rate limit pr. hash af IP-adressen (5 pr. time) og pr. e-mail;
+  - validering i servicen.
+
+  IP-hashen slettes efter 24 timer. Ingen CAPTCHA (ekstern tjeneste, ADR-016).
+- **Ingen konto-enumerering:** svaret er det samme, uanset om e-mailen findes. Ejeren af en eksisterende konto får en mail.
+- **Roller:**
+  - pluginet opretter en WordPress-bruger uden rolle;
+  - først når e-mailen er bekræftet (første adgangskode via WordPress' eget link), gives `merchboard_creator`;
+  - der gives aldrig en rolle fra input, og en eksisterende brugers roller ændres aldrig.
+- **Oprydning:** ubekræftede konti slettes efter 7 dage. Det gælder kun brugere, pluginet selv har oprettet, som aldrig er bekræftet og ikke har andre roller.
+- **Ikke live:** en creator, der ikke er live, når aldrig butikken. Der er ingen kategori, produktkobling, rabatkode, designer-anvendelse eller oplæsning, så intet kan lække via shop, søgning, sitemaps, REST eller Store API (forhindring frem for filtrering).
+- **Aftalepapiret:**
+  - teksten renses med `wp_kses_post`;
+  - kun `merchboard_manage_creators` kan udgive;
+  - versioner og accepter får kun tilføjelser;
+  - "Se som creator" kan ikke acceptere.
+- **Go-live og kategorioprettelse** kræver `merchboard_manage_creators` og nonce. Kategorinavnet renses.

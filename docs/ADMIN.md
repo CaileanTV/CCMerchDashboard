@@ -516,3 +516,10 @@ Kræver WooCommerce ≥ 10.3. Med en ældre version vises kun en requirements-no
   - **Fejl pr. produkt:** kan et produkt ikke afstemmes (fx en fejlet skrivning eller læsning), logges det, tælles som `errors`, og kørslen fortsætter med næste produkt. Produktet gentages ikke inden for den fulde afstemning; der er ingen separat retry-løkke pr. produkt. (Jobs for enkelte produkter fra hooks har deres egen begrænsede retry.)
   - **Fejl pr. side:** fejler en hel side (fx kandidatforespørgslen), sættes samme side i kø igen fra samme tilstand, så tællingerne ikke dobbelttælles, med den eksisterende begrænsede retry: højst 3 gentagelser efter 1, 5 og 15 minutter (`CategoryReconciliationJobs`). Derefter opgives kørslen og logges; der skrives ingen `category_sync_completed`.
   - Ingen AJAX-, REST- eller `nopriv`-rute, og ingen ny persistent tilstand.
+
+## Selvoprettelse og go-live (fase 32, planlagt, ADR-091–094)
+- **Indstillinger:** "Creators kan oprette sig selv" (fra som standard), "Overkategori for creators" og fanen "Aftale" med aftalepapirets versioner.
+- **Forslag → Go-live:** godkend med tillæg og kategorinavn, eller afvis med note.
+- **Grundprodukter:** en prisstigning kræver en dato mindst 14 dage frem (ADR-094).
+- **Legacy-produkter:** pluginet sætter ikke deres priser. Aftalepapiret lover 14 dages varsel før prisstigninger, så varsel creatoren selv, før du hæver prisen på et legacy-produkt i WooCommerce.
+- **Før funktionen slås til:** godkend aftaleteksten. Udkastet står i [features/creator-signup.md](features/creator-signup.md).

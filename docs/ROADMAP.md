@@ -26,6 +26,7 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | Notifikationer | 29 | E-mail i butikkens design og klokken i dashboardet, admin-side med til/fra og eksempler (plan godkendt 2026-10-27; udgives som 1.4.0; ADR-079) |
 | Produktdesigner | 30 | Creatorens egen produktdesigner med grundprodukter, godkendelse og kataloger (plan godkendt 2026-10-28; ADR-080–087) |
 | Alert-designer 2.0 | 31 | Enklere alert-designer: lærred, sidebjælke, layouts, variationer og oplæsning (plan godkendt 2026-11-03; ADR-088–089) |
+| Selvoprettelse | 32 | Creators opretter sig selv, accepterer aftalepapiret og går live efter godkendelse; 14 dages prisvarsel (plan godkendt 2026-11-06; ADR-091–094) |
 | Senere | – | Integrations, campaigns, support, reporting, hardening og E2E |
 
 ---
@@ -888,12 +889,55 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 
 **Projektejerens feedback fra Local (2026-11-03):** editoren skal være én samlet boks, bredere end før, og alle grupper af felter skal kunne foldes ud og sammen (indbygget i 31.7).
 
+## Fase 32 – Creators opretter sig selv, aftalepapir og "gå live" 📝 (plan godkendt 2026-11-06; ADR-091–094)
+
+**Projektejerens ønske (2026-11-06):**
+- Creators skal selv kunne oprette sig.
+- Under oprettelsen godkender de "aftalepapiret", som bygger på den hidtidige samarbejdsaftale. Allerede godkendte creators skal ikke godkende det.
+- En ny creator trykker "Anmod om at gå live på shoppen". Indtil da er creatoren helt skjult på hjemmesiden.
+
+**Projektejerens valg (2026-11-06):**
+- **Oprettelse:** åben for alle, med e-mailbekræftelse.
+- **Før go-live:** creatoren forbereder alt (profil, kategoriforslag, designs), men intet vises.
+- **Alder:** mindst 18 år.
+- **Aftaleteksten:** admin redigerer den med versioner, og en væsentlig ændring kræver ny accept.
+- **Kategori:** pluginet opretter kategorien ved go-live under en valgt overkategori (ADR-093).
+- **Priser:** 14 dages varsel på prisstigninger bygges (ADR-094).
+- **Oplæsning** åbner først efter go-live. "Se det færdige produkt" er åben uden ekstra loft.
+- **Eksisterende creators** skal ikke acceptere (ADR-092).
+
+**Trin:**
+- **32.1 ADR'er og plan:**
+  - ADR-091 (selvoprettelse og go-live), ADR-092 (aftalepapir), ADR-093 (kategori ved go-live) og ADR-094 (prisvarsel);
+  - [features/creator-signup.md](features/creator-signup.md) med udkastet til aftalepapiret;
+  - SECURITY, USER-ROLES og ADMIN.
+- **32.2 Live-status og forhindring:** migration 45 (`live_since`, `agreement_required` og de nye tabeller). En creator, der ikke er live, får ingen kategori, produktkobling, rabatkode, designer-produkter i butikken eller oplæsning. Kategoriforslag kan først godkendes efter go-live.
+- **32.3 Aftalepapir:**
+  - admin-editor med versioner;
+  - accept i dashboardet og `/me/agreement`;
+  - porte for go-live og udbetaling;
+  - audit.
+- **32.4 Selvoprettelse:**
+  - indstillinger og den offentlige side;
+  - bruger uden rolle, bekræftelse via link til ny adgangskode og derefter creator-rollen;
+  - honeypot og rate limit, ingen afsløring af eksisterende konti;
+  - oprydning efter 7 dage og notifikationer.
+- **32.5 Gå live:**
+  - banner og anmodning i dashboardet;
+  - fanen "Go-live" under Forslag;
+  - godkendelse med tillæg, oprettelse af kategori og anvendelse af ventende designs;
+  - afvisning med note og notifikationer.
+- **32.6 14 dages prisvarsel:** planlagte prisstigninger på grundprodukter, besked til creators, den kommende pris i designeren og job på datoen.
+- **32.7 Review, runtime-test og release 1.6.0.** Runtime-testen på Local tjekker, at en ny creators navn ikke findes i shop, søgning, sitemaps, REST eller Store API før go-live. Bump sker efter projektejerens ønske.
+
+**Før funktionen slås til på live:** projektejeren godkender aftaleteksten. Den er et udkast og ikke juridisk gennemgået (ADR-092).
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |
 | --- | --- |
 | Payouts | Manuelle udbetalinger i fase 23–24. Senere: eksport og evt. integration med betalingsudbyder (kræver ADR efter ADR-016) |
-| Creator-aftaler | Overvejelse, ikke godkendt: digital registrering af creatorens accept af vilkårene for omvendt fakturering i Merch Dashboard. Aftaler indgås i dag uden for pluginet; ikke en afhængighed for fase 23 |
+| Creator-aftaler | Flyttet til fase 32 (ADR-092, 2026-11-06) for selvoprettede creators; eksisterende creators accepterer ikke og har fortsat deres aftale uden for pluginet. |
 | Integrations | Framework for eksterne tjenester med webhooks og HMAC. Hver konkret tjeneste kræver projektejerens eksplicitte godkendelse og en ADR. Dinero og Google Drive er fravalgt (ADR-016). |
 | CVR-register | Udskudt fra første version 2026-10-18 (ADR-062, statusnote): integration med CVR-registret via API, validering af udsteders og creatorens CVR-numre og håndtering af virksomhedsoplysninger. K09's CVR-felter findes, men der registreres ingen værdier før da. Ekstern tjeneste: kræver ADR og projektejerens godkendelse |
 | Campaigns | Tidsbegrænsede kampagner/drops pr. creator |

@@ -1066,7 +1066,7 @@ Relationen er Merch Dashboards forretningsdata. Den administreres dér, hvor cre
 2026-09-26
 
 ## Status
-Accepteret (fase 17, efter trin 4, før implementering). **Implementeringsstatus 2026-09-27:** implementeret i fase 17, trin 6-13 (se PROJECT-STATUS); admin-værktøjet til fuld afstemning og visningen af konflikter som needs attention (tvetydige produkter, inaktive creators og manuelle koblinger, der afviger fra kategorien) er implementeret 2026-09-27; verifikationen i Merch Dashboard Local (roadmappens trin 12) er udført 2026-09-28 (blok-produkteditorens UI og drift uden WooCommerce er ikke kørt manuelt i Local). Beslutningen er uændret. Besluttet af projektejeren. **Ændrer ADR-030 D6, ADR-031 og ADR-032 pkt. 1 og 3** (se "Ændringer af tidligere ADR'er" nedenfor). Supplerer ADR-011 og ADR-025. Dette er en **bevidst arkitekturændring**, ikke en undtagelse fra de tidligere beslutninger. Implementeringen var ikke startet, da beslutningen blev taget (se implementeringsstatus ovenfor). **Suppleret af ADR-034 (2026-09-26):** kategori-afstemningen (pkt. 7) skal skrive gennem `ProtectedMetaWrite::for_category_reconciliation()`; begge meta-nøgler er beskyttet mod generiske skriveveje.
+Accepteret (fase 17, efter trin 4, før implementering). **Implementeringsstatus 2026-09-27:** implementeret i fase 17, trin 6-13 (se PROJECT-STATUS); admin-værktøjet til fuld afstemning og visningen af konflikter som needs attention (tvetydige produkter, inaktive creators og manuelle koblinger, der afviger fra kategorien) er implementeret 2026-09-27; verifikationen i Merch Dashboard Local (roadmappens trin 12) er udført 2026-09-28 (blok-produkteditorens UI og drift uden WooCommerce er ikke kørt manuelt i Local). Beslutningen er uændret. Besluttet af projektejeren. **Ændrer ADR-030 D6, ADR-031 og ADR-032 pkt. 1 og 3** (se "Ændringer af tidligere ADR'er" nedenfor). Supplerer ADR-011 og ADR-025. Dette er en **bevidst arkitekturændring**, ikke en undtagelse fra de tidligere beslutninger. Implementeringen var ikke startet, da beslutningen blev taget (se implementeringsstatus ovenfor). **Suppleret af ADR-034 (2026-09-26):** kategori-afstemningen (pkt. 7) skal skrive gennem `ProtectedMetaWrite::for_category_reconciliation()`; begge meta-nøgler er beskyttet mod generiske skriveveje. **Ændret af ADR-093 (2026-11-06):** pluginet må oprette en creators kategori ved go-live; det sletter stadig aldrig en kategori.
 
 ## Context
 ADR-031 gjorde creator-kategori-mappingen til et rent input til en engangs-backfill: ingen automatisk synkronisering, og mapping-ændringer og sletning af kategorier påvirkede aldrig produkternes ejerskab. ADR-032 gjorde creatorens redigeringsside til den normale manuelle skrivevej. Trin 4 leverede den, inkl. søgning på produktkategori, som kun hjælper admin med at finde produkter.
@@ -3320,7 +3320,7 @@ ADR-025, ADR-037, ADR-038, ADR-049, ADR-052, ADR-054, ADR-055, ADR-057, ADR-058,
 2026-10-17
 
 ## Status
-Accepteret som forretningsbeslutning af projektejeren 2026-10-17. **R4: forretningsmæssigt afklaret med dokumenterede forbehold.** Beslutningen er ikke en juridisk, momsmæssig eller regnskabsmæssig godkendelse af modellen og lukker ingen andre blokeringer (R1–R3, G1–G3 og ADR-059's åbne dele er uændrede). Supplerer ADR-060.
+Accepteret som forretningsbeslutning af projektejeren 2026-10-17. **R4: forretningsmæssigt afklaret med dokumenterede forbehold.** Beslutningen er ikke en juridisk, momsmæssig eller regnskabsmæssig godkendelse af modellen og lukker ingen andre blokeringer (R1–R3, G1–G3 og ADR-059's åbne dele er uændrede). Supplerer ADR-060. **Ændret af ADR-092 (2026-11-06):** eksisterende creators skal ikke acceptere standardaftalen, og selvoprettede creators accepterer aftalepapiret digitalt i Merch Dashboard (pkt. 4 og 5).
 
 ## Context
 R4, aftalegrundlaget for omvendt fakturering ([reports/2026-10-10-fase-23-payouts.md](reports/2026-10-10-fase-23-payouts.md), afsnit 13.6 punkt 11 og 13.7), afventede ekstern afklaring hos revisor eller jurist. Grundlaget for omvendt fakturering er projektejerens gengivelse af en mundtlig vejledning fra SKAT (rapportens afsnit 13; ADR-060). Vilkårene for samarbejdet med creators (streamere) er hidtil gennemgået mundtligt, og aftaler indgås uden for Merch Dashboard; pluginet har intet accept-flow (13.7).
@@ -4484,7 +4484,7 @@ ADR-007, ADR-029, ADR-049, ADR-062, ADR-068, ADR-072, ADR-075, ADR-077, ADR-078.
 2026-10-28
 
 ## Status
-Accepteret (fase 30, trin 30.1). Besluttet af projektejeren 2026-10-28; planen er godkendt samme dag. Ikke implementeret endnu. Undtagelse fra ADR-049 pkt. 1 (kun for designer-produkter). Supplerer ADR-007, ADR-034/035, ADR-047, ADR-062, ADR-064, ADR-067, ADR-068, ADR-077, ADR-078 og ADR-079.
+Accepteret (fase 30, trin 30.1). Besluttet af projektejeren 2026-10-28; planen er godkendt samme dag. Ikke implementeret endnu. Undtagelse fra ADR-049 pkt. 1 (kun for designer-produkter). Supplerer ADR-007, ADR-034/035, ADR-047, ADR-062, ADR-064, ADR-067, ADR-068, ADR-077, ADR-078 og ADR-079. **Pkt. 10 ændret af ADR-094 (2026-11-06):** en prisstigning på et grundprodukt varsles 14 dage før og gælder først på datoen.
 
 **Statusnote 2026-10-31 (sletteanmodninger):** pkt. 7 står ved magt: pluginet berører aldrig legacy-produkter. En creator kan bede om at få et legacy-produkt slettet, men det er kun en sag, som admin behandler i WooCommerce (ADR-083).
 
@@ -5292,3 +5292,197 @@ Kun med capability, nonce bundet til creatoren og fingeraftryk. Intet sendes ud,
 
 ## Related
 ADR-047, ADR-049, ADR-051, ADR-054, ADR-060, ADR-062, ADR-064
+
+# ADR-091: Creators opretter sig selv og går live efter godkendelse
+
+## Date
+2026-11-06
+
+## Status
+Accepteret af projektejeren 2026-11-06 (fase 32). Bevidst undtagelse fra "ingen offentlige endpoints" (SECURITY.md) og fra, at kun admin opretter creators (USER-ROLES.md). ADR-006, ADR-007 og ADR-020 er uændrede.
+
+## Context
+- I dag opretter kun en administrator creators, og pluginet opretter aldrig WordPress-brugere.
+- Pluginet skjuler intet i butikken. Selv en inaktiv creators kategori og produkter er synlige (ADR-076), og legacy-produkter må aldrig ændres (ADR-080 pkt. 7).
+- Projektejeren vil have, at creators selv kan oprette sig, forberede deres shop og først blive synlige, når en administrator har godkendt, at de går live.
+
+## Decision
+1. **Til og fra:** indstillingen "Creators kan oprette sig selv" er slået fra som standard.
+2. **Offentlig side** `/<dashboard-slug>/opret` i dashboardets standalone-shell med samme CSP.
+   - Felter: creatornavn, e-mail, kanal-link, "Jeg er fyldt 18 år" og accept af aftalepapiret (ADR-092).
+   - En logget ind bruger, der ikke er creator, kobles direkte. E-mailfeltet udelades.
+3. **Konto:**
+   - Pluginet opretter en WordPress-bruger uden rolle og en creator med status `active`, `live_since` NULL og `agreement_required` 1.
+   - Mailen "Bekræft e-mail og vælg adgangskode" bruger WordPress' eget link til ny adgangskode (`get_password_reset_key`).
+   - Når adgangskoden er valgt første gang, er e-mailen bekræftet. Først da får brugeren rollen `merchboard_creator`, som er den eneste rolle, pluginet nogensinde giver. Uden rollen er der ingen adgang (ADR-006).
+4. **Ingen afsløring:** findes e-mailen allerede, er svaret det samme. Ejeren af e-mailen får en mail om at logge ind og oprette sig derfra.
+5. **Spam:** honeypot, mindste udfyldningstid, rate limit pr. hash af IP-adressen (5 pr. time) og pr. e-mail. Ingen CAPTCHA, fordi det er en ekstern tjeneste (ADR-016).
+6. **Oprydning:** en ubekræftet oprettelse slettes efter 7 dage, både bruger, creator og accept. Det sker kun for brugere, pluginet selv har oprettet, som aldrig er bekræftet og ikke har fået andre roller.
+7. **Live:** ny kolonne `live_since` på `merchboard_creators`.
+   - Eksisterende creators og creators oprettet af admin er live fra oprettelsen.
+   - En creator, der ikke er live, kan bruge dashboardet (profil, kategoriforslag, designer og alerts), men intet når butikken.
+8. **Forhindring frem for filtrering:** en creator, der ikke er live, får aldrig:
+   - en kategori-mapping;
+   - en produktkobling (admin- eller kategorikilde);
+   - en rabatkode;
+   - et anvendt designer-produkt. Et godkendt design venter uden WooCommerce-produkt og uden medier.
+   - Et kategoriforslag kan først godkendes efter go-live.
+   - Oplæsning (ADR-089) åbner først, når creatoren er live.
+   - Derfor er der intet at skjule i shop-lister, søgning, sitemaps, menuer, REST eller Store API.
+9. **Gå live:** creatoren anmoder fra dashboardet, når den gældende aftale er accepteret. Admin godkender eller afviser med note på fanen "Go-live" under Forslag (`merchboard_manage_creators`).
+   - **Godkendelse** sætter `live_since` og tillægget. Efter commit oprettes kategorien (ADR-093), og ventende designs anvendes.
+   - `live_since` sættes kun én gang. At stoppe en creator sker som i dag med status `inactive`.
+10. **Notifikationer:**
+    - admin: ny creator og anmodning om at gå live;
+    - creator: bekræft e-mail, godkendt og afvist.
+11. **Audit:** `creator_signed_up`, `creator_signup_verified`, `creator_signup_expired`, `go_live_requested`, `go_live_approved` og `go_live_declined`.
+
+## Alternatives considered
+- **Skjule creatoren med filtre på butikkens forespørgsler:** fravalgt. Der er for mange veje (Store API, sitemaps, menuer, widgets og andre plugins), og legacy-produkter må ikke ændres.
+- **En ny status `pending`:** fravalgt. `active` styrer adgangen til dashboardet (`CreatorContext`) og bør beholde sin betydning. Synlighed i butikken er et andet spørgsmål.
+- **Invitationslink i stedet for åben oprettelse:** fravalgt af projektejeren.
+
+## Reason
+En creator skal kunne komme i gang uden admin, men butikken må ikke vise noget, før en administrator har sagt god for det.
+
+## Security
+- Formularen er det første offentlige skrivende endpoint. Det kræver nonce, rate limit, honeypot og validering i servicen.
+- Der gives aldrig en rolle fra input. Brugerens e-mail eller eksistens afsløres ikke.
+- Hashen af IP-adressen gemmes højst 24 timer.
+
+## Migration/data implications
+Migration 45:
+- `live_since` og `agreement_required` på `merchboard_creators`; eksisterende rækker får `live_since = created_at`;
+- tabellerne `merchboard_creator_signups` og `merchboard_go_live_requests`.
+
+Alle slettes ved opt-in-afinstallation.
+
+## Consequences
+- Admin får en ny godkendelsesopgave.
+- Ubekræftede konti forsvinder af sig selv.
+- Projektejeren skal godkende aftaleteksten, før funktionen slås til.
+
+## Related
+ADR-006, ADR-007, ADR-016, ADR-020, ADR-026, ADR-033, ADR-076, ADR-077, ADR-080, ADR-083, ADR-089, ADR-092, ADR-093
+
+# ADR-092: Aftalepapiret accepteres digitalt med versioner
+
+## Date
+2026-11-06
+
+## Status
+Accepteret af projektejeren 2026-11-06 (fase 32). **Ændrer ADR-061 pkt. 4 og 5:**
+- Eksisterende creators skal ikke acceptere standardaftalen.
+- Nye, selvoprettede creators accepterer den i Merch Dashboard.
+
+ADR-061's øvrige punkter og forbehold er uændrede. Aftaleteksten er et udkast, indtil projektejeren eller en advokat har godkendt den.
+
+## Context
+ADR-061 lagde aftaler og accepter uden for pluginet. Med selvoprettelse (ADR-091) skal en ny creator acceptere aftalepapiret, før samarbejdet starter. Det sker i pluginet. Udkastet bygger på den hidtidige samarbejdsaftale; se [features/creator-signup.md](features/creator-signup.md).
+
+## Decision
+1. **Versioner:** admin redigerer teksten under Indstillinger → Aftale og udgiver den som en ny version (`merchboard_agreement_versions`).
+   - En udgivet version ændres aldrig.
+   - Ved udgivelsen markeres, om ændringen er væsentlig.
+   - Pluginet leverer et dansk udkast som standardtekst. Virksomhedens adresse og CVR står ikke i repoet; admin skriver dem ind.
+2. **Accept:** `merchboard_agreement_acceptances` gemmer creator, bruger, version, tidspunkt og bekræftelsen af at være fyldt 18 år.
+   - Tabellen får kun tilføjelser, og der er ingen tilbagetrækning.
+   - "Se som creator" kan ikke acceptere.
+3. **Hvem:**
+   - Kun creators med `agreement_required` (selvoprettede) skal acceptere.
+   - Eksisterende og admin-oprettede creators er undtaget. Admin kan sætte kravet på en creator.
+4. **Ny version:**
+   - En væsentlig ændring kræver ny accept af creators med kravet.
+   - Uden den kan de ikke anmode om at gå live eller om udbetaling. Resten af dashboardet virker.
+   - En mindre ændring vises bare, og creators får besked.
+5. **Audit:** `agreement_published` (version og om ændringen er væsentlig) og `agreement_accepted` (version).
+
+## Alternatives considered
+- **Fast tekst i pluginet:** fravalgt af projektejeren; teksten skal kunne ændres uden ny pluginversion.
+- **Alle creators accepterer:** fravalgt af projektejeren for eksisterende creators.
+
+## Reason
+Accepten skal kunne dokumenteres: præcis hvilken tekst, hvem og hvornår.
+
+## Security
+Teksten renses (`wp_kses_post`) og vises kun i dashboardet og på oprettelsessiden. Kun `merchboard_manage_creators` kan udgive.
+
+## Migration/data implications
+Migration 45: tabellerne `merchboard_agreement_versions` og `merchboard_agreement_acceptances`. De slettes ved opt-in-afinstallation.
+
+## Consequences
+- Aftaleteksten er ikke juridisk gennemgået (som ADR-061's forbehold).
+- Hvad en manglende accept betyder juridisk for allerede optjent provision, er stadig uafklaret (ADR-061, forbehold 4 og 5).
+
+## Related
+ADR-060, ADR-061, ADR-071, ADR-091
+
+# ADR-093: Pluginet opretter creatorens produktkategori ved go-live
+
+## Date
+2026-11-06
+
+## Status
+Accepteret af projektejeren 2026-11-06 (fase 32). **Ændrer ADR-033 pkt. 1** ("Produktkategorierne selv slettes eller ændres aldrig") med én undtagelse: pluginet må oprette en kategori. Det sletter stadig aldrig en kategori.
+
+## Context
+En selvoprettet creator har ingen kategori, og pluginet må i dag ikke oprette en. Projektejeren vil ikke oprette den manuelt hver gang.
+
+## Decision
+1. **Indstilling:** "Overkategori for creators" (en `product_cat`). Uden den kan go-live ikke godkendes.
+2. **Ved godkendelsen** af go-live (ADR-091 pkt. 9) opretter pluginet en kategori med det navn, admin godkender (som standard creatornavnet), under overkategorien.
+   - WordPress laver slug'en.
+   - Kategorien mappes til creatoren med den eksisterende service, så afstemningen (ADR-033) kører som ved en manuel mapping.
+3. **Idempotent:** har creatoren allerede en mapping, oprettes intet. Fejler oprettelsen, viser admin-siden fejlen med "Prøv igen".
+4. **Kategoriforslag** (ADR-077) skriver derefter til kategorien som i dag.
+
+## Alternatives considered
+**Admin opretter kategorien i WooCommerce og vælger den:** fravalgt af projektejeren.
+
+## Reason
+Én godkendelse skal gøre creatoren synlig uden manuelle trin.
+
+## Security
+Kun efter godkendelse med `merchboard_manage_creators` og nonce. Navnet renses med `sanitize_text_field`.
+
+## Consequences
+Kategoriplugins, der reagerer på nye kategorier (fx "CCMerch Kategoribannere"), ser kategorien som en almindelig ny kategori. Det verificeres i runtime-testen.
+
+## Related
+ADR-033, ADR-077, ADR-091
+
+# ADR-094: Prisstigninger på grundprodukter varsles 14 dage før
+
+## Date
+2026-11-06
+
+## Status
+Accepteret af projektejeren 2026-11-06 (fase 32). **Ændrer ADR-080 pkt. 10:** en ny grundpris gælder ikke længere altid med det samme.
+
+## Context
+Den hidtidige samarbejdsaftale lover skriftligt varsel 14 dage før en prisstigning. Projektejeren vil have, at det også gælder i aftalepapiret, og at pluginet sikrer det.
+
+## Decision
+1. **Omfang:** grundprodukternes priser, dvs. grundpris, pris pr. størrelse og priser for ekstra store og små områder.
+2. **Stigning:** stiger blot én af priserne, gemmes hele det nye prissæt som en planlagt prisændring med en dato mindst 14 dage frem.
+   - Creators med produkter eller designs på grundproduktet får besked med det samme, med før, efter og dato.
+   - Designeren viser den kommende pris.
+3. **På datoen** sætter et Action Scheduler-job priserne, og den eksisterende genberegning (ADR-080 pkt. 10) kører.
+4. **Fald og uændrede priser** gælder med det samme som i dag.
+5. Der kan kun være én planlagt ændring pr. grundprodukt. En ny erstatter den gamle, og den kan annulleres.
+6. **Ikke omfattet:**
+   - Legacy-produkternes priser sætter admin selv i WooCommerce (ADR-049). Varslet er en manuel pligt, som ADMIN.md beskriver.
+   - Digitaliseringsgebyret (ADR-086) vises, før designet sendes.
+
+## Alternatives considered
+**Ændre aftaleteksten til "besked ved ændring":** fravalgt af projektejeren.
+
+## Reason
+Aftalens løfte skal holdes af systemet, ikke af hukommelsen.
+
+## Consequences
+- Et design, der godkendes inden datoen, får den nuværende pris og følger med ved prisændringen.
+- Audit: `designer_price_scheduled`, `designer_price_schedule_cancelled` og `designer_price_applied`.
+
+## Related
+ADR-049, ADR-080, ADR-086, ADR-092
