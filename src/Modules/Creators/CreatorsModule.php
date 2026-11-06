@@ -17,6 +17,15 @@ use MerchBoard\Modules\Creators\Admin\AgreementSettingsSection;
 use MerchBoard\Modules\Creators\Agreement\Agreement;
 use MerchBoard\Modules\Creators\Agreement\AgreementRepository;
 use MerchBoard\Modules\Creators\Rest\MeAgreementController;
+use MerchBoard\Modules\Creators\Admin\SignupSettingsSection;
+use MerchBoard\Modules\Creators\Signup\CreatorSignup;
+use MerchBoard\Modules\Creators\Signup\SignupMails;
+use MerchBoard\Modules\Creators\Signup\SignupPage;
+use MerchBoard\Modules\Creators\Signup\SignupRepository;
+use MerchBoard\Modules\Creators\Signup\SignupSettings;
+use MerchBoard\Modules\Dashboard\DashboardRoute;
+use MerchBoard\Modules\Notifications\Email\EmailRenderer;
+use MerchBoard\Modules\Notifications\Email\Mailer;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
 use MerchBoard\Modules\Admin\Approvals\ApprovalsPage;
@@ -88,7 +97,55 @@ final class CreatorsModule implements Module {
 		add_action(
 			'admin_init',
 			static function () use ( $container ): void {
+				$container->get( SignupSettingsSection::class )->register();
 				$container->get( AgreementSettingsSection::class )->register();
+			}
+		);
+
+		// Creators who sign themselves up (ADR-091): the public page, the e-mail check and the clean-up.
+		$container->set( SignupRepository::class, static fn( Container $c ): SignupRepository => new SignupRepository( $c->get( wpdb::class ) ) );
+		$container->set(
+			CreatorSignup::class,
+			static fn( Container $c ): CreatorSignup => new CreatorSignup(
+				$c->get( CreatorRepository::class ),
+				$c->get( SignupRepository::class ),
+				$c->get( Agreement::class ),
+				$c->get( AgreementRepository::class ),
+				$c->get( UserAccounts::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				new SignupMails( new EmailRenderer(), new Mailer() ),
+				$c->get( Logger::class ),
+				static fn(): string => $c->get( SignupPage::class )->url()
+			)
+		);
+		$container->set( SignupPage::class, static fn( Container $c ): SignupPage => new SignupPage( $c->get( DashboardRoute::class ), $c->get( CreatorSignup::class ), $c->get( Agreement::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );
+		$container->set( SignupSettingsSection::class, static fn( Container $c ): SignupSettingsSection => new SignupSettingsSection( $c->get( Agreement::class ), $c->get( SignupPage::class ), $c->get( Logger::class ) ) );
+		// Before the dashboard shell (priority 0): the one dashboard page without a login.
+		add_action(
+			'template_redirect',
+			static function () use ( $container ): void {
+				$container->get( SignupPage::class )->handle_request();
+			},
+			-1
+		);
+		// The first password proves the e-mail: the user gets the creator role.
+		add_action(
+			'after_password_reset',
+			static function ( mixed $user ) use ( $container ): void {
+				$container->get( CreatorSignup::class )->verified( $user );
+			}
+		);
+		// Unverified sign-ups are removed after 7 days; checked at most once a day, after the response.
+		add_action(
+			'shutdown',
+			static function () use ( $container ): void {
+				if ( ! SignupSettings::enabled() || false !== get_transient( 'merchboard_signup_cleanup' ) ) {
+					return;
+				}
+
+				set_transient( 'merchboard_signup_cleanup', 1, DAY_IN_SECONDS );
+				$container->get( CreatorSignup::class )->clean_up();
 			}
 		);
 

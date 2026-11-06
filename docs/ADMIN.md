@@ -518,7 +518,7 @@ Kræver WooCommerce ≥ 10.3. Med en ældre version vises kun en requirements-no
   - Ingen AJAX-, REST- eller `nopriv`-rute, og ingen ny persistent tilstand.
 
 ## Selvoprettelse og go-live (fase 32, planlagt, ADR-091–094)
-- **Indstillinger:** "Creators kan oprette sig selv" (fra som standard) og "Overkategori for creators".
+- **Indstillinger → Aftale, "Creators, der opretter sig selv" ✅ (32.4):** "Creators kan oprette sig selv" (fra som standard; kan først slås til, når en version af aftalen er udgivet), "Overkategori for creators" og adressen på oprettelsessiden (`/<dashboard-slug>/opret`). Når en ny creator har bekræftet sin e-mail, får admin notifikationen "Ny creator har oprettet sig" med kanal-linket.
 - **Indstillinger → Aftale ✅ (32.3):** aftalepapiret som tekst (HTML) med pladsholderne [COMPANY], [ADDRESS], [CVR] og [EMAIL], som udfyldes fra firmaoplysningerne, når creators læser den. "Gem kladde" gemmer uden at vise noget; "Udgiv" gør teksten til næste version (kun når hver pladsholder har en værdi). Afkryds "væsentlig ændring", når creators skal acceptere igen; uden afkrydsning får de kun besked. Tabellen viser versionerne og antal accepter. Kræver `merchboard_manage_creators`; audit `agreement_published`.
 - **Forslag → Go-live:** godkend med tillæg og kategorinavn, eller afvis med note.
 - **Grundprodukter:** en prisstigning kræver en dato mindst 14 dage frem (ADR-094).

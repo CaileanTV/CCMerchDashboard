@@ -811,4 +811,23 @@ enum AuditAction: string {
 	 * version.
 	 */
 	case AgreementAccepted = 'agreement_accepted';
+
+	/**
+	 * Someone signed up as a creator (ADR-091). Context: existing_user
+	 * (a logged-in user was linked; false when the plugin created the user).
+	 * No e-mail, name or address in the log.
+	 */
+	case CreatorSignedUp = 'creator_signed_up';
+
+	/**
+	 * A creator who signed up verified their e-mail and got the creator
+	 * role (ADR-091). System action.
+	 */
+	case CreatorSignupVerified = 'creator_signup_verified';
+
+	/**
+	 * An unverified sign-up expired and was removed with its user (ADR-091).
+	 * Context: creator_id. System action.
+	 */
+	case CreatorSignupExpired = 'creator_signup_expired';
 }

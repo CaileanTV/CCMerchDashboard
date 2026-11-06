@@ -115,7 +115,7 @@ Tilladte undtagelser, som er nødvendige for værktøjerne selv: OS-temp-mapper,
 - **Integrationstests (projektejerens beslutning 2026-11-04, erstatter 2026-10-25):** integrationstestene køres gennem CI, som kører hele suiten mod MySQL efter hvert push. Før commit køres `npm run lint` og `npm test` lokalt. Lokalt køres integrationstests kun målrettet (`npm run test:integration -- --filter …`), når en fejl skal findes eller rettes, fx efter en rød CI-kørsel. En rød CI-kørsel rettes før næste trin. Grøn CI på den commit, der tagges, er porten for et release; den fulde suite køres aldrig lokalt.
 - **Faste lister i tests (projektejerens ønske 2026-11-06):** flere tests holder faste lister eller antal over pluginets kataloger. CI er gentagne gange blevet rød alene af den grund. Når et af disse tilføjes, opdateres testene, og de køres målrettet med `--filter` før push:
   - **en `/me`-route:** `MeEndpointTest` (den præcise liste i registreringsrækkefølge);
-  - **en notifikationstype:** antallet i `NotificationsTest` og `DesignerNotificationsTest` samt tabellen i features/notifications.md;
+  - **en notifikationstype:** antallet i `NotificationsTest` og `DesignerNotificationsTest`, for en admin-type også den ordnede liste af `admin_*`-nøgler i `NotificationsTest`, samt tabellen i features/notifications.md;
   - **en audit-handling:** den lukkede liste i `AuditTrailTest` og etiketten i `AuditLogFormatter`;
   - **en tabel:** `Tables` og listerne i `TablesTest`, `TransactionSupportTest`, `TransactionTest` og `UninstallerTest`;
   - **en kolonne på `merchboard_creators`:** `SchemaTest`, `IntegrationTestCase::creator_rows()` og `MigrationTest::rows_without_markup()`;

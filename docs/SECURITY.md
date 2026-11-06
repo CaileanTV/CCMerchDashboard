@@ -370,7 +370,7 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 - **Økonomi:** kommission, udbetalinger og betalingsoplysninger flyttes ikke. Nye creators får afregningsstart = migreringens tidspunkt, så salg, som Product Vendors har afregnet, aldrig udbetales igen.
 - **Roller (26.3):** kun Product Vendors' tre roller fjernes, kun hos den bruger, migreringen koblede til en creator (mens creatoren er aktiv og stadig har brugeren), kun hos bekræftede brugere og kun med `merchboard_manage_creators`, WordPress' `promote_users` og `promote_user` for hver bruger (undtagelse fra ADR-022). Hver ændring auditeres (`vendor_roles_removed`).
 
-## Selvoprettelse og go-live (fase 32, planlagt, ADR-091–093)
+## Selvoprettelse og go-live (fase 32, ADR-091–093; oprettelsen implementeret i 32.4)
 - **Offentlig formular:** oprettelsessiden `/<dashboard-slug>/opret` er en bevidst undtagelse fra "ingen offentlige endpoints". Den er slået fra som standard og har:
   - nonce, honeypot og en mindste udfyldningstid;
   - rate limit pr. hash af IP-adressen (5 pr. time) og pr. e-mail;

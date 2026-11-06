@@ -35,6 +35,7 @@ final class AdminTypes {
 			self::payout_requested(),
 			self::proposal_submitted(),
 			self::product_removal_requested(),
+			self::creator_signed_up(),
 			self::order_decision(),
 			self::sync_failed(),
 			self::reconciliation_failed(),
@@ -149,6 +150,36 @@ final class AdminTypes {
 					array( __( 'Method', 'merchboard' ), self::method( $d ) ),
 				),
 				__( 'Open Payouts', 'merchboard' )
+			)
+		);
+	}
+
+	/**
+	 * Someone signed up as a creator (ADR-091).
+	 */
+	private static function creator_signed_up(): NotificationType {
+		return self::type(
+			'creator_signed_up',
+			static fn(): string => __( 'New creator signed up', 'merchboard' ),
+			static fn(): string => __( 'When someone signs up as a creator and their e-mail is verified (ADR-091). They are not live until you approve it.', 'merchboard' ),
+			true,
+			'merchboard-creators',
+			array(
+				'creator' => 'Nova',
+				'channel' => 'https://www.twitch.tv/nova',
+			),
+			/* translators: %s: creator name. */
+			static fn( NotificationData $d ): string => sprintf( __( '%s signed up as a creator.', 'merchboard' ), $d->text( 'creator' ) ),
+			static fn( NotificationData $d ): EmailMessage => self::message(
+				/* translators: %s: creator name. */
+				sprintf( __( 'New creator: %s', 'merchboard' ), $d->text( 'creator' ) ),
+				__( 'New creator signed up', 'merchboard' ),
+				__( 'A creator signed up and accepted the agreement. They can prepare their shop now; nothing is shown in the shop until you approve their request to go live.', 'merchboard' ),
+				array(
+					array( __( 'Creator', 'merchboard' ), $d->text( 'creator' ) ),
+					array( __( 'Channel', 'merchboard' ), $d->text( 'channel' ) ),
+				),
+				__( 'Open Creators', 'merchboard' )
 			)
 		);
 	}

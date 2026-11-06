@@ -917,7 +917,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
   - accept i dashboardet og `/me/agreement`;
   - porte for go-live og udbetaling;
   - audit.
-- **32.4 Selvoprettelse:**
+- **32.4 Selvoprettelse ✅ (2026-11-06, testet automatisk):**
   - indstillinger og den offentlige side;
   - bruger uden rolle, bekræftelse via link til ny adgangskode og derefter creator-rollen;
   - honeypot og rate limit, ingen afsløring af eksisterende konti;

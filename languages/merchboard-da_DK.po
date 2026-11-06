@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-06T17:39:33+00:00\n"
+"PO-Revision-Date: 2026-11-06T19:05:22+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -713,429 +713,441 @@ msgid "Agreement accepted"
 msgstr "Aftale accepteret"
 
 #: src/Modules/Admin/AuditLogFormatter.php:195
+msgid "Creator signed up"
+msgstr "Creator oprettede sig"
+
+#: src/Modules/Admin/AuditLogFormatter.php:196
+msgid "Creator sign-up verified"
+msgstr "Creators oprettelse bekræftet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:197
+msgid "Unverified sign-up removed"
+msgstr "Ubekræftet oprettelse fjernet"
+
+#: src/Modules/Admin/AuditLogFormatter.php:198
 msgid "Creator started a designer product"
 msgstr "Creator startede et designer-produkt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:196
+#: src/Modules/Admin/AuditLogFormatter.php:199
 msgid "Creator deleted a designer draft"
 msgstr "Creator slettede en designkladde"
 
-#: src/Modules/Admin/AuditLogFormatter.php:197
+#: src/Modules/Admin/AuditLogFormatter.php:200
 msgid "Creator submitted a design for approval"
 msgstr "Creator sendte et design til godkendelse"
 
-#: src/Modules/Admin/AuditLogFormatter.php:198
+#: src/Modules/Admin/AuditLogFormatter.php:201
 msgid "Creator withdrew a design from approval"
 msgstr "Creator trak et design tilbage fra godkendelse"
 
-#: src/Modules/Admin/AuditLogFormatter.php:199
+#: src/Modules/Admin/AuditLogFormatter.php:202
 msgid "Design approved"
 msgstr "Design godkendt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:200
+#: src/Modules/Admin/AuditLogFormatter.php:203
 #: src/Modules/ProductDesigner/DesignerNotifications.php:207
 msgid "Design rejected"
 msgstr "Design afvist"
 
-#: src/Modules/Admin/AuditLogFormatter.php:201
+#: src/Modules/Admin/AuditLogFormatter.php:204
 msgid "Design put in the shop"
 msgstr "Design lagt i butikken"
 
-#: src/Modules/Admin/AuditLogFormatter.php:202
+#: src/Modules/Admin/AuditLogFormatter.php:205
 msgid "Design queued for the shop again"
 msgstr "Design sat i kø til butikken igen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:203
+#: src/Modules/Admin/AuditLogFormatter.php:206
 msgid "Creator discarded a change of a designer product"
 msgstr "Creator annullerede en ændring af et designer-produkt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:204
+#: src/Modules/Admin/AuditLogFormatter.php:207
 msgid "Creator put a designer product in the shop"
 msgstr "Creator satte et designer-produkt i butikken"
 
-#: src/Modules/Admin/AuditLogFormatter.php:205
+#: src/Modules/Admin/AuditLogFormatter.php:208
 msgid "Creator took a designer product out of the shop"
 msgstr "Creator tog et designer-produkt ud af butikken"
 
-#: src/Modules/Admin/AuditLogFormatter.php:206
+#: src/Modules/Admin/AuditLogFormatter.php:209
 msgid "Creator moved a designer product to the deleted designs"
 msgstr "Creator flyttede et designer-produkt til slettede designs"
 
-#: src/Modules/Admin/AuditLogFormatter.php:207
+#: src/Modules/Admin/AuditLogFormatter.php:210
 msgid "Creator deleted a design for good"
 msgstr "Creator slettede et design permanent"
 
-#: src/Modules/Admin/AuditLogFormatter.php:208
+#: src/Modules/Admin/AuditLogFormatter.php:211
 msgid "Creator started a change of a designer product"
 msgstr "Creator startede en ændring af et designer-produkt"
 
-#: src/Modules/Admin/AuditLogFormatter.php:209
+#: src/Modules/Admin/AuditLogFormatter.php:212
 msgid "Base product retired"
 msgstr "Grundprodukt pensioneret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:210
+#: src/Modules/Admin/AuditLogFormatter.php:213
 msgid "Designer product repriced"
 msgstr "Designer-produkt genprissat"
 
-#: src/Modules/Admin/AuditLogFormatter.php:211
+#: src/Modules/Admin/AuditLogFormatter.php:214
 #: src/Modules/ProductDesigner/DesignerNotifications.php:276
 msgid "Designer product taken out of the shop"
 msgstr "Designer-produkt taget ud af butikken"
 
-#: src/Modules/Admin/AuditLogFormatter.php:302
+#: src/Modules/Admin/AuditLogFormatter.php:305
 msgid "WordPress user: none"
 msgstr "WordPress-bruger: ingen"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:304
+#: src/Modules/Admin/AuditLogFormatter.php:307
 #, php-format
 msgid "WordPress user: %s"
 msgstr "WordPress-bruger: %s"
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:307
+#: src/Modules/Admin/AuditLogFormatter.php:310
 #, php-format
 msgid "Triggered by: %s"
 msgstr "Udløst af: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:310
+#: src/Modules/Admin/AuditLogFormatter.php:313
 #, php-format
 msgid "Status: %s"
 msgstr "Status: %s"
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:313
+#: src/Modules/Admin/AuditLogFormatter.php:316
 #, php-format
 msgid "Previous status: %s"
 msgstr "Tidligere status: %s"
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:316
+#: src/Modules/Admin/AuditLogFormatter.php:319
 #, php-format
 msgid "Changed: %s"
 msgstr "Ændret: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:319
+#: src/Modules/Admin/AuditLogFormatter.php:322
 msgid "Reason: the WordPress user was deleted"
 msgstr "Årsag: WordPress-brugeren blev slettet"
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:321
+#: src/Modules/Admin/AuditLogFormatter.php:324
 #, php-format
 msgid "Reason: %s"
 msgstr "Årsag: %s"
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:324
+#: src/Modules/Admin/AuditLogFormatter.php:327
 #, php-format
 msgid "Trigger: %s"
 msgstr "Anledning: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:327
+#: src/Modules/Admin/AuditLogFormatter.php:330
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr "Indstilling: slet alle data, når pluginet slettes"
 
-#: src/Modules/Admin/AuditLogFormatter.php:328
+#: src/Modules/Admin/AuditLogFormatter.php:331
 msgid "Setting: creator dashboard URL slug"
 msgstr "Indstilling: URL-slug for creator-dashboardet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:329
+#: src/Modules/Admin/AuditLogFormatter.php:332
 msgid "Setting: counted order statuses"
 msgstr "Indstilling: tællende ordrestatusser"
 
-#: src/Modules/Admin/AuditLogFormatter.php:330
+#: src/Modules/Admin/AuditLogFormatter.php:333
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr "Indstilling: logo (mediebibliotekets vedhæftnings-ID, 0 = standardlogo)"
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:332
+#: src/Modules/Admin/AuditLogFormatter.php:335
 #, php-format
 msgid "Setting: %s"
 msgstr "Indstilling: %s"
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:336
+#: src/Modules/Admin/AuditLogFormatter.php:339
 #, php-format
 msgid "Previous value: %s"
 msgstr "Tidligere værdi: %s"
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:339
+#: src/Modules/Admin/AuditLogFormatter.php:342
 #, php-format
 msgid "New value: %s"
 msgstr "Ny værdi: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:341
+#: src/Modules/Admin/AuditLogFormatter.php:344
 msgid "New value: enabled"
 msgstr "Ny værdi: slået til"
 
-#: src/Modules/Admin/AuditLogFormatter.php:341
+#: src/Modules/Admin/AuditLogFormatter.php:344
 msgid "New value: disabled"
 msgstr "Ny værdi: slået fra"
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:344
+#: src/Modules/Admin/AuditLogFormatter.php:347
 #, php-format
 msgid "Product: %s"
 msgstr "Produkt: %s"
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:347
+#: src/Modules/Admin/AuditLogFormatter.php:350
 #, php-format
 msgid "Product category: %s"
 msgstr "Produktkategori: %s"
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:350
+#: src/Modules/Admin/AuditLogFormatter.php:353
 #, php-format
 msgid "Product categories: %s"
 msgstr "Produktkategorier: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:353
+#: src/Modules/Admin/AuditLogFormatter.php:356
 msgid "Previous creator: none"
 msgstr "Tidligere creator: ingen"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:355
+#: src/Modules/Admin/AuditLogFormatter.php:358
 #, php-format
 msgid "Previous creator: %s"
 msgstr "Tidligere creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:358
+#: src/Modules/Admin/AuditLogFormatter.php:361
 #, php-format
 msgid "Creator: %s"
 msgstr "Creator: %s"
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:361
+#: src/Modules/Admin/AuditLogFormatter.php:364
 #, php-format
 msgid "Done by an administrator viewing as %s"
 msgstr "Gjort af en administrator, der så som %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:364
+#: src/Modules/Admin/AuditLogFormatter.php:367
 msgid "Kept anonymized for its sales, payouts and settlement documents"
 msgstr "Bevaret anonymt på grund af sine salg, udbetalinger og afregningsbilag"
 
-#: src/Modules/Admin/AuditLogFormatter.php:365
+#: src/Modules/Admin/AuditLogFormatter.php:368
 msgid "Deleted completely (no sales, payouts or settlement documents)"
 msgstr "Slettet helt (ingen salg, udbetalinger eller afregningsbilag)"
 
 #. translators: %s: the creator's former name.
-#: src/Modules/Admin/AuditLogFormatter.php:368
+#: src/Modules/Admin/AuditLogFormatter.php:371
 #, php-format
 msgid "Former name: %s"
 msgstr "Tidligere navn: %s"
 
 #. translators: %s: removal request id.
-#: src/Modules/Admin/AuditLogFormatter.php:371
+#: src/Modules/Admin/AuditLogFormatter.php:374
 #, php-format
 msgid "Removal request: #%s"
 msgstr "Sletteanmodning: #%s"
 
 #. translators: %s: proposal id.
-#: src/Modules/Admin/AuditLogFormatter.php:374
+#: src/Modules/Admin/AuditLogFormatter.php:377
 #, php-format
 msgid "Proposal: #%s"
 msgstr "Forslag: #%s"
 
 #. translators: %s: what the proposal changes, e.g. "banner".
-#: src/Modules/Admin/AuditLogFormatter.php:377
+#: src/Modules/Admin/AuditLogFormatter.php:380
 #, php-format
 msgid "Proposed change: %s"
 msgstr "Foreslået ændring: %s"
 
 #. translators: %s: the administrator's note.
-#: src/Modules/Admin/AuditLogFormatter.php:380
+#: src/Modules/Admin/AuditLogFormatter.php:383
 #, php-format
 msgid "Note to the creator: %s"
 msgstr "Note til creatoren: %s"
 
 #. translators: %s: campaign id.
-#: src/Modules/Admin/AuditLogFormatter.php:383
+#: src/Modules/Admin/AuditLogFormatter.php:386
 #, php-format
 msgid "Campaign: #%s"
 msgstr "Kampagne: #%s"
 
 #. translators: %s: campaign name.
-#: src/Modules/Admin/AuditLogFormatter.php:386
+#: src/Modules/Admin/AuditLogFormatter.php:389
 #, php-format
 msgid "Campaign name: %s"
 msgstr "Kampagnens navn: %s"
 
 #. translators: %s: start and end in UTC.
-#: src/Modules/Admin/AuditLogFormatter.php:389
+#: src/Modules/Admin/AuditLogFormatter.php:392
 #, php-format
 msgid "Period (UTC): %s"
 msgstr "Periode (UTC): %s"
 
 #. translators: %s: comma-separated coupon codes.
-#: src/Modules/Admin/AuditLogFormatter.php:392
+#: src/Modules/Admin/AuditLogFormatter.php:395
 #, php-format
 msgid "Coupon codes: %s"
 msgstr "Kuponkoder: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:394
+#: src/Modules/Admin/AuditLogFormatter.php:397
 msgid "Covers sale prices: yes"
 msgstr "Omfatter tilbudspriser: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:394
+#: src/Modules/Admin/AuditLogFormatter.php:397
 msgid "Covers sale prices: no"
 msgstr "Omfatter tilbudspriser: nej"
 
 #. translators: %d: minutes.
-#: src/Modules/Admin/AuditLogFormatter.php:397
+#: src/Modules/Admin/AuditLogFormatter.php:400
 #, php-format
 msgid "Session length: %d minutes"
 msgstr "Sessionens længde: %d minutter"
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:400
+#: src/Modules/Admin/AuditLogFormatter.php:403
 #, php-format
 msgid "Origin: %s"
 msgstr "Oprindelse: %s"
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:403
+#: src/Modules/Admin/AuditLogFormatter.php:406
 #, php-format
 msgid "Previous origin: %s"
 msgstr "Tidligere oprindelse: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:406
+#: src/Modules/Admin/AuditLogFormatter.php:409
 msgid "Previous link: invalid"
 msgstr "Tidligere tilknytning: ugyldig"
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:408
+#: src/Modules/Admin/AuditLogFormatter.php:411
 #, php-format
 msgid "Previous link: %s"
 msgstr "Tidligere tilknytning: %s"
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:411
+#: src/Modules/Admin/AuditLogFormatter.php:414
 #, php-format
 msgid "Choice: %s"
 msgstr "Valg: %s"
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:414
+#: src/Modules/Admin/AuditLogFormatter.php:417
 #, php-format
 msgid "Run: %s"
 msgstr "Kørsel: %s"
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:417
+#: src/Modules/Admin/AuditLogFormatter.php:420
 #, php-format
 msgid "Scope: %s"
 msgstr "Omfang: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:419
+#: src/Modules/Admin/AuditLogFormatter.php:422
 msgid "Dry run: yes"
 msgstr "Tørkørsel: ja"
 
-#: src/Modules/Admin/AuditLogFormatter.php:419
+#: src/Modules/Admin/AuditLogFormatter.php:422
 msgid "Dry run: no"
 msgstr "Tørkørsel: nej"
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:422
+#: src/Modules/Admin/AuditLogFormatter.php:425
 #, php-format
 msgid "Products evaluated: %s"
 msgstr "Vurderede produkter: %s"
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:425
+#: src/Modules/Admin/AuditLogFormatter.php:428
 #, php-format
 msgid "Order: #%s"
 msgstr "Ordre: #%s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:428
+#: src/Modules/Admin/AuditLogFormatter.php:431
 msgid "WooCommerce order: in the trash"
 msgstr "WooCommerce-ordre: i papirkurven"
 
-#: src/Modules/Admin/AuditLogFormatter.php:429
+#: src/Modules/Admin/AuditLogFormatter.php:432
 msgid "WooCommerce order: deleted"
 msgstr "WooCommerce-ordre: slettet"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:432
+#: src/Modules/Admin/AuditLogFormatter.php:435
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr "Slettede ledger-rækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:435
+#: src/Modules/Admin/AuditLogFormatter.php:438
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr "Slettede cyklushændelser: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:438
+#: src/Modules/Admin/AuditLogFormatter.php:441
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr "Slettede momsrækker: %s"
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:441
+#: src/Modules/Admin/AuditLogFormatter.php:444
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr "Slettede profit-snapshots: %s"
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:444
+#: src/Modules/Admin/AuditLogFormatter.php:447
 #, php-format
 msgid "Creators: %s"
 msgstr "Creators: %s"
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:485
+#: src/Modules/Admin/AuditLogFormatter.php:488
 #, php-format
 msgid "Orders scanned: %s"
 msgstr "Ordrer gennemgået: %s"
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:487
+#: src/Modules/Admin/AuditLogFormatter.php:490
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr "Rækker skrevet: %s"
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:489
+#: src/Modules/Admin/AuditLogFormatter.php:492
 #, php-format
 msgid "Failures by code: %s"
 msgstr "Fejl pr. kode: %s"
 
-#: src/Modules/Admin/AuditLogFormatter.php:502
+#: src/Modules/Admin/AuditLogFormatter.php:505
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:355
 msgid "Registered"
 msgstr "Registreret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:503
+#: src/Modules/Admin/AuditLogFormatter.php:506
 msgid "Already in the ledger"
 msgstr "Allerede i salgsjournalen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:504
+#: src/Modules/Admin/AuditLogFormatter.php:507
 #: build/dashboard.js:66
 msgid "Not counted"
 msgstr "Tæller ikke"
 
-#: src/Modules/Admin/AuditLogFormatter.php:505
+#: src/Modules/Admin/AuditLogFormatter.php:508
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr "Ingen creator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:506
+#: src/Modules/Admin/AuditLogFormatter.php:509
 msgid "Not found"
 msgstr "Ikke fundet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:507
+#: src/Modules/Admin/AuditLogFormatter.php:510
 msgid "Busy"
 msgstr "Optaget"
 
-#: src/Modules/Admin/AuditLogFormatter.php:508
+#: src/Modules/Admin/AuditLogFormatter.php:511
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:262
 msgid "Failed"
 msgstr "Fejlet"
@@ -1143,90 +1155,90 @@ msgstr "Fejlet"
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:518
-#: src/Modules/Admin/AuditLogFormatter.php:544
-#: src/Modules/Admin/AuditLogFormatter.php:603
+#: src/Modules/Admin/AuditLogFormatter.php:521
+#: src/Modules/Admin/AuditLogFormatter.php:547
+#: src/Modules/Admin/AuditLogFormatter.php:606
 #, php-format
 msgid "%1$s: %2$d"
 msgstr "%1$s: %2$d"
 
-#: src/Modules/Admin/AuditLogFormatter.php:531
+#: src/Modules/Admin/AuditLogFormatter.php:534
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:72
 msgid "Sale"
 msgstr "Salg"
 
-#: src/Modules/Admin/AuditLogFormatter.php:532
+#: src/Modules/Admin/AuditLogFormatter.php:535
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:72
 msgid "Refund"
 msgstr "Refundering"
 
-#: src/Modules/Admin/AuditLogFormatter.php:533
+#: src/Modules/Admin/AuditLogFormatter.php:536
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:72
 msgid "Reversal"
 msgstr "Tilbageførsel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:534
+#: src/Modules/Admin/AuditLogFormatter.php:537
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:481
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:72
 msgid "Correction"
 msgstr "Korrektion"
 
-#: src/Modules/Admin/AuditLogFormatter.php:562
+#: src/Modules/Admin/AuditLogFormatter.php:565
 msgid "none"
 msgstr "ingen"
 
-#: src/Modules/Admin/AuditLogFormatter.php:586
+#: src/Modules/Admin/AuditLogFormatter.php:589
 msgid "Linked"
 msgstr "Linket"
 
-#: src/Modules/Admin/AuditLogFormatter.php:587
+#: src/Modules/Admin/AuditLogFormatter.php:590
 msgid "Moved"
 msgstr "Flyttet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:588
+#: src/Modules/Admin/AuditLogFormatter.php:591
 msgid "Removed"
 msgstr "Fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:589
+#: src/Modules/Admin/AuditLogFormatter.php:592
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:110
 msgid "Unchanged"
 msgstr "Uændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:590
-#: src/Modules/Admin/AuditLogFormatter.php:742
+#: src/Modules/Admin/AuditLogFormatter.php:593
+#: src/Modules/Admin/AuditLogFormatter.php:745
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:241
 msgid "Manual"
 msgstr "Manuel"
 
-#: src/Modules/Admin/AuditLogFormatter.php:591
+#: src/Modules/Admin/AuditLogFormatter.php:594
 msgid "Ambiguous"
 msgstr "Tvetydig"
 
-#: src/Modules/Admin/AuditLogFormatter.php:592
-#: src/Modules/Admin/AuditLogFormatter.php:802
+#: src/Modules/Admin/AuditLogFormatter.php:595
+#: src/Modules/Admin/AuditLogFormatter.php:805
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
 #: build/dashboard.js:68
 msgid "Inactive"
 msgstr "Inaktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:593
+#: src/Modules/Admin/AuditLogFormatter.php:596
 msgid "Errors"
 msgstr "Fejl"
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:622
+#: src/Modules/Admin/AuditLogFormatter.php:625
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr "#%d (findes ikke længere)"
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:637
+#: src/Modules/Admin/AuditLogFormatter.php:640
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -1235,7 +1247,7 @@ msgstr "Creator #%d (ikke fundet)"
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:706
+#: src/Modules/Admin/AuditLogFormatter.php:709
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:589
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:422
@@ -1244,103 +1256,103 @@ msgid "%1$s (#%2$d)"
 msgstr "%1$s (#%2$d)"
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:706
+#: src/Modules/Admin/AuditLogFormatter.php:709
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:586
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:419
 msgid "(no name)"
 msgstr "(intet navn)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:716
+#: src/Modules/Admin/AuditLogFormatter.php:719
 msgid "the product was added to a mapped category"
 msgstr "produktet blev tilføjet en mappet kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:717
+#: src/Modules/Admin/AuditLogFormatter.php:720
 msgid "the product left its mapped category"
 msgstr "produktet forlod sin mappede kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:718
+#: src/Modules/Admin/AuditLogFormatter.php:721
 msgid "the product moved to another creator's category"
 msgstr "produktet flyttede til en anden creators kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:719
+#: src/Modules/Admin/AuditLogFormatter.php:722
 msgid "product categories changed"
 msgstr "produktkategorier blev ændret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:720
+#: src/Modules/Admin/AuditLogFormatter.php:723
 msgid "a category mapping was created"
 msgstr "en kategorimapping blev oprettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:721
+#: src/Modules/Admin/AuditLogFormatter.php:724
 msgid "a category mapping was removed"
 msgstr "en kategorimapping blev fjernet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:722
+#: src/Modules/Admin/AuditLogFormatter.php:725
 msgid "the creator was activated"
 msgstr "creatoren blev aktiveret"
 
-#: src/Modules/Admin/AuditLogFormatter.php:723
+#: src/Modules/Admin/AuditLogFormatter.php:726
 msgid "the product category was deleted"
 msgstr "produktkategorien blev slettet"
 
-#: src/Modules/Admin/AuditLogFormatter.php:724
+#: src/Modules/Admin/AuditLogFormatter.php:727
 msgid "categories of several creators (ambiguous)"
 msgstr "kategorier fra flere creators (tvetydig)"
 
-#: src/Modules/Admin/AuditLogFormatter.php:725
+#: src/Modules/Admin/AuditLogFormatter.php:728
 msgid "full reconciliation"
 msgstr "fuld afstemning"
 
-#: src/Modules/Admin/AuditLogFormatter.php:726
+#: src/Modules/Admin/AuditLogFormatter.php:729
 msgid "an administrator"
 msgstr "en administrator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:727
+#: src/Modules/Admin/AuditLogFormatter.php:730
 msgid "the administrator stopped viewing as the creator"
 msgstr "administratoren stoppede selv med at se som creatoren"
 
-#: src/Modules/Admin/AuditLogFormatter.php:728
+#: src/Modules/Admin/AuditLogFormatter.php:731
 msgid "the session expired"
 msgstr "sessionen udløb"
 
-#: src/Modules/Admin/AuditLogFormatter.php:729
+#: src/Modules/Admin/AuditLogFormatter.php:732
 msgid "the administrator logged out"
 msgstr "administratoren loggede ud"
 
-#: src/Modules/Admin/AuditLogFormatter.php:730
+#: src/Modules/Admin/AuditLogFormatter.php:733
 msgid "the administrator viewed another creator"
 msgstr "administratoren så som en anden creator"
 
-#: src/Modules/Admin/AuditLogFormatter.php:743
+#: src/Modules/Admin/AuditLogFormatter.php:746
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:128
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:312
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:244
 msgid "Product category"
 msgstr "Produktkategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:755
+#: src/Modules/Admin/AuditLogFormatter.php:758
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Remove category-managed links"
 msgstr "Fjern kategoristyrede tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:756
+#: src/Modules/Admin/AuditLogFormatter.php:759
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:384
 msgid "Keep as manual links"
 msgstr "Behold som manuelle tilknytninger"
 
-#: src/Modules/Admin/AuditLogFormatter.php:768
+#: src/Modules/Admin/AuditLogFormatter.php:771
 msgid "all relevant products"
 msgstr "alle relevante produkter"
 
-#: src/Modules/Admin/AuditLogFormatter.php:769
+#: src/Modules/Admin/AuditLogFormatter.php:772
 msgid "the products of one category"
 msgstr "produkterne i én kategori"
 
-#: src/Modules/Admin/AuditLogFormatter.php:770
+#: src/Modules/Admin/AuditLogFormatter.php:773
 msgid "the products of one mapping"
 msgstr "produkterne i én mapping"
 
-#: src/Modules/Admin/AuditLogFormatter.php:802
+#: src/Modules/Admin/AuditLogFormatter.php:805
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
@@ -1351,15 +1363,15 @@ msgstr "produkterne i én mapping"
 msgid "Active"
 msgstr "Aktiv"
 
-#: src/Modules/Admin/AuditLogFormatter.php:821
+#: src/Modules/Admin/AuditLogFormatter.php:824
 msgid "display name"
 msgstr "visningsnavn"
 
-#: src/Modules/Admin/AuditLogFormatter.php:822
+#: src/Modules/Admin/AuditLogFormatter.php:825
 msgid "bio"
 msgstr "bio"
 
-#: src/Modules/Admin/AuditLogFormatter.php:823
+#: src/Modules/Admin/AuditLogFormatter.php:826
 msgid "social links"
 msgstr "sociale links"
 
@@ -1381,13 +1393,14 @@ msgstr "Hændelse"
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 #: src/Modules/Creators/Admin/UserProfileSection.php:62
 #: src/Modules/News/Admin/NewsAdminPage.php:334
-#: src/Modules/Notifications/Catalog/AdminTypes.php:147
-#: src/Modules/Notifications/Catalog/AdminTypes.php:178
-#: src/Modules/Notifications/Catalog/AdminTypes.php:208
+#: src/Modules/Notifications/Catalog/AdminTypes.php:148
+#: src/Modules/Notifications/Catalog/AdminTypes.php:179
+#: src/Modules/Notifications/Catalog/AdminTypes.php:209
 #: src/Modules/Notifications/Catalog/AdminTypes.php:239
-#: src/Modules/Notifications/Catalog/AdminTypes.php:320
-#: src/Modules/Notifications/Catalog/AdminTypes.php:369
-#: src/Modules/Notifications/Catalog/AdminTypes.php:398
+#: src/Modules/Notifications/Catalog/AdminTypes.php:270
+#: src/Modules/Notifications/Catalog/AdminTypes.php:351
+#: src/Modules/Notifications/Catalog/AdminTypes.php:400
+#: src/Modules/Notifications/Catalog/AdminTypes.php:429
 #: src/Modules/ProductDesigner/Admin/DesignerFeesSection.php:122
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:187
 #: src/Modules/ProductDesigner/DesignerNotifications.php:323
@@ -2938,6 +2951,7 @@ msgid "Platform"
 msgstr "Platform"
 
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
+#: src/Modules/Notifications/Catalog/AdminTypes.php:180
 msgid "Channel"
 msgstr "Kanal"
 
@@ -3372,9 +3386,9 @@ msgid "Orders with alerts"
 msgstr "Ordrer med alerts"
 
 #: src/Modules/Alerts/Admin/OrderLogTab.php:243
-#: src/Modules/Notifications/Catalog/AdminTypes.php:238
-#: src/Modules/Notifications/Catalog/AdminTypes.php:268
-#: src/Modules/Notifications/Catalog/AdminTypes.php:345
+#: src/Modules/Notifications/Catalog/AdminTypes.php:269
+#: src/Modules/Notifications/Catalog/AdminTypes.php:299
+#: src/Modules/Notifications/Catalog/AdminTypes.php:376
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:203
 #: src/Modules/ProductDesigner/Admin/DesignerFeesSection.php:122
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:250
@@ -3844,7 +3858,7 @@ msgstr "Udgivet"
 
 #: src/Modules/Creators/Admin/AgreementSettingsSection.php:197
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:216
-#: src/Modules/Notifications/Catalog/AdminTypes.php:209
+#: src/Modules/Notifications/Catalog/AdminTypes.php:240
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:559
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:593
 msgid "Change"
@@ -4373,6 +4387,58 @@ msgstr "Ukendt bruger #%d"
 msgid "The image is no longer waiting for approval."
 msgstr "Billedet venter ikke længere på godkendelse."
 
+#: src/Modules/Creators/Admin/SignupSettingsSection.php:106
+msgid "The sign-up settings were saved."
+msgstr "Indstillingerne for oprettelse er gemt."
+
+#: src/Modules/Creators/Admin/SignupSettingsSection.php:107
+msgid "Not switched on: publish a version of the agreement first."
+msgstr "Ikke slået til: udgiv først en version af aftalen."
+
+#: src/Modules/Creators/Admin/SignupSettingsSection.php:108
+msgid "Not saved: the parent category does not exist."
+msgstr "Ikke gemt: overkategorien findes ikke."
+
+#: src/Modules/Creators/Admin/SignupSettingsSection.php:112
+msgid "Creators who sign up themselves"
+msgstr "Creators, der opretter sig selv"
+
+#: src/Modules/Creators/Admin/SignupSettingsSection.php:118
+msgid "When this is on, anyone can sign up as a creator on the page below. They confirm their e-mail, accept the agreement and can prepare their shop, but nothing of theirs is shown in the shop until you approve their request to go live. Then their product category is created under the parent category."
+msgstr "Når dette er slået til, kan alle oprette sig som creator på siden nedenfor. De bekræfter deres e-mail, accepterer aftalen og kan forberede deres shop, men intet af deres vises i butikken, før du godkender deres anmodning om at gå live. Så oprettes deres produktkategori under overkategorien."
+
+#: src/Modules/Creators/Admin/SignupSettingsSection.php:119
+msgid "Sign-up page:"
+msgstr "Oprettelsesside:"
+
+#: src/Modules/Creators/Admin/SignupSettingsSection.php:124
+msgid "Sign-up"
+msgstr "Oprettelse"
+
+#: src/Modules/Creators/Admin/SignupSettingsSection.php:124
+msgid "Creators can sign themselves up"
+msgstr "Creators kan oprette sig selv"
+
+#: src/Modules/Creators/Admin/SignupSettingsSection.php:125
+msgid "Parent category for creators"
+msgstr "Overkategori for creators"
+
+#: src/Modules/Creators/Admin/SignupSettingsSection.php:135
+msgid "— Choose a category —"
+msgstr "— Vælg en kategori —"
+
+#: src/Modules/Creators/Admin/SignupSettingsSection.php:140
+msgid "A creator's product category is created under it when you approve that they go live."
+msgstr "En creators produktkategori oprettes under den, når du godkender, at creatoren går live."
+
+#: src/Modules/Creators/Admin/SignupSettingsSection.php:142
+msgid "Product categories need WooCommerce."
+msgstr "Produktkategorier kræver WooCommerce."
+
+#: src/Modules/Creators/Admin/SignupSettingsSection.php:146
+msgid "Save sign-up settings"
+msgstr "Gem indstillinger for oprettelse"
+
 #: src/Modules/Creators/Admin/UserProfileSection.php:65
 msgid "This user is not linked to a creator."
 msgstr "Denne bruger er ikke tilknyttet en creator."
@@ -4420,6 +4486,46 @@ msgstr "link på banneret"
 #: src/Modules/Creators/Rest/MeAgreementController.php:153
 msgid "The agreement was not accepted."
 msgstr "Aftalen blev ikke accepteret."
+
+#: src/Modules/Creators/Signup/SignupMails.php:47
+msgid "Confirm your e-mail and choose a password"
+msgstr "Bekræft din e-mail og vælg en adgangskode"
+
+#: src/Modules/Creators/Signup/SignupMails.php:48
+msgid "Welcome! One more step"
+msgstr "Velkommen! Ét trin mere"
+
+#: src/Modules/Creators/Signup/SignupMails.php:50
+msgid "Thank you for signing up as a creator. Confirm your e-mail by choosing a password; then you can log in and prepare your shop."
+msgstr "Tak, fordi du har oprettet dig som creator. Bekræft din e-mail ved at vælge en adgangskode; så kan du logge ind og forberede din shop."
+
+#: src/Modules/Creators/Signup/SignupMails.php:51
+msgid "The link works for 7 days. If you did not sign up, you can ignore this e-mail; the sign-up is then removed."
+msgstr "Linket virker i 7 dage. Har du ikke oprettet dig, kan du se bort fra denne e-mail; oprettelsen fjernes så."
+
+#: src/Modules/Creators/Signup/SignupMails.php:56
+msgid "Choose a password"
+msgstr "Vælg en adgangskode"
+
+#: src/Modules/Creators/Signup/SignupMails.php:74
+msgid "You already have an account with us"
+msgstr "Du har allerede en konto hos os"
+
+#: src/Modules/Creators/Signup/SignupMails.php:75
+msgid "You already have an account"
+msgstr "Du har allerede en konto"
+
+#: src/Modules/Creators/Signup/SignupMails.php:77
+msgid "Someone, probably you, tried to sign up as a creator with this e-mail. You already have an account with us: log in first and sign up from there, so your creator profile is linked to your account."
+msgstr "Nogen, sandsynligvis dig, har prøvet at oprette sig som creator med denne e-mail. Du har allerede en konto hos os: log ind først, og opret dig derfra, så din creatorprofil bliver koblet til din konto."
+
+#: src/Modules/Creators/Signup/SignupMails.php:78
+msgid "If it was not you, you can ignore this e-mail; nothing was changed."
+msgstr "Var det ikke dig, kan du se bort fra denne e-mail; intet er ændret."
+
+#: src/Modules/Creators/Signup/SignupMails.php:83
+msgid "Log in and sign up"
+msgstr "Log ind og opret dig"
 
 #: src/Modules/Dashboard/DashboardSections.php:63
 msgid "Profile"
@@ -4723,7 +4829,7 @@ msgid "Attempts"
 msgstr "Forsøg"
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:208
-#: src/Modules/Notifications/Catalog/AdminTypes.php:269
+#: src/Modules/Notifications/Catalog/AdminTypes.php:300
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:409
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:488
 #: src/Modules/ProductDesigner/DesignerNotifications.php:325
@@ -4757,6 +4863,7 @@ msgstr "Ikke sendt (ingen modtager)"
 
 #: src/Modules/Notifications/Admin/NotificationSwitches.php:53
 #: src/Modules/Notifications/Admin/NotificationSwitches.php:89
+#: templates/signup/signup.php:87
 msgid "E-mail"
 msgstr "E-mail"
 
@@ -4817,7 +4924,7 @@ msgstr "Vigtig"
 msgid "Show example"
 msgstr "Vis eksempel"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:76
+#: src/Modules/Notifications/Catalog/AdminTypes.php:77
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:256
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1064
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1244
@@ -4826,7 +4933,7 @@ msgid "PayPal"
 msgstr "PayPal"
 
 #. translators: 1: gift card plugin, 2: the card's id in it.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:77
+#: src/Modules/Notifications/Catalog/AdminTypes.php:78
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:257
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:539
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1065
@@ -4835,7 +4942,7 @@ msgstr "PayPal"
 msgid "Gift card"
 msgstr "Gavekort"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:78
+#: src/Modules/Notifications/Catalog/AdminTypes.php:79
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:258
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1063
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1243
@@ -4843,7 +4950,7 @@ msgstr "Gavekort"
 msgid "Bank transfer"
 msgstr "Bankoverførsel"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:118
+#: src/Modules/Notifications/Catalog/AdminTypes.php:119
 #: src/Modules/ProductDesigner/DesignerNotifications.php:331
 #: src/Modules/ProductDesigner/DesignerNotifications.php:376
 #: src/Modules/ProductDesigner/DesignerNotifications.php:417
@@ -4851,33 +4958,33 @@ msgstr "Bankoverførsel"
 msgid "This message was sent by Merch Dashboard."
 msgstr "Denne besked er sendt af Merch Dashboard."
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:129
-#: src/Modules/Notifications/Catalog/AdminTypes.php:144
+#: src/Modules/Notifications/Catalog/AdminTypes.php:130
+#: src/Modules/Notifications/Catalog/AdminTypes.php:145
 msgid "New payout request"
 msgstr "Ny udbetalingsanmodning"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:130
+#: src/Modules/Notifications/Catalog/AdminTypes.php:131
 msgid "When a creator requests a payout that must be processed."
 msgstr "Når en creator anmoder om en udbetaling, der skal behandles."
 
 #. translators: 1: creator name, 2: amount.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:140
+#: src/Modules/Notifications/Catalog/AdminTypes.php:141
 #, php-format
 msgid "%1$s requested a payout of %2$s."
 msgstr "%1$s har anmodet om en udbetaling på %2$s."
 
 #. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:143
+#: src/Modules/Notifications/Catalog/AdminTypes.php:144
 #, php-format
 msgid "New payout request from %s"
 msgstr "Ny udbetalingsanmodning fra %s"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:145
+#: src/Modules/Notifications/Catalog/AdminTypes.php:146
 msgid "A creator requested a payout. It waits for you under Payouts."
 msgstr "En creator har anmodet om en udbetaling. Den venter på dig under Udbetalinger."
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:148
-#: src/Modules/Notifications/Catalog/AdminTypes.php:399
+#: src/Modules/Notifications/Catalog/AdminTypes.php:149
+#: src/Modules/Notifications/Catalog/AdminTypes.php:430
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:290
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:328
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:367
@@ -4893,7 +5000,7 @@ msgstr "En creator har anmodet om en udbetaling. Den venter på dig under Udbeta
 msgid "Amount"
 msgstr "Beløb"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:149
+#: src/Modules/Notifications/Catalog/AdminTypes.php:150
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:291
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:368
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:290
@@ -4903,38 +5010,69 @@ msgstr "Beløb"
 msgid "Method"
 msgstr "Metode"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:151
-#: src/Modules/Notifications/Catalog/AdminTypes.php:346
-#: src/Modules/Notifications/Catalog/AdminTypes.php:401
+#: src/Modules/Notifications/Catalog/AdminTypes.php:152
+#: src/Modules/Notifications/Catalog/AdminTypes.php:377
+#: src/Modules/Notifications/Catalog/AdminTypes.php:432
 msgid "Open Payouts"
 msgstr "Åbn Udbetalinger"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:162
+#: src/Modules/Notifications/Catalog/AdminTypes.php:163
+#: src/Modules/Notifications/Catalog/AdminTypes.php:176
+msgid "New creator signed up"
+msgstr "Ny creator har oprettet sig"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:164
+msgid "When someone signs up as a creator and their e-mail is verified (ADR-091). They are not live until you approve it."
+msgstr "Når nogen opretter sig som creator, og deres e-mail er bekræftet (ADR-091). De er ikke live, før du godkender det."
+
+#. translators: %s: creator name.
+#: src/Modules/Notifications/Catalog/AdminTypes.php:172
+#, php-format
+msgid "%s signed up as a creator."
+msgstr "%s har oprettet sig som creator."
+
+#. translators: %s: creator name.
 #: src/Modules/Notifications/Catalog/AdminTypes.php:175
+#, php-format
+msgid "New creator: %s"
+msgstr "Ny creator: %s"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:177
+msgid "A creator signed up and accepted the agreement. They can prepare their shop now; nothing is shown in the shop until you approve their request to go live."
+msgstr "En creator har oprettet sig og accepteret aftalen. Creatoren kan forberede sin shop nu; intet vises i butikken, før du godkender anmodningen om at gå live."
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:182
+#: src/Modules/Notifications/Catalog/AdminTypes.php:324
+#: src/Modules/Notifications/Catalog/AdminTypes.php:401
+msgid "Open Creators"
+msgstr "Åbn Creators"
+
+#: src/Modules/Notifications/Catalog/AdminTypes.php:193
+#: src/Modules/Notifications/Catalog/AdminTypes.php:206
 msgid "Product removal requested"
 msgstr "Anmodning om sletning af produkt"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:163
+#: src/Modules/Notifications/Catalog/AdminTypes.php:194
 msgid "When a creator asks to have a product removed that was not made in the product designer."
 msgstr "Når en creator beder om at få slettet et produkt, der ikke er lavet i produktdesigneren."
 
 #. translators: 1: creator name, 2: product name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:171
+#: src/Modules/Notifications/Catalog/AdminTypes.php:202
 #, php-format
 msgid "%1$s asked to have %2$s removed."
 msgstr "%1$s har bedt om at få %2$s slettet."
 
 #. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:174
+#: src/Modules/Notifications/Catalog/AdminTypes.php:205
 #, php-format
 msgid "Product removal requested by %s"
 msgstr "Anmodning om sletning af produkt fra %s"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:176
+#: src/Modules/Notifications/Catalog/AdminTypes.php:207
 msgid "A creator asked to have a product removed. Nothing happens to the product until you have dealt with it in WooCommerce."
 msgstr "En creator har bedt om at få et produkt slettet. Der sker intet med produktet, før du har behandlet det i WooCommerce."
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:179
+#: src/Modules/Notifications/Catalog/AdminTypes.php:210
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:166
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:799
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:935
@@ -4966,248 +5104,243 @@ msgstr "En creator har bedt om at få et produkt slettet. Der sker intet med pro
 msgid "Product"
 msgstr "Produkt"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:181
+#: src/Modules/Notifications/Catalog/AdminTypes.php:212
 msgid "Open Removal requests"
 msgstr "Åbn Sletteanmodninger"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:192
-#: src/Modules/Notifications/Catalog/AdminTypes.php:205
+#: src/Modules/Notifications/Catalog/AdminTypes.php:223
+#: src/Modules/Notifications/Catalog/AdminTypes.php:236
 msgid "New category proposal"
 msgstr "Nyt kategoriforslag"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:193
+#: src/Modules/Notifications/Catalog/AdminTypes.php:224
 msgid "When a creator proposes a change to their category that must be approved."
 msgstr "Når en creator foreslår en ændring af sin kategori, som skal godkendes."
 
 #. translators: 1: creator name, 2: the changed field.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:201
+#: src/Modules/Notifications/Catalog/AdminTypes.php:232
 #, php-format
 msgid "%1$s proposed a new %2$s."
 msgstr "%1$s har foreslået ny %2$s."
 
 #. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:204
+#: src/Modules/Notifications/Catalog/AdminTypes.php:235
 #, php-format
 msgid "New category proposal from %s"
 msgstr "Nyt kategoriforslag fra %s"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:206
+#: src/Modules/Notifications/Catalog/AdminTypes.php:237
 msgid "A creator proposed a change to their category. Nothing changes in the shop until you approve it."
 msgstr "En creator har foreslået en ændring af sin kategori. Intet ændres i butikken, før du godkender den."
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:211
+#: src/Modules/Notifications/Catalog/AdminTypes.php:242
 msgid "Open Category proposals"
 msgstr "Åbn Kategoriforslag"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:222
+#: src/Modules/Notifications/Catalog/AdminTypes.php:253
 msgid "Order needs a decision"
 msgstr "Ordre kræver en beslutning"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:223
+#: src/Modules/Notifications/Catalog/AdminTypes.php:254
 msgid "When an order with a creator's own discount code concerns sales that are already settled (open case)."
 msgstr "Når en ordre med en creators egen rabatkode vedrører salg, der allerede er afregnet (åben sag)."
 
 #. translators: 1: order number, 2: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:231
+#: src/Modules/Notifications/Catalog/AdminTypes.php:262
 #, php-format
 msgid "Order #%1$s with %2$s's discount code needs a decision."
 msgstr "Ordre #%1$s med %2$ss rabatkode kræver en beslutning."
 
 #. translators: %s: order number.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:234
+#: src/Modules/Notifications/Catalog/AdminTypes.php:265
 #, php-format
 msgid "Order #%s needs a decision"
 msgstr "Ordre #%s kræver en beslutning"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:235
+#: src/Modules/Notifications/Catalog/AdminTypes.php:266
 msgid "An order needs a decision"
 msgstr "En ordre kræver en beslutning"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:236
+#: src/Modules/Notifications/Catalog/AdminTypes.php:267
 msgid "An order used a creator's own discount code, but the creator's sales in it are already settled. It is an open case until you decide."
 msgstr "En ordre har brugt en creators egen rabatkode, men creatorens salg i den er allerede afregnet. Den er en åben sag, indtil du beslutter."
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:241
-#: src/Modules/Notifications/Catalog/AdminTypes.php:271
+#: src/Modules/Notifications/Catalog/AdminTypes.php:272
+#: src/Modules/Notifications/Catalog/AdminTypes.php:302
 msgid "Open Order history"
 msgstr "Åbn Ordrehistorik"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:252
+#: src/Modules/Notifications/Catalog/AdminTypes.php:283
 msgid "Order could not be counted"
 msgstr "Ordre kunne ikke tælles med"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:253
+#: src/Modules/Notifications/Catalog/AdminTypes.php:284
 msgid "When an order could not be added to the creators' sales."
 msgstr "Når en ordre ikke kunne føjes til creatorernes salg."
 
 #. translators: %s: order number.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:261
+#: src/Modules/Notifications/Catalog/AdminTypes.php:292
 #, php-format
 msgid "Order #%s could not be counted in the creators' sales."
 msgstr "Ordre #%s kunne ikke tælles med i creatorernes salg."
 
 #. translators: %s: order number.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:264
+#: src/Modules/Notifications/Catalog/AdminTypes.php:295
 #, php-format
 msgid "Order #%s could not be counted"
 msgstr "Ordre #%s kunne ikke tælles med"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:265
+#: src/Modules/Notifications/Catalog/AdminTypes.php:296
 msgid "An order could not be counted"
 msgstr "En ordre kunne ikke tælles med"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:266
+#: src/Modules/Notifications/Catalog/AdminTypes.php:297
 msgid "An order could not be added to the creators' sales. It is tried again when the order is saved; the log has the details."
 msgstr "En ordre kunne ikke føjes til creatorernes salg. Det prøves igen, når ordren gemmes; loggen har detaljerne."
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:282
-#: src/Modules/Notifications/Catalog/AdminTypes.php:290
+#: src/Modules/Notifications/Catalog/AdminTypes.php:313
+#: src/Modules/Notifications/Catalog/AdminTypes.php:321
 msgid "Category reconciliation failed"
 msgstr "Kategoriafstemning fejlede"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:283
+#: src/Modules/Notifications/Catalog/AdminTypes.php:314
 msgid "When the automatic linking of products by category gives up after its retries."
 msgstr "Når den automatiske kobling af produkter via kategori giver op efter sine genforsøg."
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:287
+#: src/Modules/Notifications/Catalog/AdminTypes.php:318
 msgid "An automatic category reconciliation was given up."
 msgstr "En automatisk kategoriafstemning er opgivet."
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:289
+#: src/Modules/Notifications/Catalog/AdminTypes.php:320
 msgid "A category reconciliation failed"
 msgstr "En kategoriafstemning fejlede"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:291
+#: src/Modules/Notifications/Catalog/AdminTypes.php:322
 msgid "Linking products to creators by category failed three times and was given up. Run a full reconciliation under Creators when the cause is fixed; the log has the details."
 msgstr "Koblingen af produkter til creators via kategori fejlede tre gange og er opgivet. Kør en fuld afstemning under Creators, når årsagen er rettet; loggen har detaljerne."
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:292
+#: src/Modules/Notifications/Catalog/AdminTypes.php:323
 msgid "Run"
 msgstr "Kørsel"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:293
-#: src/Modules/Notifications/Catalog/AdminTypes.php:370
-msgid "Open Creators"
-msgstr "Åbn Creators"
-
-#: src/Modules/Notifications/Catalog/AdminTypes.php:304
+#: src/Modules/Notifications/Catalog/AdminTypes.php:335
 msgid "Adjustment failed"
 msgstr "Regulering fejlede"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:305
+#: src/Modules/Notifications/Catalog/AdminTypes.php:336
 msgid "When an adjustment of a creator's earlier settlements could not be carried out."
 msgstr "Når en regulering af en creators tidligere afregninger ikke kunne gennemføres."
 
 #. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:313
+#: src/Modules/Notifications/Catalog/AdminTypes.php:344
 #, php-format
 msgid "An adjustment for %s failed."
 msgstr "En regulering for %s fejlede."
 
 #. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:316
+#: src/Modules/Notifications/Catalog/AdminTypes.php:347
 #, php-format
 msgid "An adjustment for %s failed"
 msgstr "En regulering for %s fejlede"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:317
+#: src/Modules/Notifications/Catalog/AdminTypes.php:348
 msgid "An adjustment failed"
 msgstr "En regulering fejlede"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:318
+#: src/Modules/Notifications/Catalog/AdminTypes.php:349
 msgid "An adjustment of earlier settlements could not be carried out. Nothing was changed for this creator; see the recalculation for the reason."
 msgstr "En regulering af tidligere afregninger kunne ikke gennemføres. Intet er ændret for denne creator; se genberegningen for årsagen."
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:321
+#: src/Modules/Notifications/Catalog/AdminTypes.php:352
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:524
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:172
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:529
 msgid "Reference"
 msgstr "Reference"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:323
+#: src/Modules/Notifications/Catalog/AdminTypes.php:354
 msgid "Open Recalculations"
 msgstr "Åbn Genberegninger"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:334
+#: src/Modules/Notifications/Catalog/AdminTypes.php:365
 msgid "Payout gift card refused as a coupon"
 msgstr "Udbetalingsgavekort afvist som kupon"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:335
+#: src/Modules/Notifications/Catalog/AdminTypes.php:366
 msgid "When a gift card from a payout is refused as a coupon on an order in wp-admin or the REST API."
 msgstr "Når et gavekort fra en udbetaling afvises som kupon på en ordre i wp-admin eller REST API'et."
 
 #. translators: %s: order number.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:340
+#: src/Modules/Notifications/Catalog/AdminTypes.php:371
 #, php-format
 msgid "A payout gift card was refused as a coupon on order #%s."
 msgstr "Et udbetalingsgavekort blev afvist som kupon på ordre #%s."
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:342
+#: src/Modules/Notifications/Catalog/AdminTypes.php:373
 msgid "A payout gift card was refused as a coupon"
 msgstr "Et udbetalingsgavekort blev afvist som kupon"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:343
+#: src/Modules/Notifications/Catalog/AdminTypes.php:374
 msgid "Gift card refused as a coupon"
 msgstr "Gavekort afvist som kupon"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:344
+#: src/Modules/Notifications/Catalog/AdminTypes.php:375
 msgid "Someone tried to use a gift card from a creator payout as a coupon on an order, and it was refused. The log has the details."
 msgstr "Nogen forsøgte at bruge et gavekort fra en creator-udbetaling som kupon på en ordre, og det blev afvist. Loggen har detaljerne."
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:357
+#: src/Modules/Notifications/Catalog/AdminTypes.php:388
 msgid "Creator reset their discount code"
 msgstr "Creator har nulstillet sin rabatkode"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:358
+#: src/Modules/Notifications/Catalog/AdminTypes.php:389
 msgid "When a creator replaces their own discount code in the dashboard."
 msgstr "Når en creator udskifter sin egen rabatkode i dashboardet."
 
 #. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:363
+#: src/Modules/Notifications/Catalog/AdminTypes.php:394
 #, php-format
 msgid "%s reset their discount code."
 msgstr "%s har nulstillet sin rabatkode."
 
 #. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:366
+#: src/Modules/Notifications/Catalog/AdminTypes.php:397
 #, php-format
 msgid "%s reset their discount code"
 msgstr "%s har nulstillet sin rabatkode"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:367
+#: src/Modules/Notifications/Catalog/AdminTypes.php:398
 msgid "A discount code was reset"
 msgstr "En rabatkode er nulstillet"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:368
+#: src/Modules/Notifications/Catalog/AdminTypes.php:399
 msgid "A creator replaced their own discount code. The old code no longer works."
 msgstr "En creator har udskiftet sin egen rabatkode. Den gamle kode virker ikke længere."
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:381
+#: src/Modules/Notifications/Catalog/AdminTypes.php:412
 msgid "Creator cancelled a payout request"
 msgstr "Creator har annulleret en udbetalingsanmodning"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:382
+#: src/Modules/Notifications/Catalog/AdminTypes.php:413
 msgid "When a creator cancels a payout request before it is processed."
 msgstr "Når en creator annullerer en udbetalingsanmodning, før den er behandlet."
 
 #. translators: 1: creator name, 2: amount.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:391
+#: src/Modules/Notifications/Catalog/AdminTypes.php:422
 #, php-format
 msgid "%1$s cancelled a payout request of %2$s."
 msgstr "%1$s har annulleret en udbetalingsanmodning på %2$s."
 
 #. translators: %s: creator name.
-#: src/Modules/Notifications/Catalog/AdminTypes.php:394
+#: src/Modules/Notifications/Catalog/AdminTypes.php:425
 #, php-format
 msgid "%s cancelled a payout request"
 msgstr "%s har annulleret en udbetalingsanmodning"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:395
+#: src/Modules/Notifications/Catalog/AdminTypes.php:426
 msgid "A payout request was cancelled"
 msgstr "En udbetalingsanmodning er annulleret"
 
-#: src/Modules/Notifications/Catalog/AdminTypes.php:396
+#: src/Modules/Notifications/Catalog/AdminTypes.php:427
 msgid "A creator cancelled a payout request. It is no longer waiting for you."
 msgstr "En creator har annulleret en udbetalingsanmodning. Den venter ikke længere på dig."
 
@@ -12509,6 +12642,117 @@ msgstr "Prøv igen senere."
 msgid "Questions? Just reply to this e-mail."
 msgstr "Spørgsmål? Svar blot på denne mail."
 
+#: templates/signup/signup.php:28
+msgid "Enter your creator name (2 to 60 characters)."
+msgstr "Skriv dit creatornavn (2 til 60 tegn)."
+
+#: templates/signup/signup.php:29
+msgid "Enter a valid e-mail address."
+msgstr "Skriv en gyldig e-mailadresse."
+
+#: templates/signup/signup.php:30
+msgid "Enter the link to your channel, starting with https://."
+msgstr "Skriv linket til din kanal, startende med https://."
+
+#: templates/signup/signup.php:31
+msgid "You must be 18 or older to sign up."
+msgstr "Du skal være fyldt 18 år for at oprette dig."
+
+#: templates/signup/signup.php:32
+msgid "Please accept the agreement to sign up."
+msgstr "Acceptér aftalen for at oprette dig."
+
+#: templates/signup/signup.php:33
+msgid "The agreement was updated while you filled in the form. Please read it again and send the form."
+msgstr "Aftalen blev opdateret, mens du udfyldte formularen. Læs den igen, og send formularen."
+
+#: templates/signup/signup.php:34
+msgid "Too many sign-ups from here. Please try again in an hour."
+msgstr "For mange oprettelser herfra. Prøv igen om en time."
+
+#: templates/signup/signup.php:35
+msgid "Please take a moment to read the form, then send it again."
+msgstr "Tag dig et øjeblik til at læse formularen, og send den så igen."
+
+#: templates/signup/signup.php:36
+msgid "Your account is a creator already."
+msgstr "Din konto er allerede en creator."
+
+#: templates/signup/signup.php:37
+msgid "The form expired. Please send it again."
+msgstr "Formularen er udløbet. Send den igen."
+
+#: templates/signup/signup.php:38
+msgid "Something went wrong. Nothing was saved; please try again later."
+msgstr "Noget gik galt. Intet er gemt; prøv igen senere."
+
+#: templates/signup/signup.php:41
+msgid "Check your e-mail"
+msgstr "Tjek din e-mail"
+
+#: templates/signup/signup.php:42
+msgid "Sign up as a creator"
+msgstr "Opret dig som creator"
+
+#: templates/signup/signup.php:43
+msgid "Sign-up is not open"
+msgstr "Oprettelse er ikke åben"
+
+#: templates/signup/signup.php:69
+msgid "Thank you! We have sent you an e-mail. Use the link in it to choose a password; then you can log in and prepare your shop. The link works for 7 days."
+msgstr "Tak! Vi har sendt dig en e-mail. Brug linket i den til at vælge en adgangskode; så kan du logge ind og forberede din shop. Linket virker i 7 dage."
+
+#: templates/signup/signup.php:70
+msgid "Nothing in your inbox? Check your spam folder."
+msgstr "Ingenting i indbakken? Tjek din spammappe."
+
+#: templates/signup/signup.php:72
+msgid "Get your own merch shop. Sign up, accept our agreement and prepare your shop; it goes live when we have approved your request."
+msgstr "Få din egen merch-shop. Opret dig, acceptér vores aftale, og forbered din shop; den går live, når vi har godkendt din anmodning."
+
+#: templates/signup/signup.php:81
+msgid "Leave this field empty"
+msgstr "Lad dette felt være tomt"
+
+#: templates/signup/signup.php:84
+msgid "Creator name"
+msgstr "Creatornavn"
+
+#: templates/signup/signup.php:90
+msgid "Link to your channel (e.g. Twitch or YouTube)"
+msgstr "Link til din kanal (fx Twitch eller YouTube)"
+
+#: templates/signup/signup.php:92
+#: build/dashboard.js:1
+msgid "Our agreement"
+msgstr "Vores aftale"
+
+#: templates/signup/signup.php:94
+msgid "I am 18 or older."
+msgstr "Jeg er fyldt 18 år."
+
+#: templates/signup/signup.php:95
+msgid "I have read and accept the agreement."
+msgstr "Jeg har læst og accepterer aftalen."
+
+#: templates/signup/signup.php:96
+msgid "Sign up"
+msgstr "Opret dig"
+
+#: templates/signup/signup.php:98
+msgid "Already a creator? Log in"
+msgstr "Allerede creator? Log ind"
+
+#: templates/signup/signup.php:100
+msgid "The page could not be shown right now. Please try again later."
+msgstr "Siden kunne ikke vises lige nu. Prøv igen senere."
+
+#. translators: %s: site name.
+#: templates/signup/signup.php:103
+#, php-format
+msgid "It is not possible to sign up as a creator right now. Please contact %s."
+msgstr "Det er ikke muligt at oprette sig som creator lige nu. Kontakt %s."
+
 #: build/alerts-global-admin.js:1
 #: build/alerts-presets-admin.js:1
 #: build/dashboard.js:1
@@ -14768,10 +15012,6 @@ msgstr "Læs og acceptér vores aftale. Du kan forberede alt imens, men du kan f
 #: build/dashboard.js:1
 msgid "Read the agreement"
 msgstr "Læs aftalen"
-
-#: build/dashboard.js:1
-msgid "Our agreement"
-msgstr "Vores aftale"
 
 #: build/dashboard.js:1
 msgid "Accept the agreement"
