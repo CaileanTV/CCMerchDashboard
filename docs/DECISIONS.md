@@ -5484,6 +5484,8 @@ Accepteret af projektejeren 2026-11-06 (fase 32). **Implementeret i 32.6 (2026-1
 - En senere ændring fletter ind i planen. På datoen sættes kun de planlagte priser, så en lavere pris, der er gemt i mellemtiden, bliver stående.
 - En fjernet størrelse er ikke en prisstigning.
 
+**Statusnote 2026-11-06 (projektejerens ønske):** knappen **"Ændre pris nu"** på grundproduktet sætter en planlagt prisstigning med det samme, når datoen er nået, men den automatiske kontrol ikke har sat priserne endnu (fx fordi ingen har besøgt sitet siden). Før datoen vises knappen ikke, og den gør intet. Varslet på 14 dage gælder derfor stadig. Handlingen kræver `merchboard_manage_designer` og nonce og auditeres som `designer_price_applied` med `manual`.
+
 ## Context
 Den hidtidige samarbejdsaftale lover skriftligt varsel 14 dage før en prisstigning. Projektejeren vil have, at det også gælder i aftalepapiret, og at pluginet sikrer det.
 

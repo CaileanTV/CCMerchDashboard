@@ -538,6 +538,16 @@ final class BaseProductsTest extends IntegrationTestCase {
 		$schedule->cancel( $id );
 		self::assertNull( BasePriceSchedule::scheduled( $id ) );
 		self::assertSame( 1690000, $this->bases->find( $id )?->base_units );
+
+		// "Change the price now" sets a due increase the automatic check has not set yet, never one before its date.
+		$service->save( $id, array_merge( self::fields(), array( 'base_price' => '179' ) ), array() );
+		self::assertFalse( $schedule->apply_now( $id ), 'Not before the date: the 14 days hold.' );
+		self::assertSame( 1690000, $this->bases->find( $id )?->base_units );
+		$now = $now->modify( '+14 days' );
+		self::assertTrue( $schedule->apply_now( $id ) );
+		self::assertSame( 1790000, $this->bases->find( $id )?->base_units );
+		self::assertNull( BasePriceSchedule::scheduled( $id ) );
+		self::assertFalse( $schedule->apply_now( $id ), 'Nothing planned any more.' );
 		delete_option( BasePriceSchedule::OPTION );
 	}
 

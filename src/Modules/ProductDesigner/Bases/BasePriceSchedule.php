@@ -220,6 +220,31 @@ class BasePriceSchedule {
 	}
 
 	/**
+	 * Sets a planned increase whose date has come, when the automatic check
+	 * has not set it yet (no page view since the date): the administrator's
+	 * "Change the price now" (owner's wish 2026-11-06). Never before the date,
+	 * so the 14 days' notice holds.
+	 *
+	 * @param int $base_id Base product.
+	 * @return bool Whether a planned increase was set (false: none, or its date has not come).
+	 * @throws DesignerException When the user may not.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function apply_now( int $base_id ): bool {
+		self::authorize();
+
+		$entry = self::scheduled( $base_id );
+
+		if ( null === $entry || ! $this->due( $entry ) ) {
+			return false;
+		}
+
+		$this->apply( $base_id, $entry, true );
+
+		return true;
+	}
+
+	/**
 	 * Sets the increases whose date has come (hourly); never throws.
 	 *
 	 * @return int How many base products got their new prices.
@@ -231,7 +256,7 @@ class BasePriceSchedule {
 		foreach ( self::stored() as $base_id => $raw ) {
 			$entry = is_array( $raw ) ? self::entry( $raw ) : null;
 
-			if ( null === $entry || $entry['at'] > $now ) {
+			if ( null === $entry || ! $this->due( $entry, $now ) ) {
 				continue;
 			}
 
@@ -244,6 +269,17 @@ class BasePriceSchedule {
 		}
 
 		return $applied;
+	}
+
+	/**
+	 * Whether the date of a planned change has come.
+	 *
+	 * @param array<mixed> $entry The change.
+	 * @param int|null     $now   Now (timestamp; null: the clock).
+	 * @phpstan-param Plan $entry
+	 */
+	private function due( array $entry, ?int $now = null ): bool {
+		return $entry['at'] <= ( $now ?? ( $this->clock )()->getTimestamp() );
 	}
 
 	/**
@@ -277,10 +313,11 @@ class BasePriceSchedule {
 	 *
 	 * @param int          $base_id Base product.
 	 * @param array<mixed> $entry   The change.
+	 * @param bool         $manual  Whether the administrator set it ("Change the price now").
 	 * @phpstan-param Plan $entry
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	private function apply( int $base_id, array $entry ): void {
+	private function apply( int $base_id, array $entry, bool $manual = false ): void {
 		$base   = $this->bases->find( $base_id );
 		$stored = self::stored();
 		unset( $stored[ $base_id ] );
@@ -299,14 +336,16 @@ class BasePriceSchedule {
 
 		$this->bases->update( $base_id, new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $entry['base'] ?? $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version, $entry['large'] ?? $base->extra_side_units, $base->note, $sizes, $entry['small'] ?? $base->small_side_units ) );
 		update_option( self::OPTION, $stored, false );
-		$this->audit->record_system(
-			AuditAction::DesignerPriceApplied,
-			null,
-			array(
-				'base_id'   => $base_id,
-				'base_name' => $base->name,
-			)
+		$context = array(
+			'base_id'   => $base_id,
+			'base_name' => $base->name,
 		);
+
+		if ( $manual ) {
+			$this->audit->record( AuditAction::DesignerPriceApplied, null, $context + array( 'manual' => true ) );
+		} else {
+			$this->audit->record_system( AuditAction::DesignerPriceApplied, null, $context );
+		}
 
 		do_action( 'merchboard_designer_base_price_changed', $base_id );
 	}

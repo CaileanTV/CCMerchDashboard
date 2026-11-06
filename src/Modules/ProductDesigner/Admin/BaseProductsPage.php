@@ -240,6 +240,8 @@ final class BaseProductsPage {
 			'saved'                                 => array( __( 'The base product was saved. A new base price reaches the designer products in the shop in the background.', 'merchboard' ), 'success' ),
 			'price_scheduled'                       => array( __( 'The base product was saved. Prices that go up apply in 14 days, and the creators who design on it were told; everything else applies now.', 'merchboard' ), 'warning' ),
 			'price_cancelled'                       => array( __( 'The planned price increase was cancelled.', 'merchboard' ), 'success' ),
+			'price_applied'                         => array( __( 'The new prices are set; products in the shop follow.', 'merchboard' ), 'success' ),
+			'price_not_due'                         => array( __( 'Nothing was changed: the date of the price increase has not come yet.', 'merchboard' ), 'warning' ),
 			'photo_moved'                           => array( __( 'The order of the mockups was saved. It is used for designs sent from now on.', 'merchboard' ), 'success' ),
 			'activated'                             => array( __( 'The base product is active: creators can design on it.', 'merchboard' ), 'success' ),
 			'deactivated'                           => array( __( 'The base product is a draft again: creators cannot start new designs on it. Products in the shop are not affected.', 'merchboard' ), 'success' ),
@@ -405,15 +407,34 @@ final class BaseProductsPage {
 		$planned = null === $base ? null : BasePriceSchedule::scheduled( $id );
 
 		if ( null !== $planned ) {
+			$due  = $planned['at'] <= time();
+			$date = (string) wp_date( (string) get_option( 'date_format' ), $planned['at'] );
 			echo '<div class="notice notice-warning inline"><p>' . esc_html(
-				sprintf(
-					/* translators: 1: date, 2: what goes up. */
-					__( 'A price increase is planned from %1$s: %2$s. Creators were told; the prices below apply until then.', 'merchboard' ),
-					(string) wp_date( (string) get_option( 'date_format' ), $planned['at'] ),
-					self::planned_prices( $planned, $base->currency )
-				)
+				$due
+					? sprintf(
+						/* translators: 1: date, 2: what goes up. */
+						__( 'The planned price increase from %1$s has not been set yet: %2$s. It is set at the next check; "Change the price now" sets it at once.', 'merchboard' ),
+						$date,
+						self::planned_prices( $planned, $base->currency )
+					)
+					: sprintf(
+						/* translators: 1: date, 2: what goes up. */
+						__( 'A price increase is planned from %1$s: %2$s. Creators were told; the prices below apply until then.', 'merchboard' ),
+						$date,
+						self::planned_prices( $planned, $base->currency )
+					)
 			) . '</p>';
-			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+
+			// After the date only, when the automatic check has not set the prices yet (the 14 days' notice holds).
+			if ( $due ) {
+				echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block;margin-right:8px" onsubmit="return confirm(this.dataset.confirm)" data-confirm="' . esc_attr__( 'Set the new prices now? Products in the shop follow at once.', 'merchboard' ) . '">';
+				echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="price_now"><input type="hidden" name="base_id" value="' . esc_attr( (string) $id ) . '">';
+				wp_nonce_field( BaseProductActions::ACTION );
+				submit_button( __( 'Change the price now', 'merchboard' ), 'primary small', 'submit', false );
+				echo '</form>';
+			}
+
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block">';
 			echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="price_cancel"><input type="hidden" name="base_id" value="' . esc_attr( (string) $id ) . '">';
 			wp_nonce_field( BaseProductActions::ACTION );
 			submit_button( __( 'Cancel the planned price increase', 'merchboard' ), 'secondary small', 'submit', false );
