@@ -42,6 +42,28 @@ final class GoLivePage {
 	public const RESULT_ARG = 'merchboard_go_live_result';
 
 	/**
+	 * Outcome codes of an approval.
+	 *
+	 * @var array<string, string>
+	 */
+	private const APPROVED = array(
+		GoLiveRequests::PROVISIONED => 'approved',
+		GoLiveRequests::NO_MARKUP   => 'approved_without_markup',
+		GoLiveRequests::NO_CATEGORY => 'approved_without_category',
+	);
+
+	/**
+	 * Outcome codes of a new try at the category.
+	 *
+	 * @var array<string, string>
+	 */
+	private const RETRIED = array(
+		GoLiveRequests::PROVISIONED => 'category_made',
+		GoLiveRequests::NO_MARKUP   => 'category_made_without_markup',
+		GoLiveRequests::NO_CATEGORY => GoLiveException::CATEGORY_FAILED,
+	);
+
+	/**
 	 * Constructor.
 	 *
 	 * @param GoLiveRequests      $service    Decisions.
@@ -92,9 +114,9 @@ final class GoLivePage {
 
 		try {
 			return match ( $text( 'decision' ) ) {
-				'approve' => $this->service->approve( $id, $text( 'category' ), $text( 'markup' ) ) ? 'approved' : 'approved_without_category',
+				'approve' => self::APPROVED[ $this->service->approve( $id, $text( 'category' ), $text( 'markup' ) ) ] ?? 'error',
 				'decline' => $this->decline( $id, $text( 'note' ) ),
-				'retry'   => $this->service->retry_category( (int) $text( 'creator_id' ), $text( 'category' ), $text( 'markup' ) ) ? 'category_made' : GoLiveException::CATEGORY_FAILED,
+				'retry'   => self::RETRIED[ $this->service->retry_category( (int) $text( 'creator_id' ), $text( 'category' ), $text( 'markup' ) ) ] ?? 'error',
 				default   => 'error',
 			};
 		} catch ( GoLiveException $e ) {
@@ -259,14 +281,16 @@ final class GoLivePage {
 		return match ( $code ) {
 			'approved'                         => array( __( 'The creator is live: the category was made, the markup set and their approved designs are on their way to the shop.', 'merchboard' ), 'success' ),
 			'approved_without_category'        => array( __( 'The creator is live, but the category could not be made. Try again below.', 'merchboard' ), 'warning' ),
-			'category_made'                    => array( __( 'The category was made.', 'merchboard' ), 'success' ),
+			'approved_without_markup'          => array( __( 'The creator is live and the category was made, but the markup was not set. Set it on the creator\'s pricing.', 'merchboard' ), 'warning' ),
+			'category_made'                    => array( __( 'The category was made and the markup set.', 'merchboard' ), 'success' ),
+			'category_made_without_markup'     => array( __( 'The category was made, but the markup was not set. Set it on the creator\'s pricing.', 'merchboard' ), 'warning' ),
 			'declined'                         => array( __( 'The request was declined. The creator sees your note and can ask again.', 'merchboard' ), 'success' ),
 			GoLiveException::NOTE              => array( __( 'Write a note to the creator before you decline.', 'merchboard' ), 'error' ),
 			GoLiveException::NAME              => array( __( 'Enter a category name.', 'merchboard' ), 'error' ),
 			GoLiveException::MARKUP            => array( __( 'Enter a markup from 0 to 100 %, with at most two decimals.', 'merchboard' ), 'error' ),
 			GoLiveException::PARENT_MISSING    => array( __( 'Choose the parent category for creators under Settings → Agreement first.', 'merchboard' ), 'error' ),
 			GoLiveException::SHOP_UNAVAILABLE  => array( __( 'Going live needs WooCommerce.', 'merchboard' ), 'error' ),
-			GoLiveException::CATEGORY_FAILED   => array( __( 'The category could not be made, e.g. because another creator has a category with that name. Try another name.', 'merchboard' ), 'error' ),
+			GoLiveException::CATEGORY_FAILED   => array( __( 'The category could not be made, e.g. because a category with that name already has products or another creator. Try another name.', 'merchboard' ), 'error' ),
 			GoLiveException::NOT_PENDING       => array( __( 'The request is no longer waiting.', 'merchboard' ), 'warning' ),
 			GoLiveException::NOT_AUTHORIZED    => array( __( 'Sorry, you are not allowed to manage creators.', 'merchboard' ), 'error' ),
 			'error'                            => array( __( 'A technical error occurred. Nothing was changed. Please try again later.', 'merchboard' ), 'error' ),

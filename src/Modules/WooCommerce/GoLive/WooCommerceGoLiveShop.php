@@ -27,9 +27,11 @@ defined( 'ABSPATH' ) || exit;
  * ADR-093: the plugin creates the creator's `product_cat` under the parent
  * category (WordPress makes the slug) and maps it with the existing
  * service, so the reconciliation (ADR-033) runs as for a manual mapping. A
- * term with the same name under the parent is used when no other creator
- * has it. The markup is set through the pricing settings (audited), when
- * the administrator may manage creator pricing.
+ * term with the same name under the parent is used only when it holds no
+ * products and no other creator has it, so a new creator never gets old
+ * products (review 32.7). The markup is set through the pricing settings
+ * (audited), when the administrator may manage creator pricing; a markup
+ * that is not set does not undo the category.
  */
 final class WooCommerceGoLiveShop implements GoLiveShop {
 
@@ -88,27 +90,30 @@ final class WooCommerceGoLiveShop implements GoLiveShop {
 	 * @param string $name       Category name.
 	 * @param int    $parent_id  Parent `product_cat`.
 	 * @param string $percent    Markup percentage.
+	 * @return bool Whether the markup was set.
 	 * @throws GoLiveException When the category cannot be made or mapped.
 	 */
-	public function provision( int $creator_id, string $name, int $parent_id, string $percent ): void {
+	public function provision( int $creator_id, string $name, int $parent_id, string $percent ): bool {
 		if ( ! $this->has_category( $creator_id ) ) {
 			$this->map( $creator_id, $this->term( $name, $parent_id ) );
 		}
 
 		if ( ! current_user_can( Capabilities::MANAGE_CREATOR_PRICING ) ) {
-			return;
+			return false;
 		}
 
 		try {
 			$this->pricing->set_markup( $creator_id, str_replace( ',', '.', $percent ) );
 		} catch ( PricingException | DatabaseException ) {
-			throw new GoLiveException( GoLiveException::MARKUP );
+			return false;
 		}
+
+		return true;
 	}
 
 	/**
 	 * The category's term: a new one under the parent, or the existing one
-	 * with the same name there.
+	 * with the same name there when it holds no products.
 	 *
 	 * @param string $name      Name.
 	 * @param int    $parent_id Parent.
@@ -123,7 +128,7 @@ final class WooCommerceGoLiveShop implements GoLiveShop {
 
 		$existing = 'term_exists' === $term->get_error_code() ? $term->get_error_data( 'term_exists' ) : null;
 
-		if ( is_numeric( $existing ) ) {
+		if ( is_numeric( $existing ) && array() === get_objects_in_term( (int) $existing, 'product_cat' ) ) {
 			return (int) $existing;
 		}
 

@@ -197,7 +197,10 @@ class DesignerApply {
 		if ( $this->awaiting_live( $creator_id ) ) {
 			$this->products->set_apply( $id, DesignerProductRepository::APPLY_WAITING, null, null );
 
-			return;
+			// Went live meanwhile, after the waiting versions were released: this one goes on now (review 32.7).
+			if ( $this->awaiting_live( $creator_id ) ) {
+				return;
+			}
 		}
 
 		$base = $this->current_base( $version );
@@ -429,6 +432,7 @@ class DesignerApply {
 	 *
 	 * @param int $creator_id Creator.
 	 * @throws DatabaseException When the creator cannot be read.
+	 * @phpstan-impure
 	 */
 	private function awaiting_live( int $creator_id ): bool {
 		$creator = $this->creators->find( $creator_id );

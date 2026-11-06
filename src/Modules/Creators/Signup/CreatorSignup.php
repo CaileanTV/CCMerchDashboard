@@ -34,7 +34,7 @@ defined( 'ABSPATH' ) || exit;
  *   user without a role and a creator who is active, not live, and must
  *   accept the agreement; the acceptance is stored. The e-mail "Confirm your
  *   e-mail and choose a password" carries WordPress' own link to set a
- *   password. Only when it is used (`after_password_reset`) does the user get
+ *   password. Only when it is used (`password_reset`) does the user get
  *   the role `merchboard_creator`, and with it the dashboard.
  * - The visitor chooses their username. An e-mail or username that has an
  *   account is refused with its reason: the owner allowed the page to say
@@ -193,7 +193,7 @@ class CreatorSignup {
 	/**
 	 * The e-mail is verified (the user chose their first password): the user
 	 * gets the creator role, and the administrator is told
-	 * (`after_password_reset`). Never throws.
+	 * (`password_reset`). Never throws.
 	 *
 	 * @param mixed $user The user (WP_User).
 	 */
@@ -350,16 +350,22 @@ class CreatorSignup {
 			return;
 		}
 
-		$this->transaction->run(
-			function () use ( $creator_id ): void {
+		// Only while it is still unverified: a sign-up verified meanwhile is kept with its user.
+		$removed = $this->transaction->run(
+			function () use ( $creator_id ): bool {
+				if ( ! $this->signups->delete_unverified( $creator_id ) ) {
+					return false;
+				}
+
 				$this->agreements->delete_for_unverified( $creator_id );
-				$this->signups->delete( $creator_id );
 				$this->creators->delete( $creator_id );
 				$this->audit->record( AuditAction::CreatorSignupExpired, null, array( 'creator_id' => $creator_id ) );
+
+				return true;
 			}
 		);
 
-		if ( false !== $user ) {
+		if ( $removed && false !== $user ) {
 			self::delete_user( $user_id );
 		}
 	}

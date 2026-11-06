@@ -382,7 +382,9 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
   - pluginet opretter en WordPress-bruger uden rolle;
   - først når e-mailen er bekræftet (første adgangskode via WordPress' eget link), gives `merchboard_creator`;
   - der gives aldrig en rolle fra input, og en eksisterende brugers roller ændres aldrig.
-- **Oprydning:** ubekræftede konti slettes efter 7 dage. Det gælder kun brugere, pluginet selv har oprettet, som aldrig er bekræftet og ikke har andre roller.
+- **Oprydning:** ubekræftede konti slettes efter 7 dage, også når selvoprettelse er slået fra igen. Det gælder kun brugere, pluginet selv har oprettet, som aldrig er bekræftet og ikke har andre roller. Oprettelsen slettes kun, mens den stadig er ubekræftet (i samme transaktion), så en samtidig bekræftelse aldrig mister sin bruger (review 32.7).
+- **Bekræftelseslinket** er WordPress' eget og virker i 24 timer. Bekræftelsen sker på `password_reset`, så WordPress' og WooCommerces nulstilling begge giver rollen.
+- **Rate limit** bruger `REMOTE_ADDR`. Bag en reverse proxy, der ikke sætter den rigtige adresse, deler alle besøgende samme grænse.
 - **Ikke live:** en creator, der ikke er live, når aldrig butikken. Der er ingen kategori, produktkobling, rabatkode, designer-anvendelse eller oplæsning, så intet kan lække via shop, søgning, sitemaps, REST eller Store API (forhindring frem for filtrering).
 - **Aftalepapiret:**
   - teksten renses med `wp_kses_post`;

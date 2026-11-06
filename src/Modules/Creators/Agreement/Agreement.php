@@ -36,8 +36,9 @@ defined( 'ABSPATH' ) || exit;
  *   confirmation of being 18 or older. Nobody accepts for a creator while
  *   viewing as them (ADR-075).
  * - The placeholders [COMPANY], [ADDRESS], [CVR] and [EMAIL] are filled from
- *   the company details when the text is shown; a version is published only
- *   when each has a value.
+ *   the company details when a version is published, and each must have a
+ *   value: the version keeps the text creators accepted, also when the
+ *   details change later (review 32.7). The draft keeps the placeholders.
  */
 class Agreement {
 
@@ -162,10 +163,11 @@ class Agreement {
 		}
 
 		$material = $material || null === $this->current();
+		$frozen   = self::rendered( $body );
 		$version  = $this->transaction->run(
-			function () use ( $body, $material ): int {
+			function () use ( $frozen, $material ): int {
 				$user    = get_current_user_id();
-				$version = $this->agreements->publish( $body, $material, $user > 0 ? $user : null, ( $this->clock )() );
+				$version = $this->agreements->publish( $frozen, $material, $user > 0 ? $user : null, ( $this->clock )() );
 				$this->audit->record(
 					AuditAction::AgreementPublished,
 					null,

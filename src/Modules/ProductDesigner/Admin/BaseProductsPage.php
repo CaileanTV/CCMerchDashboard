@@ -191,6 +191,43 @@ final class BaseProductsPage {
 	}
 
 	/**
+	 * What a planned price increase raises, in words.
+	 *
+	 * @param array{at: int, base: int|null, large: int|null, small: int|null, sizes: array<string, int>, large_sides: list<string>, scheduled_at: int} $planned  The plan.
+	 * @param string                                                                                                                                    $currency Currency.
+	 */
+	private static function planned_prices( array $planned, string $currency ): string {
+		$parts = array();
+
+		if ( null !== $planned['base'] ) {
+			/* translators: 1: price, 2: currency. */
+			$parts[] = sprintf( __( 'base price %1$s %2$s', 'merchboard' ), SalesAmount::format( $planned['base'] ), $currency );
+		}
+
+		foreach ( $planned['sizes'] as $size => $units ) {
+			/* translators: 1: size, 2: price, 3: currency. */
+			$parts[] = sprintf( __( 'size %1$s %2$s %3$s', 'merchboard' ), $size, SalesAmount::format( $units ), $currency );
+		}
+
+		if ( null !== $planned['large'] ) {
+			/* translators: 1: price, 2: currency. */
+			$parts[] = sprintf( __( 'extra large area %1$s %2$s', 'merchboard' ), SalesAmount::format( $planned['large'] ), $currency );
+		}
+
+		if ( null !== $planned['small'] ) {
+			/* translators: 1: price, 2: currency. */
+			$parts[] = sprintf( __( 'extra small area %1$s %2$s', 'merchboard' ), SalesAmount::format( $planned['small'] ), $currency );
+		}
+
+		if ( array() !== $planned['large_sides'] ) {
+			/* translators: %s: side keys. */
+			$parts[] = sprintf( __( 'sides that become large areas: %s', 'merchboard' ), implode( ', ', $planned['large_sides'] ) );
+		}
+
+		return implode( '; ', $parts );
+	}
+
+	/**
 	 * Message and notice type for an outcome code; null for unknown codes.
 	 *
 	 * @param string $code Outcome code.
@@ -201,7 +238,7 @@ final class BaseProductsPage {
 
 		return match ( $code ) {
 			'saved'                                 => array( __( 'The base product was saved. A new base price reaches the designer products in the shop in the background.', 'merchboard' ), 'success' ),
-			'price_scheduled'                       => array( __( 'The base product was saved. The higher prices apply in 14 days; the creators who design on it were told (ADR-094).', 'merchboard' ), 'warning' ),
+			'price_scheduled'                       => array( __( 'The base product was saved. Prices that go up apply in 14 days, and the creators who design on it were told; everything else applies now.', 'merchboard' ), 'warning' ),
 			'price_cancelled'                       => array( __( 'The planned price increase was cancelled.', 'merchboard' ), 'success' ),
 			'photo_moved'                           => array( __( 'The order of the mockups was saved. It is used for designs sent from now on.', 'merchboard' ), 'success' ),
 			'activated'                             => array( __( 'The base product is active: creators can design on it.', 'merchboard' ), 'success' ),
@@ -370,11 +407,10 @@ final class BaseProductsPage {
 		if ( null !== $planned ) {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html(
 				sprintf(
-					/* translators: 1: date, 2: new base price, 3: currency. */
-					__( 'A price increase is planned: from %1$s the base price is %2$s %3$s (with the other new prices). Creators were told; the prices below apply until then (ADR-094).', 'merchboard' ),
+					/* translators: 1: date, 2: what goes up. */
+					__( 'A price increase is planned from %1$s: %2$s. Creators were told; the prices below apply until then.', 'merchboard' ),
 					(string) wp_date( (string) get_option( 'date_format' ), $planned['at'] ),
-					SalesAmount::format( $planned['base'] ),
-					$base->currency
+					self::planned_prices( $planned, $base->currency )
 				)
 			) . '</p>';
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';

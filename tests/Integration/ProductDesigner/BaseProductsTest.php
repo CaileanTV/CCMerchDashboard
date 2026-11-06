@@ -468,7 +468,17 @@ final class BaseProductsTest extends IntegrationTestCase {
 		add_action( 'merchboard_notify', $listen, 10, 2 );
 
 		// Nobody designs on it yet: a higher price applies at once.
-		$service->save( $id, array_merge( self::fields(), array( 'base_price' => '159' ) ), array() );
+		$service->save(
+			$id,
+			array_merge(
+				self::fields(),
+				array(
+					'base_price'       => '159',
+					'extra_side_price' => '50',
+				)
+			),
+			array()
+		);
 		self::assertSame( 1590000, $this->bases->find( $id )?->base_units );
 		self::assertNull( BasePriceSchedule::scheduled( $id ) );
 
@@ -497,13 +507,27 @@ final class BaseProductsTest extends IntegrationTestCase {
 		remove_action( 'merchboard_notify', $listen, 10 );
 		self::assertStringContainsString( '169.00', BasePriceSchedule::notice( $this->bases->find( $id ) ?? self::fail() ) );
 
+		$service->save(
+			$id,
+			array_merge(
+				self::fields(),
+				array(
+					'base_price'       => '149',
+					'extra_side_price' => '10',
+				)
+			),
+			array()
+		);
+		self::assertSame( 100000, $this->bases->find( $id )?->extra_side_units, 'A lower price applies at once, also while an increase is planned.' );
+		self::assertSame( 1690000, BasePriceSchedule::scheduled( $id )['base'] ?? null, 'The planned increase stays.' );
+
 		$now = $now->modify( '+13 days' );
 		self::assertSame( 0, $schedule->apply_due(), 'Not before the date.' );
 
 		$now    = $now->modify( '+1 day' );
 		$before = did_action( BaseProductService::PRICE_CHANGED );
 		self::assertSame( 1, $schedule->apply_due() );
-		self::assertSame( 1690000, $this->bases->find( $id )?->base_units );
+		self::assertSame( array( 1690000, 100000 ), array( $this->bases->find( $id )?->base_units, $this->bases->find( $id )?->extra_side_units ), 'Only the increase is set; the lower price saved meanwhile stays (review 32.7).' );
 		self::assertNull( BasePriceSchedule::scheduled( $id ) );
 		self::assertSame( $before + 1, did_action( BaseProductService::PRICE_CHANGED ), 'The shop is repriced on the date.' );
 		self::assertGreaterThan( $changed, $before );
@@ -517,28 +541,41 @@ final class BaseProductsTest extends IntegrationTestCase {
 		delete_option( BasePriceSchedule::OPTION );
 	}
 
-	public function test_a_side_that_becomes_large_or_a_higher_size_price_is_an_increase(): void {
-		$base = new BaseProduct( 1, BaseProduct::DRAFT, 'own', 'Cup', '', 100000, 'DKK', null, array(), array( 'S', 'L' ), array(), 1, 20000, '', array( 'L' => 120000 ), 10000 );
-
-		self::assertFalse( BasePriceSchedule::raises( $base, 100000, array( 'L' => 120000 ), 20000, 10000, array() ) );
-		self::assertFalse( BasePriceSchedule::raises( $base, 90000, array(), 20000, 10000, array() ), 'Lower prices only.' );
-		self::assertTrue( BasePriceSchedule::raises( $base, 100000, array( 'L' => 130000 ), 20000, 10000, array() ) );
-		self::assertTrue(
-			BasePriceSchedule::raises(
-				$base,
-				100000,
-				array(
-					'L' => 120000,
-					'S' => 110000,
-				),
-				20000,
-				10000,
-				array()
+	public function test_only_prices_that_go_up_are_increases(): void {
+		$base  = new BaseProduct(
+			1,
+			BaseProduct::DRAFT,
+			'own',
+			'Cup',
+			'',
+			100000,
+			'DKK',
+			null,
+			array(),
+			array( 'XS', 'S', 'L' ),
+			array(),
+			1,
+			20000,
+			'',
+			array(
+				'XS' => 80000,
+				'L'  => 120000,
 			),
-			'A size with its own price above the base price.'
+			10000
 		);
-		self::assertTrue( BasePriceSchedule::raises( $base, 100000, array( 'L' => 120000 ), 25000, 10000, array() ) );
-		self::assertTrue( BasePriceSchedule::raises( $base, 100000, array( 'L' => 120000 ), 20000, 15000, array() ) );
+		$sizes = array( 'XS', 'S', 'L' );
+		$own   = array(
+			'XS' => 80000,
+			'L'  => 120000,
+		);
+
+		self::assertNull( BasePriceSchedule::increases( $base, 100000, $own, $sizes, 20000, 10000, array() ), 'Unchanged.' );
+		self::assertNull( BasePriceSchedule::increases( $base, 90000, array(), $sizes, 20000, 10000, array() ), 'Lower prices only.' );
+		self::assertNull( BasePriceSchedule::increases( $base, 100000, array( 'L' => 120000 ), array( 'S', 'L' ), 20000, 10000, array() ), 'A removed size with its own price is no increase (review 32.7).' );
+		self::assertSame( array( 'L' => 130000 ), BasePriceSchedule::increases( $base, 100000, array_merge( $own, array( 'L' => 130000 ) ), $sizes, 20000, 10000, array() )['sizes'] ?? null );
+		self::assertSame( array( 'S' => 110000 ), BasePriceSchedule::increases( $base, 100000, array_merge( $own, array( 'S' => 110000 ) ), $sizes, 20000, 10000, array() )['sizes'] ?? null, 'A size with its own price above the base price.' );
+		self::assertSame( array( 25000, null ), array_values( array_intersect_key( BasePriceSchedule::increases( $base, 100000, $own, $sizes, 25000, 10000, array() ) ?? array(), array_flip( array( 'large', 'small' ) ) ) ) );
+		self::assertSame( 15000, BasePriceSchedule::increases( $base, 100000, $own, $sizes, 20000, 15000, array() )['small'] ?? null );
 	}
 
 	public function test_text_fields_are_parsed_strictly(): void {

@@ -5301,6 +5301,17 @@ ADR-047, ADR-049, ADR-051, ADR-054, ADR-060, ADR-062, ADR-064
 ## Status
 Accepteret af projektejeren 2026-11-06 (fase 32). **Implementeret:** forhindringen i 32.2, oprettelsen i 32.4 og go-live i 32.5 (2026-11-06). Kategorien og tillægget sættes af WooCommerce-modulet bag grænsefladen `GoLiveShop`; ventende designs frigives via action `merchboard_creator_went_live`. Bevidst undtagelse fra "ingen offentlige endpoints" (SECURITY.md) og fra, at kun admin opretter creators (USER-ROLES.md). ADR-006, ADR-007 og ADR-020 er uændrede.
 
+**Statusnote 2026-11-06 (review 32.7):**
+- Linket i bekræftelsesmailen er WordPress' eget og virker i 24 timer, ikke 7 dage. Mailen siger det og henviser derefter til "Glemt din adgangskode?". Oprettelsen gemmes stadig i 7 dage.
+- Bekræftelsen sker på `password_reset`, så den også virker, når adgangskoden vælges via WooCommerce.
+- Oprydningen kører, også når selvoprettelse er slået fra igen. Den sletter kun en oprettelse, der stadig er ubekræftet i samme transaktion, så en bekræftelse samtidig aldrig mister sin bruger.
+- Et godkendt design, der lige er sat til at vente, mens creatoren går live, anvendes med det samme.
+- En inaktiv creator kan ikke godkendes til at gå live.
+- **Kendte begrænsninger:**
+  - "Se som creator" kan anmode om go-live på creatorens vegne. Det er bevidst, som andre handlinger i dashboardet; kun accepten af aftalen er spærret (ADR-092).
+  - Rate limit bruger `REMOTE_ADDR`. Bag en proxy uden korrekt videresendt adresse deler alle besøgende samme grænse.
+  - Sletter admin en selvoprettet creator, før e-mailen er bekræftet, bliver den rolleløse bruger liggende. Admin kan slette den under Brugere.
+
 ## Context
 - I dag opretter kun en administrator creators, og pluginet opretter aldrig WordPress-brugere.
 - Pluginet skjuler intet i butikken. Selv en inaktiv creators kategori og produkter er synlige (ADR-076), og legacy-produkter må aldrig ændres (ADR-080 pkt. 7).
@@ -5377,6 +5388,10 @@ Accepteret af projektejeren 2026-11-06 (fase 32). **Implementeret i 32.3 (2026-1
 
 ADR-061's øvrige punkter og forbehold er uændrede. Aftaleteksten er et udkast, indtil projektejeren eller en advokat har godkendt den.
 
+**Statusnote 2026-11-06 (review 32.7):**
+- En version gemmes med firmaoplysningerne udfyldt. Teksten, creators har accepteret, ændres derfor ikke, hvis oplysningerne ændres senere. Kladden beholder pladsholderne.
+- "Admin kan sætte kravet på en creator" (pkt. 3) er ikke bygget. Kravet sættes kun ved selvoprettelse.
+
 ## Context
 ADR-061 lagde aftaler og accepter uden for pluginet. Med selvoprettelse (ADR-091) skal en ny creator acceptere aftalepapiret, før samarbejdet starter. Det sker i pluginet. Udkastet bygger på den hidtidige samarbejdsaftale; se [features/creator-signup.md](features/creator-signup.md).
 
@@ -5425,6 +5440,11 @@ ADR-060, ADR-061, ADR-071, ADR-091
 ## Status
 Accepteret af projektejeren 2026-11-06 (fase 32). **Ændrer ADR-033 pkt. 1** ("Produktkategorierne selv slettes eller ændres aldrig") med én undtagelse: pluginet må oprette en kategori. Det sletter stadig aldrig en kategori.
 
+**Statusnote 2026-11-06 (review 32.7):**
+- En eksisterende kategori med samme navn under overkategorien genbruges kun, når den ikke har produkter og ikke tilhører en anden creator. Ellers ville en ny creator få gamle produkter. Admin vælger så et andet navn.
+- Når kategorien er oprettet, frigives ventende designs, også hvis tillægget ikke kunne sættes. Admin får besked om at sætte tillægget under creatorens priser.
+- "Prøv igen" vises for de 50 senest godkendte creators uden kategori. Ældre kobles manuelt under Kategorier.
+
 ## Context
 En selvoprettet creator har ingen kategori, og pluginet må i dag ikke oprette en. Projektejeren vil ikke oprette den manuelt hver gang.
 
@@ -5458,6 +5478,11 @@ ADR-033, ADR-077, ADR-091
 
 ## Status
 Accepteret af projektejeren 2026-11-06 (fase 32). **Implementeret i 32.6 (2026-11-06):** `BasePriceSchedule`; datoen er altid 14 dage fra gem, og priserne sættes ved første sidevisning efter datoen (højst én gang i timen). **Ændrer ADR-080 pkt. 10:** en ny grundpris gælder ikke længere altid med det samme.
+
+**Statusnote 2026-11-06 (review 32.7):** prisvarslet gælder pr. pris, ikke hele prissættet:
+- Kun de priser, der stiger, venter 14 dage (grundpris, en størrelses egen pris, ekstra stort eller lille område, en side, der bliver stor). Alt andet i samme gem gælder med det samme.
+- En senere ændring fletter ind i planen. På datoen sættes kun de planlagte priser, så en lavere pris, der er gemt i mellemtiden, bliver stående.
+- En fjernet størrelse er ikke en prisstigning.
 
 ## Context
 Den hidtidige samarbejdsaftale lover skriftligt varsel 14 dage før en prisstigning. Projektejeren vil have, at det også gælder i aftalepapiret, og at pluginet sikrer det.

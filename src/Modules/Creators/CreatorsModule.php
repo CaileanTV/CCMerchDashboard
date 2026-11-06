@@ -157,8 +157,9 @@ final class CreatorsModule implements Module {
 			-1
 		);
 		// The first password proves the e-mail: the user gets the creator role.
+		// `password_reset` fires in WordPress' reset and in WooCommerce's (review 32.7).
 		add_action(
-			'after_password_reset',
+			'password_reset',
 			static function ( mixed $user ) use ( $container ): void {
 				$container->get( CreatorSignup::class )->verified( $user );
 			}
@@ -167,7 +168,8 @@ final class CreatorsModule implements Module {
 		add_action(
 			'shutdown',
 			static function () use ( $container ): void {
-				if ( ! SignupSettings::enabled() || false !== get_transient( 'merchboard_signup_cleanup' ) ) {
+				// Also when sign-up was turned off meanwhile: old sign-ups still expire (review 32.7).
+				if ( false !== get_transient( 'merchboard_signup_cleanup' ) ) {
 					return;
 				}
 

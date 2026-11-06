@@ -51,7 +51,7 @@ final class NullGoLiveShop implements GoLiveShop {
 	 * @param string $percent    Markup.
 	 * @throws GoLiveException Always.
 	 */
-	public function provision( int $creator_id, string $name, int $parent_id, string $percent ): void {
+	public function provision( int $creator_id, string $name, int $parent_id, string $percent ): bool {
 		throw new GoLiveException( GoLiveException::SHOP_UNAVAILABLE );
 	}
 }

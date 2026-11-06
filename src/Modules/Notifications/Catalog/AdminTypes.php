@@ -162,7 +162,7 @@ final class AdminTypes {
 		return self::type(
 			'go_live_requested',
 			static fn(): string => __( 'Request to go live', 'merchboard' ),
-			static fn(): string => __( 'When a creator who signed up asks to go live in the shop (ADR-091).', 'merchboard' ),
+			static fn(): string => __( 'When a creator who signed up asks to go live in the shop.', 'merchboard' ),
 			true,
 			'merchboard-approvals',
 			array( 'creator' => 'Nova' ),
@@ -186,7 +186,7 @@ final class AdminTypes {
 		return self::type(
 			'creator_signed_up',
 			static fn(): string => __( 'New creator signed up', 'merchboard' ),
-			static fn(): string => __( 'When someone signs up as a creator and their e-mail is verified (ADR-091). They are not live until you approve it.', 'merchboard' ),
+			static fn(): string => __( 'When someone signs up as a creator and their e-mail is verified. They are not live until you approve it.', 'merchboard' ),
 			true,
 			'merchboard-creators',
 			array(

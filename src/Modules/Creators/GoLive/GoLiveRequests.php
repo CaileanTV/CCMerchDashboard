@@ -20,6 +20,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\Agreement\Agreement;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\Creators\Signup\SignupSettings;
 
 defined( 'ABSPATH' ) || exit;
@@ -30,15 +31,25 @@ defined( 'ABSPATH' ) || exit;
  *   request is pending at a time. The administrator is told.
  * - Approving needs the parent category and the shop: the creator goes live
  *   (in one transaction with the decision and the audit record), then the
- *   shop creates the category and sets the markup, and
- *   `merchboard_creator_went_live` lets the designer put the waiting designs
- *   in the shop. If the category cannot be made, the creator is live without
- *   it and the administrator tries again from the Go-live tab.
+ *   shop creates the category and sets the markup. Once the category is
+ *   there, `merchboard_creator_went_live` lets the designer put the waiting
+ *   designs in the shop, also when the markup was not set (review 32.7). If
+ *   the category cannot be made, the creator is live without it and the
+ *   administrator tries again from the Go-live tab.
  * - Declining needs a note, which the creator gets; they can ask again.
  */
 class GoLiveRequests {
 
 	public const WENT_LIVE = 'merchboard_creator_went_live';
+
+	/** The category was made and the markup set. */
+	public const PROVISIONED = 'provisioned';
+
+	/** The category was made; the markup was not set. */
+	public const NO_MARKUP = 'no_markup';
+
+	/** The category could not be made (try again). */
+	public const NO_CATEGORY = 'no_category';
 
 	private const MAX_NOTE = 500;
 
@@ -130,11 +141,11 @@ class GoLiveRequests {
 	 * @param int    $id       Request.
 	 * @param string $name     Category name.
 	 * @param string $percent  Markup percentage.
-	 * @return bool Whether the category was made too (false: try again from the tab).
+	 * @return string One of PROVISIONED, NO_MARKUP and NO_CATEGORY: the creator is live in all three.
 	 * @throws GoLiveException When it is refused (nothing changed).
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function approve( int $id, string $name, string $percent ): bool {
+	public function approve( int $id, string $name, string $percent ): string {
 		self::authorize();
 		$request = $this->requests->find( $id );
 
@@ -147,7 +158,7 @@ class GoLiveRequests {
 		$shop    = ( $this->shop )();
 		$parent  = SignupSettings::parent_category();
 
-		if ( null === $creator ) {
+		if ( null === $creator || CreatorStatus::Active !== $creator->status ) {
 			self::refuse( GoLiveException::NOT_PENDING );
 		}
 
@@ -195,11 +206,11 @@ class GoLiveRequests {
 	 * @param int    $creator_id Creator.
 	 * @param string $name       Category name.
 	 * @param string $percent    Markup percentage.
-	 * @return bool Whether the category was made.
+	 * @return string One of PROVISIONED, NO_MARKUP and NO_CATEGORY.
 	 * @throws GoLiveException When it is refused.
 	 * @throws DatabaseException When it cannot be read.
 	 */
-	public function retry_category( int $creator_id, string $name, string $percent ): bool {
+	public function retry_category( int $creator_id, string $name, string $percent ): string {
 		self::authorize();
 		$creator = $this->creators->find( $creator_id );
 		$name    = trim( sanitize_text_field( $name ) );
@@ -265,18 +276,18 @@ class GoLiveRequests {
 	 * @param int    $creator_id Creator.
 	 * @param string $name       Category name.
 	 * @param string $percent    Markup percentage.
-	 * @return bool Whether it was done.
+	 * @return string One of PROVISIONED, NO_MARKUP and NO_CATEGORY.
 	 */
-	private function provision( int $creator_id, string $name, string $percent ): bool {
+	private function provision( int $creator_id, string $name, string $percent ): string {
 		try {
-			( $this->shop )()->provision( $creator_id, $name, SignupSettings::parent_category(), $percent );
+			$markup = ( $this->shop )()->provision( $creator_id, $name, SignupSettings::parent_category(), $percent );
 		} catch ( GoLiveException ) {
-			return false;
+			return self::NO_CATEGORY;
 		}
 
 		do_action( 'merchboard_creator_went_live', $creator_id ); // Same as self::WENT_LIVE. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- merchboard_creator_went_live.
 
-		return true;
+		return $markup ? self::PROVISIONED : self::NO_MARKUP;
 	}
 
 	/**

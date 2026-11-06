@@ -134,22 +134,27 @@ class BaseProductService {
 		try {
 			$plans = $this->plan_views( $existing, $views, $stored, array_column( $colors, 'key' ), $sizes );
 
-			// A higher price of a base product creators design on waits 14 days (ADR-094): the row keeps its prices.
+			// Prices that go up on a base product creators design on wait 14 days (ADR-094); the rest of the save applies now.
 			if ( null !== $existing && null !== $this->schedule && $this->schedule->applies( (int) $id ) ) {
-				$sides = array_intersect_key( array_column( $plans, 'small', 'key' ), array_flip( array_map( static fn( BaseView $view ): string => $view->key, $existing->views ) ) );
+				$sides   = array_intersect_key( array_column( $plans, 'small', 'key' ), array_flip( array_map( static fn( BaseView $view ): string => $view->key, $existing->views ) ) );
+				$planned = BasePriceSchedule::increases( $existing, $price, $by_size, $sizes, $extra, $small, $sides );
 
-				if ( BasePriceSchedule::raises( $existing, $price, $by_size, $extra, $small, $sides ) ) {
-					$planned = array( $price, $by_size, $extra, $small, $sides );
-					$price   = $existing->base_units;
-					$extra   = $existing->extra_side_units;
-					$small   = $existing->small_side_units;
-					$by_size = array_intersect_key( $existing->size_prices, array_flip( $sizes ) );
+				if ( null !== $planned ) {
+					$price = null === $planned['base'] ? $price : $existing->base_units;
+					$extra = null === $planned['large'] ? $extra : $existing->extra_side_units;
+					$small = null === $planned['small'] ? $small : $existing->small_side_units;
+
+					foreach ( array_keys( $planned['sizes'] ) as $size ) {
+						if ( isset( $existing->size_prices[ $size ] ) ) {
+							$by_size[ $size ] = $existing->size_prices[ $size ];
+						} else {
+							unset( $by_size[ $size ] );
+						}
+					}
 
 					foreach ( $plans as $index => $plan ) {
-						foreach ( $existing->views as $view ) {
-							if ( $view->key === $plan['key'] ) {
-								$plans[ $index ]['small'] = $view->small;
-							}
+						if ( in_array( $plan['key'], $planned['large_sides'], true ) ) {
+							$plans[ $index ]['small'] = true;
 						}
 					}
 				}
@@ -213,7 +218,7 @@ class BaseProductService {
 		$this->forget_layers( $saved[1] );
 
 		if ( null !== $planned && null !== $existing && null !== $this->schedule ) {
-			$this->schedule->schedule( $this->bases->find( $saved[0] ) ?? $existing, ...$planned );
+			$this->schedule->schedule( $this->bases->find( $saved[0] ) ?? $existing, $planned );
 		}
 
 		if ( null !== $existing && ( $existing->base_units !== $price || $existing->extra_side_units !== $extra || $existing->size_prices !== $by_size || $existing->small_side_units !== $small || self::small_sides( $existing->views ) !== array_keys( array_filter( array_column( $plans, 'small', 'key' ) ) ) ) ) {

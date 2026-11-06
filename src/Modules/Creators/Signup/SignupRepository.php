@@ -159,6 +159,31 @@ class SignupRepository {
 	}
 
 	/**
+	 * Deletes a creator's sign-up only while it is unverified, so a sign-up
+	 * verified meanwhile is kept (review 32.7).
+	 *
+	 * @param int $creator_id Creator.
+	 * @return bool Whether it was deleted.
+	 * @throws DatabaseException When it cannot be deleted.
+	 */
+	public function delete_unverified( int $creator_id ): bool {
+		$wpdb = $this->wpdb;
+		$sql  = $wpdb->prepare( 'DELETE FROM %i WHERE creator_id = %d AND verified_at IS NULL', $this->table(), $creator_id );
+
+		if ( null === $sql ) {
+			throw new DatabaseException( 'Could not delete the sign-up.' );
+		}
+
+		$deleted = $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- $sql is the result of $wpdb->prepare(); own table.
+
+		if ( false === $deleted ) {
+			throw new DatabaseException( 'Could not delete the sign-up.' );
+		}
+
+		return 1 === $deleted;
+	}
+
+	/**
 	 * A sign-up from a row.
 	 *
 	 * @param array<string, mixed> $row Row.

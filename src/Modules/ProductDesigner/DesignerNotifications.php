@@ -278,7 +278,7 @@ final class DesignerNotifications {
 			NotificationType::CREATOR,
 			self::GROUP,
 			static fn(): string => __( 'Coming price increase', 'merchboard' ),
-			static fn(): string => __( 'At least 14 days before a base product the creator designs on gets a higher price (ADR-094).', 'merchboard' ),
+			static fn(): string => __( 'At least 14 days before a base product the creator designs on gets a higher price.', 'merchboard' ),
 			true,
 			true,
 			true,
@@ -286,8 +286,9 @@ final class DesignerNotifications {
 			array_merge(
 				self::sample(),
 				array(
-					'date'   => '2026-12-01',
-					'before' => '229.00',
+					'date'        => '2026-12-01',
+					'before'      => '229.00',
+					'base_raised' => true,
 				)
 			),
 			/* translators: 1: base product, 2: date. */
@@ -296,12 +297,16 @@ final class DesignerNotifications {
 				/* translators: %s: base product. */
 				sprintf( __( 'The price of %s goes up', 'merchboard' ), $d->text( 'title' ) ),
 				__( 'A price goes up', 'merchboard' ),
-				array( __( 'The base price of a product you design on goes up. As agreed, we tell you at least 14 days before. On that date, the customer price of your products in the shop follows; your profit setting (percent or amount) stays the same.', 'merchboard' ) ),
-				array(
-					array( __( 'Product', 'merchboard' ), $d->text( 'title' ) ),
-					array( __( 'From', 'merchboard' ), $d->text( 'date' ) ),
-					array( __( 'New base price incl. VAT', 'merchboard' ), $d->money( 'price' ) ),
-					array( __( 'Before', 'merchboard' ), $d->money( 'before' ) ),
+				array( __( 'A price of a product you design on goes up: the base price, the price of a size or the price of an extra design area. As agreed, we tell you at least 14 days before. On that date, the customer price of your products in the shop follows; your profit setting (percent or amount) stays the same.', 'merchboard' ) ),
+				array_merge(
+					array(
+						array( __( 'Product', 'merchboard' ), $d->text( 'title' ) ),
+						array( __( 'From', 'merchboard' ), $d->text( 'date' ) ),
+					),
+					$d->flag( 'base_raised' ) ? array(
+						array( __( 'New base price incl. VAT', 'merchboard' ), $d->money( 'price' ) ),
+						array( __( 'Before', 'merchboard' ), $d->money( 'before' ) ),
+					) : array()
 				),
 				null,
 				null,

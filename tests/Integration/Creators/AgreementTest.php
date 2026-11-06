@@ -79,6 +79,7 @@ final class AgreementTest extends IntegrationTestCase {
 
 		$GLOBALS['wp_rest_server'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh REST server per test.
 		delete_option( Agreement::DRAFT_OPTION );
+		delete_option( 'merchboard_settings' );
 		delete_user_meta( 1, ImpersonationSession::META );
 		parent::tearDown();
 	}
@@ -98,6 +99,12 @@ final class AgreementTest extends IntegrationTestCase {
 		self::assertNotNull( $current );
 		self::assertSame( array( 1, '<p>Version one</p>alert(1)', true ), array( $current->version, $current->body, $current->material ), 'Sanitized; the first version is always material.' );
 		self::assertSame( 1, $this->audit_count( 'agreement_published' ) );
+
+		update_option( 'merchboard_settings', array( 'company_name' => 'Merch ApS' ) );
+		$this->agreement->publish( '<p>Between [COMPANY] and you</p>', false );
+		update_option( 'merchboard_settings', array( 'company_name' => 'Other ApS' ) );
+		self::assertSame( '<p>Between Merch ApS and you</p>', $this->agreement->current()?->body, 'A version keeps the text that was accepted (review 32.7).' );
+		self::assertStringContainsString( '[COMPANY]', $this->agreement->draft(), 'The draft keeps the placeholder.' );
 	}
 
 	public function test_only_creators_who_signed_up_accept_the_first_and_material_versions(): void {

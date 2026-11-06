@@ -48,7 +48,7 @@ class SignupMails {
 				__( 'Welcome! One more step', 'merchboard' ),
 				array(
 					__( 'Thank you for signing up as a creator. Confirm your e-mail by choosing a password; then you can log in and prepare your shop.', 'merchboard' ),
-					__( 'The link works for 7 days. If you did not sign up, you can ignore this e-mail; the sign-up is then removed.', 'merchboard' ),
+					__( 'The link works for 24 hours. After that, use "Lost your password?" on the login page with this e-mail; the sign-up is kept for 7 days. If you did not sign up, you can ignore this e-mail; the sign-up is then removed.', 'merchboard' ),
 				),
 				array(),
 				null,

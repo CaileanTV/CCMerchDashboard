@@ -39,14 +39,15 @@ interface GoLiveShop {
 	public function has_category( int $creator_id ): bool;
 
 	/**
-	 * Creates the creator's category under the parent and maps it, and sets
+	 * Creates the creator's category under the parent and maps it, then sets
 	 * the markup. Idempotent: an existing mapping is kept.
 	 *
 	 * @param int    $creator_id Creator (live already).
 	 * @param string $name       Category name.
 	 * @param int    $parent_id  Parent `product_cat`.
 	 * @param string $percent    Markup percentage.
-	 * @throws GoLiveException When it cannot be done.
+	 * @return bool Whether the markup was set too (false: the category is there, the markup is not).
+	 * @throws GoLiveException When the category cannot be made or mapped.
 	 */
-	public function provision( int $creator_id, string $name, int $parent_id, string $percent ): void;
+	public function provision( int $creator_id, string $name, int $parent_id, string $percent ): bool;
 }

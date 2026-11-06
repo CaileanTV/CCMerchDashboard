@@ -26,14 +26,23 @@ use Throwable;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * ADR-094: when a base product that creators design on gets a higher price
- * (the base price, a size's own price, the price of a large or small extra
- * area, or a side that becomes large), the whole new set of prices waits
- * 14 days. The creators are told at once and the designer shows the coming
- * price; on the date the prices are set and the existing repricing runs
- * (`merchboard_designer_base_price_changed`). One change per base product:
- * a new one replaces it, and the administrator can cancel it. Stored in an
- * option, keyed by base product.
+ * ADR-094: when a base product that creators design on gets a higher price,
+ * only the prices that go up wait 14 days; everything else of the save
+ * (also lower prices) applies at once. A planned increase is one of:
+ * - `base`: the base price;
+ * - `large` / `small`: the price of a large or small extra design area;
+ * - `sizes`: a size's own price (or a size that gets a higher own price
+ *   than the base price it had);
+ * - `large_sides`: sides that become large areas.
+ * The creators are told at once and the designer shows the coming change. On
+ * the date only those components are set on the base product as it is then,
+ * and the existing repricing runs (`merchboard_designer_base_price_changed`).
+ * A later increase is added to the plan (its date moves 14 days from then,
+ * and the creators are told again); the administrator can cancel the plan.
+ * Stored in an option, keyed by base product.
+ *
+ * @phpstan-type Plan array{at: int, base: int|null, large: int|null, small: int|null, sizes: array<string, int>, large_sides: list<string>, scheduled_at: int}
+ * @phpstan-type Increase array{base: int|null, large: int|null, small: int|null, sizes: array<string, int>, large_sides: list<string>}
  */
 class BasePriceSchedule {
 
@@ -75,40 +84,52 @@ class BasePriceSchedule {
 	}
 
 	/**
-	 * Whether new prices raise any price of a base product.
+	 * The prices a save raises, compared with the base product now; only
+	 * sizes and sides it keeps count.
 	 *
 	 * @param BaseProduct         $base        The base product now.
 	 * @param int                 $price       New base price (units).
-	 * @param array<string, int>  $size_prices New prices of sizes with their own.
+	 * @param array<string, int>  $size_prices New own prices of sizes.
+	 * @param string[]            $sizes       The sizes it keeps or gets.
 	 * @param int                 $large       New price of a large extra area.
 	 * @param int                 $small       New price of a small extra area.
 	 * @param array<string, bool> $small_sides Whether each existing side is small, by key.
+	 * @return Increase|null Null when nothing goes up.
 	 */
-	public static function raises( BaseProduct $base, int $price, array $size_prices, int $large, int $small, array $small_sides ): bool {
-		if ( $price > $base->base_units || $large > $base->extra_side_units || $small > $base->small_side_units ) {
-			return true;
-		}
+	public static function increases( BaseProduct $base, int $price, array $size_prices, array $sizes, int $large, int $small, array $small_sides ): ?array {
+		$increase = array(
+			'base'        => $price > $base->base_units ? $price : null,
+			'large'       => $large > $base->extra_side_units ? $large : null,
+			'small'       => $small > $base->small_side_units ? $small : null,
+			'sizes'       => array(),
+			'large_sides' => array(),
+		);
 
-		foreach ( $base->sizes as $size ) {
-			if ( ( $size_prices[ $size ] ?? $price ) > ( $base->size_prices[ $size ] ?? $base->base_units ) ) {
-				return true;
+		foreach ( array_intersect( $base->sizes, $sizes ) as $size ) {
+			$own = $size_prices[ $size ] ?? null;
+
+			// A size without an own price follows the base price (and its increase).
+			if ( null !== $own && $own > ( $base->size_prices[ $size ] ?? $base->base_units ) ) {
+				$increase['sizes'][ (string) $size ] = $own;
 			}
 		}
 
 		foreach ( $base->views as $view ) {
 			if ( $view->small && false === ( $small_sides[ $view->key ] ?? true ) ) {
-				return true;
+				$increase['large_sides'][] = $view->key;
 			}
 		}
 
-		return false;
+		$raised = null !== $increase['base'] || null !== $increase['large'] || null !== $increase['small'] || array() !== $increase['sizes'] || array() !== $increase['large_sides'];
+
+		return $raised ? $increase : null;
 	}
 
 	/**
 	 * The planned change of a base product, or null.
 	 *
 	 * @param int $base_id Base product.
-	 * @return array{at: int, base: int, sizes: array<string, int>, large: int, small: int, small_sides: array<string, bool>, scheduled_at: int}|null
+	 * @return Plan|null
 	 * @phpstan-impure Reads the option.
 	 */
 	public static function scheduled( int $base_id ): ?array {
@@ -118,30 +139,29 @@ class BasePriceSchedule {
 	}
 
 	/**
-	 * Plans new prices 14 days from now and tells the creators.
+	 * Plans the increases 14 days from now (added to a plan there is) and
+	 * tells the creators.
 	 *
-	 * @param BaseProduct         $base        The base product now.
-	 * @param int                 $price       New base price.
-	 * @param array<string, int>  $size_prices New prices of sizes.
-	 * @param int                 $large       New large area price.
-	 * @param int                 $small       New small area price.
-	 * @param array<string, bool> $small_sides Whether each side is small.
+	 * @param BaseProduct  $base     The base product now.
+	 * @param array<mixed> $increase What goes up.
+	 * @phpstan-param Increase $increase
 	 * @return int When the prices apply (Unix time).
 	 * @throws DatabaseException When the creators or the audit cannot be read or written.
 	 */
-	public function schedule( BaseProduct $base, int $price, array $size_prices, int $large, int $small, array $small_sides ): int {
+	public function schedule( BaseProduct $base, array $increase ): int {
 		$id     = (int) $base->id;
 		$now    = ( $this->clock )();
 		$at     = $now->add( new DateInterval( 'P' . self::NOTICE_DAYS . 'D' ) )->getTimestamp();
+		$before = self::scheduled( $id );
 		$stored = self::stored();
 
 		$stored[ $id ] = array(
 			'at'           => $at,
-			'base'         => $price,
-			'sizes'        => $size_prices,
-			'large'        => $large,
-			'small'        => $small,
-			'small_sides'  => $small_sides,
+			'base'         => $increase['base'] ?? $before['base'] ?? null,
+			'large'        => $increase['large'] ?? $before['large'] ?? null,
+			'small'        => $increase['small'] ?? $before['small'] ?? null,
+			'sizes'        => array_merge( $before['sizes'] ?? array(), $increase['sizes'] ),
+			'large_sides'  => array_values( array_unique( array_merge( $before['large_sides'] ?? array(), $increase['large_sides'] ) ) ),
 			'scheduled_at' => $now->getTimestamp(),
 		);
 
@@ -156,17 +176,20 @@ class BasePriceSchedule {
 			)
 		);
 
+		$planned = self::entry( $stored[ $id ] );
+
 		foreach ( $this->products->creators_of_base( $id ) as $creator_id ) {
 			do_action(
 				'merchboard_notify',
 				self::NOTIFICATION,
 				$creator_id,
 				array(
-					'title'    => $base->name,
-					'date'     => gmdate( 'Y-m-d', $at ),
-					'price'    => SalesAmount::format( $price ),
-					'before'   => SalesAmount::format( $base->base_units ),
-					'currency' => $base->currency,
+					'title'       => $base->name,
+					'date'        => gmdate( 'Y-m-d', $at ),
+					'base_raised' => null !== ( $planned['base'] ?? null ),
+					'price'       => SalesAmount::format( $planned['base'] ?? $base->base_units ),
+					'before'      => SalesAmount::format( $base->base_units ),
+					'currency'    => $base->currency,
 				),
 				'designer_price:' . $id . ':' . $now->getTimestamp()
 			);
@@ -197,7 +220,7 @@ class BasePriceSchedule {
 	}
 
 	/**
-	 * Sets the prices whose date has come (hourly); never throws.
+	 * Sets the increases whose date has come (hourly); never throws.
 	 *
 	 * @return int How many base products got their new prices.
 	 */
@@ -235,20 +258,26 @@ class BasePriceSchedule {
 			return '';
 		}
 
-		return sprintf(
-			/* translators: 1: date, 2: new base price, 3: currency. */
-			__( 'The price of this product goes up on %1$s (base price %2$s %3$s). Products in the shop follow on that date; your profit setting stays the same.', 'merchboard' ),
-			wp_date( (string) get_option( 'date_format' ), $entry['at'] ),
-			SalesAmount::format( $entry['base'] ),
-			$base->currency
-		);
+		$date = (string) wp_date( (string) get_option( 'date_format' ), $entry['at'] );
+
+		return null === $entry['base']
+			/* translators: %s: date. */
+			? sprintf( __( 'Prices of this product go up on %s. Products in the shop follow on that date; your profit setting stays the same.', 'merchboard' ), $date )
+			: sprintf(
+				/* translators: 1: date, 2: new base price, 3: currency. */
+				__( 'The price of this product goes up on %1$s (base price %2$s %3$s). Products in the shop follow on that date; your profit setting stays the same.', 'merchboard' ),
+				$date,
+				SalesAmount::format( $entry['base'] ),
+				$base->currency
+			);
 	}
 
 	/**
-	 * Sets a planned change.
+	 * Sets the planned increases on the base product as it is now.
 	 *
-	 * @param int                                                                                                                               $base_id Base product.
-	 * @param array{at: int, base: int, sizes: array<string, int>, large: int, small: int, small_sides: array<string, bool>, scheduled_at: int} $entry   The change.
+	 * @param int          $base_id Base product.
+	 * @param array<mixed> $entry   The change.
+	 * @phpstan-param Plan $entry
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	private function apply( int $base_id, array $entry ): void {
@@ -263,12 +292,12 @@ class BasePriceSchedule {
 		}
 
 		$views = array_map(
-			static fn( BaseView $view ): BaseView => new BaseView( $view->key, $view->name, $view->width, $view->height, $view->layers, $view->area, $view->width_mm, $view->height_mm, $view->dpi, $view->thread_pack, $view->flat, $view->scene, $view->sizes, $entry['small_sides'][ $view->key ] ?? $view->small ),
+			static fn( BaseView $view ): BaseView => new BaseView( $view->key, $view->name, $view->width, $view->height, $view->layers, $view->area, $view->width_mm, $view->height_mm, $view->dpi, $view->thread_pack, $view->flat, $view->scene, $view->sizes, $view->small && ! in_array( $view->key, $entry['large_sides'], true ) ),
 			$base->views
 		);
-		$sizes = array_intersect_key( $entry['sizes'], array_flip( $base->sizes ) );
+		$sizes = array_merge( $base->size_prices, array_intersect_key( $entry['sizes'], array_flip( $base->sizes ) ) );
 
-		$this->bases->update( $base_id, new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $entry['base'], $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version, $entry['large'], $base->note, $sizes, $entry['small'] ) );
+		$this->bases->update( $base_id, new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $entry['base'] ?? $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version, $entry['large'] ?? $base->extra_side_units, $base->note, $sizes, $entry['small'] ?? $base->small_side_units ) );
 		update_option( self::OPTION, $stored, false );
 		$this->audit->record_system(
 			AuditAction::DesignerPriceApplied,
@@ -308,34 +337,31 @@ class BasePriceSchedule {
 	 * A stored change, checked.
 	 *
 	 * @param array<mixed> $raw Stored value.
-	 * @return array{at: int, base: int, sizes: array<string, int>, large: int, small: int, small_sides: array<string, bool>, scheduled_at: int}|null
+	 * @return Plan|null
 	 */
 	private static function entry( array $raw ): ?array {
-		if ( ! is_int( $raw['at'] ?? null ) || ! is_int( $raw['base'] ?? null ) || $raw['base'] < 1 || ! is_int( $raw['large'] ?? null ) || ! is_int( $raw['small'] ?? null ) ) {
+		if ( ! is_int( $raw['at'] ?? null ) ) {
 			return null;
 		}
 
+		$units = static fn( mixed $value ): ?int => is_int( $value ) && $value >= 0 ? $value : null;
 		$sizes = array();
 
-		foreach ( is_array( $raw['sizes'] ?? null ) ? $raw['sizes'] : array() as $size => $units ) {
-			if ( is_int( $units ) && $units > 0 ) {
-				$sizes[ (string) $size ] = $units;
+		foreach ( is_array( $raw['sizes'] ?? null ) ? $raw['sizes'] : array() as $size => $value ) {
+			if ( is_int( $value ) && $value > 0 ) {
+				$sizes[ (string) $size ] = $value;
 			}
 		}
 
-		$small_sides = array();
-
-		foreach ( is_array( $raw['small_sides'] ?? null ) ? $raw['small_sides'] : array() as $key => $small ) {
-			$small_sides[ (string) $key ] = true === $small;
-		}
+		$base = $units( $raw['base'] ?? null );
 
 		return array(
 			'at'           => $raw['at'],
-			'base'         => $raw['base'],
+			'base'         => null !== $base && $base > 0 ? $base : null,
+			'large'        => $units( $raw['large'] ?? null ),
+			'small'        => $units( $raw['small'] ?? null ),
 			'sizes'        => $sizes,
-			'large'        => max( 0, $raw['large'] ),
-			'small'        => max( 0, $raw['small'] ),
-			'small_sides'  => $small_sides,
+			'large_sides'  => array_values( array_filter( is_array( $raw['large_sides'] ?? null ) ? $raw['large_sides'] : array(), 'is_string' ) ),
 			'scheduled_at' => is_int( $raw['scheduled_at'] ?? null ) ? $raw['scheduled_at'] : 0,
 		);
 	}
