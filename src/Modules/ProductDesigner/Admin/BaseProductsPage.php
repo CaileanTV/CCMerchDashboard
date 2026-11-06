@@ -241,7 +241,7 @@ final class BaseProductsPage {
 			'price_scheduled'                       => array( __( 'The base product was saved. Prices that go up apply in 14 days, and the creators who design on it were told; everything else applies now.', 'merchboard' ), 'warning' ),
 			'price_cancelled'                       => array( __( 'The planned price increase was cancelled.', 'merchboard' ), 'success' ),
 			'price_applied'                         => array( __( 'The new prices are set; products in the shop follow.', 'merchboard' ), 'success' ),
-			'price_not_due'                         => array( __( 'Nothing was changed: the date of the price increase has not come yet.', 'merchboard' ), 'warning' ),
+			'price_not_planned'                     => array( __( 'Nothing was changed: no price increase is planned.', 'merchboard' ), 'warning' ),
 			'photo_moved'                           => array( __( 'The order of the mockups was saved. It is used for designs sent from now on.', 'merchboard' ), 'success' ),
 			'activated'                             => array( __( 'The base product is active: creators can design on it.', 'merchboard' ), 'success' ),
 			'deactivated'                           => array( __( 'The base product is a draft again: creators cannot start new designs on it. Products in the shop are not affected.', 'merchboard' ), 'success' ),
@@ -425,14 +425,15 @@ final class BaseProductsPage {
 					)
 			) . '</p>';
 
-			// After the date only, when the automatic check has not set the prices yet (the 14 days' notice holds).
-			if ( $due ) {
-				echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block;margin-right:8px" onsubmit="return confirm(this.dataset.confirm)" data-confirm="' . esc_attr__( 'Set the new prices now? Products in the shop follow at once.', 'merchboard' ) . '">';
-				echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="price_now"><input type="hidden" name="base_id" value="' . esc_attr( (string) $id ) . '">';
-				wp_nonce_field( BaseProductActions::ACTION );
-				submit_button( __( 'Change the price now', 'merchboard' ), 'primary small', 'submit', false );
-				echo '</form>';
-			}
+			// After the date it sets what the automatic check has not set yet; before the date it overrides the 14 days' notice.
+			$confirm = $due
+				? __( 'Set the new prices now? Products in the shop follow at once.', 'merchboard' )
+				: __( 'Creators were promised 14 days\' notice of a price increase. Set the new prices now anyway? Products in the shop follow at once, and the creators are told.', 'merchboard' );
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block;margin-right:8px" onsubmit="return confirm(this.dataset.confirm)" data-confirm="' . esc_attr( $confirm ) . '">';
+			echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="price_now"><input type="hidden" name="base_id" value="' . esc_attr( (string) $id ) . '">';
+			wp_nonce_field( BaseProductActions::ACTION );
+			submit_button( __( 'Change the price now', 'merchboard' ), $due ? 'primary small' : 'secondary small', 'submit', false );
+			echo '</form>';
 
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block">';
 			echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="price_cancel"><input type="hidden" name="base_id" value="' . esc_attr( (string) $id ) . '">';

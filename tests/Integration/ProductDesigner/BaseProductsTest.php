@@ -539,15 +539,18 @@ final class BaseProductsTest extends IntegrationTestCase {
 		self::assertNull( BasePriceSchedule::scheduled( $id ) );
 		self::assertSame( 1690000, $this->bases->find( $id )?->base_units );
 
-		// "Change the price now" sets a due increase the automatic check has not set yet, never one before its date.
+		// "Change the price now": before the date it overrides the notice (audited as early), after it sets what the check has not set yet.
 		$service->save( $id, array_merge( self::fields(), array( 'base_price' => '179' ) ), array() );
-		self::assertFalse( $schedule->apply_now( $id ), 'Not before the date: the 14 days hold.' );
-		self::assertSame( 1690000, $this->bases->find( $id )?->base_units );
-		$now = $now->modify( '+14 days' );
 		self::assertTrue( $schedule->apply_now( $id ) );
 		self::assertSame( 1790000, $this->bases->find( $id )?->base_units );
 		self::assertNull( BasePriceSchedule::scheduled( $id ) );
 		self::assertFalse( $schedule->apply_now( $id ), 'Nothing planned any more.' );
+		$service->save( $id, array_merge( self::fields(), array( 'base_price' => '189' ) ), array() );
+		$now = $now->modify( '+14 days' );
+		self::assertTrue( $schedule->apply_now( $id ) );
+		self::assertSame( 1890000, $this->bases->find( $id )?->base_units );
+		$early = array_map( static fn( ?string $context ): mixed => json_decode( (string) $context, true )['early'] ?? null, $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT context FROM %i WHERE action = %s ORDER BY id DESC LIMIT 2', $this->wpdb->prefix . 'merchboard_audit_log', 'designer_price_applied' ) ) );
+		self::assertSame( array( false, true ), $early, 'After the date, then before it.' );
 		delete_option( BasePriceSchedule::OPTION );
 	}
 

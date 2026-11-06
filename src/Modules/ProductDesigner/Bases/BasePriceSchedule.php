@@ -220,13 +220,13 @@ class BasePriceSchedule {
 	}
 
 	/**
-	 * Sets a planned increase whose date has come, when the automatic check
-	 * has not set it yet (no page view since the date): the administrator's
-	 * "Change the price now" (owner's wish 2026-11-06). Never before the date,
-	 * so the 14 days' notice holds.
+	 * Sets a planned increase now: the administrator's "Change the price now"
+	 * (owner's wish 2026-11-06). After the date it sets what the automatic
+	 * check has not set yet (no page view since the date); before the date it
+	 * overrides the 14 days' notice, which is audited as `early`.
 	 *
 	 * @param int $base_id Base product.
-	 * @return bool Whether a planned increase was set (false: none, or its date has not come).
+	 * @return bool Whether a planned increase was set (false: none is planned).
 	 * @throws DesignerException When the user may not.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
@@ -235,11 +235,11 @@ class BasePriceSchedule {
 
 		$entry = self::scheduled( $base_id );
 
-		if ( null === $entry || ! $this->due( $entry ) ) {
+		if ( null === $entry ) {
 			return false;
 		}
 
-		$this->apply( $base_id, $entry, true );
+		$this->apply( $base_id, $entry, true, ! $this->due( $entry ) );
 
 		return true;
 	}
@@ -314,10 +314,11 @@ class BasePriceSchedule {
 	 * @param int          $base_id Base product.
 	 * @param array<mixed> $entry   The change.
 	 * @param bool         $manual  Whether the administrator set it ("Change the price now").
+	 * @param bool         $early   Whether that was before the date (the notice overridden).
 	 * @phpstan-param Plan $entry
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	private function apply( int $base_id, array $entry, bool $manual = false ): void {
+	private function apply( int $base_id, array $entry, bool $manual = false, bool $early = false ): void {
 		$base   = $this->bases->find( $base_id );
 		$stored = self::stored();
 		unset( $stored[ $base_id ] );
@@ -342,7 +343,9 @@ class BasePriceSchedule {
 		);
 
 		if ( $manual ) {
-			$this->audit->record( AuditAction::DesignerPriceApplied, null, $context + array( 'manual' => true ) );
+			$context['manual'] = true;
+			$context['early']  = $early;
+			$this->audit->record( AuditAction::DesignerPriceApplied, null, $context );
 		} else {
 			$this->audit->record_system( AuditAction::DesignerPriceApplied, null, $context );
 		}

@@ -131,7 +131,7 @@ final class BaseProductActions {
 
 					return BaseProductsPage::edit_url( $id, 'price_cancelled' );
 				case 'price_now':
-					return BaseProductsPage::edit_url( $id, true === $this->schedule?->apply_now( $id ) ? 'price_applied' : 'price_not_due' );
+					return BaseProductsPage::edit_url( $id, true === $this->schedule?->apply_now( $id ) ? 'price_applied' : 'price_not_planned' );
 				case 'activate':
 				case 'deactivate':
 					if ( true === $this->catalog?->running( $id ) ) {
