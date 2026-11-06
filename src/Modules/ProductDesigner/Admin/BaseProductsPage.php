@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\ProductDesigner\Admin;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\ProductDesigner\Bases\BasePriceSchedule;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
@@ -33,6 +34,7 @@ use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
+use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -199,6 +201,8 @@ final class BaseProductsPage {
 
 		return match ( $code ) {
 			'saved'                                 => array( __( 'The base product was saved. A new base price reaches the designer products in the shop in the background.', 'merchboard' ), 'success' ),
+			'price_scheduled'                       => array( __( 'The base product was saved. The higher prices apply in 14 days; the creators who design on it were told (ADR-094).', 'merchboard' ), 'warning' ),
+			'price_cancelled'                       => array( __( 'The planned price increase was cancelled.', 'merchboard' ), 'success' ),
 			'photo_moved'                           => array( __( 'The order of the mockups was saved. It is used for designs sent from now on.', 'merchboard' ), 'success' ),
 			'activated'                             => array( __( 'The base product is active: creators can design on it.', 'merchboard' ), 'success' ),
 			'deactivated'                           => array( __( 'The base product is a draft again: creators cannot start new designs on it. Products in the shop are not affected.', 'merchboard' ), 'success' ),
@@ -359,6 +363,25 @@ final class BaseProductsPage {
 		if ( null !== $base ) {
 			/* translators: 1: status, 2: version, 3: number of designs. */
 			echo '<p>' . esc_html( sprintf( __( 'Status: %1$s · Version %2$d · %3$d designs', 'merchboard' ), self::status( $base->status ), $base->version, $designs ) ) . '</p>';
+		}
+
+		$planned = null === $base ? null : BasePriceSchedule::scheduled( $id );
+
+		if ( null !== $planned ) {
+			echo '<div class="notice notice-warning inline"><p>' . esc_html(
+				sprintf(
+					/* translators: 1: date, 2: new base price, 3: currency. */
+					__( 'A price increase is planned: from %1$s the base price is %2$s %3$s (with the other new prices). Creators were told; the prices below apply until then (ADR-094).', 'merchboard' ),
+					(string) wp_date( (string) get_option( 'date_format' ), $planned['at'] ),
+					SalesAmount::format( $planned['base'] ),
+					$base->currency
+				)
+			) . '</p>';
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+			echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="price_cancel"><input type="hidden" name="base_id" value="' . esc_attr( (string) $id ) . '">';
+			wp_nonce_field( BaseProductActions::ACTION );
+			submit_button( __( 'Cancel the planned price increase', 'merchboard' ), 'secondary small', 'submit', false );
+			echo '</form></div>';
 		}
 
 		if ( null !== $base ) {

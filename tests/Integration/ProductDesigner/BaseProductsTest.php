@@ -9,14 +9,19 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\ProductDesigner;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerAssetDownload;
+use MerchBoard\Modules\ProductDesigner\Bases\BasePriceSchedule;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
@@ -445,6 +450,95 @@ final class BaseProductsTest extends IntegrationTestCase {
 
 		wp_set_current_user( 0 );
 		self::assertSame( 403, $download->response( array( 'asset' => (string) $id, '_wpnonce' => $nonce ) )['status'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	}
+
+	public function test_a_higher_price_of_a_base_product_creators_design_on_waits_14_days(): void {
+		$id       = $this->service->save( null, self::fields(), array() );
+		$now      = new DateTimeImmutable( '2026-11-06 12:00:00', new DateTimeZone( 'UTC' ) );
+		$clock    = static function () use ( &$now ): DateTimeImmutable {
+			return $now;
+		};
+		$schedule = new BasePriceSchedule( $this->bases, new DesignerProductRepository( $this->wpdb ), $this->service( AuditTrail::class ), $this->service( Logger::class ), $clock );
+		$service  = new BaseProductService( $this->bases, $this->assets, $this->files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2, 'DKK', $schedule );
+		$changed  = did_action( BaseProductService::PRICE_CHANGED );
+		$told     = array();
+		$listen   = static function ( mixed $type, mixed $creator ) use ( &$told ): void {
+			$told[] = array( $type, $creator );
+		};
+		add_action( 'merchboard_notify', $listen, 10, 2 );
+
+		// Nobody designs on it yet: a higher price applies at once.
+		$service->save( $id, array_merge( self::fields(), array( 'base_price' => '159' ) ), array() );
+		self::assertSame( 1590000, $this->bases->find( $id )?->base_units );
+		self::assertNull( BasePriceSchedule::scheduled( $id ) );
+
+		$this->wpdb->insert(
+			$this->wpdb->prefix . 'merchboard_designer_products',
+			array(
+				'creator_id'     => 7,
+				'base_id'        => $id,
+				'creation_token' => str_repeat( 'a', 32 ),
+				'status'         => 'live',
+				'created_at'     => '2026-11-01 10:00:00',
+				'updated_at'     => '2026-11-01 10:00:00',
+			)
+		);
+
+		// A lower price still applies at once.
+		$service->save( $id, array_merge( self::fields(), array( 'base_price' => '149' ) ), array() );
+		self::assertSame( 1490000, $this->bases->find( $id )?->base_units );
+
+		// A higher one waits 14 days, and the creator is told.
+		$service->save( $id, array_merge( self::fields(), array( 'base_price' => '169' ) ), array() );
+		self::assertSame( 1490000, $this->bases->find( $id )?->base_units, 'The shop keeps the price until the date.' );
+		$planned = BasePriceSchedule::scheduled( $id );
+		self::assertSame( array( 1690000, $now->getTimestamp() + 14 * DAY_IN_SECONDS ), array( $planned['base'] ?? null, $planned['at'] ?? null ) );
+		self::assertSame( array( array( 'designer_price_increase', 7 ) ), $told, 'The creator who designs on it is told.' );
+		remove_action( 'merchboard_notify', $listen, 10 );
+		self::assertStringContainsString( '169.00', BasePriceSchedule::notice( $this->bases->find( $id ) ?? self::fail() ) );
+
+		$now = $now->modify( '+13 days' );
+		self::assertSame( 0, $schedule->apply_due(), 'Not before the date.' );
+
+		$now    = $now->modify( '+1 day' );
+		$before = did_action( BaseProductService::PRICE_CHANGED );
+		self::assertSame( 1, $schedule->apply_due() );
+		self::assertSame( 1690000, $this->bases->find( $id )?->base_units );
+		self::assertNull( BasePriceSchedule::scheduled( $id ) );
+		self::assertSame( $before + 1, did_action( BaseProductService::PRICE_CHANGED ), 'The shop is repriced on the date.' );
+		self::assertGreaterThan( $changed, $before );
+
+		// A planned increase can be cancelled.
+		$service->save( $id, array_merge( self::fields(), array( 'base_price' => '179' ) ), array() );
+		self::assertNotNull( BasePriceSchedule::scheduled( $id ) );
+		$schedule->cancel( $id );
+		self::assertNull( BasePriceSchedule::scheduled( $id ) );
+		self::assertSame( 1690000, $this->bases->find( $id )?->base_units );
+		delete_option( BasePriceSchedule::OPTION );
+	}
+
+	public function test_a_side_that_becomes_large_or_a_higher_size_price_is_an_increase(): void {
+		$base = new BaseProduct( 1, BaseProduct::DRAFT, 'own', 'Cup', '', 100000, 'DKK', null, array(), array( 'S', 'L' ), array(), 1, 20000, '', array( 'L' => 120000 ), 10000 );
+
+		self::assertFalse( BasePriceSchedule::raises( $base, 100000, array( 'L' => 120000 ), 20000, 10000, array() ) );
+		self::assertFalse( BasePriceSchedule::raises( $base, 90000, array(), 20000, 10000, array() ), 'Lower prices only.' );
+		self::assertTrue( BasePriceSchedule::raises( $base, 100000, array( 'L' => 130000 ), 20000, 10000, array() ) );
+		self::assertTrue(
+			BasePriceSchedule::raises(
+				$base,
+				100000,
+				array(
+					'L' => 120000,
+					'S' => 110000,
+				),
+				20000,
+				10000,
+				array()
+			),
+			'A size with its own price above the base price.'
+		);
+		self::assertTrue( BasePriceSchedule::raises( $base, 100000, array( 'L' => 120000 ), 25000, 10000, array() ) );
+		self::assertTrue( BasePriceSchedule::raises( $base, 100000, array( 'L' => 120000 ), 20000, 15000, array() ) );
 	}
 
 	public function test_text_fields_are_parsed_strictly(): void {

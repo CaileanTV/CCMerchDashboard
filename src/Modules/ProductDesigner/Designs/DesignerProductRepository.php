@@ -693,6 +693,25 @@ class DesignerProductRepository {
 	}
 
 	/**
+	 * The creators with a designer product on a base product that is not
+	 * deleted or retired (ADR-094: they are told of a coming price increase).
+	 *
+	 * @param int $base_id Base product.
+	 * @return list<int>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function creators_of_base( int $base_id ): array {
+		$wpdb = $this->wpdb;
+		$ids  = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT creator_id FROM %i WHERE base_id = %d AND status NOT IN ( %s, %s, %s ) ORDER BY creator_id', $this->table( Tables::DESIGNER_PRODUCTS ), $base_id, self::DELETED, self::PURGED, self::RETIRED ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the creators of the base product.' );
+		}
+
+		return array_map( 'intval', $ids );
+	}
+
+	/**
 	 * Whether a product has an approved version waiting for its creator to go
 	 * live (ADR-091).
 	 *

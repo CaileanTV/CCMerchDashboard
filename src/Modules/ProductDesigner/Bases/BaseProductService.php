@@ -39,7 +39,10 @@ defined( 'ABSPATH' ) || exit;
  *   `version`; designs made on an earlier version must be saved and sent
  *   again. A new base price does not (step 30.11): it fires
  *   `merchboard_designer_base_price_changed` after the commit, and the
- *   designer products in the shop are repriced (DesignerRepricing).
+ *   designer products in the shop are repriced (DesignerRepricing). A
+ *   higher price of a base product creators design on waits 14 days
+ *   (ADR-094, BasePriceSchedule): the row keeps the prices, and the new set
+ *   is planned instead.
  * - **Status:** a new base product is a draft; it is activated only with
  *   colours, sizes and sides. A base product with designs is never
  *   deleted; it is retired (step 30.11, final): `merchboard_designer_base_retired`
@@ -68,6 +71,7 @@ class BaseProductService {
 	 * @param Transaction             $transaction Transaction.
 	 * @param int                     $decimals    Store price decimals.
 	 * @param string                  $currency    Store currency.
+	 * @param BasePriceSchedule|null  $schedule    Price increases with notice (ADR-094); null: at once.
 	 */
 	public function __construct(
 		private BaseProductRepository $bases,
@@ -76,7 +80,8 @@ class BaseProductService {
 		private AuditTrail $audit,
 		private Transaction $transaction,
 		private int $decimals,
-		private string $currency
+		private string $currency,
+		private ?BasePriceSchedule $schedule = null
 	) {
 	}
 
@@ -123,10 +128,32 @@ class BaseProductService {
 			self::reject( DesignerException::BASE_NAME );
 		}
 
-		$stored = array();
+		$stored  = array();
+		$planned = null;
 
 		try {
 			$plans = $this->plan_views( $existing, $views, $stored, array_column( $colors, 'key' ), $sizes );
+
+			// A higher price of a base product creators design on waits 14 days (ADR-094): the row keeps its prices.
+			if ( null !== $existing && null !== $this->schedule && $this->schedule->applies( (int) $id ) ) {
+				$sides = array_intersect_key( array_column( $plans, 'small', 'key' ), array_flip( array_map( static fn( BaseView $view ): string => $view->key, $existing->views ) ) );
+
+				if ( BasePriceSchedule::raises( $existing, $price, $by_size, $extra, $small, $sides ) ) {
+					$planned = array( $price, $by_size, $extra, $small, $sides );
+					$price   = $existing->base_units;
+					$extra   = $existing->extra_side_units;
+					$small   = $existing->small_side_units;
+					$by_size = array_intersect_key( $existing->size_prices, array_flip( $sizes ) );
+
+					foreach ( $plans as $index => $plan ) {
+						foreach ( $existing->views as $view ) {
+							if ( $view->key === $plan['key'] ) {
+								$plans[ $index ]['small'] = $view->small;
+							}
+						}
+					}
+				}
+			}
 
 			$saved = $this->transaction->run(
 				function () use ( $id, $existing, $name, $fields, $price, $extra, $by_size, $small, $category, $colors, $sizes, $plans ): array {
@@ -184,6 +211,10 @@ class BaseProductService {
 		}
 
 		$this->forget_layers( $saved[1] );
+
+		if ( null !== $planned && null !== $existing && null !== $this->schedule ) {
+			$this->schedule->schedule( $this->bases->find( $saved[0] ) ?? $existing, ...$planned );
+		}
 
 		if ( null !== $existing && ( $existing->base_units !== $price || $existing->extra_side_units !== $extra || $existing->size_prices !== $by_size || $existing->small_side_units !== $small || self::small_sides( $existing->views ) !== array_keys( array_filter( array_column( $plans, 'small', 'key' ) ) ) ) ) {
 			do_action( 'merchboard_designer_base_price_changed', $saved[0] );

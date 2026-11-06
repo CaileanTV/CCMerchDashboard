@@ -21,6 +21,7 @@ use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\GoLive\GoLiveRequests;
+use MerchBoard\Modules\ProductDesigner\Bases\BasePriceSchedule;
 use MerchBoard\Modules\Notifications\Admin\NotificationSwitches;
 use MerchBoard\Modules\Notifications\NotificationSender;
 use MerchBoard\Modules\Notifications\NotificationSettings;
@@ -238,10 +239,24 @@ final class ProductDesignerModule implements Module {
 		$container->set( DesignerFiles::class, static fn(): DesignerFiles => new DesignerFiles() );
 		$container->set( DesignerAssetRepository::class, static fn( Container $c ): DesignerAssetRepository => new DesignerAssetRepository( $c->get( wpdb::class ) ) );
 		$container->set( BaseProductRepository::class, static fn( Container $c ): BaseProductRepository => new BaseProductRepository( $c->get( wpdb::class ) ) );
-		$container->set( BaseProductService::class, static fn( Container $c ): BaseProductService => new BaseProductService( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency() ) );
+		// Price increases of base products wait 14 days (ADR-094).
+		$container->set( BasePriceSchedule::class, static fn( Container $c ): BasePriceSchedule => new BasePriceSchedule( $c->get( BaseProductRepository::class ), $c->get( DesignerProductRepository::class ), $c->get( AuditTrail::class ), $c->get( Logger::class ) ) );
+		$container->set( BaseProductService::class, static fn( Container $c ): BaseProductService => new BaseProductService( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency(), $c->get( BasePriceSchedule::class ) ) );
+		// The prices whose date has come are set at most once an hour, after the response.
+		add_action(
+			'shutdown',
+			static function () use ( $container ): void {
+				if ( false !== get_transient( 'merchboard_designer_price_check' ) || array() === get_option( BasePriceSchedule::OPTION, array() ) ) {
+					return;
+				}
+
+				set_transient( 'merchboard_designer_price_check', 1, HOUR_IN_SECONDS );
+				$container->get( BasePriceSchedule::class )->apply_due();
+			}
+		);
 		$container->set( ClipartLibrary::class, static fn( Container $c ): ClipartLibrary => new ClipartLibrary( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( BaseProductsPage::class, static fn( Container $c ): BaseProductsPage => new BaseProductsPage( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency(), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ), $c->get( PrintfulToken::class )->configured(), $c->get( GelatoAccount::class )->configured(), $c->get( CatalogImport::class ), $c->get( PrintfulCatalog::class ), $c->get( GelatoCatalog::class ), $c->get( ProdigiCatalog::class ), $c->get( ProdigiAccount::class )->configured(), $c->get( PrintifyCatalog::class ), $c->get( PrintifyAccount::class )->configured() ) );
-		$container->set( BaseProductActions::class, static fn( Container $c ): BaseProductActions => new BaseProductActions( $c->get( BaseProductService::class ), $c->get( ClipartLibrary::class ), $c->get( Logger::class ), $c->get( CatalogImport::class ) ) );
+		$container->set( BaseProductActions::class, static fn( Container $c ): BaseProductActions => new BaseProductActions( $c->get( BaseProductService::class ), $c->get( ClipartLibrary::class ), $c->get( Logger::class ), $c->get( CatalogImport::class ), $c->get( BasePriceSchedule::class ) ) );
 		$container->set( DesignerAssetDownload::class, static fn( Container $c ): DesignerAssetDownload => new DesignerAssetDownload( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ) ) );
 		// The creator's designer: drafts, uploads and `/me/designer` (step 30.8).
 		$container->set( DesignerProductRepository::class, static fn( Container $c ): DesignerProductRepository => new DesignerProductRepository( $c->get( wpdb::class ) ) );

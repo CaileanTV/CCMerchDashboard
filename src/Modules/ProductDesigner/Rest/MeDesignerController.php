@@ -17,6 +17,7 @@ use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Alerts\Fonts\AlertFont;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Creators\Creator;
+use MerchBoard\Modules\ProductDesigner\Bases\BasePriceSchedule;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
@@ -938,7 +939,7 @@ final class MeDesignerController extends RestController {
 			'stitches'         => null === $this->mockups ? array() : $this->mockups->stitches( $base ),
 			'name'             => $base->name,
 			'description'      => $base->description,
-			'note'             => $base->note,
+			'note'             => trim( $base->note . "\n\n" . BasePriceSchedule::notice( $base ) ),
 			'size_prices'      => (object) array_map( array( SalesAmount::class, 'format' ), $base->size_prices ),
 			'base_price'       => SalesAmount::format( $base->base_units ),
 			'extra_side_price' => SalesAmount::format( $base->extra_side_units ),

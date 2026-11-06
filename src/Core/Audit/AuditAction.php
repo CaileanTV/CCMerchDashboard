@@ -846,4 +846,22 @@ enum AuditAction: string {
 	 * stored with the request, never in the log.
 	 */
 	case GoLiveDeclined = 'go_live_declined';
+
+	/**
+	 * A higher price of a base product was planned 14 days ahead (ADR-094).
+	 * Context: base_id, base_name, applies_at.
+	 */
+	case DesignerPriceScheduled = 'designer_price_scheduled';
+
+	/**
+	 * An administrator cancelled a planned price of a base product (ADR-094).
+	 * Context: base_id.
+	 */
+	case DesignerPriceScheduleCancelled = 'designer_price_schedule_cancelled';
+
+	/**
+	 * A planned price of a base product was set on its date (ADR-094).
+	 * System action. Context: base_id, base_name.
+	 */
+	case DesignerPriceApplied = 'designer_price_applied';
 }

@@ -49,6 +49,7 @@ I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog
 | Admin | Anmodning om at gå live (`admin_go_live_requested`) | en selvoprettet creator anmoder om at gå live (ADR-091) | M | |
 | Konto | Du er live i butikken | admin godkender go-live (ADR-091) | M+D | ✓ |
 | Konto | Anmodning om at gå live afvist (med note) | admin afviser go-live (ADR-091) | M+D | ✓ |
+| Designer | Kommende prisstigning (`designer_price_increase`) | mindst 14 dage før et grundprodukt, creatoren designer på, får en højere pris (ADR-094) | M+D | ✓ |
 | Konto | Ny version af aftalen (væsentlig: acceptér igen; mindre: kun besked) | admin udgiver version 2 eller senere af aftalepapiret; kun creators, der har oprettet sig selv (ADR-092) | M+D | ✓ |
 | Konto | Din fortjeneste er ændret (standard eller pr. produkt) | prisindstillinger | M+D | ✓ |
 | Konto | Din momsstatus er ændret | momsstatus | M+D | ✓ |

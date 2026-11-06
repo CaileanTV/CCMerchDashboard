@@ -61,6 +61,8 @@ final class DesignerNotifications {
 
 	public const PRICE_CHANGED = 'designer_price_changed';
 
+	public const PRICE_INCREASE = 'designer_price_increase';
+
 	public const UNPUBLISHED = 'designer_unpublished';
 
 	public const MOCKUPS_FAILED = 'admin_designer_mockups_failed';
@@ -89,6 +91,7 @@ final class DesignerNotifications {
 			self::approved( true ),
 			self::rejected(),
 			self::price_changed(),
+			self::price_increase(),
 			self::unpublished(),
 			self::submitted(),
 			self::change_submitted(),
@@ -255,6 +258,50 @@ final class DesignerNotifications {
 					array( __( 'Product', 'merchboard' ), $d->text( 'title' ) ),
 					array( __( 'New customer price incl. VAT', 'merchboard' ), $d->money( 'price' ) ),
 					array( __( 'Before', 'merchboard' ), $d->money( 'previous_price' ) ),
+				),
+				null,
+				null,
+				__( 'Open the designer', 'merchboard' ),
+				'',
+				__( 'Thank you for creating with us.', 'merchboard' )
+			)
+		);
+	}
+
+	/**
+	 * A price increase of a base product the creator designs on, 14 days
+	 * before it applies (ADR-094).
+	 */
+	private static function price_increase(): NotificationType {
+		return new NotificationType(
+			self::PRICE_INCREASE,
+			NotificationType::CREATOR,
+			self::GROUP,
+			static fn(): string => __( 'Coming price increase', 'merchboard' ),
+			static fn(): string => __( 'At least 14 days before a base product the creator designs on gets a higher price (ADR-094).', 'merchboard' ),
+			true,
+			true,
+			true,
+			'designer',
+			array_merge(
+				self::sample(),
+				array(
+					'date'   => '2026-12-01',
+					'before' => '229.00',
+				)
+			),
+			/* translators: 1: base product, 2: date. */
+			static fn( NotificationData $d ): string => sprintf( __( 'The price of %1$s goes up on %2$s. Your products in the shop follow on that date.', 'merchboard' ), $d->text( 'title' ), $d->text( 'date' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: base product. */
+				sprintf( __( 'The price of %s goes up', 'merchboard' ), $d->text( 'title' ) ),
+				__( 'A price goes up', 'merchboard' ),
+				array( __( 'The base price of a product you design on goes up. As agreed, we tell you at least 14 days before. On that date, the customer price of your products in the shop follows; your profit setting (percent or amount) stays the same.', 'merchboard' ) ),
+				array(
+					array( __( 'Product', 'merchboard' ), $d->text( 'title' ) ),
+					array( __( 'From', 'merchboard' ), $d->text( 'date' ) ),
+					array( __( 'New base price incl. VAT', 'merchboard' ), $d->money( 'price' ) ),
+					array( __( 'Before', 'merchboard' ), $d->money( 'before' ) ),
 				),
 				null,
 				null,

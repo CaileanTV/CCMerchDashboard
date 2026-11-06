@@ -927,7 +927,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
   - fanen "Go-live" under Forslag;
   - godkendelse med tillæg, oprettelse af kategori og anvendelse af ventende designs;
   - afvisning med note og notifikationer.
-- **32.6 14 dages prisvarsel:** planlagte prisstigninger på grundprodukter, besked til creators, den kommende pris i designeren og job på datoen.
+- **32.6 14 dages prisvarsel ✅ (2026-11-06, testet automatisk):** planlagte prisstigninger på grundprodukter, besked til creators, den kommende pris i designeren og job på datoen.
 - **32.7 Review, runtime-test og release 1.6.0.** Runtime-testen på Local tjekker, at en ny creators navn ikke findes i shop, søgning, sitemaps, REST eller Store API før go-live. Bump sker efter projektejerens ønske.
 
 **Før funktionen slås til på live:** projektejeren godkender aftaleteksten. Den er et udkast og ikke juridisk gennemgået (ADR-092).

@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\ProductDesigner\Admin;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Modules\ProductDesigner\Bases\BasePriceSchedule;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
@@ -44,12 +45,13 @@ final class BaseProductActions {
 	/**
 	 * Constructor.
 	 *
-	 * @param BaseProductService $bases    Base products.
-	 * @param ClipartLibrary     $cliparts Cliparts.
-	 * @param Logger             $logger   Technical log.
-	 * @param CatalogImport|null $catalog  The catalog import (review 30.15).
+	 * @param BaseProductService     $bases    Base products.
+	 * @param ClipartLibrary         $cliparts Cliparts.
+	 * @param Logger                 $logger   Technical log.
+	 * @param CatalogImport|null     $catalog  The catalog import (review 30.15).
+	 * @param BasePriceSchedule|null $schedule Planned price increases (ADR-094).
 	 */
-	public function __construct( private BaseProductService $bases, private ClipartLibrary $cliparts, private Logger $logger, private ?CatalogImport $catalog = null ) {
+	public function __construct( private BaseProductService $bases, private ClipartLibrary $cliparts, private Logger $logger, private ?CatalogImport $catalog = null, private ?BasePriceSchedule $schedule = null ) {
 	}
 
 	/**
@@ -105,7 +107,11 @@ final class BaseProductActions {
 
 					$fields['size_prices'] = (string) wp_json_encode( '1' === $text( 'size_priced' ) && is_array( $input['size_prices'] ?? null ) ? $input['size_prices'] : array() );
 
-					return BaseProductsPage::edit_url( $this->bases->save( $id > 0 ? $id : null, $fields, self::views( $input, $files ) ), 'saved' );
+					$before = $id > 0 ? BasePriceSchedule::scheduled( $id ) : null;
+					$saved  = $this->bases->save( $id > 0 ? $id : null, $fields, self::views( $input, $files ) );
+					$after  = BasePriceSchedule::scheduled( $saved );
+
+					return BaseProductsPage::edit_url( $saved, null !== $after && $after !== $before ? 'price_scheduled' : 'saved' );
 				case 'color_photos':
 					$photos = array();
 
@@ -120,6 +126,10 @@ final class BaseProductActions {
 					$this->bases->add_color_photos( $id, $text( 'side' ), $photos );
 
 					return BaseProductsPage::edit_url( $id, 'saved' );
+				case 'price_cancel':
+					$this->schedule?->cancel( $id );
+
+					return BaseProductsPage::edit_url( $id, 'price_cancelled' );
 				case 'activate':
 				case 'deactivate':
 					if ( true === $this->catalog?->running( $id ) ) {

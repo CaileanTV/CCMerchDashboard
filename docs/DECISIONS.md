@@ -5457,7 +5457,7 @@ ADR-033, ADR-077, ADR-091
 2026-11-06
 
 ## Status
-Accepteret af projektejeren 2026-11-06 (fase 32). **Ændrer ADR-080 pkt. 10:** en ny grundpris gælder ikke længere altid med det samme.
+Accepteret af projektejeren 2026-11-06 (fase 32). **Implementeret i 32.6 (2026-11-06):** `BasePriceSchedule`; datoen er altid 14 dage fra gem, og priserne sættes ved første sidevisning efter datoen (højst én gang i timen). **Ændrer ADR-080 pkt. 10:** en ny grundpris gælder ikke længere altid med det samme.
 
 ## Context
 Den hidtidige samarbejdsaftale lover skriftligt varsel 14 dage før en prisstigning. Projektejeren vil have, at det også gælder i aftalepapiret, og at pluginet sikrer det.

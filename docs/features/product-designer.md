@@ -57,6 +57,7 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - Pluginet skriver prisen, varianterne og billederne på designer-produkter; ret dem ikke i WooCommerce, de overskrives ved næste godkendelse.
 
 ## Ny grundpris og pensionering (trin 30.11)
+- **Prisstigninger varsles 14 dage før (fase 32, ADR-094):** hæves en pris på et grundprodukt, som creators designer på, gemmes hele det nye prissæt som en planlagt ændring 14 dage frem (option `merchboard_designer_price_schedule`). Creators får notifikationen "Kommende prisstigning", og designeren viser den kommende pris i grundproduktets notis. På datoen sættes priserne, og genberegningen nedenfor kører. Prisfald gælder med det samme.
 - **Ny grundpris:** gem grundproduktet med den nye pris. Produkterne i butikken får den nye pris i baggrunden; creatorens procent eller beløb bevares, og creatoren får "ny pris" (før/efter). Ordrer lagt før beholder deres pris, og et salg afregnes efter den pris, butikken havde.
 - En ny pris gør ikke ventende designs forældede; det gør kun en ændret skabelon, et ændret printområde eller en omdøbt eller fjernet farve eller størrelse (fra review 30.15). En ny farve eller størrelse gør ikke.
 - **Pensionér** (på grundproduktet, med afkrydsning): dets produkter tages ud af butikken (de bliver kladder og bevares til ordrehistorikken), ventende designs afvises med en note, og creatorne får besked. Det kan ikke fortrydes; brug "Tilbage til kladde", hvis du kun vil stoppe nye designs.

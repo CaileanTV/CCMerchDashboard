@@ -20,6 +20,7 @@ use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
+use MerchBoard\Modules\ProductDesigner\Bases\BasePriceSchedule;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
@@ -272,6 +273,8 @@ final class Uninstaller {
 		delete_option( NotificationSettings::OPTION );
 		delete_option( PrintfulToken::OPTION );
 		delete_option( ThreadPacks::OPTION );
+		delete_option( BasePriceSchedule::OPTION );
+		delete_transient( 'merchboard_designer_price_check' );
 		delete_option( GelatoAccount::KEY_OPTION );
 		delete_option( GelatoAccount::STORE_OPTION );
 		delete_option( ProdigiAccount::KEY_OPTION );

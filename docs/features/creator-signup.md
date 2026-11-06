@@ -4,7 +4,7 @@
 Creators skal selv kunne oprette sig, acceptere aftalepapiret og forberede deres shop uden at vente på admin. Butikken viser dem først, når en administrator har godkendt, at de går live (projektejerens ønske 2026-11-06).
 
 ## Current status
-I gang (fase 32, ADR-091–094). 32.2 (live-status og spærringer) og 32.3 (aftalepapiret: Indstillinger → Aftale, `/me/agreement`, boksen øverst i dashboardet og spærringen af udbetalinger) er implementeret 2026-11-06, og 32.4 (selvoprettelsen: siden `/<dashboard-slug>/opret`, bekræftelse via WordPress' link til ny adgangskode, honeypot, rate limit og oprydning efter 7 dage) ligeså, og 32.5 (go-live: boksen "Du er ikke live endnu", `/me/go-live`, fanen Go-live med godkendelse, kategori under overkategorien, tillæg og frigivelse af ventende designs) ligeså; 32.6 mangler.
+I gang (fase 32, ADR-091–094). 32.2 (live-status og spærringer) og 32.3 (aftalepapiret: Indstillinger → Aftale, `/me/agreement`, boksen øverst i dashboardet og spærringen af udbetalinger) er implementeret 2026-11-06, og 32.4 (selvoprettelsen: siden `/<dashboard-slug>/opret`, bekræftelse via WordPress' link til ny adgangskode, honeypot, rate limit og oprydning efter 7 dage) ligeså, og 32.5 (go-live: boksen "Du er ikke live endnu", `/me/go-live`, fanen Go-live med godkendelse, kategori under overkategorien, tillæg og frigivelse af ventende designs) ligeså, og 32.6 (prisstigninger på grundprodukter med 14 dages varsel) ligeså. Review, runtime-test og release følger i 32.7.
 
 ## User-facing functionality
 - **Oprettelse** på `/<dashboard-slug>/opret`:
