@@ -53,6 +53,8 @@ final class CreatorTypes {
 			self::account_welcome(),
 			self::account_status(),
 			self::agreement_updated(),
+			self::live_approved(),
+			self::live_declined(),
 			self::pricing_changed(),
 			self::vat_changed(),
 			self::billing_details_changed(),
@@ -1120,6 +1122,64 @@ final class CreatorTypes {
 				null,
 				null,
 				__( 'Read and accept', 'merchboard' ),
+				'',
+				self::closing()
+			)
+		);
+	}
+
+	/**
+	 * An administrator approved that the creator goes live (ADR-091).
+	 */
+	private static function live_approved(): NotificationType {
+		return self::type(
+			'account_live_approved',
+			'account',
+			static fn(): string => __( 'Live in the shop', 'merchboard' ),
+			static fn(): string => __( 'When an administrator approves that a creator who signed up goes live.', 'merchboard' ),
+			true,
+			true,
+			true,
+			'',
+			array(),
+			static fn(): string => __( 'You are live in the shop! Your approved designs are on their way.', 'merchboard' ),
+			static fn(): EmailMessage => new EmailMessage(
+				__( 'You are live in the shop', 'merchboard' ),
+				__( 'You are live!', 'merchboard' ),
+				array( __( 'We approved your request: your shop is live, and your approved designs are on their way to the shop. Share the link with your followers.', 'merchboard' ) ),
+				array(),
+				null,
+				null,
+				__( 'Open your dashboard', 'merchboard' ),
+				'',
+				self::closing()
+			)
+		);
+	}
+
+	/**
+	 * An administrator declined the request to go live, with a note (ADR-091).
+	 */
+	private static function live_declined(): NotificationType {
+		return self::type(
+			'account_live_declined',
+			'account',
+			static fn(): string => __( 'Request to go live declined', 'merchboard' ),
+			static fn(): string => __( 'When an administrator declines a request to go live, with the reason.', 'merchboard' ),
+			true,
+			true,
+			true,
+			'',
+			array( 'note' => 'Please add one more design first.' ),
+			static fn(): string => __( 'Your request to go live was not approved yet. Read the reason in your dashboard.', 'merchboard' ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				__( 'Your request to go live', 'merchboard' ),
+				__( 'Not live yet', 'merchboard' ),
+				array( __( 'We could not approve your request to go live yet. You can change what is needed and ask again from your dashboard.', 'merchboard' ) ),
+				array(),
+				null,
+				array( __( 'Reason', 'merchboard' ), $d->text( 'note' ) ),
+				__( 'Open your dashboard', 'merchboard' ),
 				'',
 				self::closing()
 			)

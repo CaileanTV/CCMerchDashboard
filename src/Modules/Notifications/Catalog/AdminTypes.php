@@ -36,6 +36,7 @@ final class AdminTypes {
 			self::proposal_submitted(),
 			self::product_removal_requested(),
 			self::creator_signed_up(),
+			self::go_live_requested(),
 			self::order_decision(),
 			self::sync_failed(),
 			self::reconciliation_failed(),
@@ -150,6 +151,30 @@ final class AdminTypes {
 					array( __( 'Method', 'merchboard' ), self::method( $d ) ),
 				),
 				__( 'Open Payouts', 'merchboard' )
+			)
+		);
+	}
+
+	/**
+	 * A creator who signed up asks to go live (ADR-091).
+	 */
+	private static function go_live_requested(): NotificationType {
+		return self::type(
+			'go_live_requested',
+			static fn(): string => __( 'Request to go live', 'merchboard' ),
+			static fn(): string => __( 'When a creator who signed up asks to go live in the shop (ADR-091).', 'merchboard' ),
+			true,
+			'merchboard-approvals',
+			array( 'creator' => 'Nova' ),
+			/* translators: %s: creator name. */
+			static fn( NotificationData $d ): string => sprintf( __( '%s asked to go live.', 'merchboard' ), $d->text( 'creator' ) ),
+			static fn( NotificationData $d ): EmailMessage => self::message(
+				/* translators: %s: creator name. */
+				sprintf( __( '%s asks to go live', 'merchboard' ), $d->text( 'creator' ) ),
+				__( 'Request to go live', 'merchboard' ),
+				__( 'A creator who signed up asks to go live. Approve it to create their category and put their approved designs in the shop, or decline it with a note.', 'merchboard' ),
+				array( array( __( 'Creator', 'merchboard' ), $d->text( 'creator' ) ) ),
+				__( 'Open Go-live', 'merchboard' )
 			)
 		);
 	}

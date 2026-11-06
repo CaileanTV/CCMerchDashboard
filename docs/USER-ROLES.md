@@ -133,7 +133,7 @@ Hvorfor både rolle **og** record? Rollen gør adgang synlig og håndterbar med 
 | Frakobl bruger ✅ fase 6 | `user_id = NULL`, og rollen fjernes (brugeren slettes ikke). Creator-recorden og historikken bevares på creator-ID'et. Audit-log. |
 | WP-bruger slettes ✅ fase 8 | WP-bruger slettes → creator bevares → `user_id = NULL` → `status = inactive` → audit-records (systemhandling, actor NULL). Uanset hvorfra brugeren slettes (wp-admin, WP-CLI, REST, andre plugins). Detaljer i [DATABASE.md](DATABASE.md#relationen-til-wordpress-brugeren). |
 | Creatoren opretter sig selv ✅ (fase 32, trin 32.4, ADR-091) | Pluginet opretter en WP-bruger **uden rolle** og en record (`active`, ikke live). Rollen `merchboard_creator` gives først, når e-mailen er bekræftet. Ubekræftede oprettelser slettes efter 7 dage. Audit: `creator_signed_up`, `creator_signup_verified`. |
-| Godkend go-live (fase 32, planlagt, ADR-091) | `awaiting_live` sættes til 0 én gang; kategorien oprettes, og ventende designs kommer i butikken. Før det når creatoren aldrig butikken. Audit: `go_live_approved`. |
+| Godkend go-live ✅ (fase 32, trin 32.5, ADR-091) | `awaiting_live` sættes til 0 én gang; kategorien oprettes, og ventende designs kommer i butikken. Før det når creatoren aldrig butikken. Audit: `go_live_approved`. |
 
 Statusmodellen er bevidst minimal: `active` og `inactive` (ADR-020, [DATABASE.md](DATABASE.md#statusmodel)). Et separat "arkiveret"-tilstand tilføjes kun, hvis en fase får et konkret behov.
 

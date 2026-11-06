@@ -922,7 +922,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
   - bruger uden rolle, bekræftelse via link til ny adgangskode og derefter creator-rollen;
   - honeypot og rate limit, ingen afsløring af eksisterende konti;
   - oprydning efter 7 dage og notifikationer.
-- **32.5 Gå live:**
+- **32.5 Gå live ✅ (2026-11-06, testet automatisk):**
   - banner og anmodning i dashboardet;
   - fanen "Go-live" under Forslag;
   - godkendelse med tillæg, oprettelse af kategori og anvendelse af ventende designs;

@@ -20,6 +20,7 @@ use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\Creators\GoLive\GoLiveRequests;
 use MerchBoard\Modules\Notifications\Admin\NotificationSwitches;
 use MerchBoard\Modules\Notifications\NotificationSender;
 use MerchBoard\Modules\Notifications\NotificationSettings;
@@ -336,6 +337,13 @@ final class ProductDesignerModule implements Module {
 			)
 		);
 		$container->set( DesignerReviewActions::class, static fn( Container $c ): DesignerReviewActions => new DesignerReviewActions( $c->get( DesignerReview::class ), $c->get( Logger::class ) ) );
+		// A creator who signed up went live (ADR-091): their approved designs that waited go to the shop.
+		add_action(
+			GoLiveRequests::WENT_LIVE,
+			static function ( mixed $creator_id ) use ( $container ): void {
+				$container->get( DesignerReview::class )->release_waiting( $creator_id );
+			}
+		);
 		$container->set( DesignerVersionFiles::class, static fn( Container $c ): DesignerVersionFiles => new DesignerVersionFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerFiles::class ) ) );
 		$container->set( DesignerOrderFiles::class, static fn( Container $c ): DesignerOrderFiles => new DesignerOrderFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerProductGuard::class ), $c->get( Logger::class ), $c->get( BaseProductRepository::class ) ) );
 		$container->set(

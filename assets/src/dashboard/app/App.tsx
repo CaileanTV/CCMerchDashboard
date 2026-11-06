@@ -3,6 +3,7 @@ import { __ } from '@wordpress/i18n';
 
 import { AgreementNotice } from '../components/AgreementNotice';
 import { ApiErrorState } from '../components/ApiErrorState';
+import { GoLiveNotice } from '../components/GoLiveNotice';
 import { Skeleton } from '../components/Skeleton';
 import type { DashboardConfig } from '../types/config';
 import { ConfigContext, useConfig } from './config-context';
@@ -31,6 +32,7 @@ function CurrentPage() {
 	let content = (
 		<>
 			<AgreementNotice />
+			<GoLiveNotice />
 			{ page.content }
 		</>
 	);

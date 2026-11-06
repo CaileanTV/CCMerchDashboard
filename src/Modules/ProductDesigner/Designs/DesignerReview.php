@@ -240,6 +240,28 @@ class DesignerReview {
 	}
 
 	/**
+	 * A creator who signed up went live (ADR-091): their approved versions
+	 * that waited are put in the shop now. Never throws.
+	 *
+	 * @param mixed $creator_id Creator (`merchboard_creator_went_live`).
+	 */
+	public function release_waiting( mixed $creator_id ): void {
+		if ( ! is_numeric( $creator_id ) ) {
+			return;
+		}
+
+		try {
+			foreach ( $this->products->waiting_for_creator( (int) $creator_id ) as $version_id ) {
+				$this->products->set_apply( $version_id, DesignerProductRepository::APPLY_QUEUED, null, null );
+				$this->schedule( $version_id );
+			}
+		} catch ( DatabaseException ) {
+			// The versions stay waiting; the administrator sees them under Designs.
+			return;
+		}
+	}
+
+	/**
 	 * Applies the versions of this request that had no queue.
 	 */
 	public function apply_pending(): void {

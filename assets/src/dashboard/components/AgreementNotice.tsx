@@ -13,6 +13,7 @@ import { useApi } from '../hooks/useApi';
 import { Alert } from './Alert';
 import { Button } from './Button';
 import { Dialog } from './Dialog';
+import { AGREEMENT_ACCEPTED } from './GoLiveNotice';
 import { SafeHtml } from './SafeHtml';
 
 /**
@@ -65,6 +66,7 @@ export function AgreementNotice() {
 		if ( result.ok ) {
 			setAccepted( result.data );
 			setOpen( false );
+			window.dispatchEvent( new Event( AGREEMENT_ACCEPTED ) );
 
 			return;
 		}

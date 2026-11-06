@@ -20,6 +20,8 @@ use MerchBoard\Core\Module;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\Agreement\Agreement;
+use MerchBoard\Modules\Creators\GoLive\GoLiveShop;
+use MerchBoard\Modules\WooCommerce\GoLive\WooCommerceGoLiveShop;
 use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Admin\CategorySyncActions;
@@ -250,6 +252,8 @@ final class WooCommerceModule implements Module {
 				$c->get( Transaction::class )
 			)
 		);
+		// Going live in the shop (ADR-093): replaces the Creators module's null shop.
+		$container->set( GoLiveShop::class, static fn( Container $c ): GoLiveShop => new WooCommerceGoLiveShop( $c->get( CreatorCategoryService::class ), $c->get( CreatorCategoryRepository::class ), $c->get( CreatorPricingSettings::class ) ) );
 
 		// Category-based ownership reconciliation (ADR-033).
 		$container->set(

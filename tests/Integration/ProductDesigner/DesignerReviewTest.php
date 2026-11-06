@@ -318,6 +318,15 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertSame( array( $version ), $this->products->waiting_for_creator( $this->creator->id ) );
 		$this->as_creator();
 		self::assertSame( array( 'approved' ), array_column( array_filter( $this->states(), static fn( array $row ): bool => $row['id'] === $product ), 'state' ) );
+
+		// Going live releases it (ADR-091).
+		wp_set_current_user( 1 );
+		$this->wpdb->update( $this->wpdb->prefix . 'merchboard_creators', array( 'awaiting_live' => 0 ), array( 'id' => $this->creator->id ) );
+		$this->review->release_waiting( $this->creator->id );
+		$this->drain();
+
+		self::assertSame( array( 'approved', 'done', '179.9400' ), $this->state( $version ) );
+		self::assertCount( 1, $this->writer->contents, 'Now it is put in the shop.' );
 	}
 
 	public function test_the_shop_shows_the_colours_in_the_creator_s_order(): void {

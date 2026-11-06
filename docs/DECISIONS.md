@@ -5299,7 +5299,7 @@ ADR-047, ADR-049, ADR-051, ADR-054, ADR-060, ADR-062, ADR-064
 2026-11-06
 
 ## Status
-Accepteret af projektejeren 2026-11-06 (fase 32). **Implementeret:** forhindringen i 32.2 og oprettelsen i 32.4 (2026-11-06); go-live følger i 32.5. Bevidst undtagelse fra "ingen offentlige endpoints" (SECURITY.md) og fra, at kun admin opretter creators (USER-ROLES.md). ADR-006, ADR-007 og ADR-020 er uændrede.
+Accepteret af projektejeren 2026-11-06 (fase 32). **Implementeret:** forhindringen i 32.2, oprettelsen i 32.4 og go-live i 32.5 (2026-11-06). Kategorien og tillægget sættes af WooCommerce-modulet bag grænsefladen `GoLiveShop`; ventende designs frigives via action `merchboard_creator_went_live`. Bevidst undtagelse fra "ingen offentlige endpoints" (SECURITY.md) og fra, at kun admin opretter creators (USER-ROLES.md). ADR-006, ADR-007 og ADR-020 er uændrede.
 
 ## Context
 - I dag opretter kun en administrator creators, og pluginet opretter aldrig WordPress-brugere.

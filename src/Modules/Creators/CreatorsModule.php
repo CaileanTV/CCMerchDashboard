@@ -17,6 +17,13 @@ use MerchBoard\Modules\Creators\Admin\AgreementSettingsSection;
 use MerchBoard\Modules\Creators\Agreement\Agreement;
 use MerchBoard\Modules\Creators\Agreement\AgreementRepository;
 use MerchBoard\Modules\Creators\Rest\MeAgreementController;
+use MerchBoard\Modules\Creators\Rest\MeGoLiveController;
+use MerchBoard\Modules\Creators\Admin\GoLivePage;
+use MerchBoard\Modules\Creators\GoLive\GoLiveRepository;
+use MerchBoard\Modules\Creators\GoLive\GoLiveRequests;
+use MerchBoard\Modules\Creators\GoLive\GoLiveShop;
+use MerchBoard\Modules\Creators\GoLive\NullGoLiveShop;
+use MerchBoard\Modules\Creators\Signup\SignupCleanup;
 use MerchBoard\Modules\Creators\Admin\SignupSettingsSection;
 use MerchBoard\Modules\Creators\Signup\CreatorSignup;
 use MerchBoard\Modules\Creators\Signup\SignupMails;
@@ -92,6 +99,7 @@ final class CreatorsModule implements Module {
 			'rest_api_init',
 			static function () use ( $container ): void {
 				$container->get( MeAgreementController::class )->register_routes();
+				$container->get( MeGoLiveController::class )->register_routes();
 			}
 		);
 		add_action(
@@ -99,6 +107,7 @@ final class CreatorsModule implements Module {
 			static function () use ( $container ): void {
 				$container->get( SignupSettingsSection::class )->register();
 				$container->get( AgreementSettingsSection::class )->register();
+				$container->get( GoLivePage::class )->register();
 			}
 		);
 
@@ -120,6 +129,25 @@ final class CreatorsModule implements Module {
 		);
 		$container->set( SignupPage::class, static fn( Container $c ): SignupPage => new SignupPage( $c->get( DashboardRoute::class ), $c->get( CreatorSignup::class ), $c->get( Agreement::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );
 		$container->set( SignupSettingsSection::class, static fn( Container $c ): SignupSettingsSection => new SignupSettingsSection( $c->get( Agreement::class ), $c->get( SignupPage::class ), $c->get( Logger::class ) ) );
+		// Going live (ADR-091, ADR-093). The WooCommerce module replaces the null shop.
+		$container->set( GoLiveShop::class, static fn(): GoLiveShop => new NullGoLiveShop() );
+		$container->set( GoLiveRepository::class, static fn( Container $c ): GoLiveRepository => new GoLiveRepository( $c->get( wpdb::class ) ) );
+		$container->set( GoLiveRequests::class, static fn( Container $c ): GoLiveRequests => new GoLiveRequests( $c->get( GoLiveRepository::class ), $c->get( CreatorRepository::class ), $c->get( Agreement::class ), static fn(): GoLiveShop => $c->get( GoLiveShop::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set( GoLivePage::class, static fn( Container $c ): GoLivePage => new GoLivePage( $c->get( GoLiveRequests::class ), $c->get( GoLiveRepository::class ), $c->get( CreatorRepository::class ), $c->get( SignupRepository::class ), $c->get( AgreementRepository::class ), $c->get( GoLiveShop::class ), $c->get( Logger::class ) ) );
+		$container->set( MeGoLiveController::class, static fn( Container $c ): MeGoLiveController => new MeGoLiveController( $c->get( CreatorContext::class ), $c->get( GoLiveRequests::class ), $c->get( Logger::class ) ) );
+		add_filter(
+			ApprovalsPage::FILTER,
+			static function ( mixed $tabs ) use ( $container ): array {
+				return array_merge( is_array( $tabs ) ? $tabs : array(), array( $container->get( GoLivePage::class )->approval_tab() ) );
+			}
+		);
+		add_filter(
+			'merchboard_creator_data_cleaners',
+			static function ( mixed $cleaners ) use ( $container ): array {
+				return array_merge( is_array( $cleaners ) ? $cleaners : array(), array( new SignupCleanup( $container->get( SignupRepository::class ), $container->get( GoLiveRepository::class ) ) ) );
+			},
+			5
+		);
 		// Before the dashboard shell (priority 0): the one dashboard page without a login.
 		add_action(
 			'template_redirect',

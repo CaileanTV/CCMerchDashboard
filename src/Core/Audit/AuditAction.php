@@ -830,4 +830,20 @@ enum AuditAction: string {
 	 * Context: creator_id. System action.
 	 */
 	case CreatorSignupExpired = 'creator_signup_expired';
+
+	/**
+	 * A creator who signed up asked to go live (ADR-091).
+	 */
+	case GoLiveRequested = 'go_live_requested';
+
+	/**
+	 * An administrator approved that a creator goes live (ADR-091).
+	 */
+	case GoLiveApproved = 'go_live_approved';
+
+	/**
+	 * An administrator declined a request to go live (ADR-091). The note is
+	 * stored with the request, never in the log.
+	 */
+	case GoLiveDeclined = 'go_live_declined';
 }
