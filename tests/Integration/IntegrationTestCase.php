@@ -164,7 +164,24 @@ abstract class IntegrationTestCase extends TestCase {
 	 * @return list<array<string, string|null>>
 	 */
 	protected function creator_rows(): array {
-		return array_map( static fn( array $row ): array => array_diff_key( $row, array( 'deleted_at' => null ) ), $this->rows( Tables::CREATORS ) );
+		return array_map(
+			static function ( array $row ): array {
+				// Migration 45 (ADR-091): existing creators are live and accept nothing.
+				if ( array_key_exists( 'awaiting_live', $row ) ) {
+					self::assertSame( array( '0', '0' ), array( $row['awaiting_live'], $row['agreement_required'] ?? null ), 'Existing creators stay live without an agreement.' );
+				}
+
+				return array_diff_key(
+					$row,
+					array(
+						'deleted_at'         => null,
+						'awaiting_live'      => null,
+						'agreement_required' => null,
+					)
+				);
+			},
+			$this->rows( Tables::CREATORS )
+		);
 	}
 
 	/**

@@ -51,6 +51,7 @@ final class CreatorNotLiveTest extends IntegrationTestCase {
 		parent::setUp();
 		$this->install();
 		wp_set_current_user( 1 );
+		add_filter( 'map_meta_cap', array( self::class, 'product_caps' ), 10, 2 );
 		register_taxonomy( 'product_cat', 'product' );
 
 		$term       = wp_insert_term( 'MB-NOTLIVE category', 'product_cat' );
@@ -59,7 +60,19 @@ final class CreatorNotLiveTest extends IntegrationTestCase {
 		$this->creators = $this->service( CreatorRepository::class );
 	}
 
+	/**
+	 * Maps `edit_product` like WooCommerce's product post type does.
+	 *
+	 * @param array<string> $caps Primitive capabilities.
+	 * @param string        $cap  Meta capability.
+	 * @return array<string>
+	 */
+	public static function product_caps( array $caps, string $cap ): array {
+		return in_array( $cap, array( 'edit_product', 'edit_products' ), true ) ? array( 'edit_posts' ) : $caps;
+	}
+
 	protected function tearDown(): void {
+		remove_filter( 'map_meta_cap', array( self::class, 'product_caps' ), 10 );
 		wp_delete_term( $this->term, 'product_cat' );
 		parent::tearDown();
 	}

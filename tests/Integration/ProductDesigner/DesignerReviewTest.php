@@ -316,6 +316,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertSame( array(), $this->links );
 		self::assertNull( $this->products->find( $this->creator->id, $product )['wc_product_id'] ?? null );
 		self::assertSame( array( $version ), $this->products->waiting_for_creator( $this->creator->id ) );
+		$this->as_creator();
 		self::assertSame( array( 'approved' ), array_column( array_filter( $this->states(), static fn( array $row ): bool => $row['id'] === $product ), 'state' ) );
 	}
 

@@ -39,6 +39,9 @@ final class SchemaTest extends IntegrationTestCase {
 				'vat_registered'     => array( 'tinyint', 'unsigned', 'NO', '' ),
 				// Migration 9 (D6); NULL = the whole history.
 				'payout_start_at'    => array( 'datetime', '', 'YES', '' ),
+				// Migration 45 (ADR-091, ADR-092); 0 for existing and admin-made creators.
+				'awaiting_live'      => array( 'tinyint', 'unsigned', 'NO', '' ),
+				'agreement_required' => array( 'tinyint', 'unsigned', 'NO', '' ),
 			),
 			$this->columns( Tables::CREATORS )
 		);

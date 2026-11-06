@@ -1045,7 +1045,7 @@ final class MigrationTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * Rows without the columns added by migrations 6, 7 and 9, to compare with
+	 * Rows without the columns added by migrations 6, 7, 9, 31 and 45, to compare with
 	 * rows read before them; fails when a row's markup, VAT status or settlement
 	 * start is not the default.
 	 *
@@ -1060,7 +1060,8 @@ final class MigrationTest extends IntegrationTestCase {
 				self::assertArrayHasKey( 'payout_start_at', $row );
 				self::assertNull( $row['payout_start_at'], 'Existing creators count their whole history (D6).' );
 				self::assertNull( $row['deleted_at'] ?? null, 'Existing creators are not deleted (ADR-076).' );
-				unset( $row['default_markup_bps'], $row['vat_registered'], $row['payout_start_at'], $row['deleted_at'] );
+				self::assertSame( array( '0', '0' ), array( $row['awaiting_live'] ?? '0', $row['agreement_required'] ?? '0' ), 'Existing creators stay live without an agreement (ADR-091).' );
+				unset( $row['default_markup_bps'], $row['vat_registered'], $row['payout_start_at'], $row['deleted_at'], $row['awaiting_live'], $row['agreement_required'] );
 
 				return $row;
 			},
