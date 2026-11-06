@@ -937,9 +937,26 @@ Det gøres færdigt før review og test af fase 30 (30.15).
     - linket virker i 24 timer, og bekræftelse virker også via WooCommerce;
     - aftaleversioner gemmes med udfyldte firmaoplysninger;
     - oprydning uden kapløb.
-  - **Release 1.6.0:** bump efter projektejerens ønske.
+  - **Release 1.6.0:** udgives sammen med fase 33 (33.5, projektejerens valg 2026-11-07).
 
 **Før funktionen slås til på live:** projektejeren godkender aftaleteksten. Den er et udkast og ikke juridisk gennemgået (ADR-092).
+
+## Fase 33 – Baggrundsfarve på AOP-produkter 📝 (plan godkendt 2026-11-07; ADR-095)
+
+**Projektejerens ønske (2026-11-07):**
+- Et flueben på grundproduktet giver en menu "Baggrund" i designeren til all-over-produkter, fx jerseys.
+- Funktionen bygger på projektejerens Lumise-modul (`CCMerch-Elementor/aop-baggrund`, læst med tilladelse), men skal være native i designeren.
+- Den gælder kun på de grundprodukter, der er markeret.
+
+**Projektejerens valg (2026-11-07):**
+- En side med kun baggrundsfarve får printfil og mockup, men er gratis (ingen pris for ekstra område).
+- Funktionen kommer med i 1.6.0, så releasen venter på fase 33.
+
+- **33.1 ADR og plan:** ADR-095 og docs.
+- **33.2 Grundproduktet:** fluebenet "Baggrundsfarve (AOP)", migration 46 og feltet til designeren.
+- **33.3 Designdokument og server:** `background` pr. side, kontrol i `DesignValidator`, brugte sider og gratis farve-sider.
+- **33.4 Designeren:** fanen "Baggrund", lærredet og printfilen.
+- **33.5 Review, runtime-test og release 1.6.0:** med fase 32; bump efter projektejerens go.
 
 ## Senere (uprioriteret)
 

@@ -5517,3 +5517,50 @@ Aftalens løfte skal holdes af systemet, ikke af hukommelsen.
 
 ## Related
 ADR-049, ADR-080, ADR-086, ADR-092
+
+# ADR-095: Baggrundsfarve på AOP-produkter i produktdesigneren
+
+## Date
+2026-11-07
+
+## Status
+Accepteret af projektejeren 2026-11-07 (fase 33, plan godkendt samme dag). Ikke implementeret endnu. Supplerer ADR-080 og ADR-081 (flade sider).
+
+**Kilde:** projektejerens eget modul `CCMerch-Elementor/aop-baggrund`, der er Lumise-snippet 31658 skilt ud til Fabric 5/6. Projektejeren gav 2026-11-07 eksplicit tilladelse til at læse netop den mappe som kilde. Det er en undtagelse fra Project Isolation (AI-DEVELOPMENT.md). Der læses kun, og der kopieres ingen Fabric-kode. Farveformlerne, standardfarverne og panelets felter genbruges; resten bygges native i designeren.
+
+## Context
+All-over-produkter (AOP), fx jerseys, printes over hele stoffet. Creators vil have en ensfarvet baggrund under designet i stedet for hvid. På ccmerch.dk gør Lumise-snippet'en det i dag. Projektejeren vil have funktionen direkte i Merch Dashboards designer, men kun på de grundprodukter, der er markeret til det.
+
+## Decision
+1. **Markering:** grundproduktet får fluebenet "Baggrundsfarve (AOP)" (kolonnen `background_color` i `merchboard_designer_bases`, schema-version 46). Det er fra som standard og sættes kun af admin (`merchboard_manage_designer`). Ændringen auditeres med grundproduktet.
+2. **I designet:** farven gemmes pr. side på designets øverste niveau, `background: { "<side>": "#RRGGBB" }`.
+   - Den er ikke et lag blandt designets objekter, så den kan ikke flyttes, vælges eller skjules, og den tæller ikke med i loftet på 100 objekter.
+   - Designets stempel ændrer sig med farven, så gamle printfiler og mockups laves om.
+3. **Serveren håndhæver:** `DesignValidator` beholder kun `background`, når grundproduktet har fluebenet, og kun for kendte sider, der ikke er broderede, med værdier på formen `#RRGGBB`. Uden fluebenet fjernes feltet ved næste gem.
+4. **Brugte sider og pris** (projektejerens valg):
+   - En side med kun en baggrund er brugt: den får printfil og mockup og skal dække størrelserne.
+   - Den er gratis: prisen for ekstra områder og digitaliseringsgebyret regnes kun af sider med objekter.
+5. **Printfil:** farven males over hele printfilen under objekterne. På flade sider (ADR-081) erstatter den den hvide baggrund i JPEG'en. Mockups, "Se det færdige produkt" og leverandørernes mockups følger med, fordi de bygger på printfilen.
+6. **Designeren:** fanen "Baggrund" vises kun på markerede grundprodukter og kun for sider, der ikke er broderede. Den har:
+   - 16 standardfarver, Hex, en farvevælger, RGB og CMYK (omregnet til RGB uden farveprofil, med en note om det);
+   - "Alle sider" (sat som standard), "Brug farven" og "Fjern baggrund".
+
+   Lærredet viser farven nederst over printområdet. Ændringer kan fortrydes som andre ændringer.
+7. **Slås fluebenet fra,** bliver indsendte og godkendte designs, som de er, fordi printfilerne er gemt. Kladder mister farven ved næste gem.
+
+## Alternatives considered
+- **Farven som et rektangel blandt objekterne** (som modulet): fravalgt. Kunden kan komme til at flytte eller skjule det, det tæller med i loftet over objekter, og en side med kun farve ville koste som et design.
+- **Lumise-modulet indlejret uændret:** fravalgt. Det er bygget til Fabric 5/6 og eget panel, og projektejeren vil have det native.
+
+## Reason
+Én kilde til farven pr. side, som serveren kan kontrollere og printfilen kan bruge direkte.
+
+## Security
+Kun admin markerer grundprodukter. Farven kontrolleres server-side som `#RRGGBB` og kun på markerede produkter. Der er ingen nye endpoints; farven gemmes via den eksisterende `/me/designer`-route (`CreatorContext`).
+
+## Consequences
+- **CMYK** omregnes til RGB uden ICC-profil. Farven kan derfor afvige lidt i tryk, og panelet siger det.
+- En helt ensfarvet printfil fylder lidt mere end en gennemsigtig.
+
+## Related
+ADR-080, ADR-081, ADR-085, ADR-086

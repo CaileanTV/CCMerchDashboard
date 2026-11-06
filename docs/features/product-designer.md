@@ -204,6 +204,17 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
 - **Implementeret (trin 30.5):** markøren `_merchboard_designer_token`, `DesignerProductGuard`, `WooCommerceDesignerWriter` og arkitekturtesten `LegacyGuardArchitectureTest`.
 - **Kontrol:** runtime-testen i 30.15 sammenligner alle legacy-produkter før og efter (pris, billeder, varianter, meta).
 
+## Baggrundsfarve på AOP-produkter (fase 33, ADR-095, planlagt)
+
+Admin markerer et grundprodukt med "Baggrundsfarve (AOP)". Kun på de produkter har designeren fanen "Baggrund".
+
+- **Fanen:** creatoren vælger en farve (16 standardfarver, Hex, farvevælger, RGB eller CMYK) og trykker "Brug farven". Den gælder den viste side eller alle sider ("Alle sider", sat som standard). "Fjern baggrund" fjerner den igen.
+- **Lærredet og printfilen:** farven dækker hele printområdet og ligger altid bagerst.
+- **Pris:** en side med kun farve printes, men koster ikke som et ekstra område.
+- **Broderede sider** har ingen baggrund.
+
+Funktionen bygger på projektejerens Lumise-snippet (31658), men er bygget direkte i designeren.
+
 ## All-over-produkter og Printful v2 (2026-10-31, eksperimentel)
 - **EU først:** kataloget filtrerer på Europa og levering til Danmark, og kun varianter på lager i Europa tilbydes. Regionen "Europe" er Printfuls salgsregion og er ikke et løfte om produktion i EU. Afsenderlandet kan kun ses pr. forsendelse.
 - **Fladt design:** et all-over-produkt har intet foto at måle på. Creatoren designer på syemønsteret, én side pr. del, og skal fylde delen ud til kanten. Mønsteret ligger over designet med et slør uden for delen, som hos Printful.
