@@ -303,7 +303,7 @@ final class SalesSyncR0Test extends IntegrationTestCase {
 
 		self::assertFalse( $result, 'The UPDATE waited for the shared lock and gave up.' );
 		self::assertSame( 1205, $errno );
-		self::assertSame( '45', $this->stored_version(), 'The version is unchanged.' );
+		self::assertSame( '46', $this->stored_version(), 'The version is unchanged.' );
 		self::assertSame( array( 's:11:1' ), $this->keys(), 'The synchronization committed.' );
 		self::assertSame( array( 'clear:7' ), $this->marker->calls );
 	}

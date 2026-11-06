@@ -287,6 +287,29 @@ final class BaseProductsTest extends IntegrationTestCase {
 		self::assertSame( '', $this->bases->find( $id )?->note );
 	}
 
+	public function test_the_background_colour_is_ticked_by_the_administrator_and_kept_until_changed(): void {
+		$id = $this->service->save( null, self::fields(), array( self::side( 'Front', array( 'background' => 1000 ) ) ) );
+		self::assertFalse( $this->bases->find( $id )?->background_color, 'Off by default (ADR-095).' );
+
+		$this->service->save( $id, array_merge( self::fields(), array( 'background_color' => '1' ) ), array( self::existing( 'front' ) ) );
+		self::assertTrue( $this->bases->find( $id )?->background_color );
+		self::assertSame( 1, $this->bases->find( $id )?->version, 'No design is outdated by it.' );
+
+		$this->service->save( $id, self::fields(), array( self::existing( 'front' ) ) );
+		self::assertTrue( $this->bases->find( $id )?->background_color, 'Left out, it is kept.' );
+		$this->service->set_active( $id, true );
+		self::assertTrue( $this->bases->find( $id )?->background_color, 'A change of status keeps it.' );
+
+		$this->service->save( $id, array_merge( self::fields(), array( 'background_color' => '0' ) ), array( self::existing( 'front' ) ) );
+		self::assertFalse( $this->bases->find( $id )?->background_color );
+
+		$stamps = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT created_at, updated_at, updated_by FROM %i WHERE id = %d', $this->wpdb->prefix . Tables::DESIGNER_BASES, $id ), ARRAY_A );
+		self::assertIsArray( $stamps );
+		self::assertMatchesRegularExpression( '/^20\d{2}-/', (string) $stamps['created_at'] );
+		self::assertMatchesRegularExpression( '/^20\d{2}-/', (string) $stamps['updated_at'], 'A date, not a number (the formats followed the columns, review 33.2).' );
+		self::assertSame( '1', (string) $stamps['updated_by'] );
+	}
+
 	public function test_refused_changes_keep_no_file_and_change_nothing(): void {
 		$refusals = array(
 			DesignerException::BASE_NAME       => array( array( 'name' => ' ' ), array() ),

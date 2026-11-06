@@ -105,7 +105,8 @@ final class BaseProductActions {
 						$fields[ $key ] = $text( $key );
 					}
 
-					$fields['size_prices'] = (string) wp_json_encode( '1' === $text( 'size_priced' ) && is_array( $input['size_prices'] ?? null ) ? $input['size_prices'] : array() );
+					$fields['background_color'] = '1' === $text( 'background_color' ) ? '1' : '0';
+					$fields['size_prices']      = (string) wp_json_encode( '1' === $text( 'size_priced' ) && is_array( $input['size_prices'] ?? null ) ? $input['size_prices'] : array() );
 
 					$before = $id > 0 ? BasePriceSchedule::scheduled( $id ) : null;
 					$saved  = $this->bases->save( $id > 0 ? $id : null, $fields, self::views( $input, $files ) );

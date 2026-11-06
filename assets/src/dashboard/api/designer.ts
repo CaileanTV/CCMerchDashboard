@@ -94,6 +94,8 @@ export interface DesignerBase {
 	readonly extraSidePrice: string;
 	/** What each further used small side adds to the base price. */
 	readonly smallSidePrice: string;
+	/** Whether the creator can give the design a background colour (ADR-095). */
+	readonly backgroundColor: boolean;
 	readonly currency: string;
 	readonly colors: readonly DesignerColor[];
 	readonly sizes: readonly string[];
@@ -474,6 +476,7 @@ function parseBase( value: unknown ): DesignerBase | null {
 				basePrice: value.base_price,
 				extraSidePrice: value.extra_side_price,
 				smallSidePrice: value.small_side_price,
+				backgroundColor: value.background_color === true,
 				currency: value.currency,
 				preview: value.preview === true,
 				stitches: strings( value.stitches ) ?? [],

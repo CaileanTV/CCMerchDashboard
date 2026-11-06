@@ -5547,6 +5547,7 @@ All-over-produkter (AOP), fx jerseys, printes over hele stoffet. Creators vil ha
 
    Lærredet viser farven nederst over printområdet. Ændringer kan fortrydes som andre ændringer.
 7. **Slås fluebenet fra,** bliver indsendte og godkendte designs, som de er, fordi printfilerne er gemt. Kladder mister farven ved næste gem.
+8. **"Duplikér lag"** (projektejerens ønske samme dag): knappen laver en kopi af det valgte lag (nyt id) lige over originalen, forskudt lidt, og vælger kopien. Den gælder alle grundprodukter, kan fortrydes og følger loftet på 100 objekter pr. side. Et billede genbruger samme fil.
 
 ## Alternatives considered
 - **Farven som et rektangel blandt objekterne** (som modulet): fravalgt. Kunden kan komme til at flytte eller skjule det, det tæller med i loftet over objekter, og en side med kun farve ville koste som et design.

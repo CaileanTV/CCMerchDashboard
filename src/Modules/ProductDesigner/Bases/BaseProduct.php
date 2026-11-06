@@ -68,6 +68,7 @@ final readonly class BaseProduct {
 	 * @param string             $note             What creators read in the designer; may be empty.
 	 * @param array<string, int> $size_prices The price of a size that has its own; empty with one price for all.
 	 * @param int                $small_side_units Price incl. VAT of each further used small side.
+	 * @param bool               $background_color Whether the designer offers a background colour (ADR-095).
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -86,7 +87,8 @@ final readonly class BaseProduct {
 		public int $extra_side_units = 0,
 		public string $note = '',
 		public array $size_prices = array(),
-		public int $small_side_units = 0
+		public int $small_side_units = 0,
+		public bool $background_color = false
 	) {
 		if ( ( null !== $id && $id < 1 ) || ! in_array( $status, array( self::DRAFT, self::ACTIVE, self::RETIRED ), true ) || ! in_array( $source, self::SOURCES, true ) || $version < 1 || $extra_side_units < 0 || $small_side_units < 0 ) {
 			throw new InvalidArgumentException( 'Invalid base product.' );

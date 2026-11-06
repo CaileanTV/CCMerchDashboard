@@ -802,7 +802,9 @@ class BaseProductService {
 				$extra,
 				mb_substr( sanitize_textarea_field( $fields['note'] ?? $existing->note ?? '' ), 0, 1000 ),
 				$size_prices,
-				$small
+				$small,
+				// Left out keeps it (e.g. a save without the admin form's tick).
+				isset( $fields['background_color'] ) ? '1' === (string) $fields['background_color'] : ( $existing->background_color ?? false )
 			);
 		} catch ( InvalidArgumentException ) {
 			self::reject( BaseProduct::ACTIVE === ( $existing->status ?? '' ) ? DesignerException::BASE_INCOMPLETE : DesignerException::BASE_VIEW );
@@ -818,7 +820,7 @@ class BaseProductService {
 	 */
 	private function with_status( BaseProduct $base, string $status ): BaseProduct {
 		try {
-			return new BaseProduct( $base->id, $status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $base->views, $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units );
+			return new BaseProduct( $base->id, $status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $base->views, $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color );
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_INCOMPLETE );
 		}
@@ -839,7 +841,7 @@ class BaseProductService {
 			$side  = new BaseView( $view->key, $view->name, $view->width, $view->height, $layers, $view->area, $view->width_mm, $view->height_mm, $view->dpi, $view->thread_pack, $view->flat, $view->scene, $view->sizes, $view->small );
 			$views = array_map( static fn( BaseView $other ): BaseView => $other->key === $side->key ? $side : $other, $base->views );
 
-			return new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version + 1, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units );
+			return new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version + 1, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color );
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_VIEW );
 		}
@@ -1004,6 +1006,7 @@ class BaseProductService {
 			'base_price'       => array( $before->base_units, $after->base_units ),
 			'extra_side_price' => array( $before->extra_side_units, $after->extra_side_units ),
 			'small_side_price' => array( $before->small_side_units, $after->small_side_units ),
+			'background_color' => array( $before->background_color, $after->background_color ),
 			'small_sides'      => array( self::small_sides( $before->views ), self::small_sides( $after->views ) ),
 			'category_id'      => array( $before->category_id, $after->category_id ),
 			'colors'           => array( $before->colors, $after->colors ),

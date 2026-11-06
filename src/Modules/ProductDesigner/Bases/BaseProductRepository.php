@@ -23,7 +23,14 @@ defined( 'ABSPATH' ) || exit;
  */
 class BaseProductRepository {
 
-	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price, creator_note, size_prices, small_side_price';
+	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price, creator_note, size_prices, small_side_price, background_color';
+
+	/**
+	 * The integer columns; every other column is a string or NULL.
+	 *
+	 * @var list<string>
+	 */
+	private const INTEGERS = array( 'category_id', 'version', 'background_color', 'created_by', 'updated_by' );
 
 	/**
 	 * Constructor.
@@ -93,7 +100,7 @@ class BaseProductRepository {
 					'updated_by' => $user > 0 ? $user : null,
 				)
 			),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%d' )
+			self::formats( array_keys( self::columns( $base ) ), array( 'created_at', 'created_by', 'updated_at', 'updated_by' ) )
 		);
 
 		if ( 1 !== $done || '' !== $this->wpdb->last_error ) {
@@ -122,7 +129,7 @@ class BaseProductRepository {
 				)
 			),
 			array( 'id' => $id ),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d' ),
+			self::formats( array_keys( self::columns( $base ) ), array( 'updated_at', 'updated_by' ) ),
 			array( '%d' )
 		);
 
@@ -411,7 +418,23 @@ class BaseProductRepository {
 			'creator_note'     => $base->note,
 			'size_prices'      => array() === $base->size_prices ? null : (string) wp_json_encode( array_map( array( SalesAmount::class, 'format' ), $base->size_prices ) ),
 			'small_side_price' => SalesAmount::format( $base->small_side_units ),
+			'background_color' => $base->background_color ? 1 : 0,
 		);
+	}
+
+	/**
+	 * The formats of a row's columns, by name and in their order, so a new
+	 * column never shifts the formats of the others (review 33.2: `updated_at`
+	 * was written as a number after migration 44).
+	 *
+	 * @param string[] $columns The base product's columns.
+	 * @param string[] $more    The columns after them.
+	 * @phpstan-param list<string> $columns
+	 * @phpstan-param list<string> $more
+	 * @return list<string>
+	 */
+	private static function formats( array $columns, array $more ): array {
+		return array_map( static fn( string $column ): string => in_array( $column, self::INTEGERS, true ) ? '%d' : '%s', array_merge( $columns, $more ) );
 	}
 
 	/**
@@ -472,7 +495,8 @@ class BaseProductRepository {
 				SalesAmount::parse( (string) ( $row['extra_side_price'] ?? '0' ) ),
 				(string) ( $row['creator_note'] ?? '' ),
 				self::size_prices( $row['size_prices'] ?? null ),
-				SalesAmount::parse( (string) ( $row['small_side_price'] ?? '0' ) )
+				SalesAmount::parse( (string) ( $row['small_side_price'] ?? '0' ) ),
+				1 === (int) ( $row['background_color'] ?? 0 )
 			);
 		} catch ( InvalidArgumentException ) {
 			throw new DatabaseException( 'Invalid base product row.' );

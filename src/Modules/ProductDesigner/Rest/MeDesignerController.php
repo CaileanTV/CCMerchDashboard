@@ -944,6 +944,7 @@ final class MeDesignerController extends RestController {
 			'base_price'       => SalesAmount::format( $base->base_units ),
 			'extra_side_price' => SalesAmount::format( $base->extra_side_units ),
 			'small_side_price' => SalesAmount::format( $base->small_side_units ),
+			'background_color' => $base->background_color,
 			'currency'         => $base->currency,
 			'colors'           => $base->colors,
 			'sizes'            => $base->sizes,

@@ -335,7 +335,7 @@ class BasePriceSchedule {
 		);
 		$sizes = array_merge( $base->size_prices, array_intersect_key( $entry['sizes'], array_flip( $base->sizes ) ) );
 
-		$this->bases->update( $base_id, new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $entry['base'] ?? $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version, $entry['large'] ?? $base->extra_side_units, $base->note, $sizes, $entry['small'] ?? $base->small_side_units ) );
+		$this->bases->update( $base_id, new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $entry['base'] ?? $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version, $entry['large'] ?? $base->extra_side_units, $base->note, $sizes, $entry['small'] ?? $base->small_side_units, $base->background_color ) );
 		update_option( self::OPTION, $stored, false );
 		$context = array(
 			'base_id'   => $base_id,
