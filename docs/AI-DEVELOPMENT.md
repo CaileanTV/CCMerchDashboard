@@ -113,6 +113,13 @@ Tilladte undtagelser, som er nødvendige for værktøjerne selv: OS-temp-mapper,
 - **Hvornår:** efter hver logisk afsluttet ændring (lille feature, doc-ændring, konfiguration eller bugfix). Bland ikke uafhængige ændringer i ét commit.
 - **Før commit:** gennemgå `git diff`, kør `npm run lint` og `npm test`, og tjek for secrets.
 - **Integrationstests (projektejerens beslutning 2026-11-04, erstatter 2026-10-25):** integrationstestene køres gennem CI, som kører hele suiten mod MySQL efter hvert push. Før commit køres `npm run lint` og `npm test` lokalt. Lokalt køres integrationstests kun målrettet (`npm run test:integration -- --filter …`), når en fejl skal findes eller rettes, fx efter en rød CI-kørsel. En rød CI-kørsel rettes før næste trin. Grøn CI på den commit, der tagges, er porten for et release; den fulde suite køres aldrig lokalt.
+- **Faste lister i tests (projektejerens ønske 2026-11-06):** flere tests holder faste lister eller antal over pluginets kataloger. CI er gentagne gange blevet rød alene af den grund. Når et af disse tilføjes, opdateres testene, og de køres målrettet med `--filter` før push:
+  - **en `/me`-route:** `MeEndpointTest` (den præcise liste i registreringsrækkefølge);
+  - **en notifikationstype:** antallet i `NotificationsTest` og `DesignerNotificationsTest` samt tabellen i features/notifications.md;
+  - **en audit-handling:** den lukkede liste i `AuditTrailTest` og etiketten i `AuditLogFormatter`;
+  - **en tabel:** `Tables` og listerne i `TablesTest`, `TransactionSupportTest`, `TransactionTest` og `UninstallerTest`;
+  - **en kolonne på `merchboard_creators`:** `SchemaTest`, `IntegrationTestCase::creator_rows()` og `MigrationTest::rows_without_markup()`;
+  - **en migration:** alle hårdkodede schema-versioner (grep det rene tal i `tests/`).
 - **Push:** efter validering. Tjek at CI er grøn; en rød CI rettes, før næste trin.
 - **Forbudt uden eksplicit instruktion:** `git push --force`, `git reset --hard` på brugerændringer, rebase/amend af pushede commits, sletning af branches, `--no-verify` og commit af `.env`, credentials, API-nøgler, passwords eller tokens.
 - **Branching:** Indtil videre committes direkte til `main` (én udvikler og CI på hvert push). Når projektet er i produktion eller har flere udviklere, skiftes til korte feature-branches (`phase/NN-navn`, `fix/…`) med PR og grøn CI før merge. Det registreres som ADR.
