@@ -115,8 +115,7 @@ final class CreatorsModule implements Module {
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
 				new SignupMails( new EmailRenderer(), new Mailer() ),
-				$c->get( Logger::class ),
-				static fn(): string => $c->get( SignupPage::class )->url()
+				$c->get( Logger::class )
 			)
 		);
 		$container->set( SignupPage::class, static fn( Container $c ): SignupPage => new SignupPage( $c->get( DashboardRoute::class ), $c->get( CreatorSignup::class ), $c->get( Agreement::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );

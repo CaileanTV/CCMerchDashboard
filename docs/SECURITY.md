@@ -377,7 +377,7 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
   - validering i servicen.
 
   IP-hashen slettes efter 24 timer. Ingen CAPTCHA (ekstern tjeneste, ADR-016).
-- **Ingen konto-enumerering:** svaret er det samme, uanset om e-mailen findes. Ejeren af en eksisterende konto får en mail.
+- **Eksisterende konti:** siden siger, at e-mailen eller brugernavnet er i brug (projektejerens valg 2026-11-06, ADR-091 pkt. 4). Rate limit (5 pr. time pr. adresse) begrænser, hvor mange der kan prøves.
 - **Roller:**
   - pluginet opretter en WordPress-bruger uden rolle;
   - først når e-mailen er bekræftet (første adgangskode via WordPress' eget link), gives `merchboard_creator`;

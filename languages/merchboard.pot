@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-06T19:05:16+00:00\n"
+"POT-Creation-Date: 2026-11-06T19:14:01+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -4507,26 +4507,6 @@ msgstr ""
 msgid "Choose a password"
 msgstr ""
 
-#: src/Modules/Creators/Signup/SignupMails.php:74
-msgid "You already have an account with us"
-msgstr ""
-
-#: src/Modules/Creators/Signup/SignupMails.php:75
-msgid "You already have an account"
-msgstr ""
-
-#: src/Modules/Creators/Signup/SignupMails.php:77
-msgid "Someone, probably you, tried to sign up as a creator with this e-mail. You already have an account with us: log in first and sign up from there, so your creator profile is linked to your account."
-msgstr ""
-
-#: src/Modules/Creators/Signup/SignupMails.php:78
-msgid "If it was not you, you can ignore this e-mail; nothing was changed."
-msgstr ""
-
-#: src/Modules/Creators/Signup/SignupMails.php:83
-msgid "Log in and sign up"
-msgstr ""
-
 #: src/Modules/Dashboard/DashboardSections.php:63
 msgid "Profile"
 msgstr ""
@@ -4863,7 +4843,7 @@ msgstr ""
 
 #: src/Modules/Notifications/Admin/NotificationSwitches.php:53
 #: src/Modules/Notifications/Admin/NotificationSwitches.php:89
-#: templates/signup/signup.php:87
+#: templates/signup/signup.php:92
 msgid "E-mail"
 msgstr ""
 
@@ -12651,104 +12631,120 @@ msgid "Enter a valid e-mail address."
 msgstr ""
 
 #: templates/signup/signup.php:30
-msgid "Enter the link to your channel, starting with https://."
+msgid "There is already an account with this e-mail. Log in, and sign up as a creator from there."
 msgstr ""
 
 #: templates/signup/signup.php:31
-msgid "You must be 18 or older to sign up."
+msgid "Choose a username of 3 to 60 characters: letters, digits, and _ . - @ only."
 msgstr ""
 
 #: templates/signup/signup.php:32
-msgid "Please accept the agreement to sign up."
+msgid "This username is taken. Please choose another one."
 msgstr ""
 
 #: templates/signup/signup.php:33
-msgid "The agreement was updated while you filled in the form. Please read it again and send the form."
+msgid "Enter the link to your channel, starting with https://."
 msgstr ""
 
 #: templates/signup/signup.php:34
-msgid "Too many sign-ups from here. Please try again in an hour."
+msgid "You must be 18 or older to sign up."
 msgstr ""
 
 #: templates/signup/signup.php:35
-msgid "Please take a moment to read the form, then send it again."
+msgid "Please accept the agreement to sign up."
 msgstr ""
 
 #: templates/signup/signup.php:36
-msgid "Your account is a creator already."
+msgid "The agreement was updated while you filled in the form. Please read it again and send the form."
 msgstr ""
 
 #: templates/signup/signup.php:37
-msgid "The form expired. Please send it again."
+msgid "Too many sign-ups from here. Please try again in an hour."
 msgstr ""
 
 #: templates/signup/signup.php:38
-msgid "Something went wrong. Nothing was saved; please try again later."
+msgid "Please take a moment to read the form, then send it again."
+msgstr ""
+
+#: templates/signup/signup.php:39
+msgid "Your account is a creator already."
+msgstr ""
+
+#: templates/signup/signup.php:40
+msgid "The form expired. Please send it again."
 msgstr ""
 
 #: templates/signup/signup.php:41
+msgid "Something went wrong. Nothing was saved; please try again later."
+msgstr ""
+
+#: templates/signup/signup.php:44
 msgid "Check your e-mail"
 msgstr ""
 
-#: templates/signup/signup.php:42
+#: templates/signup/signup.php:45
 msgid "Sign up as a creator"
 msgstr ""
 
-#: templates/signup/signup.php:43
+#: templates/signup/signup.php:46
 msgid "Sign-up is not open"
 msgstr ""
 
-#: templates/signup/signup.php:69
+#: templates/signup/signup.php:72
 msgid "Thank you! We have sent you an e-mail. Use the link in it to choose a password; then you can log in and prepare your shop. The link works for 7 days."
 msgstr ""
 
-#: templates/signup/signup.php:70
+#: templates/signup/signup.php:73
 msgid "Nothing in your inbox? Check your spam folder."
 msgstr ""
 
-#: templates/signup/signup.php:72
+#: templates/signup/signup.php:75
 msgid "Get your own merch shop. Sign up, accept our agreement and prepare your shop; it goes live when we have approved your request."
 msgstr ""
 
-#: templates/signup/signup.php:81
+#: templates/signup/signup.php:84
 msgid "Leave this field empty"
 msgstr ""
 
-#: templates/signup/signup.php:84
+#: templates/signup/signup.php:87
 msgid "Creator name"
 msgstr ""
 
 #: templates/signup/signup.php:90
+msgid "Username (for logging in)"
+msgstr ""
+
+#: templates/signup/signup.php:95
 msgid "Link to your channel (e.g. Twitch or YouTube)"
 msgstr ""
 
-#: templates/signup/signup.php:92
+#: templates/signup/signup.php:97
 #: build/dashboard.js:1
 msgid "Our agreement"
 msgstr ""
 
-#: templates/signup/signup.php:94
+#: templates/signup/signup.php:99
 msgid "I am 18 or older."
 msgstr ""
 
-#: templates/signup/signup.php:95
+#: templates/signup/signup.php:100
 msgid "I have read and accept the agreement."
 msgstr ""
 
-#: templates/signup/signup.php:96
+#: templates/signup/signup.php:101
 msgid "Sign up"
 msgstr ""
 
-#: templates/signup/signup.php:98
+#: templates/signup/signup.php:103
 msgid "Already a creator? Log in"
 msgstr ""
 
-#: templates/signup/signup.php:100
+#: templates/signup/signup.php:105
 msgid "The page could not be shown right now. Please try again later."
 msgstr ""
 
 #. translators: %s: site name.
-#: templates/signup/signup.php:103
+#: templates/signup/signup.php:108
 #, php-format
 msgid "It is not possible to sign up as a creator right now. Please contact %s."
 msgstr ""

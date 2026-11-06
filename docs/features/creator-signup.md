@@ -8,7 +8,8 @@ I gang (fase 32, ADR-091–094). 32.2 (live-status og spærringer) og 32.3 (afta
 
 ## User-facing functionality
 - **Oprettelse** på `/<dashboard-slug>/opret`:
-  - creatornavn, e-mail, kanal-link, "Jeg er fyldt 18 år" og aftalepapiret med accept;
+  - creatornavn, brugernavn, e-mail, kanal-link, "Jeg er fyldt 18 år" og aftalepapiret med accept;
+  - er e-mailen eller brugernavnet i brug, siger siden det (projektejerens valg 2026-11-06);
   - mailen "Bekræft e-mail og vælg adgangskode";
   - efter den første adgangskode åbner MitCCMerch.
 - **Før go-live:** profil, kategoriforslag, designs og alerts virker, men intet vises i butikken. Oplæsning åbner først efter go-live. Et godkendt design står som "Godkendt – kommer i butikken, når du er live".

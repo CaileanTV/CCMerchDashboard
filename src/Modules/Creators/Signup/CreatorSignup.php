@@ -36,8 +36,9 @@ defined( 'ABSPATH' ) || exit;
  *   e-mail and choose a password" carries WordPress' own link to set a
  *   password. Only when it is used (`after_password_reset`) does the user get
  *   the role `merchboard_creator`, and with it the dashboard.
- * - An e-mail that has an account gets the same answer; its owner is told
- *   to log in and sign up from there (no account enumeration).
+ * - The visitor chooses their username. An e-mail or username that has an
+ *   account is refused with its reason: the owner allowed the page to say
+ *   so (2026-11-06), and the person can log in and sign up from there.
  * - A logged-in user who is not a creator is linked at once (their account
  *   exists already) and gets the role.
  * - Spam: a honeypot field, at least 3 seconds to fill in the form (a signed
@@ -77,9 +78,7 @@ class CreatorSignup {
 	 * @param Transaction         $transaction Transactions.
 	 * @param SignupMails         $mails       The e-mails.
 	 * @param Logger              $logger      Technical log.
-	 * @param Closure             $signup_url  The sign-up page's URL.
 	 * @param Closure|null        $clock       Current time (tests).
-	 * @phpstan-param Closure(): string $signup_url
 	 * @phpstan-param (Closure(): DateTimeImmutable)|null $clock
 	 */
 	public function __construct(
@@ -92,7 +91,6 @@ class CreatorSignup {
 		private Transaction $transaction,
 		private SignupMails $mails,
 		private Logger $logger,
-		private Closure $signup_url,
 		?Closure $clock = null
 	) {
 		$this->clock = $clock ?? static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
@@ -176,15 +174,18 @@ class CreatorSignup {
 			self::refuse( SignupException::EMAIL );
 		}
 
-		$this->limit( 'email', strtolower( $email ), self::PER_EMAIL );
+		$username = self::username( self::text( $input, 'username' ) );
 
 		if ( false !== email_exists( $email ) ) {
-			$this->mails->existing( $email, ( $this->signup_url )() );
-
-			return 'sent';
+			self::refuse( SignupException::EMAIL_TAKEN );
 		}
 
-		$this->create( $email, $name, $channel, $version );
+		if ( false !== username_exists( $username ) ) {
+			self::refuse( SignupException::USERNAME_TAKEN );
+		}
+
+		$this->limit( 'email', strtolower( $email ), self::PER_EMAIL );
+		$this->create( $email, $username, $name, $channel, $version );
 
 		return 'sent';
 	}
@@ -239,16 +240,17 @@ class CreatorSignup {
 	/**
 	 * A new user without a role, the creator, the acceptance and the e-mail.
 	 *
-	 * @param string $email   E-mail.
-	 * @param string $name    Creator name.
-	 * @param string $channel Channel link.
-	 * @param int    $version Agreement version.
+	 * @param string $email    E-mail.
+	 * @param string $username The chosen username.
+	 * @param string $name     Creator name.
+	 * @param string $channel  Channel link.
+	 * @param int    $version  Agreement version.
 	 * @throws DatabaseException When it cannot be stored (the user is removed again).
 	 */
-	private function create( string $email, string $name, string $channel, int $version ): void {
+	private function create( string $email, string $username, string $name, string $channel, int $version ): void {
 		$user_id = wp_insert_user(
 			array(
-				'user_login'   => self::login( $email ),
+				'user_login'   => $username,
 				'user_email'   => $email,
 				'user_pass'    => wp_generate_password( 32 ),
 				'display_name' => $name,
@@ -434,22 +436,21 @@ class CreatorSignup {
 	}
 
 	/**
-	 * A free login from an e-mail's local part.
+	 * A username as WordPress allows it (letters, digits and _ . - @),
+	 * 3 to 60 characters, unchanged by the sanitizing.
 	 *
-	 * @param string $email E-mail.
+	 * @param string $value Input.
+	 * @throws SignupException When it is not one.
 	 */
-	private static function login( string $email ): string {
-		$base = sanitize_user( strtolower( (string) strstr( $email, '@', true ) ), true );
-		$base = '' === $base ? 'creator' : substr( $base, 0, 50 );
-		$name = $base;
-		$i    = 2;
+	private static function username( string $value ): string {
+		$value    = trim( $value );
+		$username = sanitize_user( $value, true );
 
-		while ( false !== username_exists( $name ) ) {
-			$name = $base . $i;
-			++$i;
+		if ( $username !== $value || strlen( $username ) < 3 || strlen( $username ) > 60 ) {
+			self::refuse( SignupException::USERNAME );
 		}
 
-		return $name;
+		return $username;
 	}
 
 	/**

@@ -148,9 +148,10 @@ final class SignupPage {
 				array(
 					'error'  => $e->reason(),
 					'values' => array(
-						'name'    => is_string( $input['name'] ?? null ) ? sanitize_text_field( $input['name'] ) : '',
-						'email'   => is_string( $input['email'] ?? null ) ? sanitize_email( $input['email'] ) : '',
-						'channel' => is_string( $input['channel'] ?? null ) ? esc_url_raw( $input['channel'] ) : '',
+						'name'     => is_string( $input['name'] ?? null ) ? sanitize_text_field( $input['name'] ) : '',
+						'email'    => is_string( $input['email'] ?? null ) ? sanitize_email( $input['email'] ) : '',
+						'username' => is_string( $input['username'] ?? null ) ? sanitize_user( $input['username'], true ) : '',
+						'channel'  => is_string( $input['channel'] ?? null ) ? esc_url_raw( $input['channel'] ) : '',
 					),
 				)
 			);

@@ -89,7 +89,7 @@ final class CreatorSignupTest extends IntegrationTestCase {
 		self::assertSame( array( 'creator_signed_up', 'agreement_accepted', 'creator_signup_verified' ), $this->audit_actions() );
 	}
 
-	public function test_an_existing_account_is_never_revealed(): void {
+	public function test_the_visitor_chooses_a_free_username_and_a_taken_e_mail_is_refused(): void {
 		$taken = $this->create_user( 'taken' );
 		wp_update_user(
 			array(
@@ -99,9 +99,15 @@ final class CreatorSignupTest extends IntegrationTestCase {
 		);
 		$GLOBALS['merchboard_test_mails'] = array();
 
-		self::assertSame( 'sent', $this->signup()->submit( $this->input( array( 'email' => 'taken@example.com' ) ), '192.0.2.2' ), 'The same answer as for a new e-mail.' );
-		self::assertSame( 'You already have an account with us', $GLOBALS['merchboard_test_mails'][0]['subject'] ?? null );
+		$this->refused( SignupException::EMAIL_TAKEN, fn() => $this->signup()->submit( $this->input( array( 'email' => 'taken@example.com' ) ), '192.0.2.2' ) );
+		$this->refused( SignupException::USERNAME_TAKEN, fn() => $this->signup()->submit( $this->input( array( 'username' => 'taken' ) ), '192.0.2.2' ) );
+		$this->refused( SignupException::USERNAME, fn() => $this->signup()->submit( $this->input( array( 'username' => 'no way!' ) ), '192.0.2.2' ) );
+		$this->refused( SignupException::USERNAME, fn() => $this->signup()->submit( $this->input( array( 'username' => 'ab' ) ), '192.0.2.2' ) );
+		self::assertSame( array(), $GLOBALS['merchboard_test_mails'] );
 		self::assertSame( array(), $this->rows( Tables::CREATORS ) );
+
+		self::assertSame( 'sent', $this->signup()->submit( $this->input( array( 'username' => 'nova.streams' ) ), '192.0.2.2' ) );
+		self::assertNotFalse( get_user_by( 'login', 'nova.streams' ), 'The chosen username, not the e-mail.' );
 	}
 
 	public function test_a_logged_in_user_is_linked_at_once(): void {
@@ -131,10 +137,29 @@ final class CreatorSignupTest extends IntegrationTestCase {
 		$this->refused( SignupException::NAME, fn() => $this->signup()->submit( $this->input( array( 'name' => 'N' ) ), '192.0.2.4' ) );
 
 		for ( $i = 1; $i <= 5; $i++ ) {
-			$this->signup()->submit( $this->input( array( 'email' => "spam{$i}@example.com" ) ), '192.0.2.5' );
+			$this->signup()->submit(
+				$this->input(
+					array(
+						'email'    => "spam{$i}@example.com",
+						'username' => "spam{$i}",
+					)
+				),
+				'192.0.2.5'
+			);
 		}
 
-		$this->refused( SignupException::TOO_MANY, fn() => $this->signup()->submit( $this->input( array( 'email' => 'spam6@example.com' ) ), '192.0.2.5' ) );
+		$this->refused(
+			SignupException::TOO_MANY,
+			fn() => $this->signup()->submit(
+				$this->input(
+					array(
+						'email'    => 'spam6@example.com',
+						'username' => 'spam6',
+					)
+				),
+				'192.0.2.5'
+			)
+		);
 
 		SignupSettings::save( false, 0 );
 		$this->refused( SignupException::CLOSED, fn() => $this->signup()->submit( $this->input(), '192.0.2.6' ) );
@@ -187,7 +212,6 @@ final class CreatorSignupTest extends IntegrationTestCase {
 			$this->service( Transaction::class ),
 			new SignupMails( new EmailRenderer(), new Mailer() ),
 			$this->service( Logger::class ),
-			static fn(): string => 'https://example.com/creator-dashboard/opret/',
 			fn(): DateTimeImmutable => ( new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) )->modify( '+' . $this->offset . ' seconds' )
 		);
 	}
@@ -201,14 +225,15 @@ final class CreatorSignupTest extends IntegrationTestCase {
 	private function input( array $changes = array() ): array {
 		return array_merge(
 			array(
-				'name'    => 'Nova',
-				'email'   => 'nova@example.com',
-				'channel' => 'https://www.twitch.tv/nova',
-				'adult'   => '1',
-				'agree'   => '1',
-				'version' => '1',
-				'started' => CreatorSignup::form_token(),
-				'website' => '',
+				'name'     => 'Nova',
+				'email'    => 'nova@example.com',
+				'username' => 'nova',
+				'channel'  => 'https://www.twitch.tv/nova',
+				'adult'    => '1',
+				'agree'    => '1',
+				'version'  => '1',
+				'started'  => CreatorSignup::form_token(),
+				'website'  => '',
 			),
 			$changes
 		);

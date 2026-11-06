@@ -27,6 +27,9 @@ $merchboard_error  = match ( (string) ( $merchboard_view['error'] ?? '' ) ) {
 	''                             => '',
 	SignupException::NAME          => __( 'Enter your creator name (2 to 60 characters).', 'merchboard' ),
 	SignupException::EMAIL         => __( 'Enter a valid e-mail address.', 'merchboard' ),
+	SignupException::EMAIL_TAKEN   => __( 'There is already an account with this e-mail. Log in, and sign up as a creator from there.', 'merchboard' ),
+	SignupException::USERNAME      => __( 'Choose a username of 3 to 60 characters: letters, digits, and _ . - @ only.', 'merchboard' ),
+	SignupException::USERNAME_TAKEN => __( 'This username is taken. Please choose another one.', 'merchboard' ),
 	SignupException::CHANNEL       => __( 'Enter the link to your channel, starting with https://.', 'merchboard' ),
 	SignupException::ADULT         => __( 'You must be 18 or older to sign up.', 'merchboard' ),
 	SignupException::AGREEMENT     => __( 'Please accept the agreement to sign up.', 'merchboard' ),
@@ -84,6 +87,8 @@ $merchboard_title = match ( $merchboard_state ) {
 			<label for="merchboard-signup-name"><?php esc_html_e( 'Creator name', 'merchboard' ); ?></label>
 			<input type="text" id="merchboard-signup-name" name="name" required minlength="2" maxlength="60" autocomplete="nickname" value="<?php echo esc_attr( $merchboard_value( 'name' ) ); ?>">
 	<?php if ( true !== ( $merchboard_view['logged_in'] ?? false ) ) : ?>
+			<label for="merchboard-signup-username"><?php esc_html_e( 'Username (for logging in)', 'merchboard' ); ?></label>
+			<input type="text" id="merchboard-signup-username" name="username" required minlength="3" maxlength="60" autocomplete="username" value="<?php echo esc_attr( $merchboard_value( 'username' ) ); ?>">
 			<label for="merchboard-signup-email"><?php esc_html_e( 'E-mail', 'merchboard' ); ?></label>
 			<input type="email" id="merchboard-signup-email" name="email" required maxlength="100" autocomplete="email" value="<?php echo esc_attr( $merchboard_value( 'email' ) ); ?>">
 	<?php endif; ?>

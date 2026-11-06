@@ -5309,13 +5309,13 @@ Accepteret af projektejeren 2026-11-06 (fase 32). **Implementeret:** forhindring
 ## Decision
 1. **Til og fra:** indstillingen "Creators kan oprette sig selv" er slået fra som standard.
 2. **Offentlig side** `/<dashboard-slug>/opret` i dashboardets standalone-shell med samme CSP.
-   - Felter: creatornavn, e-mail, kanal-link, "Jeg er fyldt 18 år" og accept af aftalepapiret (ADR-092).
+   - Felter: creatornavn, brugernavn, e-mail, kanal-link, "Jeg er fyldt 18 år" og accept af aftalepapiret (ADR-092). Brugernavnet vælges af creatoren (projektejerens ønske 2026-11-06).
    - En logget ind bruger, der ikke er creator, kobles direkte. E-mailfeltet udelades.
 3. **Konto:**
    - Pluginet opretter en WordPress-bruger uden rolle og en creator med status `active`, `awaiting_live` 1 og `agreement_required` 1.
    - Mailen "Bekræft e-mail og vælg adgangskode" bruger WordPress' eget link til ny adgangskode (`get_password_reset_key`).
    - Når adgangskoden er valgt første gang, er e-mailen bekræftet. Først da får brugeren rollen `merchboard_creator`, som er den eneste rolle, pluginet nogensinde giver. Uden rollen er der ingen adgang (ADR-006).
-4. **Ingen afsløring:** findes e-mailen allerede, er svaret det samme. Ejeren af e-mailen får en mail om at logge ind og oprette sig derfra.
+4. **Eksisterende konti (ændret af projektejeren 2026-11-06):** siden siger direkte, at e-mailen eller brugernavnet allerede er i brug, og beder om at logge ind og oprette sig derfra. Projektejeren har valgt det frem for, at ingen kan se, om en konto findes; WordPress' eget login og "Glemt adgangskode" afslører det i forvejen.
 5. **Spam:** honeypot, mindste udfyldningstid, rate limit pr. hash af IP-adressen (5 pr. time) og pr. e-mail. Ingen CAPTCHA, fordi det er en ekstern tjeneste (ADR-016).
 6. **Oprydning:** en ubekræftet oprettelse slettes efter 7 dage, både bruger, creator og accept. Det sker kun for brugere, pluginet selv har oprettet, som aldrig er bekræftet og ikke har fået andre roller.
 7. **Live:** ny kolonne `awaiting_live` på `merchboard_creators` (0 som standard). Tidspunktet for go-live står på den godkendte anmodning.
@@ -5347,7 +5347,7 @@ En creator skal kunne komme i gang uden admin, men butikken må ikke vise noget,
 
 ## Security
 - Formularen er det første offentlige skrivende endpoint. Det kræver nonce, rate limit, honeypot og validering i servicen.
-- Der gives aldrig en rolle fra input. Brugerens e-mail eller eksistens afsløres ikke.
+- Der gives aldrig en rolle fra input. At en e-mail eller et brugernavn er i brug, vises på siden (projektejerens valg 2026-11-06, pkt. 4); rate limit gør det dyrt at prøve mange.
 - Hashen af IP-adressen gemmes højst 24 timer.
 
 ## Migration/data implications

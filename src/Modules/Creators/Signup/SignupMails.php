@@ -60,35 +60,6 @@ class SignupMails {
 	}
 
 	/**
-	 * "You already have an account": someone signed up with an e-mail that
-	 * has an account; the page answered as for a new one (ADR-091 pkt. 4).
-	 *
-	 * @param string $to         Recipient.
-	 * @param string $signup_url The sign-up page.
-	 */
-	public function existing( string $to, string $signup_url ): void {
-		$this->send(
-			$to,
-			'',
-			new EmailMessage(
-				__( 'You already have an account with us', 'merchboard' ),
-				__( 'You already have an account', 'merchboard' ),
-				array(
-					__( 'Someone, probably you, tried to sign up as a creator with this e-mail. You already have an account with us: log in first and sign up from there, so your creator profile is linked to your account.', 'merchboard' ),
-					__( 'If it was not you, you can ignore this e-mail; nothing was changed.', 'merchboard' ),
-				),
-				array(),
-				null,
-				null,
-				__( 'Log in and sign up', 'merchboard' ),
-				wp_login_url( $signup_url ),
-				'',
-				false
-			)
-		);
-	}
-
-	/**
 	 * Renders and sends a message.
 	 *
 	 * @param string       $to      Recipient.
