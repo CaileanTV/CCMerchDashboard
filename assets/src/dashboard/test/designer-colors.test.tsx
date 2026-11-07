@@ -129,6 +129,37 @@ describe( 'the colours of a design', () => {
 		] );
 	} );
 
+	it( 'selects all colours and keeps the chosen order first', async () => {
+		const onColors = jest.fn();
+
+		await show( [ 'red' ], onColors );
+
+		const all = Array.from(
+			document.querySelectorAll< HTMLButtonElement >( 'button' )
+		).find( ( button ) => button.textContent === 'Select all' );
+
+		await act( async () => {
+			all?.click();
+			await Promise.resolve();
+		} );
+
+		expect( onColors ).toHaveBeenLastCalledWith( [
+			'red',
+			'black',
+			'sand',
+		] );
+	} );
+
+	it( 'has nothing to select when every colour is chosen', async () => {
+		await show( [ 'black', 'sand', 'red' ], jest.fn() );
+
+		const all = Array.from(
+			document.querySelectorAll< HTMLButtonElement >( 'button' )
+		).find( ( button ) => button.textContent === 'Select all' );
+
+		expect( all?.disabled ).toBe( true );
+	} );
+
 	it( 'offers the stitching of an all-over product', async () => {
 		const onStitch = jest.fn();
 

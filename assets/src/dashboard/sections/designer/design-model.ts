@@ -999,3 +999,39 @@ export function quotePrice(
 		step
 	);
 }
+
+/**
+ * A size in print file pixels as centimetres on the print, to one decimal:
+ * the print file is the side's print size at its dpi (ADR-096 pkt. 8).
+ *
+ * @param width  Width (px).
+ * @param height Height (px).
+ * @param dpi    The side's resolution.
+ */
+export function sizeInCm(
+	width: number,
+	height: number,
+	dpi: number
+): { readonly width: number; readonly height: number } {
+	const cm = ( px: number ): number =>
+		dpi > 0 ? Math.round( ( Math.abs( px ) * 25.4 ) / dpi ) / 10 : 0;
+
+	return { width: cm( width ), height: cm( height ) };
+}
+
+/**
+ * An object's size on the print in centimetres.
+ *
+ * @param object The object.
+ * @param dpi    The side's resolution.
+ */
+export function objectSizeInCm(
+	object: DesignObject,
+	dpi: number
+): { readonly width: number; readonly height: number } {
+	return sizeInCm(
+		object.width * object.scaleX,
+		object.height * object.scaleY,
+		dpi
+	);
+}

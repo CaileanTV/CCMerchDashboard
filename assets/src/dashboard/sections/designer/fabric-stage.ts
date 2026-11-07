@@ -42,6 +42,19 @@ export interface StageCallbacks {
 	/** The objects after the user moved, scaled, rotated or edited one. */
 	readonly onChange: ( objects: readonly DesignObject[] ) => void;
 	readonly onSelect: ( id: string | null ) => void;
+	/** While an object is scaled: its size and where to show it; null when released. */
+	readonly onMeasure?: ( measure: StageMeasure | null ) => void;
+}
+
+/**
+ * The size of an object being scaled (print file px) and the point just
+ * below it on the canvas (CSS px from the canvas' top left).
+ */
+export interface StageMeasure {
+	readonly width: number;
+	readonly height: number;
+	readonly left: number;
+	readonly top: number;
 }
 
 /**
@@ -103,6 +116,33 @@ export class FabricStage {
 		this.canvas.on( 'selection:cleared', () =>
 			this.callbacks.onSelect( null )
 		);
+		this.canvas.on( 'object:scaling', ( event ) =>
+			this.measure( event.target )
+		);
+		this.canvas.on( 'object:resizing', ( event ) =>
+			this.measure( event.target )
+		);
+		this.canvas.on( 'mouse:up', () => this.callbacks.onMeasure?.( null ) );
+	}
+
+	/**
+	 * Reports the size of an object being scaled (ADR-096 pkt. 8).
+	 *
+	 * @param target The object.
+	 */
+	private measure( target: FabricObject ): void {
+		const [ a, , , d, e, f ] = this.canvas.viewportTransform;
+		const points = target
+			.getCoords()
+			.map( ( point ) => ( { x: point.x * a + e, y: point.y * d + f } ) );
+		const xs = points.map( ( point ) => point.x );
+
+		this.callbacks.onMeasure?.( {
+			width: target.width * target.scaleX,
+			height: target.height * target.scaleY,
+			left: ( Math.min( ...xs ) + Math.max( ...xs ) ) / 2,
+			top: Math.max( ...points.map( ( point ) => point.y ) ),
+		} );
 	}
 
 	/**

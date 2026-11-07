@@ -48,6 +48,8 @@ import { moneyText } from '../sales/format';
 import {
 	backgroundOf,
 	duplicateObject,
+	objectSizeInCm,
+	sizeInCm,
 	withBackground,
 	withKnownBackground,
 	moveObject,
@@ -72,7 +74,7 @@ import type {
 	ShapeType,
 	TextObject,
 } from './design-model';
-import type { FabricStage } from './fabric-stage';
+import type { FabricStage, StageMeasure } from './fabric-stage';
 import { FontPicker } from '../../components/FontPicker';
 import { addFontStylesheet } from '../alerts/useFontStylesheet';
 import { FinishedProduct } from './FinishedProduct';
@@ -249,6 +251,7 @@ function Editor( props: EditorProps ) {
 		draft.colors[ 0 ] ?? base.colors[ 0 ]?.key ?? ''
 	);
 	const [ selected, setSelected ] = useState< string | null >( null );
+	const [ measure, setMeasure ] = useState< StageMeasure | null >( null );
 	const [ zoom, setZoom ] = useState< number >( 1 );
 	const [ tab, setTab ] = useState< Tab >( 'product' );
 	const [ images, setImages ] = useState< ReadonlyMap< number, string > >(
@@ -469,6 +472,7 @@ function Editor( props: EditorProps ) {
 						);
 					},
 					onSelect: setSelected,
+					onMeasure: setMeasure,
 				} );
 				stage.current = current;
 				setStageReady( true );
@@ -1515,6 +1519,24 @@ function Editor( props: EditorProps ) {
 										zoom,
 								} }
 							/>
+							{ measure === null ? null : (
+								<span
+									className="merchboard-product-designer__measure"
+									style={ {
+										left: measure.left,
+										top: measure.top,
+									} }
+								>
+									{ cmText(
+										sizeInCm(
+											measure.width,
+											measure.height,
+											view.dpi
+										),
+										locale
+									) }
+								</span>
+							) }
 						</div>
 					</div>
 					{ stageError ? (
@@ -1561,6 +1583,21 @@ function Editor( props: EditorProps ) {
 					{ selectedObject === null ? null : (
 						<section className="merchboard-product-designer__card">
 							<h3>{ __( 'Selected element', 'merchboard' ) }</h3>
+							<p className="merchboard-product-designer__hint">
+								{ sprintf(
+									/* translators: %s: width × height in cm, e.g. "12,5 × 8,0 cm". */ __(
+										'Size on the print: %s',
+										'merchboard'
+									),
+									cmText(
+										objectSizeInCm(
+											selectedObject,
+											view.dpi
+										),
+										locale
+									)
+								) }
+							</p>
 							<Properties
 								object={ selectedObject }
 								fonts={ fonts }
@@ -2290,6 +2327,33 @@ interface ProductPanelProps {
 }
 
 /**
+ * A size in centimetres, e.g. "12,5 × 8,0 cm".
+ *
+ * @param size        Width and height (cm).
+ * @param size.width  Width (cm).
+ * @param size.height Height (cm).
+ * @param locale      The viewer's locale.
+ */
+export function cmText(
+	size: { readonly width: number; readonly height: number },
+	locale: string
+): string {
+	const number = new Intl.NumberFormat( locale, {
+		minimumFractionDigits: 1,
+		maximumFractionDigits: 1,
+	} );
+
+	return sprintf(
+		/* translators: 1: width in cm, 2: height in cm. */ __(
+			'%1$s × %2$s cm',
+			'merchboard'
+		),
+		number.format( size.width ),
+		number.format( size.height )
+	);
+}
+
+/**
  * The name of a stitch colour.
  *
  * @param stitch The stitch colour.
@@ -2400,6 +2464,25 @@ export function ProductPanel( props: ProductPanelProps ) {
 						) }
 					</Labelled>
 				) ) }
+				<Button
+					variant="secondary"
+					size="sm"
+					disabled={ base.colors.every( ( color ) =>
+						props.colors.includes( color.key )
+					) }
+					onClick={ () =>
+						props.onColors( [
+							...props.colors,
+							...base.colors
+								.map( ( color ) => color.key )
+								.filter(
+									( key ) => ! props.colors.includes( key )
+								),
+						] )
+					}
+				>
+					{ __( 'Select all', 'merchboard' ) }
+				</Button>
 			</fieldset>
 			{ base.stitches.length > 1 ? (
 				<fieldset className="merchboard-product-designer__options">

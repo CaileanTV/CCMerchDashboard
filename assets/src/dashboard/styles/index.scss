@@ -2180,6 +2180,21 @@ input:disabled + .merchboard-sounds__upload {
 	pointer-events: none;
 }
 
+// The size of an element while it is scaled (ADR-096 pkt. 8).
+.merchboard-product-designer__measure {
+	position: absolute;
+	z-index: 2;
+	padding: 0.125rem 0.5rem;
+	font-size: 0.75rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--merchboard-on-inverse);
+	white-space: nowrap;
+	pointer-events: none;
+	background: var(--merchboard-inverse-surface);
+	border-radius: var(--merchboard-radius-sm);
+	transform: translate(-50%, 0.5rem);
+}
+
 .merchboard-product-designer__grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(5rem, 1fr));
