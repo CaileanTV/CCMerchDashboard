@@ -15,6 +15,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
+use MerchBoard\Modules\ProductDesigner\Designs\ColorDesigns;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
@@ -75,6 +76,11 @@ class PrintfulMockups {
 	public const TASK_SIDE = 'all';
 
 	/**
+	 * What joins a task's side and its colour design: "front@d1" (ADR-096).
+	 */
+	private const DESIGN = '@';
+
+	/**
 	 * A draft's preview task (transient prefix).
 	 */
 	public const PREVIEW = 'merchboard_designer_preview_';
@@ -120,16 +126,20 @@ class PrintfulMockups {
 				return;
 			}
 
-			$sides = array_keys( SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null )['print'] );
+			// The tasks of every design the colours use; a colour design's end in "@<id>" (ADR-096).
+			foreach ( SubmissionFiles::prints( SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null ) ) as $part => $prints ) {
+				$sides  = array_map( 'strval', array_keys( $prints ) );
+				$suffix = ColorDesigns::SHARED === (string) $part ? '' : self::DESIGN . $part;
 
-			if ( $provider['flat'] || array() !== $provider['photos'] ) {
-				foreach ( $this->all_tasks( $version, array_map( 'strval', $sides ), $provider ) as $task ) {
-					$this->tasks->create( $id, 'printful', $task, '{}' );
-				}
-			} else {
-				foreach ( $sides as $side ) {
-					if ( isset( $provider['placements'][ $side ] ) ) {
-						$this->tasks->create( $id, 'printful', (string) $side, '{}' );
+				if ( $provider['flat'] || array() !== $provider['photos'] ) {
+					foreach ( $this->all_tasks( $version, $sides, $provider ) as $task ) {
+						$this->tasks->create( $id, 'printful', $task . $suffix, '{}' );
+					}
+				} else {
+					foreach ( $sides as $side ) {
+						if ( isset( $provider['placements'][ $side ] ) ) {
+							$this->tasks->create( $id, 'printful', $side . $suffix, '{}' );
+						}
 					}
 				}
 			}
@@ -218,6 +228,33 @@ class PrintfulMockups {
 		}
 
 		return $groups;
+	}
+
+	/**
+	 * A task's side and its colour design (ADR-096): "front@d1" is the front
+	 * of design d1, "all:0" the first group of the shared design.
+	 *
+	 * @param string $task The task's side.
+	 * @return array{0: string, 1: string} Side and design (SHARED for the shared one).
+	 */
+	private static function split_task( string $task ): array {
+		$parts = explode( self::DESIGN, $task, 2 );
+
+		return array( $parts[0], $parts[1] ?? ColorDesigns::SHARED );
+	}
+
+	/**
+	 * The colours of a version that use a design (ADR-096).
+	 *
+	 * @param array<string, mixed> $version Version.
+	 * @param string               $part    A colour design's id, or SHARED.
+	 * @return list<string>
+	 */
+	private static function colors_of( array $version, string $part ): array {
+		$design = json_decode( (string) $version['design'], true );
+		$colors = json_decode( (string) $version['colors'], true );
+
+		return ColorDesigns::parts( is_array( $design ) ? $design : array(), is_array( $colors ) ? array_values( array_filter( $colors, 'is_string' ) ) : array() )[ $part ] ?? array();
 	}
 
 	/**
@@ -332,8 +369,11 @@ class PrintfulMockups {
 
 		$product  = (int) $provider['ref'];
 		$side     = self::lead( $base, $version );
-		$variants = array_slice( $this->variants( $product, $version, $base, $provider['variants'], self::task_sizes( $base, $side ) ), 0, 1, true );
-		$sides    = $this->task_sides( $id, $side, $version, $base, $provider );
+		$colors   = json_decode( (string) $version['colors'], true );
+		$design   = json_decode( (string) $version['design'], true );
+		$part     = ColorDesigns::part_of( is_array( $design ) ? $design : array(), is_array( $colors ) && is_string( $colors[0] ?? null ) ? $colors[0] : '' );
+		$variants = array_slice( $this->variants( $product, $version, $base, $provider['variants'], self::task_sizes( $base, $side ), self::colors_of( $version, $part ) ), 0, 1, true );
+		$sides    = $this->task_sides( $id, $side, $version, $base, $provider, $part );
 
 		if ( array() === $variants || array() === $sides ) {
 			self::fail( PrintfulException::INVALID );
@@ -513,9 +553,9 @@ class PrintfulMockups {
 	private function create( int $id, int $product, array $version, BaseProduct $base, array $provider, array $task ): void {
 		$provider['options'] = self::with_stitch( $provider, $version );
 
-		$side     = (string) $task['side'];
-		$variants = $this->variants( $product, $version, $base, $provider['variants'], self::task_sizes( $base, $side ) );
-		$sides    = $this->task_sides( $id, $side, $version, $base, $provider );
+		[ $side, $part ] = self::split_task( (string) $task['side'] );
+		$variants        = $this->variants( $product, $version, $base, $provider['variants'], self::task_sizes( $base, $side ), self::colors_of( $version, $part ) );
+		$sides           = $this->task_sides( $id, $side, $version, $base, $provider, $part );
 
 		// The chosen photos come from the group of the first chosen size only, so another group's never replace them.
 		if ( self::grouped( $side ) && self::lead( $base, $version ) !== $side ) {
@@ -593,10 +633,11 @@ class PrintfulMockups {
 	 * @param array<string, mixed> $version  Version.
 	 * @param BaseProduct          $base     Base product.
 	 * @param array                $provider The base product's provider data.
+	 * @param string               $part     The design's id (ADR-096); SHARED for the shared design.
 	 * @return list<array{key: string, placement: string, technique: string, url: string, width: int, height: int, width_mm: int, height_mm: int}>
 	 */
-	private function task_sides( int $id, string $side, array $version, BaseProduct $base, array $provider ): array {
-		$used  = array_map( 'strval', array_keys( SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null )['print'] ) );
+	private function task_sides( int $id, string $side, array $version, BaseProduct $base, array $provider, string $part = ColorDesigns::SHARED ): array {
+		$used  = array_map( 'strval', array_keys( SubmissionFiles::prints( SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null ) )[ $part ] ?? array() ) );
 		$sides = array();
 		$group = self::grouped( $side ) ? (int) substr( $side, strlen( self::TASK_SIDE ) + 1 ) : -1;
 		$sizes = $group >= 0 ? ( self::size_groups( $base )[ $group ] ?? array() ) : array();
@@ -615,7 +656,7 @@ class PrintfulMockups {
 				'key'       => $view->key,
 				'placement' => $provider['placements'][ $view->key ],
 				'technique' => $provider['techniques'][ $view->key ] ?? 'dtg',
-				'url'       => SignedPrintFiles::url( $id, $view->key ),
+				'url'       => SignedPrintFiles::url( $id, $view->key, null, $part ),
 				'width'     => $width,
 				'height'    => $height,
 				'width_mm'  => $view->width_mm,
@@ -754,7 +795,8 @@ class PrintfulMockups {
 			return;
 		}
 
-		$this->store( $id, (string) $task['side'], self::mockup_urls( (string) $task['side'], is_array( $answer['mockups'] ?? null ) ? $answer['mockups'] : array(), $map ), is_array( $map['photos'] ?? null ) ? $map['photos'] : array() );
+		$side = self::split_task( (string) $task['side'] )[0];
+		$this->store( $id, $side, self::mockup_urls( $side, is_array( $answer['mockups'] ?? null ) ? $answer['mockups'] : array(), $map ), is_array( $map['photos'] ?? null ) ? $map['photos'] : array() );
 		$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::DONE, 'attempts' => $attempts ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	}
 
@@ -1000,11 +1042,12 @@ class PrintfulMockups {
 	 * @param BaseProduct                          $base    Base product.
 	 * @param array<string, array<string, string>> $known   Variant by colour key and size.
 	 * @param list<string>|null                    $only    The sizes a task keeps to; null for any.
+	 * @param list<string>|null                    $colors  The colours of the task's design (ADR-096); null for every chosen colour.
 	 * @return array<int, string>
 	 * @throws PrintfulException When Printful refuses or fails.
 	 */
-	private function variants( int $product, array $version, BaseProduct $base, array $known = array(), ?array $only = null ): array {
-		$chosen = json_decode( (string) $version['colors'], true );
+	private function variants( int $product, array $version, BaseProduct $base, array $known = array(), ?array $only = null, ?array $colors = null ): array {
+		$chosen = $colors ?? json_decode( (string) $version['colors'], true );
 		$sizes  = json_decode( (string) $version['sizes'], true );
 		$sizes  = null === $only || ! is_array( $sizes ) ? $sizes : array_values( array_intersect( $sizes, $only ) );
 		$map    = array();

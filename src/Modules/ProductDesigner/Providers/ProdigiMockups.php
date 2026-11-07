@@ -15,6 +15,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
+use MerchBoard\Modules\ProductDesigner\Designs\ColorDesigns;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
@@ -265,14 +266,39 @@ class ProdigiMockups {
 	private function send_assets( int $id, array $version, array $placements ): array {
 		$assets = array();
 
-		foreach ( self::sides( $version, $placements ) as $side ) {
-			$assets[ $side ] = $this->api->ingest_asset( SignedPrintFiles::url( $id, $side ), (string) $version['title'] . ' ' . $side );
+		// Every design's print files; a colour design's asset is keyed "side@id" (ADR-096).
+		foreach ( array_keys( SubmissionFiles::prints( SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null ) ) ) as $part ) {
+			foreach ( self::sides( $version, $placements, (string) $part ) as $side ) {
+				$assets[ self::asset_key( $side, (string) $part ) ] = $this->api->ingest_asset( SignedPrintFiles::url( $id, $side, null, (string) $part ), (string) $version['title'] . ' ' . $side );
+			}
 		}
 
 		return array(
 			'phase'  => 'assets',
 			'assets' => $assets,
 		);
+	}
+
+	/**
+	 * The key of a design's asset: the side, with "@id" for a colour design (ADR-096).
+	 *
+	 * @param string $side Side.
+	 * @param string $part A design's id, or SHARED.
+	 */
+	private static function asset_key( string $side, string $part ): string {
+		return ColorDesigns::SHARED === $part ? $side : $side . '@' . $part;
+	}
+
+	/**
+	 * An asset key's side and design.
+	 *
+	 * @param string $key Asset key.
+	 * @return array{0: string, 1: string}
+	 */
+	private static function split_asset( string $key ): array {
+		$parts = explode( '@', $key, 2 );
+
+		return array( $parts[0], $parts[1] ?? ColorDesigns::SHARED );
 	}
 
 	/**
@@ -320,54 +346,76 @@ class ProdigiMockups {
 			self::fail( ProdigiException::INVALID );
 		}
 
-		$map['product'] = $this->api->create_product(
-			array(
-				'title'                => (string) $version['title'],
-				'catalogueProductSlug' => $provider['ref'],
-				'catalogueProductId'   => $provider['ref'],
-				'status'               => 'draft',
-				'variants'             => array_values(
-					array_map(
-						static fn( array $color ): array => array(
-							'catalogueVariantId' => $color['sku'],
-							'attributes'         => $color['attributes'],
-						),
-						$colors
-					)
-				),
-			)
-		);
-		$this->tasks->update( $task, array( 'result' => (string) wp_json_encode( $map ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
-
-		$saved = array();
-
-		foreach ( $this->api->product_variants( (string) $map['product'] ) as $variant ) {
-			if ( is_array( $variant ) && is_scalar( $variant['id'] ?? null ) ) {
-				$saved[] = $variant;
-			}
-		}
-
+		// Artwork is bound to a saved product, so each design gets one (ADR-096).
+		$design  = json_decode( (string) $version['design'], true );
+		$design  = is_array( $design ) ? $design : array();
+		$parts   = ColorDesigns::parts( $design, array_map( 'strval', array_keys( $colors ) ) );
 		$assets  = is_array( $map['assets'] ?? null ) ? $map['assets'] : array();
 		$mockups = array();
 
-		foreach ( $assets as $side => $asset ) {
-			$this->api->bind_asset( (string) $map['product'], (string) $asset, $provider['placements'][ (string) $side ] ?? '' );
-		}
+		foreach ( $parts as $part => $keys ) {
+			$part    = (string) $part;
+			$own     = array_intersect_key( $colors, array_flip( $keys ) );
+			$product = $this->api->create_product(
+				array(
+					'title'                => (string) $version['title'],
+					'catalogueProductSlug' => $provider['ref'],
+					'catalogueProductId'   => $provider['ref'],
+					'status'               => 'draft',
+					'variants'             => array_values(
+						array_map(
+							static fn( array $color ): array => array(
+								'catalogueVariantId' => $color['sku'],
+								'attributes'         => $color['attributes'],
+							),
+							$own
+						)
+					),
+				)
+			);
 
-		foreach ( $colors as $key => $color ) {
-			$variant = self::saved_variant( $saved, $color );
+			$map['products'][ $part ] = $product;
 
-			if ( null === $variant ) {
-				continue;
+			if ( ColorDesigns::SHARED === $part ) {
+				$map['product'] = $product;
 			}
 
-			foreach ( $assets as $side => $asset ) {
-				$mockups[] = array(
-					'side'   => (string) $side,
-					'color'  => (string) $key,
-					'asset'  => (string) $asset,
-					'mockup' => $this->api->create_mockup( (string) $asset, (string) $map['product'], $variant ),
-				);
+			$this->tasks->update( $task, array( 'result' => (string) wp_json_encode( $map ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+			$saved = array();
+
+			foreach ( $this->api->product_variants( $product ) as $variant ) {
+				if ( is_array( $variant ) && is_scalar( $variant['id'] ?? null ) ) {
+					$saved[] = $variant;
+				}
+			}
+
+			$bound = array();
+
+			foreach ( $assets as $key => $asset ) {
+				[ $side, $of ] = self::split_asset( (string) $key );
+
+				if ( $of === $part ) {
+					$bound[ $side ] = (string) $asset;
+					$this->api->bind_asset( $product, (string) $asset, $provider['placements'][ $side ] ?? '' );
+				}
+			}
+
+			foreach ( $own as $key => $color ) {
+				$variant = self::saved_variant( $saved, $color );
+
+				if ( null === $variant ) {
+					continue;
+				}
+
+				foreach ( $bound as $side => $asset ) {
+					$mockups[] = array(
+						'side'   => $side,
+						'color'  => (string) $key,
+						'asset'  => $asset,
+						'mockup' => $this->api->create_mockup( $asset, $product, $variant ),
+					);
+				}
 			}
 		}
 
@@ -529,8 +577,10 @@ class ProdigiMockups {
 		$map = is_array( $map ) ? $map : array();
 
 		try {
-			if ( is_string( $map['product'] ?? null ) ) {
-				$this->api->delete_product( $map['product'] );
+			$products = array_merge( is_string( $map['product'] ?? null ) ? array( $map['product'] ) : array(), is_array( $map['products'] ?? null ) ? array_values( $map['products'] ) : array() );
+
+			foreach ( array_unique( array_filter( $products, 'is_string' ) ) as $product ) {
+				$this->api->delete_product( $product );
 			}
 
 			foreach ( is_array( $map['assets'] ?? null ) ? $map['assets'] : array() as $asset ) {
@@ -580,14 +630,16 @@ class ProdigiMockups {
 	}
 
 	/**
-	 * The version's used sides with a print area, in the base product's order.
+	 * The version's used sides of a design with a print area, in the base
+	 * product's order.
 	 *
 	 * @param array<string, mixed>  $version    Version.
 	 * @param array<string, string> $placements Print area by side.
+	 * @param string                $part       A design's id (ADR-096); SHARED for the shared design.
 	 * @return list<string>
 	 */
-	private static function sides( array $version, array $placements ): array {
-		$used = SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null )['print'];
+	private static function sides( array $version, array $placements, string $part = ColorDesigns::SHARED ): array {
+		$used = SubmissionFiles::prints( SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null ) )[ $part ] ?? array();
 
 		return array_values( array_filter( array_map( 'strval', array_keys( $placements ) ), static fn( string $side ): bool => isset( $used[ $side ] ) ) );
 	}

@@ -236,6 +236,26 @@ final class ProdigiTest extends IntegrationTestCase {
 		$this->assert_never_ordered();
 	}
 
+	public function test_each_colour_design_has_a_saved_product_with_its_own_artwork(): void {
+		$version = $this->submit( true );
+		$mockups = $this->mockups();
+
+		$mockups->submitted( $version );
+		$this->drain( $mockups );
+
+		self::assertSame( PrintfulMockups::READY, $this->products->version( $version )['mockup_state'] ?? null );
+
+		$bodies = array_map( static fn( array $call ): array => (array) json_decode( (string) ( $call[2]['body'] ?? '' ), true ), array_values( array_filter( $this->calls, static fn( array $call ): bool => 'POST' === $call[0] && self::API . '/products' === $call[1] ) ) );
+		$ingest = array_map( static fn( array $call ): string => urldecode( (string) ( json_decode( (string) ( $call[2]['body'] ?? '' ), true )['url'] ?? '' ) ), array_values( array_filter( $this->calls, static fn( array $call ): bool => 'POST' === $call[0] && self::API . '/assets:ingest' === $call[1] ) ) );
+
+		self::assertSame( array( array( 'Black' ), array( 'White' ) ), array_map( static fn( array $body ): array => array_map( static fn( array $variant ): string => (string) ( $variant['attributes']['color'] ?? '' ), (array) ( $body['variants'] ?? array() ) ), $bodies ), 'Black on the shared design, white on its own.' );
+		self::assertCount( 2, $ingest );
+		self::assertStringContainsString( '/designer-print/' . $version . '/front&', $ingest[0] );
+		self::assertStringContainsString( '/designer-print/' . $version . '/front@d1', $ingest[1] );
+		self::assertNotNull( $this->call( 'DELETE', self::API . '/products/saved1' ) );
+		$this->assert_never_ordered();
+	}
+
 	public function test_what_was_saved_is_deleted_after_a_failure_and_the_browser_s_images_stay(): void {
 		$version = $this->submit();
 		$mockups = $this->mockups();
@@ -271,15 +291,17 @@ final class ProdigiTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * Imports the tee in white, sizes S and M.
+	 * Imports the tee in white (and black), sizes S and M.
+	 *
+	 * @param bool $black Also in black.
 	 */
-	private function import(): int {
+	private function import( bool $black = false ): int {
 		$catalog = new CatalogImport( $this->wpdb, $this->bases, $this->base_service(), $this->files, $this->queue, $this->service( Logger::class ), 2, 'https://shop.example/assets/', null, null, new ProdigiCatalog( $this->api ) );
 		$id      = $catalog->create(
 			'prodigi',
 			'prod-tee',
 			array(
-				'colors'           => array( 'White' ),
+				'colors'           => $black ? array( 'Black', 'White' ) : array( 'White' ),
 				'sizes'            => array( 'S', 'M' ),
 				'sides'            => array( 'front' ),
 				'base_price'       => '199',
@@ -300,10 +322,11 @@ final class ProdigiTest extends IntegrationTestCase {
 	/**
 	 * A submitted design on the tee.
 	 *
+	 * @param bool $black_own Black is chosen too, and white gets a design of its own (ADR-096).
 	 * @return int The version.
 	 */
-	private function submit(): int {
-		$base = $this->import();
+	private function submit( bool $black_own = false ): int {
+		$base = $this->import( $black_own );
 
 		$this->base_service()->set_active( $base, true );
 
@@ -319,7 +342,7 @@ final class ProdigiTest extends IntegrationTestCase {
 			array(
 				'title'        => 'Tee',
 				'description'  => '',
-				'colors'       => array( 'white' ),
+				'colors'       => $black_own ? array( 'black', 'white' ) : array( 'white' ),
 				'sizes'        => array( 'S', 'M' ),
 				'profit_kind'  => 'percent',
 				'profit_value' => '20',
@@ -344,7 +367,15 @@ final class ProdigiTest extends IntegrationTestCase {
 							),
 						),
 					),
-				),
+				) + ( $black_own ? array(
+					'designs' => array(
+						array(
+							'id'     => 'd1',
+							'colors' => array( 'white' ),
+							'sides'  => array( 'front' => array( array( 'type' => 'rect', 'id' => 'r2', 'x' => 10, 'y' => 10, 'width' => 20, 'height' => 20, 'angle' => 0, 'scaleX' => 1, 'scaleY' => 1, 'opacity' => 1, 'fill' => '#0000ff', 'strokeWidth' => 0, 'radius' => 0 ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+						),
+					),
+				) : array() ),
 			),
 			new DesignValidator( static fn(): bool => false, array() )
 		);
@@ -357,6 +388,11 @@ final class ProdigiTest extends IntegrationTestCase {
 
 		$submissions->attach( $creator, $product, 'print:front', AlertImagesTest::upload( AlertImagesTest::png( $width, $height ), 'print.png' ) );
 		$submissions->attach( $creator, $product, 'mockup:front:white', AlertImagesTest::upload( AlertImagesTest::png( $view->width, $view->height ), 'mockup.png' ) );
+
+		if ( $black_own ) {
+			$submissions->attach( $creator, $product, 'print:front:d1', AlertImagesTest::upload( AlertImagesTest::png( $width, $height ), 'print.png' ) );
+			$submissions->attach( $creator, $product, 'mockup:front:black', AlertImagesTest::upload( AlertImagesTest::png( $view->width, $view->height ), 'mockup.png' ) );
+		}
 		$submissions->submit( $creator, $product );
 
 		return (int) ( $this->products->pending( $product )['id'] ?? 0 );

@@ -15,6 +15,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
+use MerchBoard\Modules\ProductDesigner\Designs\ColorDesigns;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
@@ -247,14 +248,18 @@ class GelatoMockups {
 			return;
 		}
 
+		// Each variant shows the print files of its colour's design (ADR-096).
+		$design = self::design_of( $version );
 		$images = array();
 
-		foreach ( $sides as $side ) {
-			$images[] = array(
-				'name'      => $placeholders[ $side ],
-				'fileUrl'   => SignedPrintFiles::url( $id, $side ),
-				'fitMethod' => 'meet',
-			);
+		foreach ( array_unique( array_map( static fn( string $color ): string => ColorDesigns::part_of( $design, $color ), $variants ) ) as $part ) {
+			foreach ( self::sides( $version, $placeholders, $part ) as $side ) {
+				$images[ $part ][] = array(
+					'name'      => $placeholders[ $side ],
+					'fileUrl'   => SignedPrintFiles::url( $id, $side, null, $part ),
+					'fitMethod' => 'meet',
+				);
+			}
 		}
 
 		$answer  = $this->api->create_from_template(
@@ -266,7 +271,7 @@ class GelatoMockups {
 				'variants'                  => array_map(
 					static fn( string $variant ): array => array(
 						'templateVariantId' => $variant,
-						'imagePlaceholders' => $images,
+						'imagePlaceholders' => $images[ ColorDesigns::part_of( $design, $variants[ $variant ] ) ] ?? array(),
 					),
 					array_map( 'strval', array_keys( $variants ) )
 				),
@@ -320,7 +325,7 @@ class GelatoMockups {
 		}
 
 		// Only an active product has its images; any other status is waited for (review 30.15).
-		$images = 'active' === $status ? $this->images( $answer, $variants, self::photographed( self::sides( $version, $placeholders ), $base ), $slots ) : array();
+		$images = 'active' === $status ? self::own_sides( $this->images( $answer, $variants, self::photographed( self::sides( $version, $placeholders ), $base ), $slots ), $version, $placeholders ) : array();
 
 		if ( 'publishing_error' === $status ) {
 			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'attempts' => $attempts, 'error' => 'publishing_error' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
@@ -521,16 +526,53 @@ class GelatoMockups {
 	}
 
 	/**
-	 * The version's used sides that have a placeholder, in the base product's order.
+	 * The version's used sides that have a placeholder, in the base product's
+	 * order: of one design (ADR-096), or of every design.
 	 *
 	 * @param array<string, mixed>  $version      Version.
 	 * @param array<string, string> $placeholders Placeholder by side.
+	 * @param string|null           $part         A design's id (SHARED for the shared one); null for every design.
 	 * @return list<string>
 	 */
-	private static function sides( array $version, array $placeholders ): array {
-		$used = SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null )['print'];
+	private static function sides( array $version, array $placeholders, ?string $part = null ): array {
+		$prints = SubmissionFiles::prints( SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null ) );
+		$used   = null === $part ? array_merge( array(), ...array_values( $prints ) ) : ( $prints[ $part ] ?? array() );
 
 		return array_values( array_filter( array_map( 'strval', array_keys( $placeholders ) ), static fn( string $side ): bool => isset( $used[ $side ] ) ) );
+	}
+
+	/**
+	 * The images of each colour on the sides of its own design only (ADR-096).
+	 *
+	 * @param array<string, array<string, string>> $images       Image URL by side and colour key.
+	 * @param array<string, mixed>                 $version      Version.
+	 * @param array<string, string>                $placeholders Placeholder by side.
+	 * @return array<string, array<string, string>>
+	 */
+	private static function own_sides( array $images, array $version, array $placeholders ): array {
+		$design = self::design_of( $version );
+
+		foreach ( $images as $side => $by_color ) {
+			foreach ( array_keys( $by_color ) as $color ) {
+				if ( ! in_array( (string) $side, self::sides( $version, $placeholders, ColorDesigns::part_of( $design, (string) $color ) ), true ) ) {
+					unset( $images[ $side ][ $color ] );
+				}
+			}
+		}
+
+		return array_filter( $images );
+	}
+
+	/**
+	 * A version's design, decoded.
+	 *
+	 * @param array<string, mixed> $version Version.
+	 * @return array<mixed>
+	 */
+	private static function design_of( array $version ): array {
+		$design = json_decode( (string) ( $version['design'] ?? '' ), true );
+
+		return is_array( $design ) ? $design : array();
 	}
 
 	/**
