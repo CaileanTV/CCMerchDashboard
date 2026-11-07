@@ -57,6 +57,20 @@ final class RecordingWpdb extends wpdb {
 	public $var = null;
 
 	/**
+	 * Optional dynamic scalar result for synchronization tests.
+	 *
+	 * @var \Closure(string): mixed|null
+	 */
+	public ?\Closure $var_callback = null;
+
+	/**
+	 * Optional dynamic write result for compare-and-swap tests.
+	 *
+	 * @var \Closure(array{query: string, args: list<mixed>}): (int|false)|null
+	 */
+	public ?\Closure $query_callback = null;
+
+	/**
 	 * Return value of insert().
 	 *
 	 * @var int|false
@@ -250,6 +264,10 @@ final class RecordingWpdb extends wpdb {
 
 		$prepared = $this->prepared_for( (string) $query );
 
+		if ( null !== $this->var_callback ) {
+			return ( $this->var_callback )( $prepared['query'] ?? '' );
+		}
+
 		if ( $this->tables_exist && null !== $prepared && 'SHOW TABLES LIKE %s' === $prepared['query'] ) {
 			$table = stripslashes( (string) $prepared['args'][0] );
 
@@ -339,6 +357,9 @@ final class RecordingWpdb extends wpdb {
 	public function query( $query ) {
 		$this->raw_queries[] = $query;
 		$prepared            = $this->prepared_for( (string) $query );
+		if ( null !== $this->query_callback && null !== $prepared ) {
+			return ( $this->query_callback )( $prepared );
+		}
 
 		if ( null !== $prepared && 'DROP TABLE IF EXISTS %i' === $prepared['query'] ) {
 			$result = $this->query_results[ $query ] ?? true;

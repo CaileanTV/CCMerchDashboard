@@ -145,38 +145,42 @@ final class CountedOrderStatusSettings {
 	public function save( array $statuses ): bool {
 		$this->authorize();
 
-		$value    = $this->normalize( $statuses );
-		$previous = Settings::counted_order_statuses();
-		$compare  = $previous;
-		sort( $compare, SORT_STRING );
+		return Settings::with_write_snapshot(
+			function () use ( $statuses ): bool {
+				$value    = $this->normalize( $statuses );
+				$previous = Settings::counted_order_statuses();
+				$compare  = $previous;
+				sort( $compare, SORT_STRING );
 
-		if ( $compare === $value ) {
-			return false;
-		}
+				if ( $compare === $value ) {
+					return false;
+				}
 
-		$settings = Settings::all();
+				$settings = Settings::all();
 
-		$settings[ Settings::COUNTED_ORDER_STATUSES ] = $value;
+				$settings[ Settings::COUNTED_ORDER_STATUSES ] = $value;
 
-		$this->transaction->run(
-			function () use ( $settings, $previous, $value ): void {
-				$this->audit->record(
-					AuditAction::SettingsUpdated,
-					null,
-					array(
-						'setting'        => Settings::COUNTED_ORDER_STATUSES,
-						'previous_value' => $previous,
-						'value'          => $value,
-					)
+				$this->transaction->run(
+					function () use ( $settings, $previous, $value ): void {
+						$this->audit->record(
+							AuditAction::SettingsUpdated,
+							null,
+							array(
+								'setting'        => Settings::COUNTED_ORDER_STATUSES,
+								'previous_value' => $previous,
+								'value'          => $value,
+							)
+						);
+
+						if ( ! Settings::save( $settings ) ) {
+							throw new DatabaseException( 'Could not save settings.' );
+						}
+					}
 				);
 
-				if ( ! Settings::save( $settings ) ) {
-					throw new DatabaseException( 'Could not save settings.' );
-				}
+				return true;
 			}
 		);
-
-		return true;
 	}
 
 	/**

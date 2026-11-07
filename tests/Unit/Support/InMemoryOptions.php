@@ -51,8 +51,36 @@ final class InMemoryOptions {
 	 * @param array<string, mixed> $options Initial options.
 	 */
 	public static function install( array $options = array() ): self {
-		$store          = new self();
-		$store->options = $options;
+		$lock_db         = new RecordingWpdb();
+		$lock_db->var    = '1';
+		$GLOBALS['wpdb'] = $lock_db; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Test-only database double.
+
+		$store                   = new self();
+		$store->options          = $options;
+		$lock_db->var_callback   = static fn( string $sql ): mixed => str_starts_with( $sql, 'SELECT option_value' )
+			? ( isset( $store->options['merchboard_settings'] ) ? serialize( $store->options['merchboard_settings'] ) : null ) // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Models WordPress option storage.
+			: $lock_db->var;
+		$lock_db->query_callback = static function ( array $prepared ) use ( $store ): int {
+			$args   = $prepared['args'];
+			$exists = array_key_exists( 'merchboard_settings', $store->options );
+			if ( str_starts_with( $prepared['query'], 'INSERT IGNORE' ) ) {
+				if ( $exists ) {
+					return 0;
+				}
+				$value = $args[2];
+			} else {
+				if ( ! $exists || serialize( $store->options['merchboard_settings'] ) !== $args[4] ) { // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize -- Models exact stored bytes.
+					return 0;
+				}
+				$value = $args[1];
+			}
+			$store->options['merchboard_settings'] = unserialize( (string) $value, array( 'allowed_classes' => false ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- Synthetic fixture only.
+			$store->updates[]                      = 'merchboard_settings';
+			return 1;
+		};
+		Functions\when( 'maybe_serialize' )->alias( 'serialize' );
+
+		Functions\when( 'maybe_unserialize' )->alias( static fn( string $raw ): mixed => unserialize( $raw, array( 'allowed_classes' => false ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- Synthetic test data only.
 
 		Functions\when( 'get_option' )->alias(
 			static fn( string $name, mixed $fallback = false ): mixed => $store->options[ $name ] ?? $fallback

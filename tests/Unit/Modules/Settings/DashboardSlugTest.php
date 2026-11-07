@@ -222,7 +222,7 @@ final class DashboardSlugTest extends TestCase {
 	}
 
 	public function test_failed_option_write_keeps_the_old_slug_and_no_audit_record(): void {
-		Functions\when( 'update_option' )->justReturn( false );
+		$GLOBALS['wpdb']->query_callback = static fn(): bool => false;
 		Actions\expectDone( 'merchboard_dashboard_slug_changed' )->never();
 
 		$this->expectException( DatabaseException::class );

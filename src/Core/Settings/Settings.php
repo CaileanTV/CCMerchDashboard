@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Core\Settings;
 
+use MerchBoard\Core\Database\DatabaseException;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -25,6 +27,63 @@ final class Settings {
 	 * Option name.
 	 */
 	public const OPTION = 'merchboard_settings';
+
+	/**
+	 * Whether a settings operation is active.
+	 *
+	 * @var bool
+	 */
+	private static bool $writing = false;
+
+	/**
+	 * Exact database value used by this operation; null means no option yet.
+	 *
+	 * @var string|null
+	 */
+	private static ?string $snapshot = null;
+
+	/**
+	 * Reads one fresh snapshot for an authorized operation and its audit.
+	 * save() atomically rejects a changed snapshot. The caller's existing
+	 * transaction then rolls back its audit and reports a retryable failure.
+	 * Cache invalidation runs after the transaction commits or rolls back.
+	 *
+	 * @template T
+	 * @param callable(): T $work Authorized operation including its transaction.
+	 * @return T
+	 * @throws DatabaseException When the snapshot cannot be read or writes are nested.
+	 */
+	public static function with_write_snapshot( callable $work ): mixed {
+		global $wpdb;
+
+		if ( self::$writing ) {
+			throw new DatabaseException( 'Nested settings writes are not supported.' );
+		}
+
+		$raw = $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name = %s', $wpdb->options, self::OPTION ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A fresh snapshot is required for compare-and-swap.
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read settings.' );
+		}
+
+		self::$snapshot = null === $raw ? null : (string) $raw;
+		self::$writing  = true;
+		try {
+			return $work();
+		} finally {
+			self::$writing  = false;
+			self::$snapshot = null;
+			self::clear_cache();
+		}
+	}
+
+	/**
+	 * Invalidates all cache locations used by get_option() for this option.
+	 */
+	private static function clear_cache(): void {
+		wp_cache_delete( self::OPTION, 'options' );
+		wp_cache_delete( 'alloptions', 'options' );
+		wp_cache_delete( 'notoptions', 'options' );
+	}
 
 	/**
 	 * Delete all Merch Dashboard data when the plugin is deleted (default off).
@@ -457,7 +516,9 @@ final class Settings {
 	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string}
 	 */
 	public static function all(): array {
-		$stored = get_option( self::OPTION, array() );
+		$stored = self::$writing
+			? ( null === self::$snapshot ? array() : maybe_unserialize( self::$snapshot ) )
+			: get_option( self::OPTION, array() );
 
 		return self::sanitize( is_array( $stored ) ? $stored : array() );
 	}
@@ -630,12 +691,37 @@ final class Settings {
 	}
 
 	/**
-	 * Stores sanitized settings.
+	 * Stores sanitized settings using compare-and-swap before the caller commits.
 	 *
 	 * @param array<mixed> $values Values.
 	 * @return bool Whether the option was written.
+	 * @throws DatabaseException When the caller has not captured a fresh snapshot.
 	 */
 	public static function save( array $values ): bool {
-		return update_option( self::OPTION, self::sanitize( $values ), true );
+		global $wpdb;
+
+		if ( ! self::$writing ) {
+			throw new DatabaseException( 'Settings writes require a fresh snapshot.' );
+		}
+
+		$old   = null === self::$snapshot ? false : maybe_unserialize( self::$snapshot );
+		$value = self::sanitize( $values );
+		// Preserve WordPress' existing option filters, including a veto that
+		// returns the old value. The database comparison still uses raw bytes.
+		$value = apply_filters( 'pre_update_option_' . self::OPTION, $value, $old, self::OPTION ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Preserve the existing WordPress option filter.
+		$value = apply_filters( 'pre_update_option', $value, self::OPTION, $old ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Preserve the existing WordPress option filter.
+		if ( $value === $old ) {
+			return false;
+		}
+		$value = maybe_serialize( $value );
+		if ( null === self::$snapshot ) {
+			$result = $wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO %i (option_name, option_value, autoload) VALUES (%s, %s, %s)', $wpdb->options, self::OPTION, $value, 'on' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Atomic creation; add_option() can replace an existing value with a stale cache.
+		} else {
+			// HEX compares exact bytes on both MySQL/MariaDB and SQLite,
+			// independent of the options table's case-insensitive collation.
+			$result = $wpdb->query( $wpdb->prepare( 'UPDATE %i SET option_value = %s, autoload = %s WHERE option_name = %s AND HEX(option_value) = HEX(%s)', $wpdb->options, $value, 'on', self::OPTION, self::$snapshot ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Compare-and-swap must be one database statement.
+		}
+
+		return 1 === $result;
 	}
 }

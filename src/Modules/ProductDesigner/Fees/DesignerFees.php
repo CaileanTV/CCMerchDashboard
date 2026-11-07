@@ -257,24 +257,38 @@ class DesignerFees {
 	public function set_amount( string $amount ): void {
 		self::authorize();
 
-		$text = str_replace( ',', '.', trim( $amount ) );
-		$text = '' === $text ? '0' : $text;
+		Settings::with_write_snapshot(
+			function () use ( $amount ): void {
+				$text = str_replace( ',', '.', trim( $amount ) );
+				$text = '' === $text ? '0' : $text;
 
-		if ( 1 !== preg_match( '/^\d{1,7}(\.\d{1,4})?$/', $text ) ) {
-			self::refuse();
-		}
+				if ( 1 !== preg_match( '/^\d{1,7}(\.\d{1,4})?$/', $text ) ) {
+					self::refuse();
+				}
 
-		$before = Settings::digitization_fee_units();
-		$units  = SalesAmount::parse( $text );
+				$before = Settings::digitization_fee_units();
+				$units  = SalesAmount::parse( $text );
 
-		Settings::save( array_merge( Settings::all(), array( Settings::DESIGNER_DIGITIZATION_FEE => SalesAmount::format( $units ) ) ) );
-		$this->audit->record(
-			AuditAction::DesignerFeeChanged,
-			null,
-			array(
-				'before' => SalesAmount::format( $before ),
-				'after'  => SalesAmount::format( $units ),
-			)
+				if ( $before === $units ) {
+					return;
+				}
+
+				$this->transaction->run(
+					function () use ( $before, $units ): void {
+						if ( ! Settings::save( array_merge( Settings::all(), array( Settings::DESIGNER_DIGITIZATION_FEE => SalesAmount::format( $units ) ) ) ) ) {
+							throw new DatabaseException( 'Could not save settings.' );
+						}
+						$this->audit->record(
+							AuditAction::DesignerFeeChanged,
+							null,
+							array(
+								'before' => SalesAmount::format( $before ),
+								'after'  => SalesAmount::format( $units ),
+							)
+						);
+					}
+				);
+			}
 		);
 	}
 
