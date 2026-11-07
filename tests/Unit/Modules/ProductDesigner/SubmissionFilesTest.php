@@ -25,9 +25,70 @@ final class SubmissionFilesTest extends TestCase {
 		self::assertSame( array( true, 'front' ), array( SubmissionFiles::is_close( '_close-front' ), SubmissionFiles::side_of( '_close-front' ) ) );
 		self::assertSame( array( false, 'front' ), array( SubmissionFiles::is_close( 'front' ), SubmissionFiles::side_of( 'front' ) ) );
 
-		foreach ( array( '', 'print', 'print:', 'print:Front', 'print:front:black', 'print:_photo-1', 'print:_close-front', 'mockup:_close-:black', 'mockup:_photo-x:black', 'mockup:front', 'mockup:front:', 'cover:front', 'print:../x', 'mockup:front:black/../' ) as $slot ) {
+		foreach ( array( '', 'print', 'print:', 'print:Front', 'print:front:black', 'print:front:d0', 'print:front:d', 'print:_photo-1', 'print:_close-front', 'mockup:_close-:black', 'mockup:_photo-x:black', 'mockup:front', 'mockup:front:', 'cover:front', 'print:../x', 'mockup:front:black/../' ) as $slot ) {
 			self::assertNull( SubmissionFiles::slot( $slot ), $slot );
 		}
+	}
+
+	public function test_a_colour_design_has_print_files_of_its_own_and_its_colours_mockups_show_it(): void {
+		self::assertSame( array( 'print', 'front', 'd1' ), SubmissionFiles::slot( 'print:front:d1' ) );
+		self::assertSame( array( 'print', 'back', 'd12' ), SubmissionFiles::slot( 'print:back:d12' ) );
+
+		$file    = static fn( string $name ): array => array(
+			'file'   => $name,
+			'mime'   => 'image/png',
+			'width'  => 10,
+			'height' => 10,
+			'bytes'  => 100,
+		);
+		$version = array(
+			'design'       => (string) wp_json_encode(
+				array(
+					'version' => 1,
+					'sides'   => array( 'front' => array( array( 'id' => 'a' ) ) ),
+					'designs' => array(
+						array(
+							'id'     => 'd1',
+							'colors' => array( 'orange' ),
+							'sides'  => array( 'back' => array( array( 'id' => 'b' ) ) ),
+						),
+					),
+				)
+			),
+			'colors'       => '["black","orange"]',
+			'base_version' => 2,
+			'files'        => null,
+		);
+		$files   = array(
+			'stamp'   => SubmissionFiles::stamp( $version ),
+			'print'   => array( 'front' => $file( 'p-front.png' ) ),
+			'designs' => array( 'd1' => array( 'back' => $file( 'p-back-d1.png' ) ) ),
+			'mockups' => array(
+				'front' => array( 'black' => $file( 'm-front-black.png' ) ),
+				'back'  => array( 'orange' => $file( 'm-back-orange.png' ) ),
+			),
+		);
+
+		self::assertTrue( SubmissionFiles::complete( array( 'files' => (string) wp_json_encode( $files ) ) + $version ) );
+		self::assertSame( array( 'p-front.png', 'p-back-d1.png', 'm-front-black.png', 'm-back-orange.png' ), SubmissionFiles::names( (string) wp_json_encode( $files ) ) );
+		self::assertSame( array( '', 'd1' ), array_keys( SubmissionFiles::prints( SubmissionFiles::decode( (string) wp_json_encode( $files ) ) ) ) );
+		self::assertSame( array( 'back' ), SubmissionFiles::used_sides_of( json_decode( $version['design'], true ), 'orange' ) );
+		self::assertSame( array( 'front', 'back' ), SubmissionFiles::all_used_sides( json_decode( $version['design'], true ), array( 'black', 'orange' ) ) );
+
+		$wrong                     = $files;
+		$wrong['mockups']['front'] = array(
+			'black'  => $file( 'a.png' ),
+			'orange' => $file( 'b.png' ),
+		);
+		self::assertFalse( SubmissionFiles::complete( array( 'files' => (string) wp_json_encode( $wrong ) ) + $version ), 'Orange shows its own design: no mockup of the shared front.' );
+
+		$missing = $files;
+		unset( $missing['designs'] );
+		self::assertFalse( SubmissionFiles::complete( array( 'files' => (string) wp_json_encode( $missing ) ) + $version ), 'Its own print file.' );
+
+		$only          = array( 'colors' => '["orange"]' ) + $version;
+		$only['files'] = (string) wp_json_encode( $files );
+		self::assertFalse( SubmissionFiles::complete( $only ), 'Without a colour on the shared design, its files are no part of it (and the stamp changed).' );
 	}
 
 	public function test_a_side_is_used_when_it_shows_something(): void {
@@ -86,6 +147,7 @@ final class SubmissionFilesTest extends TestCase {
 			array(
 				'stamp'   => '',
 				'print'   => array(),
+				'designs' => array(),
 				'mockups' => array(),
 			),
 			SubmissionFiles::decode( null )

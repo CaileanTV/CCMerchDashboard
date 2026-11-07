@@ -85,6 +85,13 @@ final class DesignerVersionFiles {
 			$slots['print'][ $side ] = SubmissionFiles::PRINT . ':' . $side;
 		}
 
+		// The print files of colour designs, keyed "side:id" (ADR-096).
+		foreach ( $decoded['designs'] as $id => $sides ) {
+			foreach ( array_keys( $sides ) as $side ) {
+				$slots['print'][ $side . ':' . $id ] = SubmissionFiles::PRINT . ':' . $side . ':' . $id;
+			}
+		}
+
 		foreach ( $decoded['mockups'] as $side => $colors ) {
 			foreach ( array_keys( $colors ) as $color ) {
 				$slots['mockups'][ $side . ':' . $color ] = SubmissionFiles::MOCKUP . ':' . $side . ':' . $color;
@@ -92,6 +99,33 @@ final class DesignerVersionFiles {
 		}
 
 		return $slots;
+	}
+
+	/**
+	 * The label of a print file's key from slots(): the side, and for a
+	 * colour design's file the colours that use it (ADR-096), e.g.
+	 * "front – Orange, Purple".
+	 *
+	 * @param string                $key    Key ("side" or "side:id").
+	 * @param string|null           $design The version's stored design.
+	 * @param array<string, string> $names  Colour names by key.
+	 */
+	public static function print_label( string $key, ?string $design, array $names = array() ): string {
+		if ( ! str_contains( $key, ':' ) ) {
+			return $key;
+		}
+
+		[ $side, $id ] = explode( ':', $key, 2 );
+		$decoded       = json_decode( (string) $design, true );
+		$colors        = array();
+
+		foreach ( is_array( $decoded ) && is_array( $decoded['designs'] ?? null ) ? $decoded['designs'] : array() as $item ) {
+			if ( is_array( $item ) && ( $item['id'] ?? null ) === $id && is_array( $item['colors'] ?? null ) ) {
+				$colors = array_map( static fn( mixed $color ): string => (string) ( $names[ (string) $color ] ?? $color ), $item['colors'] );
+			}
+		}
+
+		return array() === $colors ? $side . ' – ' . $id : $side . ' – ' . implode( ', ', $colors );
 	}
 
 	/**
@@ -150,9 +184,13 @@ final class DesignerVersionFiles {
 		}
 
 		$files = SubmissionFiles::decode( is_string( $row['files'] ?? null ) ? $row['files'] : null );
-		$file  = SubmissionFiles::PRINT === $parts[0] ? ( $files['print'][ $parts[1] ] ?? null ) : ( $files['mockups'][ $parts[1] ][ (string) $parts[2] ] ?? null );
-		$path  = is_string( $file['file'] ?? null ) ? $this->files->path( $file['file'] ) : null;
-		$body  = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A local file of at most 25 MB.
+		$file  = match ( true ) {
+			SubmissionFiles::PRINT === $parts[0] && null !== $parts[2] => $files['designs'][ $parts[2] ][ $parts[1] ] ?? null,
+			SubmissionFiles::PRINT === $parts[0] => $files['print'][ $parts[1] ] ?? null,
+			default => $files['mockups'][ $parts[1] ][ (string) $parts[2] ] ?? null,
+		};
+		$path = is_string( $file['file'] ?? null ) ? $this->files->path( $file['file'] ) : null;
+		$body = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A local file of at most 25 MB.
 
 		if ( null === $row || ! is_array( $file ) || false === $body ) {
 			return self::failure( 404, __( 'The file no longer exists.', 'merchboard' ) );
@@ -161,7 +199,7 @@ final class DesignerVersionFiles {
 		$disposition = 'inline';
 
 		if ( SubmissionFiles::PRINT === $parts[0] ) {
-			$name        = sanitize_file_name( sanitize_title( (string) $row['title'] ) . '-v' . (int) $row['number'] . '-' . $parts[1] . ( 'image/jpeg' === $file['mime'] ? '.jpg' : '.png' ) );
+			$name        = sanitize_file_name( sanitize_title( (string) $row['title'] ) . '-v' . (int) $row['number'] . '-' . $parts[1] . ( null === $parts[2] ? '' : '-' . $parts[2] ) . ( 'image/jpeg' === $file['mime'] ? '.jpg' : '.png' ) );
 			$disposition = 'attachment; filename="' . $name . '"';
 		}
 

@@ -120,20 +120,21 @@ class DesignerFees {
 			return;
 		}
 
-		$prints = SubmissionFiles::decode( is_string( $version['files'] ?? null ) ? $version['files'] : null )['print'];
+		// Every design's files: a colour design's new embroidery is a file of its own (ADR-096).
+		foreach ( SubmissionFiles::prints( SubmissionFiles::decode( is_string( $version['files'] ?? null ) ? $version['files'] : null ) ) as $prints ) {
+			foreach ( self::embroidered( $base, array_map( 'strval', array_keys( $prints ) ) ) as $side ) {
+				$name = $prints[ $side ]['file'] ?? null;
+				$path = is_string( $name ) ? $this->files->path( $name ) : null;
+				$hash = null === $path ? false : hash_file( 'sha256', $path );
 
-		foreach ( self::embroidered( $base, array_map( 'strval', array_keys( $prints ) ) ) as $side ) {
-			$name = $prints[ $side ]['file'] ?? null;
-			$path = is_string( $name ) ? $this->files->path( $name ) : null;
-			$hash = null === $path ? false : hash_file( 'sha256', $path );
+				if ( false === $hash ) {
+					$this->logger->warning( 'An embroidery file could not be read for its digitization fee.', array( 'version_id' => (int) $version['id'] ) );
 
-			if ( false === $hash ) {
-				$this->logger->warning( 'An embroidery file could not be read for its digitization fee.', array( 'version_id' => (int) $version['id'] ) );
+					continue;
+				}
 
-				continue;
+				$this->fees->register( (int) $version['creator_id'], $hash, $amount, $base->currency, $side, (string) $version['title'], (int) $version['id'] );
 			}
-
-			$this->fees->register( (int) $version['creator_id'], $hash, $amount, $base->currency, $side, (string) $version['title'], (int) $version['id'] );
 		}
 	}
 

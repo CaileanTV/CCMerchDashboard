@@ -217,7 +217,9 @@ class DesignerOrderFiles {
 			return $slots;
 		}
 
-		$own = array_intersect_key( $slots, array_flip( $base->sides_of( $size ) ) );
+		// A colour design's key is "side:id" (ADR-096).
+		$sides = $base->sides_of( $size );
+		$own   = array_filter( $slots, static fn( int|string $key ): bool => in_array( explode( ':', (string) $key, 2 )[0], $sides, true ), ARRAY_FILTER_USE_KEY );
 
 		return array() === $own ? $slots : $own;
 	}
@@ -246,7 +248,7 @@ class DesignerOrderFiles {
 		$links = array();
 
 		foreach ( $slots as $side => $slot ) {
-			$links[] = '<a href="' . esc_url( DesignerVersionFiles::url( $version, $slot ) ) . '">' . esc_html( $side ) . '</a>';
+			$links[] = '<a href="' . esc_url( DesignerVersionFiles::url( $version, $slot ) ) . '">' . esc_html( DesignerVersionFiles::print_label( (string) $side, is_string( $row['design'] ?? null ) ? $row['design'] : null ) ) . '</a>';
 		}
 
 		echo implode( ', ', $links ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.

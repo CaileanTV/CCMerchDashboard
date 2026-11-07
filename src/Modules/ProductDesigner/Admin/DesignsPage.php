@@ -278,7 +278,7 @@ final class DesignsPage {
 		$links = array();
 
 		foreach ( $slots['print'] as $side => $slot ) {
-			$links[] = '<a href="' . esc_url( DesignerVersionFiles::url( $id, $slot ) ) . '">' . esc_html( $side ) . '</a>';
+			$links[] = '<a href="' . esc_url( DesignerVersionFiles::url( $id, $slot ) ) . '">' . esc_html( DesignerVersionFiles::print_label( (string) $side, (string) $row['design'], $names ) ) . '</a>';
 		}
 
 		echo implode( ', ', $links ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.

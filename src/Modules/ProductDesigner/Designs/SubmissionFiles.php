@@ -24,6 +24,11 @@ defined( 'ABSPATH' ) || exit;
  * where a file is `{ file, mime, width, height, bytes }`. The stamp is the
  * hash of what the files show (design, colours, base version); files with
  * another stamp belong to an earlier state of the draft and are replaced.
+ *
+ * Colour designs (ADR-096): `print` holds the shared design's files and
+ * `designs: { id: { side: file } }` those of colour designs (slot
+ * `print:<side>:<id>`). A colour's mockups show its own design, so their
+ * keys stay `mockup:<side>:<colour>`.
  * Pure functions.
  */
 final class SubmissionFiles {
@@ -55,7 +60,7 @@ final class SubmissionFiles {
 	 * and the colours' sanitize_title() keys make them, a chosen photo or a
 	 * side's close-up).
 	 */
-	private const SLOT = '/^(?:print:([a-z0-9][a-z0-9-]{0,31})|mockup:([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}|_close-[a-z0-9][a-z0-9-]{0,31}):([a-z0-9%_-]{1,32}))$/';
+	private const SLOT = '/^(?:print:([a-z0-9][a-z0-9-]{0,31})(?::(d[1-9][0-9]?))?|mockup:([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}|_close-[a-z0-9][a-z0-9-]{0,31}):([a-z0-9%_-]{1,32}))$/';
 
 	/**
 	 * The stamp of a version's content (its stored columns).
@@ -81,14 +86,64 @@ final class SubmissionFiles {
 	 * A slot's parts, or null when it is not a slot.
 	 *
 	 * @param string $slot Slot.
-	 * @return array{0: string, 1: string, 2: string|null}|null Kind, side and colour (mockups).
+	 * @return array{0: string, 1: string, 2: string|null}|null Kind, side and colour (mockups) or colour design (print files; null for the shared design).
 	 */
 	public static function slot( string $slot ): ?array {
-		if ( 1 !== preg_match( self::SLOT, $slot, $match ) ) {
+		if ( 1 !== preg_match( self::SLOT, $slot, $match, PREG_UNMATCHED_AS_NULL ) ) {
 			return null;
 		}
 
-		return '' !== $match[1] ? array( self::PRINT, $match[1], null ) : array( self::MOCKUP, $match[2], $match[3] );
+		if ( null !== $match[1] ) {
+			return array( self::PRINT, $match[1], $match[2] );
+		}
+
+		return null === $match[3] || null === $match[4] ? null : array( self::MOCKUP, $match[3], $match[4] );
+	}
+
+	/**
+	 * The print files by design: SHARED ('') for the shared design, then the
+	 * colour designs (ADR-096).
+	 *
+	 * @param array{print: array<string, array<string, mixed>>, designs?: array<string, array<string, array<string, mixed>>>} $files decode().
+	 * @return array<string, array<string, array<string, mixed>>> Files by design and side.
+	 */
+	public static function prints( array $files ): array {
+		$prints = array() === $files['print'] ? array() : array( ColorDesigns::SHARED => $files['print'] );
+
+		foreach ( $files['designs'] ?? array() as $id => $sides ) {
+			$prints[ (string) $id ] = $sides;
+		}
+
+		return $prints;
+	}
+
+	/**
+	 * The used sides of the design a colour uses (ADR-096).
+	 *
+	 * @param array<mixed> $design Design document (stored JSON, decoded).
+	 * @param string       $color  Colour key.
+	 * @return list<string>
+	 */
+	public static function used_sides_of( array $design, string $color ): array {
+		return self::used_sides( ColorDesigns::part( $design, ColorDesigns::part_of( $design, $color ) ) );
+	}
+
+	/**
+	 * The used sides of every design the chosen colours use, in the order
+	 * first met (ADR-096).
+	 *
+	 * @param array<mixed>  $design Design document (stored JSON, decoded).
+	 * @param array<string> $colors Chosen colours.
+	 * @return list<string>
+	 */
+	public static function all_used_sides( array $design, array $colors ): array {
+		$sides = array();
+
+		foreach ( array_keys( ColorDesigns::parts( $design, $colors ) ) as $id ) {
+			$sides = array_merge( $sides, self::used_sides( ColorDesigns::part( $design, (string) $id ) ) );
+		}
+
+		return array_values( array_unique( $sides ) );
 	}
 
 	/**
@@ -151,7 +206,7 @@ final class SubmissionFiles {
 	 * The stored files, normalised.
 	 *
 	 * @param string|null $json Stored JSON.
-	 * @return array{stamp: string, print: array<string, array<string, mixed>>, mockups: array<string, array<string, array<string, mixed>>>}
+	 * @return array{stamp: string, print: array<string, array<string, mixed>>, designs: array<string, array<string, array<string, mixed>>>, mockups: array<string, array<string, array<string, mixed>>>}
 	 */
 	public static function decode( ?string $json ): array {
 		$data  = null === $json ? null : json_decode( $json, true );
@@ -159,12 +214,21 @@ final class SubmissionFiles {
 		$files = array(
 			'stamp'   => is_string( $data['stamp'] ?? null ) ? $data['stamp'] : '',
 			'print'   => array(),
+			'designs' => array(),
 			'mockups' => array(),
 		);
 
 		foreach ( is_array( $data['print'] ?? null ) ? $data['print'] : array() as $side => $file ) {
 			if ( self::is_file( $file ) ) {
 				$files['print'][ (string) $side ] = $file;
+			}
+		}
+
+		foreach ( is_array( $data['designs'] ?? null ) ? $data['designs'] : array() as $id => $sides ) {
+			foreach ( is_array( $sides ) ? $sides : array() as $side => $file ) {
+				if ( self::is_file( $file ) ) {
+					$files['designs'][ (string) $id ][ (string) $side ] = $file;
+				}
 			}
 		}
 
@@ -189,6 +253,10 @@ final class SubmissionFiles {
 		$files = self::decode( $json );
 		$names = array_column( $files['print'], 'file' );
 
+		foreach ( $files['designs'] as $sides ) {
+			$names = array_merge( $names, array_column( $sides, 'file' ) );
+		}
+
 		foreach ( $files['mockups'] as $colors ) {
 			$names = array_merge( $names, array_column( $colors, 'file' ) );
 		}
@@ -198,30 +266,53 @@ final class SubmissionFiles {
 
 	/**
 	 * Whether the files are exactly the ones a version needs: its stamp, one
-	 * print file per used side and one mockup per used side and colour.
+	 * print file per used side of every design the colours use (ADR-096),
+	 * and one mockup per colour and used side of its design.
 	 *
 	 * @param array<string, mixed> $version Version row.
 	 */
 	public static function complete( array $version ): bool {
 		$files  = self::decode( is_string( $version['files'] ?? null ) ? $version['files'] : null );
 		$design = json_decode( (string) ( $version['design'] ?? '' ), true );
+		$design = is_array( $design ) ? $design : array();
 		$colors = json_decode( (string) ( $version['colors'] ?? '' ), true );
-		$sides  = self::used_sides( is_array( $design ) ? $design : array() );
 		$colors = is_array( $colors ) ? array_values( array_map( 'strval', $colors ) ) : array();
 		// A chosen photo left from a withdrawn version is no file the browser
 		// sends, and a design without a close-up is complete.
 		$mockups = array_filter( $files['mockups'], static fn( int|string $side ): bool => ! str_starts_with( (string) $side, self::PHOTO ) && ! self::is_close( (string) $side ), ARRAY_FILTER_USE_KEY );
 
-		if ( self::stamp( $version ) !== $files['stamp'] || array() === $sides || array() === $colors ) {
+		if ( self::stamp( $version ) !== $files['stamp'] || array() === $colors ) {
 			return false;
 		}
 
-		if ( self::sorted( array_keys( $files['print'] ) ) !== self::sorted( $sides ) || self::sorted( array_keys( $mockups ) ) !== self::sorted( $sides ) ) {
+		$parts  = ColorDesigns::parts( $design, $colors );
+		$prints = self::prints( $files );
+
+		if ( self::sorted( array_keys( $prints ) ) !== self::sorted( array_keys( $parts ) ) ) {
 			return false;
 		}
 
-		foreach ( $mockups as $by_color ) {
-			if ( self::sorted( array_keys( $by_color ) ) !== self::sorted( $colors ) ) {
+		// The colours each side needs a mockup of.
+		$needed = array();
+
+		foreach ( $parts as $id => $own ) {
+			$sides = self::used_sides( ColorDesigns::part( $design, (string) $id ) );
+
+			if ( array() === $sides || self::sorted( array_keys( $prints[ (string) $id ] ) ) !== self::sorted( $sides ) ) {
+				return false;
+			}
+
+			foreach ( $sides as $side ) {
+				$needed[ $side ] = array_merge( $needed[ $side ] ?? array(), $own );
+			}
+		}
+
+		if ( self::sorted( array_keys( $mockups ) ) !== self::sorted( array_keys( $needed ) ) ) {
+			return false;
+		}
+
+		foreach ( $mockups as $side => $by_color ) {
+			if ( self::sorted( array_keys( $by_color ) ) !== self::sorted( $needed[ (string) $side ] ) ) {
 				return false;
 			}
 		}

@@ -20,6 +20,7 @@ use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\Dashboard\DashboardSections;
+use MerchBoard\Modules\ProductDesigner\Admin\DesignerVersionFiles;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\DesignerDashboardSection;
@@ -28,6 +29,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
+use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
@@ -318,6 +320,48 @@ final class DesignerApiTest extends IntegrationTestCase {
 
 		$body['design']['designs'][] = $body['design']['designs'][0];
 		self::assertSame( array( 400, 'design_invalid' ), $this->refusal( $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $body ) ), 'Two designs with one id.' );
+	}
+
+	public function test_a_colour_design_is_submitted_with_print_files_of_its_own(): void {
+		wp_set_current_user( $this->user );
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		$route   = '/merchboard/v1/me/designer/products/' . $product;
+		$body    = $this->draft( array( self::rect() ) );
+
+		$body['colors']            = array( 'black', 'sand' );
+		$body['design']['designs'] = array(
+			array(
+				'id'     => 'd1',
+				'colors' => array( 'sand' ),
+				'sides'  => array( 'front' => array() ),
+			),
+		);
+		self::assertSame( 200, $this->call( 'PUT', $route, $body )->get_status() );
+		self::assertSame( array( 400, 'design_empty' ), $this->refusal( $this->call( 'POST', $route . '/submit' ) ), 'Sand\'s own design shows nothing.' );
+
+		$body['design']['designs'][0]['sides']['front'] = array( self::text() );
+		self::assertSame( 200, $this->call( 'PUT', $route, $body )->get_status() );
+
+		foreach ( array( 'print:front:d2', 'print:back:d1' ) as $slot ) {
+			self::assertSame( array( 400, 'submission_file' ), $this->refusal( $this->attach( $product, $slot, AlertImagesTest::png( 118, 157 ) ) ), $slot );
+		}
+
+		self::assertSame( 200, $this->attach( $product, 'print:front', AlertImagesTest::png( 118, 157 ) )->get_status() );
+		self::assertSame( 200, $this->attach( $product, 'mockup:front:black', AlertImagesTest::png( 400, 400 ) )->get_status() );
+		self::assertSame( 200, $this->attach( $product, 'mockup:front:sand', AlertImagesTest::png( 400, 400 ) )->get_status() );
+		self::assertSame( array( 400, 'submission_files' ), $this->refusal( $this->call( 'POST', $route . '/submit' ) ), 'Sand\'s design needs its own print file.' );
+		self::assertSame( 200, $this->attach( $product, 'print:front:d1', AlertImagesTest::png( 118, 157 ) )->get_status() );
+
+		$submitted = $this->data( $this->call( 'POST', $route . '/submit' ) );
+		self::assertSame( 1, $submitted['pending']['number'] );
+
+		$pending = ( new DesignerProductRepository( $this->wpdb ) )->pending( $product );
+		$files   = SubmissionFiles::decode( is_string( $pending['files'] ?? null ) ? $pending['files'] : null );
+		self::assertSame( array( 'front' ), array_keys( $files['print'] ) );
+		self::assertSame( array( 'd1' => array( 'front' ) ), array_map( 'array_keys', $files['designs'] ) );
+		self::assertCount( 4, $this->stored_files() );
+		self::assertSame( array( 'front', 'front:d1' ), array_keys( DesignerVersionFiles::slots( $pending['files'] ?? null )['print'] ) );
+		self::assertSame( 'front – Sand', DesignerVersionFiles::print_label( 'front:d1', (string) ( $pending['design'] ?? '' ), array( 'sand' => 'Sand' ) ) );
 	}
 
 	public function test_a_creator_copies_a_product_as_a_new_draft_also_before_it_is_approved(): void {

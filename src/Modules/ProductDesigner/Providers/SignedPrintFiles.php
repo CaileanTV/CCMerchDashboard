@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\ProductDesigner\Providers;
 
 use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Modules\ProductDesigner\Designs\ColorDesigns;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
@@ -31,7 +32,10 @@ defined( 'ABSPATH' ) || exit;
  */
 class SignedPrintFiles {
 
-	public const ROUTE = '/designer-print/(?P<version>[1-9][0-9]{0,18})/(?P<side>[a-z0-9][a-z0-9-]{0,31})';
+	/**
+	 * The side, with `@<id>` for a colour design's print file (ADR-096).
+	 */
+	public const ROUTE = '/designer-print/(?P<version>[1-9][0-9]{0,18})/(?P<side>[a-z0-9][a-z0-9-]{0,31}(?:@d[1-9][0-9]?)?)';
 
 	public const TTL = 3600;
 
@@ -52,9 +56,11 @@ class SignedPrintFiles {
 	 * @param int      $version_id Version.
 	 * @param string   $side       Side.
 	 * @param int|null $now        Now (tests).
+	 * @param string   $design     A colour design's id; '' for the shared design (ADR-096).
 	 */
-	public static function url( int $version_id, string $side, ?int $now = null ): string {
+	public static function url( int $version_id, string $side, ?int $now = null, string $design = '' ): string {
 		$expires = ( $now ?? time() ) + self::TTL;
+		$side    = '' === $design ? $side : $side . '@' . $design;
 
 		return add_query_arg(
 			array(
@@ -125,9 +131,10 @@ class SignedPrintFiles {
 			return $missing;
 		}
 
-		$file = SubmissionFiles::decode( is_string( $row['files'] ) ? $row['files'] : null )['print'][ $side ] ?? null;
-		$path = is_string( $file['file'] ?? null ) ? $this->files->path( $file['file'] ) : null;
-		$body = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A local file of at most 25 MB.
+		[ $key, $design ] = array_pad( explode( '@', $side, 2 ), 2, ColorDesigns::SHARED );
+		$file             = SubmissionFiles::prints( SubmissionFiles::decode( is_string( $row['files'] ) ? $row['files'] : null ) )[ $design ][ $key ] ?? null;
+		$path             = is_string( $file['file'] ?? null ) ? $this->files->path( $file['file'] ) : null;
+		$body             = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A local file of at most 25 MB.
 
 		if ( false === $body ) {
 			return $missing;

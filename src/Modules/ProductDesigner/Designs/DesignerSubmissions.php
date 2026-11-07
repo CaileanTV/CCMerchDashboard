@@ -145,11 +145,16 @@ class DesignerSubmissions {
 						$files    = array(
 							'stamp'   => $stamp,
 							'print'   => array(),
+							'designs' => array(),
 							'mockups' => array(),
 						);
 					}
 
-					if ( SubmissionFiles::PRINT === $parts[0] ) {
+					if ( SubmissionFiles::PRINT === $parts[0] && null !== $parts[2] ) {
+						// A colour design's print file (ADR-096).
+						$replaced[]                                 = $files['designs'][ $parts[2] ][ $parts[1] ]['file'] ?? null;
+						$files['designs'][ $parts[2] ][ $parts[1] ] = $file;
+					} elseif ( SubmissionFiles::PRINT === $parts[0] ) {
 						$replaced[]                  = $files['print'][ $parts[1] ]['file'] ?? null;
 						$files['print'][ $parts[1] ] = $file;
 					} else {
@@ -196,15 +201,23 @@ class DesignerSubmissions {
 
 				$base   = $this->current_base( (int) $row['base_id'], $draft );
 				$design = json_decode( (string) $draft['design'], true );
+				$design = is_array( $design ) ? $design : array();
+				$colors = json_decode( (string) $draft['colors'], true );
+				$colors = is_array( $colors ) ? array_values( array_filter( $colors, 'is_string' ) ) : array();
+				$sizes  = json_decode( (string) $draft['sizes'], true );
+				$sizes  = is_array( $sizes ) ? array_values( array_filter( $sizes, 'is_string' ) ) : array();
 
-				if ( array() === SubmissionFiles::used_sides( is_array( $design ) ? $design : array() ) ) {
-					self::refuse( DesignerException::DESIGN_EMPTY );
-				}
+				// Every design the colours use must show something and cover the sizes (ADR-096).
+				foreach ( array_keys( ColorDesigns::parts( $design, $colors ) ) as $id ) {
+					$used = SubmissionFiles::used_sides( ColorDesigns::part( $design, (string) $id ) );
 
-				$sizes = json_decode( (string) $draft['sizes'], true );
+					if ( array() === $used ) {
+						self::refuse( DesignerException::DESIGN_EMPTY );
+					}
 
-				if ( ! $base->covers( SubmissionFiles::used_sides( is_array( $design ) ? $design : array() ), is_array( $sizes ) ? array_values( array_filter( $sizes, 'is_string' ) ) : array() ) ) {
-					self::refuse( DesignerException::DESIGN_SIZES );
+					if ( ! $base->covers( $used, $sizes ) ) {
+						self::refuse( DesignerException::DESIGN_SIZES );
+					}
 				}
 
 				if ( ! SubmissionFiles::complete( $draft ) ) {
@@ -212,7 +225,7 @@ class DesignerSubmissions {
 				}
 
 				$price = $this->price( $base, $draft );
-				$this->products->submit( (int) $draft['id'], $product, $price, $this->fees?->quote( $base, SubmissionFiles::used_sides( is_array( $design ) ? $design : array() ) ) );
+				$this->products->submit( (int) $draft['id'], $product, $price, $this->fees?->quote( $base, SubmissionFiles::all_used_sides( $design, $colors ) ) );
 				$this->audit->record(
 					AuditAction::DesignerVersionSubmitted,
 					$creator->id,
@@ -345,10 +358,21 @@ class DesignerSubmissions {
 	 */
 	private function used_view( BaseProduct $base, array $draft, array $parts ): BaseView {
 		$design = json_decode( (string) $draft['design'], true );
+		$design = is_array( $design ) ? $design : array();
 		$colors = json_decode( (string) $draft['colors'], true );
+		$colors = is_array( $colors ) ? array_values( array_filter( $colors, 'is_string' ) ) : array();
 
-		if ( ! in_array( $parts[1], SubmissionFiles::used_sides( is_array( $design ) ? $design : array() ), true )
-			|| ( null !== $parts[2] && ! in_array( $parts[2], is_array( $colors ) ? $colors : array(), true ) ) ) {
+		if ( SubmissionFiles::PRINT === $parts[0] ) {
+			// A print file of a design some chosen colour uses (ADR-096).
+			$id    = $parts[2] ?? ColorDesigns::SHARED;
+			$known = array_key_exists( $id, ColorDesigns::parts( $design, $colors ) );
+			$used  = $known && in_array( $parts[1], SubmissionFiles::used_sides( ColorDesigns::part( $design, $id ) ), true );
+		} else {
+			// A mockup of a chosen colour on a used side of its design.
+			$used = null !== $parts[2] && in_array( $parts[2], $colors, true ) && in_array( $parts[1], SubmissionFiles::used_sides_of( $design, $parts[2] ), true );
+		}
+
+		if ( ! $used ) {
 			self::refuse( DesignerException::SUBMISSION_FILE );
 		}
 
