@@ -17,7 +17,7 @@
  * Usage: node bin/integration.mjs [phpunit arguments]
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { dirname, join, resolve } from 'node:path';
@@ -112,6 +112,7 @@ function startServer( dataDir ) {
 				`--datadir=${ dataDir }`,
 				`--port=${ MARIADB_PORT }`,
 				'--bind-address=127.0.0.1',
+				`--secure-file-priv=${ dataDir }`,
 				'--skip-name-resolve',
 				'--console',
 			],
@@ -165,6 +166,37 @@ if ( init.status !== 0 ) {
 	process.exit( 1 );
 }
 
+// Set credentials offline, before opening any listener. Do not put secrets in
+// process arguments or files readable by other local users. Bootstrap uses the
+// same privilege table as mariadb-install-db in the pinned MariaDB release.
+const password = randomBytes( 32 ).toString( 'hex' );
+const stageOne = createHash( 'sha1' ).update( password ).digest();
+const passwordHash =
+	'*' + createHash( 'sha1' ).update( stageOne ).digest( 'hex' ).toUpperCase();
+const secured = spawnSync(
+	bin( 'mariadbd' ),
+	[
+		'--no-defaults',
+		`--basedir=${ baseDir }`,
+		`--datadir=${ dataDir }`,
+		'--bootstrap',
+		'--skip-networking',
+	],
+	{
+		input: `DELETE FROM mysql.global_priv WHERE User = '';
+UPDATE mysql.global_priv SET Priv = JSON_SET(Priv, '$.plugin', 'mysql_native_password', '$.authentication_string', '${ passwordHash }', '$.auth_or', JSON_ARRAY()) WHERE User = 'root';
+`,
+		encoding: 'utf8',
+	}
+);
+if ( secured.status !== 0 ) {
+	// Bootstrap diagnostics can contain the SQL and its authentication hash.
+	console.error(
+		'Could not secure the disposable MariaDB; refusing to start.'
+	);
+	process.exit( 1 );
+}
+
 const server = await startServer( dataDir );
 let status = 1;
 
@@ -174,13 +206,19 @@ try {
 		MERCHBOARD_TEST_DB_PORT: String( MARIADB_PORT ),
 		MERCHBOARD_TEST_DB_NAME: 'merchboard_tests',
 		MERCHBOARD_TEST_DB_USER: 'root',
-		MERCHBOARD_TEST_DB_PASSWORD: '',
+		MERCHBOARD_TEST_DB_PASSWORD: password,
 	} );
 } finally {
 	spawnSync(
 		bin( 'mariadb-admin' ),
-		[ '-uroot', '-h127.0.0.1', `-P${ MARIADB_PORT }`, 'shutdown' ],
-		{ stdio: 'ignore' }
+		[
+			'--no-defaults',
+			'-uroot',
+			'-h127.0.0.1',
+			`-P${ MARIADB_PORT }`,
+			'shutdown',
+		],
+		{ stdio: 'ignore', env: { ...process.env, MYSQL_PWD: password } }
 	);
 	await new Promise( ( done ) => {
 		const timer = setTimeout( () => {
