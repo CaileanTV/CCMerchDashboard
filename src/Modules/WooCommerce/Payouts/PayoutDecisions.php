@@ -102,6 +102,8 @@ final class PayoutDecisions {
 			$payout_id,
 			PayoutStatus::Rejected,
 			function ( Payout $payout ) use ( $reason ): void {
+				$this->guard_hidden_account( $payout, $reason );
+
 				// The creator sees the reason and it is kept (ADR-059): never payment details.
 				if ( PayoutFreeText::contains_payment_details( $reason, $this->details_if_readable( $payout ) ) ) {
 					throw new PayoutException( PayoutException::PAYMENT_DETAILS_IN_TEXT );
@@ -142,6 +144,8 @@ final class PayoutDecisions {
 				if ( PayoutMethod::GiftCard === $payout->method ) {
 					throw new PayoutException( PayoutException::WRONG_METHOD );
 				}
+
+				$this->guard_hidden_account( $payout, $reference );
 
 				// The reference is kept (ADR-059): never the payout's own or other payment details.
 				if ( PayoutFreeText::contains_payment_details( $reference, $this->readable_details( $payout ) ) ) {
@@ -262,6 +266,24 @@ final class PayoutDecisions {
 				}
 			)
 		);
+	}
+
+	/**
+	 * Refuses account candidates independently of hidden destination values.
+	 * Managers without detail access can still decide payouts, but numeric
+	 * bank references and reasons with six or more digits need detail access.
+	 * Checking both decision paths prevents repeatable account guesses.
+	 *
+	 * @param Payout $payout Payout.
+	 * @param string $text   Reference or reason.
+	 * @throws PayoutException When the text could contain a hidden account.
+	 */
+	private function guard_hidden_account( Payout $payout, string $text ): void {
+		if ( PayoutMethod::Bank === $payout->method
+			&& ! current_user_can( Capabilities::VIEW_PAYOUT_DETAILS )
+			&& preg_match_all( '/[0-9]/', $text ) >= PayoutFreeText::MIN_ACCOUNT_DIGITS ) {
+			throw new PayoutException( PayoutException::PAYMENT_DETAILS_IN_TEXT );
+		}
 	}
 
 	/**

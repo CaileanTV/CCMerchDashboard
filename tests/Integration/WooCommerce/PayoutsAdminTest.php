@@ -28,6 +28,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\Payout;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutCipher;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutDecisions;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutException;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRequests;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
@@ -330,6 +331,18 @@ final class PayoutsAdminTest extends IntegrationTestCase {
 		self::assertSame( PayoutStatus::Pending, $this->repository->find( $payout->id )?->status, 'Never completed automatically.' );
 		self::assertStringContainsString( 'Handle it manually', $this->render( array( 'payout' => (string) $payout->id, 'result' => 'insufficient_balance' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertSame( array(), $this->audit( AuditAction::PayoutCompleted ) );
+
+		$manager = $this->create_user( 'mb-underfunded-manager' );
+		( new WP_User( $manager ) )->add_cap( Capabilities::MANAGE_PAYOUTS );
+		wp_set_current_user( $manager );
+
+		foreach ( array( self::ACCOUNT, '9988776655', '12 345 678' ) as $reference ) {
+			$url = $this->actions->handle( $this->complete_input( $payout->id, $reference ) );
+			self::assertStringContainsString( 'result=' . PayoutException::PAYMENT_DETAILS_IN_TEXT, $url );
+			self::assertSame( PayoutStatus::Pending, $this->repository->find( $payout->id )?->status );
+		}
+
+		self::assertStringContainsString( 'result=insufficient_balance', $this->actions->handle( $this->complete_input( $payout->id ) ) );
 	}
 
 	public function test_without_a_valid_key_pending_requests_can_only_be_rejected(): void {

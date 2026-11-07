@@ -15,7 +15,9 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
+use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Security\ProtectedProductMeta;
+use WP_User;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutActions;
@@ -202,6 +204,22 @@ final class PayoutFreeTextGuardTest extends IntegrationTestCase {
 		self::assertSame( 'error', $message[1] );
 		self::assertStringContainsString( 'must not contain bank or payment details', $message[0] );
 		self::assertStringNotContainsString( '12345678', $message[0] );
+	}
+
+	public function test_hidden_accounts_cannot_be_probed_through_either_decision(): void {
+		$payout = $this->request( '10', 'key-ft-oracle' );
+		$before = $this->state( $payout );
+		$user   = $this->create_user( 'mb-hidden-account-manager' );
+		( new WP_User( $user ) )->add_cap( Capabilities::MANAGE_PAYOUTS );
+		wp_set_current_user( $user );
+
+		foreach ( array( self::ACCOUNT, '9988776655', 'Konto 12 345 678', 'Ref 88-21-33-77' ) as $text ) {
+			$this->refused( fn() => $this->decisions->complete( $payout->id, $text ), $text );
+			$this->refused( fn() => $this->decisions->reject( $payout->id, $text ), $text );
+			self::assertSame( $before, $this->state( $payout ) );
+		}
+
+		self::assertSame( PayoutStatus::Completed, $this->decisions->complete( $payout->id )->status );
 	}
 
 	/**
