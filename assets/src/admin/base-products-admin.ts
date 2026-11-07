@@ -10,8 +10,8 @@ import { __, sprintf } from '@wordpress/i18n';
 
 import { attachAreaPicker } from './area-picker';
 import { attachColorPhotos } from './color-photos';
-import { readScene } from './psd-scene';
-import { LAYERS, readTemplate, TemplateError } from './psd-template';
+import { importPsd } from './psd-import';
+import { LAYERS, TemplateError } from './psd-template';
 import type { PrintArea, PsdTemplate, Rgba } from './psd-template';
 
 /** Largest PSD read in the browser (it is never uploaded). */
@@ -227,7 +227,7 @@ function attach( input: HTMLInputElement ): void {
 		say( __( 'Reading the PSD…', 'merchboard' ) );
 
 		try {
-			const template = readTemplate( await file.arrayBuffer() );
+			const template = await importPsd( await file.arrayBuffer(), false );
 			const filled = await fillLayers( form, index, template );
 
 			if ( null !== template.area ) {
@@ -599,8 +599,9 @@ function attachScene( input: HTMLInputElement ): void {
 		say( __( 'Reading the PSD…', 'merchboard' ) );
 
 		try {
-			const { scene, atlas, designs, warnings } = readScene(
-				await file.arrayBuffer()
+			const { scene, atlas, designs, warnings } = await importPsd(
+				await file.arrayBuffer(),
+				true
 			);
 			const image = form.elements.namedItem( `layer_${ index }_scene` );
 			const data = form.elements.namedItem( `views[${ index }][scene]` );

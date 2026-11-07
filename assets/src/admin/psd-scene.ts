@@ -10,7 +10,7 @@
  * Effects, layer masks and adjustment layers cannot be redrawn: they are named
  * in `warnings`, and the administrator can merge them in Photoshop.
  */
-import { readPsd } from 'ag-psd';
+import { readBoundedPsd } from './psd-budget';
 import type { Layer, Psd } from 'ag-psd';
 
 import { FLAT_MESH } from '../dashboard/sections/designer/scene';
@@ -451,12 +451,7 @@ export function readScene( buffer: ArrayBuffer ): PsdScene {
 	let psd: Psd;
 
 	try {
-		psd = readPsd( buffer, {
-			useImageData: true,
-			skipCompositeImageData: true,
-			skipThumbnail: true,
-			skipLinkedFilesData: true,
-		} );
+		psd = readBoundedPsd( buffer );
 	} catch {
 		throw new TemplateError( 'unreadable' );
 	}

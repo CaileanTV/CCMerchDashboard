@@ -1,7 +1,7 @@
 /**
  * Tests for drawing a print area on a template.
  */
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 
 import { drawnArea, isInside, movedArea } from '../area-picker';
 import {
@@ -10,6 +10,8 @@ import {
 	movedSize,
 	sizesOf,
 } from '../base-products-admin';
+
+jest.mock( '../psd-import', () => ( { importPsd: jest.fn() } ) );
 
 describe( 'the sizes with a price', () => {
 	it( 'are the sizes of the field, each once', () => {

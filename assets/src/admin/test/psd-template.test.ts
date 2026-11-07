@@ -1,13 +1,15 @@
 /**
  * Tests for the PSD import of base products (phase 30, step 30.7).
  */
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 import { initializeCanvas, writePsd } from 'ag-psd';
 import type { Layer, Psd } from 'ag-psd';
 
 import { errorMessage, fillArea, fillName } from '../base-products-admin';
 import { readTemplate, TemplateError, templateFromPsd } from '../psd-template';
 import type { TemplateErrorCode } from '../psd-template';
+
+jest.mock( '../psd-import', () => ( { importPsd: jest.fn() } ) );
 
 // jsdom has no canvas: ag-psd gets plain image data.
 initializeCanvas(
