@@ -184,6 +184,50 @@ final class CreatorSignupTest extends IntegrationTestCase {
 		self::assertContains( 'creator_signup_expired', $this->audit_actions() );
 	}
 
+	public function test_reassignment_cancels_expiry_even_if_the_original_user_is_linked_again(): void {
+		$this->signup()->submit( $this->input(), '192.0.2.8' );
+		$user = get_user_by( 'email', 'nova@example.com' );
+		self::assertNotFalse( $user );
+		$creators = new CreatorRepository( $this->wpdb );
+		$creator  = $creators->find_by_user_id( $user->ID );
+		self::assertNotNull( $creator );
+		$other = $this->create_user( 'new-owner' );
+		wp_set_current_user( 1 );
+		$service = $this->service( \MerchBoard\Modules\Creators\CreatorService::class );
+		$service->update( $creator->id, $creator->display_name, $creator->status, $other );
+		self::assertNull( $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT expires_at FROM %i WHERE creator_id = %d', $this->wpdb->prefix . Tables::CREATOR_SIGNUPS, $creator->id ) ) );
+		$service->update( $creator->id, $creator->display_name, $creator->status, $user->ID );
+		// Remove the role granted by reassignment to isolate expiry cancellation.
+		( new \WP_User( $user->ID ) )->set_role( '' );
+		$this->offset = 8 * DAY_IN_SECONDS;
+		$this->signup()->clean_up();
+
+		self::assertNotNull( $creators->find( $creator->id ) );
+		self::assertNotFalse( get_userdata( $user->ID ) );
+		self::assertNotFalse( get_userdata( $other ) );
+		self::assertSame( 1, ( new AgreementRepository( $this->wpdb ) )->accepted( $creator->id ) );
+	}
+
+	public function test_cleanup_preserves_a_reassigned_creator_with_a_legacy_expiry_record(): void {
+		$this->signup()->submit( $this->input(), '192.0.2.9' );
+		$user = get_user_by( 'email', 'nova@example.com' );
+		self::assertNotFalse( $user );
+		$creators = new CreatorRepository( $this->wpdb );
+		$creator  = $creators->find_by_user_id( $user->ID );
+		self::assertNotNull( $creator );
+		$other = $this->create_user( 'legacy-owner' );
+		// Simulate reassignment before expiry cancellation was introduced.
+		$this->wpdb->update( $this->wpdb->prefix . Tables::CREATORS, array( 'user_id' => $other ), array( 'id' => $creator->id ) );
+		$this->offset = 8 * DAY_IN_SECONDS;
+		$this->signup()->clean_up();
+
+		self::assertSame( $other, $creators->find( $creator->id )?->user_id );
+		self::assertNotFalse( get_userdata( $user->ID ) );
+		self::assertNotFalse( get_userdata( $other ) );
+		self::assertSame( 1, ( new AgreementRepository( $this->wpdb ) )->accepted( $creator->id ) );
+		self::assertNotContains( 'creator_signup_expired', $this->audit_actions() );
+	}
+
 	public function test_the_page_answers_only_while_open_and_checks_its_nonce(): void {
 		$page = $this->service( SignupPage::class );
 
