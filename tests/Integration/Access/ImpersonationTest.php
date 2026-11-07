@@ -202,7 +202,7 @@ final class ImpersonationTest extends IntegrationTestCase {
 	}
 
 	public function test_what_must_stay_the_creators_own_is_refused(): void {
-		$routes  = array(
+		$routes = array(
 			array( 'POST', '/merchboard/v1/me/payouts', array() ),
 			array( 'POST', '/merchboard/v1/me/payouts/5/cancel', array() ),
 			array( 'GET', '/merchboard/v1/me/payouts/5/gift-card', array() ),
@@ -217,6 +217,11 @@ final class ImpersonationTest extends IntegrationTestCase {
 			array( 'POST', '/merchboard/v1/me/alerts/api/Keys', array() ),
 			array( 'POST', '/merchboard/v1/me/alerts/api/Webhooks', array( 'format' => 'json' ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		);
+		// Non-string JSON values become empty in the webhook controller.
+		foreach ( array( true, false, 1, 0, 1.5, null, array(), array( 'value' ) ) as $secret ) {
+			$routes[] = array( 'POST', '/merchboard/v1/me/alerts/api/webhooks', array( 'format' => 'json', 'secret' => $secret ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact request fixture.
+		}
+
 		$allowed = array(
 			array( 'GET', '/merchboard/v1/me/payouts/5/settlement-document', array() ),
 			array( 'POST', '/merchboard/v1/me/alerts/chatbot/twitch/test', array() ),
