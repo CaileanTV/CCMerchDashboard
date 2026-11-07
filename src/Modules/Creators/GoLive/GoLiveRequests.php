@@ -178,6 +178,11 @@ class GoLiveRequests {
 
 		$decided = $this->transaction->run(
 			function () use ( $id, $creator ): bool {
+				// A pending request may predate a material agreement update.
+				if ( ! $this->agreement->satisfied( $creator ) ) {
+					self::refuse( GoLiveException::AGREEMENT );
+				}
+
 				$user = get_current_user_id();
 
 				if ( ! $this->requests->decide( $id, GoLiveRepository::APPROVED, null, $user > 0 ? $user : null, ( $this->clock )() ) ) {
