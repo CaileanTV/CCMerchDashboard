@@ -40,9 +40,10 @@ final class TransactionSupport {
 	/**
 	 * Constructor.
 	 *
-	 * @param wpdb $wpdb WordPress database object.
+	 * @param wpdb              $wpdb WordPress database object.
+	 * @param list<string>|null $tables Required table suffixes; null checks all plugin tables.
 	 */
-	public function __construct( private wpdb $wpdb ) {
+	public function __construct( private wpdb $wpdb, private ?array $tables = null ) {
 	}
 
 	/**
@@ -80,7 +81,7 @@ final class TransactionSupport {
 
 		$unsupported = array();
 
-		foreach ( Tables::all() as $table ) {
+		foreach ( $this->tables ?? Tables::all() as $table ) {
 			$name = Tables::name( $wpdb, $table );
 			$row  = $found[ strtolower( $name ) ] ?? null;
 

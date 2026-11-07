@@ -208,6 +208,79 @@ final class PayoutCreatorRowLockTest extends IntegrationTestCase {
 		self::assertSame( array( 2, 3 ), array( $this->count_rows( Tables::SETTLEMENT_DOCUMENTS ), $this->count_rows( Tables::SETTLEMENT_ROWS ) ), 'A second document; no row settled twice.' );
 	}
 
+	public function test_uninstall_rechecks_after_a_request_commits_between_preflight_and_drain(): void {
+		Settings::save( array( Settings::DELETE_DATA_ON_UNINSTALL => true ) + Settings::all() );
+		$second   = $this->second_connection();
+		$inserted = false;
+		$probe    = function ( string $sql ) use ( $second, &$inserted ): string {
+			if ( ! $inserted && str_starts_with( $sql, 'SELECT id FROM' ) && str_contains( $sql, 'ORDER BY id FOR UPDATE' ) ) {
+				$inserted   = true;
+				$repository = new PayoutRepository( $second );
+				$repository->with_creator_lock(
+					$this->creator,
+					function () use ( $repository, $second ): void {
+						( new Transaction( $second, new TransactionSupport( $second ) ) )->run(
+							function () use ( $repository ): void {
+								CreatorRowLock::acquire( $repository, $this->creator );
+								$repository->insert_pending( $this->creator, 'DKK', 10000, 2, PayoutMethod::Bank, 'masked', 'key-uninstall-race', 1, self::at( '2026-11-30 12:00:00' ), 'encrypted-test-details', 'test-key' );
+							}
+						);
+					}
+				);
+			}
+			return $sql;
+		};
+		add_filter( 'query', $probe );
+		try {
+			$this->uninstaller()->run();
+			self::fail( 'The committed pending payout must block cleanup.' );
+		} catch ( \MerchBoard\Core\Lifecycle\UninstallBlocked $error ) {
+			self::assertSame( 1, $error->pending );
+		} finally {
+			remove_filter( 'query', $probe );
+		}
+		self::assertTrue( $inserted );
+		self::assertSame( 1, $this->count_rows( Tables::PAYOUT_SECRETS ) );
+		self::assertSame( 'active', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT status FROM %i WHERE id = %d', $this->table( Tables::CREATORS ), $this->creator ) ) );
+	}
+
+	public function test_uninstall_waits_for_inflight_work_and_fails_closed_on_timeout(): void {
+		Settings::save( array( Settings::DELETE_DATA_ON_UNINSTALL => true ) + Settings::all() );
+		$second = $this->second_connection();
+		$second->query( 'START TRANSACTION' );
+		$second->get_var( $second->prepare( 'SELECT id FROM %i WHERE id = %d FOR UPDATE', $this->table( Tables::CREATORS ), $this->creator ) );
+		$before = $this->state();
+		try {
+			$result = null;
+			$error  = $this->while_waiting(
+				function () use ( &$result ): void {
+					$result = $this->uninstaller()->run();
+				}
+			);
+			self::assertNull( $error );
+			self::assertFalse( $result );
+			self::assertGreaterThanOrEqual( 0.9, $this->waited );
+			self::assertSame( $before, $this->state() );
+		} finally {
+			$second->query( 'ROLLBACK' );
+		}
+	}
+
+	public function test_archival_closes_admission_for_a_previously_authorized_request(): void {
+		// Exercise the admission boundary before cleanup drops balance tables.
+		$uninstaller = $this->uninstaller();
+		( new \ReflectionMethod( $uninstaller, 'drain_and_archive_creators' ) )->invoke( $uninstaller );
+		$error = $this->while_waiting( fn(): Payout => $this->requests->request( $this->creator, 'DKK', '1', PayoutMethod::GiftCard->value, array(), 'key-after-archive', 1 ) );
+		self::assertInstanceOf( DatabaseException::class, $error );
+		self::assertSame( 0, $this->count_rows( Tables::PAYOUTS ) );
+		self::assertSame( 0, $this->count_rows( Tables::PAYOUT_SECRETS ) );
+	}
+
+	private function uninstaller(): \MerchBoard\Core\Lifecycle\Uninstaller {
+		$logger = new RecordingLogger();
+		return new \MerchBoard\Core\Lifecycle\Uninstaller( $this->wpdb, new \MerchBoard\Core\Database\SchemaEraser( $this->wpdb, $logger ), $logger );
+	}
+
 	public function test_the_lock_requires_the_creators_named_lock(): void {
 		try {
 			CreatorRowLock::acquire( $this->repository, $this->creator );

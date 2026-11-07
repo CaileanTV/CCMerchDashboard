@@ -10,6 +10,9 @@ declare( strict_types=1 );
 namespace MerchBoard\Core\Lifecycle;
 
 use MerchBoard\Core\Database\Migrator;
+use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Database\TransactionSupport;
 use MerchBoard\Core\Database\SchemaEraser;
 use MerchBoard\Core\Database\Migrations\RemoveImportOptions;
 use MerchBoard\Core\Database\Tables;
@@ -54,9 +57,11 @@ defined( 'ABSPATH' ) || exit;
  * Deletes nothing unless "delete all data on uninstall" is exactly true.
  * With the opt-in it first counts the pending payouts (every method; ADR-059):
  * when one is pending, or the count fails, it throws UninstallBlocked before
- * anything is changed (fail closed), and uninstall.php ends the deletion
- * request so the plugin stays installed. Otherwise, and always without the
- * opt-in, it cancels pending sales ledger backfill jobs (ScheduledJobs; jobs,
+ * anything is changed (fail closed). It then locks all creator rows to drain
+ * payout work, repeats the count, and archives creators in that transaction
+ * before cleanup. New payout inserts require an active creator. uninstall.php
+ * ends a blocked deletion request so the plugin stays installed. Otherwise,
+ * and always without the opt-in, it cancels pending sales ledger backfill jobs (ScheduledJobs; jobs,
  * not data).
  * With the opt-in it removes only what the plugin owns, for the current site:
  *
@@ -210,6 +215,10 @@ final class Uninstaller {
 			}
 		}
 
+		if ( $opted_in && ! $this->drain_and_archive_creators() ) {
+			return false;
+		}
+
 		// Not data: pending backfill pages are cancelled with or without the opt-in.
 		ScheduledJobs::cancel_sales_backfill();
 
@@ -231,11 +240,6 @@ final class Uninstaller {
 
 		// The product designer's private files (ADR-080 pkt. 5): template layers, cliparts and later uploads and print files.
 		DesignerFiles::remove_all();
-
-		if ( ! $this->archive_creators() ) {
-			// Nothing is dropped; the opt-in survives so a later uninstall can finish.
-			return false;
-		}
 
 		if ( ! $this->schema->erase() ) {
 			// Keep the options (including the opt-in) so a later uninstall can finish.
@@ -287,6 +291,74 @@ final class Uninstaller {
 
 		$this->logger->info( 'Merch Dashboard data deleted on uninstall.', array( 'kept_tables' => implode( ', ', Tables::retained_on_uninstall() ) ) );
 
+		return true;
+	}
+
+	/**
+	 * Drain payout transactions, check pending work, and close admission by
+	 * archiving creators before releasing their row locks. No DDL runs here.
+	 *
+	 * @return bool Whether creators were safely archived.
+	 * @throws UninstallBlocked When counting fails or payouts are pending.
+	 */
+	private function drain_and_archive_creators(): bool {
+		$wpdb   = $this->wpdb;
+		$table  = Tables::name( $wpdb, Tables::CREATORS );
+		$exists = self::read( $wpdb, $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) );
+		if ( ! $exists['ok'] ) {
+			throw new UninstallBlocked( null );
+		}
+		if ( null === $exists['value'] ) {
+			return true;
+		}
+
+		// Only existing tables are required: uninstall must also work on old
+		// schemas and after a previous attempt already dropped some tables.
+		$tables  = array( Tables::CREATORS );
+		$payouts = Tables::name( $wpdb, Tables::PAYOUTS );
+		$exists  = self::read( $wpdb, $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $payouts ) ) );
+		if ( ! $exists['ok'] ) {
+			throw new UninstallBlocked( null );
+		}
+		if ( null !== $exists['value'] ) {
+			$tables[] = Tables::PAYOUTS;
+		}
+		$connection = self::read( $wpdb, 'SELECT CONNECTION_ID()' );
+		if ( ! $connection['ok'] || ! is_numeric( $connection['value'] ) ) {
+			throw new UninstallBlocked( null );
+		}
+		$assert_connection = static function () use ( $wpdb, $connection ): void {
+			$current = self::read( $wpdb, 'SELECT CONNECTION_ID()' );
+			if ( ! $current['ok'] || (string) $current['value'] !== (string) $connection['value'] ) {
+				throw new DatabaseException( 'Connection changed during uninstall.' );
+			}
+		};
+		try {
+			( new Transaction( $wpdb, new TransactionSupport( $wpdb, $tables ) ) )->run(
+				function () use ( $wpdb, $table, $assert_connection ): void {
+					// Current locking read: waits for all existing creator payout work.
+					$wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i ORDER BY id FOR UPDATE', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- Prepared plugin table; live lifecycle exclusion.
+					if ( '' !== $wpdb->last_error ) {
+						throw new DatabaseException( 'Could not lock creators during uninstall.' );
+					}
+					$assert_connection();
+					// The first consistent read is after the drain, so committed
+					// requests are visible even at REPEATABLE READ isolation.
+					$pending = self::pending_payouts( $wpdb );
+					if ( 0 !== $pending ) {
+						throw new UninstallBlocked( $pending );
+					}
+					if ( ! $this->archive_creators() ) {
+						throw new DatabaseException( 'Could not archive creators during uninstall.' );
+					}
+					$assert_connection();
+				}
+			);
+			$assert_connection();
+		} catch ( DatabaseException ) {
+			$this->logger->warning( 'Uninstall could not safely archive creators.' );
+			return false;
+		}
 		return true;
 	}
 

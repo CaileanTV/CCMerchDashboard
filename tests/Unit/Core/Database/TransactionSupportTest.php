@@ -35,6 +35,14 @@ final class TransactionSupportTest extends TestCase {
 		self::assertSame( array(), $support->unsupported_tables() );
 	}
 
+	public function test_explicit_scope_allows_partial_uninstall_but_still_checks_required_engines(): void {
+		$this->tables( array( 'wp_merchboard_creators' => 'YES' ) );
+		self::assertTrue( ( new TransactionSupport( $this->wpdb, array( 'merchboard_creators' ) ) )->available() );
+		$this->tables( array( 'wp_merchboard_creators' => 'NO' ) );
+		self::assertFalse( ( new TransactionSupport( $this->wpdb, array( 'merchboard_creators' ) ) )->available() );
+		self::assertFalse( ( new TransactionSupport( $this->wpdb, array( 'merchboard_payouts' ) ) )->available(), 'A required missing table still fails closed.' );
+	}
+
 	public function test_asks_information_schema_for_the_engine_of_the_plugin_tables_only(): void {
 		$this->tables( array() );
 
