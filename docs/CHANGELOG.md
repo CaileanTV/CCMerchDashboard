@@ -4,6 +4,18 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+### Added
+
+- **Farvedesigns (fase 34, ADR-096):** enkelte farver på samme produkt kan få deres eget design, fx sort og hvid med ét design og orange med et andet. Som standard deler alle farver ét design; creatoren giver en farve "+ Nyt design" eller lader flere farver dele et. Når en farve samles med et andet design, vælger creatoren, hvordan de flettes. Hver farve får sin egen pris, egne printfiler og mockups (også hos leverandørerne), og ordresiden viser printfilerne for linjens farve.
+- **Produktbillede (fase 34, schema-version 47):** creatoren vælger, hvilket mockup (farve + side) der er produktets hovedbillede, og kan skifte det på et live produkt uden ny godkendelse. Audit `designer_primary_image_changed`.
+- **Kopiér design (fase 34):** et nyt produkt med samme opsætning som et eksisterende, også før det er godkendt.
+- **Vælg alle farver** og elementets **størrelse i cm** i designeren.
+- **Sikkerhed:** en admin, der ser dashboardet som en creator, kan ikke få lavet en webhook-hemmelighed med en hemmelighed, der ikke er tekst (PR #11), og en Twitch-, Kick- eller YouTube-forbindelse kan ikke gøres færdig, efter creatorens adgang er fjernet (PR #13).
+
+### Changed
+
+- **Migration 47:** `merchboard_designer_versions.primary_image` og en længere opgavenøgle hos leverandørerne. Butikken gemmer grundprisen pr. farve og størrelse for produkter med farvedesigns; en nedgradering til 1.6 understøttes ikke for dem.
+
 ## [1.6.0] - 2026-11-07
 
 Fase 32 og 33: creators opretter sig selv, aftalepapiret, "gå live", 14 dages prisvarsel med "Ændre pris nu", baggrundsfarve på AOP-produkter og "Duplikér lag". Schema-version 46 (migration 45 og 46 ved opdatering fra 1.5.0; ingen manuelle trin i databasen). Selvoprettelse er slået fra som standard. Fase 32 og 33 er reviewet og runtime-testet på Local 2026-11-06–07. Opdateringen står i DEVELOPMENT.md ("Release 1.6.0").

@@ -204,6 +204,16 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
 - **Implementeret (trin 30.5):** markøren `_merchboard_designer_token`, `DesignerProductGuard`, `WooCommerceDesignerWriter` og arkitekturtesten `LegacyGuardArchitectureTest`.
 - **Kontrol:** runtime-testen i 30.15 sammenligner alle legacy-produkter før og efter (pris, billeder, varianter, meta).
 
+## Farvedesigns, produktbillede og "Kopiér design" (fase 34, ADR-096, 2026-11-07)
+
+- **Farvedesigns:** som standard deler alle farver ét design. I farvelisten og over lærredet har hver farve et designvalg: "Fælles design", "Design 2" … eller "+ Nyt design", der starter som en kopi af farvens design. Flere farver kan dele et eget design (højst 8 egne designs). Lærredet redigerer designet for den viste farve, og linjen over lærredet viser, hvilke farver ændringerne gælder.
+- **Når en farve flyttes ind i et andet design,** spørger designeren: brug måldesignet, brug farvens design (det erstatter måldesignet for alle farver i det) eller læg lagene sammen. Alt kan fortrydes.
+- **Pris pr. farve:** en farve koster prisen for sit eget design, så ekstra trykområder regnes pr. farve. Designeren viser "Pris pr. farve", og overskriftsprisen er den højeste.
+- **Filer og leverandører:** hvert design får sine egne printfiler. Hver farve får mockups af sit eget design, også hos Printful, Gelato og Prodigi. Ordresiden viser printfilerne for linjens farve og størrelse; kan farven ikke afgøres, vises alle med farvenavn.
+- **Produktbillede:** creatoren vælger farve og side under "Produktbillede". Ved godkendelse bliver billedet produktets hovedbillede. På et live produkt kan billedet skiftes under "Produktbillede" uden ny godkendelse.
+- **Kopiér design:** knappen på hvert design og i designeren laver et nyt produkt med samme opsætning, også fra et design, der venter eller er afvist. Filer kopieres ikke.
+- **"Vælg alle"** ved farverne, og det valgte elements **størrelse i cm** ud fra sidens printstørrelse (også mens det skaleres).
+
 ## Baggrundsfarve på AOP-produkter (fase 33, ADR-095, 2026-11-07)
 
 Admin markerer et grundprodukt med "Baggrundsfarve (AOP)". Kun på de produkter har designeren fanen "Baggrund".
