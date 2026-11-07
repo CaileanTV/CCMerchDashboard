@@ -59,6 +59,13 @@ describe( 'the size of an element on the print', () => {
 		expect( cmText( { width: 12.5, height: 8 }, 'da-DK' ) ).toBe(
 			'12,5 × 8,0 cm'
 		);
+		// WordPress gives the locale with an underscore (it crashed the editor on Local).
+		expect( cmText( { width: 12.5, height: 8 }, 'da_DK' ) ).toBe(
+			'12,5 × 8,0 cm'
+		);
+		expect( cmText( { width: 1, height: 2 }, 'not a locale!' ) ).toBe(
+			'1.0 × 2.0 cm'
+		);
 		expect( cmText( { width: 3, height: 10.2 }, 'en-US' ) ).toBe(
 			'3.0 × 10.2 cm'
 		);

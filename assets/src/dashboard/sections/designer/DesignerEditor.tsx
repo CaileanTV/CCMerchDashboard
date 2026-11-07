@@ -2652,18 +2652,25 @@ export function cmText(
 	size: { readonly width: number; readonly height: number },
 	locale: string
 ): string {
-	const number = new Intl.NumberFormat( locale, {
-		minimumFractionDigits: 1,
-		maximumFractionDigits: 1,
-	} );
+	// WordPress gives "da_DK"; Intl wants "da-DK" and throws on the other.
+	const format = ( value: number ): string => {
+		try {
+			return new Intl.NumberFormat( locale.replace( '_', '-' ), {
+				minimumFractionDigits: 1,
+				maximumFractionDigits: 1,
+			} ).format( value );
+		} catch {
+			return value.toFixed( 1 );
+		}
+	};
 
 	return sprintf(
 		/* translators: 1: width in cm, 2: height in cm. */ __(
 			'%1$s × %2$s cm',
 			'merchboard'
 		),
-		number.format( size.width ),
-		number.format( size.height )
+		format( size.width ),
+		format( size.height )
 	);
 }
 
