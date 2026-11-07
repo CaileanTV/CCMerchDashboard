@@ -101,7 +101,18 @@ class ProdigiMockups {
 			$version  = $id > 0 && $this->api->available() ? $this->products->version( $id ) : null;
 			$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
 
-			if ( null === $version || null === $provider || ProdigiCatalog::SOURCE !== $provider['source'] || array() === self::sides( $version, $provider['placements'] ) ) {
+			if ( null === $version || null === $provider || ProdigiCatalog::SOURCE !== $provider['source'] ) {
+				return;
+			}
+
+			// Any design's print files count, also when every colour has a design of its own (review 34.12).
+			$sides = array();
+
+			foreach ( array_keys( SubmissionFiles::prints( SubmissionFiles::decode( is_string( $version['files'] ) ? $version['files'] : null ) ) ) as $part ) {
+				$sides = array_merge( $sides, self::sides( $version, $provider['placements'], (string) $part ) );
+			}
+
+			if ( array() === $sides ) {
 				return;
 			}
 

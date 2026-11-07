@@ -298,6 +298,7 @@ function Editor( props: EditorProps ) {
 		design: props.design,
 		stitch,
 		price: draft.price,
+		primaryImage: draft.primaryImage,
 	} );
 	const [ stageError, setStageError ] = useState( false );
 	const [ displayWidth, setDisplayWidth ] = useState( DISPLAY_WIDTH );
@@ -318,7 +319,11 @@ function Editor( props: EditorProps ) {
 	// The whole document; the canvas edits the design of the colour shown (ADR-096).
 	const whole = history.value;
 	const activePart = partOf( whole, previewColor );
-	const design = partDoc( whole, activePart );
+	// Memoised: effects depend on it, and a new object each render would run them again and again (review 34.12).
+	const design = useMemo(
+		() => partDoc( whole, activePart ),
+		[ whole, activePart ]
+	);
 	const previewRef = useRef( previewColor );
 	previewRef.current = previewColor;
 	sideRef.current = view?.key ?? side;
@@ -408,7 +413,7 @@ function Editor( props: EditorProps ) {
 		)
 	);
 	const dirty =
-		primaryImage !== draft.primaryImage ||
+		primaryImage !== saved.primaryImage ||
 		whole !== saved.design ||
 		stitch !== saved.stitch ||
 		title !== draft.postfix ||
@@ -975,6 +980,7 @@ function Editor( props: EditorProps ) {
 			design: whole,
 			stitch,
 			price: result.data.draft?.price ?? null,
+			primaryImage: result.data.draft?.primaryImage ?? null,
 		} );
 
 		return result.data;

@@ -1007,7 +1007,9 @@ final class MeDesignerController extends RestController {
 			$sides[ $view->key ] = $view->name;
 		}
 
-		foreach ( array_keys( SubmissionFiles::decode( is_string( $live['files'] ?? null ) ? $live['files'] : null )['mockups'] ) as $key ) {
+		$mockups = SubmissionFiles::decode( is_string( $live['files'] ?? null ) ? $live['files'] : null )['mockups'];
+
+		foreach ( array_keys( $mockups ) as $key ) {
 			$key = (string) $key;
 
 			if ( SubmissionFiles::is_close( $key ) ) {
@@ -1020,7 +1022,8 @@ final class MeDesignerController extends RestController {
 			foreach ( $colors as $color ) {
 				$image = $key . ':' . $color;
 
-				if ( DesignerImages::valid( $image, $design, $colors ) ) {
+				// Only a mockup the version has: a photo or a provider's replacement may cover some colours only (review 34.12).
+				if ( isset( $mockups[ $key ][ $color ] ) && DesignerImages::valid( $image, $design, $colors ) ) {
 					$images[] = array(
 						'image' => $image,
 						'label' => ( $names[ $color ] ?? $color ) . ' – ' . $side,

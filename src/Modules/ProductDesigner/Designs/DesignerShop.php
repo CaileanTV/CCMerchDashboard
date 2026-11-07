@@ -151,32 +151,32 @@ class DesignerShop {
 			self::refuse( DesignerException::NOT_LIVE );
 		}
 
-		$live   = $this->products->live( $product ) ?? self::refuse( DesignerException::NOT_LIVE );
-		$base   = $this->bases->find( (int) $row['base_id'] ) ?? self::refuse( DesignerException::BASE_UNKNOWN );
-		$proof  = $this->guard->for_row( $product ) ?? self::refuse( DesignerException::NOT_LIVE );
-		$design = json_decode( (string) $live['design'], true );
-		$design = is_array( $design ) ? $design : array();
-		$colors = json_decode( (string) $live['colors'], true );
-		$colors = is_array( $colors ) ? array_values( array_filter( $colors, 'is_string' ) ) : array();
-		$files  = SubmissionFiles::decode( is_string( $live['files'] ?? null ) ? $live['files'] : null );
-
-		if ( ! DesignerImages::valid( $image, $design, $colors ) ) {
-			self::refuse( DesignerException::DESIGN_INVALID );
-		}
-
-		// The apply, the repricing and the retirement write the same product.
+		// The apply, the repricing and the retirement write the same product: the live version is read under the lock (review 34.12).
 		if ( ! $this->products->lock_product( $product ) ) {
 			self::refuse( DesignerException::DESIGN_BUSY );
 		}
 
 		try {
+			$live   = $this->products->live( $product ) ?? self::refuse( DesignerException::NOT_LIVE );
+			$base   = $this->bases->find( (int) $row['base_id'] ) ?? self::refuse( DesignerException::BASE_UNKNOWN );
+			$proof  = $this->guard->for_row( $product ) ?? self::refuse( DesignerException::NOT_LIVE );
+			$design = json_decode( (string) $live['design'], true );
+			$design = is_array( $design ) ? $design : array();
+			$colors = json_decode( (string) $live['colors'], true );
+			$colors = is_array( $colors ) ? array_values( array_filter( $colors, 'is_string' ) ) : array();
+			$files  = SubmissionFiles::decode( is_string( $live['files'] ?? null ) ? $live['files'] : null );
+
+			if ( ! DesignerImages::valid( $image, $design, $colors ) ) {
+				self::refuse( DesignerException::DESIGN_INVALID );
+			}
+
 			$media = $this->media->imported( (int) $live['id'], $files );
 
 			if ( ! isset( $media[ SubmissionFiles::MOCKUP . ':' . $image ] ) ) {
 				self::refuse( DesignerException::DESIGN_INVALID );
 			}
 
-			$this->writer->set_images( $proof, DesignerImages::order( $base, $colors, array_keys( $files['mockups'] ), $media, $image )['images'] );
+			// The choice is stored first: a failed save leaves the shop as it was.
 			$this->transaction->run(
 				function () use ( $creator, $product, $live, $image ): void {
 					$this->products->set_primary_image( (int) $live['id'], $image );
@@ -202,6 +202,7 @@ class DesignerShop {
 					);
 				}
 			);
+			$this->writer->set_images( $proof, DesignerImages::order( $base, $colors, array_keys( $files['mockups'] ), $media, $image )['images'] );
 		} finally {
 			$this->products->unlock_product( $product );
 		}

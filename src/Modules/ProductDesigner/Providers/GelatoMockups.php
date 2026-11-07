@@ -262,6 +262,15 @@ class GelatoMockups {
 			}
 		}
 
+		// A variant whose design has no image Gelato can place is left out (review 34.12).
+		$variants = array_filter( $variants, static fn( string $color ): bool => array() !== ( $images[ ColorDesigns::part_of( $design, $color ) ] ?? array() ) );
+
+		if ( array() === $variants ) {
+			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'error' => 'no_variant' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+			return;
+		}
+
 		$answer  = $this->api->create_from_template(
 			array(
 				'templateId'                => $template,

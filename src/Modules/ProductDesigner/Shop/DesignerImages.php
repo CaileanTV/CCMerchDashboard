@@ -77,7 +77,8 @@ final class DesignerImages {
 	 * @param array<string> $colors  The chosen colours.
 	 */
 	public static function valid( mixed $primary, array $design, array $colors ): bool {
-		if ( ! is_string( $primary ) || 1 !== preg_match( '/^([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}):([a-z0-9%_-]{1,32})$/', $primary, $match ) ) {
+		// The column holds 64 characters (migration 47).
+		if ( ! is_string( $primary ) || strlen( $primary ) > 64 || 1 !== preg_match( '/^([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}):([a-z0-9%_-]{1,32})$/', $primary, $match ) ) {
 			return false;
 		}
 
