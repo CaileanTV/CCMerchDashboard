@@ -2180,6 +2180,36 @@ input:disabled + .merchboard-sounds__upload {
 	pointer-events: none;
 }
 
+// Colour designs (ADR-096): the design being edited and each colour's choice.
+.merchboard-product-designer__design-status {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+	font-size: 0.875rem;
+}
+
+.merchboard-product-designer__design-choice {
+	width: auto;
+	max-width: 12rem;
+	padding-block: 0.125rem;
+	font-size: 0.8125rem;
+}
+
+.merchboard-product-designer__design-prices {
+	display: grid;
+	gap: 0.25rem;
+	padding: 0;
+	margin: 0;
+	list-style: none;
+
+	li {
+		display: flex;
+		gap: 0.5rem;
+		justify-content: space-between;
+	}
+}
+
 // The size of an element while it is scaled (ADR-096 pkt. 8).
 .merchboard-product-designer__measure {
 	position: absolute;

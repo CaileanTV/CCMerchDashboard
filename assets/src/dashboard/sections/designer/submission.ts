@@ -20,6 +20,10 @@ import {
 	backgroundOf,
 	coversSizes,
 	objectsOf,
+	effectiveParts,
+	partDoc,
+	partOf,
+	SHARED,
 	usedSides,
 } from './design-model';
 import type { DesignDocument } from './design-model';
@@ -65,12 +69,19 @@ export function submissionSize(
 	colors: readonly string[],
 	views: readonly DesignerView[]
 ): number {
-	const sides = usedSides( design );
-	const closeUps = views.filter(
-		( view ) => sides.includes( view.key ) && hasStitches( view )
-	).length;
+	// Every design the colours use sends its own files (ADR-096).
+	return effectiveParts( design, colors ).reduce( ( sum, part ) => {
+		const sides = usedSides( partDoc( design, part.id ) );
+		const closeUps = views.filter(
+			( view ) => sides.includes( view.key ) && hasStitches( view )
+		).length;
 
-	return sides.length * ( 1 + colors.length ) + closeUps * colors.length;
+		return (
+			sum +
+			sides.length * ( 1 + part.colors.length ) +
+			closeUps * part.colors.length
+		);
+	}, 0 );
 }
 
 /**
@@ -301,11 +312,19 @@ async function stitchedImages(
  * The mockups a creator can see while designing: drawn here from the side's
  * PSD scene or its stitches, so nothing is sent. Null when one cannot be drawn.
  *
- * @param input The design as it stands.
+ * @param whole The design as it stands; the first colour's design is shown.
  */
 export async function sceneImages(
-	input: SubmissionInput
+	whole: SubmissionInput
 ): Promise< DesignerPreview[ 'images' ] | null > {
+	// The first colour's design (ADR-096).
+	const input = {
+		...whole,
+		design: partDoc(
+			whole.design,
+			partOf( whole.design, whole.colors[ 0 ] ?? '' )
+		),
+	};
 	const sides = usedSides( input.design );
 	const shown: { side: string; color: string; url: string }[] = [];
 
@@ -361,19 +380,67 @@ export async function uploadFiles(
 	input: SubmissionInput,
 	progress: ( done: number, total: number ) => void
 ): Promise< UploadResult > {
-	const sides = usedSides( input.design );
+	// Each design the colours use, with its colours (ADR-096).
+	const parts = effectiveParts( input.design, input.colors );
 
-	if ( sides.length === 0 ) {
+	if ( parts.length === 0 ) {
 		return { ok: false, reason: 'design_empty' };
 	}
 
-	if ( ! coversSizes( input.base.views, input.design, input.sizes ) ) {
-		return { ok: false, reason: 'design_sizes' };
+	for ( const part of parts ) {
+		const doc = partDoc( input.design, part.id );
+
+		if ( usedSides( doc ).length === 0 ) {
+			return { ok: false, reason: 'design_empty' };
+		}
+
+		if ( ! coversSizes( input.base.views, doc, input.sizes ) ) {
+			return { ok: false, reason: 'design_sizes' };
+		}
 	}
 
+	const total = submissionSize(
+		input.design,
+		input.colors,
+		input.base.views
+	);
 	let done = 0;
 
 	await input.fonts();
+
+	for ( const part of parts ) {
+		const result = await uploadPart(
+			{
+				...input,
+				design: partDoc( input.design, part.id ),
+				colors: part.colors,
+			},
+			part.id,
+			() => progress( ++done, total )
+		);
+
+		if ( ! result.ok ) {
+			return result;
+		}
+	}
+
+	return { ok: true };
+}
+
+/**
+ * Renders and sends the files of one design: its print files and the
+ * mockups of its colours.
+ *
+ * @param input The draft with one design as its document and that design's colours.
+ * @param id    The design's id; SHARED for the shared design.
+ * @param tick  Called after each file.
+ */
+async function uploadPart(
+	input: SubmissionInput,
+	id: string,
+	tick: () => void
+): Promise< UploadResult > {
+	const sides = usedSides( input.design );
 
 	for ( const key of sides ) {
 		const view = input.base.views.find(
@@ -396,11 +463,6 @@ export async function uploadFiles(
 			return { ok: false, reason: 'render' };
 		}
 
-		const total = submissionSize(
-			input.design,
-			input.colors,
-			input.base.views
-		);
 		const file = await ( view.flat ? flatJpegOf( print ) : pngOf( print ) );
 
 		if ( file === null ) {
@@ -409,7 +471,7 @@ export async function uploadFiles(
 
 		const sent = await uploadSubmissionFile(
 			input.product,
-			`print:${ key }`,
+			id === SHARED ? `print:${ key }` : `print:${ key }:${ id }`,
 			file,
 			`print-${ key }.${ view.flat ? 'jpg' : 'png' }`
 		);
@@ -418,7 +480,7 @@ export async function uploadFiles(
 			return { ok: false, reason: sent.error.reason ?? 'upload' };
 		}
 
-		progress( ++done, total );
+		tick();
 
 		// A PSD scene draws the product as it is: the same mockup for each colour.
 		const sceneUrl =
@@ -468,7 +530,7 @@ export async function uploadFiles(
 				return { ok: false, reason: result.error.reason ?? 'upload' };
 			}
 
-			progress( ++done, total );
+			tick();
 
 			if ( ! hasStitches( view ) ) {
 				continue;
@@ -503,7 +565,7 @@ export async function uploadFiles(
 				}
 			}
 
-			progress( ++done, total );
+			tick();
 		}
 	}
 

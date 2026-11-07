@@ -67,6 +67,17 @@ import {
 	withKnownThreads,
 	withObjects,
 	withThread,
+	allPartDocs,
+	designsOf,
+	mapParts,
+	moveColor,
+	newColorDesign,
+	partDoc,
+	partOf,
+	prunedDesigns,
+	withPart,
+	MAX_DESIGNS,
+	effectiveParts,
 } from './design-model';
 import type {
 	DesignDocument,
@@ -87,6 +98,12 @@ import {
 	uploadFiles,
 } from './submission';
 import { BackgroundPanel } from './BackgroundPanel';
+import {
+	ColorDesignPicker,
+	designName,
+	MergeDesigns,
+	NEW_DESIGN,
+} from './ColorDesigns';
 import { IconButton, LayerList } from './LayerList';
 import { TemplateLayers } from './TemplateLayers';
 import { threadObject, threadSide } from './threads';
@@ -194,10 +211,8 @@ export function DesignerEditor( props: DesignerEditorProps ) {
 			overview={ overview }
 			product={ product }
 			base={ base }
-			design={ withKnownBackground(
-				draft.design,
-				base.views,
-				base.backgroundColor
+			design={ mapParts( draft.design, ( part ) =>
+				withKnownBackground( part, base.views, base.backgroundColor )
 			) }
 			locale={ locale }
 			onBack={ onBack }
@@ -269,6 +284,11 @@ function Editor( props: EditorProps ) {
 	const [ saving, setSaving ] = useState( false );
 	const [ discarding, setDiscarding ] = useState( false );
 	const [ copying, setCopying ] = useState( false );
+	// A colour joining another design: how to merge is asked first (ADR-096).
+	const [ merging, setMerging ] = useState< {
+		readonly color: string;
+		readonly target: string;
+	} | null >( null );
 	const [ saved, setSaved ] = useState( {
 		design: props.design,
 		stitch,
@@ -290,8 +310,21 @@ function Editor( props: EditorProps ) {
 	const view =
 		base.views.find( ( candidate ) => candidate.key === side ) ??
 		base.views[ 0 ];
-	const design = history.value;
+	// The whole document; the canvas edits the design of the colour shown (ADR-096).
+	const whole = history.value;
+	const activePart = partOf( whole, previewColor );
+	const design = partDoc( whole, activePart );
+	const previewRef = useRef( previewColor );
+	previewRef.current = previewColor;
 	sideRef.current = view?.key ?? side;
+
+	/** Changes the design of the colour shown (ADR-096); every colour with that design follows. */
+	const editPart = ( change: ( part: DesignDocument ) => DesignDocument ) =>
+		history.set( ( full ) => {
+			const id = partOf( full, previewRef.current );
+
+			return withPart( full, id, change( partDoc( full, id ) ) );
+		} );
 	const fullName = `${ overview.creator } ${ base.name } ${ title }`.trim();
 	const objects = view === undefined ? [] : objectsOf( design, view.key );
 	const embroidery = view?.embroidery ?? null;
@@ -330,12 +363,38 @@ function Editor( props: EditorProps ) {
 		overview.priceDecimals,
 		extraTotal( extras )
 	);
+	// The price of each design the colours use, when there is more than one (ADR-096).
+	const designPrices =
+		designsOf( whole ).length === 0
+			? []
+			: effectiveParts( whole, colors ).map( ( part ) => ( {
+					colors: part.colors.map(
+						( key ) =>
+							base.colors.find( ( color ) => color.key === key )
+								?.name ?? key
+					),
+					price: quotePrice(
+						base.basePrice,
+						profitKind,
+						profitValue,
+						overview.priceDecimals,
+						extraTotal(
+							extraAreas(
+								base.views,
+								partDoc( whole, part.id ),
+								sizes,
+								base.extraSidePrice,
+								base.smallSidePrice
+							)
+						)
+					),
+				} ) );
 	const scenePreview = base.views.some(
 		( candidate ) =>
 			candidate.scene?.preview === true || hasStitches( candidate )
 	);
 	const dirty =
-		design !== saved.design ||
+		whole !== saved.design ||
 		stitch !== saved.stitch ||
 		title !== draft.postfix ||
 		colors.join() !== draft.colors.join() ||
@@ -469,7 +528,7 @@ function Editor( props: EditorProps ) {
 							return;
 						}
 
-						history.set( ( present ) =>
+						editPart( ( present ) =>
 							withObjects( present, sideRef.current, next )
 						);
 					},
@@ -574,9 +633,7 @@ function Editor( props: EditorProps ) {
 
 	const setObjects = ( next: readonly DesignObject[] ) => {
 		if ( view !== undefined ) {
-			history.set( ( present ) =>
-				withObjects( present, view.key, next )
-			);
+			editPart( ( present ) => withObjects( present, view.key, next ) );
 		}
 	};
 
@@ -657,7 +714,7 @@ function Editor( props: EditorProps ) {
 
 	const setBackground = ( chosen: string | null, allSides: boolean ) => {
 		if ( view !== undefined ) {
-			history.set( ( present ) =>
+			editPart( ( present ) =>
 				withBackground(
 					present,
 					allSides ? printed : [ view.key ],
@@ -669,7 +726,7 @@ function Editor( props: EditorProps ) {
 
 	const swapThread = ( found: string, used: string | null ) => {
 		if ( view !== undefined ) {
-			history.set( ( present ) =>
+			editPart( ( present ) =>
 				withThread( present, view.key, found, used )
 			);
 		}
@@ -682,7 +739,7 @@ function Editor( props: EditorProps ) {
 				fill: thread.hex,
 			} as Partial< DesignObject > );
 
-			history.set( ( present ) =>
+			editPart( ( present ) =>
 				withThread(
 					withObjects( present, view.key, next ),
 					view.key,
@@ -793,6 +850,27 @@ function Editor( props: EditorProps ) {
 		}
 	};
 
+	const colorName = ( key: string ): string =>
+		base.colors.find( ( color ) => color.key === key )?.name ?? key;
+
+	/** A colour's new design: a copy of its design now, or another design (asked how first). */
+	const chooseDesign = ( color: string, choice: string ) => {
+		if ( choice === NEW_DESIGN ) {
+			const made = newColorDesign( whole, color );
+
+			if ( made !== null ) {
+				history.set( made.design );
+				setPreviewColor( color );
+			}
+
+			return;
+		}
+
+		if ( choice !== partOf( whole, color ) ) {
+			setMerging( { color, target: choice } );
+		}
+	};
+
 	/** "Copy design" (ADR-096 pkt. 7): saves what is open, then opens the copy. */
 	const copy = async () => {
 		if ( dirty && ( await persist() ) === null ) {
@@ -849,13 +927,15 @@ function Editor( props: EditorProps ) {
 			profitKind,
 			profitValue,
 			design: {
-				...withKnownThreads(
-					withKnownBackground(
-						design,
-						base.views,
-						base.backgroundColor
-					),
-					base.views
+				...mapParts( prunedDesigns( whole, colors ), ( part ) =>
+					withKnownThreads(
+						withKnownBackground(
+							part,
+							base.views,
+							base.backgroundColor
+						),
+						base.views
+					)
 				),
 				...( stitch === '' ? {} : { stitch } ),
 			},
@@ -871,7 +951,11 @@ function Editor( props: EditorProps ) {
 			return null;
 		}
 
-		setSaved( { design, stitch, price: result.data.draft?.price ?? null } );
+		setSaved( {
+			design: whole,
+			stitch,
+			price: result.data.draft?.price ?? null,
+		} );
 
 		return result.data;
 	};
@@ -901,7 +985,8 @@ function Editor( props: EditorProps ) {
 	/** Waits for the fonts of a design's texts. */
 	const fontsOf = async ( shown: DesignDocument ): Promise< void > => {
 		const families = new Set(
-			Object.values( shown.sides )
+			allPartDocs( shown )
+				.flatMap( ( part ) => Object.values( part.sides ) )
 				.flat()
 				.flatMap( ( object ) =>
 					object.type === 'text' ? [ object.font ] : []
@@ -999,11 +1084,11 @@ function Editor( props: EditorProps ) {
 		sceneImages( {
 			product: product.id,
 			base,
-			design,
-			colors,
+			design: whole,
+			colors: [ previewColor, ...colors ],
 			sizes,
 			image: imageOf,
-			fonts: () => fontsOf( design ),
+			fonts: () => fontsOf( whole ),
 		} );
 
 	const onKeyDown = ( event: KeyboardEvent< HTMLDivElement > ) => {
@@ -1227,7 +1312,7 @@ function Editor( props: EditorProps ) {
 							'Your design is saved and sent with %1$d images (a print file per side and a product image per colour). It waits for our approval (customer price incl. VAT: %2$s); until then it cannot be changed, but you can withdraw it.',
 							'merchboard'
 						),
-						submissionSize( design, colors, base.views ),
+						submissionSize( whole, colors, base.views ),
 						price === null
 							? '–'
 							: moneyText(
@@ -1260,6 +1345,27 @@ function Editor( props: EditorProps ) {
 				<div className="merchboard-product-designer__note">
 					<Alert tone="info">{ base.note }</Alert>
 				</div>
+			) }
+
+			{ merging === null ? null : (
+				<MergeDesigns
+					colorName={ colorName( merging.color ) }
+					target={ merging.target }
+					design={ whole }
+					onClose={ () => setMerging( null ) }
+					onMerge={ ( mode ) => {
+						history.set(
+							moveColor(
+								whole,
+								merging.color,
+								merging.target,
+								mode
+							)
+						);
+						setPreviewColor( merging.color );
+						setMerging( null );
+					} }
+				/>
 			) }
 
 			{ finished ? (
@@ -1319,6 +1425,8 @@ function Editor( props: EditorProps ) {
 									onSizes={ setSizes }
 									stitch={ stitch }
 									onStitch={ setStitch }
+									design={ whole }
+									onDesign={ chooseDesign }
 								/>
 							) : null }
 							{ tab === 'text' ? (
@@ -1465,6 +1573,36 @@ function Editor( props: EditorProps ) {
 								</button>
 							) ) }
 						</span>
+						{ colors.length > 1 ? (
+							<span className="merchboard-product-designer__design-status">
+								<span>
+									{ sprintf(
+										/* translators: 1: design name, 2: colour names. */
+										__( '%1$s – for %2$s', 'merchboard' ),
+										designName( whole, activePart ),
+										colors
+											.filter(
+												( key ) =>
+													partOf( whole, key ) ===
+													activePart
+											)
+											.map( colorName )
+											.join( ', ' )
+									) }
+								</span>
+								<ColorDesignPicker
+									design={ whole }
+									color={ previewColor }
+									colorName={ colorName( previewColor ) }
+									canAdd={
+										designsOf( whole ).length < MAX_DESIGNS
+									}
+									onChoose={ ( choice ) =>
+										chooseDesign( previewColor, choice )
+									}
+								/>
+							</span>
+						) : null }
 						<span
 							className="merchboard-product-designer__swatches"
 							role="group"
@@ -1684,6 +1822,27 @@ function Editor( props: EditorProps ) {
 						onProfitKind={ setProfitKind }
 						onProfitValue={ setProfitValue }
 					/>
+					{ designPrices.length > 1 ? (
+						<section className="merchboard-product-designer__card">
+							<h3>{ __( 'Price per colour', 'merchboard' ) }</h3>
+							<ul className="merchboard-product-designer__design-prices">
+								{ designPrices.map( ( row ) => (
+									<li key={ row.colors.join() }>
+										<span>{ row.colors.join( ', ' ) }</span>
+										<strong>
+											{ row.price === null
+												? '–'
+												: moneyText(
+														String( row.price ),
+														base.currency,
+														locale
+													) }
+										</strong>
+									</li>
+								) ) }
+							</ul>
+						</section>
+					) : null }
 					<NextSteps />
 				</aside>
 			</div>
@@ -2358,6 +2517,10 @@ interface ProductPanelProps {
 	/** The chosen stitch colour. */
 	readonly stitch: string;
 	readonly onStitch: ( value: string ) => void;
+	/** The whole design, for the design each colour uses (ADR-096). */
+	readonly design?: DesignDocument;
+	/** A colour's new design: an id, SHARED or NEW_DESIGN. */
+	readonly onDesign?: ( color: string, choice: string ) => void;
 }
 
 /**
@@ -2562,6 +2725,24 @@ export function ProductPanel( props: ProductPanelProps ) {
 									aria-hidden="true"
 								/>
 								<span>{ color.name }</span>
+								{ props.design === undefined ||
+								props.onDesign === undefined ? null : (
+									<ColorDesignPicker
+										design={ props.design }
+										color={ color.key }
+										colorName={ color.name }
+										canAdd={
+											designsOf( props.design ).length <
+											MAX_DESIGNS
+										}
+										onChoose={ ( choice ) =>
+											props.onDesign?.(
+												color.key,
+												choice
+											)
+										}
+									/>
+								) }
 								<IconButton
 									icon="up"
 									label={ sprintf(

@@ -1432,3 +1432,32 @@ function mergedParts(
 		...( Object.keys( threads ).length === 0 ? {} : { threads } ),
 	};
 }
+
+/**
+ * Every design of the document as a document of its own: the shared one
+ * first (ADR-096).
+ *
+ * @param design The document.
+ */
+export function allPartDocs( design: DesignDocument ): DesignDocument[] {
+	return [
+		partDoc( design, SHARED ),
+		...designsOf( design ).map( ( item ) => partDoc( design, item.id ) ),
+	];
+}
+
+/**
+ * The document with a change made to every design (ADR-096).
+ *
+ * @param design The document.
+ * @param change The change of one design, as a document of its own.
+ */
+export function mapParts(
+	design: DesignDocument,
+	change: ( part: DesignDocument ) => DesignDocument
+): DesignDocument {
+	return [ SHARED, ...designsOf( design ).map( ( item ) => item.id ) ].reduce(
+		( next, id ) => withPart( next, id, change( partDoc( next, id ) ) ),
+		design
+	);
+}
