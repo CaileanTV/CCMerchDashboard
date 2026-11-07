@@ -124,7 +124,8 @@ final class CreatorsModule implements Module {
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
 				new SignupMails( new EmailRenderer(), new Mailer() ),
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				$c->get( CreatorMetaStore::class )
 			)
 		);
 		$container->set( SignupPage::class, static fn( Container $c ): SignupPage => new SignupPage( $c->get( DashboardRoute::class ), $c->get( CreatorSignup::class ), $c->get( Agreement::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );
@@ -132,7 +133,7 @@ final class CreatorsModule implements Module {
 		// Going live (ADR-091, ADR-093). The WooCommerce module replaces the null shop.
 		$container->set( GoLiveShop::class, static fn(): GoLiveShop => new NullGoLiveShop() );
 		$container->set( GoLiveRepository::class, static fn( Container $c ): GoLiveRepository => new GoLiveRepository( $c->get( wpdb::class ) ) );
-		$container->set( GoLiveRequests::class, static fn( Container $c ): GoLiveRequests => new GoLiveRequests( $c->get( GoLiveRepository::class ), $c->get( CreatorRepository::class ), $c->get( Agreement::class ), static fn(): GoLiveShop => $c->get( GoLiveShop::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set( GoLiveRequests::class, static fn( Container $c ): GoLiveRequests => new GoLiveRequests( $c->get( GoLiveRepository::class ), $c->get( CreatorRepository::class ), $c->get( Agreement::class ), static fn(): GoLiveShop => $c->get( GoLiveShop::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( CreatorMetaStore::class ) ) );
 		$container->set( GoLivePage::class, static fn( Container $c ): GoLivePage => new GoLivePage( $c->get( GoLiveRequests::class ), $c->get( GoLiveRepository::class ), $c->get( CreatorRepository::class ), $c->get( SignupRepository::class ), $c->get( AgreementRepository::class ), $c->get( GoLiveShop::class ), $c->get( Logger::class ) ) );
 		$container->set( MeGoLiveController::class, static fn( Container $c ): MeGoLiveController => new MeGoLiveController( $c->get( CreatorContext::class ), $c->get( GoLiveRequests::class ), $c->get( Logger::class ) ) );
 		add_filter(

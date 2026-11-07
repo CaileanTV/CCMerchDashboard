@@ -996,10 +996,10 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 
 **Projektejerens ønske (2026-11-07):** creatoren vælger ved tilmeldingen, om de vises på forsiden som "Content creator" (`creator`, forudvalgt) eller "Forening & Community" (`community`). Valget skrives som bannerpluginets term meta `ccm_front_group` på creatorens primære kategori ved go-live. Bagefter kan kun administratoren ændre det. Fremtidige underkategorier får det ikke.
 
-- **35.1 Docs:** ADR-097, denne fase, creator-signup.md og DATABASE.md.
-- **35.2 Server:** `FrontGroup`, creator meta `front_group`, tilmeldingen, go-live (`GoLiveRequests`, `GoLiveShop`) og fanen Go-live.
-- **35.3 Formular og tekster:** feltet på tilmeldingssiden og danske tekster.
-- **35.4 Tests:** unit og integration (tilmelding og go-live).
+- **35.1 Docs ✅ (2026-11-08):** ADR-097, denne fase, creator-signup.md og DATABASE.md.
+- **35.2 Server ✅ (testet automatisk):** `FrontGroup`, creator meta `front_group`, tilmeldingen, go-live (`GoLiveRequests`, `GoLiveShop`) og fanen Go-live.
+- **35.3 Formular og tekster ✅:** feltet på tilmeldingssiden og danske tekster.
+- **35.4 Tests ✅:** unit og integration (tilmelding og go-live).
 - **35.5 Review og runtime-test på Local.**
 - **35.6 Release 1.7.1:** efter projektejerens go.
 

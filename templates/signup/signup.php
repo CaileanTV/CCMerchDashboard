@@ -14,6 +14,7 @@
 
 declare( strict_types=1 );
 
+use MerchBoard\Modules\Creators\Signup\FrontGroup;
 use MerchBoard\Modules\Creators\Signup\SignupException;
 use MerchBoard\Modules\Dashboard\FallbackStyles;
 
@@ -23,6 +24,7 @@ $merchboard_site   = (string) ( $merchboard_view['site_name'] ?? '' );
 $merchboard_state  = (string) ( $merchboard_view['state'] ?? 'closed' );
 $merchboard_values = is_array( $merchboard_view['values'] ?? null ) ? $merchboard_view['values'] : array();
 $merchboard_value  = static fn( string $key ): string => is_string( $merchboard_values[ $key ] ?? null ) ? $merchboard_values[ $key ] : '';
+$merchboard_group  = FrontGroup::or_default( $merchboard_values['front_group'] ?? null );
 $merchboard_error  = match ( (string) ( $merchboard_view['error'] ?? '' ) ) {
 	''                             => '',
 	SignupException::NAME          => __( 'Enter your creator name (2 to 60 characters).', 'merchboard' ),
@@ -37,6 +39,7 @@ $merchboard_error  = match ( (string) ( $merchboard_view['error'] ?? '' ) ) {
 	SignupException::TOO_MANY      => __( 'Too many sign-ups from here. Please try again in an hour.', 'merchboard' ),
 	SignupException::TOO_FAST      => __( 'Please take a moment to read the form, then send it again.', 'merchboard' ),
 	SignupException::ALREADY       => __( 'Your account is a creator already.', 'merchboard' ),
+	SignupException::FRONT_GROUP   => __( 'Choose how you are shown on the front page.', 'merchboard' ),
 	SignupException::EXPIRED_FORM  => __( 'The form expired. Please send it again.', 'merchboard' ),
 	default                        => __( 'Something went wrong. Nothing was saved; please try again later.', 'merchboard' ),
 };
@@ -58,6 +61,9 @@ $merchboard_title = match ( $merchboard_state ) {
 .merchboard-signup label { display: block; margin: 1rem 0 0.25rem; font-weight: 600; }
 .merchboard-signup input[type="text"], .merchboard-signup input[type="email"], .merchboard-signup input[type="url"] { box-sizing: border-box; width: 100%; padding: 0.5rem; font: inherit; border: 1px solid var(--merchboard-border); border-radius: 4px; }
 .merchboard-signup .merchboard-signup__check { display: flex; gap: 0.5rem; align-items: flex-start; font-weight: 400; }
+.merchboard-signup__group { margin: 1rem 0 0; padding: 0; border: 0; }
+.merchboard-signup__group legend { padding: 0; font-weight: 600; }
+.merchboard-signup .merchboard-signup__group .merchboard-signup__check { margin: 0.4rem 0 0; }
 .merchboard-signup__agreement { max-height: 20rem; overflow: auto; margin-top: 1rem; padding: 0 1rem; border: 1px solid var(--merchboard-border); border-radius: 4px; }
 .merchboard-signup__error { padding: 0.75rem 1rem; border-left: 4px solid #b91c1c; background: #fef2f2; }
 .merchboard-signup__trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
@@ -94,6 +100,12 @@ $merchboard_title = match ( $merchboard_state ) {
 	<?php endif; ?>
 			<label for="merchboard-signup-channel"><?php esc_html_e( 'Link to your channel (e.g. Twitch or YouTube)', 'merchboard' ); ?></label>
 			<input type="url" id="merchboard-signup-channel" name="channel" required maxlength="255" placeholder="https://" value="<?php echo esc_attr( $merchboard_value( 'channel' ) ); ?>">
+			<fieldset class="merchboard-signup__group">
+				<legend><?php esc_html_e( 'Shown on the front page', 'merchboard' ); ?></legend>
+				<?php foreach ( FrontGroup::VALUES as $merchboard_option ) : ?>
+				<label class="merchboard-signup__check"><input type="radio" name="front_group" value="<?php echo esc_attr( $merchboard_option ); ?>"<?php checked( $merchboard_group, $merchboard_option ); ?>> <?php echo esc_html( FrontGroup::label( $merchboard_option ) ); ?></label>
+				<?php endforeach; ?>
+			</fieldset>
 			<h2><?php esc_html_e( 'Our agreement', 'merchboard' ); ?></h2>
 			<div class="merchboard-signup__agreement"><?php echo wp_kses_post( (string) ( $merchboard_view['agreement'] ?? '' ) ); ?></div>
 			<label class="merchboard-signup__check"><input type="checkbox" name="adult" value="1" required> <?php esc_html_e( 'I am 18 or older.', 'merchboard' ); ?></label>

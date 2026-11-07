@@ -19,8 +19,10 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\Agreement\Agreement;
 use MerchBoard\Modules\Creators\Creator;
+use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\Creators\Signup\FrontGroup;
 use MerchBoard\Modules\Creators\Signup\SignupSettings;
 
 defined( 'ABSPATH' ) || exit;
@@ -69,11 +71,12 @@ class GoLiveRequests {
 	 * @param Closure           $shop        The shop side (resolved when needed).
 	 * @param AuditTrail        $audit       Audit trail.
 	 * @param Transaction       $transaction Transactions.
+	 * @param CreatorMetaStore  $meta        Creator meta (the front-page group, ADR-097).
 	 * @param Closure|null      $clock       Current time (tests).
 	 * @phpstan-param Closure(): GoLiveShop $shop
 	 * @phpstan-param (Closure(): DateTimeImmutable)|null $clock
 	 */
-	public function __construct( private GoLiveRepository $requests, private CreatorRepository $creators, private Agreement $agreement, private Closure $shop, private AuditTrail $audit, private Transaction $transaction, ?Closure $clock = null ) {
+	public function __construct( private GoLiveRepository $requests, private CreatorRepository $creators, private Agreement $agreement, private Closure $shop, private AuditTrail $audit, private Transaction $transaction, private CreatorMetaStore $meta, ?Closure $clock = null ) {
 		$this->clock = $clock ?? static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
 	}
 
@@ -141,11 +144,12 @@ class GoLiveRequests {
 	 * @param int    $id       Request.
 	 * @param string $name     Category name.
 	 * @param string $percent  Markup percentage.
+	 * @param string $group    Front-page group (FrontGroup) the administrator chose.
 	 * @return string One of PROVISIONED, NO_MARKUP and NO_CATEGORY: the creator is live in all three.
 	 * @throws GoLiveException When it is refused (nothing changed).
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function approve( int $id, string $name, string $percent ): string {
+	public function approve( int $id, string $name, string $percent, string $group ): string {
 		self::authorize();
 		$request = $this->requests->find( $id );
 
@@ -175,9 +179,10 @@ class GoLiveRequests {
 		}
 
 		$shop->check_markup( $percent );
+		self::check_front_group( $group );
 
 		$decided = $this->transaction->run(
-			function () use ( $id, $creator ): bool {
+			function () use ( $id, $creator, $group ): bool {
 				$user = get_current_user_id();
 
 				if ( ! $this->requests->decide( $id, GoLiveRepository::APPROVED, null, $user > 0 ? $user : null, ( $this->clock )() ) ) {
@@ -185,7 +190,8 @@ class GoLiveRequests {
 				}
 
 				$this->creators->go_live( $creator->id );
-				$this->audit->record( AuditAction::GoLiveApproved, $creator->id );
+				$this->meta->set( $creator->id, CreatorMetaStore::FRONT_GROUP, $group );
+				$this->audit->record( AuditAction::GoLiveApproved, $creator->id, array( 'front_group' => $group ) );
 
 				return true;
 			}
@@ -197,7 +203,7 @@ class GoLiveRequests {
 
 		do_action( 'merchboard_notify', 'account_live_approved', $creator->id, array(), 'go_live_approved:' . $id );
 
-		return $this->provision( $creator->id, $name, $percent );
+		return $this->provision( $creator->id, $name, $percent, $group );
 	}
 
 	/**
@@ -206,11 +212,12 @@ class GoLiveRequests {
 	 * @param int    $creator_id Creator.
 	 * @param string $name       Category name.
 	 * @param string $percent    Markup percentage.
+	 * @param string $group      Front-page group (FrontGroup).
 	 * @return string One of PROVISIONED, NO_MARKUP and NO_CATEGORY.
 	 * @throws GoLiveException When it is refused.
-	 * @throws DatabaseException When it cannot be read.
+	 * @throws DatabaseException When it cannot be read or stored.
 	 */
-	public function retry_category( int $creator_id, string $name, string $percent ): string {
+	public function retry_category( int $creator_id, string $name, string $percent, string $group ): string {
 		self::authorize();
 		$creator = $this->creators->find( $creator_id );
 		$name    = trim( sanitize_text_field( $name ) );
@@ -224,8 +231,20 @@ class GoLiveRequests {
 		}
 
 		( $this->shop )()->check_markup( $percent );
+		self::check_front_group( $group );
+		$this->meta->set( $creator_id, CreatorMetaStore::FRONT_GROUP, $group );
 
-		return $this->provision( $creator_id, $name, $percent );
+		return $this->provision( $creator_id, $name, $percent, $group );
+	}
+
+	/**
+	 * The creator's front-page group: their choice at sign-up or the
+	 * administrator's at go-live; Content creator when there is none.
+	 *
+	 * @param int $creator_id Creator.
+	 */
+	public function front_group( int $creator_id ): string {
+		return FrontGroup::or_default( $this->meta->get( $creator_id, CreatorMetaStore::FRONT_GROUP ) );
 	}
 
 	/**
@@ -276,11 +295,12 @@ class GoLiveRequests {
 	 * @param int    $creator_id Creator.
 	 * @param string $name       Category name.
 	 * @param string $percent    Markup percentage.
+	 * @param string $group      Front-page group.
 	 * @return string One of PROVISIONED, NO_MARKUP and NO_CATEGORY.
 	 */
-	private function provision( int $creator_id, string $name, string $percent ): string {
+	private function provision( int $creator_id, string $name, string $percent, string $group ): string {
 		try {
-			$markup = ( $this->shop )()->provision( $creator_id, $name, SignupSettings::parent_category(), $percent );
+			$markup = ( $this->shop )()->provision( $creator_id, $name, SignupSettings::parent_category(), $percent, $group );
 		} catch ( GoLiveException ) {
 			return self::NO_CATEGORY;
 		}
@@ -288,6 +308,18 @@ class GoLiveRequests {
 		do_action( 'merchboard_creator_went_live', $creator_id ); // Same as self::WENT_LIVE. // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- merchboard_creator_went_live.
 
 		return $markup ? self::PROVISIONED : self::NO_MARKUP;
+	}
+
+	/**
+	 * Refuses a front-page group that is not one of the two.
+	 *
+	 * @param string $group Value.
+	 * @throws GoLiveException When it is not.
+	 */
+	private static function check_front_group( string $group ): void {
+		if ( ! FrontGroup::is_valid( $group ) ) {
+			self::refuse( GoLiveException::FRONT_GROUP );
+		}
 	}
 
 	/**

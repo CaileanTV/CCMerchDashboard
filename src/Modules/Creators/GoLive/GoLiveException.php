@@ -29,6 +29,7 @@ final class GoLiveException extends RuntimeException {
 	public const PARENT_MISSING   = 'parent_category_missing';
 	public const SHOP_UNAVAILABLE = 'shop_unavailable';
 	public const CATEGORY_FAILED  = 'category_failed';
+	public const FRONT_GROUP      = 'invalid_front_group';
 
 	/**
 	 * Constructor.

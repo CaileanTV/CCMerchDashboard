@@ -14,6 +14,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\GoLive\GoLiveException;
 use MerchBoard\Modules\Creators\GoLive\GoLiveShop;
+use MerchBoard\Modules\Creators\Signup\FrontGroup;
 use MerchBoard\Modules\WooCommerce\CreatorCategoryException;
 use MerchBoard\Modules\WooCommerce\CreatorCategoryRepository;
 use MerchBoard\Modules\WooCommerce\CreatorCategoryService;
@@ -32,6 +33,11 @@ defined( 'ABSPATH' ) || exit;
  * products (review 32.7). The markup is set through the pricing settings
  * (audited), when the administrator may manage creator pricing; a markup
  * that is not set does not undo the category.
+ *
+ * ADR-097: before the term is mapped, the banner plugin's
+ * `ccm_front_group` is written on it (a new or a reused term) and read back;
+ * when it is not there, the term is not mapped, so "Try again" reuses it.
+ * Nothing is written on a category the creator has already.
  */
 final class WooCommerceGoLiveShop implements GoLiveShop {
 
@@ -90,12 +96,15 @@ final class WooCommerceGoLiveShop implements GoLiveShop {
 	 * @param string $name       Category name.
 	 * @param int    $parent_id  Parent `product_cat`.
 	 * @param string $percent    Markup percentage.
+	 * @param string $front_group Front-page group of the new category.
 	 * @return bool Whether the markup was set.
 	 * @throws GoLiveException When the category cannot be made or mapped.
 	 */
-	public function provision( int $creator_id, string $name, int $parent_id, string $percent ): bool {
+	public function provision( int $creator_id, string $name, int $parent_id, string $percent, string $front_group ): bool {
 		if ( ! $this->has_category( $creator_id ) ) {
-			$this->map( $creator_id, $this->term( $name, $parent_id ) );
+			$term_id = $this->term( $name, $parent_id );
+			self::set_front_group( $term_id, $front_group );
+			$this->map( $creator_id, $term_id );
 		}
 
 		if ( ! current_user_can( Capabilities::MANAGE_CREATOR_PRICING ) ) {
@@ -133,6 +142,26 @@ final class WooCommerceGoLiveShop implements GoLiveShop {
 		}
 
 		throw new GoLiveException( GoLiveException::CATEGORY_FAILED );
+	}
+
+	/**
+	 * Writes the front-page group on the term and checks it.
+	 *
+	 * @param int    $term_id Term.
+	 * @param string $group   FrontGroup value.
+	 * @throws GoLiveException When it is not a value or not stored.
+	 */
+	private static function set_front_group( int $term_id, string $group ): void {
+		if ( ! FrontGroup::is_valid( $group ) ) {
+			throw new GoLiveException( GoLiveException::FRONT_GROUP );
+		}
+
+		update_term_meta( $term_id, FrontGroup::TERM_META, $group );
+		wp_cache_delete( $term_id, 'term_meta' );
+
+		if ( get_term_meta( $term_id, FrontGroup::TERM_META, true ) !== $group ) {
+			throw new GoLiveException( GoLiveException::CATEGORY_FAILED );
+		}
 	}
 
 	/**

@@ -65,9 +65,17 @@ final class CreatorMetaStore {
 	public const ALERT_API_ACCESS = 'alert_api_access';
 
 	/**
+	 * Where the creator is shown on the front page (phase 35, ADR-097):
+	 * `creator` or `community`, chosen at sign-up and changed by an
+	 * administrator at go-live. Written on the category when go-live makes it;
+	 * not read afterwards.
+	 */
+	public const FRONT_GROUP = 'front_group';
+
+	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BILLING_DETAILS, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS );
+	private const KEYS = array( self::BILLING_DETAILS, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP );
 
 	/**
 	 * Constructor.

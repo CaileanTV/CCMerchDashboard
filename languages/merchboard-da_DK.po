@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-07T20:56:11+00:00\n"
+"PO-Revision-Date: 2026-11-07T23:04:34+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -122,8 +122,8 @@ msgstr "Stop med at se som creatoren"
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:212
 #: src/Modules/Creators/Admin/CreatorDeletionActions.php:97
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:142
-#: src/Modules/Creators/Admin/GoLivePage.php:136
-#: src/Modules/Creators/Admin/GoLivePage.php:295
+#: src/Modules/Creators/Admin/GoLivePage.php:137
+#: src/Modules/Creators/Admin/GoLivePage.php:321
 #: src/Modules/Creators/Admin/ProposalImageDownload.php:100
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:111
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:242
@@ -3976,7 +3976,7 @@ msgid "The proposal is no longer valid and was not approved."
 msgstr "Forslaget er ikke længere gyldigt og blev ikke godkendt."
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:94
-#: src/Modules/Creators/Admin/GoLivePage.php:296
+#: src/Modules/Creators/Admin/GoLivePage.php:322
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:101
 msgid "A technical error occurred. Nothing was changed. Please try again later."
 msgstr "Der opstod en teknisk fejl. Intet blev ændret. Prøv igen senere."
@@ -4417,87 +4417,97 @@ msgstr "Ingen WordPress-bruger"
 msgid "Unknown user #%d"
 msgstr "Ukendt bruger #%d"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:91
+#: src/Modules/Creators/Admin/GoLivePage.php:92
 msgid "Go-live"
 msgstr "Go-live"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:143
+#: src/Modules/Creators/Admin/GoLivePage.php:144
 msgid "Requests to go live"
 msgstr "Anmodninger om at gå live"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:149
+#: src/Modules/Creators/Admin/GoLivePage.php:150
 msgid "Creators who signed up themselves ask here to go live. Until you approve, nothing of theirs is shown in the shop. Approving creates their product category under the parent category, sets their markup and puts their approved designs in the shop."
 msgstr "Creators, der har oprettet sig selv, anmoder her om at gå live. Indtil du godkender, vises intet af deres i butikken. En godkendelse opretter deres produktkategori under overkategorien, sætter deres tillæg og lægger deres godkendte designs i butikken."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:152
+#: src/Modules/Creators/Admin/GoLivePage.php:153
 msgid "Choose the parent category for creators under Settings → Agreement before you approve."
 msgstr "Vælg overkategorien for creators under Indstillinger → Aftale, før du godkender."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:160
+#: src/Modules/Creators/Admin/GoLivePage.php:161
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:140
 msgid "The requests could not be read. Please try again later."
 msgstr "Anmodningerne kunne ikke læses. Prøv igen senere."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:166
+#: src/Modules/Creators/Admin/GoLivePage.php:167
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:146
 msgid "No requests are waiting."
 msgstr "Ingen anmodninger venter."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:174
+#: src/Modules/Creators/Admin/GoLivePage.php:175
 msgid "Live, but the category could not be made"
 msgstr "Live, men kategorien kunne ikke oprettes"
 
 #. translators: %s: date and time.
-#: src/Modules/Creators/Admin/GoLivePage.php:202
+#: src/Modules/Creators/Admin/GoLivePage.php:203
 #, php-format
 msgid "Asked %s"
 msgstr "Anmodet %s"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:205
+#: src/Modules/Creators/Admin/GoLivePage.php:206
 msgid "Channel:"
 msgstr "Kanal:"
 
 #. translators: %d: agreement version.
-#: src/Modules/Creators/Admin/GoLivePage.php:209
+#: src/Modules/Creators/Admin/GoLivePage.php:210
 #, php-format
 msgid "Accepted the agreement, version %d"
 msgstr "Har accepteret aftalen, version %d"
 
 #. translators: %d: agreement version.
-#: src/Modules/Creators/Admin/GoLivePage.php:209
+#: src/Modules/Creators/Admin/GoLivePage.php:210
 msgid "Must not accept the agreement"
 msgstr "Skal ikke acceptere aftalen"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:210
+#. translators: %s: "Content creator" or "Association & community".
+#: src/Modules/Creators/Admin/GoLivePage.php:212
+#, php-format
+msgid "Shown on the front page as: %s"
+msgstr "Vises på forsiden som: %s"
+
+#: src/Modules/Creators/Admin/GoLivePage.php:213
 msgid "Open the creator"
 msgstr "Åbn creatoren"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:214
-#: src/Modules/Creators/Admin/GoLivePage.php:241
+#: src/Modules/Creators/Admin/GoLivePage.php:217
+#: src/Modules/Creators/Admin/GoLivePage.php:247
 msgid "Category name"
 msgstr "Kategorinavn"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:215
-#: src/Modules/Creators/Admin/GoLivePage.php:242
+#: src/Modules/Creators/Admin/GoLivePage.php:218
+#: src/Modules/Creators/Admin/GoLivePage.php:248
 msgid "Markup (%)"
 msgstr "Tillæg (%)"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:216
+#: src/Modules/Creators/Admin/GoLivePage.php:221
+msgid "The front-page group is written on the new category. Later you change it on the category in WooCommerce; the creator cannot change it."
+msgstr "\"Vises på forsiden\" skrives på den nye kategori. Bagefter ændrer du det på kategorien i WooCommerce; creatoren kan ikke ændre det."
+
+#: src/Modules/Creators/Admin/GoLivePage.php:222
 msgid "Approve and go live"
 msgstr "Godkend og gå live"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:220
+#: src/Modules/Creators/Admin/GoLivePage.php:226
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:293
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:176
 msgid "Note to the creator"
 msgstr "Note til creatoren"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:221
+#: src/Modules/Creators/Admin/GoLivePage.php:227
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:177
 msgid "Decline"
 msgstr "Afvis"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:243
+#: src/Modules/Creators/Admin/GoLivePage.php:251
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1449
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:212
 #: build/alerts-global-admin.js:1
@@ -4506,55 +4516,64 @@ msgstr "Afvis"
 msgid "Try again"
 msgstr "Prøv igen"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:282
+#: src/Modules/Creators/Admin/GoLivePage.php:263
+#: templates/signup/signup.php:104
+msgid "Shown on the front page"
+msgstr "Vises på forsiden"
+
+#: src/Modules/Creators/Admin/GoLivePage.php:307
 msgid "The creator is live: the category was made, the markup set and their approved designs are on their way to the shop."
 msgstr "Creatoren er live: kategorien er oprettet, tillægget sat, og de godkendte designs er på vej i butikken."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:283
+#: src/Modules/Creators/Admin/GoLivePage.php:308
 msgid "The creator is live, but the category could not be made. Try again below."
 msgstr "Creatoren er live, men kategorien kunne ikke oprettes. Prøv igen nedenfor."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:284
+#: src/Modules/Creators/Admin/GoLivePage.php:309
 msgid "The creator is live and the category was made, but the markup was not set. Set it on the creator's pricing."
 msgstr "Creatoren er live, og kategorien er oprettet, men tillægget blev ikke sat. Sæt det under creatorens priser."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:285
+#: src/Modules/Creators/Admin/GoLivePage.php:310
 msgid "The category was made and the markup set."
 msgstr "Kategorien er oprettet, og tillægget er sat."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:286
+#: src/Modules/Creators/Admin/GoLivePage.php:311
 msgid "The category was made, but the markup was not set. Set it on the creator's pricing."
 msgstr "Kategorien er oprettet, men tillægget blev ikke sat. Sæt det under creatorens priser."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:287
+#: src/Modules/Creators/Admin/GoLivePage.php:312
 msgid "The request was declined. The creator sees your note and can ask again."
 msgstr "Anmodningen er afvist. Creatoren ser din note og kan anmode igen."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:288
+#: src/Modules/Creators/Admin/GoLivePage.php:313
 msgid "Write a note to the creator before you decline."
 msgstr "Skriv en note til creatoren, før du afviser."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:289
+#: src/Modules/Creators/Admin/GoLivePage.php:314
 msgid "Enter a category name."
 msgstr "Skriv et kategorinavn."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:290
+#: src/Modules/Creators/Admin/GoLivePage.php:315
 msgid "Enter a markup from 0 to 100 %, with at most two decimals."
 msgstr "Skriv et tillæg fra 0 til 100 % med højst to decimaler."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:291
+#: src/Modules/Creators/Admin/GoLivePage.php:316
 msgid "Choose the parent category for creators under Settings → Agreement first."
 msgstr "Vælg først overkategorien for creators under Indstillinger → Aftale."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:292
+#: src/Modules/Creators/Admin/GoLivePage.php:317
 msgid "Going live needs WooCommerce."
 msgstr "Go-live kræver WooCommerce."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:293
+#: src/Modules/Creators/Admin/GoLivePage.php:318
+msgid "Choose where the creator is shown on the front page."
+msgstr "Vælg, hvor creatoren vises på forsiden."
+
+#: src/Modules/Creators/Admin/GoLivePage.php:319
 msgid "The category could not be made, e.g. because a category with that name already has products or another creator. Try another name."
 msgstr "Kategorien kunne ikke oprettes, fx fordi en kategori med det navn allerede har produkter eller en anden creator. Prøv et andet navn."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:294
+#: src/Modules/Creators/Admin/GoLivePage.php:320
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:99
 msgid "The request is no longer waiting."
 msgstr "Anmodningen venter ikke længere."
@@ -4666,6 +4685,14 @@ msgstr "Aftalen blev ikke accepteret."
 #: src/Modules/Creators/Rest/MeGoLiveController.php:135
 msgid "The request to go live was not sent."
 msgstr "Anmodningen om at gå live blev ikke sendt."
+
+#: src/Modules/Creators/Signup/FrontGroup.php:63
+msgid "Association & community"
+msgstr "Forening & Community"
+
+#: src/Modules/Creators/Signup/FrontGroup.php:63
+msgid "Content creator"
+msgstr "Content creator"
 
 #: src/Modules/Creators/Signup/SignupMails.php:47
 msgid "Confirm your e-mail and choose a password"
@@ -5024,7 +5051,7 @@ msgstr "Ikke sendt (ingen modtager)"
 
 #: src/Modules/Notifications/Admin/NotificationSwitches.php:53
 #: src/Modules/Notifications/Admin/NotificationSwitches.php:89
-#: templates/signup/signup.php:92
+#: templates/signup/signup.php:98
 msgid "E-mail"
 msgstr "E-mail"
 
@@ -13005,129 +13032,133 @@ msgstr "Prøv igen senere."
 msgid "Questions? Just reply to this e-mail."
 msgstr "Spørgsmål? Svar blot på denne mail."
 
-#: templates/signup/signup.php:28
+#: templates/signup/signup.php:30
 msgid "Enter your creator name (2 to 60 characters)."
 msgstr "Skriv dit creatornavn (2 til 60 tegn)."
 
-#: templates/signup/signup.php:29
+#: templates/signup/signup.php:31
 msgid "Enter a valid e-mail address."
 msgstr "Skriv en gyldig e-mailadresse."
 
-#: templates/signup/signup.php:30
+#: templates/signup/signup.php:32
 msgid "There is already an account with this e-mail. Log in, and sign up as a creator from there."
 msgstr "Der findes allerede en konto med denne e-mail. Log ind, og opret dig som creator derfra."
 
-#: templates/signup/signup.php:31
+#: templates/signup/signup.php:33
 msgid "Choose a username of 3 to 60 characters: letters, digits, and _ . - @ only."
 msgstr "Vælg et brugernavn på 3 til 60 tegn: kun bogstaver, tal og _ . - @."
 
-#: templates/signup/signup.php:32
+#: templates/signup/signup.php:34
 msgid "This username is taken. Please choose another one."
 msgstr "Brugernavnet er optaget. Vælg et andet."
 
-#: templates/signup/signup.php:33
+#: templates/signup/signup.php:35
 msgid "Enter the link to your channel, starting with https://."
 msgstr "Skriv linket til din kanal, startende med https://."
 
-#: templates/signup/signup.php:34
+#: templates/signup/signup.php:36
 msgid "You must be 18 or older to sign up."
 msgstr "Du skal være fyldt 18 år for at oprette dig."
 
-#: templates/signup/signup.php:35
+#: templates/signup/signup.php:37
 msgid "Please accept the agreement to sign up."
 msgstr "Acceptér aftalen for at oprette dig."
 
-#: templates/signup/signup.php:36
+#: templates/signup/signup.php:38
 msgid "The agreement was updated while you filled in the form. Please read it again and send the form."
 msgstr "Aftalen blev opdateret, mens du udfyldte formularen. Læs den igen, og send formularen."
 
-#: templates/signup/signup.php:37
+#: templates/signup/signup.php:39
 msgid "Too many sign-ups from here. Please try again in an hour."
 msgstr "For mange oprettelser herfra. Prøv igen om en time."
 
-#: templates/signup/signup.php:38
+#: templates/signup/signup.php:40
 msgid "Please take a moment to read the form, then send it again."
 msgstr "Tag dig et øjeblik til at læse formularen, og send den så igen."
 
-#: templates/signup/signup.php:39
+#: templates/signup/signup.php:41
 msgid "Your account is a creator already."
 msgstr "Din konto er allerede en creator."
 
-#: templates/signup/signup.php:40
+#: templates/signup/signup.php:42
+msgid "Choose how you are shown on the front page."
+msgstr "Vælg, hvordan du vises på forsiden."
+
+#: templates/signup/signup.php:43
 msgid "The form expired. Please send it again."
 msgstr "Formularen er udløbet. Send den igen."
 
-#: templates/signup/signup.php:41
+#: templates/signup/signup.php:44
 msgid "Something went wrong. Nothing was saved; please try again later."
 msgstr "Noget gik galt. Intet er gemt; prøv igen senere."
 
-#: templates/signup/signup.php:44
+#: templates/signup/signup.php:47
 msgid "Check your e-mail"
 msgstr "Tjek din e-mail"
 
-#: templates/signup/signup.php:45
+#: templates/signup/signup.php:48
 msgid "Sign up as a creator"
 msgstr "Opret dig som creator"
 
-#: templates/signup/signup.php:46
+#: templates/signup/signup.php:49
 msgid "Sign-up is not open"
 msgstr "Oprettelse er ikke åben"
 
-#: templates/signup/signup.php:72
+#: templates/signup/signup.php:78
 msgid "Thank you! We have sent you an e-mail. Use the link in it to choose a password; then you can log in and prepare your shop. The link works for 7 days."
 msgstr "Tak! Vi har sendt dig en e-mail. Brug linket i den til at vælge en adgangskode; så kan du logge ind og forberede din shop. Linket virker i 7 dage."
 
-#: templates/signup/signup.php:73
+#: templates/signup/signup.php:79
 msgid "Nothing in your inbox? Check your spam folder."
 msgstr "Ingenting i indbakken? Tjek din spammappe."
 
-#: templates/signup/signup.php:75
+#: templates/signup/signup.php:81
 msgid "Get your own merch shop. Sign up, accept our agreement and prepare your shop; it goes live when we have approved your request."
 msgstr "Få din egen merch-shop. Opret dig, acceptér vores aftale, og forbered din shop; den går live, når vi har godkendt din anmodning."
 
-#: templates/signup/signup.php:84
+#: templates/signup/signup.php:90
 msgid "Leave this field empty"
 msgstr "Lad dette felt være tomt"
 
-#: templates/signup/signup.php:87
+#: templates/signup/signup.php:93
 msgid "Creator name"
 msgstr "Creatornavn"
 
-#: templates/signup/signup.php:90
+#: templates/signup/signup.php:96
 msgid "Username (for logging in)"
 msgstr "Brugernavn (til login)"
 
-#: templates/signup/signup.php:95
+#: templates/signup/signup.php:101
 msgid "Link to your channel (e.g. Twitch or YouTube)"
 msgstr "Link til din kanal (fx Twitch eller YouTube)"
 
-#: templates/signup/signup.php:97
+#: templates/signup/signup.php:109
 #: build/dashboard.js:2
 msgid "Our agreement"
 msgstr "Vores aftale"
 
-#: templates/signup/signup.php:99
+#: templates/signup/signup.php:111
 msgid "I am 18 or older."
 msgstr "Jeg er fyldt 18 år."
 
-#: templates/signup/signup.php:100
+#: templates/signup/signup.php:112
 msgid "I have read and accept the agreement."
 msgstr "Jeg har læst og accepterer aftalen."
 
-#: templates/signup/signup.php:101
+#: templates/signup/signup.php:113
 msgid "Sign up"
 msgstr "Opret dig"
 
-#: templates/signup/signup.php:103
+#: templates/signup/signup.php:115
 msgid "Already a creator? Log in"
 msgstr "Allerede creator? Log ind"
 
-#: templates/signup/signup.php:105
+#: templates/signup/signup.php:117
 msgid "The page could not be shown right now. Please try again later."
 msgstr "Siden kunne ikke vises lige nu. Prøv igen senere."
 
 #. translators: %s: site name.
-#: templates/signup/signup.php:108
+#: templates/signup/signup.php:120
 #, php-format
 msgid "It is not possible to sign up as a creator right now. Please contact %s."
 msgstr "Det er ikke muligt at oprette sig som creator lige nu. Kontakt %s."

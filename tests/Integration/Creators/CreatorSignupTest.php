@@ -17,8 +17,10 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Creators\Agreement\Agreement;
 use MerchBoard\Modules\Creators\Agreement\AgreementRepository;
+use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\Signup\CreatorSignup;
+use MerchBoard\Modules\Creators\Signup\FrontGroup;
 use MerchBoard\Modules\Creators\Signup\SignupException;
 use MerchBoard\Modules\Creators\Signup\SignupMails;
 use MerchBoard\Modules\Creators\Signup\SignupPage;
@@ -75,6 +77,7 @@ final class CreatorSignupTest extends IntegrationTestCase {
 		self::assertNotNull( $creator );
 		self::assertSame( array( 'Nova', true, false, true ), array( $creator->display_name, $creator->is_active(), $creator->is_live(), $creator->agreement_required ) );
 		self::assertSame( 1, ( new AgreementRepository( $this->wpdb ) )->accepted( $creator->id ), 'The agreement was accepted with the sign-up.' );
+		self::assertSame( FrontGroup::CREATOR, $this->service( CreatorMetaStore::class )->get( $creator->id, CreatorMetaStore::FRONT_GROUP ), 'Content creator is preselected.' );
 		self::assertCount( 1, $GLOBALS['merchboard_test_mails'] );
 		self::assertSame( 'Confirm your e-mail and choose a password', $GLOBALS['merchboard_test_mails'][0]['subject'] );
 		self::assertStringContainsString( 'action=rp', (string) $GLOBALS['merchboard_test_mails'][0]['message'] );
@@ -120,6 +123,42 @@ final class CreatorSignupTest extends IntegrationTestCase {
 		self::assertContains( 'merchboard_creator', (array) $data->roles );
 		self::assertFalse( ( new CreatorRepository( $this->wpdb ) )->find_by_user_id( $user )?->is_live() );
 		$this->refused( SignupException::ALREADY, fn() => $this->signup()->submit( $this->input(), '192.0.2.3' ) );
+	}
+
+	public function test_the_creator_chooses_the_front_page_group(): void {
+		$this->refused( SignupException::FRONT_GROUP, fn() => $this->signup()->submit( $this->input( array( 'front_group' => 'partner' ) ), '192.0.2.6' ) );
+		self::assertSame( array(), $this->rows( Tables::CREATORS ), 'Nothing is stored.' );
+
+		self::assertSame( 'sent', $this->signup()->submit( $this->input( array( 'front_group' => FrontGroup::COMMUNITY ) ), '192.0.2.6' ) );
+		$user = get_user_by( 'email', 'nova@example.com' );
+		self::assertNotFalse( $user );
+		$creator = ( new CreatorRepository( $this->wpdb ) )->find_by_user_id( $user->ID );
+		self::assertNotNull( $creator );
+		self::assertSame( FrontGroup::COMMUNITY, $this->service( CreatorMetaStore::class )->get( $creator->id, CreatorMetaStore::FRONT_GROUP ) );
+		$signed  = array_values( array_filter( $this->rows( Tables::AUDIT_LOG ), static fn( array $row ): bool => 'creator_signed_up' === $row['action'] ) );
+		$context = json_decode( (string) ( $signed[0]['context'] ?? '' ), true );
+		self::assertSame( FrontGroup::COMMUNITY, is_array( $context ) ? $context['front_group'] ?? null : null );
+
+		$input = $this->input(
+			array(
+				'email'    => 'old@example.com',
+				'username' => 'old.page',
+			)
+		);
+		unset( $input['front_group'] );
+		self::assertSame( 'sent', $this->signup()->submit( $input, '192.0.2.6' ), 'An old page without the field.' );
+		$old = get_user_by( 'email', 'old@example.com' );
+		self::assertNotFalse( $old );
+		$old_creator = ( new CreatorRepository( $this->wpdb ) )->find_by_user_id( $old->ID );
+		self::assertNotNull( $old_creator );
+		self::assertSame( FrontGroup::CREATOR, $this->service( CreatorMetaStore::class )->get( $old_creator->id, CreatorMetaStore::FRONT_GROUP ) );
+
+		$shopper = $this->create_user( 'club' );
+		wp_set_current_user( $shopper );
+		self::assertSame( 'linked', $this->signup()->submit( $this->input( array( 'email' => '', 'front_group' => FrontGroup::COMMUNITY ) ), '192.0.2.7' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Short input.
+		$linked = ( new CreatorRepository( $this->wpdb ) )->find_by_user_id( $shopper );
+		self::assertNotNull( $linked );
+		self::assertSame( FrontGroup::COMMUNITY, $this->service( CreatorMetaStore::class )->get( $linked->id, CreatorMetaStore::FRONT_GROUP ), 'Also a linked account.' );
 	}
 
 	public function test_spam_and_incomplete_forms_are_refused(): void {
@@ -212,6 +251,7 @@ final class CreatorSignupTest extends IntegrationTestCase {
 			$this->service( Transaction::class ),
 			new SignupMails( new EmailRenderer(), new Mailer() ),
 			$this->service( Logger::class ),
+			$this->service( CreatorMetaStore::class ),
 			fn(): DateTimeImmutable => ( new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) ) )->modify( '+' . $this->offset . ' seconds' )
 		);
 	}
@@ -225,15 +265,16 @@ final class CreatorSignupTest extends IntegrationTestCase {
 	private function input( array $changes = array() ): array {
 		return array_merge(
 			array(
-				'name'     => 'Nova',
-				'email'    => 'nova@example.com',
-				'username' => 'nova',
-				'channel'  => 'https://www.twitch.tv/nova',
-				'adult'    => '1',
-				'agree'    => '1',
-				'version'  => '1',
-				'started'  => CreatorSignup::form_token(),
-				'website'  => '',
+				'name'        => 'Nova',
+				'email'       => 'nova@example.com',
+				'username'    => 'nova',
+				'channel'     => 'https://www.twitch.tv/nova',
+				'adult'       => '1',
+				'agree'       => '1',
+				'version'     => '1',
+				'started'     => CreatorSignup::form_token(),
+				'website'     => '',
+				'front_group' => FrontGroup::CREATOR,
 			),
 			$changes
 		);

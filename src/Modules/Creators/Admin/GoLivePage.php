@@ -20,6 +20,7 @@ use MerchBoard\Modules\Creators\GoLive\GoLiveException;
 use MerchBoard\Modules\Creators\GoLive\GoLiveRepository;
 use MerchBoard\Modules\Creators\GoLive\GoLiveRequests;
 use MerchBoard\Modules\Creators\GoLive\GoLiveShop;
+use MerchBoard\Modules\Creators\Signup\FrontGroup;
 use MerchBoard\Modules\Creators\Signup\SignupRepository;
 use MerchBoard\Modules\Creators\Signup\SignupSettings;
 
@@ -114,9 +115,9 @@ final class GoLivePage {
 
 		try {
 			return match ( $text( 'decision' ) ) {
-				'approve' => self::APPROVED[ $this->service->approve( $id, $text( 'category' ), $text( 'markup' ) ) ] ?? 'error',
+				'approve' => self::APPROVED[ $this->service->approve( $id, $text( 'category' ), $text( 'markup' ), $text( 'front_group' ) ) ] ?? 'error',
 				'decline' => $this->decline( $id, $text( 'note' ) ),
-				'retry'   => self::RETRIED[ $this->service->retry_category( (int) $text( 'creator_id' ), $text( 'category' ), $text( 'markup' ) ) ] ?? 'error',
+				'retry'   => self::RETRIED[ $this->service->retry_category( (int) $text( 'creator_id' ), $text( 'category' ), $text( 'markup' ), $text( 'front_group' ) ) ] ?? 'error',
 				default   => 'error',
 			};
 		} catch ( GoLiveException $e ) {
@@ -207,12 +208,17 @@ final class GoLivePage {
 
 		/* translators: %d: agreement version. */
 		echo esc_html( $accepted > 0 ? sprintf( __( 'Accepted the agreement, version %d', 'merchboard' ), $accepted ) : __( 'Must not accept the agreement', 'merchboard' ) ) . '<br>';
+		/* translators: %s: "Content creator" or "Association & community". */
+		echo esc_html( sprintf( __( 'Shown on the front page as: %s', 'merchboard' ), FrontGroup::label( $this->service->front_group( $creator->id ) ) ) ) . '<br>';
 		echo '<a href="' . esc_url( CreatorsAdminPage::edit_url( $creator->id ) ) . '">' . esc_html__( 'Open the creator', 'merchboard' ) . '</a>';
 		echo '</p>';
 
 		$this->form_open( 'approve', $row['id'] );
 		echo '<p><label>' . esc_html__( 'Category name', 'merchboard' ) . ' <input type="text" name="category" required maxlength="191" value="' . esc_attr( $creator->display_name ) . '"></label> ';
-		echo '<label>' . esc_html__( 'Markup (%)', 'merchboard' ) . ' <input type="text" name="markup" required inputmode="decimal" size="6" value="0"></label></p>';
+		echo '<label>' . esc_html__( 'Markup (%)', 'merchboard' ) . ' <input type="text" name="markup" required inputmode="decimal" size="6" value="0"></label> ';
+		$this->front_group_select( $creator->id );
+		echo '</p>';
+		echo '<p class="description">' . esc_html__( 'The front-page group is written on the new category. Later you change it on the category in WooCommerce; the creator cannot change it.', 'merchboard' ) . '</p>';
 		submit_button( __( 'Approve and go live', 'merchboard' ), 'primary', 'submit', false );
 		echo '</form>';
 
@@ -240,8 +246,27 @@ final class GoLivePage {
 		echo '<p><strong>' . esc_html( $creator->display_name ) . '</strong> ';
 		echo '<label>' . esc_html__( 'Category name', 'merchboard' ) . ' <input type="text" name="category" required maxlength="191" value="' . esc_attr( $creator->display_name ) . '"></label> ';
 		echo '<label>' . esc_html__( 'Markup (%)', 'merchboard' ) . ' <input type="text" name="markup" required inputmode="decimal" size="6" value="0"></label> ';
+		$this->front_group_select( $creator->id );
+		echo ' ';
 		submit_button( __( 'Try again', 'merchboard' ), 'secondary', 'submit', false );
 		echo '</p></form>';
+	}
+
+	/**
+	 * The list "Shown on the front page", preselected with the creator's group.
+	 *
+	 * @param int $creator_id Creator.
+	 */
+	private function front_group_select( int $creator_id ): void {
+		$current = $this->service->front_group( $creator_id );
+
+		echo '<label>' . esc_html__( 'Shown on the front page', 'merchboard' ) . ' <select name="front_group">';
+
+		foreach ( FrontGroup::VALUES as $value ) {
+			echo '<option value="' . esc_attr( $value ) . '"' . selected( $current, $value, false ) . '>' . esc_html( FrontGroup::label( $value ) ) . '</option>';
+		}
+
+		echo '</select></label>';
 	}
 
 	/**
@@ -290,6 +315,7 @@ final class GoLivePage {
 			GoLiveException::MARKUP            => array( __( 'Enter a markup from 0 to 100 %, with at most two decimals.', 'merchboard' ), 'error' ),
 			GoLiveException::PARENT_MISSING    => array( __( 'Choose the parent category for creators under Settings → Agreement first.', 'merchboard' ), 'error' ),
 			GoLiveException::SHOP_UNAVAILABLE  => array( __( 'Going live needs WooCommerce.', 'merchboard' ), 'error' ),
+			GoLiveException::FRONT_GROUP       => array( __( 'Choose where the creator is shown on the front page.', 'merchboard' ), 'error' ),
 			GoLiveException::CATEGORY_FAILED   => array( __( 'The category could not be made, e.g. because a category with that name already has products or another creator. Try another name.', 'merchboard' ), 'error' ),
 			GoLiveException::NOT_PENDING       => array( __( 'The request is no longer waiting.', 'merchboard' ), 'warning' ),
 			GoLiveException::NOT_AUTHORIZED    => array( __( 'Sorry, you are not allowed to manage creators.', 'merchboard' ), 'error' ),

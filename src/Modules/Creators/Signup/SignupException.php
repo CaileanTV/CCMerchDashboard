@@ -32,6 +32,7 @@ final class SignupException extends RuntimeException {
 	public const AGREEMENT      = 'agreement_required';
 	public const OUTDATED       = 'agreement_outdated';
 	public const ALREADY        = 'already_creator';
+	public const FRONT_GROUP    = 'invalid_front_group';
 
 	/**
 	 * Constructor.

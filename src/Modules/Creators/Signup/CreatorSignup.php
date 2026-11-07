@@ -20,6 +20,7 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Creators\Agreement\Agreement;
 use MerchBoard\Modules\Creators\Agreement\AgreementRepository;
+use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\Creators\UserAccounts;
@@ -41,6 +42,9 @@ defined( 'ABSPATH' ) || exit;
  *   so (2026-11-06), and the person can log in and sign up from there.
  * - A logged-in user who is not a creator is linked at once (their account
  *   exists already) and gets the role.
+ * - "Vises på forsiden" (ADR-097): Content creator or Association &
+ *   community, stored as creator meta with the creator; a form without the
+ *   field (an old page) means Content creator.
  * - Spam: a honeypot field, at least 3 seconds to fill in the form (a signed
  *   start time), at most 5 sign-ups an hour per address (a keyed hash, kept
  *   in a transient for an hour) and 3 per e-mail.
@@ -78,6 +82,7 @@ class CreatorSignup {
 	 * @param Transaction         $transaction Transactions.
 	 * @param SignupMails         $mails       The e-mails.
 	 * @param Logger              $logger      Technical log.
+	 * @param CreatorMetaStore    $meta        Creator meta (the front-page group).
 	 * @param Closure|null        $clock       Current time (tests).
 	 * @phpstan-param (Closure(): DateTimeImmutable)|null $clock
 	 */
@@ -91,6 +96,7 @@ class CreatorSignup {
 		private Transaction $transaction,
 		private SignupMails $mails,
 		private Logger $logger,
+		private CreatorMetaStore $meta,
 		?Closure $clock = null
 	) {
 		$this->clock = $clock ?? static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
@@ -138,6 +144,7 @@ class CreatorSignup {
 
 		$name    = trim( sanitize_text_field( self::text( $input, 'name' ) ) );
 		$channel = self::channel( self::text( $input, 'channel' ) );
+		$group   = self::front_group( self::text( $input, 'front_group' ) );
 		$user_id = get_current_user_id();
 
 		if ( mb_strlen( $name ) < 2 || mb_strlen( $name ) > 60 ) {
@@ -163,7 +170,7 @@ class CreatorSignup {
 		$this->limit( 'address', $address, self::PER_ADDRESS );
 
 		if ( $user_id > 0 ) {
-			$this->link_current( $user_id, $name, $channel, $version );
+			$this->link_current( $user_id, $name, $channel, $group, $version );
 
 			return 'linked';
 		}
@@ -185,7 +192,7 @@ class CreatorSignup {
 		}
 
 		$this->limit( 'email', strtolower( $email ), self::PER_EMAIL );
-		$this->create( $email, $username, $name, $channel, $version );
+		$this->create( $email, $username, $name, $channel, $group, $version );
 
 		return 'sent';
 	}
@@ -244,10 +251,11 @@ class CreatorSignup {
 	 * @param string $username The chosen username.
 	 * @param string $name     Creator name.
 	 * @param string $channel  Channel link.
+	 * @param string $group    Front-page group.
 	 * @param int    $version  Agreement version.
 	 * @throws DatabaseException When it cannot be stored (the user is removed again).
 	 */
-	private function create( string $email, string $username, string $name, string $channel, int $version ): void {
+	private function create( string $email, string $username, string $name, string $channel, string $group, int $version ): void {
 		$user_id = wp_insert_user(
 			array(
 				'user_login'   => $username,
@@ -264,7 +272,7 @@ class CreatorSignup {
 
 		try {
 			$now        = ( $this->clock )();
-			$creator_id = $this->store( $user_id, $name, $channel, $version, true, $now->add( new DateInterval( self::EXPIRES ) ) );
+			$creator_id = $this->store( $user_id, $name, $channel, $group, $version, true, $now->add( new DateInterval( self::EXPIRES ) ) );
 		} catch ( Throwable $e ) {
 			self::delete_user( $user_id );
 			$this->logger->error( 'A sign-up could not be stored; its user was removed again.', array( 'error' => $e::class ) );
@@ -290,16 +298,17 @@ class CreatorSignup {
 	 * @param int    $user_id User.
 	 * @param string $name    Creator name.
 	 * @param string $channel Channel link.
+	 * @param string $group   Front-page group.
 	 * @param int    $version Agreement version.
 	 * @throws SignupException When the user is a creator already.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	private function link_current( int $user_id, string $name, string $channel, int $version ): void {
+	private function link_current( int $user_id, string $name, string $channel, string $group, int $version ): void {
 		if ( null !== $this->creators->find_by_user_id( $user_id ) ) {
 			self::refuse( SignupException::ALREADY );
 		}
 
-		$creator_id = $this->store( $user_id, $name, $channel, $version, false, null );
+		$creator_id = $this->store( $user_id, $name, $channel, $group, $version, false, null );
 		$this->users->grant_creator_role( $user_id );
 		$this->notify_admin( $creator_id, $channel );
 	}
@@ -310,22 +319,31 @@ class CreatorSignup {
 	 * @param int                    $user_id      User.
 	 * @param string                 $name         Creator name.
 	 * @param string                 $channel      Channel link.
+	 * @param string                 $group        Front-page group (ADR-097).
 	 * @param int                    $version      Agreement version.
 	 * @param bool                   $created_user Whether the plugin created the user.
 	 * @param DateTimeImmutable|null $expires_at   Expiry of an unverified sign-up; null when verified.
 	 * @return int The creator.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	private function store( int $user_id, string $name, string $channel, int $version, bool $created_user, ?DateTimeImmutable $expires_at ): int {
+	private function store( int $user_id, string $name, string $channel, string $group, int $version, bool $created_user, ?DateTimeImmutable $expires_at ): int {
 		return $this->transaction->run(
-			function () use ( $user_id, $name, $channel, $version, $created_user, $expires_at ): int {
+			function () use ( $user_id, $name, $channel, $group, $version, $created_user, $expires_at ): int {
 				$now     = ( $this->clock )();
 				$creator = $this->creators->create( $name, CreatorStatus::Active, $user_id, true );
 
 				// The version was checked against the current one; Agreement::accept() would open a nested transaction.
 				$this->agreements->accept( $creator->id, $user_id, $version, true, $now );
 				$this->signups->insert( $creator->id, $user_id, $channel, $created_user, $now, $expires_at );
-				$this->audit->record( AuditAction::CreatorSignedUp, $creator->id, array( 'existing_user' => ! $created_user ) );
+				$this->meta->set( $creator->id, CreatorMetaStore::FRONT_GROUP, $group );
+				$this->audit->record(
+					AuditAction::CreatorSignedUp,
+					$creator->id,
+					array(
+						'existing_user' => ! $created_user,
+						'front_group'   => $group,
+					)
+				);
 				$this->audit->record( AuditAction::AgreementAccepted, $creator->id, array( 'version' => $version ) );
 
 				return $creator->id;
@@ -439,6 +457,24 @@ class CreatorSignup {
 		}
 
 		return $url;
+	}
+
+	/**
+	 * The front-page group: Content creator when the form had no field.
+	 *
+	 * @param string $value Input.
+	 * @throws SignupException When it is another value.
+	 */
+	private static function front_group( string $value ): string {
+		if ( '' === $value ) {
+			return FrontGroup::DEFAULT;
+		}
+
+		if ( ! FrontGroup::is_valid( $value ) ) {
+			self::refuse( SignupException::FRONT_GROUP );
+		}
+
+		return $value;
 	}
 
 	/**

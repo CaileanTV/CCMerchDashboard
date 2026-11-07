@@ -49,9 +49,10 @@ final class NullGoLiveShop implements GoLiveShop {
 	 * @param string $name       Category name.
 	 * @param int    $parent_id  Parent.
 	 * @param string $percent    Markup.
+	 * @param string $front_group Front-page group.
 	 * @throws GoLiveException Always.
 	 */
-	public function provision( int $creator_id, string $name, int $parent_id, string $percent ): bool {
+	public function provision( int $creator_id, string $name, int $parent_id, string $percent, string $front_group ): bool {
 		throw new GoLiveException( GoLiveException::SHOP_UNAVAILABLE );
 	}
 }

@@ -19,8 +19,10 @@ use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Creators\Admin\GoLivePage;
 use MerchBoard\Modules\Creators\Agreement\Agreement;
 use MerchBoard\Modules\Creators\Agreement\AgreementRepository;
+use MerchBoard\Modules\Creators\Signup\FrontGroup;
 use MerchBoard\Modules\Creators\Signup\SignupRepository;
 use MerchBoard\Modules\Creators\Creator;
+use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
@@ -65,7 +67,7 @@ final class GoLiveTest extends IntegrationTestCase {
 	/**
 	 * Provisions the fake shop was asked for.
 	 *
-	 * @var list<array{0: int, 1: string, 2: int, 3: string}>
+	 * @var list<array{0: int, 1: string, 2: int, 3: string, 4: string}>
 	 */
 	private array $provisioned = array();
 
@@ -134,11 +136,11 @@ final class GoLiveTest extends IntegrationTestCase {
 		$id      = $this->pending_id( $creator->id );
 		$went    = did_action( GoLiveRequests::WENT_LIVE );
 
-		$this->refused( GoLiveException::MARKUP, fn() => $this->requests( true )->approve( $id, 'Nova', '120' ) );
-		$this->refused( GoLiveException::NAME, fn() => $this->requests( true )->approve( $id, ' ', '20' ) );
+		$this->refused( GoLiveException::MARKUP, fn() => $this->requests( true )->approve( $id, 'Nova', '120', FrontGroup::CREATOR ) );
+		$this->refused( GoLiveException::NAME, fn() => $this->requests( true )->approve( $id, ' ', '20', FrontGroup::CREATOR ) );
 		self::assertFalse( ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->is_live(), 'Refused before anything changed.' );
 
-		self::assertSame( GoLiveRequests::PROVISIONED, $this->requests( true )->approve( $id, 'Nova Shop', '20' ) );
+		self::assertSame( GoLiveRequests::PROVISIONED, $this->requests( true )->approve( $id, 'Nova Shop', '20', FrontGroup::CREATOR ) );
 
 		self::assertTrue( ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->is_live() );
 		$mapping = ( new CreatorCategoryRepository( $this->wpdb ) )->for_creator( $creator->id );
@@ -149,19 +151,19 @@ final class GoLiveTest extends IntegrationTestCase {
 		self::assertSame( 2000, ( new CreatorMarkupRepository( $this->wpdb ) )->find( $creator->id )?->bps );
 		self::assertSame( $went + 1, did_action( GoLiveRequests::WENT_LIVE ), 'The designer releases the waiting designs.' );
 		self::assertContains( 'account_live_approved', array_column( $this->rows( Tables::NOTIFICATIONS ), 'type' ) );
-		$this->refused( GoLiveException::NOT_PENDING, fn() => $this->requests( true )->approve( $id, 'Nova Shop', '20' ) );
+		$this->refused( GoLiveException::NOT_PENDING, fn() => $this->requests( true )->approve( $id, 'Nova Shop', '20', FrontGroup::CREATOR ) );
 	}
 
 	public function test_a_category_that_cannot_be_made_is_tried_again(): void {
 		$creator          = $this->asked();
 		$this->shop_fails = true;
 
-		self::assertSame( GoLiveRequests::NO_CATEGORY, $this->requests()->approve( $this->pending_id( $creator->id ), 'Nova', '10' ), 'Live, but without the category.' );
+		self::assertSame( GoLiveRequests::NO_CATEGORY, $this->requests()->approve( $this->pending_id( $creator->id ), 'Nova', '10', FrontGroup::CREATOR ), 'Live, but without the category.' );
 		self::assertTrue( ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->is_live() );
 
 		$this->shop_fails = false;
-		self::assertSame( GoLiveRequests::PROVISIONED, $this->requests()->retry_category( $creator->id, 'Nova', '10' ) );
-		self::assertSame( array( $creator->id, 'Nova', $this->parent, '10' ), $this->provisioned[ count( $this->provisioned ) - 1 ] );
+		self::assertSame( GoLiveRequests::PROVISIONED, $this->requests()->retry_category( $creator->id, 'Nova', '10', FrontGroup::CREATOR ) );
+		self::assertSame( array( $creator->id, 'Nova', $this->parent, '10', FrontGroup::CREATOR ), $this->provisioned[ count( $this->provisioned ) - 1 ] );
 	}
 
 	public function test_a_markup_that_is_not_set_still_releases_the_designs(): void {
@@ -169,7 +171,7 @@ final class GoLiveTest extends IntegrationTestCase {
 		$this->markup_fails = true;
 		$went               = did_action( GoLiveRequests::WENT_LIVE );
 
-		self::assertSame( GoLiveRequests::NO_MARKUP, $this->requests()->approve( $this->pending_id( $creator->id ), 'Nova', '10' ) );
+		self::assertSame( GoLiveRequests::NO_MARKUP, $this->requests()->approve( $this->pending_id( $creator->id ), 'Nova', '10', FrontGroup::CREATOR ) );
 		self::assertSame( $went + 1, did_action( GoLiveRequests::WENT_LIVE ), 'The category is there: the waiting designs go to the shop (review 32.7).' );
 	}
 
@@ -186,12 +188,12 @@ final class GoLiveTest extends IntegrationTestCase {
 		);
 		wp_set_object_terms( $product, array( (int) $old['term_id'] ), 'product_cat' );
 
-		self::assertSame( GoLiveRequests::NO_CATEGORY, $this->requests( true )->approve( $this->pending_id( $creator->id ), 'Old Shop', '20' ), 'Its products would go to the new creator (review 32.7).' );
+		self::assertSame( GoLiveRequests::NO_CATEGORY, $this->requests( true )->approve( $this->pending_id( $creator->id ), 'Old Shop', '20', FrontGroup::CREATOR ), 'Its products would go to the new creator (review 32.7).' );
 		self::assertSame( array(), ( new CreatorCategoryRepository( $this->wpdb ) )->for_creator( $creator->id ) );
 
 		$empty = wp_insert_term( 'Empty Shop', 'product_cat', array( 'parent' => max( 0, $this->parent ) ) );
 		self::assertIsArray( $empty );
-		self::assertSame( GoLiveRequests::PROVISIONED, $this->requests( true )->retry_category( $creator->id, 'Empty Shop', '20' ), 'An empty category with the name is used.' );
+		self::assertSame( GoLiveRequests::PROVISIONED, $this->requests( true )->retry_category( $creator->id, 'Empty Shop', '20', FrontGroup::CREATOR ), 'An empty category with the name is used.' );
 		self::assertSame( (int) $empty['term_id'], ( new CreatorCategoryRepository( $this->wpdb ) )->for_creator( $creator->id )[0]->term_id ?? null );
 		wp_delete_post( (int) $product, true );
 	}
@@ -215,11 +217,11 @@ final class GoLiveTest extends IntegrationTestCase {
 		$id      = $this->pending_id( $creator->id );
 
 		SignupSettings::save( true, 0 );
-		$this->refused( GoLiveException::PARENT_MISSING, fn() => $this->requests()->approve( $id, 'Nova', '10' ) );
+		$this->refused( GoLiveException::PARENT_MISSING, fn() => $this->requests()->approve( $id, 'Nova', '10', FrontGroup::CREATOR ) );
 
 		SignupSettings::save( true, $this->parent );
 		wp_set_current_user( $this->user );
-		$this->refused( GoLiveException::NOT_AUTHORIZED, fn() => $this->requests()->approve( $id, 'Nova', '10' ) );
+		$this->refused( GoLiveException::NOT_AUTHORIZED, fn() => $this->requests()->approve( $id, 'Nova', '10', FrontGroup::CREATOR ) );
 	}
 
 	public function test_the_go_live_tab_shows_the_request_and_decides_it(): void {
@@ -232,6 +234,8 @@ final class GoLiveTest extends IntegrationTestCase {
 
 		self::assertStringContainsString( 'Nova', $html );
 		self::assertStringContainsString( 'Accepted the agreement, version 1', $html );
+		self::assertStringContainsString( 'Shown on the front page as: Content creator', $html, 'No choice stored: Content creator (ADR-097).' );
+		self::assertStringContainsString( '<option value="creator" selected=\'selected\'>', $html );
 		self::assertSame( 1, $page->approval_tab()->waiting(), 'The red count.' );
 
 		$input = array(
@@ -242,6 +246,54 @@ final class GoLiveTest extends IntegrationTestCase {
 		self::assertSame( 'declined', $page->handle( $input + array( 'note' => 'Not yet.' ) ) );
 	}
 
+	public function test_approving_writes_the_front_page_group_on_the_new_category(): void {
+		$creator = $this->asked();
+		$meta    = $this->service( CreatorMetaStore::class );
+		$meta->set( $creator->id, CreatorMetaStore::FRONT_GROUP, FrontGroup::CREATOR );
+		$id = $this->pending_id( $creator->id );
+
+		$this->refused( GoLiveException::FRONT_GROUP, fn() => $this->requests( true )->approve( $id, 'Nova Club', '20', 'partner' ) );
+		self::assertFalse( ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->is_live(), 'Refused before anything changed.' );
+
+		self::assertSame( GoLiveRequests::PROVISIONED, $this->requests( true )->approve( $id, 'Nova Club', '20', FrontGroup::COMMUNITY ), 'The administrator changes the creator\'s choice.' );
+
+		$term_id = ( new CreatorCategoryRepository( $this->wpdb ) )->for_creator( $creator->id )[0]->term_id ?? 0;
+		self::assertSame( FrontGroup::COMMUNITY, get_term_meta( $term_id, FrontGroup::TERM_META, true ) );
+		self::assertSame( FrontGroup::COMMUNITY, $meta->get( $creator->id, CreatorMetaStore::FRONT_GROUP ) );
+		self::assertSame( FrontGroup::COMMUNITY, $this->requests()->front_group( $creator->id ) );
+		self::assertSame( '', get_term_meta( $this->parent, FrontGroup::TERM_META, true ), 'Only the creator\'s own category.' );
+
+		$audit = array_values( array_filter( $this->rows( Tables::AUDIT_LOG ), static fn( array $row ): bool => 'go_live_approved' === $row['action'] ) );
+		self::assertNotSame( array(), $audit );
+		self::assertSame( FrontGroup::COMMUNITY, json_decode( (string) $audit[0]['context'], true )['front_group'] ?? null );
+	}
+
+	public function test_a_reused_empty_category_and_a_retry_get_the_front_page_group(): void {
+		$creator = $this->asked();
+		$empty   = wp_insert_term( 'Club Shop', 'product_cat', array( 'parent' => max( 0, $this->parent ) ) );
+		self::assertIsArray( $empty );
+		update_term_meta( (int) $empty['term_id'], FrontGroup::TERM_META, FrontGroup::CREATOR );
+
+		$this->shop_fails = true;
+		self::assertSame( GoLiveRequests::NO_CATEGORY, $this->requests()->approve( $this->pending_id( $creator->id ), 'Club Shop', '10', FrontGroup::CREATOR ) );
+
+		self::assertSame( GoLiveRequests::PROVISIONED, $this->requests( true )->retry_category( $creator->id, 'Club Shop', '10', FrontGroup::COMMUNITY ) );
+		self::assertSame( (int) $empty['term_id'], ( new CreatorCategoryRepository( $this->wpdb ) )->for_creator( $creator->id )[0]->term_id ?? null );
+		self::assertSame( FrontGroup::COMMUNITY, get_term_meta( (int) $empty['term_id'], FrontGroup::TERM_META, true ), 'Always written on the reused category.' );
+		self::assertSame( FrontGroup::COMMUNITY, $this->requests()->front_group( $creator->id ) );
+	}
+
+	public function test_a_category_the_creator_has_already_is_not_changed(): void {
+		$creator = $this->asked();
+		$own     = wp_insert_term( 'Own Shop', 'product_cat' );
+		self::assertIsArray( $own );
+		( new CreatorCategoryRepository( $this->wpdb ) )->insert( (int) $own['term_id'], $creator->id, null );
+
+		self::assertSame( GoLiveRequests::PROVISIONED, $this->requests( true )->approve( $this->pending_id( $creator->id ), 'Nova', '20', FrontGroup::COMMUNITY ) );
+		self::assertSame( '', get_term_meta( (int) $own['term_id'], FrontGroup::TERM_META, true ), 'A mapped category is never written (ADR-097).' );
+		self::assertCount( 1, ( new CreatorCategoryRepository( $this->wpdb ) )->for_creator( $creator->id ) );
+	}
+
 	/**
 	 * The service with the fake shop, or the WooCommerce shop.
 	 *
@@ -250,7 +302,7 @@ final class GoLiveTest extends IntegrationTestCase {
 	private function requests( bool $woocommerce = false ): GoLiveRequests {
 		$shop = $woocommerce ? $this->woocommerce_shop() : $this->fake_shop();
 
-		return new GoLiveRequests( new GoLiveRepository( $this->wpdb ), new CreatorRepository( $this->wpdb ), $this->service( Agreement::class ), static fn(): GoLiveShop => $shop, $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+		return new GoLiveRequests( new GoLiveRepository( $this->wpdb ), new CreatorRepository( $this->wpdb ), $this->service( Agreement::class ), static fn(): GoLiveShop => $shop, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( CreatorMetaStore::class ) );
 	}
 
 	/**
@@ -293,8 +345,8 @@ final class GoLiveTest extends IntegrationTestCase {
 				return false;
 			}
 
-			public function provision( int $creator_id, string $name, int $parent_id, string $percent ): bool {
-				return $this->test->provisioned( $creator_id, $name, $parent_id, $percent );
+			public function provision( int $creator_id, string $name, int $parent_id, string $percent, string $front_group ): bool {
+				return $this->test->provisioned( $creator_id, $name, $parent_id, $percent, $front_group );
 			}
 		};
 	}
@@ -306,15 +358,16 @@ final class GoLiveTest extends IntegrationTestCase {
 	 * @param string $name       Name.
 	 * @param int    $parent_id  Parent.
 	 * @param string $percent    Markup.
+	 * @param string $group      Front-page group.
 	 * @return bool Whether the markup was set.
 	 * @throws GoLiveException When the shop is set to fail.
 	 */
-	public function provisioned( int $creator_id, string $name, int $parent_id, string $percent ): bool {
+	public function provisioned( int $creator_id, string $name, int $parent_id, string $percent, string $group ): bool {
 		if ( $this->shop_fails ) {
 			throw new GoLiveException( GoLiveException::CATEGORY_FAILED );
 		}
 
-		$this->provisioned[] = array( $creator_id, $name, $parent_id, $percent );
+		$this->provisioned[] = array( $creator_id, $name, $parent_id, $percent, $group );
 
 		return ! $this->markup_fails;
 	}
