@@ -23,6 +23,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import type { ChangeEvent, KeyboardEvent, ReactNode } from 'react';
 
 import {
+	copyDesignerProduct,
 	deleteDesignerImage,
 	designerAssetUrl,
 	discardChange,
@@ -267,6 +268,7 @@ function Editor( props: EditorProps ) {
 	} | null >( null );
 	const [ saving, setSaving ] = useState( false );
 	const [ discarding, setDiscarding ] = useState( false );
+	const [ copying, setCopying ] = useState( false );
 	const [ saved, setSaved ] = useState( {
 		design: props.design,
 		stitch,
@@ -791,6 +793,30 @@ function Editor( props: EditorProps ) {
 		}
 	};
 
+	/** "Copy design" (ADR-096 pkt. 7): saves what is open, then opens the copy. */
+	const copy = async () => {
+		if ( dirty && ( await persist() ) === null ) {
+			return;
+		}
+
+		setCopying( true );
+		setMessage( null );
+		const result = await copyDesignerProduct( product.id );
+		setCopying( false );
+
+		if ( result.ok ) {
+			onProduct( result.data );
+		} else {
+			setMessage( {
+				tone: 'danger',
+				text: __(
+					'The design could not be copied. Please try again.',
+					'merchboard'
+				),
+			} );
+		}
+	};
+
 	/** Drops the change of a product in the shop. */
 	const discard = async () => {
 		setDiscarding( true );
@@ -1103,6 +1129,14 @@ function Editor( props: EditorProps ) {
 							{ __( 'Cancel the change', 'merchboard' ) }
 						</Button>
 					) }
+					<Button
+						variant="ghost"
+						onClick={ () => void copy() }
+						isBusy={ copying }
+						disabled={ saving || sending }
+					>
+						{ __( 'Copy design', 'merchboard' ) }
+					</Button>
 					{ impersonating ? null : (
 						<Button
 							variant="ghost"

@@ -111,6 +111,60 @@ class DesignerDrafts {
 	}
 
 	/**
+	 * "Copy design" (ADR-096 pkt. 7): a new designer product whose first
+	 * draft has the setup of the newest version of one of the creator's
+	 * products, in any status. The design is checked again against the base
+	 * product as it is now (its sides, colours and sizes); files are not
+	 * copied, so the copy renders its own at submission.
+	 *
+	 * @param Creator         $creator   The creator.
+	 * @param int             $product   The designer product to copy.
+	 * @param DesignValidator $validator The design check for this creator.
+	 * @return int The new designer product's id.
+	 * @throws DesignerException When the product is unknown, its base product is not active or its setup is refused.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function duplicate( Creator $creator, int $product, DesignValidator $validator ): int {
+		$row     = $this->products->find( $creator->id, $product ) ?? self::refuse( DesignerException::DESIGN_UNKNOWN );
+		$version = $this->products->newest( $product ) ?? self::refuse( DesignerException::DESIGN_UNKNOWN );
+		$base    = $this->active_base( (int) $row['base_id'] );
+		$prefix  = DesignerNames::prefix( $creator->display_name, $base->name );
+		$design  = json_decode( (string) $version['design'], true );
+		$offered = array_column( $base->colors, 'key' );
+		$colors  = self::in_chosen_order( json_decode( (string) $version['colors'], true ), $offered );
+		$sizes   = self::subset( json_decode( (string) $version['sizes'], true ), $base->sizes );
+		$kind    = in_array( $version['profit_kind'], array( 'percent', 'fixed' ), true ) ? (string) $version['profit_kind'] : 'fixed';
+
+		$fields = $this->fields(
+			$base,
+			$this->copy_title( $prefix, DesignerNames::postfix( (string) $version['title'], $prefix, $base->name ) ),
+			(string) $version['description'],
+			array() === $colors ? array( $offered[0] ?? '' ) : $colors,
+			array() === $sizes ? $base->sizes : $sizes,
+			$kind,
+			$this->profit_units( $version['profit_value'] ),
+			$validator->validate( self::known_sides( is_array( $design ) ? $design : array(), $base ), $base, $this->bases->provider( (int) $base->id )['stitches'] ?? array() )
+		);
+
+		return $this->transaction->run(
+			function () use ( $creator, $base, $fields, $product ): int {
+				[ $copy ] = $this->products->create( $creator->id, (int) $base->id, $fields );
+				$this->audit->record(
+					AuditAction::DesignerProductCreated,
+					$creator->id,
+					array(
+						'design_product_id' => $copy,
+						'base_id'           => (int) $base->id,
+						'copied_from'       => $product,
+					)
+				);
+
+				return $copy;
+			}
+		);
+	}
+
+	/**
 	 * Saves the draft of a creator's designer product.
 	 *
 	 * @param Creator              $creator   The creator.
@@ -235,6 +289,56 @@ class DesignerDrafts {
 			'profit_value' => SalesAmount::format( $value ),
 			'quoted_price' => SalesAmount::format( $price->price_units() ),
 		);
+	}
+
+	/**
+	 * A free name for a copy: the original's addition followed by "(copy)",
+	 * "(copy 2)" … within the name's length.
+	 *
+	 * @param string $prefix  The fixed part of the name.
+	 * @param string $postfix The original's addition.
+	 * @throws DatabaseException When the names cannot be read.
+	 */
+	private function copy_title( string $prefix, string $postfix ): string {
+		$title = '';
+
+		for ( $number = 1; $number <= 20; $number++ ) {
+			$mark = __( '(copy)', 'merchboard' );
+
+			if ( $number > 1 ) {
+				/* translators: %d: the number of the copy (2 or more). */
+				$mark = sprintf( __( '(copy %d)', 'merchboard' ), $number );
+			}
+
+			$room  = max( 0, 120 - mb_strlen( $prefix ) - mb_strlen( $mark ) - 2 );
+			$title = DesignerNames::full( $prefix, trim( mb_substr( $postfix, 0, $room ) . ' ' . $mark ) );
+
+			if ( ! $this->products->name_taken( $title, 0 ) ) {
+				break;
+			}
+		}
+
+		return $title;
+	}
+
+	/**
+	 * A design without the sides, colours and threads of sides the base
+	 * product no longer has, so a copy of an old design is not refused.
+	 *
+	 * @param array<mixed, mixed> $design The stored design.
+	 * @param BaseProduct         $base   The base product as it is now.
+	 * @return array<mixed, mixed>
+	 */
+	private static function known_sides( array $design, BaseProduct $base ): array {
+		$keys = array_flip( array_map( static fn( $view ): string => $view->key, $base->views ) );
+
+		foreach ( array( 'sides', 'background', 'threads' ) as $field ) {
+			if ( isset( $design[ $field ] ) && is_array( $design[ $field ] ) ) {
+				$design[ $field ] = array_intersect_key( $design[ $field ], $keys );
+			}
+		}
+
+		return $design;
 	}
 
 	/**

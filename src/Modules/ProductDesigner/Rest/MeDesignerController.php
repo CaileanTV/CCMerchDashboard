@@ -135,6 +135,9 @@ final class MeDesignerController extends RestController {
 				WP_REST_Server::EDITABLE  => 'save_product',
 				WP_REST_Server::DELETABLE => 'delete_product',
 			),
+			'/products/(?P<id>[1-9][0-9]{0,18})/copy'     => array(
+				WP_REST_Server::CREATABLE => 'copy_product',
+			),
 			'/products/(?P<id>[1-9][0-9]{0,18})/files'    => array(
 				WP_REST_Server::CREATABLE => 'attach_file',
 			),
@@ -322,6 +325,28 @@ final class MeDesignerController extends RestController {
 
 				try {
 					$id = $this->drafts->create( $creator, is_int( $base ) ? $base : 0 );
+				} catch ( DesignerException $e ) {
+					return self::refused( $e );
+				}
+
+				return $this->product_response( $creator, $id, 201 );
+			}
+		);
+	}
+
+	/**
+	 * `POST /me/designer/products/{id}/copy`: a new product with the setup of
+	 * this one (ADR-096 pkt. 7).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function copy_product( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/products/{id}/copy',
+			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
+				try {
+					$id = $this->drafts->duplicate( $creator, (int) $request->get_param( 'id' ), $this->validator( $creator ) );
 				} catch ( DesignerException $e ) {
 					return self::refused( $e );
 				}

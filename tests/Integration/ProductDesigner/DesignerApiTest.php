@@ -292,6 +292,46 @@ final class DesignerApiTest extends IntegrationTestCase {
 		self::assertSame( 403, $this->call( 'GET', '/merchboard/v1/me/designer' )->get_status() );
 	}
 
+	public function test_a_creator_copies_a_product_as_a_new_draft_also_before_it_is_approved(): void {
+		wp_set_current_user( $this->user );
+		$own     = (int) $this->upload( AlertImagesTest::png( 50, 40 ) )->get_data()['id'];
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		$route   = '/merchboard/v1/me/designer/products/' . $product;
+		self::assertSame( 200, $this->call( 'PUT', $route, $this->draft( array( self::rect(), self::image( $own ) ) ) )->get_status() );
+
+		$copied = $this->call( 'POST', $route . '/copy' );
+		self::assertSame( 201, $copied->get_status(), (string) wp_json_encode( $copied->get_data() ) );
+		$copy  = (int) $copied->get_data()['id'];
+		$draft = $copied->get_data()['draft'];
+		self::assertNotSame( $product, $copy );
+		self::assertSame( array( 'Designer A Organic tee Stream tee (copy)', array( 'sand', 'black' ), array( 'M', 'L' ), 'percent', '20.0000', '179.9400' ), array( $draft['title'], $draft['colors'], $draft['sizes'], $draft['profit_kind'], $draft['profit_value'], $draft['price'] ) );
+		self::assertSame( array( 'rect', 'image' ), array_column( $draft['design']['sides']['front'], 'type' ), 'The design and the creator\'s own upload come along.' );
+
+		// A submitted version is copied too, and the name stays free.
+		self::assertSame( 200, $this->attach( $product, 'print:front', AlertImagesTest::png( 118, 157 ) )->get_status() );
+		foreach ( array( 'black', 'sand' ) as $color ) {
+			self::assertSame( 200, $this->attach( $product, 'mockup:front:' . $color, AlertImagesTest::png( 400, 400 ) )->get_status() );
+		}
+		self::assertSame( 200, $this->call( 'POST', $route . '/submit' )->get_status() );
+
+		$again = $this->call( 'POST', $route . '/copy' );
+		self::assertSame( 201, $again->get_status() );
+		self::assertSame( 'Designer A Organic tee Stream tee (copy 2)', $again->get_data()['draft']['title'] );
+		self::assertNull( ( new DesignerProductRepository( $this->wpdb ) )->draft( (int) $again->get_data()['id'] )['files'] ?? null, 'Files are never copied.' );
+		self::assertSame( 'pending', ( new DesignerProductRepository( $this->wpdb ) )->pending( $product )['status'] ?? null, 'The original is unchanged.' );
+
+		$audit = $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT context FROM %i WHERE action = %s ORDER BY id', $this->table( Tables::AUDIT_LOG ), 'designer_product_created' ) );
+		self::assertSame( $product, json_decode( (string) end( $audit ), true )['copied_from'] ?? null );
+
+		wp_set_current_user( $this->other );
+		self::assertSame( 404, $this->call( 'POST', $route . '/copy' )->get_status(), 'Only the creator\'s own products.' );
+
+		wp_set_current_user( $this->user );
+		$this->wpdb->update( $this->table( Tables::DESIGNER_BASES ), array( 'status' => 'draft' ), array( 'id' => $this->base ) );
+		self::assertSame( 'base_unknown', $this->refusal( $this->call( 'POST', $route . '/copy' ) )[1], 'Not on a base product that is not active.' );
+		self::assertSame( 3, $this->count_rows( Tables::DESIGNER_PRODUCTS ) );
+	}
+
 	public function test_a_product_rejected_before_it_was_ever_approved_can_be_deleted(): void {
 		wp_set_current_user( $this->user );
 		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];

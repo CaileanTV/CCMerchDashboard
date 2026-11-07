@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
 import {
+	copyDesignerProduct,
 	createDesignerProduct,
 	deleteDesignerProduct,
 	getDesigner,
@@ -115,6 +116,25 @@ export function DesignerSection() {
 			setNotice(
 				__(
 					'The design could not be started. Please try again.',
+					'merchboard'
+				)
+			);
+		}
+	};
+
+	const copy = async ( id: number ) => {
+		setBusy( id );
+		setNotice( null );
+		const result = await copyDesignerProduct( id );
+		setBusy( null );
+
+		if ( result.ok ) {
+			setOpen( result.data );
+			load();
+		} else {
+			setNotice(
+				__(
+					'The design could not be copied. Please try again.',
 					'merchboard'
 				)
 			);
@@ -244,6 +264,23 @@ export function DesignerSection() {
 										{ product.status === 'draft'
 											? __( 'Edit', 'merchboard' )
 											: __( 'Open', 'merchboard' ) }
+									</Button>
+									<Button
+										size="sm"
+										variant="secondary"
+										onClick={ () =>
+											void copy( product.id )
+										}
+										disabled={ busy === product.id }
+										aria-label={ sprintf(
+											/* translators: %s: design title. */ __(
+												'Copy %s as a new design',
+												'merchboard'
+											),
+											product.title
+										) }
+									>
+										{ __( 'Copy design', 'merchboard' ) }
 									</Button>
 									<Button
 										size="sm"

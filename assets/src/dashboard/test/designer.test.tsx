@@ -526,6 +526,59 @@ describe( 'DesignerSection', () => {
 		);
 	} );
 
+	it( 'copies a design as a new draft and opens it', async () => {
+		const requests = mockApi( {
+			'GET /merchboard/v1/me/designer': () => response( 200, OVERVIEW ),
+			'POST /merchboard/v1/me/designer/products/5/copy': () =>
+				response( 201, {
+					id: 9,
+					base_id: 3,
+					in_shop: false,
+					draft: {
+						number: 1,
+						title: 'Organic tee Tee (copy)',
+						description: '',
+						colors: [ 'black' ],
+						sizes: [ 'S' ],
+						design: { version: 1, sides: [] },
+						profit_kind: 'fixed',
+						profit_value: '0.0000',
+						price: '149.9500',
+						base_version: 2,
+						updated_at: '2026-11-07T10:00:00+00:00',
+					},
+				} ),
+		} );
+
+		rendered = render(
+			<ConfigContext.Provider value={ CONFIG }>
+				<DesignerSection />
+			</ConfigContext.Provider>
+		);
+		await flush();
+
+		click(
+			rendered.container.querySelector< HTMLElement >(
+				'[aria-label="Copy Tee as a new design"]'
+			)
+		);
+		await flush();
+
+		expect(
+			requests.some(
+				( request ) =>
+					request.method === 'POST' &&
+					request.path ===
+						'/merchboard/v1/me/designer/products/5/copy'
+			)
+		).toBe( true );
+		expect(
+			rendered.container.querySelector< HTMLInputElement >(
+				'input[maxlength="60"]'
+			)?.value
+		).toContain( 'Tee (copy)' );
+	} );
+
 	it( 'sends a draft with its files for approval and withdraws it', async () => {
 		const draft = {
 			number: 1,

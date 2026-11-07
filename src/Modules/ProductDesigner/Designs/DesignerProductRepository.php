@@ -215,6 +215,26 @@ class DesignerProductRepository {
 	}
 
 	/**
+	 * The newest version of a designer product in any status, or null
+	 * ("Copy design", ADR-096 pkt. 7).
+	 *
+	 * @param int $product_id Designer product.
+	 * @return array<string, mixed>|null
+	 * @throws DatabaseException When it cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function newest( int $product_id ): ?array {
+		$wpdb = $this->wpdb;
+		$row  = $wpdb->get_row( $wpdb->prepare( 'SELECT ' . self::VERSION_COLUMNS . ' FROM %i WHERE design_product_id = %d ORDER BY number DESC LIMIT 1', $this->table( Tables::DESIGNER_VERSIONS ), $product_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Constant columns; the designer's own table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the design.' );
+		}
+
+		return is_array( $row ) ? $row : null;
+	}
+
+	/**
 	 * The pending version of a designer product, or null.
 	 *
 	 * @param int  $product_id Designer product.

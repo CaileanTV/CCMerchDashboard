@@ -806,6 +806,21 @@ export function createDesignerProduct(
 	);
 }
 
+/**
+ * "Copy design": a new product with the setup of this one, as a draft
+ * (ADR-096 pkt. 7).
+ *
+ * @param id Designer product to copy.
+ */
+export function copyDesignerProduct(
+	id: number
+): Promise< ApiResult< DesignerProduct > > {
+	return request(
+		{ path: `${ PATH }/products/${ id }/copy`, method: 'POST' },
+		parseProduct
+	);
+}
+
 const SHOP_STATES: readonly DesignerShopState[] = [
 	'in_shop',
 	'hidden',
