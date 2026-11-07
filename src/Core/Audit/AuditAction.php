@@ -870,4 +870,10 @@ enum AuditAction: string {
 	 * Context: design_product_id, version_id, image.
 	 */
 	case DesignerPrimaryImageChanged = 'designer_primary_image_changed';
+
+	/**
+	 * An administrator changed a creator's front-page group on "Try again"
+	 * at go-live (ADR-097). Context: from, to.
+	 */
+	case CreatorFrontGroupChanged = 'creator_front_group_changed';
 }

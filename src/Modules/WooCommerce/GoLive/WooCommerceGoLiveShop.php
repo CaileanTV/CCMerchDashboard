@@ -29,7 +29,7 @@ defined( 'ABSPATH' ) || exit;
  * category (WordPress makes the slug) and maps it with the existing
  * service, so the reconciliation (ADR-033) runs as for a manual mapping. A
  * term with the same name under the parent is used only when it holds no
- * products and no other creator has it, so a new creator never gets old
+ * products and no creator has it (checked before anything is written on it), so a new creator never gets old
  * products (review 32.7). The markup is set through the pricing settings
  * (audited), when the administrator may manage creator pricing; a markup
  * that is not set does not undo the category.
@@ -137,11 +137,26 @@ final class WooCommerceGoLiveShop implements GoLiveShop {
 
 		$existing = 'term_exists' === $term->get_error_code() ? $term->get_error_data( 'term_exists' ) : null;
 
-		if ( is_numeric( $existing ) && array() === get_objects_in_term( (int) $existing, 'product_cat' ) ) {
+		if ( is_numeric( $existing ) && array() === get_objects_in_term( (int) $existing, 'product_cat' ) && ! $this->is_mapped( (int) $existing ) ) {
 			return (int) $existing;
 		}
 
 		throw new GoLiveException( GoLiveException::CATEGORY_FAILED );
+	}
+
+	/**
+	 * Whether a term is mapped to a creator already (then it is never
+	 * reused, and nothing is written on it).
+	 *
+	 * @param int $term_id Term.
+	 * @throws GoLiveException When the mapping cannot be read.
+	 */
+	private function is_mapped( int $term_id ): bool {
+		try {
+			return null !== $this->mappings->find( $term_id );
+		} catch ( DatabaseException | InvalidArgumentException ) {
+			throw new GoLiveException( GoLiveException::CATEGORY_FAILED );
+		}
 	}
 
 	/**

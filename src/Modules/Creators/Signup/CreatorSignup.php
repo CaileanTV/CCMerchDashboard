@@ -376,6 +376,7 @@ class CreatorSignup {
 				}
 
 				$this->agreements->delete_for_unverified( $creator_id );
+				$this->meta->delete_all( $creator_id );
 				$this->creators->delete( $creator_id );
 				$this->audit->record( AuditAction::CreatorSignupExpired, null, array( 'creator_id' => $creator_id ) );
 

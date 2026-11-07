@@ -189,6 +189,7 @@ final class GoLiveTest extends IntegrationTestCase {
 		wp_set_object_terms( $product, array( (int) $old['term_id'] ), 'product_cat' );
 
 		self::assertSame( GoLiveRequests::NO_CATEGORY, $this->requests( true )->approve( $this->pending_id( $creator->id ), 'Old Shop', '20', FrontGroup::CREATOR ), 'Its products would go to the new creator (review 32.7).' );
+		self::assertSame( '', get_term_meta( (int) $old['term_id'], FrontGroup::TERM_META, true ), 'Nothing is written on it (ADR-097).' );
 		self::assertSame( array(), ( new CreatorCategoryRepository( $this->wpdb ) )->for_creator( $creator->id ) );
 
 		$empty = wp_insert_term( 'Empty Shop', 'product_cat', array( 'parent' => max( 0, $this->parent ) ) );
@@ -281,6 +282,29 @@ final class GoLiveTest extends IntegrationTestCase {
 		self::assertSame( (int) $empty['term_id'], ( new CreatorCategoryRepository( $this->wpdb ) )->for_creator( $creator->id )[0]->term_id ?? null );
 		self::assertSame( FrontGroup::COMMUNITY, get_term_meta( (int) $empty['term_id'], FrontGroup::TERM_META, true ), 'Always written on the reused category.' );
 		self::assertSame( FrontGroup::COMMUNITY, $this->requests()->front_group( $creator->id ) );
+
+		$changed = array_values( array_filter( $this->rows( Tables::AUDIT_LOG ), static fn( array $row ): bool => 'creator_front_group_changed' === $row['action'] ) );
+		self::assertCount( 1, $changed, 'The change on "Try again" is audited.' );
+		self::assertSame(
+			array(
+				'from' => FrontGroup::CREATOR,
+				'to'   => FrontGroup::COMMUNITY,
+			),
+			json_decode( (string) $changed[0]['context'], true )
+		);
+	}
+
+	public function test_an_empty_category_of_another_creator_is_never_reused_or_written(): void {
+		$other = $this->service( CreatorService::class )->create( 'Nova Original', CreatorStatus::Active, $this->create_user( 'original' ) );
+		$taken = wp_insert_term( 'Nova', 'product_cat', array( 'parent' => max( 0, $this->parent ) ) );
+		self::assertIsArray( $taken );
+		update_term_meta( (int) $taken['term_id'], FrontGroup::TERM_META, FrontGroup::COMMUNITY );
+		( new CreatorCategoryRepository( $this->wpdb ) )->insert( (int) $taken['term_id'], $other->id, null );
+		$creator = $this->asked();
+
+		self::assertSame( GoLiveRequests::NO_CATEGORY, $this->requests( true )->approve( $this->pending_id( $creator->id ), 'Nova', '20', FrontGroup::CREATOR ), 'Another creator\'s empty category (review 35.5).' );
+		self::assertSame( FrontGroup::COMMUNITY, get_term_meta( (int) $taken['term_id'], FrontGroup::TERM_META, true ), 'Its front-page group is untouched.' );
+		self::assertSame( array(), ( new CreatorCategoryRepository( $this->wpdb ) )->for_creator( $creator->id ) );
 	}
 
 	public function test_a_category_the_creator_has_already_is_not_changed(): void {

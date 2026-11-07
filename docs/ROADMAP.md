@@ -1000,7 +1000,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **35.2 Server ✅ (testet automatisk):** `FrontGroup`, creator meta `front_group`, tilmeldingen, go-live (`GoLiveRequests`, `GoLiveShop`) og fanen Go-live.
 - **35.3 Formular og tekster ✅:** feltet på tilmeldingssiden og danske tekster.
 - **35.4 Tests ✅:** unit og integration (tilmelding og go-live).
-- **35.5 Review og runtime-test på Local.**
+- **35.5 Review og runtime-test på Local ✅ (2026-11-08):** efter verificeret backup; se statusnoten i ADR-097. Reviewet fandt én fejl (værdien kunne skrives på en anden creators tomme kategori) og to mindre; alle rettet.
 - **35.6 Release 1.7.1:** efter projektejerens go.
 
 ## Senere (uprioriteret)

@@ -220,6 +220,7 @@ final class CreatorSignupTest extends IntegrationTestCase {
 		self::assertSame( array(), $this->rows( Tables::CREATORS ) );
 		self::assertSame( 0, (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(*) FROM %i', $this->wpdb->prefix . Tables::CREATOR_SIGNUPS ) ) );
 		self::assertSame( array(), $this->rows( Tables::AGREEMENT_ACCEPTANCES ) );
+		self::assertSame( 0, (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(*) FROM %i', $this->wpdb->prefix . Tables::CREATOR_META ) ), 'The front-page group goes with it (review 35.5).' );
 		self::assertContains( 'creator_signup_expired', $this->audit_actions() );
 	}
 

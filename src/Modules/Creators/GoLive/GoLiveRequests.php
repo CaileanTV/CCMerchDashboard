@@ -232,7 +232,23 @@ class GoLiveRequests {
 
 		( $this->shop )()->check_markup( $percent );
 		self::check_front_group( $group );
-		$this->meta->set( $creator_id, CreatorMetaStore::FRONT_GROUP, $group );
+		$before = $this->front_group( $creator_id );
+
+		if ( $before !== $group ) {
+			$this->transaction->run(
+				function () use ( $creator_id, $before, $group ): void {
+					$this->meta->set( $creator_id, CreatorMetaStore::FRONT_GROUP, $group );
+					$this->audit->record(
+						AuditAction::CreatorFrontGroupChanged,
+						$creator_id,
+						array(
+							'from' => $before,
+							'to'   => $group,
+						)
+					);
+				}
+			);
+		}
 
 		return $this->provision( $creator_id, $name, $percent, $group );
 	}
