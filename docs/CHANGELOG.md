@@ -7,7 +7,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 ### Added
 
 - **Farvedesigns (fase 34, ADR-096):** enkelte farver på samme produkt kan få deres eget design, fx sort og hvid med ét design og orange med et andet. Som standard deler alle farver ét design; creatoren giver en farve "+ Nyt design" eller lader flere farver dele et. Når en farve samles med et andet design, vælger creatoren, hvordan de flettes. Hver farve får sin egen pris, egne printfiler og mockups (også hos leverandørerne), og ordresiden viser printfilerne for linjens farve.
-- **Produktbillede (fase 34, schema-version 47):** creatoren vælger, hvilket mockup (farve + side) der er produktets hovedbillede, og kan skifte det på et live produkt uden ny godkendelse. Audit `designer_primary_image_changed`.
+- **Produktbillede (fase 34, schema-version 47):** creatoren vælger, hvilket mockup (farve + side) der er produktets hovedbillede, og kan skifte det på et live produkt uden ny godkendelse. Designeren viser det valgte billede, tegnet som butikken vil vise det, og "Vis alle billeder" giver et galleri at vælge fra; et live produkt viser de godkendte billeder som et galleri. Audit `designer_primary_image_changed`.
 - **Kopiér design (fase 34):** et nyt produkt med samme opsætning som et eksisterende, også før det er godkendt.
 - **Vælg alle farver** og elementets **størrelse i cm** i designeren.
 - **Sikkerhed:** en admin, der ser dashboardet som en creator, kan ikke få lavet en webhook-hemmelighed med en hemmelighed, der ikke er tekst (PR #11), og en Twitch-, Kick- eller YouTube-forbindelse kan ikke gøres færdig, efter creatorens adgang er fjernet (PR #13).

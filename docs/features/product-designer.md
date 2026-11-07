@@ -210,7 +210,7 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
 - **Når en farve flyttes ind i et andet design,** spørger designeren: brug måldesignet, brug farvens design (det erstatter måldesignet for alle farver i det) eller læg lagene sammen. Alt kan fortrydes.
 - **Pris pr. farve:** en farve koster prisen for sit eget design, så ekstra trykområder regnes pr. farve. Designeren viser "Pris pr. farve", og overskriftsprisen er den højeste.
 - **Filer og leverandører:** hvert design får sine egne printfiler. Hver farve får mockups af sit eget design, også hos Printful, Gelato og Prodigi. Ordresiden viser printfilerne for linjens farve og størrelse; kan farven ikke afgøres, vises alle med farvenavn.
-- **Produktbillede:** creatoren vælger farve og side under "Produktbillede". Ved godkendelse bliver billedet produktets hovedbillede. På et live produkt kan billedet skiftes under "Produktbillede" uden ny godkendelse.
+- **Produktbillede:** creatoren vælger farve og side under "Produktbillede" og ser det valgte billede, tegnet som i butikken; "Vis alle billeder" viser alle valgmuligheder som et galleri (projektejerens ønske 2026-11-07). Ved godkendelse bliver billedet produktets hovedbillede. På et live produkt vælges et af de godkendte billeder i et galleri og skiftes uden ny godkendelse.
 - **Kopiér design:** knappen på hvert design og i designeren laver et nyt produkt med samme opsætning, også fra et design, der venter eller er afvist. Filer kopieres ikke.
 - **"Vælg alle"** ved farverne, og det valgte elements **størrelse i cm** ud fra sidens printstørrelse (også mens det skaleres).
 

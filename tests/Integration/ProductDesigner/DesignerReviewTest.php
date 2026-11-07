@@ -390,6 +390,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$data = (array) $answer->get_data();
 		self::assertSame( array( 'front:black', 'front:sand' ), array_column( (array) ( $data['live']['images'] ?? array() ), 'image' ) );
 		self::assertSame( 'Sand – Front', $data['live']['images'][1]['label'] ?? null );
+		self::assertIsString( $data['live']['images'][1]['url'] ?? null, 'The approved image itself, for the gallery.' );
 		self::assertSame( 'front:sand', $data['live']['primary_image'] ?? null );
 		wp_set_current_user( 1 );
 

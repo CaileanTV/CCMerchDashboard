@@ -92,6 +92,7 @@ import { FontPicker } from '../../components/FontPicker';
 import { addFontStylesheet } from '../alerts/useFontStylesheet';
 import { FinishedProduct } from './FinishedProduct';
 import {
+	mockupPreview,
 	hasStitches,
 	sceneImages,
 	submissionSize,
@@ -261,6 +262,12 @@ function Editor( props: EditorProps ) {
 	const [ primaryImage, setPrimaryImage ] = useState< string | null >(
 		draft.primaryImage
 	);
+	// The product image drawn as the shop will show it, and the gallery of all choices (ADR-096).
+	const [ imagePreview, setImagePreview ] = useState< string | null >( null );
+	const [ gallery, setGallery ] = useState< Readonly<
+		Record< string, string >
+	> | null >( null );
+	const [ galleryBusy, setGalleryBusy ] = useState( false );
 	const [ profitKind, setProfitKind ] = useState< ProfitKind >(
 		draft.profitKind
 	);
@@ -412,6 +419,78 @@ function Editor( props: EditorProps ) {
 			} )
 		)
 	);
+	// The image the product will show: the chosen one, or the first colour's first side.
+	const shownImage =
+		imageChoices.find( ( choice ) => choice.value === primaryImage )
+			?.value ??
+		imageChoices[ 0 ]?.value ??
+		null;
+	const previewInput = {
+		product: product.id,
+		base,
+		design: whole,
+		colors,
+		sizes,
+		image: ( id: number ) => imageOf( id ),
+		fonts: () => fontsOf( whole ),
+	};
+
+	// The gallery shows the design as it was drawn: another design or colours draw it again.
+	const colorList = colors.join();
+
+	useEffect( () => {
+		setGallery( null );
+	}, [ whole, colorList ] );
+
+	// Drawn a moment after the design or the choice stops changing.
+	useEffect( () => {
+		if ( shownImage === null || tab !== 'product' ) {
+			setImagePreview( null );
+
+			return undefined;
+		}
+
+		let cancelled = false;
+		const [ key, color ] = shownImage.split( ':' );
+		const timer = window.setTimeout( () => {
+			void mockupPreview( previewInput, key ?? '', color ?? '' )
+				.then( ( url ) => {
+					if ( ! cancelled ) {
+						setImagePreview( url );
+					}
+				} )
+				.catch( () => undefined );
+		}, 600 );
+
+		return () => {
+			cancelled = true;
+			window.clearTimeout( timer );
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- previewInput is derived from these.
+	}, [ shownImage, whole, colors.join(), tab ] );
+
+	/** Draws every choice for the gallery, one after the other. */
+	const showGallery = async () => {
+		setGalleryBusy( true );
+		const drawn: Record< string, string > = {};
+
+		for ( const choice of imageChoices ) {
+			const [ key, color ] = choice.value.split( ':' );
+			const url = await mockupPreview(
+				previewInput,
+				key ?? '',
+				color ?? ''
+			).catch( () => null );
+
+			if ( url !== null ) {
+				drawn[ choice.value ] = url;
+			}
+		}
+
+		setGallery( drawn );
+		setGalleryBusy( false );
+	};
+
 	const dirty =
 		primaryImage !== saved.primaryImage ||
 		whole !== saved.design ||
@@ -1456,6 +1535,10 @@ function Editor( props: EditorProps ) {
 									images={ imageChoices }
 									image={ primaryImage }
 									onImage={ setPrimaryImage }
+									imagePreview={ imagePreview }
+									gallery={ gallery }
+									galleryBusy={ galleryBusy }
+									onGallery={ () => void showGallery() }
 								/>
 							) : null }
 							{ tab === 'text' ? (
@@ -2519,6 +2602,32 @@ function InShop( props: DesignerEditorProps ) {
 					) }
 				</Alert>
 			) : null }
+			{ live.images.some( ( choice ) => choice.url !== null ) &&
+			live.images.length > 1 ? (
+				<div
+					className="merchboard-product-designer__image-gallery"
+					role="group"
+					aria-label={ __( 'Product images', 'merchboard' ) }
+				>
+					{ live.images.map( ( choice ) =>
+						choice.url === null ? null : (
+							<button
+								key={ choice.image }
+								type="button"
+								aria-pressed={
+									( image === ''
+										? live.primaryImage
+										: image ) === choice.image
+								}
+								title={ choice.label }
+								onClick={ () => setImage( choice.image ) }
+							>
+								<img src={ choice.url } alt={ choice.label } />
+							</button>
+						)
+					) }
+				</div>
+			) : null }
 			{ live.images.length < 2 ? null : (
 				<div className="merchboard-product-designer__actions">
 					<Labelled
@@ -2621,6 +2730,12 @@ interface ProductPanelProps {
 	/** The product's image; null for the first colour's first side. */
 	readonly image?: string | null;
 	readonly onImage?: ( value: string | null ) => void;
+	/** The product image as the shop will show it (`data:`), or null while it is drawn. */
+	readonly imagePreview?: string | null;
+	/** Every choice drawn, by value; null until asked for. */
+	readonly gallery?: Readonly< Record< string, string > > | null;
+	readonly galleryBusy?: boolean;
+	readonly onGallery?: () => void;
 }
 
 /**
@@ -2940,6 +3055,62 @@ export function ProductPanel( props: ProductPanelProps ) {
 						</select>
 					) }
 				</Labelled>
+			) }
+			{ props.images === undefined || props.images.length === 0 ? null : (
+				<div className="merchboard-product-designer__image-preview">
+					{ props.imagePreview ? (
+						<img
+							src={ props.imagePreview }
+							alt={ __( 'The product image', 'merchboard' ) }
+						/>
+					) : (
+						<span className="merchboard-product-designer__hint">
+							{ __( 'Drawing the product image…', 'merchboard' ) }
+						</span>
+					) }
+					{ props.gallery ? (
+						<div
+							className="merchboard-product-designer__image-gallery"
+							role="group"
+							aria-label={ __( 'Product images', 'merchboard' ) }
+						>
+							{ props.images.map( ( choice ) =>
+								props.gallery?.[ choice.value ] ? (
+									<button
+										key={ choice.value }
+										type="button"
+										aria-pressed={
+											( props.image ??
+												props.images?.[ 0 ]?.value ) ===
+											choice.value
+										}
+										title={ choice.label }
+										onClick={ () =>
+											props.onImage?.( choice.value )
+										}
+									>
+										<img
+											src={
+												props.gallery[ choice.value ]
+											}
+											alt={ choice.label }
+										/>
+									</button>
+								) : null
+							) }
+						</div>
+					) : (
+						<Button
+							variant="secondary"
+							size="sm"
+							onClick={ () => props.onGallery?.() }
+							isBusy={ props.galleryBusy === true }
+							disabled={ props.onGallery === undefined }
+						>
+							{ __( 'Show all images', 'merchboard' ) }
+						</Button>
+					) }
+				</div>
 			) }
 			<fieldset className="merchboard-product-designer__options">
 				<legend className="merchboard-field__label">

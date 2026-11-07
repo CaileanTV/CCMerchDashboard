@@ -209,6 +209,76 @@ describe( 'colour designs in the editor', () => {
 		expect( onImage ).toHaveBeenCalledWith( null );
 	} );
 
+	it( 'shows the product image and a gallery to choose from', async () => {
+		const onImage = jest.fn();
+		const onGallery = jest.fn();
+		const panel = ( gallery: Record< string, string > | null ) => (
+			<ProductPanel
+				base={ BASE }
+				locale="da-DK"
+				creator="Nova"
+				title=""
+				colors={ [ 'black', 'red' ] }
+				sizes={ [ 'M' ] }
+				onTitle={ jest.fn() }
+				onColors={ jest.fn() }
+				onSizes={ jest.fn() }
+				stitch="white"
+				onStitch={ jest.fn() }
+				images={ [
+					{ value: 'front:black', label: 'Black – Front' },
+					{ value: 'back:red', label: 'Red – Back' },
+				] }
+				image={ null }
+				onImage={ onImage }
+				imagePreview="data:image/png;base64,AAAA"
+				gallery={ gallery }
+				galleryBusy={ false }
+				onGallery={ onGallery }
+			/>
+		);
+
+		await show( panel( null ) );
+
+		expect(
+			document
+				.querySelector(
+					'.merchboard-product-designer__image-preview > img'
+				)
+				?.getAttribute( 'src' )
+		).toBe( 'data:image/png;base64,AAAA' );
+
+		await act( async () => {
+			button( 'Show all images' )?.click();
+			await Promise.resolve();
+		} );
+		expect( onGallery ).toHaveBeenCalled();
+
+		document.body.replaceChildren();
+		await show(
+			panel( {
+				'front:black': 'data:image/png;base64,BBBB',
+				'back:red': 'data:image/png;base64,CCCC',
+			} )
+		);
+
+		const tiles = Array.from(
+			document.querySelectorAll< HTMLButtonElement >(
+				'.merchboard-product-designer__image-gallery button'
+			)
+		);
+
+		expect(
+			tiles.map( ( tile ) => tile.getAttribute( 'aria-pressed' ) )
+		).toEqual( [ 'true', 'false' ] );
+
+		await act( async () => {
+			tiles[ 1 ]?.click();
+			await Promise.resolve();
+		} );
+		expect( onImage ).toHaveBeenCalledWith( 'back:red' );
+	} );
+
 	it( 'asks how two designs are merged', async () => {
 		const onMerge = jest.fn();
 

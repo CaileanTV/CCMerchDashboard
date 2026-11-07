@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-07T20:06:25+00:00\n"
+"PO-Revision-Date: 2026-11-07T20:41:59+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -4694,9 +4694,9 @@ msgstr "Profil"
 #: src/Modules/Dashboard/Rest/MeController.php:245
 #: src/Modules/Dashboard/Rest/MeController.php:279
 #: src/Modules/Dashboard/Rest/MeController.php:311
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:275
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:455
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:931
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:276
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:456
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:932
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:147
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:182
 #: src/Modules/WooCommerce/Rest/MeProductsController.php:183
@@ -9140,16 +9140,16 @@ msgid "Clear"
 msgstr "Klar"
 
 #. translators: %d: number of the product photo.
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1018
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1024
 #, php-format
 msgid "Product photo %d"
 msgstr "Produktfoto %d"
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1117
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1127
 msgid "The product designer is not available."
 msgstr "Produktdesigneren er ikke tilgængelig."
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1136
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1146
 msgid "The product designer refused the change."
 msgstr "Produktdesigneren afviste ændringen."
 
@@ -16944,6 +16944,10 @@ msgid "That did not work. Please try again."
 msgstr "Det lykkedes ikke. Prøv igen."
 
 #: build/dashboard.js:78
+msgid "Product images"
+msgstr "Produktbilleder"
+
+#: build/dashboard.js:78
 msgid "Choose an image"
 msgstr "Vælg et billede"
 
@@ -17000,6 +17004,18 @@ msgstr "Butikken viser farverne i denne rækkefølge. Den første er den, kunder
 #: build/dashboard.js:78
 msgid "The first colour, first side"
 msgstr "Første farve, første side"
+
+#: build/dashboard.js:78
+msgid "The product image"
+msgstr "Produktbilledet"
+
+#: build/dashboard.js:78
+msgid "Drawing the product image…"
+msgstr "Tegner produktbilledet…"
+
+#: build/dashboard.js:78
+msgid "Show all images"
+msgstr "Vis alle billeder"
 
 #: build/dashboard.js:78
 msgid "Weight"

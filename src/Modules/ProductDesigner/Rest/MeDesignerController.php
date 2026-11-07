@@ -30,6 +30,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerImages;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
@@ -972,7 +973,7 @@ final class MeDesignerController extends RestController {
 					'title'         => (string) $live['title'],
 					'price'         => $price( $live['quoted_price'] ),
 					// The images the product's image can be (ADR-096); a provider is never named.
-					'images'        => null === $base ? array() : self::live_images( $live, $base ),
+					'images'        => null === $base ? array() : $this->live_images( $live, $base ),
 					'primary_image' => is_string( $live['primary_image'] ?? null ) ? $live['primary_image'] : null,
 				),
 				'rejection' => null === $refusal ? null : array(
@@ -991,9 +992,9 @@ final class MeDesignerController extends RestController {
 	 *
 	 * @param array<string, mixed> $live Live version.
 	 * @param BaseProduct          $base Its base product.
-	 * @return list<array{image: string, label: string}>
+	 * @return list<array{image: string, label: string, url: string|null}>
 	 */
-	private static function live_images( array $live, BaseProduct $base ): array {
+	private function live_images( array $live, BaseProduct $base ): array {
 		$design = json_decode( (string) $live['design'], true );
 		$design = is_array( $design ) ? $design : array();
 		$colors = json_decode( (string) $live['colors'], true );
@@ -1007,7 +1008,10 @@ final class MeDesignerController extends RestController {
 			$sides[ $view->key ] = $view->name;
 		}
 
-		$mockups = SubmissionFiles::decode( is_string( $live['files'] ?? null ) ? $live['files'] : null )['mockups'];
+		$files   = SubmissionFiles::decode( is_string( $live['files'] ?? null ) ? $live['files'] : null );
+		$mockups = $files['mockups'];
+		// The approved images in the media library, shown in the gallery.
+		$media = ( new DesignerMedia( $this->files ) )->imported( (int) $live['id'], $files );
 
 		foreach ( array_keys( $mockups ) as $key ) {
 			$key = (string) $key;
@@ -1024,9 +1028,12 @@ final class MeDesignerController extends RestController {
 
 				// Only a mockup the version has: a photo or a provider's replacement may cover some colours only (review 34.12).
 				if ( isset( $mockups[ $key ][ $color ] ) && DesignerImages::valid( $image, $design, $colors ) ) {
-					$images[] = array(
+					$attachment = $media[ SubmissionFiles::MOCKUP . ':' . $image ] ?? 0;
+					$url        = $attachment > 0 ? wp_get_attachment_image_url( $attachment, 'medium' ) : false;
+					$images[]   = array(
 						'image' => $image,
 						'label' => ( $names[ $color ] ?? $color ) . ' – ' . $side,
+						'url'   => is_string( $url ) ? $url : null,
 					);
 				}
 			}

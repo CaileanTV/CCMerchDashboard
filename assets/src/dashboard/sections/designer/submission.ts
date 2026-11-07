@@ -571,3 +571,61 @@ async function uploadPart(
 
 	return { ok: true };
 }
+
+/**
+ * A mockup of one colour on one side as a `data:` URL, drawn here as the
+ * submission would draw it, without sending anything: the preview of the
+ * product image (ADR-096). Null when it cannot be drawn.
+ *
+ * @param input    The design as it stands (the whole document and its colours).
+ * @param sideKey  The side.
+ * @param colorKey The colour.
+ */
+export async function mockupPreview(
+	input: SubmissionInput,
+	sideKey: string,
+	colorKey: string
+): Promise< string | null > {
+	const view = input.base.views.find( ( item ) => item.key === sideKey );
+	const color = input.base.colors.find( ( item ) => item.key === colorKey );
+
+	if ( view === undefined || color === undefined ) {
+		return null;
+	}
+
+	const part = {
+		...input,
+		design: partDoc( input.design, partOf( input.design, colorKey ) ),
+		colors: [ colorKey ],
+	};
+
+	await input.fonts();
+
+	const print = await printOf( part, view );
+
+	if ( print === null ) {
+		return null;
+	}
+
+	if ( view.scene !== null ) {
+		const atlas = await input.image( view.scene.asset );
+		const scene =
+			atlas === null
+				? null
+				: await composeScene( view.scene, atlas, print );
+
+		return scene === null ? null : dataUrl( scene );
+	}
+
+	const layers = await layersOf( part, view );
+	const own =
+		layers === null
+			? null
+			: await colorLayersOf( part, view, layers, colorKey );
+	const mockup =
+		own === null
+			? null
+			: await composeMockup( view, own, color.hex, print );
+
+	return mockup === null ? null : dataUrl( mockup );
+}
