@@ -23,7 +23,8 @@ defined( 'ABSPATH' ) || exit;
  * who already has a webhook gets access to webhooks (the project owner's
  * choice 2026-10-24): creator meta `alert_api_access` (`{ keys, webhooks }`,
  * serialized like the metadata API does). A creator who already has the row
- * keeps it. Data only; no table changes.
+ * keeps it, including an explicit denial (`{ keys: false, webhooks: false }`).
+ * Data only; no table changes.
  *
  * Idempotent: running it again finds the rows and changes nothing.
  */

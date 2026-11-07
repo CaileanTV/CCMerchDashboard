@@ -571,7 +571,13 @@ Migration 20 (`CreateAlertChatbotTables`) tilføjer tre tabeller til Twitch-chat
 
 **Schema-version 29 (`AddAlertEventImportedFlag`, importerede alerts, 25.13 review):** `merchboard_alert_events` får `imported tinyint(1) NOT NULL DEFAULT 0` (efter `customer_username`). Importen fra MerchAlert sætter 1 på de rækker, den tilføjer; de live feeds (creatorens overlay, det globale overlay og alert-API'en) springer dem over, og historikken beholder dem. Rækker fra før version 29 forbliver 0 (en import, der allerede har kørt, ligger bag enhver cursor). Kun kolonnen tilføjes, og kun når den mangler (idempotent); ingen data ændres.
 
-**Schema-version 28 (`GrantExistingAlertApiAccess`, adgang pr. creator til alert-API'en, ADR-073 pkt. 10):** kun data, ingen tabeller ændres. For hver creator med en ikke-tilbagekaldt nøgle i `merchboard_alert_api_keys` og/eller en webhook i `merchboard_alert_webhooks` indsættes creator meta `alert_api_access` (`{ keys: bool, webhooks: bool }`, serialiseret som metadata-API'et) efter, hvad creatoren har. En creator, der allerede har rækken, springes over (idempotent). Andre creators har ingen række, altså ingen adgang. Meta-nøglen `alert_api_access` skrives derefter kun af `AlertApiAccess` og slettes, når creatoren hverken har adgang til nøgler eller webhooks.
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:4d74b2e5a61db81fd5f62edaa5803e84da93124b2bf21717b4f1cc2a8252d06e -->
+
+**Schema-version 28 (`GrantExistingAlertApiAccess`, adgang pr. creator til alert-API'en, ADR-073 pkt. 10):** kun data, ingen tabeller ændres. For hver creator med en ikke-tilbagekaldt nøgle i `merchboard_alert_api_keys` og/eller en webhook i `merchboard_alert_webhooks` indsættes creator meta `alert_api_access` (`{ keys: bool, webhooks: bool }`, serialiseret som metadata-API'et) efter, hvad creatoren har. En creator, der allerede har rækken, springes over (idempotent). Andre creators har ingen række, altså ingen adgang. Meta-nøglen `alert_api_access` skrives derefter kun af `AlertApiAccess` og bevares som `{ keys: false, webhooks: false }`, når administratoren nægter begge adgange, også hvis der endnu ikke findes en række. Dermed kan et migrationsforsøg ikke genoprette en eksplicit nægtet adgang.
+
+<!-- /coderabbit-ai-generated:v1 -->
 
 **Schema-version 27 (`CreateAlertWebhookTables`, webhooks, ADR-073):** to nye tabeller (InnoDB, idempotent; ingen data ændres):
 

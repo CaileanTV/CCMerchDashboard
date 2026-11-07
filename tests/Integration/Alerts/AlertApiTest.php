@@ -12,6 +12,7 @@ namespace MerchBoard\Tests\Integration\Alerts;
 use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Audit\AuditTrail;
+use MerchBoard\Core\Database\Migrations\GrantExistingAlertApiAccess;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
@@ -293,6 +294,39 @@ final class AlertApiTest extends IntegrationTestCase {
 		} catch ( AlertApiException $e ) {
 			self::assertSame( AlertApiException::NOT_AUTHORIZED, $e->reason() );
 		}
+	}
+
+	public function test_migration_retry_preserves_an_explicit_denial(): void {
+		$key = $this->keys->create( $this->creator, 'Bot' );
+		self::assertTrue( $this->access->set( $this->creator, false, false ) );
+
+		( new GrantExistingAlertApiAccess() )->up( $this->wpdb );
+
+		self::assertSame( 401, $this->poll( $key )->get_status() );
+		self::assertCount( 1, $this->keys->for_creator( $this->creator ) );
+		self::assertFalse( $this->access->set( $this->creator, false, false ), 'Repeated denial is unchanged.' );
+	}
+
+	public function test_denial_before_backfill_is_persisted_and_audited(): void {
+		$key  = $this->keys->create( $this->creator, 'Bot' );
+		$meta = new CreatorMetaStore( $this->wpdb );
+		$meta->set( $this->creator, CreatorMetaStore::ALERT_API_ACCESS, array() );
+		self::assertFalse( $this->access->keys( $this->creator ) );
+		$before = count( $this->rows( Tables::AUDIT_LOG ) );
+
+		self::assertTrue( $this->access->set( $this->creator, false, false ) );
+		self::assertCount( $before + 1, $this->rows( Tables::AUDIT_LOG ) );
+		self::assertSame(
+			array(
+				'keys'     => false,
+				'webhooks' => false,
+			),
+			$meta->get( $this->creator, CreatorMetaStore::ALERT_API_ACCESS )
+		);
+
+		( new GrantExistingAlertApiAccess() )->up( $this->wpdb );
+
+		self::assertSame( 401, $this->poll( $key )->get_status() );
 	}
 
 	public function test_requests_are_limited_per_key(): void {
