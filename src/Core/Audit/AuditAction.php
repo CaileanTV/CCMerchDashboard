@@ -864,4 +864,10 @@ enum AuditAction: string {
 	 * System action. Context: base_id, base_name.
 	 */
 	case DesignerPriceApplied = 'designer_price_applied';
+
+	/**
+	 * A creator chose another image for a live designer product (ADR-096).
+	 * Context: design_product_id, version_id, image.
+	 */
+	case DesignerPrimaryImageChanged = 'designer_primary_image_changed';
 }

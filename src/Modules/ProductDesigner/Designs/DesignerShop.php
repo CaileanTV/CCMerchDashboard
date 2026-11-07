@@ -18,6 +18,8 @@ use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerImages;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
 use MerchBoard\Modules\ProductDesigner\Shop\WooCommerceDesignerWriter;
 
@@ -43,6 +45,13 @@ defined( 'ABSPATH' ) || exit;
 class DesignerShop {
 
 	/**
+	 * The media library's copies of the mockups (ADR-096).
+	 *
+	 * @var DesignerMedia
+	 */
+	private DesignerMedia $media;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param DesignerProductRepository $products    Designer products.
@@ -53,6 +62,7 @@ class DesignerShop {
 	 * @param Transaction               $transaction Transaction.
 	 * @param DesignerFiles             $files       Files.
 	 * @param BaseProductRepository     $bases       Base products.
+	 * @param DesignerMedia|null        $media       The media library's mockups; made from the files without one.
 	 */
 	public function __construct(
 		private DesignerProductRepository $products,
@@ -62,8 +72,10 @@ class DesignerShop {
 		private AuditTrail $audit,
 		private Transaction $transaction,
 		private DesignerFiles $files,
-		private BaseProductRepository $bases
+		private BaseProductRepository $bases,
+		?DesignerMedia $media = null
 	) {
+		$this->media = $media ?? new DesignerMedia( $files );
 	}
 
 	/**
@@ -117,6 +129,82 @@ class DesignerShop {
 		}
 
 		$this->audit->record( $published ? AuditAction::DesignerProductPublished : AuditAction::DesignerProductHidden, $creator->id, array( 'design_product_id' => $product ) );
+	}
+
+	/**
+	 * A new image for a product in the shop (ADR-096): the creator picks
+	 * another mockup of the live version, and only the images already
+	 * approved and in the media library are put in a new order, without a
+	 * new approval. An open draft gets the same choice while it names one of
+	 * its mockups.
+	 *
+	 * @param Creator $creator The creator.
+	 * @param int     $product Designer product.
+	 * @param string  $image   `<key>:<colour>`.
+	 * @throws DesignerException When it is unknown, not live, busy or the image is no mockup of it.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_primary_image( Creator $creator, int $product, string $image ): void {
+		$row = $this->row( $creator, $product );
+
+		if ( DesignerProductRepository::LIVE !== $row['status'] ) {
+			self::refuse( DesignerException::NOT_LIVE );
+		}
+
+		$live   = $this->products->live( $product ) ?? self::refuse( DesignerException::NOT_LIVE );
+		$base   = $this->bases->find( (int) $row['base_id'] ) ?? self::refuse( DesignerException::BASE_UNKNOWN );
+		$proof  = $this->guard->for_row( $product ) ?? self::refuse( DesignerException::NOT_LIVE );
+		$design = json_decode( (string) $live['design'], true );
+		$design = is_array( $design ) ? $design : array();
+		$colors = json_decode( (string) $live['colors'], true );
+		$colors = is_array( $colors ) ? array_values( array_filter( $colors, 'is_string' ) ) : array();
+		$files  = SubmissionFiles::decode( is_string( $live['files'] ?? null ) ? $live['files'] : null );
+
+		if ( ! DesignerImages::valid( $image, $design, $colors ) ) {
+			self::refuse( DesignerException::DESIGN_INVALID );
+		}
+
+		// The apply, the repricing and the retirement write the same product.
+		if ( ! $this->products->lock_product( $product ) ) {
+			self::refuse( DesignerException::DESIGN_BUSY );
+		}
+
+		try {
+			$media = $this->media->imported( (int) $live['id'], $files );
+
+			if ( ! isset( $media[ SubmissionFiles::MOCKUP . ':' . $image ] ) ) {
+				self::refuse( DesignerException::DESIGN_INVALID );
+			}
+
+			$this->writer->set_images( $proof, DesignerImages::order( $base, $colors, array_keys( $files['mockups'] ), $media, $image )['images'] );
+			$this->transaction->run(
+				function () use ( $creator, $product, $live, $image ): void {
+					$this->products->set_primary_image( (int) $live['id'], $image );
+					$draft = $this->products->draft( $product );
+
+					if ( null !== $draft ) {
+						$draft_design = json_decode( (string) $draft['design'], true );
+						$draft_colors = json_decode( (string) $draft['colors'], true );
+
+						if ( DesignerImages::valid( $image, is_array( $draft_design ) ? $draft_design : array(), is_array( $draft_colors ) ? array_values( array_filter( $draft_colors, 'is_string' ) ) : array() ) ) {
+							$this->products->set_primary_image( (int) $draft['id'], $image );
+						}
+					}
+
+					$this->audit->record(
+						AuditAction::DesignerPrimaryImageChanged,
+						$creator->id,
+						array(
+							'design_product_id' => $product,
+							'version_id'        => (int) $live['id'],
+							'image'             => $image,
+						)
+					);
+				}
+			);
+		} finally {
+			$this->products->unlock_product( $product );
+		}
 	}
 
 	/**

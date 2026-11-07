@@ -59,6 +59,13 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	public array $published = array();
 
 	/**
+	 * The images of each set_images() (ADR-096).
+	 *
+	 * @var list<array{0: int, 1: list<int>}>
+	 */
+	public array $images = array();
+
+	/**
 	 * Unpublished products.
 	 *
 	 * @var list<int>
@@ -155,6 +162,18 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	 */
 	public function set_name( GuardedProduct $product, string $name ): void {
 		$this->names[] = array( $product->wc_product_id, $name );
+	}
+
+	/**
+	 * Records a new order of the images.
+	 *
+	 * @phpstan-param list<int> $images
+	 *
+	 * @param GuardedProduct $product Proof.
+	 * @param int[]          $images  Attachments.
+	 */
+	public function set_images( GuardedProduct $product, array $images ): void {
+		$this->images[] = array( $product->wc_product_id, $images );
 	}
 
 	/**

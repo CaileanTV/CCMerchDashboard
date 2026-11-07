@@ -375,6 +375,27 @@ class WooCommerceDesignerWriter {
 	}
 
 	/**
+	 * Sets a designer product's image and gallery, nothing else (ADR-096).
+	 *
+	 * @phpstan-param list<int> $images
+	 *
+	 * @param GuardedProduct $product The guard's proof.
+	 * @param int[]          $images  Attachments: the first is the product image, the rest the gallery.
+	 * @throws DatabaseException When it cannot be saved.
+	 */
+	public function set_images( GuardedProduct $product, array $images ): void {
+		$parent = wc_get_product( $product->wc_product_id );
+
+		if ( ! $parent instanceof WC_Product_Variable && ! $parent instanceof WC_Product_Simple ) {
+			return;
+		}
+
+		$parent->set_image_id( $images[0] ?? 0 );
+		$parent->set_gallery_image_ids( array_slice( $images, 1 ) );
+		self::save( $parent );
+	}
+
+	/**
 	 * Takes a designer product out of the shop (a draft again).
 	 *
 	 * @param GuardedProduct $product The guard's proof.

@@ -201,6 +201,7 @@ final class AuditLogFormatter {
 			AuditAction::DesignerPriceScheduled => __( 'Price increase of a base product planned', 'merchboard' ),
 			AuditAction::DesignerPriceScheduleCancelled => __( 'Planned price increase cancelled', 'merchboard' ),
 			AuditAction::DesignerPriceApplied => __( 'Planned base price set', 'merchboard' ),
+			AuditAction::DesignerPrimaryImageChanged => __( 'Creator chose another product image', 'merchboard' ),
 			AuditAction::DesignerProductCreated => __( 'Creator started a designer product', 'merchboard' ),
 			AuditAction::DesignerProductDeleted => __( 'Creator deleted a designer draft', 'merchboard' ),
 			AuditAction::DesignerVersionSubmitted => __( 'Creator submitted a design for approval', 'merchboard' ),

@@ -28,6 +28,7 @@ import {
 	designerAssetUrl,
 	discardChange,
 	saveDesignerDraft,
+	setDesignerImage,
 	setShopPublished,
 	startChange,
 	uploadDesignerImage,
@@ -2440,6 +2441,22 @@ function InShop( props: DesignerEditorProps ) {
 	const shown = shownPrice( currency );
 	const [ moving, setMoving ] = useState( false );
 	const [ failed, setFailed ] = useState( false );
+	const [ image, setImage ] = useState( live.primaryImage ?? '' );
+	const [ imaging, setImaging ] = useState( false );
+
+	/** Another image for the product, without a new approval (ADR-096). */
+	const chooseImage = async () => {
+		setImaging( true );
+		setFailed( false );
+		const result = await setDesignerImage( product.id, image );
+		setImaging( false );
+
+		if ( result.ok ) {
+			onProduct( result.data );
+		} else {
+			setFailed( true );
+		}
+	};
 
 	const move = async () => {
 		setMoving( true );
@@ -2496,6 +2513,53 @@ function InShop( props: DesignerEditorProps ) {
 					) }
 				</Alert>
 			) : null }
+			{ live.images.length < 2 ? null : (
+				<div className="merchboard-product-designer__actions">
+					<Labelled
+						className="merchboard-field"
+						before
+						label={
+							<span className="merchboard-field__label">
+								{ __( 'Product image', 'merchboard' ) }
+							</span>
+						}
+					>
+						{ ( id ) => (
+							<select
+								id={ id }
+								className="merchboard-input"
+								value={ image }
+								onChange={ ( event ) =>
+									setImage( event.target.value )
+								}
+							>
+								<option value="" disabled>
+									{ __( 'Choose an image', 'merchboard' ) }
+								</option>
+								{ live.images.map( ( choice ) => (
+									<option
+										key={ choice.image }
+										value={ choice.image }
+									>
+										{ choice.label }
+									</option>
+								) ) }
+							</select>
+						) }
+					</Labelled>
+					<Button
+						variant="secondary"
+						onClick={ () => void chooseImage() }
+						isBusy={ imaging }
+						disabled={
+							image === '' ||
+							image === ( live.primaryImage ?? '' )
+						}
+					>
+						{ __( 'Use as the product image', 'merchboard' ) }
+					</Button>
+				</div>
+			) }
 			<div className="merchboard-product-designer__actions">
 				<Button variant="secondary" onClick={ onBack }>
 					{ __( 'Back to my designs', 'merchboard' ) }

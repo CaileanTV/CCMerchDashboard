@@ -187,6 +187,12 @@ export interface DesignerLive {
 	readonly number: number;
 	readonly title: string;
 	readonly price: string | null;
+	/** The mockups the product's image can be (ADR-096). */
+	readonly images: readonly {
+		readonly image: string;
+		readonly label: string;
+	}[];
+	readonly primaryImage: string | null;
 }
 
 /** The administrator's rejection a draft continues. */
@@ -689,7 +695,25 @@ function parseLive( value: unknown ): DesignerLive | null | undefined {
 		return undefined;
 	}
 
-	return { number: value.number, title: value.title, price: value.price };
+	const images = Array.isArray( value.images )
+		? value.images.flatMap( ( item ) =>
+				isRecord( item ) &&
+				isString( item.image ) &&
+				isString( item.label )
+					? [ { image: item.image, label: item.label } ]
+					: []
+			)
+		: [];
+
+	return {
+		number: value.number,
+		title: value.title,
+		price: value.price,
+		images,
+		primaryImage: isString( value.primary_image )
+			? value.primary_image
+			: null,
+	};
 }
 
 /**
@@ -1157,6 +1181,26 @@ export function setShopPublished(
 			path: `${ PATH }/products/${ id }/shop`,
 			method: 'POST',
 			data: { published },
+		},
+		parseProduct
+	);
+}
+
+/**
+ * Another image for a product in the shop, without a new approval (ADR-096).
+ *
+ * @param id    Designer product.
+ * @param image `<side>:<colour>`.
+ */
+export function setDesignerImage(
+	id: number,
+	image: string
+): Promise< ApiResult< DesignerProduct > > {
+	return request(
+		{
+			path: `${ PATH }/products/${ id }/image`,
+			method: 'POST',
+			data: { image },
 		},
 		parseProduct
 	);

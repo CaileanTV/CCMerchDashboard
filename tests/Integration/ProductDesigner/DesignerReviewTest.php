@@ -62,6 +62,7 @@ use MerchBoard\Tests\Unit\Support\FakeJobQueue;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use WP_Error;
+use WP_REST_Request;
 use WP_REST_Response;
 use wpdb;
 
@@ -370,6 +371,53 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		// "Copy design" takes the choice along.
 		$copy = $this->drafts->duplicate( $this->creator, $product, new DesignValidator( static fn(): bool => false, array() ) );
 		self::assertSame( 'front:sand', $this->products->draft( $copy )['primary_image'] ?? null );
+	}
+
+	public function test_a_creator_changes_the_image_of_a_live_product_without_a_new_approval(): void {
+		$product       = $this->live_product();
+		$shop          = $this->shop();
+		$live          = $this->products->live( $product ) ?? self::fail( 'Not live.' );
+		[ , $content ] = $this->writer->contents[ count( $this->writer->contents ) - 1 ];
+
+		// The creator sees which images it can be, named by colour and side.
+		$this->as_creator();
+		$request = new WP_REST_Request( 'POST', '/merchboard/v1/me/designer/products/' . $product . '/image' );
+		$request->set_url_params( array( 'id' => (string) $product ) );
+		$request->set_param( 'image', 'front:sand' );
+		$answer = $this->controller()->set_image( $request );
+		self::assertInstanceOf( WP_REST_Response::class, $answer );
+		self::assertSame( 200, $answer->get_status(), (string) wp_json_encode( $answer->get_data() ) );
+		$data = (array) $answer->get_data();
+		self::assertSame( array( 'front:black', 'front:sand' ), array_column( (array) ( $data['live']['images'] ?? array() ), 'image' ) );
+		self::assertSame( 'Sand – Front', $data['live']['images'][1]['label'] ?? null );
+		self::assertSame( 'front:sand', $data['live']['primary_image'] ?? null );
+		wp_set_current_user( 1 );
+
+		[ $wc, $images ] = $this->writer->images[0] ?? array( 0, array() );
+		self::assertSame( (int) ( $this->products->product( $product )['wc_product_id'] ?? -1 ), $wc );
+		self::assertSame( $content->color_images['sand'], $images[0], 'Sand\'s front is the product image now.' );
+		self::assertEqualsCanonicalizing( $content->images, $images, 'Only the approved images, in a new order.' );
+		self::assertSame( 'front:sand', $this->products->version( (int) $live['id'] )['primary_image'] ?? null );
+		self::assertSame( 'live', $this->products->product( $product )['status'] ?? null, 'No new version.' );
+		self::assertSame( array( 'designer_primary_image_changed' ), $this->audit( 'designer_primary_image_changed' ) );
+
+		foreach ( array( 'back:sand', 'front:green', 'nonsense' ) as $refused ) {
+			try {
+				$shop->set_primary_image( $this->creator, $product, $refused );
+				self::fail( 'Refused: ' . $refused );
+			} catch ( DesignerException $e ) {
+				self::assertSame( DesignerException::DESIGN_INVALID, $e->reason() );
+			}
+		}
+
+		$other = $this->service( CreatorService::class )->create( 'Other', CreatorStatus::Active, $this->create_user( 'another-creator' ) );
+
+		try {
+			$shop->set_primary_image( $other, $product, 'front:black' );
+			self::fail( 'Another creator\'s product.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_UNKNOWN, $e->reason() );
+		}
 	}
 
 	public function test_an_interrupted_apply_continues_where_it_stopped(): void {

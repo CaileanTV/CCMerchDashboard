@@ -82,6 +82,11 @@ class DesignerProductRepository {
 
 	private const PRODUCT_COLUMNS = 'id, creator_id, base_id, wc_product_id, live_version_id, status, shop_price, shop_base_price, shop_base_prices, created_at, updated_at';
 
+	/**
+	 * The named lock of a designer product (DesignerApply's).
+	 */
+	public const PRODUCT_LOCK = 'merchboard_designer_product_';
+
 	private const VERSION_COLUMNS = 'id, design_product_id, creator_id, number, status, base_version, title, description, colors, sizes, sides, design, profit_kind, profit_value, quoted_price, fee_quote, primary_image, files, mockup_state, apply_state, apply_step, apply_error, note, updated_at, submitted_at, decided_at, decided_by';
 
 	/**
@@ -1102,6 +1107,29 @@ class DesignerProductRepository {
 		if ( 1 !== $done || '' !== $this->wpdb->last_error ) {
 			throw new DatabaseException( 'Could not save the design.' );
 		}
+	}
+
+	/**
+	 * Takes a designer product's lock, the one the apply, the repricing and
+	 * the retirement take (one job per product at a time); false when busy.
+	 *
+	 * @param int $product_id Designer product.
+	 */
+	public function lock_product( int $product_id ): bool {
+		$wpdb     = $this->wpdb;
+		$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', self::PRODUCT_LOCK . $product_id, 0 ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A named lock; never cached.
+
+		return is_numeric( $acquired ) && 1 === (int) $acquired;
+	}
+
+	/**
+	 * Releases a designer product's lock.
+	 *
+	 * @param int $product_id Designer product.
+	 */
+	public function unlock_product( int $product_id ): void {
+		$wpdb = $this->wpdb;
+		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', self::PRODUCT_LOCK . $product_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Releases the named lock.
 	}
 
 	/**

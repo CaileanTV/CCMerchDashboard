@@ -82,6 +82,31 @@ class DesignerMedia {
 	}
 
 	/**
+	 * The attachments a version's mockups already have, by slot, without
+	 * copying anything (ADR-096: a new product image of a live product).
+	 *
+	 * @param int                  $version_id Version.
+	 * @param array<string, mixed> $files      SubmissionFiles::decode() of the version.
+	 * @return array<string, int> Attachment by slot.
+	 */
+	public function imported( int $version_id, array $files ): array {
+		$media = array();
+
+		foreach ( is_array( $files['mockups'] ?? null ) ? $files['mockups'] : array() as $side => $colors ) {
+			foreach ( array_keys( is_array( $colors ) ? $colors : array() ) as $color ) {
+				$slot = SubmissionFiles::MOCKUP . ':' . $side . ':' . $color;
+				$id   = $this->existing( $version_id, $slot );
+
+				if ( null !== $id ) {
+					$media[ $slot ] = $id;
+				}
+			}
+		}
+
+		return $media;
+	}
+
+	/**
 	 * Copies a mockup into the media library.
 	 *
 	 * @param int                  $version_id Version.

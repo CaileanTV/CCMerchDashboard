@@ -29,6 +29,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerImages;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
@@ -137,6 +138,9 @@ final class MeDesignerController extends RestController {
 			),
 			'/products/(?P<id>[1-9][0-9]{0,18})/copy'     => array(
 				WP_REST_Server::CREATABLE => 'copy_product',
+			),
+			'/products/(?P<id>[1-9][0-9]{0,18})/image'    => array(
+				WP_REST_Server::CREATABLE => 'set_image',
 			),
 			'/products/(?P<id>[1-9][0-9]{0,18})/files'    => array(
 				WP_REST_Server::CREATABLE => 'attach_file',
@@ -527,6 +531,31 @@ final class MeDesignerController extends RestController {
 	}
 
 	/**
+	 * `POST /me/designer/products/{id}/image`: another image for a product in
+	 * the shop, `{ image: "<side>:<colour>" }` (ADR-096).
+	 *
+	 * @param WP_REST_Request $request Request.
+	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function set_image( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+		return $this->with_creator(
+			self::ROUTE . '/products/{id}/image',
+			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
+				$id    = (int) $request->get_param( 'id' );
+				$image = $request->get_param( 'image' );
+
+				try {
+					$this->shop->set_primary_image( $creator, $id, is_string( $image ) ? $image : '' );
+				} catch ( DesignerException $e ) {
+					return self::refused( $e );
+				}
+
+				return $this->product_response( $creator, $id, 200 );
+			}
+		);
+	}
+
+	/**
 	 * `POST /me/designer/products/{id}/files`: one file of the submission.
 	 *
 	 * @param WP_REST_Request $request Request.
@@ -902,7 +931,8 @@ final class MeDesignerController extends RestController {
 			return self::error( 'merchboard_not_found', __( 'Not found.', 'merchboard' ), 404 );
 		}
 
-		$base_name = (string) ( $this->bases->find( (int) $product['base_id'] )->name ?? '' );
+		$base      = $this->bases->find( (int) $product['base_id'] );
+		$base_name = (string) ( $base->name ?? '' );
 
 		$json = static function ( mixed $value ): mixed {
 			$decoded = is_string( $value ) ? json_decode( $value, true ) : null;
@@ -938,9 +968,12 @@ final class MeDesignerController extends RestController {
 					'submitted_at' => mysql_to_rfc3339( (string) $pending['submitted_at'] ),
 				),
 				'live'      => null === $live ? null : array(
-					'number' => (int) $live['number'],
-					'title'  => (string) $live['title'],
-					'price'  => $price( $live['quoted_price'] ),
+					'number'        => (int) $live['number'],
+					'title'         => (string) $live['title'],
+					'price'         => $price( $live['quoted_price'] ),
+					// The images the product's image can be (ADR-096); a provider is never named.
+					'images'        => null === $base ? array() : self::live_images( $live, $base ),
+					'primary_image' => is_string( $live['primary_image'] ?? null ) ? $live['primary_image'] : null,
 				),
 				'rejection' => null === $refusal ? null : array(
 					'number'     => (int) $refusal['number'],
@@ -950,6 +983,53 @@ final class MeDesignerController extends RestController {
 			),
 			$status
 		);
+	}
+
+	/**
+	 * The mockups of a live version that can be the product's image, with a
+	 * name of colour and side; a chosen photo is "Product photo n" (ADR-096).
+	 *
+	 * @param array<string, mixed> $live Live version.
+	 * @param BaseProduct          $base Its base product.
+	 * @return list<array{image: string, label: string}>
+	 */
+	private static function live_images( array $live, BaseProduct $base ): array {
+		$design = json_decode( (string) $live['design'], true );
+		$design = is_array( $design ) ? $design : array();
+		$colors = json_decode( (string) $live['colors'], true );
+		$colors = is_array( $colors ) ? array_values( array_filter( $colors, 'is_string' ) ) : array();
+		$names  = array_column( $base->colors, 'name', 'key' );
+		$sides  = array();
+		$photo  = 0;
+		$images = array();
+
+		foreach ( $base->views as $view ) {
+			$sides[ $view->key ] = $view->name;
+		}
+
+		foreach ( array_keys( SubmissionFiles::decode( is_string( $live['files'] ?? null ) ? $live['files'] : null )['mockups'] ) as $key ) {
+			$key = (string) $key;
+
+			if ( SubmissionFiles::is_close( $key ) ) {
+				continue;
+			}
+
+			/* translators: %d: number of the product photo. */
+			$side = str_starts_with( $key, SubmissionFiles::PHOTO ) ? sprintf( __( 'Product photo %d', 'merchboard' ), ++$photo ) : ( $sides[ $key ] ?? $key );
+
+			foreach ( $colors as $color ) {
+				$image = $key . ':' . $color;
+
+				if ( DesignerImages::valid( $image, $design, $colors ) ) {
+					$images[] = array(
+						'image' => $image,
+						'label' => ( $names[ $color ] ?? $color ) . ' – ' . $side,
+					);
+				}
+			}
+		}
+
+		return $images;
 	}
 
 	/**

@@ -128,6 +128,11 @@ final class DesignerException extends RuntimeException {
 
 	public const PREVIEW_FAILED = 'preview_failed';
 
+	/**
+	 * The product is being written to the shop just now (ADR-096): try again.
+	 */
+	public const DESIGN_BUSY = 'design_busy';
+
 	public const MOCKUPS_PENDING = 'mockups_pending';
 
 	/** The catalog import (review 30.15): no colour, size or side was ticked. */
