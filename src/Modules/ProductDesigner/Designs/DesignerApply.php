@@ -19,12 +19,12 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
-use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerContent;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerImages;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
 use MerchBoard\Modules\ProductDesigner\Shop\GuardedProduct;
 use MerchBoard\Modules\ProductDesigner\Shop\WooCommerceDesignerWriter;
@@ -267,26 +267,10 @@ class DesignerApply {
 
 		usort( $colors, static fn( array $a, array $b ): int => array_search( $a['key'], $chosen, true ) <=> array_search( $b['key'], $chosen, true ) );
 
-		$order = array_flip( array_map( static fn( BaseView $view ): string => $view->key, $base->views ) );
-		$sides = array_keys( $files['mockups'] );
-
-		// The base product's order of the sides. A chosen photo stays first, and a close-up follows its side.
-		usort( $sides, static fn( int|string $a, int|string $b ): int => ( $order[ SubmissionFiles::side_of( (string) $a ) ] ?? -1 ) <=> ( $order[ SubmissionFiles::side_of( (string) $b ) ] ?? -1 ) );
-
-		$images = array();
-		$first  = array();
-
-		// The first colour's sides first, then the other colours.
-		foreach ( $colors as $color ) {
-			foreach ( $sides as $side ) {
-				$attachment = $media[ SubmissionFiles::MOCKUP . ':' . $side . ':' . $color['key'] ] ?? null;
-
-				if ( null !== $attachment ) {
-					$images[]                 = $attachment;
-					$first[ $color['key'] ] ??= $attachment;
-				}
-			}
-		}
+		// The first colour's sides first, then the other colours; the image the creator chose comes first (ADR-096).
+		$ordered = DesignerImages::order( $base, $chosen, array_keys( $files['mockups'] ), $media, is_string( $version['primary_image'] ?? null ) ? $version['primary_image'] : null );
+		$images  = $ordered['images'];
+		$first   = $ordered['first'];
 
 		// With sides per size, a variation shows the image of its own size.
 		$size_images = array();

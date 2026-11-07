@@ -256,6 +256,10 @@ function Editor( props: EditorProps ) {
 		props.design.stitch ?? base.stitches[ 0 ] ?? ''
 	);
 	const [ sizes, setSizes ] = useState< readonly string[] >( draft.sizes );
+	// The product's image (ADR-096): `<side>:<colour>`, or null for the first colour's first side.
+	const [ primaryImage, setPrimaryImage ] = useState< string | null >(
+		draft.primaryImage
+	);
 	const [ profitKind, setProfitKind ] = useState< ProfitKind >(
 		draft.profitKind
 	);
@@ -393,7 +397,17 @@ function Editor( props: EditorProps ) {
 		( candidate ) =>
 			candidate.scene?.preview === true || hasStitches( candidate )
 	);
+	// The mockups the product's image can be: each chosen colour on the used sides of its design.
+	const imageChoices = colors.flatMap( ( color ) =>
+		usedSides( partDoc( whole, partOf( whole, color ) ) ).map(
+			( key ) => ( {
+				value: `${ key }:${ color }`,
+				label: `${ base.colors.find( ( item ) => item.key === color )?.name ?? color } – ${ base.views.find( ( item ) => item.key === key )?.name ?? key }`,
+			} )
+		)
+	);
 	const dirty =
+		primaryImage !== draft.primaryImage ||
 		whole !== saved.design ||
 		stitch !== saved.stitch ||
 		title !== draft.postfix ||
@@ -926,6 +940,11 @@ function Editor( props: EditorProps ) {
 			sizes,
 			profitKind,
 			profitValue,
+			primaryImage: imageChoices.some(
+				( choice ) => choice.value === primaryImage
+			)
+				? primaryImage
+				: null,
 			design: {
 				...mapParts( prunedDesigns( whole, colors ), ( part ) =>
 					withKnownThreads(
@@ -1427,6 +1446,9 @@ function Editor( props: EditorProps ) {
 									onStitch={ setStitch }
 									design={ whole }
 									onDesign={ chooseDesign }
+									images={ imageChoices }
+									image={ primaryImage }
+									onImage={ setPrimaryImage }
 								/>
 							) : null }
 							{ tab === 'text' ? (
@@ -2521,6 +2543,14 @@ interface ProductPanelProps {
 	readonly design?: DesignDocument;
 	/** A colour's new design: an id, SHARED or NEW_DESIGN. */
 	readonly onDesign?: ( color: string, choice: string ) => void;
+	/** The mockups the product's image can be (ADR-096). */
+	readonly images?: readonly {
+		readonly value: string;
+		readonly label: string;
+	}[];
+	/** The product's image; null for the first colour's first side. */
+	readonly image?: string | null;
+	readonly onImage?: ( value: string | null ) => void;
 }
 
 /**
@@ -2792,6 +2822,55 @@ export function ProductPanel( props: ProductPanelProps ) {
 					</ol>
 				</div>
 			) : null }
+			{ props.images === undefined ||
+			props.onImage === undefined ||
+			props.images.length === 0 ? null : (
+				<Labelled
+					className="merchboard-field"
+					before
+					label={
+						<span className="merchboard-field__label">
+							{ __( 'Product image', 'merchboard' ) }
+						</span>
+					}
+				>
+					{ ( id ) => (
+						<select
+							id={ id }
+							className="merchboard-input"
+							value={
+								props.images?.some(
+									( choice ) => choice.value === props.image
+								)
+									? ( props.image ?? '' )
+									: ''
+							}
+							onChange={ ( event ) =>
+								props.onImage?.(
+									event.target.value === ''
+										? null
+										: event.target.value
+								)
+							}
+						>
+							<option value="">
+								{ __(
+									'The first colour, first side',
+									'merchboard'
+								) }
+							</option>
+							{ props.images?.map( ( choice ) => (
+								<option
+									key={ choice.value }
+									value={ choice.value }
+								>
+									{ choice.label }
+								</option>
+							) ) }
+						</select>
+					) }
+				</Labelled>
+			) }
 			<fieldset className="merchboard-product-designer__options">
 				<legend className="merchboard-field__label">
 					{ __( 'Sizes', 'merchboard' ) }

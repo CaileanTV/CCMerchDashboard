@@ -346,6 +346,32 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertSame( $content->color_images['sand'], $content->images[0], 'The first colour gives the main image.' );
 	}
 
+	public function test_the_image_the_creator_chose_is_the_product_s_image(): void {
+		$product = $this->drafts->create( $this->creator, $this->base );
+
+		$this->save( $product, '20', array( 'front' ), array( 'black', 'sand' ), 'front:sand' );
+		self::assertSame( 'front:sand', $this->products->draft( $product )['primary_image'] ?? null );
+
+		$this->save( $product, '20', array( 'front' ), array( 'black', 'sand' ), 'back:sand' );
+		self::assertNull( $this->products->draft( $product )['primary_image'] ?? null, 'No mockup of an unused side.' );
+
+		$this->save( $product, '20', array( 'front' ), array( 'black', 'sand' ), 'front:sand' );
+		$this->send_files( $product );
+		$this->submissions->submit( $this->creator, $product );
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+
+		[ , $content ] = $this->writer->contents[0];
+
+		self::assertSame( $content->color_images['sand'], $content->images[0], 'Sand\'s front first, though black is the first colour.' );
+		self::assertContains( $content->color_images['black'], $content->images );
+		self::assertCount( 2, $content->images, 'Each image once.' );
+
+		// "Copy design" takes the choice along.
+		$copy = $this->drafts->duplicate( $this->creator, $product, new DesignValidator( static fn(): bool => false, array() ) );
+		self::assertSame( 'front:sand', $this->products->draft( $copy )['primary_image'] ?? null );
+	}
+
 	public function test_an_interrupted_apply_continues_where_it_stopped(): void {
 		$product                    = $this->submitted();
 		$version                    = $this->pending_id( $product );
@@ -1894,12 +1920,13 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	 * @phpstan-param list<string> $sides
 	 * @phpstan-param list<string> $colors
 	 *
-	 * @param int      $product Designer product.
-	 * @param string   $profit  Percent.
-	 * @param string[] $sides   Sides with a rectangle.
-	 * @param string[] $colors  Colours, in the creator's order.
+	 * @param int         $product Designer product.
+	 * @param string      $profit  Percent.
+	 * @param string[]    $sides   Sides with a rectangle.
+	 * @param string[]    $colors  Colours, in the creator's order.
+	 * @param string|null $primary The image the creator chose, or null.
 	 */
-	private function save( int $product, string $profit, array $sides = array( 'front' ), array $colors = array( 'black', 'sand' ) ): void {
+	private function save( int $product, string $profit, array $sides = array( 'front' ), array $colors = array( 'black', 'sand' ), ?string $primary = null ): void {
 		$rectangle = array(
 			'type'        => 'rect',
 			'id'          => 'r1',
@@ -1920,15 +1947,16 @@ final class DesignerReviewTest extends IntegrationTestCase {
 			$this->creator,
 			$product,
 			array(
-				'title'        => $this->postfixes[ $product ] ??= 'Stream tee' . ( array() === $this->postfixes ? '' : ' ' . count( $this->postfixes ) ),
-				'colors'       => $colors,
-				'sizes'        => array( 'S', 'M' ),
-				'profit_kind'  => 'percent',
-				'profit_value' => $profit,
-				'design'       => array(
+				'title'         => $this->postfixes[ $product ] ??= 'Stream tee' . ( array() === $this->postfixes ? '' : ' ' . count( $this->postfixes ) ),
+				'colors'        => $colors,
+				'sizes'         => array( 'S', 'M' ),
+				'profit_kind'   => 'percent',
+				'profit_value'  => $profit,
+				'design'        => array(
 					'version' => 1,
 					'sides'   => array_fill_keys( $sides, array( $rectangle ) ),
 				),
+				'primary_image' => $primary,
 			),
 			new DesignValidator( static fn(): bool => false, array() )
 		);

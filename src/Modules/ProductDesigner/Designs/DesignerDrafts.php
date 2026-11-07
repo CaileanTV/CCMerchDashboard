@@ -20,6 +20,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerImages;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use OverflowException;
 
@@ -147,6 +148,8 @@ class DesignerDrafts {
 			$validator->validate( self::known_sides( is_array( $design ) ? $design : array(), $base ), $base, $this->bases->provider( (int) $base->id )['stitches'] ?? array(), $colors )
 		);
 
+		$fields['primary_image'] = DesignerImages::valid( $version['primary_image'] ?? null, $fields['design'], $colors ) ? $version['primary_image'] : null;
+
 		return $this->transaction->run(
 			function () use ( $creator, $base, $fields, $product ): int {
 				[ $copy ] = $this->products->create( $creator->id, (int) $base->id, $fields );
@@ -210,6 +213,9 @@ class DesignerDrafts {
 			$value,
 			$validator->validate( $input['design'] ?? null, $base, $this->bases->provider( (int) $row['base_id'] )['stitches'] ?? array(), $colors )
 		);
+
+		// The image the creator chose, kept only while it names a mockup of the design (ADR-096).
+		$fields['primary_image'] = DesignerImages::valid( $input['primary_image'] ?? null, $fields['design'], $colors ) ? $input['primary_image'] : null;
 
 		$this->products->save_draft( (int) $draft['id'], $fields );
 	}

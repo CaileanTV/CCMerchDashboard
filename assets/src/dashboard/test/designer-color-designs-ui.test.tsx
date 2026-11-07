@@ -163,6 +163,52 @@ describe( 'colour designs in the editor', () => {
 		expect( onDesign ).toHaveBeenCalledWith( 'black', NEW_DESIGN );
 	} );
 
+	it( 'lets the creator choose the product image', async () => {
+		const onImage = jest.fn();
+
+		await show(
+			<ProductPanel
+				base={ BASE }
+				locale="da-DK"
+				creator="Nova"
+				title=""
+				colors={ [ 'black', 'red' ] }
+				sizes={ [ 'M' ] }
+				onTitle={ jest.fn() }
+				onColors={ jest.fn() }
+				onSizes={ jest.fn() }
+				stitch="white"
+				onStitch={ jest.fn() }
+				images={ [
+					{ value: 'front:black', label: 'Black – Front' },
+					{ value: 'back:red', label: 'Red – Back' },
+				] }
+				image="back:red"
+				onImage={ onImage }
+			/>
+		);
+
+		const select = Array.from(
+			document.querySelectorAll< HTMLSelectElement >( 'select' )
+		).find( ( candidate ) => candidate.value === 'back:red' )!;
+
+		expect(
+			Array.from( select.options ).map( ( option ) => option.textContent )
+		).toEqual( [
+			'The first colour, first side',
+			'Black – Front',
+			'Red – Back',
+		] );
+
+		await act( async () => {
+			select.value = '';
+			select.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+			await Promise.resolve();
+		} );
+
+		expect( onImage ).toHaveBeenCalledWith( null );
+	} );
+
 	it( 'asks how two designs are merged', async () => {
 		const onMerge = jest.fn();
 

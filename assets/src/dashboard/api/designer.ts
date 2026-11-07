@@ -169,6 +169,8 @@ export interface DesignerDraft {
 	readonly profitKind: ProfitKind;
 	readonly profitValue: string;
 	readonly price: string | null;
+	/** The mockup the creator chose as the product's image, `<side>:<colour>` (ADR-096). */
+	readonly primaryImage: string | null;
 	readonly updatedAt: string;
 }
 
@@ -657,6 +659,9 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 			profitKind: draft.profit_kind,
 			profitValue: draft.profit_value,
 			price: draft.price,
+			primaryImage: isString( draft.primary_image )
+				? draft.primary_image
+				: null,
 			updatedAt: draft.updated_at,
 		},
 		pending,
@@ -959,6 +964,8 @@ export interface DraftChanges {
 	readonly profitKind: ProfitKind;
 	readonly profitValue: string;
 	readonly design: DesignDocument;
+	/** The product's image, `<side>:<colour>`; null for the first colour's first side. */
+	readonly primaryImage?: string | null;
 }
 
 /**
@@ -983,6 +990,7 @@ export function saveDesignerDraft(
 				profit_kind: changes.profitKind,
 				profit_value: changes.profitValue,
 				design: changes.design,
+				primary_image: changes.primaryImage ?? null,
 			},
 		},
 		parseProduct

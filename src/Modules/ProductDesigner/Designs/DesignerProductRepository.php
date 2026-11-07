@@ -82,12 +82,12 @@ class DesignerProductRepository {
 
 	private const PRODUCT_COLUMNS = 'id, creator_id, base_id, wc_product_id, live_version_id, status, shop_price, shop_base_price, shop_base_prices, created_at, updated_at';
 
-	private const VERSION_COLUMNS = 'id, design_product_id, creator_id, number, status, base_version, title, description, colors, sizes, sides, design, profit_kind, profit_value, quoted_price, fee_quote, files, mockup_state, apply_state, apply_step, apply_error, note, updated_at, submitted_at, decided_at, decided_by';
+	private const VERSION_COLUMNS = 'id, design_product_id, creator_id, number, status, base_version, title, description, colors, sizes, sides, design, profit_kind, profit_value, quoted_price, fee_quote, primary_image, files, mockup_state, apply_state, apply_step, apply_error, note, updated_at, submitted_at, decided_at, decided_by';
 
 	/**
 	 * VERSION_COLUMNS of the alias v (joined with the product).
 	 */
-	private const VERSION_COLUMNS_V = 'v.id, v.design_product_id, v.creator_id, v.number, v.status, v.base_version, v.title, v.description, v.colors, v.sizes, v.sides, v.design, v.profit_kind, v.profit_value, v.quoted_price, v.fee_quote, v.files, v.mockup_state, v.apply_state, v.apply_step, v.apply_error, v.note, v.updated_at, v.submitted_at, v.decided_at, v.decided_by';
+	private const VERSION_COLUMNS_V = 'v.id, v.design_product_id, v.creator_id, v.number, v.status, v.base_version, v.title, v.description, v.colors, v.sizes, v.sides, v.design, v.profit_kind, v.profit_value, v.quoted_price, v.fee_quote, v.primary_image, v.files, v.mockup_state, v.apply_state, v.apply_step, v.apply_error, v.note, v.updated_at, v.submitted_at, v.decided_at, v.decided_by';
 
 	/**
 	 * Constructor.
@@ -353,7 +353,7 @@ class DesignerProductRepository {
 
 		$copied = array();
 
-		foreach ( array( 'design_product_id', 'creator_id', 'base_version', 'title', 'description', 'colors', 'sizes', 'sides', 'design', 'profit_kind', 'profit_value', 'quoted_price', 'files' ) as $column ) {
+		foreach ( array( 'design_product_id', 'creator_id', 'base_version', 'title', 'description', 'colors', 'sizes', 'sides', 'design', 'profit_kind', 'profit_value', 'quoted_price', 'primary_image', 'files' ) as $column ) {
 			$copied[ $column ] = $version[ $column ] ?? null;
 		}
 
@@ -1105,6 +1105,25 @@ class DesignerProductRepository {
 	}
 
 	/**
+	 * Sets the image a version's product shows first (ADR-096).
+	 *
+	 * @param int         $version_id Version.
+	 * @param string|null $image      `<key>:<colour>`, or null for none.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_primary_image( int $version_id, ?string $image ): void {
+		$this->wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+			$this->table( Tables::DESIGNER_VERSIONS ),
+			array( 'primary_image' => $image ),
+			array( 'id' => $version_id )
+		);
+
+		if ( '' !== $this->wpdb->last_error ) {
+			throw new DatabaseException( 'Could not store the image of the design.' );
+		}
+	}
+
+	/**
 	 * Locks a designer product's versions for a deletion (inside a
 	 * transaction, before its files are read): a submission or an attached
 	 * file waits until the deletion is decided (review 30.15).
@@ -1177,12 +1196,14 @@ class DesignerProductRepository {
 		return array_merge(
 			$json,
 			array(
-				'base_version' => (int) ( $draft['base_version'] ?? 1 ),
-				'title'        => (string) ( $draft['title'] ?? '' ),
-				'description'  => (string) ( $draft['description'] ?? '' ),
-				'profit_kind'  => (string) ( $draft['profit_kind'] ?? 'fixed' ),
-				'profit_value' => (string) ( $draft['profit_value'] ?? '0' ),
-				'quoted_price' => $draft['quoted_price'] ?? null,
+				'base_version'  => (int) ( $draft['base_version'] ?? 1 ),
+				'title'         => (string) ( $draft['title'] ?? '' ),
+				'description'   => (string) ( $draft['description'] ?? '' ),
+				'profit_kind'   => (string) ( $draft['profit_kind'] ?? 'fixed' ),
+				'profit_value'  => (string) ( $draft['profit_value'] ?? '0' ),
+				'quoted_price'  => $draft['quoted_price'] ?? null,
+				// The mockup the creator chose as the product's image (ADR-096).
+				'primary_image' => $draft['primary_image'] ?? null,
 			)
 		);
 	}
