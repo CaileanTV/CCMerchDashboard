@@ -64,7 +64,26 @@ final class GlobalOverlayStore {
 			return array( $existing, false );
 		}
 
-		return array( $this->save( new GlobalOverlay( OverlayId::generate(), false, OverlaySettings::defaults(), 1 ) ), true );
+		global $wpdb;
+
+		$overlay = new GlobalOverlay( OverlayId::generate(), false, OverlaySettings::defaults(), 1 );
+		// add_option() can overwrite a concurrent insert via ON DUPLICATE KEY UPDATE.
+		$created = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Insert only; find() invalidates the option caches.
+			$wpdb->prepare(
+				'INSERT IGNORE INTO %i (option_name, option_value, autoload) VALUES (%s, %s, %s)',
+				$wpdb->options,
+				self::OPTION,
+				maybe_serialize( self::values( $overlay ) ),
+				'off'
+			)
+		);
+		$stored  = $this->find();
+
+		if ( false === $created || null === $stored ) {
+			throw new DatabaseException( 'Could not create the global alert overlay.' );
+		}
+
+		return array( $stored, 1 === $created );
 	}
 
 	/**
@@ -75,7 +94,7 @@ final class GlobalOverlayStore {
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function update_settings( GlobalOverlay $overlay, OverlaySettings $settings ): GlobalOverlay {
-		return $this->save( new GlobalOverlay( $overlay->overlay_id, $overlay->enabled, $settings, $overlay->revision + 1 ) );
+		return $this->save( $overlay, new GlobalOverlay( $overlay->overlay_id, $overlay->enabled, $settings, $overlay->revision + 1 ) );
 	}
 
 	/**
@@ -86,7 +105,7 @@ final class GlobalOverlayStore {
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function set_enabled( GlobalOverlay $overlay, bool $enabled ): GlobalOverlay {
-		return $this->save( new GlobalOverlay( $overlay->overlay_id, $enabled, $overlay->settings, $overlay->revision + 1 ) );
+		return $this->save( $overlay, new GlobalOverlay( $overlay->overlay_id, $enabled, $overlay->settings, $overlay->revision + 1 ) );
 	}
 
 	/**
@@ -96,7 +115,7 @@ final class GlobalOverlayStore {
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function regenerate( GlobalOverlay $overlay ): GlobalOverlay {
-		return $this->save( new GlobalOverlay( OverlayId::generate(), $overlay->enabled, $overlay->settings, $overlay->revision + 1 ) );
+		return $this->save( $overlay, new GlobalOverlay( OverlayId::generate(), $overlay->enabled, $overlay->settings, $overlay->revision + 1 ) );
 	}
 
 	/**
@@ -106,33 +125,59 @@ final class GlobalOverlayStore {
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function touch( GlobalOverlay $overlay ): GlobalOverlay {
-		return $this->save( new GlobalOverlay( $overlay->overlay_id, $overlay->enabled, $overlay->settings, $overlay->revision + 1 ) );
+		return $this->save( $overlay, new GlobalOverlay( $overlay->overlay_id, $overlay->enabled, $overlay->settings, $overlay->revision + 1 ) );
 	}
 
 	/**
-	 * Stores the overlay and reads it back.
+	 * Atomically replaces the snapshot. A stale request must fail rather than
+	 * restore an old secret id or enabled flag after another request revokes it.
 	 *
-	 * @param GlobalOverlay $overlay Overlay.
-	 * @throws DatabaseException When it was not stored.
+	 * @param GlobalOverlay $previous Snapshot the mutation was based on.
+	 * @param GlobalOverlay $overlay  Replacement.
+	 * @throws DatabaseException When it was not stored or the snapshot is stale.
 	 */
-	private function save( GlobalOverlay $overlay ): GlobalOverlay {
-		update_option(
-			self::OPTION,
-			array(
-				'overlay_id' => $overlay->overlay_id,
-				'enabled'    => $overlay->enabled,
-				'settings'   => $overlay->settings->to_json(),
-				'revision'   => $overlay->revision,
-			),
-			false
-		);
+	private function save( GlobalOverlay $previous, GlobalOverlay $overlay ): GlobalOverlay {
+		global $wpdb;
 
-		$stored = $this->find();
+		$raw     = $wpdb->get_var( $wpdb->prepare( 'SELECT option_value FROM %i WHERE option_name = %s', $wpdb->options, self::OPTION ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Read the persisted snapshot, bypassing option caches.
+		$current = maybe_unserialize( $raw );
 
-		if ( null === $stored || $stored->revision !== $overlay->revision || $stored->overlay_id !== $overlay->overlay_id ) {
-			throw new DatabaseException( 'Could not save the global alert overlay.' );
+		if ( ! is_array( $current ) || ( $current['revision'] ?? 0 ) !== $previous->revision || ( $current['overlay_id'] ?? null ) !== $previous->overlay_id || ( $current['enabled'] ?? false ) !== $previous->enabled ) {
+			throw new DatabaseException( 'The global alert overlay changed. Please try again.' );
 		}
 
-		return $stored;
+		// Compare the exact bytes read above so a concurrent write cannot slip
+		// between the snapshot check and replacement (including case-only ids).
+		$updated = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Atomic compare-and-swap; invalidate the option cache below.
+			$wpdb->prepare(
+				'UPDATE %i SET option_value = %s WHERE option_name = %s AND BINARY option_value = BINARY %s',
+				$wpdb->options,
+				maybe_serialize( self::values( $overlay ) ),
+				self::OPTION,
+				$raw
+			)
+		);
+		wp_cache_delete( self::OPTION, 'options' );
+
+		if ( 1 !== $updated ) {
+			throw new DatabaseException( 'Could not save the global alert overlay. Please try again.' );
+		}
+
+		return $overlay;
+	}
+
+	/**
+	 * The stored option fields.
+	 *
+	 * @param GlobalOverlay $overlay Overlay.
+	 * @return array{overlay_id: string, enabled: bool, settings: string, revision: int}
+	 */
+	private static function values( GlobalOverlay $overlay ): array {
+		return array(
+			'overlay_id' => $overlay->overlay_id,
+			'enabled'    => $overlay->enabled,
+			'settings'   => $overlay->settings->to_json(),
+			'revision'   => $overlay->revision,
+		);
 	}
 }

@@ -13,6 +13,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
@@ -170,6 +171,79 @@ final class GlobalOverlayTest extends IntegrationTestCase {
 		self::assertNull( $this->feed->active( $regenerated->overlay_id ) );
 		self::assertSame( array( 'alert_global_overlay_created', 'alert_global_overlay_toggled', 'alert_global_overlay_id_regenerated', 'alert_global_overlay_toggled' ), $this->audit_actions() );
 		self::assertSame( 1, $this->count_rows( Tables::ALERT_OVERLAYS ), 'No row in the creators\' table.' );
+	}
+
+	public function test_concurrent_creation_does_not_replace_the_winner(): void {
+		$winner = null;
+		$create = function ( string $query ) use ( &$create, &$winner ): string {
+			if ( str_starts_with( $query, 'INSERT IGNORE' ) && str_contains( $query, GlobalOverlayStore::OPTION ) ) {
+				remove_filter( 'query', $create );
+				[ $winner ] = $this->store->create();
+				$winner     = $this->store->set_enabled( $winner, true );
+			}
+			return $query;
+		};
+		add_filter( 'query', $create );
+
+		try {
+			[ $stored, $created ] = $this->store->create();
+			self::assertFalse( $created );
+			self::assertEquals( $winner, $stored );
+		} finally {
+			remove_filter( 'query', $create );
+		}
+	}
+
+	public function test_stale_mutations_cannot_restore_revoked_access(): void {
+		$this->alerts_on();
+		[ $initial ] = $this->store->create();
+		$before      = $this->store->set_enabled( $initial, true );
+		$rotated     = $this->store->regenerate( $before );
+		$revoked     = $this->store->set_enabled( $rotated, false );
+
+		foreach ( array( $before, $rotated ) as $snapshot ) {
+			$mutations = array(
+				fn() => $this->store->update_settings( $snapshot, OverlaySettings::defaults() ),
+				fn() => $this->store->touch( $snapshot ),
+				fn() => $this->store->set_enabled( $snapshot, false ),
+				fn() => $this->store->regenerate( $snapshot ),
+			);
+
+			foreach ( $mutations as $mutate ) {
+				try {
+					$mutate();
+					self::fail( 'A stale mutation must fail.' );
+				} catch ( DatabaseException ) {
+					self::assertEquals( $revoked, $this->store->find() );
+				}
+				self::assertNull( $this->feed->active( $before->overlay_id ) );
+				self::assertNull( $this->feed->active( $rotated->overlay_id ) );
+			}
+		}
+	}
+
+	public function test_revocation_between_comparison_and_write_wins(): void {
+		$this->alerts_on();
+		[ $initial ] = $this->store->create();
+		$before      = $this->store->set_enabled( $initial, true );
+		$revoke      = function ( string $query ) use ( $before, &$revoke ): string {
+			if ( str_starts_with( $query, 'UPDATE' ) && str_contains( $query, 'BINARY option_value' ) ) {
+				remove_filter( 'query', $revoke );
+				$this->store->regenerate( $before );
+			}
+			return $query;
+		};
+		add_filter( 'query', $revoke );
+
+		try {
+			$this->store->touch( $before );
+			self::fail( 'The concurrent revocation must prevent the stale write.' );
+		} catch ( DatabaseException ) {
+			self::assertNull( $this->feed->active( $before->overlay_id ) );
+			self::assertSame( $before->revision + 1, $this->store->find()?->revision );
+		} finally {
+			remove_filter( 'query', $revoke );
+		}
 	}
 
 	public function test_test_alerts_and_replays_go_only_to_its_own_queue(): void {
