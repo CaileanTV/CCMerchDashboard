@@ -16,6 +16,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ### Fixed
 
+- **Farvefotos forsvandt:** valgte man en sides farvefotos, og et enkelt foto var bare 1 px anderledes (fx projektejerens JN-mockups, hvor Aske og Oliven er 1000 × 1001 og resten 1001 × 1001), blev hele udvalget afvist, og fotoene forsvandt igen. Fotos op til 1 % fra sidens størrelse tilpasses nu, centreret på gennemsigtig baggrund. Fotos længere fra udelades med navn, mens resten uploades. Et filnavn med sidens navn ("Aske Forside.png") giver farven uden siden ("Aske").
 - **Grundprodukternes datoer:** siden migration 44 (1.5.0) gemte en ændring af et grundprodukt `updated_at` (og en oprettelse også `created_at`) som 0000-00-00, fordi listen over feltformater var forskudt. Formaterne følger nu kolonnenavnene, og migration 46 giver de berørte rækker tidspunktet for opdateringen.
 
 ## [1.5.0] - 2026-11-04

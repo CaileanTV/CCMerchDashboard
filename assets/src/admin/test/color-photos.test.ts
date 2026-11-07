@@ -14,7 +14,9 @@ import {
 	attachColorPhotos,
 	batches,
 	colorOfFile,
+	fits,
 	medianHex,
+	targetSize,
 	withColors,
 } from '../color-photos';
 
@@ -31,6 +33,33 @@ describe( 'naming and measuring', () => {
 	it( 'takes the colour from the file name, in one form of letters', () => {
 		expect( colorOfFile( 'Mørk grøn.png' ) ).toBe( 'Mørk grøn' );
 		expect( colorOfFile( 'Himmelblå.PNG' ) ).toBe( 'Himmelblå' );
+	} );
+
+	it( "leaves out the side in the file name (the owner's JN mockups)", () => {
+		expect( colorOfFile( 'Aske Forside.png', 'Forside' ) ).toBe( 'Aske' );
+		expect(
+			colorOfFile( 'Gylden Gul Venstre Side.png', 'Venstre side' )
+		).toBe( 'Gylden Gul' );
+		expect( colorOfFile( 'Irsk grøn Højre Side.png' ) ).toBe( 'Irsk grøn' );
+		expect( colorOfFile( 'Brun Bagside.png', 'Back' ) ).toBe( 'Brun' );
+		expect( colorOfFile( 'Forside.png', 'Forside' ) ).toBe( 'Forside' );
+		expect( colorOfFile( 'Lime grøn.png', 'Front' ) ).toBe( 'Lime grøn' );
+	} );
+
+	it( 'fits a photo a few pixels off the size most photos have', () => {
+		const big = { width: 1001, height: 1001 };
+
+		expect(
+			targetSize( [ { width: 1000, height: 1001 }, big, big ], null )
+		).toEqual( big );
+		expect( targetSize( [ big ], { width: 900, height: 900 } ) ).toEqual( {
+			width: 900,
+			height: 900,
+		} );
+		expect( fits( { width: 1000, height: 1001 }, big ) ).toBe( true );
+		expect( fits( { width: 991, height: 1001 }, big ) ).toBe( true );
+		expect( fits( { width: 990, height: 1001 }, big ) ).toBe( false );
+		expect( fits( { width: 800, height: 1001 }, big ) ).toBe( false );
 	} );
 
 	it( 'adds only the colours the field lacks, whatever their case', () => {
@@ -190,28 +219,50 @@ describe( 'the upload', () => {
 		expect( global.fetch ).not.toHaveBeenCalled();
 	} );
 
-	it( 'refuses photos of different sizes', async () => {
+	it( 'fits photos a few pixels off and leaves out one far off', async () => {
 		(
 			global.createImageBitmap as unknown as jest.Mock<
 				() => Promise< unknown >
 			>
 		 )
-			.mockResolvedValueOnce( { width: 1000, height: 1000 } )
-			.mockResolvedValueOnce( { width: 800, height: 1000 } );
+			.mockResolvedValueOnce( { width: 1001, height: 1001 } )
+			.mockResolvedValueOnce( { width: 1000, height: 1001 } )
+			.mockResolvedValueOnce( { width: 800, height: 1001 } )
+			.mockResolvedValueOnce( { width: 1001, height: 1001 } )
+			.mockResolvedValue( { width: 1000, height: 1001 } );
+		const toBlob = HTMLCanvasElement.prototype.toBlob;
+
+		HTMLCanvasElement.prototype.toBlob = function ( done: BlobCallback ) {
+			done( new Blob( [ 'fitted' ], { type: 'image/png' } ) );
+		};
 
 		const { form, input } = setup( [
-			photo( 'Sort.png' ),
-			photo( 'Hvid.png' ),
+			photo( 'Sort Forside.png' ),
+			photo( 'Aske Forside.png' ),
+			photo( 'Rød Forside.png' ),
+			photo( 'Hvid Forside.png' ),
 		] );
 
+		fill( form, 'views[0][name]', 'Forside' );
 		input.dispatchEvent( new Event( 'change' ) );
 		await flush();
-		form.dispatchEvent(
-			new Event( 'submit', { bubbles: true, cancelable: true } )
-		);
+		HTMLCanvasElement.prototype.toBlob = toBlob;
 
-		expect( status() ).toContain( 'same size' );
-		expect( form.querySelector( 'img' ) ).toBeNull();
+		expect(
+			Array.from( form.querySelectorAll( 'img' ) ).map(
+				( image ) => image.alt
+			)
+		).toEqual( [ 'Sort', 'Aske', 'Hvid' ] );
+		expect(
+			( form.elements.namedItem( 'colors' ) as HTMLTextAreaElement ).value
+		).toBe( 'Sort #102030\nAske #102030\nHvid #102030' );
+		expect( status() ).toContain( '3 photos of 1001 × 1001 px' );
+		expect( status() ).toContain(
+			'centred (they were a few pixels off): Aske.'
+		);
+		expect( status() ).toContain(
+			'Left out, another size: Rød (800 × 1001).'
+		);
 		expect( global.fetch ).not.toHaveBeenCalled();
 	} );
 

@@ -6,6 +6,12 @@
  * the photos in batches, one after the other. Each batch is kept whole or not
  * at all. A side without a template gets the first photo as its background, so
  * the print area can be drawn on it before anything is sent.
+ *
+ * A photo up to 1 % off the side's size (e.g. 1000 × 1001 among 1001 × 1001)
+ * is fitted to it, centred on a transparent canvas; a photo further off is
+ * left out by name, and the others go on (the owner's JN mockups,
+ * 2026-11-07). A file named after its colour and side ("Aske Forside.png")
+ * gives the colour without the side.
  */
 import { __, sprintf } from '@wordpress/i18n';
 
@@ -23,16 +29,92 @@ const MEASURE = 64;
 /** Of the most a request may hold, what is used: the form's fields count too. */
 const BYTES_USED = 0.8;
 
+/** How far off the side's size a photo may be and still be fitted to it. */
+const FIT_SHARE = 0.01;
+
+/** The usual names of a side at the end of a file name. */
+const SIDE_WORDS =
+	/\s+(?:forside|bagside|(?:højre|venstre)\s+(?:side|ærme)|ærme|front|back|(?:left|right)(?:\s+(?:side|sleeve))?|sleeve)$/iu;
+
+/** A photo's size. */
+export interface PhotoSize {
+	readonly width: number;
+	readonly height: number;
+}
+
 /**
- * The colour a file is named after.
+ * The colour a file is named after: the file name without the side's name
+ * (or a usual side name) at its end.
  *
  * @param name File name.
+ * @param side The side's name.
  */
-export function colorOfFile( name: string ): string {
-	return name
+export function colorOfFile( name: string, side = '' ): string {
+	const full = name
 		.replace( /\.png$/i, '' )
 		.normalize( 'NFC' )
 		.trim();
+	const tail = side.normalize( 'NFC' ).trim().toLowerCase();
+
+	if (
+		tail !== '' &&
+		full.length > tail.length + 1 &&
+		full.toLowerCase().endsWith( ` ${ tail }` )
+	) {
+		return full.slice( 0, full.length - tail.length ).trim();
+	}
+
+	return full.replace( SIDE_WORDS, '' ).trim() || full;
+}
+
+/**
+ * The size the photos of a side get: the stored template's, or else the
+ * size most of them have (the first photo's on a tie).
+ *
+ * @param sizes  The photos' sizes.
+ * @param stored The stored template's size, or null.
+ */
+export function targetSize(
+	sizes: readonly PhotoSize[],
+	stored: PhotoSize | null
+): PhotoSize | null {
+	if ( stored !== null ) {
+		return stored;
+	}
+
+	const counts = new Map< string, number >();
+	let best: PhotoSize | null = null;
+	let most = 0;
+
+	for ( const size of sizes ) {
+		const key = `${ size.width }x${ size.height }`;
+		const count = ( counts.get( key ) ?? 0 ) + 1;
+
+		counts.set( key, count );
+
+		if ( count > most ) {
+			most = count;
+			best = size;
+		}
+	}
+
+	return best;
+}
+
+/**
+ * Whether a photo is close enough to the side's size to be fitted to it.
+ *
+ * @param size   The photo's size.
+ * @param target The side's size.
+ */
+export function fits( size: PhotoSize, target: PhotoSize ): boolean {
+	const near = ( value: number, wanted: number ) =>
+		Math.abs( value - wanted ) <=
+		Math.max( 1, Math.round( wanted * FIT_SHARE ) );
+
+	return (
+		near( size.width, target.width ) && near( size.height, target.height )
+	);
 }
 
 /**
@@ -176,6 +258,39 @@ async function measure(
 }
 
 /**
+ * A photo fitted to the side's size: centred on a transparent canvas of that
+ * size, as a PNG with the same name.
+ *
+ * @param file   The photo.
+ * @param target The side's size.
+ */
+async function fitted( file: File, target: PhotoSize ): Promise< File > {
+	const image = await createImageBitmap( file );
+	const canvas = document.createElement( 'canvas' );
+
+	canvas.width = target.width;
+	canvas.height = target.height;
+	canvas
+		.getContext( '2d' )
+		?.drawImage(
+			image,
+			Math.round( ( target.width - image.width ) / 2 ),
+			Math.round( ( target.height - image.height ) / 2 )
+		);
+	image.close?.();
+
+	const blob = await new Promise< Blob | null >( ( done ) =>
+		canvas.toBlob( done, 'image/png' )
+	);
+
+	if ( blob === null ) {
+		throw new Error( 'The photo could not be fitted.' );
+	}
+
+	return new File( [ blob ], file.name, { type: 'image/png' } );
+}
+
+/**
  * Wires the colour photo fields of the form.
  *
  * @param form     The base product form.
@@ -200,6 +315,8 @@ export function attachColorPhotos(
 			status.textContent = text;
 		}
 	};
+	const sideName = ( index: string ): string =>
+		value( `views[${ index }][name]` );
 	const showPhotos = ( index: string, files: readonly File[] ): void => {
 		const preview = document.getElementById(
 			`merchboard-photos-preview-${ index }`
@@ -210,7 +327,7 @@ export function attachColorPhotos(
 				const image = document.createElement( 'img' );
 
 				image.src = URL.createObjectURL( file );
-				image.alt = colorOfFile( file.name );
+				image.alt = colorOfFile( file.name, sideName( index ) );
 				image.title = image.alt;
 				image.style.cssText =
 					'width:56px;height:56px;margin:0 4px 4px 0;object-fit:contain';
@@ -266,19 +383,54 @@ export function attachColorPhotos(
 			for ( const file of files ) {
 				sizes.push( await measure( file ) );
 			}
-			const [ first ] = sizes;
+			const holder = form.querySelector< HTMLElement >(
+				`[data-merchboard-area="${ index }"]`
+			);
+			const storedWidth = Number( value( `views[${ index }][width]` ) );
+			const storedHeight = Number( value( `views[${ index }][height]` ) );
+			const target = targetSize(
+				sizes,
+				holder?.dataset.url && storedWidth > 0 && storedHeight > 0
+					? { width: storedWidth, height: storedHeight }
+					: null
+			);
+			const kept: File[] = [];
+			const keptSizes: typeof sizes = [];
+			const adjusted: string[] = [];
+			const left: string[] = [];
 
-			if (
-				sizes.some(
-					( { width, height } ) =>
-						width !== first?.width || height !== first?.height
-				)
-			) {
-				showPhotos( index, [] );
+			for ( const [ position, file ] of files.entries() ) {
+				const size = sizes[ position ];
+				const name = colorOfFile( file.name, sideName( index ) );
+
+				if ( size === undefined || target === null ) {
+					continue;
+				}
+
+				if (
+					size.width === target.width &&
+					size.height === target.height
+				) {
+					kept.push( file );
+					keptSizes.push( size );
+				} else if ( fits( size, target ) ) {
+					kept.push( await fitted( file, target ) );
+					keptSizes.push( size );
+					adjusted.push( name );
+				} else {
+					left.push(
+						`${ name } (${ size.width } × ${ size.height })`
+					);
+				}
+			}
+
+			showPhotos( index, kept );
+
+			if ( kept.length === 0 || target === null ) {
 				say(
 					index,
 					__(
-						'All the photos of a side must have the same size.',
+						'None of the photos has the size of the side.',
 						'merchboard'
 					)
 				);
@@ -291,30 +443,54 @@ export function attachColorPhotos(
 			if ( colors instanceof HTMLTextAreaElement ) {
 				colors.value = withColors(
 					colors.value,
-					files.map( ( file, position ) => ( {
-						name: colorOfFile( file.name ),
-						hex: sizes[ position ]?.hex ?? NO_COLOR,
+					kept.map( ( file, position ) => ( {
+						name: colorOfFile( file.name, sideName( index ) ),
+						hex: keptSizes[ position ]?.hex ?? NO_COLOR,
 					} ) )
 				);
 			}
 
-			if ( files[ 0 ] !== undefined ) {
-				setTemplate( index, files[ 0 ] );
+			if ( kept[ 0 ] !== undefined ) {
+				setTemplate( index, kept[ 0 ] );
 			}
 
-			queues.set( index, files );
+			queues.set( index, kept );
 			say(
 				index,
-				sprintf(
-					/* translators: 1: number of photos, 2: width in px, 3: height in px. */
-					__(
-						'%1$d photos of %2$d × %3$d px. They are uploaded when you save.',
-						'merchboard'
+				[
+					sprintf(
+						/* translators: 1: number of photos, 2: width in px, 3: height in px. */
+						__(
+							'%1$d photos of %2$d × %3$d px. They are uploaded when you save.',
+							'merchboard'
+						),
+						kept.length,
+						target.width,
+						target.height
 					),
-					files.length,
-					first?.width ?? 0,
-					first?.height ?? 0
-				)
+					adjusted.length === 0
+						? ''
+						: sprintf(
+								/* translators: %s: colour names. */
+								__(
+									'Fitted to that size, centred (they were a few pixels off): %s.',
+									'merchboard'
+								),
+								adjusted.join( ', ' )
+							),
+					left.length === 0
+						? ''
+						: sprintf(
+								/* translators: %s: colour names with their sizes. */
+								__(
+									'Left out, another size: %s.',
+									'merchboard'
+								),
+								left.join( ', ' )
+							),
+				]
+					.filter( ( part ) => part !== '' )
+					.join( ' ' )
 			);
 		} catch {
 			showPhotos( index, [] );
@@ -424,7 +600,7 @@ export function attachColorPhotos(
 					batch.forEach( ( file, position ) => {
 						body.set(
 							`photo_colors[${ position }]`,
-							colorOfFile( file.name )
+							colorOfFile( file.name, sideName( side ) )
 						);
 						body.set( `photo_${ position }`, file );
 					} );

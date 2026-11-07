@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-06T23:54:30+00:00\n"
+"POT-Creation-Date: 2026-11-07T00:42:00+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -7751,7 +7751,7 @@ msgstr ""
 #. translators: %s: colour name.
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1409
 #: build/base-products-admin.js:8
-#: build/base-products-admin.js:13
+#: build/base-products-admin.js:15
 #: build/dashboard.js:68
 #, php-format,js-format
 msgid "Move %s up"
@@ -7763,7 +7763,7 @@ msgstr ""
 #. translators: %s: colour name.
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1411
 #: build/base-products-admin.js:10
-#: build/base-products-admin.js:14
+#: build/base-products-admin.js:16
 #: build/dashboard.js:68
 #, php-format,js-format
 msgid "Move %s down"
@@ -8599,13 +8599,13 @@ msgid "The picture could not be read."
 msgstr ""
 
 #. translators: %s: date.
-#: src/Modules/ProductDesigner/Bases/BasePriceSchedule.php:301
+#: src/Modules/ProductDesigner/Bases/BasePriceSchedule.php:299
 #, php-format
 msgid "Prices of this product go up on %s. Products in the shop follow on that date; your profit setting stays the same."
 msgstr ""
 
 #. translators: 1: date, 2: new base price, 3: currency.
-#: src/Modules/ProductDesigner/Bases/BasePriceSchedule.php:304
+#: src/Modules/ProductDesigner/Bases/BasePriceSchedule.php:302
 #, php-format
 msgid "The price of this product goes up on %1$s (base price %2$s %3$s). Products in the shop follow on that date; your profit setting stays the same."
 msgstr ""
@@ -14940,7 +14940,7 @@ msgstr ""
 
 #: build/alerts-global-admin.js:22
 #: build/alerts-presets-admin.js:22
-#: build/base-products-admin.js:11
+#: build/base-products-admin.js:13
 #: build/dashboard.js:50
 msgid "Saving…"
 msgstr ""
@@ -15307,7 +15307,7 @@ msgid "Reading the photos…"
 msgstr ""
 
 #: build/base-products-admin.js:10
-msgid "All the photos of a side must have the same size."
+msgid "None of the photos has the size of the side."
 msgstr ""
 
 #. translators: 1: number of photos, 2: width in px, 3: height in px.
@@ -15316,33 +15316,45 @@ msgstr ""
 msgid "%1$d photos of %2$d × %3$d px. They are uploaded when you save."
 msgstr ""
 
-#: build/base-products-admin.js:11
+#. translators: %s: colour names.
+#: build/base-products-admin.js:12
+#, js-format
+msgid "Fitted to that size, centred (they were a few pixels off): %s."
+msgstr ""
+
+#. translators: %s: colour names with their sizes.
+#: build/base-products-admin.js:13
+#, js-format
+msgid "Left out, another size: %s."
+msgstr ""
+
+#: build/base-products-admin.js:13
 msgid "The photos could not be read."
 msgstr ""
 
-#: build/base-products-admin.js:11
+#: build/base-products-admin.js:13
 msgid "Name the side, draw its print area and enter its print size before you save."
 msgstr ""
 
-#: build/base-products-admin.js:11
+#: build/base-products-admin.js:13
 msgid "The upload stopped. Please choose the photos and save again."
 msgstr ""
 
 #. translators: 1: photos sent, 2: all the photos.
-#: build/base-products-admin.js:12
+#: build/base-products-admin.js:14
 #, js-format
 msgid "Uploading photos: %1$d of %2$d…"
 msgstr ""
 
-#: build/base-products-admin.js:14
+#: build/base-products-admin.js:16
 msgid "Only for these sizes (none ticked: every size):"
 msgstr ""
 
-#: build/base-products-admin.js:14
+#: build/base-products-admin.js:16
 msgid "Draw the print area on the image with the mouse. Drag inside it to move it."
 msgstr ""
 
-#: build/base-products-admin.js:14
+#: build/base-products-admin.js:16
 msgid "Choose a background or colour photos to draw the print area on them."
 msgstr ""
 
