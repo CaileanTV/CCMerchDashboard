@@ -31,12 +31,15 @@ use MerchBoard\Modules\Dashboard\ThemePreference;
 use MerchBoard\Modules\Settings\SettingsException;
 use MerchBoard\Modules\Settings\SettingsService;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
+use MerchBoard\Tests\Integration\PrivateDashboardBuild;
 use WP;
 use WP_Application_Passwords;
 use WP_Error;
 use WP_User;
 
 final class DashboardAccessTest extends IntegrationTestCase {
+
+	use PrivateDashboardBuild;
 
 	private const HOME = 'http://merchboard.test';
 
@@ -67,6 +70,7 @@ final class DashboardAccessTest extends IntegrationTestCase {
 			wp_delete_post( (int) $page, true );
 		}
 
+		$this->remove_dashboard_builds();
 		parent::tearDown();
 	}
 
@@ -428,14 +432,7 @@ final class DashboardAccessTest extends IntegrationTestCase {
 	 * `npm run build` having run.
 	 */
 	private function controller(): ShellController {
-		$dir = sys_get_temp_dir() . '/merchboard-it-build/';
-
-		if ( ! is_dir( $dir . 'build' ) ) {
-			mkdir( $dir . 'build', 0777, true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Test fixture.
-		}
-
-		file_put_contents( $dir . 'build/dashboard.asset.php', "<?php return array( 'dependencies' => array( 'react-jsx-runtime', 'wp-element', 'wp-i18n' ), 'version' => 'test-build' );" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
-		file_put_contents( $dir . 'build/dashboard.js', '/* bundle */' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
+		$dir = $this->create_dashboard_build( array( 'react-jsx-runtime', 'wp-element', 'wp-i18n' ), 'test-build' );
 
 		return new ShellController(
 			new DashboardRoute(),

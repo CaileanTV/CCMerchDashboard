@@ -23,8 +23,11 @@ use MerchBoard\Modules\Dashboard\ShellController;
 use MerchBoard\Modules\Dashboard\ThemePreference;
 use MerchBoard\Modules\WooCommerce\Dashboard\DashboardSectionRegistration;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
+use MerchBoard\Tests\Integration\PrivateDashboardBuild;
 
 final class SectionsAndTranslationsTest extends IntegrationTestCase {
+
+	use PrivateDashboardBuild;
 
 	private const MO = MERCHBOARD_TEST_ROOT . '/languages/merchboard-da_DK.mo';
 
@@ -48,6 +51,7 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 		$GLOBALS['locale']     = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Reset to the site default.
 		$GLOBALS['wp_scripts'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Reset.
 		$GLOBALS['wp_styles']  = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Reset.
+		$this->remove_dashboard_builds();
 		parent::tearDown();
 	}
 
@@ -149,18 +153,9 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 	}
 
 	public function test_shell_prints_the_danish_script_translations_with_the_nonce(): void {
-		$dir = sys_get_temp_dir() . '/merchboard-i18n-build/';
-
-		foreach ( array( 'build', 'languages' ) as $folder ) {
-			if ( ! is_dir( $dir . $folder ) ) {
-				mkdir( $dir . $folder, 0777, true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Test fixture.
-			}
-		}
-
 		$json = 'merchboard-da_DK-' . md5( 'build/dashboard.js' ) . '.json';
-		copy( MERCHBOARD_TEST_ROOT . '/languages/' . $json, $dir . 'languages/' . $json );
-		file_put_contents( $dir . 'build/dashboard.asset.php', "<?php return array( 'dependencies' => array( 'wp-i18n' ), 'version' => 'i18n-test' );" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
-		file_put_contents( $dir . 'build/dashboard.js', '/* bundle */' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
+		$dir  = $this->create_dashboard_build( array( 'wp-i18n' ), 'i18n-test' );
+		self::assertTrue( copy( MERCHBOARD_TEST_ROOT . '/languages/' . $json, $dir . 'languages/' . $json ) );
 
 		// The dashboard is a frontend page: it follows the site language (creators
 		// cannot reach their WordPress profile to pick a personal language).
