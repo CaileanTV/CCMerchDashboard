@@ -120,7 +120,8 @@ final class PayoutDecisions {
 
 	/**
 	 * Registers a pending bank or PayPal payout as transferred outside
-	 * Merch Dashboard.
+	 * Merch Dashboard. A nonempty reference also requires VIEW_PAYOUT_DETAILS
+	 * because its validation compares against the decrypted destination.
 	 *
 	 * @param int    $payout_id Payout.
 	 * @param string $reference Optional bank or PayPal reference (not audited).
@@ -143,9 +144,10 @@ final class PayoutDecisions {
 					throw new PayoutException( PayoutException::WRONG_METHOD );
 				}
 
-				// The reference is kept (ADR-059): never the payout's own or other payment details.
-				if ( PayoutFreeText::contains_payment_details( $reference, $this->readable_details( $payout ) ) ) {
-					throw new PayoutException( PayoutException::PAYMENT_DETAILS_IN_TEXT );
+				// A nonempty reference is compared with hidden details: require permission
+				// before returning any destination-dependent validation result.
+				if ( '' !== $reference ) {
+					self::authorize( Capabilities::VIEW_PAYOUT_DETAILS );
 				}
 
 				$balance = $this->balances->in_currency( $payout->creator_id, $payout->currency )->balance_units();
@@ -157,6 +159,11 @@ final class PayoutDecisions {
 				// The balance includes this payout's own reservation.
 				if ( $balance < 0 ) {
 					throw new PayoutException( PayoutException::INSUFFICIENT_BALANCE );
+				}
+
+				// The reference is kept (ADR-059): never the payout's own or other payment details.
+				if ( PayoutFreeText::contains_payment_details( $reference, $this->readable_details( $payout ) ) ) {
+					throw new PayoutException( PayoutException::PAYMENT_DETAILS_IN_TEXT );
 				}
 
 				$now = ( $this->clock )();

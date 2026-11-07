@@ -15,6 +15,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
+use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
@@ -151,6 +152,43 @@ final class PayoutFreeTextGuardTest extends IntegrationTestCase {
 		self::assertSame( PayoutStatus::Completed, $completed->status );
 		self::assertSame( 'Bank transaktions-ID 88213377', $completed->reference );
 		self::assertSame( 1, $this->count_rows( Tables::SETTLEMENT_DOCUMENTS ) );
+	}
+
+	public function test_completion_references_cannot_probe_hidden_details(): void {
+		$payout  = $this->request( '10', 'key-ft-security' );
+		$actions = new PayoutActions( $this->decisions, $this->logger );
+		$user    = wp_get_current_user();
+		$user->add_cap( Capabilities::VIEW_PAYOUT_DETAILS, false );
+		self::assertTrue( current_user_can( Capabilities::MANAGE_PAYOUTS ) );
+		self::assertFalse( current_user_can( Capabilities::VIEW_PAYOUT_DETAILS ) );
+
+		try {
+			foreach ( array( '10.0000', '1000.0000' ) as $amount ) {
+				// Exercise both an eligible payout and one whose reservation exceeds earnings.
+				$this->wpdb->update( $this->table( Tables::PAYOUTS ), array( 'amount' => $amount ), array( 'id' => $payout->id ) );
+				$before = $this->state( $payout );
+
+				foreach ( array( self::ACCOUNT, '99887766', 'BANK-REF-1' ) as $reference ) {
+					$url = $actions->handle(
+						array(
+							'action'           => PayoutActions::COMPLETE_ACTION,
+							'payout_id'        => (string) $payout->id,
+							'_wpnonce'         => wp_create_nonce( PayoutActions::nonce_action( PayoutActions::COMPLETE_ACTION, $payout->id ) ),
+							'confirm_transfer' => '1',
+							'reference'        => $reference,
+						)
+					);
+					self::assertStringContainsString( 'result=' . PayoutException::NOT_AUTHORIZED, $url );
+					self::assertSame( $before, $this->state( $payout ) );
+				}
+			}
+
+			$this->wpdb->update( $this->table( Tables::PAYOUTS ), array( 'amount' => '10.0000' ), array( 'id' => $payout->id ) );
+			self::assertSame( PayoutStatus::Completed, $this->decisions->complete( $payout->id, '  ' )->status );
+			self::assertSame( array(), $this->logger->entries );
+		} finally {
+			$user->remove_cap( Capabilities::VIEW_PAYOUT_DETAILS );
+		}
 	}
 
 	public function test_a_reason_with_payment_details_is_refused_and_an_ordinary_reason_passes(): void {
