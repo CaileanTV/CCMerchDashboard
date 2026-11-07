@@ -992,7 +992,7 @@ final class MeDesignerController extends RestController {
 	 *
 	 * @param array<string, mixed> $live Live version.
 	 * @param BaseProduct          $base Its base product.
-	 * @return list<array{image: string, label: string, url: string|null}>
+	 * @return list<array{image: string, label: string, url: string|null, large: string|null}>
 	 */
 	private function live_images( array $live, BaseProduct $base ): array {
 		$design = json_decode( (string) $live['design'], true );
@@ -1030,10 +1030,12 @@ final class MeDesignerController extends RestController {
 				if ( isset( $mockups[ $key ][ $color ] ) && DesignerImages::valid( $image, $design, $colors ) ) {
 					$attachment = $media[ SubmissionFiles::MOCKUP . ':' . $image ] ?? 0;
 					$url        = $attachment > 0 ? wp_get_attachment_image_url( $attachment, 'medium' ) : false;
+					$large      = $attachment > 0 ? wp_get_attachment_image_url( $attachment, 'large' ) : false;
 					$images[]   = array(
 						'image' => $image,
 						'label' => ( $names[ $color ] ?? $color ) . ' – ' . $side,
 						'url'   => is_string( $url ) ? $url : null,
+						'large' => is_string( $large ) ? $large : null,
 					);
 				}
 			}

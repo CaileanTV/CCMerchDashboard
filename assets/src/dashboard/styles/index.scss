@@ -2211,20 +2211,57 @@ input:disabled + .merchboard-sounds__upload {
 }
 
 // The product image and the gallery of choices (ADR-096).
-.merchboard-product-designer__image-preview {
+.merchboard-image-picker {
 	display: grid;
-	gap: 0.5rem;
-	justify-items: start;
+	gap: 0.75rem;
+	width: 100%;
+}
 
-	> img {
+.merchboard-image-picker__chosen {
+	display: grid;
+	gap: 0.25rem;
+	justify-items: start;
+	font-size: 0.875rem;
+}
+
+.merchboard-image-picker__large {
+	width: 100%;
+	max-width: 28rem;
+	padding: 0;
+	cursor: zoom-in;
+	background: var(--merchboard-mockup-ground);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius-sm);
+
+	img {
+		display: block;
 		width: 100%;
-		max-width: 16rem;
 		aspect-ratio: 1;
 		object-fit: contain;
-		background: var(--merchboard-mockup-ground);
-		border: 1px solid var(--merchboard-border);
-		border-radius: var(--merchboard-radius-sm);
 	}
+}
+
+.merchboard-image-picker__sides {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+}
+
+.merchboard-image-picker__placeholder {
+	display: grid;
+	place-items: center;
+	aspect-ratio: 1;
+	padding: 0.25rem;
+	font-size: 0.6875rem;
+	color: var(--merchboard-text-muted);
+}
+
+.merchboard-image-picker__full {
+	display: block;
+	width: min(80vw, 60rem);
+	max-width: 100%;
+	max-height: 75vh;
+	object-fit: contain;
 }
 
 .merchboard-product-designer__image-gallery {
@@ -2232,6 +2269,8 @@ input:disabled + .merchboard-sounds__upload {
 	grid-template-columns: repeat(auto-fill, minmax(4rem, 1fr));
 	gap: 0.5rem;
 	width: 100%;
+	max-height: 24rem;
+	overflow-y: auto;
 
 	button {
 		padding: 0;

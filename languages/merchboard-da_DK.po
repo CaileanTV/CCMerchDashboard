@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-07T20:41:59+00:00\n"
+"PO-Revision-Date: 2026-11-07T20:56:11+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -8103,6 +8103,7 @@ msgid "No fees yet."
 msgstr "Ingen gebyrer endnu."
 
 #: src/Modules/ProductDesigner/Admin/DesignerFeesSection.php:122
+#: build/dashboard.js:74
 msgid "Side"
 msgstr "Side"
 
@@ -9145,11 +9146,11 @@ msgstr "Klar"
 msgid "Product photo %d"
 msgstr "Produktfoto %d"
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1127
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1129
 msgid "The product designer is not available."
 msgstr "Produktdesigneren er ikke tilgængelig."
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1146
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1148
 msgid "The product designer refused the change."
 msgstr "Produktdesigneren afviste ændringen."
 
@@ -11413,6 +11414,7 @@ msgstr "Udfør de poster, der endnu ikke er udført. Udførte poster udføres al
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:418
 #: build/dashboard.js:1
 #: build/dashboard.js:63
+#: build/dashboard.js:74
 #: build/dashboard.js:93
 msgid "Close"
 msgstr "Luk"
@@ -16434,6 +16436,7 @@ msgid "CMYK is converted to RGB, so the printed colour can differ a little."
 msgstr "CMYK omregnes til RGB, så farven kan afvige en smule i tryk."
 
 #: build/dashboard.js:65
+#: build/dashboard.js:74
 msgid "All sides"
 msgstr "Alle sider"
 
@@ -16522,6 +16525,22 @@ msgstr "Læg dem sammen: lagene fra %1$s lægges oven på %2$s."
 #: build/dashboard.js:74
 msgid "You can undo this."
 msgstr "Du kan fortryde det."
+
+#: build/dashboard.js:74
+msgid "Show it large"
+msgstr "Vis det stort"
+
+#: build/dashboard.js:74
+msgid "The image cannot be shown."
+msgstr "Billedet kan ikke vises."
+
+#: build/dashboard.js:74
+msgid "Drawing the product image…"
+msgstr "Tegner produktbilledet…"
+
+#: build/dashboard.js:74
+msgid "Product images"
+msgstr "Produktbilleder"
 
 #: build/dashboard.js:74
 msgid "Rectangle"
@@ -16944,14 +16963,6 @@ msgid "That did not work. Please try again."
 msgstr "Det lykkedes ikke. Prøv igen."
 
 #: build/dashboard.js:78
-msgid "Product images"
-msgstr "Produktbilleder"
-
-#: build/dashboard.js:78
-msgid "Choose an image"
-msgstr "Vælg et billede"
-
-#: build/dashboard.js:78
 msgid "Use as the product image"
 msgstr "Brug som produktbillede"
 
@@ -17004,18 +17015,6 @@ msgstr "Butikken viser farverne i denne rækkefølge. Den første er den, kunder
 #: build/dashboard.js:78
 msgid "The first colour, first side"
 msgstr "Første farve, første side"
-
-#: build/dashboard.js:78
-msgid "The product image"
-msgstr "Produktbilledet"
-
-#: build/dashboard.js:78
-msgid "Drawing the product image…"
-msgstr "Tegner produktbilledet…"
-
-#: build/dashboard.js:78
-msgid "Show all images"
-msgstr "Vis alle billeder"
 
 #: build/dashboard.js:78
 msgid "Weight"

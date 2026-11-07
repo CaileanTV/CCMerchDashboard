@@ -193,6 +193,8 @@ export interface DesignerLive {
 		readonly label: string;
 		/** The approved image itself; null when it cannot be shown. */
 		readonly url: string | null;
+		/** The same image large. */
+		readonly large: string | null;
 	}[];
 	readonly primaryImage: string | null;
 }
@@ -707,6 +709,9 @@ function parseLive( value: unknown ): DesignerLive | null | undefined {
 								image: item.image,
 								label: item.label,
 								url: isString( item.url ) ? item.url : null,
+								large: isString( item.large )
+									? item.large
+									: null,
 							},
 						]
 					: []

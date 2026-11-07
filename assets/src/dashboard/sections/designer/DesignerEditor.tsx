@@ -106,6 +106,7 @@ import {
 	MergeDesigns,
 	NEW_DESIGN,
 } from './ColorDesigns';
+import { ImagePicker } from './ImagePicker';
 import { IconButton, LayerList } from './LayerList';
 import { TemplateLayers } from './TemplateLayers';
 import { threadObject, threadSide } from './threads';
@@ -262,12 +263,6 @@ function Editor( props: EditorProps ) {
 	const [ primaryImage, setPrimaryImage ] = useState< string | null >(
 		draft.primaryImage
 	);
-	// The product image drawn as the shop will show it, and the gallery of all choices (ADR-096).
-	const [ imagePreview, setImagePreview ] = useState< string | null >( null );
-	const [ gallery, setGallery ] = useState< Readonly<
-		Record< string, string >
-	> | null >( null );
-	const [ galleryBusy, setGalleryBusy ] = useState( false );
 	const [ profitKind, setProfitKind ] = useState< ProfitKind >(
 		draft.profitKind
 	);
@@ -419,12 +414,6 @@ function Editor( props: EditorProps ) {
 			} )
 		)
 	);
-	// The image the product will show: the chosen one, or the first colour's first side.
-	const shownImage =
-		imageChoices.find( ( choice ) => choice.value === primaryImage )
-			?.value ??
-		imageChoices[ 0 ]?.value ??
-		null;
 	const previewInput = {
 		product: product.id,
 		base,
@@ -435,61 +424,21 @@ function Editor( props: EditorProps ) {
 		fonts: () => fontsOf( whole ),
 	};
 
-	// The gallery shows the design as it was drawn: another design or colours draw it again.
-	const colorList = colors.join();
+	/** A choice of the product image drawn as the shop will show it (ADR-096). */
+	const drawImage = ( value: string ): Promise< string | null > => {
+		const at = value.lastIndexOf( ':' );
 
-	useEffect( () => {
-		setGallery( null );
-	}, [ whole, colorList ] );
-
-	// Drawn a moment after the design or the choice stops changing.
-	useEffect( () => {
-		if ( shownImage === null || tab !== 'product' ) {
-			setImagePreview( null );
-
-			return undefined;
-		}
-
-		let cancelled = false;
-		const [ key, color ] = shownImage.split( ':' );
-		const timer = window.setTimeout( () => {
-			void mockupPreview( previewInput, key ?? '', color ?? '' )
-				.then( ( url ) => {
-					if ( ! cancelled ) {
-						setImagePreview( url );
-					}
-				} )
-				.catch( () => undefined );
-		}, 600 );
-
-		return () => {
-			cancelled = true;
-			window.clearTimeout( timer );
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps -- previewInput is derived from these.
-	}, [ shownImage, whole, colors.join(), tab ] );
-
-	/** Draws every choice for the gallery, one after the other. */
-	const showGallery = async () => {
-		setGalleryBusy( true );
-		const drawn: Record< string, string > = {};
-
-		for ( const choice of imageChoices ) {
-			const [ key, color ] = choice.value.split( ':' );
-			const url = await mockupPreview(
-				previewInput,
-				key ?? '',
-				color ?? ''
-			).catch( () => null );
-
-			if ( url !== null ) {
-				drawn[ choice.value ] = url;
-			}
-		}
-
-		setGallery( drawn );
-		setGalleryBusy( false );
+		return mockupPreview(
+			previewInput,
+			value.slice( 0, at ),
+			value.slice( at + 1 )
+		);
 	};
+	// What the drawn images show: the design and its colours.
+	const drawKey = useMemo(
+		() => ( { whole, colors: colors.join() } ),
+		[ whole, colors ]
+	);
 
 	const dirty =
 		primaryImage !== saved.primaryImage ||
@@ -1535,10 +1484,8 @@ function Editor( props: EditorProps ) {
 									images={ imageChoices }
 									image={ primaryImage }
 									onImage={ setPrimaryImage }
-									imagePreview={ imagePreview }
-									gallery={ gallery }
-									galleryBusy={ galleryBusy }
-									onGallery={ () => void showGallery() }
+									imageDraw={ drawImage }
+									imageDrawKey={ drawKey }
 								/>
 							) : null }
 							{ tab === 'text' ? (
@@ -2602,78 +2549,33 @@ function InShop( props: DesignerEditorProps ) {
 					) }
 				</Alert>
 			) : null }
-			{ live.images.some( ( choice ) => choice.url !== null ) &&
-			live.images.length > 1 ? (
-				<div
-					className="merchboard-product-designer__image-gallery"
-					role="group"
-					aria-label={ __( 'Product images', 'merchboard' ) }
-				>
-					{ live.images.map( ( choice ) =>
-						choice.url === null ? null : (
-							<button
-								key={ choice.image }
-								type="button"
-								aria-pressed={
-									( image === ''
-										? live.primaryImage
-										: image ) === choice.image
-								}
-								title={ choice.label }
-								onClick={ () => setImage( choice.image ) }
-							>
-								<img src={ choice.url } alt={ choice.label } />
-							</button>
-						)
-					) }
-				</div>
-			) : null }
 			{ live.images.length < 2 ? null : (
-				<div className="merchboard-product-designer__actions">
-					<Labelled
-						className="merchboard-field"
-						before
-						label={
-							<span className="merchboard-field__label">
-								{ __( 'Product image', 'merchboard' ) }
-							</span>
-						}
-					>
-						{ ( id ) => (
-							<select
-								id={ id }
-								className="merchboard-input"
-								value={ image }
-								onChange={ ( event ) =>
-									setImage( event.target.value )
-								}
-							>
-								<option value="" disabled>
-									{ __( 'Choose an image', 'merchboard' ) }
-								</option>
-								{ live.images.map( ( choice ) => (
-									<option
-										key={ choice.image }
-										value={ choice.image }
-									>
-										{ choice.label }
-									</option>
-								) ) }
-							</select>
-						) }
-					</Labelled>
-					<Button
-						variant="secondary"
-						onClick={ () => void chooseImage() }
-						isBusy={ imaging }
-						disabled={
-							image === '' ||
-							image === ( live.primaryImage ?? '' )
-						}
-					>
-						{ __( 'Use as the product image', 'merchboard' ) }
-					</Button>
-				</div>
+				<section className="merchboard-product-designer__card">
+					<h3>{ __( 'Product image', 'merchboard' ) }</h3>
+					<ImagePicker
+						choices={ live.images.map( ( choice ) => ( {
+							value: choice.image,
+							label: choice.label,
+							url: choice.url,
+							large: choice.large,
+						} ) ) }
+						selected={ image === '' ? live.primaryImage : image }
+						onSelect={ setImage }
+					/>
+					<div className="merchboard-product-designer__actions">
+						<Button
+							variant="secondary"
+							onClick={ () => void chooseImage() }
+							isBusy={ imaging }
+							disabled={
+								image === '' ||
+								image === ( live.primaryImage ?? '' )
+							}
+						>
+							{ __( 'Use as the product image', 'merchboard' ) }
+						</Button>
+					</div>
+				</section>
 			) }
 			<div className="merchboard-product-designer__actions">
 				<Button variant="secondary" onClick={ onBack }>
@@ -2730,12 +2632,12 @@ interface ProductPanelProps {
 	/** The product's image; null for the first colour's first side. */
 	readonly image?: string | null;
 	readonly onImage?: ( value: string | null ) => void;
-	/** The product image as the shop will show it (`data:`), or null while it is drawn. */
-	readonly imagePreview?: string | null;
-	/** Every choice drawn, by value; null until asked for. */
-	readonly gallery?: Readonly< Record< string, string > > | null;
-	readonly galleryBusy?: boolean;
-	readonly onGallery?: () => void;
+	/** Draws a choice of the product image (`data:`). */
+	readonly imageDraw?: ( value: string ) => Promise< string | null >;
+	/** Changes when what imageDraw() shows changes. */
+	readonly imageDrawKey?: unknown;
+	/** How long the design must be still before the images are drawn (ms). */
+	readonly imageDrawDelay?: number;
 }
 
 /**
@@ -3057,60 +2959,18 @@ export function ProductPanel( props: ProductPanelProps ) {
 				</Labelled>
 			) }
 			{ props.images === undefined || props.images.length === 0 ? null : (
-				<div className="merchboard-product-designer__image-preview">
-					{ props.imagePreview ? (
-						<img
-							src={ props.imagePreview }
-							alt={ __( 'The product image', 'merchboard' ) }
-						/>
-					) : (
-						<span className="merchboard-product-designer__hint">
-							{ __( 'Drawing the product image…', 'merchboard' ) }
-						</span>
-					) }
-					{ props.gallery ? (
-						<div
-							className="merchboard-product-designer__image-gallery"
-							role="group"
-							aria-label={ __( 'Product images', 'merchboard' ) }
-						>
-							{ props.images.map( ( choice ) =>
-								props.gallery?.[ choice.value ] ? (
-									<button
-										key={ choice.value }
-										type="button"
-										aria-pressed={
-											( props.image ??
-												props.images?.[ 0 ]?.value ) ===
-											choice.value
-										}
-										title={ choice.label }
-										onClick={ () =>
-											props.onImage?.( choice.value )
-										}
-									>
-										<img
-											src={
-												props.gallery[ choice.value ]
-											}
-											alt={ choice.label }
-										/>
-									</button>
-								) : null
-							) }
-						</div>
-					) : (
-						<Button
-							variant="secondary"
-							size="sm"
-							onClick={ () => props.onGallery?.() }
-							isBusy={ props.galleryBusy === true }
-							disabled={ props.onGallery === undefined }
-						>
-							{ __( 'Show all images', 'merchboard' ) }
-						</Button>
-					) }
-				</div>
+				<ImagePicker
+					choices={ props.images }
+					selected={ props.image ?? null }
+					onSelect={ ( value ) => props.onImage?.( value ) }
+					{ ...( props.imageDraw === undefined
+						? {}
+						: { draw: props.imageDraw } ) }
+					drawKey={ props.imageDrawKey }
+					{ ...( props.imageDrawDelay === undefined
+						? {}
+						: { delay: props.imageDrawDelay } ) }
+				/>
 			) }
 			<fieldset className="merchboard-product-designer__options">
 				<legend className="merchboard-field__label">
