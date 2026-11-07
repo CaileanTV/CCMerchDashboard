@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Alerts\Chatbot;
 
 use Closure;
+use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
@@ -75,10 +76,11 @@ final class YouTubeOAuth {
 	 * @param Closure                  $dashboard_url The dashboard URL of a path.
 	 * @param Logger                   $logger        Technical log (failures without tokens).
 	 * @param YouTubeTerms             $terms         Privacy policy and terms (ADR-071).
+	 * @param CreatorContext           $context       Current creator access.
 	 *
 	 * @phpstan-param Closure(string): string $dashboard_url
 	 */
-	public function __construct( private YouTubeAccount $account, private YouTubeApi $api, private CreatorTokens $tokens, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url, private Logger $logger, private YouTubeTerms $terms ) {
+	public function __construct( private YouTubeAccount $account, private YouTubeApi $api, private CreatorTokens $tokens, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url, private Logger $logger, private YouTubeTerms $terms, private CreatorContext $context ) {
 		$this->dashboard_url = $dashboard_url;
 	}
 
@@ -132,7 +134,9 @@ final class YouTubeOAuth {
 		wp_set_current_user( $data['user'] );
 
 		try {
-			$result = '' !== $error || '' === $code || ! TwitchOAuth::same_login( $data['user'] ) ? ChatbotException::DENIED : $this->complete( $bot, $data['creator'], $code, $data['verifier'] );
+			// A pending state does not preserve creator access after unlinking or reassignment.
+			$creator = $bot ? null : $this->context->for_user( $data['user'] );
+			$result  = '' !== $error || '' === $code || ! TwitchOAuth::same_login( $data['user'] ) || ( ! $bot && $creator?->id !== $data['creator'] ) ? ChatbotException::DENIED : $this->complete( $bot, $data['creator'], $code, $data['verifier'] );
 		} catch ( ChatbotException $e ) {
 			$result = $e->reason();
 			$this->log_failure( $bot, $result, $e->status() );
