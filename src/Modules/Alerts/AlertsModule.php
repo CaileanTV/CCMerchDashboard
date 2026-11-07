@@ -394,7 +394,9 @@ final class AlertsModule implements Module {
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
 				$dashboard_url,
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				$c->get( CreatorContext::class ),
+				$c->get( CreatorRepository::class )
 			)
 		);
 		$container->set(

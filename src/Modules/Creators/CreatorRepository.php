@@ -82,6 +82,24 @@ final class CreatorRepository {
 	}
 
 	/**
+	 * Locks a creator against changes until the caller's transaction ends.
+	 *
+	 * Must be called inside Transaction::run(), before reading access.
+	 *
+	 * @param int $id Creator id.
+	 * @throws DatabaseException When the lock cannot be acquired.
+	 */
+	public function lock( int $id ): void {
+		self::assert_positive_id( $id, 'Creator id' );
+		$wpdb  = $this->wpdb;
+		$query = $wpdb->prepare( 'SELECT id FROM %i WHERE id = %d FOR UPDATE', $this->table(), $id );
+
+		if ( null === $query || false === $wpdb->query( $query ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Prepared above; null is rejected before execution.
+			throw new DatabaseException( 'Could not lock creator.' );
+		}
+	}
+
+	/**
 	 * Finds the creator linked to a WordPress user.
 	 *
 	 * @param int $user_id WordPress user id.
