@@ -1403,6 +1403,60 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		}
 	}
 
+	public function test_retirement_before_publication_acquires_the_lock_is_seen(): void {
+		$product = $this->live_product();
+		$shop_id = (int) ( $this->products->product( $product )['wc_product_id'] ?? 0 );
+		$ran     = false;
+		$before  = function ( string $query ) use ( $product, &$ran ): string {
+			if ( ! $ran && str_contains( $query, "GET_LOCK('merchboard_designer_product_{$product}'" ) ) {
+				$ran = true;
+				$this->retirement->run( $product );
+			}
+
+			return $query;
+		};
+		add_filter( 'query', $before );
+
+		try {
+			$this->shop()->set_published( $this->creator, $product, true );
+			self::fail( 'Retirement while publication waits must prevent publication.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::NOT_LIVE, $e->reason() );
+		} finally {
+			remove_filter( 'query', $before );
+		}
+
+		self::assertTrue( $ran );
+		self::assertSame( 'draft', get_post_status( $shop_id ) );
+		self::assertSame( 'retired', $this->products->product( $product )['status'] ?? null );
+		self::assertSame( '1', (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT IS_FREE_LOCK(%s)', 'merchboard_designer_product_' . $product ) ) );
+	}
+
+	public function test_publication_holds_retirements_lock_through_the_shop_save(): void {
+		$product = $this->live_product();
+		$shop_id = (int) ( $this->products->product( $product )['wc_product_id'] ?? 0 );
+		$this->shop()->set_published( $this->creator, $product, false );
+		$saved = false;
+		$after = function ( int $id ) use ( $product, $shop_id, &$saved ): void {
+			if ( $shop_id === $id ) {
+				$saved = true;
+				self::assertSame( '0', (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT IS_FREE_LOCK(%s)', 'merchboard_designer_product_' . $product ) ) );
+			}
+		};
+		add_action( 'post_updated', $after );
+
+		try {
+			$this->shop()->set_published( $this->creator, $product, true );
+		} finally {
+			remove_action( 'post_updated', $after );
+		}
+
+		self::assertTrue( $saved );
+		self::assertSame( '1', (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT IS_FREE_LOCK(%s)', 'merchboard_designer_product_' . $product ) ) );
+		$this->retirement->run( $product );
+		self::assertSame( 'draft', get_post_status( $shop_id ) );
+	}
+
 	public function test_a_product_from_the_shop_moves_to_the_deleted_designs_and_keeps_what_orders_need(): void {
 		$product = $this->live_product();
 		$version = (int) ( $this->products->live( $product )['id'] ?? 0 );
