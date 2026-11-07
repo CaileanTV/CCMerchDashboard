@@ -68,6 +68,14 @@ final class CategoryReconciliationBatchTest extends IntegrationTestCase {
 		$this->install();
 		delete_option( Settings::OPTION ); // ADR-036 window closed (see ProtectedProductMetaTest).
 
+		// A run reconciles every product on the site: products another test left behind would be
+		// counted too (an order-dependent CI failure, 2026-11-07). The test starts without any.
+		foreach ( (array) $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT ID FROM %i WHERE post_type IN (%s, %s)', $this->wpdb->posts, 'product', 'product_variation' ) ) as $leftover ) {
+			$this->execute( 'DELETE FROM %i WHERE post_id = %d', $this->wpdb->postmeta, (int) $leftover );
+			$this->execute( 'DELETE FROM %i WHERE object_id = %d', $this->wpdb->term_relationships, (int) $leftover );
+			$this->execute( 'DELETE FROM %i WHERE ID = %d', $this->wpdb->posts, (int) $leftover );
+		}
+
 		register_taxonomy( 'product_cat', array( 'product', 'product_variation' ), array( 'hierarchical' => true ) );
 		$this->alpha_cat   = $this->term( 'Batch Alpha' );
 		$this->beta_cat    = $this->term( 'Batch Beta' );

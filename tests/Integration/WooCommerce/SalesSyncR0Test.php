@@ -281,7 +281,7 @@ final class SalesSyncR0Test extends IntegrationTestCase {
 		$this->order( self::ORDER, 'completed', array( self::line( 11, 2, '100' ) ) );
 		$second = $this->second();
 		$sales  = '`' . $this->table( Tables::SALES ) . '`';
-		$update = $this->version_update( $second, '46' );
+		$update = $this->version_update( $second, '47' );
 		$result = null;
 		$errno  = null;
 
@@ -312,7 +312,7 @@ final class SalesSyncR0Test extends IntegrationTestCase {
 		$this->order( self::ORDER, 'completed', array( self::line( 11, 2, '100' ) ) );
 		$second = $this->second();
 		$second->query( 'START TRANSACTION' );
-		self::assertSame( 1, $second->query( $this->version_update( $second, '46' ) ) );
+		self::assertSame( 1, $second->query( $this->version_update( $second, '47' ) ) );
 		$errno = $this->errno_before_rollback();
 		$this->wpdb->suppress_errors( true );
 
