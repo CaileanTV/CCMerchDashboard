@@ -104,15 +104,16 @@ class AlertApiAccess {
 			'webhooks' => $webhooks,
 		);
 
-		if ( $this->for_creator( $creator_id ) === $access ) {
+		// A missing row is not an explicit denial: migration 28 may still backfill it.
+		if ( $this->meta->get( $creator_id, CreatorMetaStore::ALERT_API_ACCESS ) === $access ) {
 			return false;
 		}
 
 		$this->transaction->run(
 			function () use ( $creator_id, $access ): void {
 				$this->audit->record( AuditAction::AlertApiAccessChanged, $creator_id, $access );
-				// No access at all removes the row (CreatorMetaStore deletes an empty value).
-				$this->meta->set( $creator_id, CreatorMetaStore::ALERT_API_ACCESS, $access['keys'] || $access['webhooks'] ? $access : array() );
+				// Keep explicit denials so migration retries cannot restore access.
+				$this->meta->set( $creator_id, CreatorMetaStore::ALERT_API_ACCESS, $access );
 			}
 		);
 
