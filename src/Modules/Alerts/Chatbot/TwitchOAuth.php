@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Alerts\Chatbot;
 
 use Closure;
+use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Core\Audit\AuditAction;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
@@ -64,10 +65,11 @@ final class TwitchOAuth {
 	 * @param AuditTrail               $audit         Audit trail.
 	 * @param Transaction              $transaction   Database transaction.
 	 * @param Closure                  $dashboard_url The dashboard URL of a path.
+	 * @param CreatorContext           $context       Current creator access.
 	 *
 	 * @phpstan-param Closure(string): string $dashboard_url
 	 */
-	public function __construct( private TwitchAccount $account, private TwitchApi $api, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url ) {
+	public function __construct( private TwitchAccount $account, private TwitchApi $api, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url, private CreatorContext $context ) {
 		$this->dashboard_url = $dashboard_url;
 	}
 
@@ -117,7 +119,9 @@ final class TwitchOAuth {
 		wp_set_current_user( $data['user'] );
 
 		try {
-			$result = '' !== $error || '' === $code || ! self::same_login( $data['user'] ) ? TwitchException::DENIED : $this->complete( $bot, $data['creator'], $code );
+			// A pending state does not preserve creator access after unlinking or reassignment.
+			$creator = $bot ? null : $this->context->for_user( $data['user'] );
+			$result  = '' !== $error || '' === $code || ! self::same_login( $data['user'] ) || ( ! $bot && $creator?->id !== $data['creator'] ) ? TwitchException::DENIED : $this->complete( $bot, $data['creator'], $code );
 		} catch ( TwitchException $e ) {
 			$result = $e->reason();
 		} catch ( DatabaseException ) {

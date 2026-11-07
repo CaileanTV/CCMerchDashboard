@@ -287,10 +287,10 @@ final class ChatbotTest extends IntegrationTestCase {
 		$this->platforms        = new ChatPlatforms( new TwitchPlatform( $this->account, $this->api ), new KickPlatform( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels ), $this->youtube_platform );
 		$this->subscriptions    = new ChatSubscriptions( $this->platforms, $this->channels, $this->chat );
 		$this->sender           = new ChatSender( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->events, new AlertsAvailability( static fn(): bool => false ), $this->queue, $logger );
-		$this->oauth            = new TwitchOAuth( $this->account, $this->api, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ) );
+		$this->oauth            = new TwitchOAuth( $this->account, $this->api, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $this->service( CreatorContext::class ) );
 		$this->twitch           = new TwitchController( $this->oauth, $this->account, $this->channels, $this->chat, $logger );
-		$this->kick_oauth       = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger );
-		$this->youtube_oauth    = new YouTubeOAuth( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger, $this->youtube_terms );
+		$this->kick_oauth       = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger, $this->service( CreatorContext::class ) );
+		$this->youtube_oauth    = new YouTubeOAuth( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger, $this->youtube_terms, $this->service( CreatorContext::class ) );
 	}
 
 	protected function tearDown(): void {
@@ -455,6 +455,80 @@ final class ChatbotTest extends IntegrationTestCase {
 		wp_set_current_user( $this->user_of( $nova ) );
 		$again = $this->query( $this->oauth->start_channel( $nova ) );
 		self::assertStringContainsString( 'chatbot=denied&platform=twitch', $this->oauth->finish( $again['state'] ?? '', 'code-y', '' ), 'Not logged in at all.' );
+	}
+
+	/**
+	 * Pending states must not outlive the user's authority over their creator.
+	 *
+	 * @param string $change Access change after initiation.
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider( 'access_changes' )]
+	public function test_channel_callbacks_recheck_current_creator_access( string $change ): void {
+		$this->set_up_bot();
+		$this->set_up_kick();
+		$this->set_up_youtube();
+		$creator = $this->creator( 'pending' );
+		$user    = get_current_user_id();
+		$this->logged_in();
+		$states = array();
+		$flows  = array(
+			'twitch'  => $this->oauth,
+			'kick'    => $this->kick_oauth,
+			'youtube' => $this->youtube_oauth,
+		);
+
+		foreach ( $flows as $platform => $flow ) {
+			$this->channels->connect( $creator, ChatPlatform::from( $platform ), 'existing-channel', 'existing' );
+			$states[ $platform ] = $this->query( $flow->start_channel( $creator ) )['state'] ?? '';
+		}
+
+		$this->as_admin();
+		$creators = $this->service( CreatorService::class );
+		switch ( $change ) {
+			case 'capability':
+				( new \WP_User( $user ) )->add_cap( \MerchBoard\Core\Security\Capabilities::ACCESS_DASHBOARD, false );
+				break;
+			case 'inactive':
+				$creators->set_status( $creator, CreatorStatus::Inactive );
+				break;
+			case 'reassigned':
+				$creators->update( $creator, 'Pending', CreatorStatus::Active, $this->create_user( 'new_owner' ) );
+				break;
+			default:
+				$creators->update( $creator, 'Pending', CreatorStatus::Active, null );
+				if ( 'different_creator' === $change ) {
+					$creators->create( 'Different', CreatorStatus::Active, $user );
+				}
+		}
+		$before   = $this->rows( Tables::ALERT_CHATBOT );
+		$audit    = $this->rows( Tables::AUDIT_LOG );
+		$requests = count( $this->requests );
+		wp_set_current_user( 0 );
+
+		foreach ( $flows as $platform => $flow ) {
+			self::assertStringContainsString( 'chatbot=denied&platform=' . $platform, $flow->finish( $states[ $platform ], 'valid-provider-code', '' ) );
+			self::assertSame( 0, get_current_user_id(), 'The callback restores the current user.' );
+			self::assertSame( home_url( '/' ), $flow->finish( $states[ $platform ], 'valid-provider-code', '' ), 'Denied states are consumed.' );
+		}
+
+		self::assertCount( $requests, $this->requests, 'Denied callbacks exchange no codes and revoke no credentials or subscriptions.' );
+		self::assertSame( $before, $this->rows( Tables::ALERT_CHATBOT ), 'Existing connections are preserved.' );
+		self::assertSame( $audit, $this->rows( Tables::AUDIT_LOG ) );
+	}
+
+	/**
+	 * Changes that invalidate a pending channel authorization.
+	 *
+	 * @return array<string, array{string}>
+	 */
+	public static function access_changes(): array {
+		return array(
+			'capability removed' => array( 'capability' ),
+			'creator inactive'   => array( 'inactive' ),
+			'user unlinked'      => array( 'unlinked' ),
+			'creator reassigned' => array( 'reassigned' ),
+			'user relinked'      => array( 'different_creator' ),
+		);
 	}
 
 	public function test_the_bot_cannot_be_added_to_its_own_channel(): void {
@@ -1078,7 +1152,7 @@ final class ChatbotTest extends IntegrationTestCase {
 	public function test_a_failed_kick_authorization_names_the_step_in_the_log_and_the_code_on_the_page(): void {
 		$this->set_up_kick();
 		$logger = new RecordingLogger();
-		$oauth  = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger );
+		$oauth  = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger, $this->service( CreatorContext::class ) );
 		$nova   = $this->creator( 'nova' );
 
 		// Kick refuses the code (e.g. a wrong redirect URL or secret).
