@@ -122,7 +122,7 @@ class DesignerReview {
 				}
 
 				try {
-					$price = SalesAmount::format( DesignerPrices::compute( 1, SalesAmount::format( DesignerPrices::secured_base( $base, (string) $version['design'], (string) $version['sizes'] ) ), (string) $version['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $version['profit_value'] ) ), $base->currency, $this->decimals )->price_units() );
+					$price = SalesAmount::format( DesignerPrices::compute( 1, SalesAmount::format( DesignerPrices::secured_base( $base, (string) $version['design'], (string) $version['sizes'], null, (string) $version['colors'] ) ), (string) $version['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $version['profit_value'] ) ), $base->currency, $this->decimals )->price_units() );
 				} catch ( InvalidArgumentException | OverflowException ) {
 					self::refuse( DesignerException::DESIGN_PROFIT );
 				}

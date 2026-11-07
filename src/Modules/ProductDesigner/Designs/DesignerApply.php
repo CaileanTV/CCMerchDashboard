@@ -227,7 +227,8 @@ class DesignerApply {
 		$step = $this->step( $id, 'live' );
 		$this->current_base( $version );
 		$this->require_creator( $creator_id );
-		$this->go_live( $version, $product, $price, DesignerPrices::size_bases( $this->size_prices( $version, $base ) ) );
+		$colored = $this->color_prices( $version, $base );
+		$this->go_live( $version, $product, $price, array() === $colored ? DesignerPrices::size_bases( $this->size_prices( $version, $base ) ) : DesignerPrices::color_bases( $colored ) );
 
 		// A first approval is published only now, with the price used for the settlement stored (review 30.15).
 		if ( null === $version['live_version_id'] ) {
@@ -324,7 +325,9 @@ class DesignerApply {
 			// Published separately after `live` (review 30.15).
 			false,
 			array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $this->size_prices( $version, $base ) ),
-			$size_images
+			$size_images,
+			// A colour's price is the one of its own design (ADR-096).
+			array_map( static fn( array $sizes ): array => array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $sizes ), $this->color_prices( $version, $base ) )
 		);
 	}
 
@@ -353,6 +356,23 @@ class DesignerApply {
 	private function size_prices( array $version, BaseProduct $base ): array {
 		try {
 			return DesignerPrices::size_prices( $base, (int) $version['creator_id'], (string) $version['design'], (string) $version['sizes'], (string) $version['profit_kind'], (string) $version['profit_value'], $this->decimals );
+		} catch ( InvalidArgumentException | OverflowException ) {
+			self::refuse( DesignerException::DESIGN_PROFIT );
+		}
+	}
+
+	/**
+	 * The prices per colour and size of a version whose colours have designs
+	 * of their own (ADR-096); empty otherwise.
+	 *
+	 * @param array<string, mixed> $version Version.
+	 * @param BaseProduct          $base    Base product.
+	 * @return array<string, array<string, DesignerPrice>>
+	 * @throws DesignerException When it cannot be priced.
+	 */
+	private function color_prices( array $version, BaseProduct $base ): array {
+		try {
+			return DesignerPrices::color_prices( $base, (int) $version['creator_id'], (string) $version['design'], (string) $version['sizes'], (string) $version['colors'], (string) $version['profit_kind'], (string) $version['profit_value'], $this->decimals );
 		} catch ( InvalidArgumentException | OverflowException ) {
 			self::refuse( DesignerException::DESIGN_PROFIT );
 		}
@@ -464,7 +484,7 @@ class DesignerApply {
 	 */
 	private function price( array $version, BaseProduct $base ): DesignerPrice {
 		try {
-			return DesignerPrices::compute( (int) $version['creator_id'], SalesAmount::format( DesignerPrices::secured_base( $base, (string) $version['design'], (string) $version['sizes'] ) ), (string) $version['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $version['profit_value'] ) ), $base->currency, $this->decimals );
+			return DesignerPrices::compute( (int) $version['creator_id'], SalesAmount::format( DesignerPrices::secured_base( $base, (string) $version['design'], (string) $version['sizes'], null, (string) $version['colors'] ) ), (string) $version['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $version['profit_value'] ) ), $base->currency, $this->decimals );
 		} catch ( InvalidArgumentException | OverflowException ) {
 			self::refuse( DesignerException::DESIGN_PROFIT );
 		}

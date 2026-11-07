@@ -13,6 +13,7 @@ use InvalidArgumentException;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
+use MerchBoard\Modules\ProductDesigner\Designs\ColorDesigns;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\WooCommerce\Pricing\DesignerPrice;
 use MerchBoard\Modules\WooCommerce\Pricing\DesignerPriceSource;
@@ -53,6 +54,12 @@ final class DesignerPrices implements DesignerPriceSource {
 	 * size. Written with the variation's price.
 	 */
 	public const SIZE_META = '_merchboard_designer_size';
+
+	/**
+	 * The colour key of a variation (post meta): it picks the colour's design,
+	 * price and print files (ADR-096). Written with the variation.
+	 */
+	public const COLOR_META = '_merchboard_designer_color';
 
 	/**
 	 * Basis of a percent value in units: 100 % × 10 000.
@@ -132,6 +139,21 @@ final class DesignerPrices implements DesignerPriceSource {
 
 		$size = $variation_id > 0 ? get_post_meta( $variation_id, self::SIZE_META, true ) : '';
 
+		// By colour and size when colours have designs of their own (ADR-096).
+		if ( is_array( reset( $bases ) ) ) {
+			$color = $variation_id > 0 ? get_post_meta( $variation_id, self::COLOR_META, true ) : '';
+
+			if ( is_string( $color ) && is_string( $size ) && is_array( $bases[ $color ] ?? null ) && isset( $bases[ $color ][ $size ] ) ) {
+				return (string) $bases[ $color ][ $size ];
+			}
+
+			$bases = array_merge( ...array_values( array_map( static fn( mixed $sizes ): array => is_array( $sizes ) ? array_values( $sizes ) : array(), $bases ) ) );
+
+			if ( array() === $bases ) {
+				return null;
+			}
+		}
+
 		if ( is_string( $size ) && isset( $bases[ $size ] ) ) {
 			return (string) $bases[ $size ];
 		}
@@ -154,14 +176,91 @@ final class DesignerPrices implements DesignerPriceSource {
 	 * @param BaseProduct              $base   Base product.
 	 * @param array<mixed>|string      $design The design, or its JSON.
 	 * @param array<mixed>|string|null $sizes  The chosen sizes, or their JSON.
+	 * @param string|null              $color  A colour: the price of its own design (ADR-096); null for the headline price.
+	 * @param array<mixed>|string|null $colors The chosen colours, or their JSON: the headline price is the highest of their designs.
 	 */
-	public static function secured_base( BaseProduct $base, array|string $design, array|string|null $sizes = null ): int {
+	public static function secured_base( BaseProduct $base, array|string $design, array|string|null $sizes = null, ?string $color = null, array|string|null $colors = null ): int {
 		$decoded = is_string( $design ) ? json_decode( $design, true ) : $design;
-		$chosen  = is_string( $sizes ) ? json_decode( $sizes, true ) : $sizes;
-		$size    = is_array( $chosen ) && 1 === count( $chosen ) ? reset( $chosen ) : null;
-		$extra   = is_array( $decoded ) ? $base->extra_amount( SubmissionFiles::designed_sides( $decoded ), is_array( $chosen ) ? array_values( array_filter( $chosen, 'is_string' ) ) : null ) : 0;
+		$decoded = is_array( $decoded ) ? $decoded : array();
+
+		// A colour has the price of its own design (the owner's choice 2026-11-07, ADR-096).
+		if ( null !== $color ) {
+			return self::part_base( $base, ColorDesigns::part( $decoded, ColorDesigns::part_of( $decoded, $color ) ), $sizes );
+		}
+
+		if ( ! ColorDesigns::has_any( $decoded ) ) {
+			return self::part_base( $base, $decoded, $sizes );
+		}
+
+		// The headline price of colour designs is the highest of the designs in use.
+		$chosen = is_string( $colors ) ? json_decode( $colors, true ) : $colors;
+		$ids    = is_array( $chosen ) ? array_map( 'strval', array_keys( ColorDesigns::parts( $decoded, array_values( array_filter( $chosen, 'is_string' ) ) ) ) ) : ColorDesigns::ids( $decoded );
+		$prices = array_map( static fn( string $id ): int => self::part_base( $base, ColorDesigns::part( $decoded, $id ), $sizes ), $ids );
+
+		return array() === $prices ? self::part_base( $base, $decoded, $sizes ) : max( $prices );
+	}
+
+	/**
+	 * The secured base price of one design (the shared one or a colour design).
+	 *
+	 * @param BaseProduct              $base   Base product.
+	 * @param array<mixed>             $design The design as a document of its own.
+	 * @param array<mixed>|string|null $sizes  The chosen sizes, or their JSON.
+	 */
+	private static function part_base( BaseProduct $base, array $design, array|string|null $sizes ): int {
+		$chosen = is_string( $sizes ) ? json_decode( $sizes, true ) : $sizes;
+		$size   = is_array( $chosen ) && 1 === count( $chosen ) ? reset( $chosen ) : null;
+		$extra  = $base->extra_amount( SubmissionFiles::designed_sides( $design ), is_array( $chosen ) ? array_values( array_filter( $chosen, 'is_string' ) ) : null );
 
 		return $base->price_of( is_string( $size ) ? $size : null ) + $extra;
+	}
+
+	/**
+	 * The price of each chosen colour and size when colours have designs of
+	 * their own (ADR-096); empty otherwise, so size_prices() applies. A size
+	 * has its own base price only on a base product with prices per size.
+	 *
+	 * @param BaseProduct $base         Base product.
+	 * @param int         $creator_id   Owner.
+	 * @param string      $design       The design's JSON.
+	 * @param string      $sizes        The chosen sizes' JSON.
+	 * @param string      $colors       The chosen colours' JSON.
+	 * @param string      $profit_kind  `percent` or `fixed`.
+	 * @param string      $profit_value The percent or the amount (decimal).
+	 * @param int         $decimals     Store precision.
+	 * @return array<string, array<string, DesignerPrice>> Prices by colour and size.
+	 * @throws InvalidArgumentException When a value is invalid.
+	 */
+	public static function color_prices( BaseProduct $base, int $creator_id, string $design, string $sizes, string $colors, string $profit_kind, string $profit_value, int $decimals ): array {
+		$decoded = json_decode( $design, true );
+		$chosen  = json_decode( $sizes, true );
+		$keys    = json_decode( $colors, true );
+		$prices  = array();
+
+		if ( ! is_array( $decoded ) || ! ColorDesigns::has_any( $decoded ) || ! is_array( $chosen ) || ! is_array( $keys ) ) {
+			return $prices;
+		}
+
+		$chosen = array_values( array_filter( $chosen, 'is_string' ) );
+
+		foreach ( array_filter( $keys, 'is_string' ) as $color ) {
+			foreach ( $chosen as $size ) {
+				$secured                   = self::secured_base( $base, $decoded, array() === $base->size_prices ? $chosen : array( $size ), $color );
+				$prices[ $color ][ $size ] = self::compute( $creator_id, SalesAmount::format( $secured ), $profit_kind, $profit_value, $base->currency, $decimals );
+			}
+		}
+
+		return $prices;
+	}
+
+	/**
+	 * What the shop stores of the prices per colour and size: the base price
+	 * by colour and size (ADR-096).
+	 *
+	 * @param array<string, array<string, DesignerPrice>> $prices Prices by colour and size.
+	 */
+	public static function color_bases( array $prices ): ?string {
+		return array() === $prices ? null : (string) wp_json_encode( array_map( static fn( array $sizes ): array => array_map( static fn( DesignerPrice $price ): string => SalesAmount::format( $price->base_units ), $sizes ), $prices ) );
 	}
 
 	/**

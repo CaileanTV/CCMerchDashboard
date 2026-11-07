@@ -1094,6 +1094,106 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertSame( 1919400, $this->writer->contents[1][1]->price_units, 'A design approved before is put in the shop at the new base price.' );
 	}
 
+	public function test_a_colour_with_a_design_of_its_own_has_its_own_price_and_print_files_from_the_shop_to_the_order_line(): void {
+		$table = $this->table( Tables::DESIGNER_BASES );
+		$views = (array) json_decode( (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT views FROM %i WHERE id = %d', $table, $this->base ) ), true );
+		$this->wpdb->update(
+			$table,
+			array(
+				'views'            => (string) wp_json_encode( array( $views[0], array_merge( (array) $views[0], array( 'key' => 'back', 'name' => 'Back' ) ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+				'extra_side_price' => '50.0000',
+			),
+			array( 'id' => $this->base )
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Test: a second side without new uploads.
+
+		$product   = $this->drafts->create( $this->creator, $this->base );
+		$rectangle = array(
+			'type'        => 'rect',
+			'id'          => 'r1',
+			'x'           => 50,
+			'y'           => 50,
+			'width'       => 40,
+			'height'      => 40,
+			'angle'       => 0,
+			'scaleX'      => 1,
+			'scaleY'      => 1,
+			'opacity'     => 1,
+			'fill'        => '#00ff00',
+			'strokeWidth' => 0,
+			'radius'      => 0,
+		);
+		$this->drafts->save(
+			$this->creator,
+			$product,
+			array(
+				'title'        => 'Two designs',
+				'colors'       => array( 'black', 'sand' ),
+				'sizes'        => array( 'S', 'M' ),
+				'profit_kind'  => 'percent',
+				'profit_value' => '20',
+				'design'       => array(
+					'version' => 1,
+					'sides'   => array( 'front' => array( $rectangle ) ),
+					'designs' => array(
+						array(
+							'id'     => 'd1',
+							'colors' => array( 'sand' ),
+							'sides'  => array(
+								'front' => array( $rectangle ),
+								'back'  => array( $rectangle ),
+							),
+						),
+					),
+				),
+			),
+			new DesignValidator( static fn(): bool => false, array() )
+		);
+		self::assertSame( '239.9400', $this->products->draft( $product )['quoted_price'] ?? null, 'The headline price is the highest: sand has a back.' );
+
+		$upload = static fn( int $width, int $height ): array => AlertImagesTest::upload( AlertImagesTest::png( $width, $height ), 'file.png' );
+		foreach ( array( 'print:front', 'print:front:d1', 'print:back:d1' ) as $slot ) {
+			$this->submissions->attach( $this->creator, $product, $slot, $upload( 118, 157 ) );
+		}
+		foreach ( array( 'mockup:front:black', 'mockup:front:sand', 'mockup:back:sand' ) as $slot ) {
+			$this->submissions->attach( $this->creator, $product, $slot, $upload( 400, 400 ) );
+		}
+		$this->submissions->submit( $this->creator, $product );
+		$version = $this->pending_id( $product );
+		$this->review->approve( $version );
+		$this->drain();
+
+		[ , $content ] = $this->writer->contents[0];
+		self::assertSame(
+			array(
+				'black' => array(
+					'S' => 1799400,
+					'M' => 1799400,
+				),
+				'sand'  => array(
+					'S' => 2399400,
+					'M' => 2399400,
+				),
+			),
+			$content->color_prices,
+			'Black: 149.95 + 20 %. Sand: (149.95 + 50) + 20 %.'
+		);
+		self::assertSame( '{"black":{"S":"149.9500","M":"149.9500"},"sand":{"S":"199.9500","M":"199.9500"}}', $this->products->product( $product )['shop_base_prices'] ?? null );
+
+		// The settlement follows the colour of the variation sold.
+		$shop   = (int) ( $this->products->product( $product )['wc_product_id'] ?? 0 );
+		$sand   = self::post_with_size( 'M' );
+		$black  = self::post_with_size( 'S' );
+		$prices = new DesignerPrices( $this->wpdb, new PostMetaPricingProductStore() );
+		update_post_meta( $sand, DesignerPrices::COLOR_META, 'sand' );
+		update_post_meta( $black, DesignerPrices::COLOR_META, 'black' );
+		self::assertSame( array( 1999500, 1499500, 1999500 ), array( $prices->price( $shop, $sand )?->base_units, $prices->price( $shop, $black )?->base_units, $prices->price( $shop )?->base_units ), 'Without a variation, the highest.' );
+
+		// The administrator sees only the print files of the line's colour, all of them when it cannot be told.
+		self::assertSame( array( '>front<' ), $this->order_links( $version, 'S', 'black' ) );
+		self::assertSame( array( '>front – Sand<', '>back – Sand<' ), $this->order_links( $version, 'S', 'sand' ) );
+		self::assertSame( array( '>front<', '>front – Sand<', '>back – Sand<' ), $this->order_links( $version, 'S', '' ) );
+	}
+
 	public function test_a_second_design_area_costs_the_extra_price_which_is_secured_and_follows_a_new_price(): void {
 		$table = $this->table( Tables::DESIGNER_BASES );
 		$views = (array) json_decode( (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT views FROM %i WHERE id = %d', $table, $this->base ) ), true );
@@ -1703,11 +1803,18 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	 *
 	 * @param int    $version Version.
 	 * @param string $size    Size of the line's variation.
+	 * @param string $color   Colour of the line's variation; '' for none.
 	 * @return list<string>
 	 */
-	private function order_links( int $version, string $size ): array {
-		$files = new DesignerOrderFiles( $this->products, $this->guard, new RecordingLogger(), $this->bases_repository() );
-		$line  = new class( $version, self::post_with_size( $size ) ) {
+	private function order_links( int $version, string $size, string $color = '' ): array {
+		$files     = new DesignerOrderFiles( $this->products, $this->guard, new RecordingLogger(), $this->bases_repository() );
+		$variation = self::post_with_size( $size );
+
+		if ( '' !== $color ) {
+			update_post_meta( $variation, DesignerPrices::COLOR_META, $color );
+		}
+
+		$line = new class( $version, $variation ) {
 			/**
 			 * Constructor.
 			 *
@@ -1739,7 +1846,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$files->render_item( 1, $line );
 		$html = (string) ob_get_clean();
 
-		preg_match_all( '/>(?:front|large)</', $html, $links );
+		preg_match_all( '/>(?:front|large|back)(?: – [A-Za-z, ]+)?</u', $html, $links );
 
 		return $links[0];
 	}

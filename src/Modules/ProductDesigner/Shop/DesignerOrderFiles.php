@@ -16,6 +16,7 @@ use MerchBoard\Modules\ProductDesigner\Admin\DesignerVersionFiles;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignsPage;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
+use MerchBoard\Modules\ProductDesigner\Designs\ColorDesigns;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
@@ -142,9 +143,10 @@ class DesignerOrderFiles {
 
 		$variation = method_exists( $item, 'get_variation_id' ) ? (int) $item->get_variation_id() : 0;
 		$size      = $variation > 0 ? get_post_meta( $variation, DesignerPrices::SIZE_META, true ) : '';
+		$color     = $variation > 0 ? get_post_meta( $variation, DesignerPrices::COLOR_META, true ) : '';
 
 		echo '<p class="merchboard-designer-files"><strong>' . esc_html__( 'Print files:', 'merchboard' ) . '</strong> ';
-		$this->print_links( $version, is_string( $size ) && '' !== $size ? $size : null );
+		$this->print_links( $version, is_string( $size ) && '' !== $size ? $size : null, is_string( $color ) && '' !== $color ? $color : null );
 		echo '</p>';
 	}
 
@@ -225,19 +227,42 @@ class DesignerOrderFiles {
 	}
 
 	/**
+	 * The print files of the design a colour uses (ADR-096): a shirt in
+	 * orange must never be printed with the black ones' design. All of them
+	 * when the colour cannot be told; we never guess.
+	 *
+	 * @param array<string, string>     $slots Slot by key ("side", or "side:id" for a colour design).
+	 * @param array<string, mixed>|null $row   Version.
+	 * @param string|null               $color Colour key of the order line.
+	 * @return array<string, string>
+	 */
+	private static function of_color( array $slots, ?array $row, ?string $color ): array {
+		$design = null === $row ? null : json_decode( (string) ( $row['design'] ?? '' ), true );
+
+		if ( null === $color || ! is_array( $design ) || ! ColorDesigns::has_any( $design ) ) {
+			return $slots;
+		}
+
+		$wanted = ColorDesigns::part_of( $design, $color );
+
+		return array_filter( $slots, static fn( int|string $key ): bool => ( explode( ':', (string) $key, 2 )[1] ?? ColorDesigns::SHARED ) === $wanted, ARRAY_FILTER_USE_KEY );
+	}
+
+	/**
 	 * A download link per print file of a version.
 	 *
 	 * @param int         $version Version.
 	 * @param string|null $size    Only the files of this size; null for all.
+	 * @param string|null $color   Only the files of this colour's design (ADR-096); null for all.
 	 */
-	private function print_links( int $version, ?string $size = null ): void {
+	private function print_links( int $version, ?string $size = null, ?string $color = null ): void {
 		try {
 			$row = $this->products->version( $version );
 		} catch ( DatabaseException ) {
 			$row = null;
 		}
 
-		$slots = $this->of_size( DesignerVersionFiles::slots( is_string( $row['files'] ?? null ) ? $row['files'] : null )['print'], $row, $size );
+		$slots = $this->of_size( self::of_color( DesignerVersionFiles::slots( is_string( $row['files'] ?? null ) ? $row['files'] : null )['print'], $row, $color ), $row, $size );
 
 		if ( array() === $slots ) {
 			echo esc_html__( 'none stored', 'merchboard' );
@@ -247,8 +272,16 @@ class DesignerOrderFiles {
 
 		$links = array();
 
+		try {
+			$base = null === $row ? null : $this->bases->find( (int) $row['base_id'] );
+		} catch ( DatabaseException ) {
+			$base = null;
+		}
+
+		$names = null === $base ? array() : array_column( $base->colors, 'name', 'key' );
+
 		foreach ( $slots as $side => $slot ) {
-			$links[] = '<a href="' . esc_url( DesignerVersionFiles::url( $version, $slot ) ) . '">' . esc_html( DesignerVersionFiles::print_label( (string) $side, is_string( $row['design'] ?? null ) ? $row['design'] : null ) ) . '</a>';
+			$links[] = '<a href="' . esc_url( DesignerVersionFiles::url( $version, $slot ) ) . '">' . esc_html( DesignerVersionFiles::print_label( (string) $side, is_string( $row['design'] ?? null ) ? $row['design'] : null, $names ) ) . '</a>';
 		}
 
 		echo implode( ', ', $links ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.

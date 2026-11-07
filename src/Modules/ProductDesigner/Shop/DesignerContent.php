@@ -40,6 +40,7 @@ final readonly class DesignerContent {
 	 * @param bool                                    $publish      Whether to publish the product (its first approval).
 	 * @param array<string, int>                      $size_prices  Customer's price by size; empty with one price for all.
 	 * @param array<string, array<string, int>>       $size_images  A variation's image by size and colour key; empty unless sides belong to sizes.
+	 * @param array<string, array<string, int>>       $color_prices Customer's price by colour key and size; empty unless colours have designs of their own (ADR-096).
 	 */
 	public function __construct(
 		public string $name,
@@ -53,7 +54,8 @@ final readonly class DesignerContent {
 		public int $decimals,
 		public bool $publish,
 		public array $size_prices = array(),
-		public array $size_images = array()
+		public array $size_images = array(),
+		public array $color_prices = array()
 	) {
 	}
 }

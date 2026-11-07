@@ -195,13 +195,14 @@ class DesignerRepricing {
 		}
 
 		try {
-			$price = DesignerPrices::compute( (int) $product['creator_id'], SalesAmount::format( DesignerPrices::secured_base( $base, (string) $live['design'], (string) $live['sizes'] ) ), (string) $live['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $live['profit_value'] ) ), $base->currency, $this->decimals );
+			$price = DesignerPrices::compute( (int) $product['creator_id'], SalesAmount::format( DesignerPrices::secured_base( $base, (string) $live['design'], (string) $live['sizes'], null, (string) $live['colors'] ) ), (string) $live['profit_kind'], SalesAmount::format( SalesAmount::parse( (string) $live['profit_value'] ) ), $base->currency, $this->decimals );
 		} catch ( InvalidArgumentException | OverflowException ) {
 			self::refuse( DesignerException::DESIGN_PROFIT );
 		}
 
 		try {
-			$by_size = DesignerPrices::size_prices( $base, (int) $product['creator_id'], (string) $live['design'], (string) $live['sizes'], (string) $live['profit_kind'], (string) $live['profit_value'], $this->decimals );
+			$by_size  = DesignerPrices::size_prices( $base, (int) $product['creator_id'], (string) $live['design'], (string) $live['sizes'], (string) $live['profit_kind'], (string) $live['profit_value'], $this->decimals );
+			$by_color = DesignerPrices::color_prices( $base, (int) $product['creator_id'], (string) $live['design'], (string) $live['sizes'], (string) $live['colors'], (string) $live['profit_kind'], (string) $live['profit_value'], $this->decimals );
 		} catch ( InvalidArgumentException | OverflowException ) {
 			self::refuse( DesignerException::DESIGN_PROFIT );
 		}
@@ -209,13 +210,13 @@ class DesignerRepricing {
 		$units    = $price->price_units();
 		$previous = null === $product['shop_price'] ? null : SalesAmount::parse( (string) $product['shop_price'] );
 		$stored   = null === $product['shop_base_price'] ? null : SalesAmount::parse( (string) $product['shop_base_price'] );
-		$bases    = DesignerPrices::size_bases( $by_size );
+		$bases    = array() === $by_color ? DesignerPrices::size_bases( $by_size ) : DesignerPrices::color_bases( $by_color );
 
 		if ( $previous === $units && $stored === $price->base_units && $bases === $product['shop_base_prices'] ) {
 			return;
 		}
 
-		$this->writer->set_prices( $proof, $units, $this->decimals, array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $by_size ) );
+		$this->writer->set_prices( $proof, $units, $this->decimals, array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $by_size ), array_map( static fn( array $sizes ): array => array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $sizes ), $by_color ) );
 		$this->products->set_shop_price( $id, SalesAmount::format( $units ), SalesAmount::format( $price->base_units ), $bases );
 
 		// Audited also when only a size's own price changed (30.15 review); the creator hears of the main price.

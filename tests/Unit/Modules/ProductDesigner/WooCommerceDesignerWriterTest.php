@@ -261,6 +261,47 @@ final class WooCommerceDesignerWriterTest extends TestCase {
 		self::assertSame( array( 10 ), WcProductStorage::$synced );
 	}
 
+	public function test_a_colour_with_a_design_of_its_own_has_its_own_price_and_every_variation_knows_its_colour(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Draft', '', 'draft' );
+		Functions\when( 'sanitize_title' )->alias( static fn( string $title ): string => strtolower( $title ) );
+		Functions\when( 'wp_json_encode' )->alias( 'json_encode' );
+		Functions\when( '__' )->returnArg();
+
+		$plain   = self::content( true );
+		$content = new DesignerContent(
+			$plain->name,
+			$plain->description,
+			$plain->category_ids,
+			$plain->colors,
+			$plain->sizes,
+			$plain->images,
+			$plain->color_images,
+			$plain->price_units,
+			$plain->decimals,
+			true,
+			array(),
+			array(),
+			array(
+				'black' => array(
+					'S' => 2490000,
+					'M' => 2490000,
+				),
+				'sand'  => array(
+					'S' => 2990000,
+					'M' => 2990000,
+				),
+			)
+		);
+		$this->writer()->set_content( new GuardedProduct( 3, 10, 7 ), $content );
+
+		$variations = array_filter( WcProductStorage::$products, static fn( array $row ): bool => 'variation' === $row['type'] );
+		$meta       = static fn( int $id, string $key ): mixed => array_values( array_filter( WcProductStorage::$meta[ $id ] ?? array(), static fn( array $row ): bool => $key === $row['key'] ) )[0]['value'] ?? null;
+
+		self::assertSame( array( '249.00', '249.00', '299.00', '299.00' ), array_values( array_map( static fn( array $row ): mixed => $row['regular_price'] ?? null, $variations ) ) );
+		self::assertSame( array( 'black', 'black', 'sand', 'sand' ), array_map( static fn( int $id ): mixed => $meta( $id, DesignerPrices::COLOR_META ), array_keys( $variations ) ) );
+		self::assertSame( array( 'S', 'M', 'S', 'M' ), array_map( static fn( int $id ): mixed => $meta( $id, DesignerPrices::SIZE_META ), array_keys( $variations ) ) );
+	}
+
 	public function test_a_change_updates_the_variations_and_hides_those_no_longer_offered(): void {
 		WcProductStorage::add( 10, array(), 'variable', 0, 'Tee', '', 'publish' );
 		WcProductStorage::add( 11, array(), 'variation', 10 );

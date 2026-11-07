@@ -90,15 +90,16 @@ class WooCommerceDesignerWriter {
 	 * Sets the price of a designer product: on the product when it is simple,
 	 * otherwise on every variation.
 	 *
-	 * @param GuardedProduct     $product     The guard's proof.
-	 * @param int                $price_units Price per unit incl. VAT in 1/10 000 units (base + profit).
-	 * @param int                $decimals    Store price decimals.
-	 * @param array<string, int> $size_prices Price by size; empty with one price for all.
+	 * @param GuardedProduct                    $product     The guard's proof.
+	 * @param int                               $price_units Price per unit incl. VAT in 1/10 000 units (base + profit).
+	 * @param int                               $decimals    Store price decimals.
+	 * @param array<string, int>                $size_prices Price by size; empty with one price for all.
+	 * @param array<string, array<string, int>> $color_prices Price by colour key and size; empty unless colours have designs of their own (ADR-096).
 	 * @throws DesignerException When the store enters prices excluding VAT, or the product is neither simple nor variable.
 	 * @throws DatabaseException When it cannot be saved.
 	 * @throws InvalidArgumentException When the price cannot be written with the store precision.
 	 */
-	public function set_prices( GuardedProduct $product, int $price_units, int $decimals, array $size_prices = array() ): void {
+	public function set_prices( GuardedProduct $product, int $price_units, int $decimals, array $size_prices = array(), array $color_prices = array() ): void {
 		if ( wc_tax_enabled() && ! wc_prices_include_tax() ) {
 			self::refuse( DesignerException::PRICES_EXCL_TAX );
 		}
@@ -117,6 +118,12 @@ class WooCommerceDesignerWriter {
 
 		if ( ! $parent instanceof WC_Product_Variable ) {
 			self::refuse( DesignerException::NOT_DESIGNER_PRODUCT );
+		}
+
+		if ( array() !== $color_prices ) {
+			$this->set_color_prices( $parent, $color_prices, $decimals );
+
+			return;
 		}
 
 		if ( array() !== $size_prices ) {
@@ -243,16 +250,19 @@ class WooCommerceDesignerWriter {
 				$variation->set_status( 'publish' );
 				$variation->set_image_id( $content->size_images[ $size ][ $color_key ] ?? $content->color_images[ $color_key ] ?? 0 );
 
-				$own = isset( $content->size_prices[ $size ] ) ? PricingMath::price_string( $content->size_prices[ $size ], $content->decimals ) : $price;
+				$units = $content->color_prices[ $color_key ][ $size ] ?? $content->size_prices[ $size ] ?? null;
+				$own   = null === $units ? $price : PricingMath::price_string( $units, $content->decimals );
 
 				if ( $variation->get_regular_price( 'edit' ) !== $own ) {
 					$variation->set_regular_price( $own );
 				}
 
-				// An order line finds its price and its print file by this size.
-				if ( array() !== $content->size_prices || array() !== $content->size_images ) {
+				// An order line finds its price and its print file by this size and colour (ADR-096).
+				if ( array() !== $content->size_prices || array() !== $content->size_images || array() !== $content->color_prices ) {
 					$variation->update_meta_data( DesignerPrices::SIZE_META, $size );
 				}
+
+				$variation->update_meta_data( DesignerPrices::COLOR_META, (string) $color_key );
 
 				self::save( $variation );
 			}
@@ -267,6 +277,38 @@ class WooCommerceDesignerWriter {
 		}
 
 		WC_Product_Variable::sync( $product->wc_product_id );
+	}
+
+	/**
+	 * Sets each variation's price from its colour and size (ADR-096), both
+	 * read from the meta the variation was written with. A variation whose
+	 * colour or size is not priced keeps its price.
+	 *
+	 * @param WC_Product_Variable               $product      The product.
+	 * @param array<string, array<string, int>> $color_prices Price by colour key and size.
+	 * @param int                               $decimals     Store price decimals.
+	 * @throws DatabaseException When a variation cannot be saved.
+	 * @throws InvalidArgumentException When a price cannot be written with the store precision.
+	 */
+	private function set_color_prices( WC_Product_Variable $product, array $color_prices, int $decimals ): void {
+		foreach ( $product->get_children() as $child_id ) {
+			$variation = wc_get_product( (int) $child_id );
+
+			if ( ! $variation instanceof WC_Product_Variation ) {
+				continue;
+			}
+
+			$color = (string) $variation->get_meta( DesignerPrices::COLOR_META, true );
+			$size  = (string) $variation->get_meta( DesignerPrices::SIZE_META, true );
+			$units = $color_prices[ $color ][ $size ] ?? null;
+
+			if ( null !== $units ) {
+				$variation->set_regular_price( PricingMath::price_string( $units, $decimals ) );
+				self::save( $variation );
+			}
+		}
+
+		WC_Product_Variable::sync( $product->get_id() );
 	}
 
 	/**

@@ -96,6 +96,16 @@ final class ColorDesigns {
 	}
 
 	/**
+	 * Every design of the document: SHARED, then the colour designs.
+	 *
+	 * @param array<mixed> $design The design.
+	 * @return list<string>
+	 */
+	public static function ids( array $design ): array {
+		return array_merge( array( self::SHARED ), array_column( self::list( $design ), 'id' ) );
+	}
+
+	/**
 	 * Whether the design has colour designs.
 	 *
 	 * @param array<mixed> $design The design.

@@ -45,6 +45,13 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	public array $size_prices = array();
 
 	/**
+	 * Prices by colour and size of set_prices() (ADR-096).
+	 *
+	 * @var list<array<string, array<string, int>>>
+	 */
+	public array $color_prices = array();
+
+	/**
 	 * Published products.
 	 *
 	 * @var list<int>
@@ -128,14 +135,16 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	/**
 	 * Records a price.
 	 *
-	 * @param GuardedProduct     $product     Proof.
-	 * @param int                $price_units Price in units.
-	 * @param int                $decimals    Decimals.
-	 * @param array<string, int> $size_prices Price by size.
+	 * @param GuardedProduct                    $product     Proof.
+	 * @param int                               $price_units Price in units.
+	 * @param int                               $decimals    Decimals.
+	 * @param array<string, int>                $size_prices Price by size.
+	 * @param array<string, array<string, int>> $color_prices Price by colour and size.
 	 */
-	public function set_prices( GuardedProduct $product, int $price_units, int $decimals, array $size_prices = array() ): void {
-		$this->prices[]      = array( $product->wc_product_id, $price_units );
-		$this->size_prices[] = $size_prices;
+	public function set_prices( GuardedProduct $product, int $price_units, int $decimals, array $size_prices = array(), array $color_prices = array() ): void {
+		$this->prices[]       = array( $product->wc_product_id, $price_units );
+		$this->size_prices[]  = $size_prices;
+		$this->color_prices[] = $color_prices;
 	}
 
 	/**

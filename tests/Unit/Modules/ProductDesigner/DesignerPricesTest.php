@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Unit\Modules\ProductDesigner;
 
+use Brain\Monkey;
 use InvalidArgumentException;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
@@ -100,6 +101,39 @@ final class DesignerPricesTest extends TestCase {
 		self::assertSame( 500000, $sized->extra_amount( $all, array( 'S', 'L' ) ) );
 		self::assertSame( 200000, $sized->extra_amount( $all, array( 'S' ) ) );
 		self::assertSame( 500000, $sized->extra_amount( $all ) );
+	}
+
+	public function test_a_colour_has_the_price_of_its_own_design(): void {
+		Monkey\Functions\when( 'wp_json_encode' )->alias( 'json_encode' );
+		$base   = new BaseProduct( null, BaseProduct::DRAFT, 'own', 'Tee', '', 1500000, 'DKK', null, array(), array(), array(), 1, 500000 );
+		$object = array( 'id' => 'a' );
+		$design = array(
+			'version' => 1,
+			'sides'   => array( 'front' => array( $object ) ),
+			'designs' => array(
+				array(
+					'id'     => 'd1',
+					'colors' => array( 'orange' ),
+					'sides'  => array(
+						'front' => array( $object ),
+						'back'  => array( $object ),
+					),
+				),
+			),
+		);
+
+		self::assertSame( 1500000, DesignerPrices::secured_base( $base, $design, null, 'black' ), 'Black uses the shared front only.' );
+		self::assertSame( 2000000, DesignerPrices::secured_base( $base, $design, null, 'orange' ), 'Orange also has a back.' );
+		self::assertSame( 2000000, DesignerPrices::secured_base( $base, $design, null, null, array( 'black', 'orange' ) ), 'The headline price is the highest.' );
+		self::assertSame( 1500000, DesignerPrices::secured_base( $base, $design, null, null, array( 'black' ) ), 'Only the designs in use count.' );
+
+		$prices = DesignerPrices::color_prices( $base, 7, (string) wp_json_encode( $design ), '["M","L"]', '["black","orange"]', 'fixed', '50', 2 );
+
+		self::assertSame( array( 'black', 'orange' ), array_keys( $prices ) );
+		self::assertSame( array( 'M', 'L' ), array_keys( $prices['orange'] ) );
+		self::assertSame( array( 2000000, 2500000 ), array( $prices['black']['M']->price_units(), $prices['orange']['L']->price_units() ) );
+		self::assertSame( '{"black":{"M":"150.0000","L":"150.0000"},"orange":{"M":"200.0000","L":"200.0000"}}', DesignerPrices::color_bases( $prices ) );
+		self::assertSame( array(), DesignerPrices::color_prices( $base, 7, '{"version":1,"sides":{}}', '["M"]', '["black"]', 'fixed', '50', 2 ), 'Without colour designs, the prices per size apply.' );
 	}
 
 	public function test_invalid_settings_are_refused(): void {

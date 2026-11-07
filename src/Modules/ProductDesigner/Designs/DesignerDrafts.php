@@ -274,7 +274,7 @@ class DesignerDrafts {
 		}
 
 		try {
-			$price = DesignerPrices::compute( 1, SalesAmount::format( DesignerPrices::secured_base( $base, $design, $sizes ) ), $kind, SalesAmount::format( $value ), $base->currency, $this->decimals );
+			$price = DesignerPrices::compute( 1, SalesAmount::format( DesignerPrices::secured_base( $base, $design, $sizes, null, $colors ) ), $kind, SalesAmount::format( $value ), $base->currency, $this->decimals );
 		} catch ( InvalidArgumentException | OverflowException ) {
 			self::refuse( DesignerException::DESIGN_PROFIT );
 		}
