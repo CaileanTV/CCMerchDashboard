@@ -289,7 +289,7 @@ final class ChatbotTest extends IntegrationTestCase {
 		$this->sender           = new ChatSender( $this->platforms, $this->channels, $this->log, $this->format, new ChatMessages( new AlertTemplate() ), $this->events, new AlertsAvailability( static fn(): bool => false ), $this->queue, $logger );
 		$this->oauth            = new TwitchOAuth( $this->account, $this->api, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ) );
 		$this->twitch           = new TwitchController( $this->oauth, $this->account, $this->channels, $this->chat, $logger );
-		$this->kick_oauth       = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger );
+		$this->kick_oauth       = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger, $this->service( CreatorContext::class ), new CreatorRepository( $this->wpdb ) );
 		$this->youtube_oauth    = new YouTubeOAuth( $this->youtube, $this->youtube_api, $this->youtube_tokens, $this->channels, $this->subscriptions, $audit, $transaction, static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger, $this->youtube_terms );
 	}
 
@@ -1075,10 +1075,73 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertSame( home_url( '/' ), $this->kick_oauth->finish( $query['state'] ?? '', 'code-k', '' ), 'A state is used once.' );
 	}
 
+	public function test_kick_callback_refuses_lost_creator_access_without_changing_the_connection(): void {
+		$this->set_up_kick();
+
+		foreach ( array( 'role', 'inactive', 'unlinked', 'reassigned' ) as $loss ) {
+			$creator = $this->creator( 'kick_' . $loss );
+			$user    = get_current_user_id();
+			$this->channels->connect( $creator, ChatPlatform::Kick, '123', 'original' );
+			$this->kick_tokens->store( $creator, array( 'access' => 'original-access', 'refresh' => 'original-refresh', 'expires_in' => 7200 ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+			$state = $this->query( $this->kick_oauth->start_channel( $creator ) )['state'] ?? '';
+			$this->logged_in();
+
+			$repository = new CreatorRepository( $this->wpdb );
+			if ( 'role' === $loss ) {
+				( new \WP_User( $user ) )->remove_role( 'merchboard_creator' );
+			} elseif ( 'inactive' === $loss ) {
+				$repository->set_status( $creator, CreatorStatus::Inactive );
+			} else {
+				$repository->unlink_user( $creator );
+				if ( 'reassigned' === $loss ) {
+					$this->as_admin();
+					$this->service( CreatorService::class )->create( 'Replacement', CreatorStatus::Active, $user );
+				}
+			}
+			$before   = $this->rows( Tables::ALERT_CHATBOT );
+			$audit    = $this->rows( Tables::AUDIT_LOG );
+			$requests = count( $this->requests_to( self::KICK_TOKEN ) );
+			wp_set_current_user( 0 );
+
+			self::assertStringContainsString( 'chatbot=denied&platform=kick', $this->kick_oauth->finish( $state, 'code-k', '' ), $loss );
+			self::assertSame( $before, $this->rows( Tables::ALERT_CHATBOT ), $loss );
+			self::assertSame( $audit, $this->rows( Tables::AUDIT_LOG ), $loss );
+			self::assertCount( $requests, $this->requests_to( self::KICK_TOKEN ), $loss );
+			self::assertSame( 0, get_current_user_id() );
+			self::assertSame( home_url( '/' ), $this->kick_oauth->finish( $state, 'code-k', '' ) );
+		}
+	}
+
+	public function test_kick_callback_rechecks_access_after_the_code_exchange(): void {
+		$this->set_up_kick();
+		$creator = $this->creator( 'kick_race' );
+		$this->channels->connect( $creator, ChatPlatform::Kick, '123', 'original' );
+		$this->kick_tokens->store( $creator, array( 'access' => 'original-access', 'refresh' => 'original-refresh', 'expires_in' => 7200 ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$state = $this->query( $this->kick_oauth->start_channel( $creator ) )['state'] ?? '';
+		$this->logged_in();
+		$before = $this->rows( Tables::ALERT_CHATBOT );
+		$audit  = $this->rows( Tables::AUDIT_LOG );
+		$this->answer( self::KICK_TOKEN, 200, array( 'access_token' => 'replacement', 'refresh_token' => 'replacement-refresh', 'expires_in' => 7200 ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->answer( self::KICK_CHANNELS, 200, array( 'data' => array( array( 'broadcaster_user_id' => 777, 'slug' => 'replacement' ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$transport = $this->transport();
+		$api       = new KickApi(
+			function ( string $method, string $url, array $headers, ?string $body ) use ( $creator, $transport ): array {
+				if ( $method . ' ' . strtok( $url, '?' ) === self::KICK_CHANNELS ) {
+					( new CreatorRepository( $this->wpdb ) )->unlink_user( $creator );
+				}
+				return $transport( $method, $url, $headers, $body );
+			}
+		);
+		$oauth     = new KickOAuth( $this->kick, $api, $this->kick_tokens, $this->channels, $this->subscriptions, $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $this->service( Logger::class ), $this->service( CreatorContext::class ), new CreatorRepository( $this->wpdb ) );
+		self::assertStringContainsString( 'chatbot=denied&platform=kick', $oauth->finish( $state, 'code-k', '' ) );
+		self::assertSame( $before, $this->rows( Tables::ALERT_CHATBOT ) );
+		self::assertSame( $audit, $this->rows( Tables::AUDIT_LOG ) );
+	}
+
 	public function test_a_failed_kick_authorization_names_the_step_in_the_log_and_the_code_on_the_page(): void {
 		$this->set_up_kick();
 		$logger = new RecordingLogger();
-		$oauth  = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger );
+		$oauth  = new KickOAuth( $this->kick, $this->kick_api, $this->kick_tokens, $this->channels, $this->subscriptions, $this->service( AuditTrail::class ), $this->service( Transaction::class ), static fn( string $path ): string => home_url( '/creator-dashboard/' . $path . '/' ), $logger, $this->service( CreatorContext::class ), new CreatorRepository( $this->wpdb ) );
 		$nova   = $this->creator( 'nova' );
 
 		// Kick refuses the code (e.g. a wrong redirect URL or secret).

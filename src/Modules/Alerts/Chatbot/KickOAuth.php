@@ -15,6 +15,8 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Creators\CreatorRepository;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -65,10 +67,12 @@ final class KickOAuth {
 	 * @param Transaction              $transaction   Database transaction.
 	 * @param Closure                  $dashboard_url The dashboard URL of a path.
 	 * @param Logger                   $logger        Technical log (failures without tokens).
+	 * @param CreatorContext           $context       Current creator access.
+	 * @param CreatorRepository        $creators      Creator storage.
 	 *
 	 * @phpstan-param Closure(string): string $dashboard_url
 	 */
-	public function __construct( private KickAccount $account, private KickApi $api, private CreatorTokens $tokens, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url, private Logger $logger ) {
+	public function __construct( private KickAccount $account, private KickApi $api, private CreatorTokens $tokens, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url, private Logger $logger, private CreatorContext $context, private CreatorRepository $creators ) {
 		$this->dashboard_url = $dashboard_url;
 	}
 
@@ -146,21 +150,24 @@ final class KickOAuth {
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	private function complete( int $creator_id, string $code, string $verifier ): string {
+		$this->require_access( $creator_id );
 		$this->step = 'token';
 		$tokens     = $this->api->exchange_code( $this->account->client_id(), $this->account->require_secret(), $code, KickAccount::redirect_uri(), $verifier );
 		$this->step = 'channel';
 		$channel    = $this->api->token_channel( $tokens['access'] );
-		$this->step = 'store';
-		$previous   = $this->channels->find( $creator_id, ChatPlatform::Kick );
-
-		// Another channel before: its tokens are revoked and its subscription ends.
-		if ( $previous->connected() && $previous->broadcaster_id !== $channel['id'] ) {
-			$this->tokens->revoke( $creator_id );
-			$this->subscriptions->unsubscribe( $previous );
-		}
-
 		$this->transaction->run(
-			function () use ( $creator_id, $channel ): void {
+			function () use ( $creator_id, $channel, $tokens ): void {
+				// Serialize the final access check and effects with creator reassignment.
+				$this->creators->lock( $creator_id );
+				$this->require_access( $creator_id );
+				$this->step = 'store';
+				$previous   = $this->channels->find( $creator_id, ChatPlatform::Kick );
+
+				if ( $previous->connected() && $previous->broadcaster_id !== $channel['id'] ) {
+					$this->tokens->revoke( $creator_id );
+					$this->subscriptions->unsubscribe( $previous );
+				}
+
 				$this->audit->record(
 					AuditAction::AlertChatbotChannelConnected,
 					$creator_id,
@@ -170,13 +177,25 @@ final class KickOAuth {
 					)
 				);
 				$this->channels->connect( $creator_id, ChatPlatform::Kick, $channel['id'], $channel['slug'] );
+				$this->tokens->store( $creator_id, $tokens );
+				$this->step = 'subscribe';
+				$this->subscriptions->subscribe( $this->channels->find( $creator_id, ChatPlatform::Kick ) );
 			}
 		);
-		$this->tokens->store( $creator_id, $tokens );
-		$this->step = 'subscribe';
-		$this->subscriptions->subscribe( $this->channels->find( $creator_id, ChatPlatform::Kick ) );
 
 		return 'connected';
+	}
+
+	/**
+	 * Requires the initiating user's current access to the saved creator.
+	 *
+	 * @param int $creator_id Creator saved in the state.
+	 * @throws KickException When access was revoked or reassigned.
+	 */
+	private function require_access( int $creator_id ): void {
+		if ( $this->context->for_user( get_current_user_id() )?->id !== $creator_id ) {
+			throw new KickException( KickException::DENIED );
+		}
 	}
 
 	/**
