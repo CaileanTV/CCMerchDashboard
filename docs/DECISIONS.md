@@ -5570,3 +5570,82 @@ Kun admin markerer grundprodukter. Farven kontrolleres server-side som `#RRGGBB`
 
 ## Related
 ADR-080, ADR-081, ADR-085, ADR-086
+
+# ADR-096: Farvedesigns, valgfrit produktbillede og "Kopiér design" i produktdesigneren
+
+## Date
+2026-11-07
+
+## Status
+Accepteret af projektejeren 2026-11-07 (fase 34, plan godkendt samme dag). Udgives i 1.7.0.
+
+## Context
+I dag har et design én tegning pr. side, og den bruges til alle valgte farver. Projektejeren vil have, at:
+- enkelte farver på samme produkt kan få deres eget design, fx sort og hvid med design A og orange med design B;
+- creatoren selv kan vælge produktets primære billede (farve + side);
+- creatoren kan kopiere et produkt som udgangspunkt for et nyt, også før det er godkendt;
+- designeren har "Vælg alle" ved farverne og viser et objekts mål i cm.
+
+## Decision
+1. **Farvedesigns i designdokumentet** (stadig version 1). Feltet er valgfrit:
+   ```json
+   "designs": [{ "id": "d1", "colors": ["orange"], "sides": {…}, "background": {…}, "threads": {…} }]
+   ```
+   - Øverste niveau (`sides`/`background`/`threads`) er det **fælles design**. En farve uden eget design bruger det.
+   - En farve hører til højst ét eget design. Der må være højst 8 egne designs. `stitch` er fælles for hele produktet.
+   - Farver, der ikke er valgt, fjernes, og tomme designs slettes. Uden egne designs udelades feltet helt, så stemplet for eksisterende designs er uændret.
+2. **Designeren:**
+   - Som standard deler alle farver ét design.
+   - Hver farve har et designvalg: "Fælles design", "Design 2" … eller "+ Nyt design". Et nyt design starter som en kopi af det, farven brugte. Flere farver kan dele et eget design.
+   - Når en farve flyttes ind i et andet design, spørger designeren, hvordan de flettes:
+     - brug måldesignet;
+     - brug farvens design;
+     - læg lagene sammen.
+   - Alt kan fortrydes.
+3. **Filer:**
+   - Printfiler laves pr. design og side (`files.print` og `files.designs.{id}.{side}`, slot `print:<side>[:<id>]`).
+   - Mockups er uændret pr. side og farve, fordi hver farve har præcis ét design.
+   - Admin ser på ordren printfilerne for linjens farve og størrelse. Kan farven ikke afgøres, vises alle designs med farvenavn.
+4. **Pris pr. farve** (projektejerens valg):
+   - En farve får prisen for sit eget design. Ekstra trykområder regnes pr. design, som ved sider pr. størrelse (ADR-087, statusnote 2026-11-02).
+   - Variationerne får farvens nøgle i meta.
+   - Den pris, creatoren får oplyst (overskriften), er den højeste.
+   - Digitaliseringsgebyret følger filen som hidtil (ADR-086), så en ny broderet tegning koster ét gebyr.
+5. **Leverandørernes mockups laves pr. design** (projektejerens valg):
+   - Printful: opgaver pr. design og størrelsesgruppe.
+   - Gelato: placeholders pr. variant.
+   - Prodigi: ét produkt pr. design.
+6. **Produktbillede:**
+   - Creatoren vælger farve og side i designeren. Valget gemmes i versionens kolonne `primary_image` (migration 47) og indgår ikke i stemplet.
+   - Ved godkendelse bliver billedet produktets hovedbillede. Resten følger den hidtidige rækkefølge.
+   - På et live produkt kan creatoren skifte billedet uden ny godkendelse (`POST /me/designer/products/{id}/image`). Det sorterer kun billeder, der allerede er godkendt og importeret.
+   - Skiftet auditeres (`designer_primary_image_changed`). WooCommerces standardvariation sættes ikke.
+7. **"Kopiér design":**
+   - `POST /me/designer/products/{id}/copy` laver et nyt produkt, hvis første kladde er den nyeste version af originalen i enhver status. Det gælder også en indsendt eller afvist version.
+   - Kopien får farver, størrelser, profit, design og produktbillede. Filer kopieres ikke.
+   - Designet kontrolleres igen mod grundproduktet, som skal være aktivt.
+   - Oprettelsen auditeres som `designer_product_created` med `copied_from`.
+8. **Mål i cm og "Vælg alle":**
+   - Designeren viser et objekts bredde og højde i cm ud fra sidens printstørrelse (`width_mm`/`height_mm` ved dpi), også mens objektet skaleres.
+   - "Vælg alle" tilføjer de farver, der mangler, sidst i rækkefølgen.
+
+## Alternatives considered
+- **Et produkt pr. farvedesign:** fravalgt. Projektejeren vil have farverne på samme produkt.
+- **Leverandørmockups kun for ét design:** fravalgt af projektejeren. Butikken skal se ens ud.
+- **Højeste pris for alle farver:** fravalgt af projektejeren. Kunden betaler for det tryk, farven har.
+- **Produktbilledet i designdokumentet:** fravalgt. Et skift ville ændre stemplet og kassere de uploadede filer.
+
+## Reason
+Farvedesigns bygger på samme model som sider pr. størrelse (ADR-087, statusnote 2026-11-02). Et design pr. farve kan derfor bruge de eksisterende regler for brugte sider, dækning og pris uændret.
+
+## Security
+- Alle nye endpoints er `/me`-scoped og finder creatoren via `CreatorContext` (ADR-007). Et fremmed produkt giver 404.
+- Skift af produktbillede bruger kun godkendte vedhæftninger fra den live version.
+- Designet kontrolleres på serveren: kendte farver, unikke id'er og højst 8 egne designs.
+
+## Consequences
+- Flere printfiler og flere opgaver hos leverandørerne for produkter med farvedesigns.
+- Et produkt med farvedesigns kan ikke vises korrekt, hvis pluginet nedgraderes til 1.6, fordi priserne pr. farve gemmes i en ny form.
+
+## Related
+ADR-007, ADR-080, ADR-081, ADR-086, ADR-087, ADR-095

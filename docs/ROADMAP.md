@@ -961,6 +961,37 @@ Det gøres færdigt før review og test af fase 30 (30.15).
   - **Release 1.6.0 ✅ (2026-11-07):** tag `v1.6.0`, se DEVELOPMENT.md "Release 1.6.0".
   - **Review ✅ (2026-11-07):** rettelserne står i ADR-095's statusnote ("Alle sider" kun på valgte størrelser, farve på broderede sider fjernes, editoren fjerner farver uden flueben). Desuden: "Ændre pris nu" spærres under import og melder kun succes, når prisen er sat, og nul-datoerne fra 1.5.0 rettes.
 
+## Fase 34 – Farvedesigns, produktbillede og "Kopiér design" 📝 (plan godkendt 2026-11-07; ADR-096; udgives i 1.7.0)
+
+**Projektejerens ønske (2026-11-07):**
+- Enkelte farver på samme produkt kan have deres eget design. Som standard deler alle farver ét design, og creatoren skiller selv farver ud eller samler dem i grupper.
+- Når farver samles igen, spørger designeren, hvordan designene skal flettes.
+- "Vælg alle" ved farverne.
+- Creatoren vælger, hvilket mockup (farve + side) der er produktets primære billede, også senere på et live produkt.
+- "Kopiér design" laver et nyt produkt med samme opsætning, også fra produkter, der ikke er godkendt.
+- Nice to have: objektets mål i cm, mens man ændrer størrelsen.
+
+**Projektejerens valg (2026-11-07):**
+- Egen pris pr. farve.
+- Leverandørernes mockups laves pr. design.
+- Produktbilledet kan skiftes på et live produkt uden ny godkendelse.
+- Udgivelsen bliver 1.7.0, og CodeRabbit-PR'erne #11 og #13 kommer med. De blev merget 2026-11-07, efter grøn CI.
+
+- **34.1 ADR og plan:** ADR-096 og docs.
+- **34.2 "Vælg alle", mål i cm og "Kopiér design".**
+- **34.3 Datamodel:** `designs` i designdokumentet, kontrol på serveren og i klienten.
+- **34.4 Migration 47:** `primary_image` på versioner og en længere opgavenøgle hos leverandørerne.
+- **34.5 Filer og slots:** printfiler pr. design og side.
+- **34.6 Priser pr. farve.**
+- **34.7 Ordrefiler:** printfiler efter farve og størrelse.
+- **34.8 Leverandørernes mockups pr. design.**
+- **34.9 Designeren:** designvalg pr. farve og fletning.
+- **34.10 Produktbillede** i designeren og ved godkendelse.
+- **34.11 Skift af produktbillede** på et live produkt.
+- **34.12 Oversættelse og review.**
+- **34.13 Runtime-test på Local.**
+- **34.14 Release 1.7.0:** efter projektejerens go.
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |
