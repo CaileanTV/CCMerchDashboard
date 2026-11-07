@@ -8,7 +8,7 @@ I gang (fase 32, ADR-091–094). 32.2 (live-status og spærringer) og 32.3 (afta
 
 ## User-facing functionality
 - **Oprettelse** på `/<dashboard-slug>/opret`:
-  - creatornavn, brugernavn, e-mail, kanal-link, "Jeg er fyldt 18 år" og aftalepapiret med accept;
+  - creatornavn, brugernavn, e-mail, kanal-link, "Vises på forsiden" ("Content creator", forudvalgt, eller "Forening & Community"; ADR-097), "Jeg er fyldt 18 år" og aftalepapiret med accept;
   - er e-mailen eller brugernavnet i brug, siger siden det (projektejerens valg 2026-11-06);
   - mailen "Bekræft e-mail og vælg adgangskode";
   - efter den første adgangskode åbner MitCCMerch.
@@ -22,7 +22,7 @@ I gang (fase 32, ADR-091–094). 32.2 (live-status og spærringer) og 32.3 (afta
   - "Overkategori for creators";
   - fanen "Aftale" med editor, udgivelse af versioner (væsentlig eller ikke) og antal accepter pr. version.
 - **Forslag → Go-live:** creator, kanal-link, accepteret version, ventende designs og kategoriforslag.
-  - **Godkend** med tillæg og kategorinavn. Kategorien oprettes, og designs kommer i butikken.
+  - **Godkend** med tillæg, kategorinavn og "Vises på forsiden" (forudvalgt med creatorens valg). Kategorien oprettes med bannerpluginets `ccm_front_group`, og designs kommer i butikken. Bagefter ændres "Vises på forsiden" på kategorien i WooCommerce; creatoren kan ikke ændre det (ADR-097).
   - **Afvis** med note.
 - **Notifikationer:** "Ny creator har oprettet sig" og "Anmodning om at gå live".
 - **Grundprodukter:** en prisstigning kræver en dato mindst 14 dage frem (ADR-094). Den planlagte ændring vises og kan annulleres.

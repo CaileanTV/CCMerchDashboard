@@ -5649,3 +5649,40 @@ Farvedesigns bygger på samme model som sider pr. størrelse (ADR-087, statusnot
 
 ## Related
 ADR-007, ADR-080, ADR-081, ADR-086, ADR-087, ADR-095
+
+# ADR-097: "Vises på forsiden" vælges ved tilmeldingen og skrives på creatorens kategori
+
+## Date
+2026-11-07
+
+## Status
+Accepteret af projektejeren 2026-11-07 (fase 35, plan godkendt samme dag). Udgives i 1.7.1.
+
+## Context
+Bannerpluginet CCMerch Kategoribannere har feltet "Vises på forsiden" på en produktkategori: term meta `ccm_front_group` med værdierne `creator` (Content creator) og `community` (Forening & Community) (ADR-077). I dag sætter administratoren det i hånden, når en creator er gået live. Projektejeren vil have, at creatoren vælger det ved tilmeldingen (2026-11-07).
+
+## Decision
+1. **Valget:** siden `/<dashboard-slug>/opret` får feltet "Vises på forsiden" med to valg: "Content creator" (forudvalgt) og "Forening & Community". Mangler feltet (en gammel side i cache), gælder "Content creator". En ukendt værdi afvises.
+2. **Lagring indtil go-live:** valget gemmes som creator meta `front_group` i samme transaktion som creatoren. En creator uden valg, fx én oprettet af administratoren, gælder som "Content creator". Ingen schemaændring (schema-version 47).
+3. **Kun administratoren ændrer det:** creatoren kan ikke ændre valget bagefter. Der er ingen route, intet dashboardfelt og intet kategoriforslag til det. På fanen Go-live vises creatorens valg, og "Godkend" og "Prøv igen" har en liste "Vises på forsiden", forudvalgt med det. Administratorens valg gemmes og står i audit (`GoLiveApproved` og `CreatorSignedUp` har `front_group` i context).
+4. **Skrivning:** når go-live opretter creatorens kategori (eller genbruger en tom kategori med samme navn, ADR-093), skrives `ccm_front_group` på den, før den tilknyttes creatoren. Skrivningen kontrolleres ved at læse værdien igen. Lykkes den ikke, tilknyttes kategorien ikke, og administratoren får "kategorien kunne ikke laves" og kan prøve igen; den tomme kategori genbruges da.
+5. **Kun den primære kategori:** go-live er det eneste sted, der skriver nøglen. Har creatoren allerede en kategori, skrives intet. Manuelt tilknyttede kategorier (ADR-033) og fremtidige underkategorier får aldrig værdien.
+6. **Efter go-live** er kategorien sandheden: administratoren ændrer feltet på kategorien i WooCommerce (bannerpluginets eget felt). Merch Dashboard læser det ikke tilbage, og creator meta'en bruges kun, når kategorien oprettes.
+
+## Alternatives considered
+- **Administratoren vælger alene ved godkendelsen:** fravalgt; projektejeren vil have creatorens eget valg.
+- **En kolonne i `merchboard_creator_signups`:** fravalgt; det kræver en migration og gælder ikke creators uden tilmelding.
+- **Synkronisering fra kategorien tilbage til creatoren:** fravalgt; kategorien er sandheden efter go-live, og ingen anden del af pluginet bruger værdien.
+
+## Reason
+Valget hører til tilmeldingen, men værdien hører til kategorien, som først findes ved go-live. Creator meta bygger bro uden ny tabel.
+
+## Security
+Creatoren kan kun vælge mellem to faste værdier, og kun én gang. Kun administratorer med `merchboard_manage_creators` ændrer det. Pluginet skriver kun på den kategori, det selv opretter eller genbruger ved go-live.
+
+## Consequences
+- Eksisterende creators og kategorier røres ikke.
+- Ændres valget på kategorien efter go-live, er creator meta'en forældet. Den vises kun på fanen Go-live, før kategorien findes.
+
+## Related
+ADR-033, ADR-077, ADR-091, ADR-093
