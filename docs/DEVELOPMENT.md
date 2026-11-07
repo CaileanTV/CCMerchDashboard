@@ -249,7 +249,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.7.0: farvedesigns, produktbillede og "Kopiér design" (fase 34)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-07** efter projektejerens go ("Jeg er klar til at release 1.7.0"). Tag og SHA-256 noteres her, når draft-releasen er bygget.
+**Versions-bump og CHANGELOG-sektion (`7a442ca`) og tagget `v1.7.0` (på `7a442ca`) 2026-11-07** efter projektejerens go ("Jeg er klar til at release 1.7.0"). CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `7617379912c102b312da5c5cfd6f350a23f1e8020b298c9424c61da726555b66`).
 - Det er en minor, fordi den indeholder nye features (ADR-096).
 - Fase 34 er reviewet uafhængigt (rettelser i `30557c1`) og runtime-testet på Local (ROADMAP 34.13). Projektejerens fund af nedbruddet ved valg af et element er rettet i `5232652`.
 - CI skal være grøn med hele integrationssuiten på den taggede commit.
