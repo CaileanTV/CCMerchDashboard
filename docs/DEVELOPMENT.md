@@ -247,6 +247,35 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.6.0: selvoprettelse, aftalepapir, gå live og baggrundsfarve (fase 32 og 33)
+
+**Versions-bump og CHANGELOG-sektion og tagget `v1.6.0` 2026-11-07** efter projektejerens ønske ("Når alt er færdig, er vi klar til at bump til 1.6.0").
+- Det er en minor, fordi den indeholder nye features.
+- Fase 32 og 33 er reviewet uafhængigt og runtime-testet på Local (ROADMAP 32.7 og 33.5). Rettelserne efter reviewene er committet (`0b37ef1`, `a537a23`). Fejlen med farvefotos, der forsvandt, er rettet i `e3c5eea` og testet på Local med projektejerens JN-mockups.
+- CI er grøn med hele integrationssuiten på den taggede commit.
+
+**Schema-version 46:**
+- Migration 45 tilføjer `awaiting_live` og `agreement_required` til `merchboard_creators` (0 for alle eksisterende creators, så de er live og accepterer intet) og opretter tabellerne til aftalepapiret, oprettelser og go-live-anmodninger. Aftaletabellerne bevares ved afinstallation.
+- Migration 46 tilføjer `background_color` til grundprodukterne (0 som standard) og giver grundprodukter med nul-datoer fra 1.5.0 tidspunktet for opdateringen.
+- Der er ingen manuelle trin i databasen.
+
+Tagget giver en draft-release. Projektejeren tester den på staging og udgiver den. AI-agenter har ingen adgang til produktion.
+
+1. **Backup:** tag backup af filer og database via hostingen. Notér den installerede version.
+2. **Opdatér** med release-ZIP'en ("Erstat nuværende med uploadet"). Overview skal vise version 1.6.0 og schema-version 46 uden advarsler.
+3. **Eksisterende creators:** åbn dashboardet som en eksisterende creator. Der må ikke stå "Du er ikke live endnu" eller en aftale, der skal accepteres, og produkter, kategori og rabatkode skal være som før.
+4. **Selvoprettelse er slået fra** som standard. Før den slås til under Indstillinger → Aftale:
+   - projektejeren godkender aftaleteksten (et udkast, ikke juridisk gennemgået, ADR-092);
+   - firmaoplysningerne (navn, adresse, CVR, e-mail) er udfyldt;
+   - aftalen er udgivet;
+   - overkategorien for creators er valgt.
+5. **Mail:** en ny oprettelse får "Bekræft din e-mail og vælg en adgangskode", og linket virker i 24 timer.
+6. **Prisvarsel:** en prisstigning på et grundprodukt med designs venter 14 dage. "Ændre pris nu" sætter den med det samme efter en advarsel.
+7. **Baggrundsfarve:** sæt fluebenet "Baggrundsfarve (AOP)" på et all-over-grundprodukt. Prøv derefter fanen "Baggrund" med en testcreator.
+8. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 1.5.0-ZIP'en igen. De nye kolonner og tabeller bliver liggende uden at blive brugt. Selvoprettede creators, der ikke er live, behandles i 1.5.0 som almindelige aktive creators; deaktivér dem derfor før en tilbagerulning. Baggrundsfarver i designs ignoreres af 1.5.0 og forsvinder ved næste gem.
+
 ## Release 1.5.0: produktdesigner og alert-designer 2.0 (fase 30 og 31)
 
 **Versions-bump og CHANGELOG-sektion (`701691b`) og tagget `v1.5.0` (på `701691b`) 2026-11-04** efter projektejerens ønske samme dag ("lav review og sidste test, så vi kan bumpe version og få på live"). Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `7f205284177b80623a7d05b8a4c0ca3405c1860467025ac37388bd3735e86fb4`).

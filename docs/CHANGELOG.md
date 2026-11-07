@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-11-07
+
+Fase 32 og 33: creators opretter sig selv, aftalepapiret, "gå live", 14 dages prisvarsel med "Ændre pris nu", baggrundsfarve på AOP-produkter og "Duplikér lag". Schema-version 46 (migration 45 og 46 ved opdatering fra 1.5.0; ingen manuelle trin i databasen). Selvoprettelse er slået fra som standard. Fase 32 og 33 er reviewet og runtime-testet på Local 2026-11-06–07. Opdateringen står i DEVELOPMENT.md ("Release 1.6.0").
+
 ### Added
 
 - **Baggrundsfarve på AOP-produkter (fase 33, schema-version 46, ADR-095):** admin sætter fluebenet "Baggrundsfarve (AOP)" på et grundprodukt, fx en jersey. Kun dér har designeren fanen "Baggrund" med 16 standardfarver, Hex, farvevælger, RGB og CMYK, "Alle sider" (de sider med tryk, der hører til de valgte størrelser), "Brug farven" og "Fjern baggrund". Farven dækker hele printområdet under designet, også i printfilen, mockups og "Se det færdige produkt". En side med kun farve printes, men koster ikke som et ekstra område. Broderede sider har ingen baggrund. Bygget direkte i designeren ud fra projektejerens Lumise-snippet.

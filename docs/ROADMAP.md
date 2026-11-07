@@ -937,7 +937,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
     - linket virker i 24 timer, og bekræftelse virker også via WooCommerce;
     - aftaleversioner gemmes med udfyldte firmaoplysninger;
     - oprydning uden kapløb.
-  - **Release 1.6.0:** udgives sammen med fase 33 (33.5, projektejerens valg 2026-11-07).
+  - **Release 1.6.0 ✅ (2026-11-07):** udgivet sammen med fase 33 (33.5).
 
 **Før funktionen slås til på live:** projektejeren godkender aftaleteksten. Den er et udkast og ikke juridisk gennemgået (ADR-092).
 
@@ -957,6 +957,8 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **33.3 Designdokument og server ✅ (2026-11-07, testet automatisk):** `background` pr. side, kontrol i `DesignValidator`, brugte sider og gratis farve-sider.
 - **33.4 Designeren ✅ (2026-11-07, testet automatisk):** fanen "Baggrund", lærredet og printfilen. Desuden knappen **"Duplikér lag"**, der laver en kopi af det valgte lag lige over det, lidt forskudt (projektejerens ønske 2026-11-07; gælder alle grundprodukter).
 - **33.5 Review, runtime-test og release 1.6.0:** med fase 32. Projektejeren gav 2026-11-07 go til bump, når alt er færdigt.
+  - **Runtime-test på Local ✅ (2026-11-07):** fluebenet i admin, fanen "Baggrund" med "Alle sider", gratis side med kun farve, "Duplikér lag", printfiler og mockups i farven, og at farven droppes uden flueben. Rettelsen af nul-datoerne er bekræftet på MariaDB. Testdata er fjernet igen.
+  - **Release 1.6.0 ✅ (2026-11-07):** tag `v1.6.0`, se DEVELOPMENT.md "Release 1.6.0".
   - **Review ✅ (2026-11-07):** rettelserne står i ADR-095's statusnote ("Alle sider" kun på valgte størrelser, farve på broderede sider fjernes, editoren fjerner farver uden flueben). Desuden: "Ændre pris nu" spærres under import og melder kun succes, når prisen er sat, og nul-datoerne fra 1.5.0 rettes.
 
 ## Senere (uprioriteret)
