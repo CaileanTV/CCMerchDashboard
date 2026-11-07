@@ -352,8 +352,8 @@ class CreatorSignup {
 
 		// Only while it is still unverified: a sign-up verified meanwhile is kept with its user.
 		$removed = $this->transaction->run(
-			function () use ( $creator_id ): bool {
-				if ( ! $this->signups->delete_unverified( $creator_id ) ) {
+			function () use ( $creator_id, $user_id ): bool {
+				if ( ! $this->signups->delete_unverified( $creator_id, $user_id, ( $this->clock )() ) ) {
 					return false;
 				}
 

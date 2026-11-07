@@ -160,15 +160,29 @@ class SignupRepository {
 
 	/**
 	 * Deletes a creator's sign-up only while it is unverified, so a sign-up
-	 * verified meanwhile is kept (review 32.7).
+	 * verified meanwhile is kept (review 32.7). Must run inside a transaction;
+	 * locks the current owner until the creator deletion commits.
 	 *
-	 * @param int $creator_id Creator.
+	 * @param int               $creator_id Creator.
+	 * @param int               $user_id Original signup user.
+	 * @param DateTimeImmutable $now Current cleanup time.
 	 * @return bool Whether it was deleted.
 	 * @throws DatabaseException When it cannot be deleted.
 	 */
-	public function delete_unverified( int $creator_id ): bool {
+	public function delete_unverified( int $creator_id, int $user_id, DateTimeImmutable $now ): bool {
 		$wpdb = $this->wpdb;
-		$sql  = $wpdb->prepare( 'DELETE FROM %i WHERE creator_id = %d AND verified_at IS NULL', $this->table(), $creator_id );
+		// Called inside the cleanup transaction: hold the owner stable through deletion.
+		$owner = $wpdb->get_var( $wpdb->prepare( 'SELECT user_id FROM %i WHERE id = %d FOR UPDATE', Tables::name( $wpdb, Tables::CREATORS ), $creator_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Live ownership lock.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not lock the sign-up creator.' );
+		}
+
+		if ( ! is_numeric( $owner ) || (int) $owner !== $user_id ) {
+			return false;
+		}
+
+		$sql = $wpdb->prepare( 'DELETE FROM %i WHERE creator_id = %d AND user_id = %d AND verified_at IS NULL AND created_user = 1 AND expires_at < %s', $this->table(), $creator_id, $user_id, self::utc( $now ) );
 
 		if ( null === $sql ) {
 			throw new DatabaseException( 'Could not delete the sign-up.' );
