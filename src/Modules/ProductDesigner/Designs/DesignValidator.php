@@ -31,10 +31,10 @@ defined( 'ABSPATH' ) || exit;
  * valid.
  *
  * ADR-095: on a base product that offers it, `background` gives a side a
- * colour (`#rrggbb`) under its objects; never on an embroidered side. A
- * side with a background is kept in `sides`, also without objects. On
- * another base product the key is dropped (a draft from before the tick was
- * removed).
+ * colour (`#rrggbb`) under its objects. A side with a background is kept
+ * in `sides`, also without objects. On another base product the key is
+ * dropped (a draft from before the tick was removed), and so is the colour
+ * of an embroidered or unknown side (a side changed later, review 33.5).
  */
 final class DesignValidator {
 
@@ -143,7 +143,7 @@ final class DesignValidator {
 	 * @param mixed       $background Input.
 	 * @param BaseProduct $base       The base product.
 	 * @return array<string, string>
-	 * @throws DesignerException When a side or colour is refused.
+	 * @throws DesignerException When a colour is refused.
 	 */
 	private static function background( mixed $background, BaseProduct $base ): array {
 		if ( ! $base->background_color ) {
@@ -156,16 +156,14 @@ final class DesignValidator {
 
 		$normalized = array();
 
-		foreach ( $background as $key => $color ) {
-			$found = array_values( array_filter( $base->views, static fn( $view ): bool => (string) $key === $view->key ) );
-
-			if ( array() === $found || '' !== $found[0]->thread_pack || ! is_string( $color ) || 1 !== preg_match( '/^#[0-9a-fA-F]{6}$/', $color ) ) {
+		foreach ( $background as $color ) {
+			if ( ! is_string( $color ) || 1 !== preg_match( '/^#[0-9a-fA-F]{6}$/', $color ) ) {
 				self::refuse();
 			}
 		}
 
 		foreach ( $base->views as $view ) {
-			if ( is_string( $background[ $view->key ] ?? null ) ) {
+			if ( '' === $view->thread_pack && is_string( $background[ $view->key ] ?? null ) ) {
 				$normalized[ $view->key ] = strtolower( $background[ $view->key ] );
 			}
 		}

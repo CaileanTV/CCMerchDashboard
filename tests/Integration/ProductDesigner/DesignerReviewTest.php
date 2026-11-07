@@ -44,6 +44,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerRepricing;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRetirement;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
+use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
@@ -1288,6 +1289,34 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$this->shop()->remove( $this->creator, $first );
 		$this->drafts->save( $this->creator, $second, $input, $valid );
 		self::assertSame( 'Nova Organic tee Winter', $this->products->draft( $second )['title'] ?? null, 'A deleted design frees its name.' );
+	}
+
+	public function test_a_background_colour_is_kept_only_where_the_base_product_offers_it(): void {
+		$product = $this->drafts->create( $this->creator, $this->base );
+		$valid   = new DesignValidator( static fn(): bool => false, array() );
+		$input   = array(
+			'title'        => 'Jersey',
+			'colors'       => array( 'black' ),
+			'sizes'        => array( 'S' ),
+			'profit_kind'  => 'percent',
+			'profit_value' => '20',
+			'design'       => array(
+				'version'    => 1,
+				'sides'      => array(),
+				'background' => array( 'front' => '#C8102E' ),
+			),
+		);
+		$stored  = fn(): array => (array) json_decode( (string) ( $this->products->draft( $product )['design'] ?? '' ), true );
+
+		$this->drafts->save( $this->creator, $product, $input, $valid );
+		self::assertArrayNotHasKey( 'background', $stored(), 'Not ticked: the colour is dropped (ADR-095).' );
+
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '149,95' ), array( 'background_color' => '1' ) ), array( $this->base_views()[0] ) );
+		$this->drafts->save( $this->creator, $product, $input, $valid );
+
+		self::assertSame( array( 'front' => '#c8102e' ), $stored()['background'] ?? null );
+		self::assertSame( array( 'front' ), SubmissionFiles::used_sides( $stored() ), 'Printed: it gets a print file.' );
+		self::assertSame( $this->bases_row()->base_units, DesignerPrices::secured_base( $this->bases_row(), $stored() ), 'And free: no extra area.' );
 	}
 
 	public function test_a_creator_s_new_name_reaches_their_products(): void {

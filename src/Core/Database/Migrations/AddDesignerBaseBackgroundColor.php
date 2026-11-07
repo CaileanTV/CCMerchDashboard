@@ -21,6 +21,11 @@ defined( 'ABSPATH' ) || exit;
  * default) marks the base products, e.g. all-over jerseys, on which the
  * designer offers a background colour. Existing base products offer none.
  *
+ * It also repairs the dates of base products written by 1.5.0: its format
+ * lists were one short after migration 44, so `created_at` and `updated_at`
+ * were stored as zero dates (review 33.5). A zero date becomes the time of
+ * the migration; real dates are not touched.
+ *
  * Idempotent: the column is added only when missing.
  */
 final class AddDesignerBaseBackgroundColor implements Migration {
@@ -40,6 +45,11 @@ final class AddDesignerBaseBackgroundColor implements Migration {
 
 		if ( ! self::has_column( $wpdb, $table ) ) {
 			throw new DatabaseException( 'Could not add the background colour of base products.' );
+		}
+
+		foreach ( array( 'created_at', 'updated_at' ) as $column ) {
+			// No zero date literal: strict SQL modes refuse one even in a comparison.
+			$wpdb->query( "UPDATE `{$table}` SET `{$column}` = UTC_TIMESTAMP() WHERE `{$column}` < '1000-01-01'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Constant table and column names; versioned migration.
 		}
 	}
 

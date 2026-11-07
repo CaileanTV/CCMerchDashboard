@@ -5,7 +5,7 @@
 ## Baggrundsfarve på grundprodukter (schema-version 46, ADR-095)
 - `merchboard_designer_bases.background_color` (`tinyint(1)`, 0 som standard): 1, når designeren tilbyder en baggrundsfarve på grundproduktet (migration 46, `AddDesignerBaseBackgroundColor`). Eksisterende grundprodukter tilbyder ingen.
 - Farven gemmes i designet pr. side (`background`), ikke i en tabel.
-- `BaseProductRepository` bestemmer formatet (`%d` eller `%s`) ud fra kolonnens navn. Før skrev en opdatering `updated_at` som et tal, efter migration 44 forskød formatlisten (rettet i 33.2; eksisterende rækker beholder deres `0000-00-00 00:00:00`, indtil grundproduktet gemmes igen).
+- `BaseProductRepository` bestemmer formatet (`%d` eller `%s`) ud fra kolonnens navn. Før skrev en opdatering `updated_at` som et tal, efter migration 44 forskød formatlisten (rettet i 33.2). Migration 46 sætter en nul-dato i `created_at` og `updated_at` til tidspunktet for migrationen; rigtige datoer røres ikke.
 
 ## Små designområder (schema-version 44, 2026-11-03)
 - `merchboard_designer_bases.small_side_price` (`decimal(19,4)`, 0 som standard): prisen for hvert ekstra lille designområde inkl. moms (migration 44, `AddDesignerSmallSidePrice`).

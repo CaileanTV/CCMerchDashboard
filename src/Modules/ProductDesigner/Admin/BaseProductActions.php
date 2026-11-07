@@ -92,7 +92,7 @@ final class BaseProductActions {
 		}
 
 		// While an import runs it replaces the sides: changes made meanwhile would be lost (30.15 review).
-		if ( $id > 0 && in_array( $do, array( 'save', 'color_photos', 'photo_move', 'retire' ), true ) && true === $this->catalog?->running( $id ) ) {
+		if ( $id > 0 && in_array( $do, array( 'save', 'color_photos', 'photo_move', 'retire', 'price_now' ), true ) && true === $this->catalog?->running( $id ) ) {
 			return BaseProductsPage::edit_url( $id, DesignerException::IMPORT_RUNNING );
 		}
 

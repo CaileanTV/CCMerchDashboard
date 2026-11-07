@@ -956,7 +956,8 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **33.2 Grundproduktet ✅ (2026-11-07, testet automatisk):** fluebenet "Baggrundsfarve (AOP)", migration 46 og feltet til designeren. Rettet samtidig: `updated_at` på grundprodukter blev gemt som et tal, efter migration 44 forskød formatlisten.
 - **33.3 Designdokument og server ✅ (2026-11-07, testet automatisk):** `background` pr. side, kontrol i `DesignValidator`, brugte sider og gratis farve-sider.
 - **33.4 Designeren ✅ (2026-11-07, testet automatisk):** fanen "Baggrund", lærredet og printfilen. Desuden knappen **"Duplikér lag"**, der laver en kopi af det valgte lag lige over det, lidt forskudt (projektejerens ønske 2026-11-07; gælder alle grundprodukter).
-- **33.5 Review, runtime-test og release 1.6.0:** med fase 32; bump efter projektejerens go.
+- **33.5 Review, runtime-test og release 1.6.0:** med fase 32. Projektejeren gav 2026-11-07 go til bump, når alt er færdigt.
+  - **Review ✅ (2026-11-07):** rettelserne står i ADR-095's statusnote ("Alle sider" kun på valgte størrelser, farve på broderede sider fjernes, editoren fjerner farver uden flueben). Desuden: "Ændre pris nu" spærres under import og melder kun succes, når prisen er sat, og nul-datoerne fra 1.5.0 rettes.
 
 ## Senere (uprioriteret)
 

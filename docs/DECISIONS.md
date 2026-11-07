@@ -5524,7 +5524,12 @@ ADR-049, ADR-080, ADR-086, ADR-092
 2026-11-07
 
 ## Status
-Accepteret af projektejeren 2026-11-07 (fase 33, plan godkendt samme dag). **Implementeret i 33.2–33.4 (2026-11-07, testet automatisk):** `BaseProduct::$background_color` (migration 46), `DesignValidator::background()`, `SubmissionFiles::used_sides()`/`designed_sides()`, fanen `BackgroundPanel`, `renderPrintFile( …, background )` og `duplicateObject()`. Supplerer ADR-080 og ADR-081 (flade sider).
+Accepteret af projektejeren 2026-11-07 (fase 33, plan godkendt samme dag). **Implementeret i 33.2–33.4 (2026-11-07, testet automatisk):** `BaseProduct::$background_color` (migration 46), `DesignValidator::background()`, `SubmissionFiles::used_sides()`/`designed_sides()`, fanen `BackgroundPanel`, `renderPrintFile( …, background )` og `duplicateObject()`.
+
+**Statusnote 2026-11-07 (review 33.5):**
+- **"Alle sider"** farver kun de sider med tryk, der hører til de valgte størrelser. Ellers ville en side for en størrelse, creatoren ikke sælger, tælle som design dér, og produktet blev afvist.
+- **Farve på en broderet eller ukendt side** (fx en side, der senere bliver broderet) fjernes i stedet for at afvise hele designet. Editoren fjerner også farverne, når fluebenet er slået fra.
+- **Migration 46** retter samtidig grundprodukternes nul-datoer fra 1.5.0 (se DATABASE.md). Supplerer ADR-080 og ADR-081 (flade sider).
 
 **Kilde:** projektejerens eget modul `CCMerch-Elementor/aop-baggrund`, der er Lumise-snippet 31658 skilt ud til Fabric 5/6. Projektejeren gav 2026-11-07 eksplicit tilladelse til at læse netop den mappe som kilde. Det er en undtagelse fra Project Isolation (AI-DEVELOPMENT.md). Der læses kun, og der kopieres ingen Fabric-kode. Farveformlerne, standardfarverne og panelets felter genbruges; resten bygges native i designeren.
 

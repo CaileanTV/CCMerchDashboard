@@ -49,6 +49,7 @@ import {
 	backgroundOf,
 	duplicateObject,
 	withBackground,
+	withKnownBackground,
 	moveObject,
 	newImage,
 	newShape,
@@ -190,7 +191,11 @@ export function DesignerEditor( props: DesignerEditorProps ) {
 			overview={ overview }
 			product={ product }
 			base={ base }
-			design={ draft.design }
+			design={ withKnownBackground(
+				draft.design,
+				base.views,
+				base.backgroundColor
+			) }
 			locale={ locale }
 			onBack={ onBack }
 			onOverview={ onOverview }
@@ -633,9 +638,15 @@ function Editor( props: EditorProps ) {
 		}
 	};
 
-	// The sides that can have a background colour: every printed side (ADR-095).
+	// The sides "All sides" colours: the printed sides of the chosen sizes (ADR-095). A side of a
+	// size that is not offered would count as a design there and refuse the product (review 33.5).
 	const printed = base.views
-		.filter( ( candidate ) => candidate.embroidery === null )
+		.filter(
+			( candidate ) =>
+				candidate.embroidery === null &&
+				( candidate.sizes.length === 0 ||
+					candidate.sizes.some( ( size ) => sizes.includes( size ) ) )
+		)
 		.map( ( candidate ) => candidate.key );
 
 	const setBackground = ( chosen: string | null, allSides: boolean ) => {
@@ -808,7 +819,14 @@ function Editor( props: EditorProps ) {
 			profitKind,
 			profitValue,
 			design: {
-				...withKnownThreads( design, base.views ),
+				...withKnownThreads(
+					withKnownBackground(
+						design,
+						base.views,
+						base.backgroundColor
+					),
+					base.views
+				),
 				...( stitch === '' ? {} : { stitch } ),
 			},
 		} );

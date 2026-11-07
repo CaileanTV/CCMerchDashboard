@@ -66,8 +66,26 @@ final class DesignBackgroundTest extends TestCase {
 		self::assertSame( array(), $design['sides'] );
 	}
 
-	public function test_an_embroidered_or_unknown_side_and_a_bad_colour_are_refused(): void {
-		foreach ( array( array( 'chest' => '#c8102e' ), array( 'hood' => '#c8102e' ), array( 'front' => 'red' ), array( 'front' => '#c8102' ), 'front' ) as $background ) {
+	public function test_an_embroidered_or_unknown_side_loses_its_colour(): void {
+		$design = $this->validator()->validate(
+			array(
+				'version'    => 1,
+				'sides'      => array(),
+				'background' => array(
+					'chest' => '#c8102e',
+					'hood'  => '#c8102e',
+					'back'  => '#c8102e',
+				),
+			),
+			self::base( true )
+		);
+
+		self::assertSame( array( 'back' => '#c8102e' ), $design['background'] ?? null, 'A side made embroidered later does not refuse the design (review 33.5).' );
+		self::assertSame( array( 'back' ), array_keys( $design['sides'] ) );
+	}
+
+	public function test_a_bad_colour_is_refused(): void {
+		foreach ( array( array( 'front' => 'red' ), array( 'front' => '#c8102' ), array( 'front' => 5 ), 'front' ) as $background ) {
 			try {
 				$this->validator()->validate(
 					array(

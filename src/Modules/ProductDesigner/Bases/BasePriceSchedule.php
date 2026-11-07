@@ -226,7 +226,7 @@ class BasePriceSchedule {
 	 * overrides the 14 days' notice, which is audited as `early`.
 	 *
 	 * @param int $base_id Base product.
-	 * @return bool Whether a planned increase was set (false: none is planned).
+	 * @return bool Whether a planned increase was set (false: none is planned, or the base product is retired or gone).
 	 * @throws DesignerException When the user may not.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
@@ -239,9 +239,7 @@ class BasePriceSchedule {
 			return false;
 		}
 
-		$this->apply( $base_id, $entry, true, ! $this->due( $entry ) );
-
-		return true;
+		return $this->apply( $base_id, $entry, true, ! $this->due( $entry ) );
 	}
 
 	/**
@@ -316,9 +314,10 @@ class BasePriceSchedule {
 	 * @param bool         $manual  Whether the administrator set it ("Change the price now").
 	 * @param bool         $early   Whether that was before the date (the notice overridden).
 	 * @phpstan-param Plan $entry
+	 * @return bool Whether the prices were set (false: the base product is retired or gone; the plan is removed).
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	private function apply( int $base_id, array $entry, bool $manual = false, bool $early = false ): void {
+	private function apply( int $base_id, array $entry, bool $manual = false, bool $early = false ): bool {
 		$base   = $this->bases->find( $base_id );
 		$stored = self::stored();
 		unset( $stored[ $base_id ] );
@@ -326,7 +325,7 @@ class BasePriceSchedule {
 		if ( null === $base || BaseProduct::RETIRED === $base->status ) {
 			update_option( self::OPTION, $stored, false );
 
-			return;
+			return false;
 		}
 
 		$views = array_map(
@@ -351,6 +350,8 @@ class BasePriceSchedule {
 		}
 
 		do_action( 'merchboard_designer_base_price_changed', $base_id );
+
+		return true;
 	}
 
 	/**

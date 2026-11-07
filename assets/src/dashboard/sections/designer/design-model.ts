@@ -769,6 +769,31 @@ export function withObjects(
 }
 
 /**
+ * The design without the background colours it cannot have: all of them
+ * when the base product offers none (the tick was removed), and those of an
+ * embroidered or unknown side (review 33.5; the server drops them too).
+ *
+ * @param design  Design.
+ * @param views   The sides of the base product.
+ * @param allowed Whether the base product offers a background colour.
+ */
+export function withKnownBackground(
+	design: DesignDocument,
+	views: readonly { readonly key: string; readonly embroidery: unknown }[],
+	allowed: boolean
+): DesignDocument {
+	const sides = Object.keys( design.background ?? {} ).filter(
+		( side ) =>
+			! allowed ||
+			! views.some(
+				( view ) => view.key === side && view.embroidery === null
+			)
+	);
+
+	return sides.length === 0 ? design : withBackground( design, sides, null );
+}
+
+/**
  * The objects with a copy of one right above it, moved a little down and to
  * the right, and the copy's id; null when there is no such object. The copy
  * is unlocked and shown, so it can be moved at once; an image keeps its file
