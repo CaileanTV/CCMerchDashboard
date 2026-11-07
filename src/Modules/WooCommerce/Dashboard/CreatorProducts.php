@@ -20,7 +20,7 @@ defined( 'ABSPATH' ) || exit;
  * Read-only selection of `GET /me/products` (ADR-039 P7, P9): parent
  * products (`post_type = 'product'`, so never variations) with status
  * `publish` or `private` that have exactly one creator link entry, and that
- * entry is the creator's id. The rule mirrors ProductRecord::creator_id(): a
+ * entry has the canonical key and the creator's id. The rule mirrors ProductRecord::creator_id(): a
  * product with several link entries (also another spelling of the key, which
  * MySQL compares case-insensitively) or an entry that is not exactly the id
  * belongs to nobody, so it is never listed for any creator. The value is
@@ -44,7 +44,7 @@ final class CreatorProducts {
 		AND ( SELECT COUNT(*) FROM %i lc WHERE lc.post_id = p.ID AND lc.meta_key = %s ) = 1
 		AND EXISTS (
 			SELECT 1 FROM %i lm
-			WHERE lm.post_id = p.ID AND lm.meta_key = %s AND CAST( lm.meta_value AS BINARY ) = CAST( %s AS BINARY )
+			WHERE lm.post_id = p.ID AND CAST( lm.meta_key AS BINARY ) = CAST( %s AS BINARY ) AND CAST( lm.meta_value AS BINARY ) = CAST( %s AS BINARY )
 		)";
 
 	/**

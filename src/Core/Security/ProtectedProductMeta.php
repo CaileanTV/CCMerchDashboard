@@ -14,6 +14,7 @@ use LogicException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
 use WeakMap;
+use wpdb;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -33,7 +34,8 @@ defined( 'ABSPATH' ) || exit;
  * write through the metadata API: WooCommerce CRUD, REST, CSV import, quick
  * and bulk edit, XML-RPC, `update_post_meta()` from any code and WP-CLI.
  * A write that touches a protected key (compared trimmed and
- * case-insensitively, as MySQL compares keys; for `_by_mid` also the key
+ * case-insensitively, including Unicode aliases under the metadata column's
+ * collation; for `_by_mid` also the key
  * stored in the row, so a rename away from a protected key is caught) is
  * short-circuited as failed and logged, unless:
  * - an explicit ProtectedMetaWrite for that very product is running inside
@@ -144,12 +146,42 @@ final class ProtectedProductMeta {
 	}
 
 	/**
-	 * Whether a meta key is protected (trimmed, case-insensitive).
+	 * Whether a meta key is protected (including database collation aliases).
 	 *
 	 * @param mixed $key Meta key.
 	 */
 	public static function is_protected_key( mixed $key ): bool {
-		return is_string( $key ) && in_array( strtolower( trim( $key ) ), self::KEYS, true );
+		if ( ! is_string( $key ) ) {
+			return false;
+		}
+
+		$key = strtolower( trim( $key ) );
+		if ( in_array( $key, self::KEYS, true ) ) {
+			return true;
+		}
+
+		// ASCII aliases are covered above. Unicode equivalence depends on the
+		// actual column collation, not PHP's case or accent folding rules.
+		if ( 1 !== preg_match( '/[^\x20-\x7e]/', $key ) ) {
+			return false;
+		}
+
+		global $wpdb;
+		if ( ! $wpdb instanceof wpdb ) {
+			return true;
+		}
+
+		$column    = $wpdb->get_row( $wpdb->prepare( "SHOW FULL COLUMNS FROM %i WHERE Field = 'meta_key'", $wpdb->postmeta ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Security check must use the actual column collation.
+		$collation = is_array( $column ) ? (string) ( $column['Collation'] ?? '' ) : '';
+		if ( '' === $collation || '' !== $wpdb->last_error ) {
+			return true; // Fail closed if database equivalence cannot be established.
+		}
+
+		$charset = explode( '_', $collation )[0];
+		$matches = $wpdb->get_var( $wpdb->prepare( 'SELECT CAST( %s AS CHAR CHARACTER SET %i ) COLLATE %i IN (%s, %s, %s)', $key, $charset, $collation, self::LINK_KEY, self::SOURCE_KEY, self::DESIGNER_KEY ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Match the metadata API's comparison before allowing a write.
+
+		// Only an explicit non-match permits the Unicode key.
+		return '0' !== (string) $matches;
 	}
 
 	/**

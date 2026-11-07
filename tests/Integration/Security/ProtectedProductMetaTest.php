@@ -97,6 +97,21 @@ final class ProtectedProductMetaTest extends IntegrationTestCase {
 		self::assertCount( $audit, $this->rows( Tables::AUDIT_LOG ), 'Denied writes create no audit records.' );
 	}
 
+	public function test_collation_aliases_cannot_write_or_hide_protected_metadata(): void {
+		foreach ( array( '_merchboard_créator_id', '_merchboard_creator_link_sourcé', '_merchboard_designer_tokén' ) as $key ) {
+			self::assertTrue( ProtectedProductMeta::is_protected_key( $key ) );
+			self::assertFalse( add_post_meta( $this->other, $key, '4' ), 'Alias alone.' );
+			self::assertFalse( add_post_meta( $this->product, $key, '4' ), 'Alias beside an existing link.' );
+			self::assertFalse( update_post_meta( $this->product, $key, '4' ) );
+			self::assertFalse( delete_post_meta( $this->product, $key ) );
+			$price_id = (int) add_post_meta( $this->product, '_price', '10' );
+			self::assertFalse( update_metadata_by_mid( 'post', $price_id, '4', $key ) );
+		}
+
+		self::assertSame( array( '3' ), get_post_meta( $this->product, self::LINK, false ) );
+		self::assertIsInt( add_post_meta( $this->other, 'café', 'ordinary metadata' ) );
+	}
+
 	public function test_writes_by_meta_id_cannot_change_rename_or_delete_a_link(): void {
 		$link_id  = $this->meta_id( $this->product, self::LINK );
 		$price_id = (int) add_post_meta( $this->product, '_price', '10' );

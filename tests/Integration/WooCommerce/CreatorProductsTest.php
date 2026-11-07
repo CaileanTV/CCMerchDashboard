@@ -71,6 +71,17 @@ final class CreatorProductsTest extends IntegrationTestCase {
 		self::assertSame( 1, $this->products->count( 12 ) );
 	}
 
+	public function test_a_collation_alias_alone_never_grants_ownership(): void {
+		foreach ( array( '_merchboard_créator_id', '_Merchboard_Creator_ID' ) as $key ) {
+			$id = $this->posts->add( 'Alias', 'publish', array() );
+			$this->posts->meta( $id, $key, '12' );
+			self::assertFalse( $this->products->owns( 12, $id ) );
+		}
+
+		self::assertSame( array(), $this->page( 12 ) );
+		self::assertSame( 0, $this->products->count( 12 ) );
+	}
+
 	public function test_another_creators_products_are_never_selected(): void {
 		$mine   = $this->posts->add( 'Mine', 'publish', array( '12' ) );
 		$theirs = $this->posts->add( 'Theirs', 'publish', array( '13' ) );
