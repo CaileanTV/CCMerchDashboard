@@ -35,6 +35,12 @@ defined( 'ABSPATH' ) || exit;
  * in `sides`, also without objects. On another base product the key is
  * dropped (a draft from before the tick was removed), and so is the colour
  * of an embroidered or unknown side (a side changed later, review 33.5).
+ *
+ * ADR-096: `designs` lists colour designs, `[{ "id": "d1", "colors": [ … ],
+ * "sides": …, "background": …, "threads": … }]`, checked like the top level
+ * (the shared design). A colour is in at most one design; colours not
+ * chosen are dropped and so is a design left without colours. Without any,
+ * the key is left out, so a design from before keeps its stamp.
  */
 final class DesignValidator {
 
@@ -59,6 +65,11 @@ final class DesignValidator {
 	public const TYPES = array( 'text', 'image', 'rect', 'ellipse', 'triangle' );
 
 	/**
+	 * Most colour designs besides the shared one (ADR-096).
+	 */
+	public const MAX_DESIGNS = 8;
+
+	/**
 	 * Constructor.
 	 *
 	 * @phpstan-param Closure(int): bool $asset_allowed
@@ -74,15 +85,121 @@ final class DesignValidator {
 	 * The normalized design, or a refusal.
 	 *
 	 * @phpstan-param list<string> $stitches
+	 * @phpstan-param list<string>|null $colors
 	 *
-	 * @param mixed       $design   Decoded design.
-	 * @param BaseProduct $base     The base product it is designed on.
-	 * @param string[]    $stitches The stitch colours the base product has; the first without a choice.
-	 * @return array{version: int, sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>, stitch?: string}
+	 * @param mixed         $design   Decoded design.
+	 * @param BaseProduct   $base     The base product it is designed on.
+	 * @param string[]      $stitches The stitch colours the base product has; the first without a choice.
+	 * @param string[]|null $colors   The chosen colours (null: every colour of the base product).
+	 * @return array{version: int, sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>, stitch?: string, designs?: list<array{id: string, colors: list<string>, sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>}>}
 	 * @throws DesignerException When the design is invalid (DESIGN_INVALID).
 	 */
-	public function validate( mixed $design, BaseProduct $base, array $stitches = array() ): array {
-		if ( ! is_array( $design ) || self::VERSION !== ( $design['version'] ?? null ) || ! is_array( $design['sides'] ?? null ) ) {
+	public function validate( mixed $design, BaseProduct $base, array $stitches = array(), ?array $colors = null ): array {
+		if ( ! is_array( $design ) || self::VERSION !== ( $design['version'] ?? null ) ) {
+			self::refuse();
+		}
+
+		$normalized = array_merge( array( 'version' => self::VERSION ), $this->part( $design, $base ) );
+
+		if ( array() !== $stitches ) {
+			$normalized['stitch'] = $design['stitch'] ?? $stitches[0];
+
+			if ( ! in_array( $normalized['stitch'], $stitches, true ) ) {
+				self::refuse();
+			}
+		}
+
+		$designs = $this->designs( $design['designs'] ?? null, $base, $colors );
+
+		if ( array() !== $designs ) {
+			$normalized['designs'] = $designs;
+		}
+
+		$json = wp_json_encode( $normalized );
+
+		if ( false === $json || strlen( $json ) > self::MAX_BYTES ) {
+			self::refuse();
+		}
+
+		return $normalized;
+	}
+
+	/**
+	 * The colour designs (ADR-096): unique ids `d1`…, each with colours of
+	 * its own among the chosen ones, in the order given.
+	 *
+	 * @phpstan-param list<string>|null $colors
+	 *
+	 * @param mixed         $designs Input.
+	 * @param BaseProduct   $base    The base product.
+	 * @param string[]|null $colors  The chosen colours (null: all of the base product).
+	 * @return list<array{id: string, colors: list<string>, sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>}>
+	 * @throws DesignerException When a design is refused.
+	 */
+	private function designs( mixed $designs, BaseProduct $base, ?array $colors ): array {
+		if ( null === $designs ) {
+			return array();
+		}
+
+		if ( ! is_array( $designs ) || ! array_is_list( $designs ) || count( $designs ) > self::MAX_DESIGNS ) {
+			self::refuse();
+		}
+
+		$offered    = array_column( $base->colors, 'key' );
+		$chosen     = null === $colors ? $offered : array_values( array_intersect( $colors, $offered ) );
+		$ids        = array();
+		$taken      = array();
+		$normalized = array();
+
+		foreach ( $designs as $item ) {
+			$id = is_array( $item ) ? ( $item['id'] ?? null ) : null;
+
+			if ( ! is_array( $item ) || ! is_string( $id ) || 1 !== preg_match( '/^d[1-9][0-9]?$/', $id ) || isset( $ids[ $id ] ) || ! is_array( $item['colors'] ?? null ) || ! array_is_list( $item['colors'] ) ) {
+				self::refuse();
+			}
+
+			$ids[ $id ] = true;
+			$own        = array();
+
+			foreach ( $item['colors'] as $color ) {
+				if ( ! is_string( $color ) || isset( $taken[ $color ] ) ) {
+					self::refuse();
+				}
+
+				$taken[ $color ] = true;
+
+				if ( in_array( $color, $chosen, true ) ) {
+					$own[] = $color;
+				}
+			}
+
+			$part = $this->part( $item, $base );
+
+			if ( array() !== $own ) {
+				$normalized[] = array_merge(
+					array(
+						'id'     => $id,
+						'colors' => $own,
+					),
+					$part
+				);
+			}
+		}
+
+		return $normalized;
+	}
+
+	/**
+	 * The sides, background colours and threads of one design: the shared
+	 * one at the top level, or a colour design (ADR-096).
+	 *
+	 * @param array<mixed, mixed> $design Input.
+	 * @param BaseProduct         $base   The base product.
+	 * @return array{sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>}
+	 * @throws DesignerException When something is refused.
+	 */
+	private function part( array $design, BaseProduct $base ): array {
+		if ( ! is_array( $design['sides'] ?? null ) ) {
 			self::refuse();
 		}
 
@@ -104,10 +221,7 @@ final class DesignValidator {
 			$sides[ $key ] ??= array();
 		}
 
-		$normalized = array(
-			'version' => self::VERSION,
-			'sides'   => $sides,
-		);
+		$normalized = array( 'sides' => $sides );
 
 		if ( array() !== $background ) {
 			$normalized['background'] = $background;
@@ -117,20 +231,6 @@ final class DesignValidator {
 
 		if ( array() !== $threads ) {
 			$normalized['threads'] = $threads;
-		}
-
-		if ( array() !== $stitches ) {
-			$normalized['stitch'] = $design['stitch'] ?? $stitches[0];
-
-			if ( ! in_array( $normalized['stitch'], $stitches, true ) ) {
-				self::refuse();
-			}
-		}
-
-		$json = wp_json_encode( $normalized );
-
-		if ( false === $json || strlen( $json ) > self::MAX_BYTES ) {
-			self::refuse();
 		}
 
 		return $normalized;

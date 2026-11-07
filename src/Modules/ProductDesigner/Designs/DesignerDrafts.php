@@ -134,16 +134,17 @@ class DesignerDrafts {
 		$colors  = self::in_chosen_order( json_decode( (string) $version['colors'], true ), $offered );
 		$sizes   = self::subset( json_decode( (string) $version['sizes'], true ), $base->sizes );
 		$kind    = in_array( $version['profit_kind'], array( 'percent', 'fixed' ), true ) ? (string) $version['profit_kind'] : 'fixed';
+		$colors  = array() === $colors ? array( $offered[0] ?? '' ) : $colors;
 
 		$fields = $this->fields(
 			$base,
 			$this->copy_title( $prefix, DesignerNames::postfix( (string) $version['title'], $prefix, $base->name ) ),
 			(string) $version['description'],
-			array() === $colors ? array( $offered[0] ?? '' ) : $colors,
+			$colors,
 			array() === $sizes ? $base->sizes : $sizes,
 			$kind,
 			$this->profit_units( $version['profit_value'] ),
-			$validator->validate( self::known_sides( is_array( $design ) ? $design : array(), $base ), $base, $this->bases->provider( (int) $base->id )['stitches'] ?? array() )
+			$validator->validate( self::known_sides( is_array( $design ) ? $design : array(), $base ), $base, $this->bases->provider( (int) $base->id )['stitches'] ?? array(), $colors )
 		);
 
 		return $this->transaction->run(
@@ -198,15 +199,16 @@ class DesignerDrafts {
 			self::refuse( DesignerException::DESIGN_PROFIT );
 		}
 
+		$colors = self::in_chosen_order( $input['colors'] ?? null, array_column( $base->colors, 'key' ) );
 		$fields = $this->fields(
 			$base,
 			$title,
 			$base->description,
-			self::in_chosen_order( $input['colors'] ?? null, array_column( $base->colors, 'key' ) ),
+			$colors,
 			self::subset( $input['sizes'] ?? null, $base->sizes ),
 			$kind,
 			$value,
-			$validator->validate( $input['design'] ?? null, $base, $this->bases->provider( (int) $row['base_id'] )['stitches'] ?? array() )
+			$validator->validate( $input['design'] ?? null, $base, $this->bases->provider( (int) $row['base_id'] )['stitches'] ?? array(), $colors )
 		);
 
 		$this->products->save_draft( (int) $draft['id'], $fields );
@@ -283,7 +285,7 @@ class DesignerDrafts {
 			'description'  => $description,
 			'colors'       => $colors,
 			'sizes'        => $sizes,
-			'sides'        => array_keys( $design['sides'] ),
+			'sides'        => self::all_sides( $design ),
 			'design'       => $design,
 			'profit_kind'  => $kind,
 			'profit_value' => SalesAmount::format( $value ),
@@ -331,14 +333,40 @@ class DesignerDrafts {
 	 */
 	private static function known_sides( array $design, BaseProduct $base ): array {
 		$keys = array_flip( array_map( static fn( $view ): string => $view->key, $base->views ) );
-
-		foreach ( array( 'sides', 'background', 'threads' ) as $field ) {
-			if ( isset( $design[ $field ] ) && is_array( $design[ $field ] ) ) {
-				$design[ $field ] = array_intersect_key( $design[ $field ], $keys );
+		$keep = static function ( array $part ) use ( $keys ): array {
+			foreach ( array( 'sides', 'background', 'threads' ) as $field ) {
+				if ( isset( $part[ $field ] ) && is_array( $part[ $field ] ) ) {
+					$part[ $field ] = array_intersect_key( $part[ $field ], $keys );
+				}
 			}
+
+			return $part;
+		};
+
+		$design = $keep( $design );
+
+		if ( isset( $design['designs'] ) && is_array( $design['designs'] ) ) {
+			$design['designs'] = array_map( static fn( mixed $item ): mixed => is_array( $item ) ? $keep( $item ) : $item, $design['designs'] );
 		}
 
 		return $design;
+	}
+
+	/**
+	 * The sides of every design of a product (the shared one and the
+	 * colour designs, ADR-096), in the order first met.
+	 *
+	 * @param array<string, mixed> $design Validated design.
+	 * @return list<string>
+	 */
+	private static function all_sides( array $design ): array {
+		$sides = array_keys( (array) ( $design['sides'] ?? array() ) );
+
+		foreach ( (array) ( $design['designs'] ?? array() ) as $item ) {
+			$sides = array_merge( $sides, array_keys( (array) ( is_array( $item ) ? ( $item['sides'] ?? array() ) : array() ) ) );
+		}
+
+		return array_values( array_unique( array_map( 'strval', $sides ) ) );
 	}
 
 	/**

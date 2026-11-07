@@ -292,6 +292,34 @@ final class DesignerApiTest extends IntegrationTestCase {
 		self::assertSame( 403, $this->call( 'GET', '/merchboard/v1/me/designer' )->get_status() );
 	}
 
+	public function test_a_draft_keeps_the_colour_designs_of_its_chosen_colours(): void {
+		wp_set_current_user( $this->user );
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		$body    = $this->draft( array( self::rect() ) );
+
+		$body['colors']            = array( 'black', 'sand' );
+		$body['design']['designs'] = array(
+			array(
+				'id'     => 'd1',
+				'colors' => array( 'sand', 'green' ),
+				'sides'  => array( 'front' => array( self::text() ) ),
+			),
+		);
+
+		$saved = $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $body );
+		self::assertSame( 200, $saved->get_status(), (string) wp_json_encode( $saved->get_data() ) );
+		$design = $saved->get_data()['draft']['design'];
+		self::assertSame( array( array( 'd1', array( 'sand' ) ) ), array_map( static fn( array $item ): array => array( $item['id'], $item['colors'] ), $design['designs'] ), 'Green is no colour of the product.' );
+		self::assertSame( array( 'text' ), array_column( $design['designs'][0]['sides']['front'], 'type' ) );
+
+		$body['colors'] = array( 'black' );
+		$design         = $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $body )->get_data()['draft']['design'];
+		self::assertArrayNotHasKey( 'designs', $design, 'Sand is no longer chosen: its design goes.' );
+
+		$body['design']['designs'][] = $body['design']['designs'][0];
+		self::assertSame( array( 400, 'design_invalid' ), $this->refusal( $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $body ) ), 'Two designs with one id.' );
+	}
+
 	public function test_a_creator_copies_a_product_as_a_new_draft_also_before_it_is_approved(): void {
 		wp_set_current_user( $this->user );
 		$own     = (int) $this->upload( AlertImagesTest::png( 50, 40 ) )->get_data()['id'];
