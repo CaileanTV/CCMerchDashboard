@@ -65,30 +65,34 @@ final class SettingsService {
 	public function set_logo_attachment_id( int $attachment_id ): bool {
 		$this->authorize();
 
-		$settings = Settings::all();
-		$previous = $settings[ Settings::LOGO_ATTACHMENT_ID ];
-		$id       = max( 0, $attachment_id );
+		return Settings::with_write_snapshot(
+			function () use ( $attachment_id ): bool {
+				$settings = Settings::all();
+				$previous = $settings[ Settings::LOGO_ATTACHMENT_ID ];
+				$id       = max( 0, $attachment_id );
 
-		if ( $id > 0 ) {
-			$this->assert_usable_logo( $id );
-		}
+				if ( $id > 0 ) {
+					$this->assert_usable_logo( $id );
+				}
 
-		if ( $previous === $id ) {
-			return false;
-		}
+				if ( $previous === $id ) {
+					return false;
+				}
 
-		$settings[ Settings::LOGO_ATTACHMENT_ID ] = $id;
+				$settings[ Settings::LOGO_ATTACHMENT_ID ] = $id;
 
-		$this->save(
-			$settings,
-			array(
-				'setting'        => Settings::LOGO_ATTACHMENT_ID,
-				'previous_value' => $previous,
-				'value'          => $id,
-			)
+				$this->save(
+					$settings,
+					array(
+						'setting'        => Settings::LOGO_ATTACHMENT_ID,
+						'previous_value' => $previous,
+						'value'          => $id,
+					)
+				);
+
+				return true;
+			}
 		);
-
-		return true;
 	}
 
 	/**
@@ -126,39 +130,43 @@ final class SettingsService {
 	public function set_dashboard_slug( string $slug ): bool {
 		$this->authorize();
 
-		$slug     = strtolower( trim( $slug, " \t\n\r\0\x0B/" ) );
-		$settings = Settings::all();
-		$previous = $settings[ Settings::DASHBOARD_SLUG ];
+		return Settings::with_write_snapshot(
+			function () use ( $slug ): bool {
+				$slug     = strtolower( trim( $slug, " \t\n\r\0\x0B/" ) );
+				$settings = Settings::all();
+				$previous = $settings[ Settings::DASHBOARD_SLUG ];
 
-		$this->assert_valid_slug( $slug );
+				$this->assert_valid_slug( $slug );
 
-		if ( $previous === $slug ) {
-			return false;
-		}
+				if ( $previous === $slug ) {
+					return false;
+				}
 
-		$this->assert_slug_available( $slug );
+				$this->assert_slug_available( $slug );
 
-		$settings[ Settings::DASHBOARD_SLUG ] = $slug;
+				$settings[ Settings::DASHBOARD_SLUG ] = $slug;
 
-		$this->save(
-			$settings,
-			array(
-				'setting'        => Settings::DASHBOARD_SLUG,
-				'previous_value' => $previous,
-				'value'          => $slug,
-			)
+				$this->save(
+					$settings,
+					array(
+						'setting'        => Settings::DASHBOARD_SLUG,
+						'previous_value' => $previous,
+						'value'          => $slug,
+					)
+				);
+
+				/**
+				 * Fires after the dashboard slug changed (the Dashboard module then
+				 * invalidates the stored rewrite rules).
+				 *
+				 * @param string $slug     New slug.
+				 * @param string $previous Previous slug.
+				 */
+				do_action( 'merchboard_dashboard_slug_changed', $slug, $previous );
+
+				return true;
+			}
 		);
-
-		/**
-		 * Fires after the dashboard slug changed (the Dashboard module then
-		 * invalidates the stored rewrite rules).
-		 *
-		 * @param string $slug     New slug.
-		 * @param string $previous Previous slug.
-		 */
-		do_action( 'merchboard_dashboard_slug_changed', $slug, $previous );
-
-		return true;
 	}
 
 	/**
@@ -173,27 +181,31 @@ final class SettingsService {
 	public function set_delete_data_on_uninstall( bool $enabled, string $confirmation = '' ): bool {
 		$this->authorize();
 
-		$settings = Settings::all();
+		return Settings::with_write_snapshot(
+			function () use ( $enabled, $confirmation ): bool {
+				$settings = Settings::all();
 
-		if ( $settings[ Settings::DELETE_DATA_ON_UNINSTALL ] === $enabled ) {
-			return false;
-		}
+				if ( $settings[ Settings::DELETE_DATA_ON_UNINSTALL ] === $enabled ) {
+					return false;
+				}
 
-		if ( $enabled ) {
-			$this->assert_confirmed( $confirmation );
-		}
+				if ( $enabled ) {
+					$this->assert_confirmed( $confirmation );
+				}
 
-		$settings[ Settings::DELETE_DATA_ON_UNINSTALL ] = $enabled;
+				$settings[ Settings::DELETE_DATA_ON_UNINSTALL ] = $enabled;
 
-		$this->save(
-			$settings,
-			array(
-				'setting' => Settings::DELETE_DATA_ON_UNINSTALL,
-				'enabled' => $enabled,
-			)
+				$this->save(
+					$settings,
+					array(
+						'setting' => Settings::DELETE_DATA_ON_UNINSTALL,
+						'enabled' => $enabled,
+					)
+				);
+
+				return true;
+			}
 		);
-
-		return true;
 	}
 
 	/**

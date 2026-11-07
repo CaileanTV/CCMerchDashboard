@@ -46,35 +46,39 @@ final class AlertSettings {
 	public function set_enabled( bool $enabled ): bool {
 		$this->authorize();
 
-		$previous = Settings::alerts_enabled();
+		return Settings::with_write_snapshot(
+			function () use ( $enabled ): bool {
+				$previous = Settings::alerts_enabled();
 
-		if ( $previous === $enabled ) {
-			return false;
-		}
+				if ( $previous === $enabled ) {
+					return false;
+				}
 
-		$settings = Settings::all();
+				$settings = Settings::all();
 
-		$settings[ Settings::ALERTS_ENABLED ] = $enabled;
+				$settings[ Settings::ALERTS_ENABLED ] = $enabled;
 
-		$this->transaction->run(
-			function () use ( $settings, $previous, $enabled ): void {
-				$this->audit->record(
-					AuditAction::SettingsUpdated,
-					null,
-					array(
-						'setting'        => Settings::ALERTS_ENABLED,
-						'previous_value' => $previous,
-						'value'          => $enabled,
-					)
+				$this->transaction->run(
+					function () use ( $settings, $previous, $enabled ): void {
+						$this->audit->record(
+							AuditAction::SettingsUpdated,
+							null,
+							array(
+								'setting'        => Settings::ALERTS_ENABLED,
+								'previous_value' => $previous,
+								'value'          => $enabled,
+							)
+						);
+
+						if ( ! Settings::save( $settings ) ) {
+							throw new DatabaseException( 'Could not save settings.' );
+						}
+					}
 				);
 
-				if ( ! Settings::save( $settings ) ) {
-					throw new DatabaseException( 'Could not save settings.' );
-				}
+				return true;
 			}
 		);
-
-		return true;
 	}
 
 	/**
@@ -169,38 +173,43 @@ final class AlertSettings {
 	 * @throws DatabaseException When the change cannot be stored (nothing is kept).
 	 */
 	private function save_changes( array $values ): bool {
-		$settings = Settings::all();
-		$changes  = array_filter(
-			$values,
-			static fn( string|bool|int $value, string $key ): bool => ( $settings[ $key ] ?? null ) !== $value,
-			ARRAY_FILTER_USE_BOTH
-		);
 
-		if ( array() === $changes ) {
-			return false;
-		}
+		return Settings::with_write_snapshot(
+			function () use ( $values ): bool {
+				$settings = Settings::all();
+				$changes  = array_filter(
+					$values,
+					static fn( string|bool|int $value, string $key ): bool => ( $settings[ $key ] ?? null ) !== $value,
+					ARRAY_FILTER_USE_BOTH
+				);
 
-		$this->transaction->run(
-			function () use ( $settings, $changes ): void {
-				foreach ( $changes as $key => $value ) {
-					$this->audit->record(
-						AuditAction::SettingsUpdated,
-						null,
-						array(
-							'setting'        => $key,
-							'previous_value' => $settings[ $key ] ?? null,
-							'value'          => $value,
-						)
-					);
+				if ( array() === $changes ) {
+					return false;
 				}
 
-				if ( ! Settings::save( array_merge( $settings, $changes ) ) ) {
-					throw new DatabaseException( 'Could not save settings.' );
-				}
+				$this->transaction->run(
+					function () use ( $settings, $changes ): void {
+						foreach ( $changes as $key => $value ) {
+							$this->audit->record(
+								AuditAction::SettingsUpdated,
+								null,
+								array(
+									'setting'        => $key,
+									'previous_value' => $settings[ $key ] ?? null,
+									'value'          => $value,
+								)
+							);
+						}
+
+						if ( ! Settings::save( array_merge( $settings, $changes ) ) ) {
+							throw new DatabaseException( 'Could not save settings.' );
+						}
+					}
+				);
+
+				return true;
 			}
 		);
-
-		return true;
 	}
 
 	/**

@@ -452,7 +452,7 @@ final class SettingsTest extends TestCase {
 	}
 
 	public function test_failed_option_write_rolls_back_the_audit_record(): void {
-		Functions\when( 'update_option' )->justReturn( false );
+		$GLOBALS['wpdb']->query_callback = static fn(): bool => false;
 
 		try {
 			$this->service->set_delete_data_on_uninstall( true, 'DELETE' );

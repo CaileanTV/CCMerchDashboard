@@ -396,7 +396,7 @@ final class SalesLedgerSettingsTest extends TestCase {
 	}
 
 	public function test_a_failed_option_write_rolls_back_the_audit_record(): void {
-		Functions\when( 'update_option' )->justReturn( false );
+		$GLOBALS['wpdb']->query_callback = static fn(): bool => false;
 
 		try {
 			$this->settings->save( array( 'completed' ) );

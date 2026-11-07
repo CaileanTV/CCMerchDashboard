@@ -51,43 +51,47 @@ class DesignerSettings {
 	public function save( array $values ): array {
 		self::authorize();
 
-		$settings = Settings::all();
-		$changed  = array();
+		return Settings::with_write_snapshot(
+			function () use ( $values ): array {
+				$settings = Settings::all();
+				$changed  = array();
 
-		foreach ( self::SWITCHES as $key ) {
-			$value = true === ( $values[ $key ] ?? false );
+				foreach ( self::SWITCHES as $key ) {
+					$value = true === ( $values[ $key ] ?? false );
 
-			if ( $settings[ $key ] !== $value ) {
-				$changed[ $key ]  = array( $settings[ $key ], $value );
-				$settings[ $key ] = $value;
-			}
-		}
-
-		if ( array() === $changed ) {
-			return array();
-		}
-
-		$this->transaction->run(
-			function () use ( $settings, $changed ): void {
-				foreach ( $changed as $key => [ $previous, $value ] ) {
-					$this->audit->record(
-						AuditAction::SettingsUpdated,
-						null,
-						array(
-							'setting'        => $key,
-							'previous_value' => $previous,
-							'value'          => $value,
-						)
-					);
+					if ( $settings[ $key ] !== $value ) {
+						$changed[ $key ]  = array( $settings[ $key ], $value );
+						$settings[ $key ] = $value;
+					}
 				}
 
-				if ( ! Settings::save( $settings ) ) {
-					throw new DatabaseException( 'Could not save settings.' );
+				if ( array() === $changed ) {
+					return array();
 				}
+
+				$this->transaction->run(
+					function () use ( $settings, $changed ): void {
+						foreach ( $changed as $key => [ $previous, $value ] ) {
+							$this->audit->record(
+								AuditAction::SettingsUpdated,
+								null,
+								array(
+									'setting'        => $key,
+									'previous_value' => $previous,
+									'value'          => $value,
+								)
+							);
+						}
+
+						if ( ! Settings::save( $settings ) ) {
+							throw new DatabaseException( 'Could not save settings.' );
+						}
+					}
+				);
+
+				return array_keys( $changed );
 			}
 		);
-
-		return array_keys( $changed );
 	}
 
 	/**

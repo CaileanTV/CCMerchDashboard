@@ -70,40 +70,45 @@ final class PayoutSettings {
 	 */
 	public function set_company_cvr( string $cvr ): bool {
 		self::authorize();
-		$cvr = preg_replace( '/\s+/', '', $cvr ) ?? '';
 
-		if ( ! Settings::valid_cvr( $cvr ) ) {
-			throw new PayoutException( PayoutException::INVALID_CVR );
-		}
+		return Settings::with_write_snapshot(
+			function () use ( $cvr ): bool {
+				$cvr = preg_replace( '/\s+/', '', $cvr ) ?? '';
 
-		$settings = Settings::all();
-		$previous = $settings[ Settings::COMPANY_CVR ];
+				if ( ! Settings::valid_cvr( $cvr ) ) {
+					throw new PayoutException( PayoutException::INVALID_CVR );
+				}
 
-		if ( $previous === $cvr ) {
-			return false;
-		}
+				$settings = Settings::all();
+				$previous = $settings[ Settings::COMPANY_CVR ];
 
-		$settings[ Settings::COMPANY_CVR ] = $cvr;
+				if ( $previous === $cvr ) {
+					return false;
+				}
 
-		$this->transaction->run(
-			function () use ( $settings, $previous, $cvr ): void {
-				$this->audit->record(
-					AuditAction::PayoutSettingsChanged,
-					null,
-					array(
-						'setting'        => Settings::COMPANY_CVR,
-						'previous_value' => $previous,
-						'value'          => $cvr,
-					)
+				$settings[ Settings::COMPANY_CVR ] = $cvr;
+
+				$this->transaction->run(
+					function () use ( $settings, $previous, $cvr ): void {
+						$this->audit->record(
+							AuditAction::PayoutSettingsChanged,
+							null,
+							array(
+								'setting'        => Settings::COMPANY_CVR,
+								'previous_value' => $previous,
+								'value'          => $cvr,
+							)
+						);
+
+						if ( ! Settings::save( $settings ) ) {
+							throw new DatabaseException( 'Could not save the payout settings.' );
+						}
+					}
 				);
 
-				if ( ! Settings::save( $settings ) ) {
-					throw new DatabaseException( 'Could not save the payout settings.' );
-				}
+				return true;
 			}
 		);
-
-		return true;
 	}
 
 	/**
@@ -167,38 +172,42 @@ final class PayoutSettings {
 	public function set_holding_days( int $days ): bool {
 		self::authorize();
 
-		if ( ! Settings::valid_holding_days( $days ) ) {
-			throw new PayoutException( PayoutException::INVALID_HOLDING_DAYS );
-		}
+		return Settings::with_write_snapshot(
+			function () use ( $days ): bool {
+				if ( ! Settings::valid_holding_days( $days ) ) {
+					throw new PayoutException( PayoutException::INVALID_HOLDING_DAYS );
+				}
 
-		$settings = Settings::all();
-		$previous = $settings[ Settings::PAYOUT_HOLDING_DAYS ];
+				$settings = Settings::all();
+				$previous = $settings[ Settings::PAYOUT_HOLDING_DAYS ];
 
-		if ( $previous === $days ) {
-			return false;
-		}
+				if ( $previous === $days ) {
+					return false;
+				}
 
-		$settings[ Settings::PAYOUT_HOLDING_DAYS ] = $days;
+				$settings[ Settings::PAYOUT_HOLDING_DAYS ] = $days;
 
-		$this->transaction->run(
-			function () use ( $settings, $previous, $days ): void {
-				$this->audit->record(
-					AuditAction::PayoutSettingsChanged,
-					null,
-					array(
-						'setting'        => Settings::PAYOUT_HOLDING_DAYS,
-						'previous_value' => $previous,
-						'value'          => $days,
-					)
+				$this->transaction->run(
+					function () use ( $settings, $previous, $days ): void {
+						$this->audit->record(
+							AuditAction::PayoutSettingsChanged,
+							null,
+							array(
+								'setting'        => Settings::PAYOUT_HOLDING_DAYS,
+								'previous_value' => $previous,
+								'value'          => $days,
+							)
+						);
+
+						if ( ! Settings::save( $settings ) ) {
+							throw new DatabaseException( 'Could not save the payout settings.' );
+						}
+					}
 				);
 
-				if ( ! Settings::save( $settings ) ) {
-					throw new DatabaseException( 'Could not save the payout settings.' );
-				}
+				return true;
 			}
 		);
-
-		return true;
 	}
 
 	/**
@@ -215,38 +224,42 @@ final class PayoutSettings {
 	public function set_gift_card_provider( string $provider, array $known ): bool {
 		self::authorize();
 
-		if ( ( '' !== $provider && ! in_array( $provider, $known, true ) ) || ! Settings::valid_provider_id( $provider ) ) {
-			throw new PayoutException( PayoutException::INVALID_GIFT_CARD_PROVIDER );
-		}
+		return Settings::with_write_snapshot(
+			function () use ( $provider, $known ): bool {
+				if ( ( '' !== $provider && ! in_array( $provider, $known, true ) ) || ! Settings::valid_provider_id( $provider ) ) {
+					throw new PayoutException( PayoutException::INVALID_GIFT_CARD_PROVIDER );
+				}
 
-		$settings = Settings::all();
-		$previous = $settings[ Settings::PAYOUT_GIFT_CARD_PROVIDER ];
+				$settings = Settings::all();
+				$previous = $settings[ Settings::PAYOUT_GIFT_CARD_PROVIDER ];
 
-		if ( $previous === $provider ) {
-			return false;
-		}
+				if ( $previous === $provider ) {
+					return false;
+				}
 
-		$settings[ Settings::PAYOUT_GIFT_CARD_PROVIDER ] = $provider;
+				$settings[ Settings::PAYOUT_GIFT_CARD_PROVIDER ] = $provider;
 
-		$this->transaction->run(
-			function () use ( $settings, $previous, $provider ): void {
-				$this->audit->record(
-					AuditAction::PayoutSettingsChanged,
-					null,
-					array(
-						'setting'        => Settings::PAYOUT_GIFT_CARD_PROVIDER,
-						'previous_value' => $previous,
-						'value'          => $provider,
-					)
+				$this->transaction->run(
+					function () use ( $settings, $previous, $provider ): void {
+						$this->audit->record(
+							AuditAction::PayoutSettingsChanged,
+							null,
+							array(
+								'setting'        => Settings::PAYOUT_GIFT_CARD_PROVIDER,
+								'previous_value' => $previous,
+								'value'          => $provider,
+							)
+						);
+
+						if ( ! Settings::save( $settings ) ) {
+							throw new DatabaseException( 'Could not save the payout settings.' );
+						}
+					}
 				);
 
-				if ( ! Settings::save( $settings ) ) {
-					throw new DatabaseException( 'Could not save the payout settings.' );
-				}
+				return true;
 			}
 		);
-
-		return true;
 	}
 
 	/**
