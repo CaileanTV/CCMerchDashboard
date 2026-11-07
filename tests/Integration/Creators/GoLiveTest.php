@@ -152,6 +152,37 @@ final class GoLiveTest extends IntegrationTestCase {
 		$this->refused( GoLiveException::NOT_PENDING, fn() => $this->requests( true )->approve( $id, 'Nova Shop', '20' ) );
 	}
 
+	public function test_approval_requires_acceptance_of_a_new_material_agreement(): void {
+		$creator   = $this->asked();
+		$id        = $this->pending_id( $creator->id );
+		$agreement = $this->service( Agreement::class );
+		$version   = $agreement->publish( '<p>New material terms</p>', true );
+		$went      = did_action( GoLiveRequests::WENT_LIVE );
+		$audit     = $this->rows( Tables::AUDIT_LOG );
+		$notices   = $this->rows( Tables::NOTIFICATIONS );
+
+		$this->refused( GoLiveException::AGREEMENT, fn() => $this->requests()->approve( $id, 'Nova', '10' ) );
+
+		self::assertFalse( ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->is_live() );
+		self::assertSame( $id, $this->pending_id( $creator->id ), 'The request remains pending for renewed acceptance.' );
+		self::assertSame( $audit, $this->rows( Tables::AUDIT_LOG ) );
+		self::assertSame( $notices, $this->rows( Tables::NOTIFICATIONS ) );
+		self::assertSame( array(), $this->provisioned );
+		self::assertSame( $went, did_action( GoLiveRequests::WENT_LIVE ) );
+
+		$agreement->accept( $creator, $this->user, $version, true );
+		self::assertSame( GoLiveRequests::PROVISIONED, $this->requests()->approve( $id, 'Nova', '10' ) );
+		self::assertTrue( ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->is_live() );
+	}
+
+	public function test_a_minor_agreement_update_does_not_block_approval(): void {
+		$creator = $this->asked();
+		$this->service( Agreement::class )->publish( '<p>Minor clarification</p>', false );
+
+		self::assertSame( GoLiveRequests::PROVISIONED, $this->requests()->approve( $this->pending_id( $creator->id ), 'Nova', '10' ) );
+		self::assertTrue( ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->is_live() );
+	}
+
 	public function test_a_category_that_cannot_be_made_is_tried_again(): void {
 		$creator          = $this->asked();
 		$this->shop_fails = true;
