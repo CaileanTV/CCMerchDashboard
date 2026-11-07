@@ -249,7 +249,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.6.0: selvoprettelse, aftalepapir, gå live og baggrundsfarve (fase 32 og 33)
 
-**Versions-bump og CHANGELOG-sektion og tagget `v1.6.0` 2026-11-07** efter projektejerens ønske ("Når alt er færdig, er vi klar til at bump til 1.6.0").
+**Versions-bump og CHANGELOG-sektion (`df39b94`) og tagget `v1.6.0` (på `ac61857`) 2026-11-07** efter projektejerens ønske ("Nu er vi klar til den kan bumpe når den er færdig og klar"). CI på bump-committen fandt to fejl i tests (en fast schema-version og et produkt, som en anden test efterlod); de er rettet i `ac61857`, som kun ændrer tests. Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `cdd65e76a0d6a9d41eb773e6cfeadd5f465d6a5c827260f8d2e85fffd8946b65").
 - Det er en minor, fordi den indeholder nye features.
 - Fase 32 og 33 er reviewet uafhængigt og runtime-testet på Local (ROADMAP 32.7 og 33.5). Rettelserne efter reviewene er committet (`0b37ef1`, `a537a23`). Fejlen med farvefotos, der forsvandt, er rettet i `e3c5eea` og testet på Local med projektejerens JN-mockups.
 - CI er grøn med hele integrationssuiten på den taggede commit.
