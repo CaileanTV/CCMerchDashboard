@@ -159,7 +159,7 @@ final class DashboardAccessTest extends IntegrationTestCase {
 		wp_set_current_user( $active );
 		$this->request( '/creator-dashboard/' );
 
-		$controller = new ShellController( new DashboardRoute(), $this->service( CreatorContext::class ), new DashboardAssets( sys_get_temp_dir() . '/merchboard-no-build/', 'http://merchboard.test/', $this->service( Logger::class ) ), $this->service( DashboardSections::class ), new ThemePreference(), $this->service( BrandLogo::class ) );
+		$controller = new ShellController( new DashboardRoute(), $this->service( CreatorContext::class ), new DashboardAssets( __DIR__ . '/../Fixtures/dashboard-missing-build/', 'http://merchboard.test/', $this->service( Logger::class ) ), $this->service( DashboardSections::class ), new ThemePreference(), $this->service( BrandLogo::class ) );
 		$response   = $controller->respond();
 
 		self::assertSame( 503, $response->status );
@@ -428,14 +428,7 @@ final class DashboardAccessTest extends IntegrationTestCase {
 	 * `npm run build` having run.
 	 */
 	private function controller(): ShellController {
-		$dir = sys_get_temp_dir() . '/merchboard-it-build/';
-
-		if ( ! is_dir( $dir . 'build' ) ) {
-			mkdir( $dir . 'build', 0777, true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Test fixture.
-		}
-
-		file_put_contents( $dir . 'build/dashboard.asset.php', "<?php return array( 'dependencies' => array( 'react-jsx-runtime', 'wp-element', 'wp-i18n' ), 'version' => 'test-build' );" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
-		file_put_contents( $dir . 'build/dashboard.js', '/* bundle */' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
+		$dir = __DIR__ . '/../Fixtures/dashboard/';
 
 		return new ShellController(
 			new DashboardRoute(),
