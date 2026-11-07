@@ -141,7 +141,7 @@ final class DesignerApiTest extends IntegrationTestCase {
 			new CreatorUploads( $assets, $files ),
 			new AlertFonts( $this->service( AuditTrail::class ), $this->service( Transaction::class ) ),
 			$this->service( Logger::class ),
-			new DesignerShop( $products, $drafts, $guard, new RecordingDesignerWriter( $guard, new ProductPosts( $this->wpdb ) ), $this->service( AuditTrail::class ), $this->service( Transaction::class ), $files, $bases )
+			new DesignerShop( $products, $drafts, $guard, new RecordingDesignerWriter( $guard, new ProductPosts( $this->wpdb ) ), $this->service( AuditTrail::class ), $this->service( Transaction::class ), $files, $bases, $this->wpdb )
 		);
 		$this->register = static function () use ( $controller ): void {
 			$controller->register_routes();

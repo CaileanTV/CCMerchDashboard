@@ -1403,6 +1403,65 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		}
 	}
 
+	public function test_publication_holds_retirements_lock_through_the_shop_save(): void {
+		$product = $this->live_product();
+		$shop    = (int) ( $this->products->product( $product )['wc_product_id'] ?? 0 );
+		$lock    = 'merchboard_designer_product_' . $product;
+		$other   = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		$checked = false;
+		$check   = static function ( int $post_id ) use ( $shop, $lock, $other, &$checked ): void {
+			if ( $shop === $post_id ) {
+				$checked = true;
+				self::assertSame( '0', (string) $other->get_var( $other->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ), 'Retirement cannot interleave with the publication save.' );
+			}
+		};
+		add_action( 'pre_post_update', $check );
+
+		try {
+			$this->shop()->set_published( $this->creator, $product, true );
+			self::assertTrue( $checked );
+			self::assertSame( '1', (string) $other->get_var( $other->prepare( 'SELECT IS_FREE_LOCK(%s)', $lock ) ), 'Publication releases the lock.' );
+		} finally {
+			remove_action( 'pre_post_update', $check );
+			$other->close();
+		}
+
+		$this->bases->retire( $this->base );
+		$this->drain_retirement();
+		self::assertSame( 'retired', $this->products->product( $product )['status'] ?? null );
+		self::assertSame( 'draft', get_post_status( $shop ) );
+	}
+
+	public function test_publication_rereads_eligibility_after_retirement_wins_the_lock(): void {
+		$product = $this->live_product();
+		$shop    = (int) ( $this->products->product( $product )['wc_product_id'] ?? 0 );
+		$retired = false;
+		$before  = function ( string $sql ) use ( &$retired ): string {
+			if ( ! $retired && str_contains( $sql, 'SELECT GET_LOCK(' ) ) {
+				$retired = true;
+				// Complete retirement immediately before publication acquires its lock.
+				$this->bases->retire( $this->base );
+				$this->drain_retirement();
+			}
+
+			return $sql;
+		};
+		add_filter( 'query', $before );
+
+		try {
+			$this->shop()->set_published( $this->creator, $product, true );
+			self::fail( 'Retirement makes the waiting publication ineligible.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::NOT_LIVE, $e->reason() );
+		} finally {
+			remove_filter( 'query', $before );
+		}
+
+		self::assertTrue( $retired );
+		self::assertSame( 'draft', get_post_status( $shop ) );
+		self::assertSame( '1', (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT IS_FREE_LOCK(%s)', 'merchboard_designer_product_' . $product ) ) );
+	}
+
 	public function test_a_product_from_the_shop_moves_to_the_deleted_designs_and_keeps_what_orders_need(): void {
 		$product = $this->live_product();
 		$version = (int) ( $this->products->live( $product )['id'] ?? 0 );
@@ -1543,7 +1602,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	 * The creator's decisions.
 	 */
 	private function shop(): DesignerShop {
-		return new DesignerShop( $this->products, $this->drafts, $this->guard, $this->writer, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->files, new BaseProductRepository( $this->wpdb ) );
+		return new DesignerShop( $this->products, $this->drafts, $this->guard, $this->writer, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->files, new BaseProductRepository( $this->wpdb ), $this->wpdb );
 	}
 
 	/**

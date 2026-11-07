@@ -20,6 +20,7 @@ use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
 use MerchBoard\Modules\ProductDesigner\Shop\WooCommerceDesignerWriter;
+use wpdb;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -53,6 +54,7 @@ class DesignerShop {
 	 * @param Transaction               $transaction Transaction.
 	 * @param DesignerFiles             $files       Files.
 	 * @param BaseProductRepository     $bases       Base products.
+	 * @param wpdb                      $wpdb        Database (retirement's named lock).
 	 */
 	public function __construct(
 		private DesignerProductRepository $products,
@@ -62,7 +64,8 @@ class DesignerShop {
 		private AuditTrail $audit,
 		private Transaction $transaction,
 		private DesignerFiles $files,
-		private BaseProductRepository $bases
+		private BaseProductRepository $bases,
+		private wpdb $wpdb
 	) {
 	}
 
@@ -98,25 +101,37 @@ class DesignerShop {
 	 * @param Creator $creator   The creator.
 	 * @param int     $product   Designer product.
 	 * @param bool    $published Whether it is to be in the shop.
-	 * @throws DesignerException When it is unknown or not live.
-	 * @throws DatabaseException When it cannot be stored.
+	 * @throws DesignerException|DatabaseException When it is unknown, not live, or cannot be locked or stored.
 	 */
 	public function set_published( Creator $creator, int $product, bool $published ): void {
-		$row = $this->row( $creator, $product );
+		$wpdb = $this->wpdb;
+		$lock = 'merchboard_designer_product_' . $product;
+		// Share retirement's lock before reading eligibility, through the shop save.
+		$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock, 10 ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A named lock; never cached.
 
-		if ( DesignerProductRepository::LIVE !== $row['status'] ) {
-			self::refuse( DesignerException::NOT_LIVE );
+		if ( ! is_numeric( $acquired ) || 1 !== (int) $acquired ) {
+			throw new DatabaseException( 'Could not lock the designer product.' );
 		}
 
-		$proof = $this->guard->for_row( $product ) ?? self::refuse( DesignerException::NOT_LIVE );
+		try {
+			$row = $this->row( $creator, $product );
 
-		if ( $published ) {
-			$this->writer->publish( $proof );
-		} else {
-			$this->writer->unpublish( $proof );
+			if ( DesignerProductRepository::LIVE !== $row['status'] ) {
+				self::refuse( DesignerException::NOT_LIVE );
+			}
+
+			$proof = $this->guard->for_row( $product ) ?? self::refuse( DesignerException::NOT_LIVE );
+
+			if ( $published ) {
+				$this->writer->publish( $proof );
+			} else {
+				$this->writer->unpublish( $proof );
+			}
+
+			$this->audit->record( $published ? AuditAction::DesignerProductPublished : AuditAction::DesignerProductHidden, $creator->id, array( 'design_product_id' => $product ) );
+		} finally {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Releases the named lock even when publication fails.
 		}
-
-		$this->audit->record( $published ? AuditAction::DesignerProductPublished : AuditAction::DesignerProductHidden, $creator->id, array( 'design_product_id' => $product ) );
 	}
 
 	/**
