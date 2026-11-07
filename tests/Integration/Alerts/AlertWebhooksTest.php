@@ -18,6 +18,8 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Access\Impersonation;
+use MerchBoard\Modules\Access\ImpersonationGuard;
 use MerchBoard\Modules\Alerts\Admin\AlertApiActions;
 use MerchBoard\Modules\Alerts\AlertEvent;
 use MerchBoard\Modules\Alerts\AlertEventRepository;
@@ -648,6 +650,32 @@ final class AlertWebhooksTest extends IntegrationTestCase {
 		self::assertSame( array(), $this->deliveries() );
 		self::assertSame( array(), $this->rows( Tables::ALERT_WEBHOOKS ) );
 		self::assertStringContainsString( 'alert_webhook_deleted', (string) wp_json_encode( $this->rows( Tables::AUDIT_LOG ) ) );
+	}
+
+	public function test_impersonation_cannot_generate_a_webhook_secret_from_non_string_input(): void {
+		$this->routes();
+		$impersonation = $this->service( Impersonation::class );
+		$impersonation->start( $this->creator );
+
+		try {
+			foreach ( array( true, 123, 1.5, false, 0, null, array(), '', " \t\n" ) as $secret ) {
+				$response = $this->call(
+					'POST',
+					'/merchboard/v1/me/alerts/api/webhooks',
+					array(
+						'name'   => 'Own bot',
+						'format' => 'json',
+						'url'    => self::URL,
+						'secret' => $secret,
+					)
+				);
+				self::assertSame( 403, $response->get_status() );
+				self::assertSame( ImpersonationGuard::BLOCKED, $response->as_error()?->get_error_code() );
+				self::assertSame( array(), $this->webhooks->for_creator( $this->creator ), 'Refusal must not persist a webhook.' );
+			}
+		} finally {
+			$impersonation->end( Impersonation::ENDED_BY_ADMIN );
+		}
 	}
 
 	public function test_the_creator_routes_and_the_administrators_switch_off(): void {

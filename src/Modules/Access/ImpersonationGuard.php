@@ -113,6 +113,6 @@ final class ImpersonationGuard {
 		return 'POST' === $method
 			&& '/merchboard/v1/me/alerts/api/webhooks' === $route
 			&& 'discord' !== ( $body['format'] ?? null )
-			&& '' === trim( is_scalar( $secret ) ? (string) $secret : '' );
+			&& '' === trim( is_string( $secret ) ? $secret : '' );
 	}
 }
