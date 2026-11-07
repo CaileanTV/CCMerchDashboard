@@ -204,7 +204,11 @@ class NotificationSender {
 		}
 
 		$creator = null === $notification->creator_id ? null : $this->creators->find( $notification->creator_id );
-		$user    = null === $creator?->user_id ? false : get_userdata( $creator->user_id );
+		if ( 'news_published' === $notification->type && ( null === $creator || ! $creator->is_active() || $creator->is_deleted() ) ) {
+			return array( '', '', 0 );
+		}
+
+		$user = null === $creator?->user_id ? false : get_userdata( $creator->user_id );
 
 		if ( null === $creator || ! $user instanceof \WP_User || ! is_email( $user->user_email ) ) {
 			return array( '', '', 0 );
