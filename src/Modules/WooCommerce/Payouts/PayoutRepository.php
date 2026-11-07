@@ -378,9 +378,12 @@ final class PayoutRepository {
 		$wpdb = $this->wpdb;
 		$time = self::utc( $now );
 
+		// Uninstall archives creators under their row locks before deleting secrets.
+		// A request authorized earlier must not insert after that admission closes.
+
 		$this->guarded(
 			$wpdb->prepare(
-				'INSERT INTO %i (creator_id, currency, amount, price_decimals, method, status, destination_hint, idempotency_key, requested_by, requested_at, updated_at) SELECT %d, %s, %s, %d, %s, %s, %s, %s, NULLIF(%d, 0), %s, %s FROM DUAL WHERE CONNECTION_ID() = %d',
+				'INSERT INTO %i (creator_id, currency, amount, price_decimals, method, status, destination_hint, idempotency_key, requested_by, requested_at, updated_at) SELECT %d, %s, %s, %d, %s, %s, %s, %s, NULLIF(%d, 0), %s, %s FROM DUAL WHERE CONNECTION_ID() = %d AND EXISTS (SELECT 1 FROM %i WHERE id = %d AND status = %s)',
 				$this->table( Tables::PAYOUTS ),
 				$creator_id,
 				$currency,
@@ -393,7 +396,10 @@ final class PayoutRepository {
 				(int) $requested_by,
 				$time,
 				$time,
-				$this->lock_connection
+				$this->lock_connection,
+				$this->table( Tables::CREATORS ),
+				$creator_id,
+				'active'
 			)
 		);
 		$id = (int) $wpdb->insert_id;
