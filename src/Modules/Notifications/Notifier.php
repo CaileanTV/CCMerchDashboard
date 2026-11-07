@@ -119,7 +119,7 @@ class Notifier {
 		$created = 0;
 
 		foreach ( $creators as $creator ) {
-			if ( ! $creator->is_deleted() && $creator->created_at <= $published && null !== $this->notify( 'news_published', $creator->id, array( 'title' => $title ), 'news:' . (int) $id ) ) {
+			if ( $creator->is_active() && ! $creator->is_deleted() && $creator->created_at <= $published && null !== $this->notify( 'news_published', $creator->id, array( 'title' => $title ), 'news:' . (int) $id ) ) {
 				++$created;
 			}
 		}
@@ -175,7 +175,7 @@ class Notifier {
 		if ( NotificationType::CREATOR === $type->audience ) {
 			$creator = null === $creator_id ? null : $this->creators->find( $creator_id );
 
-			if ( null === $creator || $creator->is_deleted() ) {
+			if ( null === $creator || $creator->is_deleted() || ( 'news_published' === $key && ! $creator->is_active() ) ) {
 				return null;
 			}
 

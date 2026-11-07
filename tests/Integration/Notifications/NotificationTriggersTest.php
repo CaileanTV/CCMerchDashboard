@@ -70,7 +70,7 @@ final class NotificationTriggersTest extends IntegrationTestCase {
 	public function test_news_is_told_once_to_the_creators_who_see_it(): void {
 		$creators = $this->service( CreatorService::class );
 		$nova     = $creators->create( 'Nova', CreatorStatus::Active, $this->create_user( 'nova' ) )->id;
-		$resting  = $creators->create( 'Resting', CreatorStatus::Inactive, null )->id;
+		$resting  = $creators->create( 'Resting', CreatorStatus::Inactive, $this->create_user( 'resting' ) )->id;
 		$this->execute( 'DELETE FROM %i', $this->table( Tables::NOTIFICATIONS ) );
 
 		$news = new NewsService( new NewsRepository( $this->wpdb ), $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
@@ -80,8 +80,9 @@ final class NotificationTriggersTest extends IntegrationTestCase {
 		$news->publish( $id );
 
 		$rows = $this->rows( Tables::NOTIFICATIONS );
-		self::assertSame( array( 'news_published', 'news_published' ), array_column( $rows, 'type' ), 'Once per creator, also after withdrawing and publishing again.' );
-		self::assertEqualsCanonicalizing( array( (string) $nova, (string) $resting ), array_map( 'strval', array_column( $rows, 'creator_id' ) ) );
+		self::assertSame( array( 'news_published' ), array_column( $rows, 'type' ), 'Once per creator, also after withdrawing and publishing again.' );
+		self::assertSame( array( (string) $nova ), array_map( 'strval', array_column( $rows, 'creator_id' ) ) );
+		self::assertNotContains( (string) $resting, array_map( 'strval', array_column( $rows, 'creator_id' ) ) );
 		self::assertSame( array( 'title' => 'New: banners' ), json_decode( (string) $rows[0]['data'], true ) );
 
 		// A creator created after the publication does not see the message.
