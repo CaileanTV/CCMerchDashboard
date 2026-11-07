@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Alerts\Webhooks;
 
 use Closure;
+use WpOrg\Requests\Transport\Curl;
 use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Database\DatabaseException;
@@ -417,29 +418,19 @@ class WebhookDispatcher {
 			return;
 		}
 
-		// cURL connects to the address that was checked, not to a new DNS answer.
-		$pin = static function ( mixed $handle, mixed $args, mixed $target ) use ( $host, $ip ): void {
-			if ( $handle instanceof \CurlHandle && is_string( $target ) && wp_parse_url( $target, PHP_URL_HOST ) === $host ) {
-				curl_setopt( $handle, CURLOPT_RESOLVE, array( $host . ':443:' . ( str_contains( $ip, ':' ) ? '[' . $ip . ']' : $ip ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt -- Pins the checked address on WordPress' own cURL handle.
-			}
-		};
-		add_action( 'http_api_curl', $pin, 10, 3 );
-
-		try {
-			$response = wp_safe_remote_post(
-				$url,
-				array(
-					'body'                => $delivery->payload,
-					'headers'             => $headers,
-					'timeout'             => self::TIMEOUT,
-					'redirection'         => 0,
-					'limit_response_size' => 1024,
-					'user-agent'          => 'MerchDashboard-Webhooks/1',
-				)
-			);
-		} finally {
-			remove_action( 'http_api_curl', $pin, 10 );
-		}
+		$response = $this->request(
+			$url,
+			$host,
+			$ip,
+			array(
+				'body'                => $delivery->payload,
+				'headers'             => $headers,
+				'timeout'             => self::TIMEOUT,
+				'redirection'         => 0,
+				'limit_response_size' => 1024,
+				'user-agent'          => 'MerchDashboard-Webhooks/1',
+			)
+		);
 
 		if ( is_wp_error( $response ) ) {
 			// The creator gets a reason code; the transport's message (never the address: a Discord address is a secret) goes to the technical log.
@@ -458,6 +449,46 @@ class WebhookDispatcher {
 
 		$status = (int) wp_remote_retrieve_response_code( $response );
 		$this->outcome( $id, $webhook, $count, $status, $status >= 200 && $status < 300 ? null : 'http_' . $status );
+	}
+
+	/**
+	 * Sends only through the transport that supports address pinning.
+	 *
+	 * @param string               $url  Webhook URL (also the TLS peer name).
+	 * @param string               $host Validated host.
+	 * @param string               $ip   Validated public address.
+	 * @param array<string, mixed> $args WordPress HTTP arguments.
+	 * @return array<string, mixed>|\WP_Error HTTP response or transport failure.
+	 */
+	private function request( string $url, string $host, string $ip, array $args ): array|\WP_Error {
+		if ( ! class_exists( Curl::class ) || ! Curl::test( array( 'ssl' => true ) ) || ! defined( 'CURLOPT_RESOLVE' ) ) {
+			return new \WP_Error( self::UNREACHABLE, 'Webhook delivery requires cURL address pinning.' );
+		}
+
+		// cURL connects to the address that was checked, not to a new DNS answer.
+		$pin = static function ( mixed $handle, mixed $args, mixed $target ) use ( $host, $ip ): void {
+			if ( $handle instanceof \CurlHandle && is_string( $target ) && wp_parse_url( $target, PHP_URL_HOST ) === $host ) {
+				curl_setopt( $handle, CURLOPT_RESOLVE, array( $host . ':443:' . ( str_contains( $ip, ':' ) ? '[' . $ip . ']' : $ip ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt -- Pins the checked address on WordPress' own cURL handle.
+			}
+		};
+		// Requests selects its transport after this hook. Never allow the unpinned fallback.
+		$transport = static function ( mixed $target, mixed $headers, mixed $data, mixed $type, array &$options ) use ( $url ): void {
+			if ( $target === $url ) {
+				$options['transport'] = Curl::class;
+			}
+		};
+		add_action( 'requests-requests.before_request', $transport, PHP_INT_MAX, 5 ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- WordPress Requests bridge.
+		add_action( 'http_api_curl', $pin, 10, 3 );
+
+		try {
+			return wp_safe_remote_post(
+				$url,
+				$args
+			);
+		} finally {
+			remove_action( 'http_api_curl', $pin, 10 );
+			remove_action( 'requests-requests.before_request', $transport, PHP_INT_MAX ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- WordPress Requests bridge.
+		}
 	}
 
 	/**
