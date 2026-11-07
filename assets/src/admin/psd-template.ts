@@ -14,7 +14,7 @@
  *   accepts. A layer's opacity is applied; blend modes and effects are not
  *   (the designer draws shading multiplied and highlights screened).
  */
-import { readPsd } from 'ag-psd';
+import { readBoundedPsd } from './psd-budget';
 import type { Layer, Psd } from 'ag-psd';
 
 /** The template layers, in the order the designer draws them. */
@@ -93,12 +93,7 @@ export function readTemplate( buffer: ArrayBuffer ): PsdTemplate {
 	let psd: Psd;
 
 	try {
-		psd = readPsd( buffer, {
-			useImageData: true,
-			skipCompositeImageData: true,
-			skipThumbnail: true,
-			skipLinkedFilesData: true,
-		} );
+		psd = readBoundedPsd( buffer );
 	} catch {
 		throw new TemplateError( 'unreadable' );
 	}
