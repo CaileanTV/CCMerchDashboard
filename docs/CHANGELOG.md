@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-11-07
+
+Fase 34: farvedesigns, valgfrit produktbillede, "Kopiér design", "Vælg alle" og størrelse i cm i produktdesigneren, samt to sikkerhedsrettelser fra CodeRabbit (PR #11 og #13). Schema-version 47 (migration 47 ved opdatering fra 1.6.0; ingen manuelle trin i databasen). Fase 34 er reviewet uafhængigt og runtime-testet på Local 2026-11-07. Opdateringen står i DEVELOPMENT.md ("Release 1.7.0").
+
 ### Added
 
 - **Farvedesigns (fase 34, ADR-096):** enkelte farver på samme produkt kan få deres eget design, fx sort og hvid med ét design og orange med et andet. Som standard deler alle farver ét design; creatoren giver en farve "+ Nyt design" eller lader flere farver dele et. Når en farve samles med et andet design, vælger creatoren, hvordan de flettes. Hver farve får sin egen pris, egne printfiler og mockups (også hos leverandørerne), og ordresiden viser printfilerne for linjens farve.
@@ -11,6 +15,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 - **Kopiér design (fase 34):** et nyt produkt med samme opsætning som et eksisterende, også før det er godkendt.
 - **Vælg alle farver** og elementets **størrelse i cm** i designeren.
 - **Sikkerhed:** en admin, der ser dashboardet som en creator, kan ikke få lavet en webhook-hemmelighed med en hemmelighed, der ikke er tekst (PR #11), og en Twitch-, Kick- eller YouTube-forbindelse kan ikke gøres færdig, efter creatorens adgang er fjernet (PR #13).
+
+### Fixed
+
+- **Designeren gik ned, når et element blev valgt** (fx en ny cirkel): størrelsen i cm blev formateret med WordPress' sprogkode `da_DK`, som browseren ikke tager imod. Fundet af projektejeren på Local før udgivelsen.
 
 ### Changed
 

@@ -247,6 +247,30 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.7.0: farvedesigns, produktbillede og "Kopiér design" (fase 34)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-07** efter projektejerens go ("Jeg er klar til at release 1.7.0"). Tag og SHA-256 noteres her, når draft-releasen er bygget.
+- Det er en minor, fordi den indeholder nye features (ADR-096).
+- Fase 34 er reviewet uafhængigt (rettelser i `30557c1`) og runtime-testet på Local (ROADMAP 34.13). Projektejerens fund af nedbruddet ved valg af et element er rettet i `5232652`.
+- CI skal være grøn med hele integrationssuiten på den taggede commit.
+
+**Schema-version 47:**
+- Migration 47 tilføjer `primary_image` til `merchboard_designer_versions` (NULL for alle eksisterende versioner, som beholder deres billeder) og gør `merchboard_designer_provider_tasks.side` 48 tegn lang.
+- Der er ingen manuelle trin i databasen. Eksisterende designs er uændrede; farvedesigns findes kun i nye gem.
+
+Tagget giver en draft-release. Projektejeren tester den på staging og udgiver den. AI-agenter har ingen adgang til produktion.
+
+1. **Backup:** tag backup af filer og database via hostingen. Notér den installerede version.
+2. **Opdatér** med release-ZIP'en ("Erstat nuværende med uploadet"). Overview skal vise version 1.7.0 og schema-version 47 uden advarsler.
+3. **Eksisterende produkter:** åbn et designer-produkt i butikken. Billeder, priser og variationer skal være som før, og ordresiden skal vise printfilerne som før.
+4. **Farvedesign:** giv i designeren én farve "+ Nyt design" med en ekstra side, og kontrollér "Pris pr. farve". Send det, godkend det, og kontrollér i butikken, at farvens variationer har deres egen pris og billeder, og at en ordrelinje i den farve viser farvens printfiler.
+5. **Leverandørmockups:** på et grundprodukt fra en leverandør skal mockups af et farvedesign vise farvens eget design. Gelato og Prodigi er kun testet mod falske svar.
+6. **Produktbillede:** vælg et billede i designeren, og skift det bagefter på det live produkt uden ny godkendelse.
+7. **Kopiér design:** kopiér et produkt i butikken og et, der venter. Kopien åbner som en ny kladde.
+8. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 1.6.0-ZIP'en igen. Kolonnen `primary_image` bliver liggende uden at blive brugt. Produkter med farvedesigns kan ikke vises korrekt i 1.6.0 (priserne pr. farve gemmes i en ny form, og 1.6.0 kender kun det fælles design), så tag dem ud af butikken før en tilbagerulning.
+
 ## Release 1.6.0: selvoprettelse, aftalepapir, gå live og baggrundsfarve (fase 32 og 33)
 
 **Versions-bump og CHANGELOG-sektion (`df39b94`) og tagget `v1.6.0` (på `ac61857`) 2026-11-07** efter projektejerens ønske ("Nu er vi klar til den kan bumpe når den er færdig og klar"). CI på bump-committen fandt to fejl i tests (en fast schema-version og et produkt, som en anden test efterlod); de er rettet i `ac61857`, som kun ændrer tests. Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `cdd65e76a0d6a9d41eb773e6cfeadd5f465d6a5c827260f8d2e85fffd8946b65").
