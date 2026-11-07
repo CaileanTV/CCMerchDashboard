@@ -33,7 +33,7 @@ defined( 'ABSPATH' ) || exit;
  * write through the metadata API: WooCommerce CRUD, REST, CSV import, quick
  * and bulk edit, XML-RPC, `update_post_meta()` from any code and WP-CLI.
  * A write that touches a protected key (compared trimmed and
- * case-insensitively, as MySQL compares keys; for `_by_mid` also the key
+ * case-insensitively; for `_by_mid` also the key
  * stored in the row, so a rename away from a protected key is caught) is
  * short-circuited as failed and logged, unless:
  * - an explicit ProtectedMetaWrite for that very product is running inside
@@ -311,7 +311,11 @@ final class ProtectedProductMeta {
 	 */
 	private function decide( mixed $check, string $operation, mixed $key, mixed $new_key, int $post_id, bool $deletion = false ): mixed {
 		if ( ! self::is_protected_key( $key ) && ! self::is_protected_key( $new_key ) ) {
-			return $check;
+			// Key-based SQL writes can touch a reserved row through the column's
+			// collation, even when PHP does not recognize the supplied key.
+			if ( ! in_array( $operation, array( 'add', 'update', 'delete' ), true ) || ! $this->collides_with_protected_row( $key, $post_id ) ) {
+				return $check;
+			}
 		}
 
 		if ( null !== $this->active && $post_id > 0 && $this->active->covers( $post_id ) ) {
@@ -321,7 +325,7 @@ final class ProtectedProductMeta {
 		$context = array(
 			'operation' => $operation,
 			'post_id'   => $post_id,
-			'key'       => self::is_protected_key( $key ) ? strtolower( trim( (string) $key ) ) : strtolower( trim( (string) $new_key ) ),
+			'key'       => self::is_protected_key( $new_key ) ? strtolower( trim( (string) $new_key ) ) : strtolower( trim( (string) $key ) ),
 		);
 
 		// ADR-036: deletion only, never add, update or rename.
@@ -334,6 +338,38 @@ final class ProtectedProductMeta {
 		$this->logger->warning( 'Blocked a write to protected product meta outside Merch Dashboard.', $context );
 
 		return false;
+	}
+
+	/**
+	 * Whether a key-based write could touch an existing protected row.
+	 * Aliases without such a row are ordinary metadata: ownership readers
+	 * compare normalized keys as bytes, so those aliases confer no ownership.
+	 *
+	 * @param mixed $key     Supplied meta key.
+	 * @param int   $post_id Post id (0 for a deletion across all posts).
+	 */
+	private function collides_with_protected_row( mixed $key, int $post_id ): bool {
+		global $wpdb;
+
+		if ( ! is_string( $key ) || '' === $key ) {
+			return false;
+		}
+
+		$found = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Must use the actual column collation and current rows before a metadata write.
+			$wpdb->prepare(
+				'SELECT meta_id FROM %i WHERE meta_key = %s AND CAST( LOWER( TRIM( meta_key ) ) AS BINARY ) IN ( CAST( %s AS BINARY ), CAST( %s AS BINARY ), CAST( %s AS BINARY ) ) AND ( %d = 0 OR post_id = %d ) LIMIT 1',
+				$wpdb->postmeta,
+				$key,
+				self::LINK_KEY,
+				self::SOURCE_KEY,
+				self::DESIGNER_KEY,
+				$post_id,
+				$post_id
+			)
+		);
+
+		// A failed check must not allow an unverified write.
+		return '' !== $wpdb->last_error || null !== $found;
 	}
 
 	/**

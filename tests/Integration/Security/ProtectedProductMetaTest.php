@@ -97,6 +97,17 @@ final class ProtectedProductMetaTest extends IntegrationTestCase {
 		self::assertCount( $audit, $this->rows( Tables::AUDIT_LOG ), 'Denied writes create no audit records.' );
 	}
 
+	public function test_collation_alias_cannot_touch_existing_protected_rows(): void {
+		$alias  = '_merchboard_créator_id';
+		$before = $this->stored();
+
+		self::assertFalse( add_post_meta( $this->product, $alias, '4' ) );
+		self::assertFalse( update_post_meta( $this->product, $alias, '4' ) );
+		self::assertFalse( delete_post_meta( $this->product, $alias ) );
+		self::assertFalse( delete_post_meta_by_key( $alias ) );
+		self::assertSame( $before, $this->stored() );
+	}
+
 	public function test_writes_by_meta_id_cannot_change_rename_or_delete_a_link(): void {
 		$link_id  = $this->meta_id( $this->product, self::LINK );
 		$price_id = (int) add_post_meta( $this->product, '_price', '10' );

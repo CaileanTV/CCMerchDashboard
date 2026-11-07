@@ -71,6 +71,25 @@ final class CreatorProductsTest extends IntegrationTestCase {
 		self::assertSame( 1, $this->products->count( 12 ) );
 	}
 
+	public function test_accented_aliases_neither_grant_nor_hide_ownership(): void {
+		$alias = '_merchboard_créator_id';
+		$only  = $this->posts->add( 'Alias only', 'publish', array() );
+		$mine  = $this->posts->add( 'Canonical', 'publish', array( '12' ) );
+
+		// Exercise the generic persistence path used by REST and CSV import.
+		self::assertIsInt( add_post_meta( $only, $alias, '12' ) );
+		// A pre-existing alias (e.g. before an approved link was created).
+		$this->posts->meta( $mine, $alias, '13' );
+		$this->posts->meta( $mine, '_merchboard_creator_İD', '13' );
+
+		self::assertSame( array( $mine ), $this->page( 12 ) );
+		self::assertSame( 1, $this->products->count( 12 ) );
+		self::assertTrue( $this->products->owns( 12, $mine ) );
+		self::assertFalse( $this->products->owns( 12, $only ) );
+		self::assertFalse( $this->products->owns( 13, $mine ) );
+		self::assertSame( array(), $this->page( 13 ) );
+	}
+
 	public function test_another_creators_products_are_never_selected(): void {
 		$mine   = $this->posts->add( 'Mine', 'publish', array( '12' ) );
 		$theirs = $this->posts->add( 'Theirs', 'publish', array( '13' ) );

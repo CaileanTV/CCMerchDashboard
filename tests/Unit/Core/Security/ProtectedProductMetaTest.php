@@ -20,6 +20,7 @@ use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
+use MerchBoard\Tests\Unit\Support\RecordingWpdb;
 use MerchBoard\Tests\Unit\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -34,6 +35,13 @@ final class ProtectedProductMetaTest extends TestCase {
 	private const LINK   = ProtectedProductMeta::LINK_KEY;
 	private const SOURCE = ProtectedProductMeta::SOURCE_KEY;
 
+	/**
+	 * Previous global database connection.
+	 *
+	 * @var mixed
+	 */
+	private mixed $previous_wpdb;
+
 	private RecordingLogger $logger;
 
 	private ProtectedProductMeta $guard;
@@ -47,6 +55,9 @@ final class ProtectedProductMetaTest extends TestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
+		$this->previous_wpdb = $GLOBALS['wpdb'] ?? null;
+		$GLOBALS['wpdb']     = new RecordingWpdb(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Database collision check double.
+
 		$this->logger = new RecordingLogger();
 		$this->guard  = new ProtectedProductMeta( $this->logger );
 		$this->rows   = array(
@@ -66,6 +77,22 @@ final class ProtectedProductMetaTest extends TestCase {
 
 		Functions\when( 'plugin_basename' )->alias( static fn( string $file ): string => ltrim( str_replace( '/plugins/', '', $file ), '/' ) );
 		Functions\when( 'get_metadata_by_mid' )->alias( fn( string $type, int $id ): object|false => 'post' === $type ? ( $this->rows[ $id ] ?? false ) : false );
+	}
+
+	protected function tearDown(): void {
+		$GLOBALS['wpdb'] = $this->previous_wpdb; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restore the previous connection.
+		parent::tearDown();
+	}
+
+	public function test_collation_collisions_and_database_errors_fail_closed(): void {
+		$wpdb      = $GLOBALS['wpdb'];
+		$wpdb->var = '100';
+		self::assertFalse( $this->guard->filter_update( null, 10, '_merchboard_créator_id' ) );
+		self::assertFalse( $this->guard->filter_delete( null, 10, '_merchboard_créator_id' ) );
+
+		$wpdb->var        = null;
+		$wpdb->last_error = 'unavailable';
+		self::assertFalse( $this->guard->filter_add( null, 10, '_ordinary' ) );
 	}
 
 	/**

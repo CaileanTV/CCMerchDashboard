@@ -21,8 +21,8 @@ defined( 'ABSPATH' ) || exit;
  * products (`post_type = 'product'`, so never variations) with status
  * `publish` or `private` that have exactly one creator link entry, and that
  * entry is the creator's id. The rule mirrors ProductRecord::creator_id(): a
- * product with several link entries (also another spelling of the key, which
- * MySQL compares case-insensitively) or an entry that is not exactly the id
+ * product with several link entries (including ASCII case variants and
+ * padded keys) or an entry that is not exactly the id
  * belongs to nobody, so it is never listed for any creator. The value is
  * compared byte for byte, so "12 " or "012" never match creator 12.
  *
@@ -41,10 +41,10 @@ final class CreatorProducts {
 	private const FROM_WHERE = "FROM %i p
 		WHERE p.post_type = 'product'
 		AND p.post_status IN ('publish', 'private')
-		AND ( SELECT COUNT(*) FROM %i lc WHERE lc.post_id = p.ID AND lc.meta_key = %s ) = 1
+		AND ( SELECT COUNT(*) FROM %i lc WHERE lc.post_id = p.ID AND OCTET_LENGTH( lc.meta_key ) = CHAR_LENGTH( lc.meta_key ) AND CAST( LOWER( TRIM( lc.meta_key ) ) AS BINARY ) = CAST( %s AS BINARY ) ) = 1
 		AND EXISTS (
 			SELECT 1 FROM %i lm
-			WHERE lm.post_id = p.ID AND lm.meta_key = %s AND CAST( lm.meta_value AS BINARY ) = CAST( %s AS BINARY )
+			WHERE lm.post_id = p.ID AND CAST( lm.meta_key AS BINARY ) = CAST( %s AS BINARY ) AND CAST( lm.meta_value AS BINARY ) = CAST( %s AS BINARY )
 		)";
 
 	/**

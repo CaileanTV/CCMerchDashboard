@@ -317,7 +317,7 @@ final class WooCommerceProductStore implements ProductStore {
 		$wpdb = $this->wpdb;
 		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Verification read of the rows just written; a cache would defeat it.
 			$wpdb->prepare(
-				'SELECT meta_key, meta_value FROM %i WHERE post_id = %d AND LOWER(TRIM(meta_key)) IN (%s, %s) ORDER BY meta_key',
+				'SELECT meta_key, meta_value FROM %i WHERE post_id = %d AND OCTET_LENGTH( meta_key ) = CHAR_LENGTH( meta_key ) AND CAST( LOWER( TRIM( meta_key ) ) AS BINARY ) IN ( CAST( %s AS BINARY ), CAST( %s AS BINARY ) ) ORDER BY meta_key',
 				$wpdb->postmeta,
 				$product_id,
 				ProductCreatorLink::META_KEY,
