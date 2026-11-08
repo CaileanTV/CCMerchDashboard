@@ -111,6 +111,13 @@ final class SalesLinePricingBackfillTest extends IntegrationTestCase {
 		);
 	}
 
+	protected function tearDown(): void {
+		// The linked products would show up for a later test's creator with the same id.
+		$this->posts->remove_all();
+		wp_set_current_user( 0 );
+		parent::tearDown();
+	}
+
 	public function test_the_creator_page_shows_the_lines_and_its_form_fills_them_in(): void {
 		$kenny   = $this->creator( 'Kenny' );
 		$missing = $this->order( $kenny, false );
