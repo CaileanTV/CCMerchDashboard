@@ -14,6 +14,8 @@
 | E2E | Playwright via `wp-scripts test-e2e` mod Playground | Login-flow, adgangskontrol og kritiske dashboard-flows | Efter MVP | CI |
 | Manuel | Tjekliste i PR/fase-afslutning | UX, responsivitet og tilgængelighed | Hver fase | Lokalt (`npm run wp:start`) |
 
+**CI og docs (projektejerens valg 2026-11-08):** en commit eller pull request, der kun ændrer `docs/**` eller `.md`-filer, starter ingen CI (`paths-ignore` i `.github/workflows/ci.yml`). Et tag kører altid alle checks gennem `release.yml`, før det pakkes.
+
 **Unit-tests fra fase 2:** `Container`, `Autoloader` (inkl. afvisning af path traversal i klassenavne), `Requirements` (versionstjek og escaped notice kun for admins) og `Plugin` (hooks, modul-boot, validering af filter-output, idempotens og HPOS-erklæring i separat proces). Kør med `npm test`.
 
 **Unit-tests fra fase 3 (databasefundament):**

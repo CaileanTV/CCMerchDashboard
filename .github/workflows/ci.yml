@@ -1,9 +1,18 @@
 name: CI
 
 on:
+  # A commit that only changes documentation changes nothing these checks
+  # test, so it runs no CI (the owner's choice 2026-11-08: no 30 minutes for
+  # a docs commit). A tag always runs every check through release.yml.
   push:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
   # The release workflow runs the same checks before it packages a tag.
   workflow_call:
 
