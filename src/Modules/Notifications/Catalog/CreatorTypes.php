@@ -101,9 +101,15 @@ final class CreatorTypes {
 	 * @param NotificationData $d Data.
 	 */
 	private static function field( NotificationData $d ): string {
-		$field = ProposalField::tryFrom( $d->text( 'field' ) );
+		$names = array();
 
-		return null === $field ? $d->text( 'field' ) : ProposalLabels::field( $field );
+		// "Approve all" names every field in one notification (keys separated by commas).
+		foreach ( explode( ',', $d->text( 'field' ) ) as $key ) {
+			$field   = ProposalField::tryFrom( trim( $key ) );
+			$names[] = null === $field ? trim( $key ) : ProposalLabels::field( $field );
+		}
+
+		return implode( ', ', array_filter( $names ) );
 	}
 
 	/**

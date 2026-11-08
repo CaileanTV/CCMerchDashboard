@@ -290,11 +290,12 @@ final class CategoryProposals {
 	 * Approves a pending proposal: the value is written to the creator (the
 	 * name) and its category.
 	 *
-	 * @param int $proposal_id Proposal id.
+	 * @param int  $proposal_id Proposal id.
+	 * @param bool $notify      Whether the creator is told now; "Approve all" tells once for all (notify_approved()).
 	 * @throws CategoryProposalException When the current user may not, the proposal is not pending, or it cannot be written (no category, banner plugin missing).
 	 * @throws DatabaseException When it cannot be written (nothing is kept).
 	 */
-	public function approve( int $proposal_id ): CategoryProposal {
+	public function approve( int $proposal_id, bool $notify = true ): CategoryProposal {
 		[ $proposal, $creator ] = $this->decidable( $proposal_id );
 		$field                  = $proposal->field;
 		$category               = null;
@@ -309,7 +310,7 @@ final class CategoryProposals {
 					self::refuse( CategoryProposalException::NO_CATEGORY );
 				}
 
-				return $this->accept( $proposal, $creator );
+				return $this->accept( $proposal, $creator, $notify );
 			}
 		} elseif ( null !== $this->target() ) {
 			$category = $this->category( $creator->id );
@@ -389,9 +390,38 @@ final class CategoryProposals {
 			$this->release_image( $replaced );
 		}
 
-		do_action( 'merchboard_notify', 'proposal_approved', $creator->id, array( 'field' => $field->value ), 'proposal:' . $proposal->id );
+		if ( $notify ) {
+			$this->notify_approved( $creator->id, array( $field->value ), false, $proposal->id );
+		}
 
 		return $this->proposals->find( $proposal->id ) ?? self::fail( 'Approved category proposal could not be read back.' );
+	}
+
+	/**
+	 * Tells the creator that proposals were approved: one notification (bell
+	 * and e-mail) naming every field, also for "Approve all", so a creator
+	 * with many proposals gets one e-mail (the owner's choice 2026-11-08).
+	 *
+	 * @param int      $creator_id Creator.
+	 * @param string[] $fields     The approved fields (ProposalField values).
+	 * @param bool     $go_live    Whether they wait for go-live (ADR-101).
+	 * @param int      $first_id   The first proposal (the notification's key).
+	 */
+	public function notify_approved( int $creator_id, array $fields, bool $go_live, int $first_id ): void {
+		if ( array() === $fields ) {
+			return;
+		}
+
+		do_action(
+			'merchboard_notify',
+			'proposal_approved',
+			$creator_id,
+			array(
+				'field'   => implode( ',', $fields ),
+				'go_live' => $go_live,
+			),
+			'proposal:' . $first_id
+		);
 	}
 
 	/**
@@ -442,10 +472,11 @@ final class CategoryProposals {
 	 *
 	 * @param CategoryProposal $proposal The pending proposal.
 	 * @param Creator          $creator  Its creator (not live, no category).
+	 * @param bool             $notify   Whether the creator is told now.
 	 * @throws CategoryProposalException When it is no longer pending.
 	 * @throws DatabaseException When it cannot be stored (nothing is kept).
 	 */
-	private function accept( CategoryProposal $proposal, Creator $creator ): CategoryProposal {
+	private function accept( CategoryProposal $proposal, Creator $creator, bool $notify ): CategoryProposal {
 		$earlier = null;
 
 		$this->transaction->run(
@@ -480,16 +511,9 @@ final class CategoryProposals {
 			$this->files->delete( $file );
 		}
 
-		do_action(
-			'merchboard_notify',
-			'proposal_approved',
-			$creator->id,
-			array(
-				'field'   => $proposal->field->value,
-				'go_live' => true,
-			),
-			'proposal:' . $proposal->id
-		);
+		if ( $notify ) {
+			$this->notify_approved( $creator->id, array( $proposal->field->value ), true, $proposal->id );
+		}
 
 		return $this->proposals->find( $proposal->id ) ?? self::fail( 'Approved category proposal could not be read back.' );
 	}

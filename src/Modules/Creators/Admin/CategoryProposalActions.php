@@ -127,6 +127,8 @@ final class CategoryProposalActions {
 			$shown   = array_map( 'absint', explode( ',', self::scalar( $input, self::SHOWN_FIELD ) ) );
 			$skipped = 0;
 			$waiting = 0;
+			$fields  = array();
+			$first   = 0;
 			$reason  = CategoryProposalException::NOT_PENDING;
 
 			// Each on its own: one that cannot be approved does not stop the others.
@@ -137,14 +139,20 @@ final class CategoryProposalActions {
 				}
 
 				try {
-					// Before go-live they wait for the category (ADR-101).
-					$waiting += ProposalStatus::Accepted === $this->proposals->approve( $proposal->id )->status ? 1 : 0;
+					// Each on its own, told to the creator once below (one e-mail for all).
+					$decided  = $this->proposals->approve( $proposal->id, false );
+					$waiting += ProposalStatus::Accepted === $decided->status ? 1 : 0;
+					$fields[] = $decided->field->value;
+					$first    = 0 === $first ? $decided->id : $first;
 					++$approved;
 				} catch ( CategoryProposalException $e ) {
 					++$skipped;
 					$reason = $e->reason();
 				}
 			}
+
+			// Before go-live they wait for the category (ADR-101).
+			$this->proposals->notify_approved( $id, $fields, $approved > 0 && $waiting === $approved, $first );
 
 			if ( 0 === $skipped ) {
 				return self::result( $approved > 0 ? ( $waiting === $approved ? 'accepted_all' : 'approved_all' ) : CategoryProposalException::NOT_PENDING );

@@ -5824,6 +5824,7 @@ Go-live (ADR-093) krævede en overkategori under Indstillinger → Aftale og afv
 4. **Et senere godkendt forslag** til samme felt erstatter et ventende godkendt (`replaced`); et nyt forslag, der afvises, rører det ikke.
 5. **Creatoren** ser "Godkendt – vises, når din shop går live." ved feltet. En creator, der er live uden kategori (fx manuelt oprettet), får som før "ingen kategori".
 6. **Bannerteksten** i dashboardet siger, at banneret vises i sin helhed og ikke beskæres (projektejerens ønske).
+7. **Én mail ved "Godkend alle":** godkender administratoren alle en creators forslag på én gang, får creatoren én notifikation (klokke og mail), der nævner alle felterne, i stedet for én pr. forslag (projektejerens ønske 2026-11-08, for at undgå spam). En enkelt godkendelse giver som før én notifikation.
 
 ## Alternatives considered
 - **Behold overkategori som krav:** fravalgt af projektejeren.

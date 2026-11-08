@@ -260,7 +260,8 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 3. **Go-live uden overkategori:** sæt "Overkategori for creators" til "— Ingen (øverste niveau) —" under Indstillinger → Aftale. Godkend en testcreators go-live: kategorien oprettes på øverste niveau.
 4. **Kategoriforslag før go-live:** lad en testcreator, der ikke er live, foreslå fx en beskrivelse og et banner. Godkend dem: de står under "Godkendt, venter på go-live", og creatoren ser "Godkendt – vises, når din shop går live." Godkend go-live: værdierne står på den nye kategori.
 5. **Banner:** profilsiden siger, at banneret vises i sin helhed og ikke beskæres.
-6. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+6. **Én mail:** lad en testcreator foreslå flere felter, og tryk "Godkend alle". Creatoren får én mail, der nævner alle felterne.
+7. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
 
 **Tilbagerulning:** installér 1.7.4-ZIP'en igen. Forslag med status `accepted` ignoreres af 1.7.4 (de vises hverken som ventende eller godkendte), og go-live kræver igen en overkategori.
 

@@ -12,6 +12,7 @@ namespace MerchBoard\Tests\Integration\Creators;
 use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Audit\AuditTrail;
+use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Creators\Admin\CategoryProposalActions;
@@ -130,6 +131,10 @@ final class CategoryProposalsAdminTest extends IntegrationTestCase {
 		self::assertSame( array( 'Nova Live', 'New story' ), array( $this->term_object()->name, $this->term_object()->description ) );
 		self::assertGreaterThan( 0, (int) get_term_meta( $this->term, 'ccm_banner_id', true ) );
 		self::assertStringContainsString( 'No proposals are waiting.', $this->render_page() );
+
+		$approved = array_values( array_filter( $this->rows( Tables::NOTIFICATIONS ), static fn( array $row ): bool => 'proposal_approved' === $row['type'] ) );
+		self::assertCount( 1, $approved, 'One notification (one e-mail) for all, not one per proposal.' );
+		self::assertCount( count( $ids ), explode( ',', (string) ( json_decode( (string) $approved[0]['data'], true )['field'] ?? '' ) ), 'It names every field.' );
 	}
 
 	public function test_approve_all_never_approves_a_proposal_the_page_did_not_show(): void {

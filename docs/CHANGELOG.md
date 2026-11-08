@@ -19,6 +19,7 @@ Fase 38: rettelse af go-live uden overkategori og kategoriforslag før go-live. 
 ### Changed
 
 - Bannerteksten i dashboardet siger, at banneret vises i sin helhed og ikke beskæres.
+- **"Godkend alle" sender én mail:** creatoren får én notifikation, der nævner alle de godkendte felter, i stedet for én pr. forslag.
 
 ## [1.7.4] - 2026-11-08
 

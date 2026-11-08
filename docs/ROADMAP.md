@@ -1042,7 +1042,8 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **38.2 Overkategori ✅:** valgfri; uden en ligger kategorien på øverste niveau.
 - **38.3 Forslag ✅:** status `accepted`, skrivning ved go-live, "Skriv på kategorien", creatorens note.
 - **38.4 Tekster ✅:** danske oversættelser, også bannerteksten.
-- **38.5 Tests ✅:** integration (go-live uden overkategori, forslag før go-live) og Jest (profilen).
+- **38.5 Tests ✅:** integration (go-live uden overkategori, forslag før go-live, én notifikation ved "Godkend alle") og Jest (profilen).
+- **38.7 Én mail ved "Godkend alle" ✅ (2026-11-08):** projektejerens ønske, med i 1.7.5.
 - **38.6 Review og testpakke:** uafhængigt review ✅ (rettelser i statusnoten i ADR-101), bump 1.7.5 (2026-11-08), CI og testpakke til staging; tag efter projektejerens OK. Se DEVELOPMENT.md "Release 1.7.5".
 
 ## Senere (uprioriteret)
