@@ -143,6 +143,22 @@ describe( 'templateFromPsd', () => {
 		] ).toEqual( [ 100, 100, 0 ] );
 	} );
 
+	it( 'reads the optional cutout (ADR-099)', () => {
+		const template = templateFromPsd(
+			psd( [
+				layer( 'mb_background', [ 0, 0, 10, 8 ] ),
+				layer( 'mb_cutout', [ 4, 2, 1, 4 ], [ 0, 0, 0, 255 ] ),
+			] )
+		);
+
+		expect( Object.keys( template.layers ) ).toEqual( [
+			'background',
+			'cutout',
+		] );
+		expect( alpha( template.layers.cutout!.data, 4, 3 ) ).toBe( 255 );
+		expect( alpha( template.layers.cutout!.data, 0, 0 ) ).toBe( 0 );
+	} );
+
 	it( 'leaves the print area to the form when the PSD has none', () => {
 		expect(
 			templateFromPsd( psd( [ layer( 'mb_color', [ 0, 0, 10, 8 ] ) ] ) )

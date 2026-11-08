@@ -2193,6 +2193,15 @@ input:disabled + .merchboard-sounds__upload {
 	user-select: none;
 }
 
+// The product in front of the design where the side's cutout is (ADR-099).
+.merchboard-product-designer__cutout {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	mask-repeat: no-repeat;
+	mask-size: 100% 100%;
+}
+
 .merchboard-product-designer__canvas {
 	position: absolute;
 	inset: 0;

@@ -254,6 +254,8 @@ export async function composeMockup(
 		context.drawImage( images.background, 0, 0, view.width, view.height );
 	}
 
+	let tinted: HTMLCanvasElement | null = null;
+
 	if ( images.color !== undefined ) {
 		const mask = surface( view.width, view.height );
 
@@ -266,6 +268,7 @@ export async function composeMockup(
 		mask.context.fillStyle = color;
 		mask.context.fillRect( 0, 0, view.width, view.height );
 		context.drawImage( mask.canvas, 0, 0 );
+		tinted = mask.canvas;
 	}
 
 	// The print file on the print area at the editor's scale (by width).
@@ -293,6 +296,36 @@ export async function composeMockup(
 			view.printWidth * scale,
 			view.printHeight * scale
 		);
+	}
+
+	// The product in front of the design where the side's cutout is (ADR-099).
+	if ( images.cutout !== undefined ) {
+		const front = surface( view.width, view.height );
+
+		if ( front === null ) {
+			return null;
+		}
+
+		front.context.fillStyle = '#ffffff';
+		front.context.fillRect( 0, 0, view.width, view.height );
+
+		if ( images.background !== undefined ) {
+			front.context.drawImage(
+				images.background,
+				0,
+				0,
+				view.width,
+				view.height
+			);
+		}
+
+		if ( tinted !== null ) {
+			front.context.drawImage( tinted, 0, 0 );
+		}
+
+		front.context.globalCompositeOperation = 'destination-in';
+		front.context.drawImage( images.cutout, 0, 0, view.width, view.height );
+		context.drawImage( front.canvas, 0, 0 );
 	}
 
 	if ( images.shading !== undefined ) {

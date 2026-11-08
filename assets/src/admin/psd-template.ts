@@ -5,8 +5,8 @@
  * images of the document, which the base products form uploads as PNG
  * layers, and `mb_print_area` gives the print area.
  *
- * - `mb_background`, `mb_color` (the colour mask), `mb_shading` and
- *   `mb_highlight` are found anywhere in the layer tree, by name (trimmed,
+ * - `mb_background`, `mb_color` (the colour mask), `mb_shading`,
+ *   `mb_highlight` and `mb_cutout` (optional, ADR-099) are found anywhere in the layer tree, by name (trimmed,
  *   any case), hidden or not; each may appear only once.
  * - `mb_print_area` is a rectangle drawn on its own layer; the print area is
  *   the box of its visible pixels.
@@ -23,6 +23,7 @@ export const LAYERS = [
 	'color',
 	'shading',
 	'highlight',
+	'cutout',
 ] as const;
 
 export type LayerKind = ( typeof LAYERS )[ number ];

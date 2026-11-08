@@ -20,6 +20,8 @@ export const LAYERS = [
 	'color',
 	'shading',
 	'highlight',
+	// Where it is opaque, the product lies in front of the design (ADR-099).
+	'cutout',
 ] as const;
 
 export type LayerKind = ( typeof LAYERS )[ number ];

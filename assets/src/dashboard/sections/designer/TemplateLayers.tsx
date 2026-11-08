@@ -2,7 +2,9 @@
  * The mockup template around the design (phase 30, step 30.8): the
  * background and the colour mask, tinted in the chosen product colour, under
  * the design; the shading (multiplied) and the highlight (screened) over it,
- * so the design follows the folds. A flat side's shading is its sewing
+ * so the design follows the folds. Where the side's cutout is opaque, the
+ * under part is drawn again over the design (ADR-099: e.g. a hoodie's
+ * strings in front). A flat side's shading is its sewing
  * pattern, drawn normally: its veil covers what falls outside the part. Only
  * `data:` images (the dashboard's CSP); the layers above never take the
  * pointer.
@@ -66,12 +68,19 @@ export function TemplateLayers( props: TemplateLayersProps ) {
 		own !== undefined || view.layers.color === undefined
 			? undefined
 			: images.get( view.layers.color );
+	const cutout =
+		view.layers.cutout === undefined
+			? undefined
+			: images.get( view.layers.cutout );
 	const [ tinted, setTinted ] = useState< string | null >( null );
 
 	useEffect( () => {
 		let current = true;
 
-		if ( part !== 'under' || mask === undefined ) {
+		if (
+			mask === undefined ||
+			( part === 'over' && cutout === undefined )
+		) {
 			setTinted( null );
 
 			return;
@@ -86,7 +95,7 @@ export function TemplateLayers( props: TemplateLayersProps ) {
 		return () => {
 			current = false;
 		};
-	}, [ mask, color, part ] );
+	}, [ mask, color, part, cutout ] );
 
 	const layer = ( id: number | undefined, blend?: 'multiply' | 'screen' ) => {
 		const url = id === undefined ? undefined : images.get( id );
@@ -103,7 +112,7 @@ export function TemplateLayers( props: TemplateLayersProps ) {
 		);
 	};
 
-	return part === 'under' ? (
+	const under = (
 		<>
 			{ layer( own ?? view.layers.background ) }
 			{ tinted === null || own !== undefined ? null : (
@@ -114,8 +123,23 @@ export function TemplateLayers( props: TemplateLayersProps ) {
 				/>
 			) }
 		</>
+	);
+
+	return part === 'under' ? (
+		under
 	) : (
 		<>
+			{ cutout === undefined ? null : (
+				<div
+					className="merchboard-product-designer__cutout"
+					style={ {
+						maskImage: `url(${ cutout })`,
+						WebkitMaskImage: `url(${ cutout })`,
+					} }
+				>
+					{ under }
+				</div>
+			) }
 			{ layer( view.layers.shading, view.flat ? undefined : 'multiply' ) }
 			{ layer( view.layers.highlight, 'screen' ) }
 		</>

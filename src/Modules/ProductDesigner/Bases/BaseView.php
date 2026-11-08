@@ -45,9 +45,17 @@ defined( 'ABSPATH' ) || exit;
 final readonly class BaseView {
 
 	/**
-	 * The template layers, in the order they are drawn.
+	 * The template layers: the background and the colour mask under the
+	 * design, the shading and the highlight over it, and the cutout (ADR-099):
+	 * where it is opaque, the product lies in front of the design (e.g. the
+	 * strings of a hoodie). The cutout alone is no template.
 	 */
-	public const LAYERS = array( 'background', 'color', 'shading', 'highlight' );
+	public const LAYERS = array( 'background', 'color', 'shading', 'highlight', 'cutout' );
+
+	/**
+	 * The cutout layer (ADR-099): not part of what a design was made on.
+	 */
+	public const CUTOUT = 'cutout';
 
 	/**
 	 * The prefix of a colour's own background (`background:<colour key>`):

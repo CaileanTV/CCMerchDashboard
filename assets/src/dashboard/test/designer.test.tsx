@@ -158,6 +158,23 @@ describe( 'the designer API', () => {
 				],
 			} )?.bases[ 0 ]?.views[ 0 ]
 		).toMatchObject( { layers: { color: 7 }, backgrounds: { black: 8 } } );
+		// The cutout of ADR-099 is a layer like the others.
+		expect(
+			parseOverview( {
+				...OVERVIEW,
+				bases: [
+					{
+						...OVERVIEW.bases[ 0 ],
+						views: [
+							{
+								...OVERVIEW.bases[ 0 ]?.views[ 0 ],
+								layers: { color: 7, cutout: 9 },
+							},
+						],
+					},
+				],
+			} )?.bases[ 0 ]?.views[ 0 ]?.layers
+		).toEqual( { color: 7, cutout: 9 } );
 		expect( overview?.fonts ).toEqual( [
 			{ family: 'Roboto', weights: [ 400, 700 ] },
 		] );
