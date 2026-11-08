@@ -1016,7 +1016,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **36.5 Tekster ✅:** danske oversættelser.
 - **36.6 Tests ✅:** Jest for popuppen, skærmen ved 0, produktfanen og galleriet.
 - **36.7 Review og tjek ✅ (2026-11-08):** uafhængigt review (rettelser: se statusnoten i ADR-098), lint, test og build, layout set i headless Chrome. Projektejeren har testet på Local og godkendt ("Dette er OK").
-- **36.8 Release 1.7.3:** efter projektejerens OK.
+- **36.8 Release 1.7.3:** projektejerens OK 2026-11-08 ("Dette er OK - så du må gerne commit og bumpe til 1.7.3"); se DEVELOPMENT.md "Release 1.7.3".
 
 ## Senere (uprioriteret)
 

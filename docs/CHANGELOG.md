@@ -4,6 +4,20 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.7.3] - 2026-11-08
+
+Fase 36: "Send til godkendelse" som popup. Ingen schemaændring og ingen serverændring (schema-version 47; ingen migration og ingen manuelle trin). Fase 36 er reviewet uafhængigt og testet af projektejeren på Local 2026-11-08. Opdateringen står i DEVELOPMENT.md ("Release 1.7.3").
+
+### Changed
+
+- **"Send til godkendelse" åbner en popup (ADR-098):** creatoren vælger farvernes rækkefølge og det primære produktbillede i shoppen (galleriet) og ser antal billeder og den højeste kundepris. Er fortjenesten 0, spørger popuppen først: "Ja, send uden fortjeneste" eller "Tilbage og sæt fortjeneste".
+- **Produktfanen i designeren:** uden pile og produktbillede, med "Design pr. farve" ved flere farver. Indholdet blev skåret af til højre; det er rettet.
+- **Live produkter:** det store billede under "Produktbillede" viser "Hovedbillede i shoppen: …".
+
+### Fixed
+
+- Tastetryk i en popup i dashboardet nåede siden bag den, så fx Delete og Ctrl+Z kunne ændre designet under en popup.
+
 ## [1.7.2] - 2026-11-08
 
 Tekster på tilmeldingssiden (ROADMAP 35.7). Ingen schemaændring (schema-version 47; ingen migration og ingen manuelle trin). Opdateringen står i DEVELOPMENT.md ("Release 1.7.2").

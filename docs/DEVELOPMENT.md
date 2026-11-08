@@ -247,6 +247,23 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.7.3: "Send til godkendelse" som popup (fase 36)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-08** efter projektejerens OK på Local ("Dette er OK - så du må gerne commit og bumpe til 1.7.3"). Tag og SHA-256 noteres her, når draft-releasen er bygget.
+- Fase 36 er reviewet uafhængigt (rettelser i statusnoten i ADR-098) og testet af projektejeren på Local.
+- CI skal være grøn med hele integrationssuiten på den taggede commit.
+
+**Ingen schemaændring og ingen serverændring:** schema-version 47 som i 1.7.2. Kun dashboardet (JavaScript og CSS) og tekster ændres.
+
+Tagget giver en draft-release. Projektejeren tester den på staging og udgiver den. AI-agenter har ingen adgang til produktion.
+
+1. **Backup:** tag backup af filer og database via hostingen. Notér den installerede version.
+2. **Opdatér** med release-ZIP'en ("Erstat nuværende med uploadet"). Overview skal vise version 1.7.3 og schema-version 47 uden advarsler.
+3. **Designeren:** åbn et design med flere farver. Produktfanen må ikke skære noget af og har "Design pr. farve". "Send til godkendelse" åbner popuppen med rækkefølge og galleri. Med fortjeneste 0 spørger "Send" først.
+4. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 1.7.2-ZIP'en igen. Intet er gemt anderledes.
+
 ## Release 1.7.2: tekster på tilmeldingssiden (ROADMAP 35.7)
 
 **Versions-bump og CHANGELOG-sektion og tagget `v1.7.2` (begge på `b329416`) 2026-11-08** efter projektejerens ønske om at bumpe direkte, så den fulde CI kører på bump-commit'en. CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `3c8fc76967da24f1e1547082424d4d1e51bc6ed7c79b61d1c9602f53c0483dda`).
