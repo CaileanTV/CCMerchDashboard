@@ -121,7 +121,7 @@ Merch Dashboard → **Grundprodukter** (`BaseProductsPage`/`BaseProductActions`,
 - **Formular:**
   - navn, beskrivelse, grundpris inkl. moms i butikkens valuta og præcision og standardkategori (til creators uden egen kategori);
   - farver (én pr. linje: navn og `#rrggbb`) og størrelser (adskilt med komma);
-  - sider: navn, fire PNG-lag (baggrund, farvemaske, skygge, highlight) i samme størrelse og printområdet i skabelonens px samt printstørrelsen i mm ved en dpi (72–600). Siden viser printfilens størrelse i px.
+  - sider: navn, fire PNG-lag (baggrund, farvemaske, skygge, highlight) og eventuelt en udskæring (fx hoodiesnore, der skal ligge foran designet; ADR-099) i samme størrelse og printområdet i skabelonens px samt printstørrelsen i mm ved en dpi (72–600). Siden viser printfilens størrelse i px.
 - **Status:** et nyt grundprodukt er en kladde. "Aktivér" kræver mindst én farve, størrelse og side; "Tilbage til kladde" stopper nye designs, men rører ikke produkter i butikken. Et grundprodukt med designs kan ikke slettes (pensionering kommer i 30.11).
 - **Version:** ny grundpris eller ny skabelon/printområde hæver `version` (genprisning i 30.11).
 - **Fanen "Kliparts":** upload (PNG, JPG eller WebP) med navn og sletning.

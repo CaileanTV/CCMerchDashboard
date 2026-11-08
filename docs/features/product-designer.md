@@ -50,7 +50,7 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 
 ## Godkendelse og butikken (trin 30.10)
 - Admin godkender eller afviser under **Designs**. En afvisning kræver en note; creatoren får den (mail og klokke) og ser den over designeren, og designet er en kladde igen.
-- Et godkendt design lægges i butikken i baggrunden: et variabelt produkt med farve × størrelse, mockups som billeder, kategori (creatorens, ellers grundproduktets) og prisen ud fra grundprisen, når det lægges i butikken (fra 30.11). Første gang udgives det; creatoren får "godkendt og i butikken".
+- Et godkendt design lægges i butikken i baggrunden: et variabelt produkt med farve × størrelse, mockups som billeder, kategori (creatorens, ellers grundproduktets), grundproduktets produkttags (ADR-100; tags sat i hånden bevares, og ændres grundproduktets tags, opdateres produkterne i butikken i baggrunden) og prisen ud fra grundprisen, når det lægges i butikken (fra 30.11). Første gang udgives det; creatoren får "godkendt og i butikken".
 - Går det galt (fx butikken bruger priser ekskl. moms), står årsagen under Designs med **Prøv igen**, og admin får en mail. Intet i butikken ændres halvt: næste forsøg fortsætter, hvor det stoppede. Er et forsøg gået i stå i mere end 10 minutter, kan det også prøves igen. Et nyt produkt bliver først synligt i butikken, når prisen til afregningen er gemt (review 30.15).
 - **Ændringer:** et produkt i butikken har **Lav en ændring** i designeren. Ændringen sendes som et nyt design; butikken viser den godkendte version, til ændringen er godkendt. Udgåede farver/størrelser skjules (varianterne slettes aldrig).
 - **Printfiler:** på ordren under hver designer-linje (den solgte version) og i boksen "Produktdesigner" på produktet. Kun admin kan hente dem.
@@ -71,9 +71,10 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
   - Skabelonen kan importeres fra en PSD med lagene `mb_background`, `mb_color`, `mb_shading`, `mb_highlight` og `mb_print_area`. AI-filer eksporteres først til PSD.
 - **Kliparts og startdesigns**, som creatorne kan bruge.
 - **Implementeret (trin 30.6):** Merch Dashboard → Produktdesigner → Grundprodukter med fanen Kliparts. Skabelonen udfyldes i formularen med PNG-lag og printområde.
+- **Udskæring (fase 37, ADR-099):** hver side kan få laget "Udskæring", en PNG i skabelonens størrelse (fx en mask.png med snorene på en hoodie). Hvor den er uigennemsigtig, vises produktfotoet foran designet, på lærredet og i alle mockups, browseren tegner. Printfilen er uændret, og laget gør ingen ventende designs forældede.
 - **PSD-import (trin 30.7):** "Importér fra PSD" pr. side. Sådan laves PSD'en (projektejeren):
   1. Ét dokument pr. side i skabelonens størrelse (fx 2000 × 2000 px), 8 bit pr. kanal (Billede → Tilstand → 8 bit/kanal). AI-filer eksporteres først til PSD.
-  2. Lagene navngives præcis: `mb_background` (fotoet uden produktets farve), `mb_color` (produktets form som maske; farves i hver produktfarve), `mb_shading` (folder og skygger, ganges på), `mb_highlight` (lys, lægges ovenpå). Mindst `mb_background` eller `mb_color` skal findes. Lagene må gerne ligge i grupper.
+  2. Lagene navngives præcis: `mb_background` (fotoet uden produktets farve), `mb_color` (produktets form som maske; farves i hver produktfarve), `mb_shading` (folder og skygger, ganges på), `mb_highlight` (lys, lægges ovenpå) og eventuelt `mb_cutout` (udskæring: hvor laget er uigennemsigtigt, ligger produktet foran designet, fx snore på en hoodie; ADR-099). Mindst `mb_background` eller `mb_color` skal findes. Lagene må gerne ligge i grupper.
   3. `mb_print_area`: et fyldt rektangel, hvor designet må stå.
   4. Vælg PSD'en i feltet, tjek forhåndsvisningen efter gem, og angiv printstørrelsen i mm og dpi (fx 300 × 400 mm ved 300 dpi).
   - Lagenes opacitet bruges; blend modes og lageffekter gør ikke (designeren ganger skygge og lægger highlight ovenpå selv). Flad effekter ud i laget, hvis de skal med.

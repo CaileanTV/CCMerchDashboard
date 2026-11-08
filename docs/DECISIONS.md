@@ -5731,3 +5731,75 @@ Kun browseren ændres. Serveren validerer stadig rækkefølge, farver og hovedbi
 
 ## Related
 ADR-080, ADR-081, ADR-096
+
+# ADR-099: Udskæring på en side, så fx hoodiesnore ligger foran designet
+
+## Date
+2026-11-08
+
+## Status
+Accepteret af projektejeren 2026-11-08 (fase 37, plan godkendt samme dag). Udgives i 1.7.4.
+
+## Context
+På hoodies hænger snorene foran trykket. Projektejeren havde før en maske (`Mask.png`: gennemsigtig med uigennemsigtige sorte streger, hvor snorene er), så snorene kom foran designet på billedet. En side har i dag lagene baggrund, farvemaske, skygge og highlight (ADR-080); intet lag dækker designet. Projektejeren vil kunne uploade sådan en maske på admin-siden for alle grundprodukter, så lignende maskeringer altid kan laves (2026-11-08).
+
+## Decision
+1. **Laget "Udskæring" (`cutout`):** et valgfrit PNG-lag pr. side i skabelonens størrelse, uploadet på grundproduktets side som de andre lag (eller `mb_cutout` i en PSD). Hvor laget er uigennemsigtigt, vises produktfotoet (baggrund og farvet farvemaske, eller farvens eget foto) i stedet for designet; skygge og highlight lægges ovenpå som før. Kanterne følger lagets gennemsigtighed. Det gælder alle farver.
+2. **Hvor:** på designerens lærred og i alle mockups, browseren tegner (billederne ved "Send til godkendelse", nærbilleder, galleriet "Primært produktbillede i shoppen" og "Se det færdige produkt" for broderede sider).
+3. **Ikke i printfilen:** trykket er helt; snorene hænger over det. Heller ikke i leverandørernes egne fotos eller i mockup-PSD'er (dér lægges snore som lag over "design"-smart objectet).
+4. **Versionen:** udskæringen er ikke en del af skabelonens version (som `scene.preview`). At tilføje, skifte eller fjerne den gør ingen ventende designs forældede. Godkendte produkter beholder deres billeder; udskæringen kommer med det næste design, der sendes.
+5. **Data:** en ny nøgle i sidens lag i `views`-JSON'en; ingen migration (schema-version 47). En udskæring alene er ikke en skabelon: siden skal stadig have baggrund, farvemaske eller farvefoto.
+
+## Alternatives considered
+- **Et billede af snorene, der lægges ovenpå:** fravalgt; projektejerens maske er en form, og fotoets egne snore passer til hver farve.
+- **Skære snorene ud af printfilen:** fravalgt; produktionen trykker hele motivet.
+- **Fabrics `overlayImage` på lærredet:** fravalgt; lærredets transform er i printfilens pixels. Et lag over lærredet som skygge og highlight er enklere. Markeringshåndtagene kan derfor være skjult, hvor snorene er.
+
+## Reason
+Formen genbruger fotoet under designet, så snorene altid har produktets farve, og laget følger samme upload, størrelseskrav og adgang som de andre lag.
+
+## Security
+Samme regler som de andre lag: PNG, højst 8000 px, samme størrelse som skabelonen, kun `merchboard_manage_designer` uploader, og creatoren henter kun lag fra grundprodukter, de må se.
+
+## Consequences
+- Ingen schema- eller REST-ændring ud over den nye lagnøgle.
+- Eksisterende produktbilleder ændres ikke.
+
+## Related
+ADR-080, ADR-085, ADR-096, ADR-098
+
+# ADR-100: Produkttags fra grundproduktet
+
+## Date
+2026-11-08
+
+## Status
+Accepteret af projektejeren 2026-11-08 (fase 37, plan godkendt samme dag). Udgives i 1.7.4.
+
+## Context
+Nogle funktioner på produktsiden i butikken vælges ud fra WooCommerce-produkttags (`product_tag`). Designerprodukter får i dag kun kategori, billeder, attributter, varianter og pris (ADR-080 pkt. 6); ingen del af pluginet rører tags. Projektejeren vil vælge tags på grundproduktet, så alle dets produkter får dem, også dem der allerede er i butikken, uden at tags sat i hånden forsvinder, og kun admin skal se dem (svar 2026-11-08).
+
+## Decision
+1. **På grundproduktet:** feltet "Produkttags" viser de eksisterende produkttags med afkrydsning. Pluginet opretter, omdøber og sletter aldrig tags (ADR-033). Et ukendt tag afvises (`base_tag`). Ændringen auditeres i `designer_base_changed` og ændrer ikke grundproduktets version.
+2. **Lagring:** `merchboard_designer_bases.tag_ids` (JSON-liste af term-id'er, NULL uden tags; migration 48).
+3. **Butiksproduktet:** ved hver godkendelse får produktet grundproduktets tags. Pluginet husker de tags, det selv har sat (produktmeta `_merchboard_designer_tags`), og fjerner kun dem af dem, grundproduktet ikke har mere. Tags sat i hånden i WooCommerce bevares. Har admin selv sat et tag, som grundproduktet også har, og fjernes det fra grundproduktet, fjernes det også fra produktet.
+4. **Produkter i butikken:** ændres grundproduktets tags, får hvert af dets designerprodukter i butikken de nye tags i baggrunden (et job pr. produkt, med samme lås og guard som omprisningen, ADR-080 pkt. 7). Legacy-produkter og andre produkter røres aldrig.
+5. **Creatoren** ser og vælger ikke tags; de er ikke i REST-svarene.
+
+## Alternatives considered
+- **Tags pr. design ved godkendelsen:** fravalgt af projektejeren; tagget hører til produkttypen.
+- **Overskrive alle tags ved hver godkendelse:** fravalgt; tags sat i hånden ville forsvinde.
+- **Kun nye godkendelser:** fravalgt af projektejeren; eksisterende produkter skal have funktionerne med det samme.
+
+## Reason
+Grundproduktet er det sted, admin allerede styrer produkttypen fra, og den husker-hvad-vi-satte-regel bevarer manuelle tags uden at spore hvert tags kilde.
+
+## Security
+Kun brugere med `merchboard_manage_designer` vælger tags, og kun eksisterende `product_tag`-termer. Writeren skriver kun designerprodukter (ADR-080 pkt. 7).
+
+## Consequences
+- Schema-version 48 (automatisk migration).
+- Ændringer af tags på et grundprodukt med mange produkter kører som baggrundsjob, ét produkt ad gangen.
+
+## Related
+ADR-033, ADR-080, ADR-093, ADR-099

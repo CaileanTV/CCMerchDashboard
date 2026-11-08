@@ -1018,6 +1018,22 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **36.7 Review og tjek ✅ (2026-11-08):** uafhængigt review (rettelser: se statusnoten i ADR-098), lint, test og build, layout set i headless Chrome. Projektejeren har testet på Local og godkendt ("Dette er OK").
 - **36.8 Release 1.7.3 ✅ (2026-11-08):** projektejerens OK ("Dette er OK - så du må gerne commit og bumpe til 1.7.3"). Tag `v1.7.3` på `4853677` (CI grøn), draft-release byte-identisk med den lokale pakke; se DEVELOPMENT.md "Release 1.7.3".
 
+## Fase 37 – Udskæring på en side og produkttags fra grundproduktet 🔄 (plan godkendt 2026-11-08; ADR-099 og ADR-100; udgives i 1.7.4)
+
+**Projektejerens ønske (2026-11-08):** hoodiens snore skal ligge foran designet på billedet, og en mask.png skal kunne uploades på admin-siden, så lignende maskeringer altid kan laves. Desuden skal designerprodukter kunne få WooCommerce-produkttags, valgt på grundproduktet, fordi nogle funktioner på produktsiden vælges ud fra tags; produkter i butikken opdateres, og tags sat i hånden røres ikke.
+
+- **37.1 Docs ✅:** ADR-099, denne fase, product-designer.md og ADMIN.md.
+- **37.2 Server ✅:** lagnøglen `cutout` (upload, størrelse, fjern, adgang) og ingen versionsændring.
+- **37.3 Dashboard ✅:** udskæringen på lærredet og i browserens mockups; PSD-lag `mb_cutout`.
+- **37.4 Tekster ✅:** danske oversættelser.
+- **37.5 Tests ✅:** PHP unit og integration, Jest.
+- **37.6 Review og tjek:** lint, test og build ✅; mockup-sammensætningen set i headless Chrome med projektejerens Mask.png ✅. Uafhængigt review: se 37.11.
+- **37.8 Docs (tags) ✅:** ADR-100, product-designer.md og DATABASE.md.
+- **37.9 Server (tags) ✅:** migration 48 (`tag_ids`), grundproduktets felt, butiksproduktet og baggrundsjobbet.
+- **37.10 Tests (tags) ✅:** unit og integration, migration og schema-version.
+- **37.11 Review:** uafhængigt review af begge dele (kører sideløbende med CI). Projektejeren tester testpakken på staging i stedet for på Local (projektejerens ønske 2026-11-08).
+- **37.7 Release 1.7.4:** bump og testpakke til staging 2026-11-08 (projektejerens ønske); tag efter projektejerens OK fra staging. Se DEVELOPMENT.md "Release 1.7.4".
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |
