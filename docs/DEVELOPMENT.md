@@ -249,7 +249,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.7.4: udskæring og produkttags (fase 37)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-08** efter projektejerens ønske om en testpakke til staging ("vil du så ikke lave en plugin fil klar til mig, så jeg kan køre test på stg"). Der tagges først efter projektejerens OK fra staging; tag og SHA-256 noteres her da.
+**Versions-bump og CHANGELOG-sektion (`361e218`), review-rettelse (`874da79`) og tagget `v1.7.4` (på `874da79`) 2026-11-08.** Testpakken blev bygget efter projektejerens ønske ("vil du så ikke lave en plugin fil klar til mig, så jeg kan køre test på stg") og testet på staging; tagget efter projektejerens OK ("Vi er klar til update"). CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke og med testpakken fra staging (SHA-256 `921b1650c251a65e8d345609fd8246158abfe82090b8fdfc2f104c4e167de6c1`).
 - Fase 37 (ADR-099 og ADR-100) er testet med unit-, integrations- og Jest-tests, og mockup-sammensætningen er set i en headless Chrome med projektejerens `Mask.png`.
 - CI skal være grøn med hele integrationssuiten på den taggede commit.
 

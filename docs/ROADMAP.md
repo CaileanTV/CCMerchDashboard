@@ -1018,7 +1018,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **36.7 Review og tjek ✅ (2026-11-08):** uafhængigt review (rettelser: se statusnoten i ADR-098), lint, test og build, layout set i headless Chrome. Projektejeren har testet på Local og godkendt ("Dette er OK").
 - **36.8 Release 1.7.3 ✅ (2026-11-08):** projektejerens OK ("Dette er OK - så du må gerne commit og bumpe til 1.7.3"). Tag `v1.7.3` på `4853677` (CI grøn), draft-release byte-identisk med den lokale pakke; se DEVELOPMENT.md "Release 1.7.3".
 
-## Fase 37 – Udskæring på en side og produkttags fra grundproduktet 🔄 (plan godkendt 2026-11-08; ADR-099 og ADR-100; udgives i 1.7.4)
+## Fase 37 – Udskæring på en side og produkttags fra grundproduktet ✅ (plan godkendt 2026-11-08; ADR-099 og ADR-100; udgivet i 1.7.4)
 
 **Projektejerens ønske (2026-11-08):** hoodiens snore skal ligge foran designet på billedet, og en mask.png skal kunne uploades på admin-siden, så lignende maskeringer altid kan laves. Desuden skal designerprodukter kunne få WooCommerce-produkttags, valgt på grundproduktet, fordi nogle funktioner på produktsiden vælges ud fra tags; produkter i butikken opdateres, og tags sat i hånden røres ikke.
 
@@ -1032,7 +1032,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **37.9 Server (tags) ✅:** migration 48 (`tag_ids`), grundproduktets felt, butiksproduktet og baggrundsjobbet.
 - **37.10 Tests (tags) ✅:** unit og integration, migration og schema-version.
 - **37.11 Review ✅ (2026-11-08):** uafhængigt review af begge dele; én fejl (lærredets udskæring viste den fælles baggrund i stedet for farvens foto) og tre mindre, rettet; se statusnoten i ADR-099. Projektejeren tester testpakken på staging i stedet for på Local (projektejerens ønske 2026-11-08).
-- **37.7 Release 1.7.4:** bump og testpakke til staging 2026-11-08 (projektejerens ønske); tag efter projektejerens OK fra staging. Se DEVELOPMENT.md "Release 1.7.4".
+- **37.7 Release 1.7.4 ✅ (2026-11-08):** testpakke til staging, testet af projektejeren ("Vi er klar til update"). Tag `v1.7.4` på `874da79` (CI grøn), draft-release byte-identisk med den lokale pakke; se DEVELOPMENT.md "Release 1.7.4".
 
 ## Senere (uprioriteret)
 
