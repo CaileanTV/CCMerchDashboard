@@ -13,6 +13,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Migrations\AddDesignerBaseBackgroundColor;
 use MerchBoard\Core\Database\Migrations\AddDesignerBaseImport;
 use MerchBoard\Core\Database\Migrations\AddDesignerBaseNote;
+use MerchBoard\Core\Database\Migrations\AddDesignerBaseTags;
 use MerchBoard\Core\Database\Migrations\AddDesignerPrimaryImage;
 use MerchBoard\Core\Database\Migrations\AddDesignerExtraSidePrice;
 use MerchBoard\Core\Database\Migrations\AddDesignerSmallSidePrice;
@@ -75,7 +76,7 @@ final class DesignerFoundationTest extends IntegrationTestCase {
 		$unique = array_column( (array) $this->wpdb->get_results( $this->wpdb->prepare( 'SHOW INDEX FROM %i WHERE Non_unique = 0', $this->table( Tables::DESIGNER_VERSIONS ) ), ARRAY_A ), 'Key_name' );
 		self::assertContains( 'pending_key', $unique, 'At most one pending change per designer product.' );
 		self::assertContains( 'product_number', $unique );
-		self::assertSame( 47, (int) get_option( 'merchboard_db_version' ) );
+		self::assertSame( 48, (int) get_option( 'merchboard_db_version' ) );
 	}
 
 	public function test_migration_38_widens_the_provider_template_and_adds_the_import_once(): void {
@@ -130,6 +131,16 @@ final class DesignerFoundationTest extends IntegrationTestCase {
 		self::assertIsArray( $side );
 		self::assertSame( array( 'varchar(64)', 'YES', null ), array( strtolower( $image['Type'] ), $image['Null'], $image['Default'] ) );
 		self::assertSame( array( 'varchar(48)', 'NO' ), array( strtolower( $side['Type'] ), $side['Null'] ) );
+	}
+
+	public function test_migration_48_adds_the_product_tags_once_and_they_are_null_by_default(): void {
+		( new AddDesignerBaseTags() )->up( $this->wpdb );
+		( new AddDesignerBaseTags() )->up( $this->wpdb );
+
+		$column = $this->wpdb->get_row( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $this->table( Tables::DESIGNER_BASES ), 'tag_ids' ), ARRAY_A );
+
+		self::assertIsArray( $column );
+		self::assertSame( array( 'longtext', 'YES', null ), array( strtolower( $column['Type'] ), $column['Null'], $column['Default'] ) );
 	}
 
 	public function test_migration_41_adds_an_empty_note_once(): void {

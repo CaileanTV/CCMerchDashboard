@@ -18,6 +18,7 @@ use MerchBoard\Core\Database\Migrations\AddDesignerBaseNote;
 use MerchBoard\Core\Database\Migrations\AddDesignerExtraSidePrice;
 use MerchBoard\Core\Database\Migrations\AddDesignerSizePrices;
 use MerchBoard\Core\Database\Migrations\AddDesignerBaseBackgroundColor;
+use MerchBoard\Core\Database\Migrations\AddDesignerBaseTags;
 use MerchBoard\Core\Database\Migrations\AddDesignerPrimaryImage;
 use MerchBoard\Core\Database\Migrations\AddDesignerSmallSidePrice;
 use MerchBoard\Core\Database\Migrations\CreateDesignerFees;
@@ -121,6 +122,7 @@ final class Schema {
 			45 => new CreateCreatorSignupTables(),
 			46 => new AddDesignerBaseBackgroundColor(),
 			47 => new AddDesignerPrimaryImage(),
+			48 => new AddDesignerBaseTags(),
 		);
 	}
 }
