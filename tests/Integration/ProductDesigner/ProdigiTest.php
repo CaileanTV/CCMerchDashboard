@@ -42,8 +42,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use WP_Error;
 
 /**
- * The key is encrypted and nothing is called while Prodigi is off; only
- * products made in the EU are offered, flat; the mockups replace the
+ * The key is encrypted and nothing is called while Prodigi is off; every
+ * product is offered, flat, wherever it is made; the mockups replace the
  * browser's, and what was saved at Prodigi is deleted, also after a failure.
  * Prodigi is never asked to produce anything.
  */
@@ -131,6 +131,11 @@ final class ProdigiTest extends IntegrationTestCase {
 
 		self::assertSame( self::KEY, $this->account->key() );
 		self::assertStringNotContainsString( self::KEY, (string) get_option( ProdigiAccount::KEY_OPTION ) );
+
+		// The dashboard shows a live key without its mode (2026-11-08).
+		self::assertTrue( $this->account->set( ' 74e60b80-0000-4000-8000-000000000000 ' ) );
+		self::assertSame( 'live_74e60b80-0000-4000-8000-000000000000', $this->account->key() );
+		self::assertTrue( $this->account->set( self::KEY ) );
 		self::assertStringNotContainsString( self::KEY, (string) wp_json_encode( $this->rows( Tables::AUDIT_LOG ) ) );
 		self::assertFalse( $this->account->set( '' ), 'An empty field keeps the key.' );
 
@@ -167,33 +172,32 @@ final class ProdigiTest extends IntegrationTestCase {
 		self::assertSame( 0, $this->calls[0][2]['redirection'] ?? null );
 	}
 
-	public function test_only_products_made_in_the_eu_are_listed_and_offered_flat(): void {
+	public function test_every_product_is_listed_and_offered_flat_wherever_it_is_made(): void {
 		$catalog = new ProdigiCatalog( $this->api );
 
-		self::assertSame( array( 'prod-tee' ), array_column( $catalog->search( 'tee' ), 'id' ), 'The UK poster is left out.' );
-
-		$calls = count( $this->calls );
-
-		self::assertSame( array( 'prod-tee' ), array_column( $catalog->search( 'tee' ), 'id' ) );
-		self::assertCount( $calls, $this->calls, 'A search is cached.' );
+		delete_transient( 'merchboard_prodigi_search_' . md5( 'tee|' ) );
+		self::assertSame( array( 'prod-tee', 'prod-poster' ), array_column( $catalog->search( 'tee' ), 'id' ), 'The UK poster is listed too.' );
+		self::assertCount( 1, $this->calls, 'One call: no product is looked up for a region.' );
+		self::assertSame( array( 'prod-tee', 'prod-poster' ), array_column( $catalog->search( 'tee' ), 'id' ) );
+		self::assertCount( 1, $this->calls, 'A search is cached.' );
 
 		$choice = $catalog->choice( 'prod-tee' );
 
 		self::assertTrue( $choice['flat'] );
 		self::assertSame( array( 'Black', 'White' ), array_column( $choice['colors'], 'name' ) );
-		self::assertSame( array( 'S', 'M' ), $choice['sizes'], 'The UK SKU is left out.' );
+		self::assertSame( array( 'S', 'M', 'XL' ), $choice['sizes'], 'The UK SKU is offered too.' );
 		self::assertSame( 'TEE-S', $choice['variants']['White']['S'] ?? null );
 		self::assertSame( array( 'front', 51, 76, 100 ), array( $choice['sides'][0]['placement'], $choice['sides'][0]['width_mm'], $choice['sides'][0]['height_mm'], $choice['sides'][0]['dpi'] ) );
 	}
 
-	public function test_a_product_not_made_in_the_eu_is_refused(): void {
+	public function test_a_product_without_print_areas_is_refused(): void {
 		$this->answers[ 'GET ' . self::API . '/catalogue/products/prod-poster/variants?limit=100&offset=0' ] = self::answer( array( 'data' => array( array( 'id' => 'POSTER-A4', 'manufacturingRegions' => array( 'GB' ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 		try {
 			( new ProdigiCatalog( $this->api ) )->choice( 'prod-poster' );
-			self::fail( 'Not made in the EU.' );
+			self::fail( 'No print area.' );
 		} catch ( ProdigiException $e ) {
-			self::assertSame( ProdigiException::NOT_IN_EU, $e->reason() );
+			self::assertSame( ProdigiException::INVALID, $e->reason() );
 		}
 	}
 
@@ -437,7 +441,7 @@ final class ProdigiTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * Prodigi's answers for a tee made in the EU and a poster made in the UK.
+	 * Prodigi's answers for a tee (one size made only in the UK) and a poster made in the UK.
 	 *
 	 * @return array<string, mixed>
 	 */
@@ -502,6 +506,7 @@ final class ProdigiTest extends IntegrationTestCase {
 						array(
 							'id'                   => 'TEE-XL',
 							'attributes'           => array( 'size' => 'XL' ),
+							'attributeOptions'     => array( 'color' => array( 'Black', 'White' ) ),
 							'printAreas'           => $areas,
 							'manufacturingRegions' => array( 'GB' ),
 						),

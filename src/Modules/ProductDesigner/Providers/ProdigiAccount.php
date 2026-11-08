@@ -34,6 +34,16 @@ class ProdigiAccount {
 	private const KEY_PATTERN = '/^(?:live|sandbox)_[A-Za-z0-9:_-]{16,200}$/';
 
 	/**
+	 * A key as Prodigi's live dashboard shows it: without its mode (a UUID).
+	 */
+	private const DASHBOARD_KEY = '/^[A-Za-z0-9-]{16,200}$/';
+
+	/**
+	 * The mode put before a key from the dashboard.
+	 */
+	private const LIVE = 'live_';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param AuditTrail      $audit       Audit trail.
@@ -73,6 +83,11 @@ class ProdigiAccount {
 
 		if ( '' === $key ) {
 			return false;
+		}
+
+		// The dashboard shows the key without its mode; v5 takes a live key only as live_<key> (tried 2026-11-08).
+		if ( 1 === preg_match( self::DASHBOARD_KEY, $key ) ) {
+			$key = self::LIVE . $key;
 		}
 
 		if ( 1 !== preg_match( self::KEY_PATTERN, $key ) ) {

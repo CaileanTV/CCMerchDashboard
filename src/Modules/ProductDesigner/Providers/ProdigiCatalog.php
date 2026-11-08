@@ -17,26 +17,22 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * ADR-084: the administrator searches Prodigi's catalogue and picks a
- * product. Only products made in the EU are offered: the list has no such
- * filter, so each hit's details are read (cached for an hour). The catalogue
- * has no photos and no colour codes, so a base product from Prodigi is flat:
+ * product. Every product is offered, wherever Prodigi makes it (the owner's
+ * agreement with Prodigi, 2026-11-08); a search is cached for an hour. The
+ * catalogue has no photos and no colour codes, so a base product from Prodigi is flat:
  * a white sheet per print area, colours the administrator can correct
  * afterwards, and the mockups come from Prodigi after a submission. A print
  * size can depend on the size, so the sizes are offered in groups, one group
  * per base product. Colours are attributes of an SKU, so one SKU can stand
  * for several colours.
  *
- * Written from Prodigi's OpenAPI file (2026-10-31) and not yet run against
- * Prodigi. Nothing is rendered on import: render() is never called.
+ * Written from Prodigi's OpenAPI file (2026-10-31); the catalogue calls were
+ * checked against Prodigi on 2026-11-08. Nothing is rendered on import:
+ * render() is never called.
  */
 class ProdigiCatalog implements CatalogRenderer {
 
 	public const SOURCE = 'prodigi';
-
-	/**
-	 * The manufacturing region offered.
-	 */
-	public const REGION = 'EU';
 
 	/**
 	 * Most search results shown.
@@ -78,7 +74,7 @@ class ProdigiCatalog implements CatalogRenderer {
 	}
 
 	/**
-	 * Catalogue products made in the EU, by words or in a category.
+	 * Catalogue products, by words or in a category.
 	 *
 	 * @param string $query    Words.
 	 * @param string $category Category; '' for all.
@@ -100,8 +96,12 @@ class ProdigiCatalog implements CatalogRenderer {
 		foreach ( $rows as $row ) {
 			$id = is_array( $row ) && is_string( $row['id'] ?? null ) ? $row['id'] : '';
 
-			if ( '' === $id || count( $found ) >= self::MAX_RESULTS || ! in_array( self::REGION, $this->regions( $this->api->product( $id ) ), true ) ) {
+			if ( '' === $id ) {
 				continue;
+			}
+
+			if ( count( $found ) >= self::MAX_RESULTS ) {
+				break;
 			}
 
 			$found[] = array(
@@ -147,8 +147,8 @@ class ProdigiCatalog implements CatalogRenderer {
 	}
 
 	/**
-	 * What the administrator can pick from a product: its SKUs made in the
-	 * EU in the group of sizes.
+	 * What the administrator can pick from a product: its SKUs in the group
+	 * of sizes.
 	 *
 	 * @param string $ref   Catalogue product.
 	 * @param int    $group The group of sizes with the same print sizes.
@@ -160,13 +160,13 @@ class ProdigiCatalog implements CatalogRenderer {
 		$rows    = array();
 
 		foreach ( $this->api->variants( $ref ) as $row ) {
-			if ( is_array( $row ) && in_array( self::REGION, $this->regions( $row ), true ) ) {
+			if ( is_array( $row ) ) {
 				$rows[ (string) wp_json_encode( self::areas( $row ) ) ][] = $row;
 			}
 		}
 
 		if ( array() === $rows ) {
-			self::fail( ProdigiException::NOT_IN_EU );
+			self::fail( ProdigiException::INVALID );
 		}
 
 		$groups = array_values( $rows );
@@ -319,16 +319,6 @@ class ProdigiCatalog implements CatalogRenderer {
 		}
 
 		return $categories;
-	}
-
-	/**
-	 * The manufacturing regions of a product or SKU.
-	 *
-	 * @param array<mixed> $row Product or SKU.
-	 * @return list<mixed>
-	 */
-	private function regions( array $row ): array {
-		return is_array( $row['manufacturingRegions'] ?? null ) ? array_values( $row['manufacturingRegions'] ) : array();
 	}
 
 	/**

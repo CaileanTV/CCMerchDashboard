@@ -37,9 +37,6 @@ final class ProdigiException extends RuntimeException {
 	/** A download or answer that is not what we accept. */
 	public const INVALID = 'prodigi_invalid';
 
-	/** No variant of the product is made in the EU. */
-	public const NOT_IN_EU = 'prodigi_not_in_eu';
-
 	/**
 	 * Constructor.
 	 *

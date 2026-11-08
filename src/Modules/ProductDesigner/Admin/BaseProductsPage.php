@@ -276,7 +276,6 @@ final class BaseProductsPage {
 			ProdigiException::RATE_LIMITED          => array( __( 'Prodigi asks us to wait a minute. Please try again shortly.', 'merchboard' ), 'error' ),
 			ProdigiException::INVALID               => array( __( 'The Prodigi product has no SKUs or print areas that can be used.', 'merchboard' ), 'error' ),
 			ProdigiException::FAILED                => array( __( 'Prodigi could not be reached. Please try again later.', 'merchboard' ), 'error' ),
-			ProdigiException::NOT_IN_EU             => array( __( 'This product is not made in the EU, so it cannot be offered.', 'merchboard' ), 'error' ),
 			'retired'                               => array( __( 'The base product is retired. Its products are being taken out of the shop, and the creators are told.', 'merchboard' ), 'success' ),
 			'retire_unconfirmed'                    => array( __( 'Tick the confirmation to retire the base product.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_RETIRED         => array( __( 'The base product is retired and cannot be changed.', 'merchboard' ), 'error' ),
@@ -892,7 +891,7 @@ final class BaseProductsPage {
 
 	/**
 	 * Prodigi's catalogue: search by words or category, then pick a product.
-	 * Only products made in the EU are listed.
+	 * Every product is listed, wherever Prodigi makes it.
 	 *
 	 * @param ProdigiCatalog $prodigi Prodigi's catalogue.
 	 */
@@ -915,7 +914,7 @@ final class BaseProductsPage {
 			return;
 		}
 
-		echo '<p>' . esc_html__( 'Search Prodigi\'s catalogue and pick the product. Only products made in the EU are listed. Creators design on a white sheet in the shape of the print area, and Prodigi makes the mockups when a design is sent for approval.', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html__( 'Search Prodigi\'s catalogue and pick the product. Creators design on a white sheet in the shape of the print area, and Prodigi makes the mockups when a design is sent for approval.', 'merchboard' ) . '</p>';
 
 		try {
 			$categories = $prodigi->categories();
