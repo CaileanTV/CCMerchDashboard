@@ -5805,3 +5805,41 @@ Kun brugere med `merchboard_manage_designer` vælger tags, og kun eksisterende `
 
 ## Related
 ADR-033, ADR-080, ADR-093, ADR-099
+
+# ADR-101: Creatorens kategori på øverste niveau, og kategoriforslag godkendt før go-live
+
+## Date
+2026-11-08
+
+## Status
+Accepteret af projektejeren 2026-11-08 (fase 38, plan godkendt samme dag). Udgives i 1.7.5.
+
+## Context
+Go-live (ADR-093) krævede en overkategori under Indstillinger → Aftale og afviste godkendelsen uden en ("Vælg overkategorien for creators under Indstillinger → Aftale, før du godkender."). Projektejeren meldte det som en kritisk fejl: creators har deres helt egen kategori, og standardkategorien skal ikke have en overkategori. Desuden kunne et kategoriforslag (beskrivelse, billede, bannere, link, sociale links) ikke godkendes, før creatoren havde en kategori, så forslag fra tilmeldingen ventede, til go-live var godkendt.
+
+## Decision
+1. **Overkategori er valgfri:** uden en opretter go-live creatorens kategori på øverste niveau. Feltet hedder "— Ingen (øverste niveau) —" som standard. Genbrug af en tom kategori med samme navn (ADR-093) gælder på det valgte niveau.
+2. **Kategoriforslag før go-live:** godkender administratoren et forslag til et felt på kategorien, mens creatoren ikke er live og ingen kategori har, gemmes det som `accepted` (godkendt, venter på kategorien). Det auditeres (`category_proposal_approved` med `term_id` 0 og `waits_for: go_live`), og creatoren får "godkendt". Et billede bliver i forslagsmappen.
+3. **Ved go-live** (`merchboard_creator_went_live`, efter kategorien er oprettet) skrives de ventende godkendte forslag på den nye kategori, hvert for sig: billeder kopieres til mediebiblioteket, forslaget bliver `approved`, og det auditeres med kategoriens `term_id`. Kan et ikke skrives (fx mangler bannerpluginet), venter det stadig og vises på fanen Kategoriforslag med "Skriv på kategorien".
+4. **Et senere godkendt forslag** til samme felt erstatter et ventende godkendt (`replaced`); et nyt forslag, der afvises, rører det ikke.
+5. **Creatoren** ser "Godkendt – vises, når din shop går live." ved feltet. En creator, der er live uden kategori (fx manuelt oprettet), får som før "ingen kategori".
+6. **Bannerteksten** i dashboardet siger, at banneret vises i sin helhed og ikke beskæres (projektejerens ønske).
+
+## Alternatives considered
+- **Behold overkategori som krav:** fravalgt af projektejeren.
+- **Opret kategorien allerede ved tilmeldingen:** fravalgt; intet af en creator, der ikke er live, når butikken (ADR-092).
+
+## Reason
+Kategorien findes først ved go-live, men beslutningen om forslagene kan træffes før. Status `accepted` bygger bro uden ny tabel.
+
+## Security
+Kun `merchboard_manage_creators` godkender og skriver. Skrivningen sker kun på creatorens egen kategori, som go-live har oprettet.
+
+## Consequences
+- Ingen schemaændring (`status` er `varchar(16)`; schema-version 48).
+- `GoLiveException::PARENT_MISSING` afvises ikke mere.
+
+**Statusnote 2026-11-08 (trin 38.6, review):** et uafhængigt review fandt bl.a., at et ventende godkendt forslag kunne overskrive en nyere godkendt værdi, og at creatoren ikke kunne rydde en værdi godkendt før go-live. Begge er rettet: en godkendelse erstatter altid et ventende godkendt forslag til feltet, og den ventende værdi tæller som den nuværende. På øverste niveau genbruges en eksisterende kategori med samme navn kun, når den hverken har produkter, underkategorier eller er butikkens standardkategori. Creatoren får "vises, når din shop går live" i notifikationen, og "Godkend alle" siger det samme.
+
+## Related
+ADR-077, ADR-091, ADR-092, ADR-093, ADR-097

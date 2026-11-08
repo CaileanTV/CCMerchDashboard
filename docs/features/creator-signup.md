@@ -12,14 +12,14 @@ I gang (fase 32, ADR-091–094). 32.2 (live-status og spærringer) og 32.3 (afta
   - er e-mailen eller brugernavnet i brug, siger siden det (projektejerens valg 2026-11-06);
   - mailen "Bekræft e-mail og vælg adgangskode";
   - efter den første adgangskode åbner MitCCMerch.
-- **Før go-live:** profil, kategoriforslag, designs og alerts virker, men intet vises i butikken. Oplæsning åbner først efter go-live. Et godkendt design står som "Godkendt – kommer i butikken, når du er live".
+- **Før go-live:** profil, kategoriforslag, designs og alerts virker, men intet vises i butikken. Et kategoriforslag, admin har godkendt, står som "Godkendt – vises, når din shop går live." og skrives på kategorien ved go-live (ADR-101). Oplæsning åbner først efter go-live. Et godkendt design står som "Godkendt – kommer i butikken, når du er live".
 - **"Anmod om at gå live"**: kræver accept af den gældende aftale. Status: venter, godkendt, eller afvist med note og mulighed for at anmode igen.
 - **Ny væsentlig aftaleversion:** creatoren accepterer igen, før der kan anmodes om go-live eller udbetaling.
 
 ## Admin functionality
 - **Indstillinger:**
   - "Creators kan oprette sig selv" (fra som standard);
-  - "Overkategori for creators";
+  - "Overkategori for creators" (valgfri; uden en ligger creatorens kategori på øverste niveau, ADR-101);
   - fanen "Aftale" med editor, udgivelse af versioner (væsentlig eller ikke) og antal accepter pr. version.
 - **Forslag → Go-live:** creator, kanal-link, accepteret version, ventende designs og kategoriforslag.
   - **Godkend** med tillæg, kategorinavn og "Vises på forsiden" (forudvalgt med creatorens valg). Kategorien oprettes med bannerpluginets `ccm_front_group`, og designs kommer i butikken. Bagefter ændres "Vises på forsiden" på kategorien i WooCommerce; creatoren kan ikke ændre det (ADR-097).
@@ -33,7 +33,7 @@ Se ADR-091–094. Hovedprincippet er forhindring frem for filtrering: en creator
 - produktkobling;
 - rabatkode;
 - designer-anvendelse;
-- godkendelse af kategoriforslag;
+- skrivning af godkendte kategoriforslag (de venter som `accepted` til go-live, ADR-101);
 - oplæsning.
 
 ## Database/data used

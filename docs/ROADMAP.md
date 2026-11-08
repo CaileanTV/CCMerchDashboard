@@ -1034,6 +1034,17 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **37.11 Review ✅ (2026-11-08):** uafhængigt review af begge dele; én fejl (lærredets udskæring viste den fælles baggrund i stedet for farvens foto) og tre mindre, rettet; se statusnoten i ADR-099. Projektejeren tester testpakken på staging i stedet for på Local (projektejerens ønske 2026-11-08).
 - **37.7 Release 1.7.4 ✅ (2026-11-08):** testpakke til staging, testet af projektejeren ("Vi er klar til update"). Tag `v1.7.4` på `874da79` (CI grøn), draft-release byte-identisk med den lokale pakke; se DEVELOPMENT.md "Release 1.7.4".
 
+## Fase 38 – Go-live uden overkategori og kategoriforslag før go-live 🔄 (plan godkendt 2026-11-08; ADR-101; udgives i 1.7.5)
+
+**Projektejerens fejlmelding (2026-11-08):** go-live kunne ikke godkendes uden en overkategori; creators skal have deres egen kategori på øverste niveau. Desuden skal kategoriforslag kunne godkendes før go-live og sættes på kategorien, når den oprettes, og bannerteksten skal sige, at banneret ikke beskæres.
+
+- **38.1 Docs ✅:** ADR-101, denne fase og creator-signup.md.
+- **38.2 Overkategori ✅:** valgfri; uden en ligger kategorien på øverste niveau.
+- **38.3 Forslag ✅:** status `accepted`, skrivning ved go-live, "Skriv på kategorien", creatorens note.
+- **38.4 Tekster ✅:** danske oversættelser, også bannerteksten.
+- **38.5 Tests ✅:** integration (go-live uden overkategori, forslag før go-live) og Jest (profilen).
+- **38.6 Review og testpakke:** uafhængigt review ✅ (rettelser i statusnoten i ADR-101), bump 1.7.5 (2026-11-08), CI og testpakke til staging; tag efter projektejerens OK. Se DEVELOPMENT.md "Release 1.7.5".
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |
