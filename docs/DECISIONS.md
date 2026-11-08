@@ -5590,6 +5590,8 @@ ADR-080, ADR-081, ADR-085, ADR-086
 ## Status
 Accepteret af projektejeren 2026-11-07 (fase 34, plan godkendt samme dag). Udgives i 1.7.0.
 
+**Statusnote 2026-11-08 (kritisk fejl, rettet i trin 40.11):** fra 1.7.0 til 1.7.5 indeholdt den signerede printfil-rute `@` (`side@d1`). WordPress matcher REST-ruter med `@` som mønstrets afgrænser, så ruten matchede aldrig, heller ikke for fælles designs. Printful, Gelato og Prodigi fik derfor 404 på hver printfil, og mockups fra leverandørerne fejlede. Browserens billeder blev brugt i stedet. Testene kaldte rutens kode direkte og fangede det ikke. Linket bruger nu `.d1` (`side.d1`), og en test går gennem WordPress' egen rute-matching. Opgavernes interne nøgler beholder `@`.
+
 ## Context
 I dag har et design én tegning pr. side, og den bruges til alle valgte farver. Projektejeren vil have, at:
 - enkelte farver på samme produkt kan få deres eget design, fx sort og hvid med design A og orange med design B;

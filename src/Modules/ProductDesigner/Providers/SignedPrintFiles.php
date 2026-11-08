@@ -33,9 +33,16 @@ defined( 'ABSPATH' ) || exit;
 class SignedPrintFiles {
 
 	/**
-	 * The side, with `@<id>` for a colour design's print file (ADR-096).
+	 * The side, with `.<id>` for a colour design's print file (ADR-096). Never
+	 * `@`: WordPress matches routes with `@` as the pattern's delimiter, so a
+	 * route with `@` never matched (1.7.0 to 1.7.5, found 2026-11-08).
 	 */
-	public const ROUTE = '/designer-print/(?P<version>[1-9][0-9]{0,18})/(?P<side>[a-z0-9][a-z0-9-]{0,31}(?:@d[1-9][0-9]?)?)';
+	public const ROUTE = '/designer-print/(?P<version>[1-9][0-9]{0,18})/(?P<side>[a-z0-9][a-z0-9-]{0,31}(?:\.d[1-9][0-9]?)?)';
+
+	/**
+	 * What stands between the side and a colour design's id in the URL.
+	 */
+	private const DESIGN = '.';
 
 	public const TTL = 3600;
 
@@ -60,7 +67,7 @@ class SignedPrintFiles {
 	 */
 	public static function url( int $version_id, string $side, ?int $now = null, string $design = '' ): string {
 		$expires = ( $now ?? time() ) + self::TTL;
-		$side    = '' === $design ? $side : $side . '@' . $design;
+		$side    = '' === $design ? $side : $side . self::DESIGN . $design;
 
 		return add_query_arg(
 			array(
@@ -131,7 +138,7 @@ class SignedPrintFiles {
 			return $missing;
 		}
 
-		[ $key, $design ] = array_pad( explode( '@', $side, 2 ), 2, ColorDesigns::SHARED );
+		[ $key, $design ] = array_pad( explode( self::DESIGN, $side, 2 ), 2, ColorDesigns::SHARED );
 		$file             = SubmissionFiles::prints( SubmissionFiles::decode( is_string( $row['files'] ) ? $row['files'] : null ) )[ $design ][ $key ] ?? null;
 		$path             = is_string( $file['file'] ?? null ) ? $this->files->path( $file['file'] ) : null;
 		$body             = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A local file of at most 25 MB.

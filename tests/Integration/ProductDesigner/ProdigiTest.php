@@ -40,6 +40,7 @@ use MerchBoard\Modules\ProductDesigner\Providers\ProdigiCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiException;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\ProviderTaskRepository;
+use MerchBoard\Modules\ProductDesigner\Providers\SignedPrintFiles;
 use MerchBoard\Modules\ProductDesigner\Rest\MeDesignerController;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
 use MerchBoard\Tests\Integration\Alerts\AlertImagesTest;
@@ -299,7 +300,7 @@ final class ProdigiTest extends IntegrationTestCase {
 		self::assertSame( array( array( 'Black' ), array( 'White' ) ), array_map( static fn( array $body ): array => array_map( static fn( array $variant ): string => (string) ( $variant['attributes']['color'] ?? '' ), (array) ( $body['variants'] ?? array() ) ), $bodies ), 'Black on the shared design, white on its own.' );
 		self::assertCount( 2, $ingest );
 		self::assertStringContainsString( '/designer-print/' . $version . '/front&', $ingest[0] );
-		self::assertStringContainsString( '/designer-print/' . $version . '/front@d1', $ingest[1] );
+		self::assertStringContainsString( '/designer-print/' . $version . '/front.d1', $ingest[1] );
 		self::assertNotNull( $this->call( 'DELETE', self::API . '/products/saved1' ) );
 		$this->assert_never_ordered();
 	}
@@ -366,6 +367,52 @@ final class ProdigiTest extends IntegrationTestCase {
 			$catalog->category_labels()
 		);
 		$this->assert_never_ordered();
+	}
+
+	public function test_the_signed_print_files_are_reached_through_the_rest_routes(): void {
+		$version  = $this->submit( true, false );
+		$signed   = new SignedPrintFiles( $this->products, $this->files );
+		$register = static function () use ( $signed ): void {
+			$signed->register_routes();
+		};
+
+		add_action( 'rest_api_init', $register );
+		$GLOBALS['wp_rest_server'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh REST server for the test.
+		rest_get_server();
+
+		try {
+			// The shared design and a colour design (ADR-096): WordPress itself must match the route (1.7.0 to 1.7.5 it never did).
+			foreach ( array( '', 'd1' ) as $design ) {
+				$url   = SignedPrintFiles::url( $version, 'front', null, $design );
+				$query = array();
+
+				parse_str( (string) wp_parse_url( $url, PHP_URL_QUERY ), $query );
+
+				$route = is_string( $query['rest_route'] ?? null ) ? $query['rest_route'] : (string) preg_replace( '#^.*?/' . rest_get_url_prefix() . '#', '', (string) wp_parse_url( $url, PHP_URL_PATH ) );
+				$get   = new WP_REST_Request( 'GET', $route );
+
+				unset( $query['rest_route'] );
+				$get->set_query_params( $query );
+
+				$answer = rest_do_request( $get );
+
+				self::assertSame( 200, $answer->get_status(), $route . ': ' . (string) wp_json_encode( $answer->get_data() ) );
+				self::assertSame( 'image/png', $answer->get_headers()['Content-Type'] ?? null );
+				self::assertStringNotContainsString( '@', $url, 'WordPress matches routes with @ as the delimiter.' );
+			}
+
+			$get = new WP_REST_Request( 'GET', '/merchboard/v1/designer-print/' . $version . '/front' );
+			$get->set_query_params(
+				array(
+					'expires'   => (string) ( time() + 60 ),
+					'signature' => 'forged',
+				)
+			);
+			self::assertSame( 404, rest_do_request( $get )->get_status(), 'A forged signature is refused.' );
+		} finally {
+			remove_action( 'rest_api_init', $register );
+			$GLOBALS['wp_rest_server'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh REST server after the test.
+		}
 	}
 
 	public function test_a_draft_is_previewed_at_prodigi_and_nothing_stays(): void {

@@ -465,8 +465,8 @@ final class PrintfulTest extends IntegrationTestCase {
 		$bodies = array_values( array_filter( $bodies, static fn( array $body ): bool => str_contains( urldecode( (string) ( $body['files'][0]['image_url'] ?? '' ) ), '/designer-print/' . $version . '/' ) ) );
 
 		self::assertSame( array( array( 101 ), array( 201 ) ), array_column( $bodies, 'variant_ids' ), 'Black on the shared design, white on its own.' );
-		self::assertStringNotContainsString( '@d1', urldecode( (string) ( $bodies[0]['files'][0]['image_url'] ?? '' ) ) );
-		self::assertStringContainsString( '/designer-print/' . $version . '/front-print@d1', urldecode( (string) ( $bodies[1]['files'][0]['image_url'] ?? '' ) ) );
+		self::assertStringNotContainsString( '.d1', urldecode( (string) ( $bodies[0]['files'][0]['image_url'] ?? '' ) ) );
+		self::assertStringContainsString( '/designer-print/' . $version . '/front-print.d1', urldecode( (string) ( $bodies[1]['files'][0]['image_url'] ?? '' ) ) );
 		self::assertSame( 'ready', $this->products->version( $version )['mockup_state'] ?? null );
 		self::assertSame( array( 'black', 'white' ), array_keys( SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null )['mockups']['front-print'] ) );
 
@@ -477,7 +477,7 @@ final class PrintfulTest extends IntegrationTestCase {
 			'signature' => is_string( $parsed['signature'] ?? null ) ? $parsed['signature'] : '',
 		);
 		$signed = new SignedPrintFiles( $this->products, $this->files );
-		self::assertSame( 200, $signed->serve( $this->print_request( $version, 'front-print@d1', $query ) )->get_status() );
+		self::assertSame( 200, $signed->serve( $this->print_request( $version, 'front-print.d1', $query ) )->get_status() );
 		self::assertSame( 404, $signed->serve( $this->print_request( $version, 'front-print', $query ) )->get_status(), 'The signature names the design.' );
 	}
 
