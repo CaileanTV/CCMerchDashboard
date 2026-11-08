@@ -247,6 +247,25 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.7.1: "Vises på forsiden" ved tilmeldingen (fase 35)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-08** efter projektejerens go ("Når den er grøn i CI - så er vi klar"). Tag og SHA-256 noteres her, når draft-releasen er bygget.
+- Projektejeren valgte versionen 1.7.1 (en lille feature uden schemaændring).
+- Fase 35 er reviewet uafhængigt (rettelser i `56abb83`) og runtime-testet på Local (ROADMAP 35.5).
+- CI skal være grøn med hele integrationssuiten på den taggede commit.
+
+**Ingen schemaændring:** schema-version 47 som i 1.7.0. Valget gemmes som creator meta `front_group`. Eksisterende creators og kategorier røres ikke.
+
+Tagget giver en draft-release. Projektejeren tester den på staging og udgiver den. AI-agenter har ingen adgang til produktion.
+
+1. **Backup:** tag backup af filer og database via hostingen. Notér den installerede version.
+2. **Opdatér** med release-ZIP'en ("Erstat nuværende med uploadet"). Overview skal vise version 1.7.1 og schema-version 47 uden advarsler.
+3. **Tilmelding:** åbn tilmeldingssiden. "Vises på forsiden" skal vise "Content creator" (valgt) og "Forening & Community".
+4. **Go-live:** tilmeld en testcreator som "Forening & Community", og anmod om go-live. På fanen Go-live skal "Vises på forsiden som: Forening & Community" stå, og listen skal være forudvalgt. Godkend, og kontrollér, at bannerpluginets felt på den nye kategori viser "Forening & community".
+5. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 1.7.0-ZIP'en igen. Creator meta'en `front_group` bliver liggende uden at blive brugt; værdien på kategorierne bliver, hvor den er.
+
 ## Release 1.7.0: farvedesigns, produktbillede og "Kopiér design" (fase 34)
 
 **Versions-bump og CHANGELOG-sektion (`7a442ca`) og tagget `v1.7.0` (på `7a442ca`) 2026-11-07** efter projektejerens go ("Jeg er klar til at release 1.7.0"). CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `7617379912c102b312da5c5cfd6f350a23f1e8020b298c9424c61da726555b66`).

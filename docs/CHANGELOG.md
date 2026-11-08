@@ -4,6 +4,14 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.7.1] - 2026-11-08
+
+Fase 35: creatoren vælger "Vises på forsiden" ved tilmeldingen. Ingen schemaændring (schema-version 47; ingen migration og ingen manuelle trin). Fase 35 er reviewet uafhængigt og runtime-testet på Local 2026-11-08. Opdateringen står i DEVELOPMENT.md ("Release 1.7.1").
+
+### Added
+
+- **"Vises på forsiden" ved tilmeldingen (fase 35, ADR-097):** creatoren vælger "Content creator" (forudvalgt) eller "Forening & Community". Valget kan kun ændres af administratoren: på fanen Go-live (forudvalgt med creatorens valg) og bagefter på kategorien i WooCommerce. Ved go-live skrives det som bannerpluginets term meta `ccm_front_group` på creatorens nye kategori (eller en genbrugt tom kategori, som ingen creator har). Kategorier, creatoren allerede har, manuelt tilknyttede kategorier og andre creators kategorier røres aldrig. Audit: `front_group` i `creator_signed_up` og `go_live_approved`, og `creator_front_group_changed` ved en ændring på "Prøv igen".
+
 ## [1.7.0] - 2026-11-07
 
 Fase 34: farvedesigns, valgfrit produktbillede, "Kopiér design", "Vælg alle" og størrelse i cm i produktdesigneren, samt to sikkerhedsrettelser fra CodeRabbit (PR #11 og #13). Schema-version 47 (migration 47 ved opdatering fra 1.6.0; ingen manuelle trin i databasen). Fase 34 er reviewet uafhængigt og runtime-testet på Local 2026-11-07. Opdateringen står i DEVELOPMENT.md ("Release 1.7.0").
