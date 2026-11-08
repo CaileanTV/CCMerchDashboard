@@ -1046,6 +1046,15 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **38.7 Én mail ved "Godkend alle" ✅ (2026-11-08):** projektejerens ønske, med i 1.7.5.
 - **38.6 Review og release 1.7.5 ✅ (2026-11-08):** uafhængigt review (rettelser i statusnoten i ADR-101), CI grøn, testpakke og projektejerens OK. Tag `v1.7.5` på `4131217`, draft-release byte-identisk med den lokale pakke; se DEVELOPMENT.md "Release 1.7.5".
 
+## Fase 39 – Prodigi med en rigtig nøgle 🔄 (projektejerens OK 2026-11-08; statusnote på ADR-084)
+
+**Baggrund (2026-11-08):** projektejeren har fået en v5-nøgle fra Prodigi. Læsekald med den viste to fejl, der gjorde Prodigi ubrugelig: dashboardets nøgle kunne ikke gemmes, og importen ledte efter `EU`, som Prodigi aldrig sender. Projektejeren har aftalt importen med Prodigi og vil kunne bruge alle produkter.
+
+- **39.1 Nøglen ✅:** en nøgle uden præfiks gemmes som `live_<nøgle>`; teksterne siger "indsæt nøglen, som dashboardet viser den".
+- **39.2 Alle produkter ✅:** regionsfilteret er fjernet, så søgningen ikke længere slår hvert hit op.
+- **39.3 Tekster og tests ✅:** danske oversættelser, `ProdigiTest` (nøgle uden præfiks, alle produkter, produkt uden printflade).
+- **39.4 Hele flowet på staging:** import af et grundprodukt, et indsendt design og Prodigis mockups, derefter oprydning i Prodigi-kontoen.
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |

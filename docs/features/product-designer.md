@@ -246,9 +246,10 @@ Funktionen bygger på projektejerens Lumise-snippet (31658), men er bygget direk
 - **Pris pr. størrelse:** fluebenet "Forskellig grundpris pr. størrelse" på grundproduktet giver et prisfelt pr. størrelse. Uden flueben har alle størrelser samme grundpris, og et tomt felt bruger grundprisen. Procent regnes af hver størrelses pris, et fast beløb er ens for alle, og prisen for ekstra designområder er ens. Butikken får prisen pr. variant, creatoren ser kundeprisen pr. størrelse i designeren, og hver ordrelinje afregnes efter sin størrelse. Kan størrelsen ikke findes, bruges den højeste grundpris, så virksomheden aldrig får for lidt. En ændring når butikken i baggrunden som en ny grundpris, og et produkts pris i oversigten er stadig grundproduktets almindelige pris.
 - **3D:** Printfuls 3D-visning er ikke en del af API'et. Den indlejrede designer (EDM) kræver en aftale med Printful og beskriver ingen 3D-visning, og den ville erstatte vores designer.
 
-## Prodigi (ADR-084, ikke afprøvet mod Prodigi)
-- **Status:** koden ligger bag afbryderen "Prodigi", der er slået fra. Der er ingen konto og ingen nøgle endnu.
-- **Grundprodukter:** kun produkter produceret i EU. Kataloget har hverken fotos eller farvekoder, så creatoren designer på et hvidt ark, og admin retter farverne.
+## Prodigi (ADR-084, kataloget afprøvet mod Prodigi 2026-11-08)
+- **Status:** koden ligger bag afbryderen "Prodigi", der er slået fra. Projektejeren har en live-nøgle (2026-11-08). Kataloget er afprøvet med læsekald; filupload og mockups afprøves på staging (fase 39).
+- **Nøgle:** indsæt nøglen, som Prodigis dashboard viser den (et UUID). Pluginet sender den som `live_<nøgle>`. En nøgle fra sandkassens dashboard indtastes med `sandbox_` foran.
+- **Grundprodukter:** alle produkter, uanset hvor de produceres (projektejerens aftale med Prodigi, 2026-11-08). Kataloget har hverken fotos eller farvekoder, så creatoren designer på et hvidt ark, og admin retter farverne.
 - **Mockups:** efter indsendelse sendes printfilen til Prodigi, et gemt produkt oprettes, og mockups hentes. Det gemte slettes igen.
 - **Ved første nøgle skal det afprøves:** svarenes form, om tøj understøtter mockups, om mockups koster penge, og hvilke scener der findes.
 - **Prodigis svar om mockups (2026-11-04, ikke bygget):** Prodigi anbefaler `POST /assets/{assetId}/mockups:fromConfig`. Det passer til vores flow: vi laver selv designet og printfilen og beder kun Prodigi om billedet. Svaret siger "v4", men endpointet findes kun i v5 (offentlig specifikation `https://www.prodigi.com/print-api/docs/openapi.yml`, version 5.0.0).
@@ -289,6 +290,7 @@ Funktionen bygger på projektejerens Lumise-snippet (31658), men er bygget direk
       - **Ingen af dem produceres i EU.** ADR-084 pkt. 3 kræver `EU` i `manufacturingRegions`.
       - **Beslutning 2026-11-04:** projektejeren tillader UK-produktion for gaming-måtter (statusnote på ADR-084), så `GLOBAL-GAMINGMAT` må tilbydes. US-SKU'erne er stadig udelukket. Told og moms ved levering fra UK er accepteret.
       - Importen tilbyder endnu kun `EU`. Undtagelsen bygges, når Prodigi genoptages.
+      - **2026-11-08:** overflødig, for alle produkter tilbydes nu (fase 39). Alle fire måtter (`GLOBAL-GAMINGMAT`, `DESK-MAT-SML/MED/LRG`) produceres nu i både GB og US og har én printflade, `default`.
     - **Andre nyttige kald i Assets:**
       - `POST /assets/{id}/validate` tjekker opløsning og format mod variant og printflade (`resolution_low`, `aspect_mismatch`, `print_area_unfilled`);
       - `POST /assets` med `PUT` til `uploadUrl` lægger filen op uden en offentlig URL, så det også virker fra Local;

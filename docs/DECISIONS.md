@@ -4936,6 +4936,15 @@ Accepteret. Projektejeren har godkendt Prodigi som ny tjeneste 2026-10-31, og at
 - **Undtagelse fra pkt. 3 (projektejerens beslutning 2026-11-04):** gaming-måtter må produceres i UK. Prodigis store gaming-måtte (`GLOBAL-GAMINGMAT`) laves kun der. Undtagelsen gælder kun gaming-måtter, og US-produktion (`DESK-MAT-SML`, `DESK-MAT-MED`) er stadig udelukket. Told og moms ved levering fra UK til Danmark er accepteret.
 - Koden er ikke ændret: importen tilbyder fortsat kun `EU`. Undtagelsen bygges, når Prodigi genoptages.
 
+**Statusnote 2026-11-08 (fase 39):** første rigtige nøgle, kun læsekald (katalog, søgning, kategorier, produkter og varianter).
+- **Nøglen:** Prodigis live-dashboard viser nøglen som et UUID uden præfiks. v5 tager den kun som `live_<nøgle>`. Uden præfiks og med `sandbox_` giver den 401. Pluginet sætter nu selv `live_` foran en nøgle uden præfiks. En nøgle fra sandkassens dashboard indtastes med `sandbox_` foran.
+- **Pkt. 3 erstattes:** projektejeren har aftalt importen med Prodigi og vil kunne bruge alle produkter (2026-11-08). Regionsfilteret er fjernet, og alle produkter og SKU'er tilbydes, uanset hvor de produceres. Undtagelsen for gaming-måtter fra 2026-11-04 er dermed overflødig.
+- **Fund i de rigtige svar:**
+  - `manufacturingRegions` indeholder landekoder (fx `GB`, `US`, `NL`, `PL`) og aldrig `EU`. Det gamle filter ville ikke have fundet ét eneste produkt.
+  - Søgning, produkter, varianter og kategorier har den form, koden forventer. En overkategori giver også underkategoriernes produkter.
+  - Et tøjstykke er én SKU med farverne som attribut (`GLOBAL-TEE-BC-3001`: 30 farver), så `mockups:fromConfig` kan stadig ikke vise en bestemt farve. `fromProduct` bevares.
+- Filupload, gemte produkter og mockups er stadig ikke afprøvet mod Prodigi. Det sker på staging (fase 39).
+
 ## Context
 Printful og Gelato dækker ikke alt, projektejeren vil tilbyde, og Prodigi har egen produktion i EU. Prodigis v4-dokumentation viser hverken katalogliste eller mockups, men v5-specifikationen (`https://www.prodigi.com/print-api/reference/v5/openapi.yml`) har begge dele. Grænsen er 1.000 kald i timen pr. nøgle.
 
