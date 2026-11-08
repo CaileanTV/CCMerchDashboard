@@ -1053,7 +1053,21 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **39.1 Nøglen ✅:** en nøgle uden præfiks gemmes som `live_<nøgle>`; teksterne siger "indsæt nøglen, som dashboardet viser den".
 - **39.2 Alle produkter ✅:** regionsfilteret er fjernet, så søgningen ikke længere slår hvert hit op.
 - **39.3 Tekster og tests ✅:** danske oversættelser, `ProdigiTest` (nøgle uden præfiks, alle produkter, produkt uden printflade).
-- **39.4 Hele flowet på staging:** import af et grundprodukt, et indsendt design og Prodigis mockups, derefter oprydning i Prodigi-kontoen.
+- **39.4 Hele flowet på staging:** import af et grundprodukt (gaming-måtten, grundprodukt 20 på stg, ✅ 2026-11-08), et indsendt design og Prodigis mockups, derefter oprydning i Prodigi-kontoen. Afprøves sammen med fase 40.
+
+## Fase 40 – "Fyld/Tilpas", Prodigis forhåndsvisning, " - " i produktnavne og Prodigis katalog 🔄 (plan godkendt 2026-11-08; ADR-102)
+
+**Projektejerens ønsker (2026-11-08)** under testen af Prodigi på stg: "skalér til fuld" i designeren, Prodigi-mockups før indsendelse, " - " mellem produktnavnet og creatorens tilføjelse (også på eksisterende produkter) og Prodigis katalog direkte i admin-menuen.
+
+- **40.1 Docs ✅:** ADR-102, statusnote på ADR-084 og denne fase.
+- **40.2 Fyld/Tilpas ✅:** to knapper på et valgt billede (`fitted()`).
+- **40.3 Prodigis forhåndsvisning ✅:** "Se det færdige produkt" for Prodigi-grundprodukter, drevet af dashboardets polling, med oprydningsjob.
+- **40.4 Dashboard ✅:** dialogen venter op til 5 minutter.
+- **40.5 Tekster ✅:** danske oversættelser.
+- **40.6 Tests ✅:** integration (`ProdigiTest`: forhåndsvisning, oprydning, begrænsning, REST, oversigt; `DesignerReviewTest`: navnejobbet), Jest (`fitted()`) og de faste hook-lister.
+- **40.8 " - " i produktnavne ✅:** `DesignerNames::SEPARATOR` og engangsjobbet `merchboard_designer_names`.
+- **40.9 Prodigis katalog som oversigt ✅:** hele kataloget som kort med søgning, kategori og sider.
+- **40.7 Review og stg:** uafhængigt review ✅ (rettelser i statusnoten i ADR-102), push (CI), eksperimentel testpakke på stg og den fælles test med 39.4. Versionsbump (1.7.6) efter projektejerens OK.
 
 ## Senere (uprioriteret)
 

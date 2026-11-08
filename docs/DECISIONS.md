@@ -4945,6 +4945,8 @@ Accepteret. Projektejeren har godkendt Prodigi som ny tjeneste 2026-10-31, og at
   - Et tøjstykke er én SKU med farverne som attribut (`GLOBAL-TEE-BC-3001`: 30 farver), så `mockups:fromConfig` kan stadig ikke vise en bestemt farve. `fromProduct` bevares.
 - Filupload, gemte produkter og mockups er stadig ikke afprøvet mod Prodigi. Det sker på staging (fase 39).
 
+**Statusnote 2026-11-08 (fase 40, ADR-102):** Prodigi laver også mockups før indsendelse ("Se det færdige produkt"), og `GET /catalogue/products` uden kategori giver katalogets oversigt. Begge bruger kun kaldene i pkt. 1.
+
 ## Context
 Printful og Gelato dækker ikke alt, projektejeren vil tilbyde, og Prodigi har egen produktion i EU. Prodigis v4-dokumentation viser hverken katalogliste eller mockups, men v5-specifikationen (`https://www.prodigi.com/print-api/reference/v5/openapi.yml`) har begge dele. Grænsen er 1.000 kald i timen pr. nøgle.
 
@@ -5853,3 +5855,85 @@ Kun `merchboard_manage_creators` godkender og skriver. Skrivningen sker kun på 
 
 ## Related
 ADR-077, ADR-091, ADR-092, ADR-093, ADR-097
+
+
+# ADR-102: "Fyld/Tilpas", Prodigis forhåndsvisning, " - " i produktnavne og Prodigis katalog som oversigt
+
+## Date
+2026-11-08
+
+## Status
+Accepteret af projektejeren 2026-11-08 (fase 40, plan godkendt samme dag; " - " i navne og kataloget tilføjet samme dag). Eksperimentel: Prodigis forhåndsvisning er kun testet mod falske svar og afprøves på staging.
+
+## Context
+Under testen af Prodigi på staging (fase 39) ønskede projektejeren:
+- **"Skalér til fuld":** Prodigi tilbyder at skalere filen (fill/fit/stretch), når et produkt oprettes hos dem.
+- **Mockups før indsendelse:** Prodigi skal kunne lave billederne, før designet sendes til godkendelse.
+- **" - " før creatorens tilføjelse** i produktnavnet, også for de produkter, der allerede findes.
+- **Prodigis katalog direkte i admin-menuen,** som Printfuls og Printifys.
+
+## Decision
+1. **Fyld/Tilpas:** et valgt billede i designeren får "Fyld printfladen" (dækker hele printfilen, det, der stikker ud, beskæres) og "Tilpas til printfladen" (hele billedet inden for printfilen). Billedet centreres, rotationen nulstilles, spejlingen bevares, og det skaleres ens på begge akser. "Stræk" er fravalgt. Vi sender altid en færdig printfil til hele printfladen, så det virker for alle leverandører.
+2. **Prodigis forhåndsvisning:**
+   - Samme knap og dialog som Printfuls ("Se det færdige produkt"), og leverandøren nævnes aldrig.
+   - Den første valgte farve på de brugte sider af dens design.
+   - **Ingen nye kald:** kun de tilladte kald i ADR-084 pkt. 1 (`assets:ingest`, gemt produkt, binding, `mockups:fromProduct`, poll, download og sletning).
+   - **Flowet drives af dashboardets polling** (`GET …/preview`) og ikke af et job. Prodigi kaldes højst hvert 5. sekund pr. forhåndsvisning, og tilstanden ligger i en transient pr. kladdeversion (2 timer).
+   - Når billederne er hentet (som data-URL'er til dashboardets CSP), eller ved en fejl, slettes alt straks hos Prodigi. En ny start sletter en tidligere forhåndsvisning først.
+   - Jobbet `merchboard_designer_prodigi_preview` sletter 30 minutter efter starten det, en opgivet forhåndsvisning efterlod. En nyere forhåndsvisning af kladden røres ikke.
+   - Én start pr. kladde pr. minut, ellers `preview_busy`. En 429 giver "pending".
+   - Dialogen venter nu op til 5 minutter (100 × 3 s) for alle leverandører.
+3. **" - " i produktnavne:**
+   - Et navn med tilføjelse er "Creator Grundprodukt - Tilføjelse" (`DesignerNames::SEPARATOR`), og en tilføjelse uden tekst giver "Creator Grundprodukt".
+   - Bindestreger og mellemrum, creatoren selv har skrevet først i tilføjelsen, fjernes, så de ikke står dobbelt.
+   - **Engangsjob:** efter opdateringen sætter jobbet `merchboard_designer_names` (startet én gang ved `admin_init`, option `merchboard_designer_name_format`) " - " ind i alle eksisterende produkters kladder, ventende og godkendte versioner.
+     - Det kører 50 produkter ad gangen under produktets lås.
+     - Produkter i butikken får det nye navn dér, kun via `WooCommerceDesignerWriter` på vagtens bevis, så legacy-produkter aldrig røres.
+     - Navne uden tilføjelse, navne med " - " og navne fra før navnereglen bliver, som de er.
+     - Et nyt navn, et andet produkt allerede har, springes over og logges.
+     - Intet auditeres, som når en creators nye navn når produkterne.
+4. **Prodigis katalog som oversigt:**
+   - Fanen "Prodigis katalog" viser hele kataloget som kort (navn, kategori med sti, id), 48 pr. side, med søgning på alle ord og kategori med underkategorier (Prodigis eget filter).
+   - Listerne caches i 12 timer.
+   - Prodigi har ingen fotos i kataloget, så kortene har ingen billeder.
+   - Produktets side viser farver, størrelser og printflader før importen.
+
+## Alternatives considered
+- **`mockups:fromConfig` til forhåndsvisningen:** fravalgt; den kan ikke vælge farve (ADR-084, statusnote 2026-11-04).
+- **Forhåndsvisning som baggrundsjob:** fravalgt; dashboardet poller allerede, og et job ville kun forsinke billedet.
+- **Navnene omdøbt i en migration:** fravalgt; produktnavne i butikken skrives kun gennem writeren (ADR-080 pkt. 7).
+
+## Reason
+Alt bygger på eksisterende flows: Printfuls forhåndsvisning, Prodigis mockups efter indsendelse, omdøbningen ved en creators nye navn og Printfuls katalogoversigt.
+
+## Security
+- Forhåndsvisningen er `/me`-scopet (ADR-007), og kun creatorens egen kladde kan vises. Printfiler forlader kun det private lager via signerede URL'er (ADR-081 pkt. 4).
+- Oversigten kræver `merchboard_manage_designer` og laver kun `GET` mod kataloget.
+- Navnejobbet skriver kun designerprodukter.
+
+## Migration/data implications
+- Ingen schemaændring (schema-version 48).
+- Nye ting, der slettes ved opt-in-afinstallation: optionen `merchboard_designer_name_format` og jobbene `merchboard_designer_names` og `merchboard_designer_prodigi_preview`.
+- Jobbet ændrer navnene på eksisterende produkter, også i butikken.
+
+## Consequences
+- Produktnavne i butikken skifter efter opdateringen.
+- Prodigis forhåndsvisning virker kun på et site, Prodigi kan nå (ikke Local).
+- Om Prodigis mockups koster penge, er stadig uvist.
+
+**Statusnote 2026-11-08 (trin 40.7, review):** et uafhængigt review fandt bl.a. følgende, og det er rettet:
+- **"Fyld" over serverens grænse:** "Fyld" kunne give en skala over 100, som serveren afviser. Skalaen er nu højst 100.
+- **429 midt i forhåndsvisningen:** en 429 kunne efterlade et gemt produkt hos Prodigi. Nu genoptages flowet, og det tidligere produkt slettes først.
+- **Afviste sletninger:** sletninger prøves hver for sig. Det, der ikke kunne slettes, prøves igen af jobbet (op til fem gange, ti minutter imellem).
+- **Lås pr. kladde:** start og polling har en lås pr. kladde.
+- **Færdige billeder:** de gemmes i ti minutter, så et tabt svar kan hentes igen.
+- **Navnejobbet:**
+  - beregner hvert navn i PHP og ser på alle kladder, ventende og godkendte versioner, ikke kun den nyeste;
+  - skriver butikkens navn før versionerne;
+  - holder navne inden for 120 tegn;
+  - tæller først som færdigt, når sidste portion er kørt.
+
+Kendt grænse: oversigten læser højst 1.000 produkter (Prodigi har 275).
+
+## Related
+ADR-080, ADR-081, ADR-084, ADR-087

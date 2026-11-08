@@ -94,7 +94,8 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
 - Produktdesigneren har egne CSS-klasser (`merchboard-product-designer`). Den delte tidligere rodklasse med OBS-overlaydesigneren og blev klippet til en mørk 16:9-boks.
 
 ## Creatorens produkter (2026-10-31, eksperimentel)
-- **Navn:** "Creator Grundprodukt Tilføjelse". Creatoren skriver kun tilføjelsen. Navnet følger creatorens navn, også i butikken, og to produkter kan ikke hedde det samme.
+- **Navn:** "Creator Grundprodukt - Tilføjelse" (" - " fra 2026-11-08, ADR-102; uden tilføjelse "Creator Grundprodukt"). Creatoren skriver kun tilføjelsen. Navnet følger creatorens navn, også i butikken, og to produkter kan ikke hedde det samme. Efter opdateringen sætter et engangsjob " - " ind i de eksisterende produkters navne, også i butikken.
+- **Fyld/Tilpas (ADR-102):** et valgt billede kan fylde hele printfladen (kanterne beskæres) eller tilpasses, så hele billedet er inden for printfladen. Billedet centreres og drejes lige.
 - **Beskrivelse:** kommer fra grundproduktet og kan ikke ændres af creatoren.
 - **Annullér ændring:** en ændring af et produkt i butikken kan annulleres. Listen viser "I butikken · ændring i gang".
 - **Sæt i kladde:** tager et godkendt produkt ud af butikken, og det kan sættes tilbage uden ny godkendelse.
@@ -251,6 +252,8 @@ Funktionen bygger på projektejerens Lumise-snippet (31658), men er bygget direk
 - **Nøgle:** indsæt nøglen, som Prodigis dashboard viser den (et UUID). Pluginet sender den som `live_<nøgle>`. En nøgle fra sandkassens dashboard indtastes med `sandbox_` foran.
 - **Grundprodukter:** alle produkter, uanset hvor de produceres (projektejerens aftale med Prodigi, 2026-11-08). Kataloget har hverken fotos eller farvekoder, så creatoren designer på et hvidt ark, og admin retter farverne.
 - **Mockups:** efter indsendelse sendes printfilen til Prodigi, et gemt produkt oprettes, og mockups hentes. Det gemte slettes igen.
+- **Før indsendelse (ADR-102):** "Se det færdige produkt" laver det samme for kladdens første farve og sletter alt hos Prodigi, når billedet er hentet. Opgives det, sletter et job resten efter 30 minutter.
+- **Katalog (ADR-102):** fanen "Prodigis katalog" viser hele kataloget som kort med søgning, kategori og sider (48 pr. side, cachet 12 timer). Der er ingen fotos i Prodigis katalog.
 - **Ved første nøgle skal det afprøves:** svarenes form, om tøj understøtter mockups, om mockups koster penge, og hvilke scener der findes.
 - **Prodigis svar om mockups (2026-11-04, ikke bygget):** Prodigi anbefaler `POST /assets/{assetId}/mockups:fromConfig`. Det passer til vores flow: vi laver selv designet og printfilen og beder kun Prodigi om billedet. Svaret siger "v4", men endpointet findes kun i v5 (offentlig specifikation `https://www.prodigi.com/print-api/docs/openapi.yml`, version 5.0.0).
   - **Nøgle:** `X-API-Key` med `sandbox_<nøgle>` eller `live_<nøgle>` på `https://api.prodigi.com/v5`. `test_`-nøgler virker ikke. Sandkassen deler assets og gemte produkter med live-kontoen, så alt, vi sender, skal slettes igen.
