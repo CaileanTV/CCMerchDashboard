@@ -249,7 +249,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.7.2: tekster på tilmeldingssiden (ROADMAP 35.7)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-08** efter projektejerens ønske om at bumpe direkte, så den fulde CI kører på bump-commit'en. Tag og SHA-256 noteres her, når draft-releasen er bygget.
+**Versions-bump og CHANGELOG-sektion og tagget `v1.7.2` (begge på `b329416`) 2026-11-08** efter projektejerens ønske om at bumpe direkte, så den fulde CI kører på bump-commit'en. CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `3c8fc76967da24f1e1547082424d4d1e51bc6ed7c79b61d1c9602f53c0483dda`).
 - Kun tekster på tilmeldingssiden ændres; testet med en integrationstest, der viser formularen, og set på Local.
 - CI skal være grøn med hele integrationssuiten på den taggede commit.
 

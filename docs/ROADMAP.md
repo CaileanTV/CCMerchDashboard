@@ -992,7 +992,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **34.13 Runtime-test på Local ✅ (2026-11-07):** efter verificeret backup. Hele serverflowet mod den rigtige database og WooCommerce på grundprodukt 1: farvedesign for hvid med ærme, pris pr. farve og størrelse (sort 209,95/219,95, hvid 229,95/239,95), grundpriser pr. farve i butikken, ordrelinjens printfiler pr. farve ("front" for sort, "front – White, sleeve – White" for hvid), det valgte produktbillede, skift på det live produkt og "Kopiér design". I browseren: designvalg pr. farve, statuslinjen, pris pr. farve, fletning med "Læg dem sammen" og fortryd, og et lærred i ro (ingen gentegning på 3 sekunder). Projektejerens ønske samme dag: preview af det valgte produktbillede og et galleri, også på et live produkt; afprøvet i browseren på Local (preview tegnet, galleri med sort forside, hvid forside og hvidt ærme, og de godkendte billeder på et live produkt). Ikke afprøvet i browseren: målet i cm (dækket af Jest). Testdata er fjernet igen; designer-produkt 6 står som "purged" med sin version, som en sletning gør.
 - **34.14 Release 1.7.0 ✅ (2026-11-07):** tag `v1.7.0` på `7a442ca`, draft-release byte-identisk med den lokale pakke; se DEVELOPMENT.md "Release 1.7.0".
 
-## Fase 35 – "Vises på forsiden" ved tilmeldingen 🔄 (plan godkendt 2026-11-07; ADR-097; udgivet i 1.7.1, teksterne i 1.7.2)
+## Fase 35 – "Vises på forsiden" ved tilmeldingen ✅ (plan godkendt 2026-11-07; ADR-097; udgivet i 1.7.1, teksterne i 1.7.2)
 
 **Projektejerens ønske (2026-11-07):** creatoren vælger ved tilmeldingen, om de vises på forsiden som "Content creator" (`creator`, forudvalgt) eller "Forening & Community" (`community`). Valget skrives som bannerpluginets term meta `ccm_front_group` på creatorens primære kategori ved go-live. Bagefter kan kun administratoren ændre det. Fremtidige underkategorier får det ikke.
 
@@ -1003,7 +1003,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **35.5 Review og runtime-test på Local ✅ (2026-11-08):** efter verificeret backup; se statusnoten i ADR-097. Reviewet fandt én fejl (værdien kunne skrives på en anden creators tomme kategori) og to mindre; alle rettet.
 - **35.6 Release 1.7.1 ✅ (2026-11-08):** projektejerens go ("Når den er grøn i CI - så er vi klar"). Tag `v1.7.1` på `cbcd446` (CI grøn), draft-release byte-identisk med den lokale pakke; se DEVELOPMENT.md "Release 1.7.1".
 - **35.7 Tekster på tilmeldingen (1.7.2) ✅ (2026-11-08):** projektejerens ønske 2026-11-08. Feltet hedder "Hvad beskriver dig/jer bedst?" i stedet for "Vises på forsiden", og "Creatornavn" bliver "Creatornavn/Navn på forening/community". Overskriften bliver "Opret dig som creator eller forening/community". Fejlbeskederne følger med. Værdierne, `ccm_front_group` og fanen Go-live er uændrede: dér beskriver "Vises på forsiden" stadig bannerpluginets felt på kategorien.
-- **35.8 Release 1.7.2:** projektejerens go 2026-11-08 (bump direkte, fuld CI på bump-commit'en); se DEVELOPMENT.md "Release 1.7.2".
+- **35.8 Release 1.7.2 ✅ (2026-11-08):** projektejerens go (bump direkte, fuld CI på bump-commit'en). Tag `v1.7.2` på `b329416` (CI grøn), draft-release byte-identisk med den lokale pakke; se DEVELOPMENT.md "Release 1.7.2".
 
 ## Senere (uprioriteret)
 
