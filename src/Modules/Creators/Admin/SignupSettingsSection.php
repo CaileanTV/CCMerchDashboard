@@ -115,7 +115,7 @@ final class SignupSettingsSection {
 			printf( '<div class="notice notice-%1$s inline"><p>%2$s</p></div>', esc_attr( $message[1] ), esc_html( $message[0] ) );
 		}
 
-		echo '<p>' . esc_html__( 'When this is on, anyone can sign up as a creator on the page below. They confirm their e-mail, accept the agreement and can prepare their shop, but nothing of theirs is shown in the shop until you approve their request to go live. Then their product category is created under the parent category.', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html__( 'When this is on, anyone can sign up as a creator on the page below. They confirm their e-mail, accept the agreement and can prepare their shop, but nothing of theirs is shown in the shop until you approve their request to go live. Then their own product category is created, at the top level unless you choose a parent category below.', 'merchboard' ) . '</p>';
 		echo '<p>' . esc_html__( 'Sign-up page:', 'merchboard' ) . ' <code>' . esc_html( $this->page->url() ) . '</code></p>';
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( self::ACTION ) . '">';
@@ -132,12 +132,12 @@ final class SignupSettingsSection {
 					'id'                => 'merchboard-signup-parent',
 					'hide_empty'        => false,
 					'hierarchical'      => true,
-					'show_option_none'  => __( '— Choose a category —', 'merchboard' ),
+					'show_option_none'  => __( '— None (top level) —', 'merchboard' ),
 					'option_none_value' => '0',
 					'selected'          => SignupSettings::parent_category(),
 				)
 			);
-			echo '<p class="description">' . esc_html__( 'A creator\'s product category is created under it when you approve that they go live.', 'merchboard' ) . '</p>';
+			echo '<p class="description">' . esc_html__( 'Optional. Without one, a creator\'s product category is created at the top level when you approve that they go live; with one, under it.', 'merchboard' ) . '</p>';
 		} else {
 			echo '<p>' . esc_html__( 'Product categories need WooCommerce.', 'merchboard' ) . '</p>';
 		}

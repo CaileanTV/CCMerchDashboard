@@ -137,11 +137,25 @@ final class WooCommerceGoLiveShop implements GoLiveShop {
 
 		$existing = 'term_exists' === $term->get_error_code() ? $term->get_error_data( 'term_exists' ) : null;
 
-		if ( is_numeric( $existing ) && array() === get_objects_in_term( (int) $existing, 'product_cat' ) && ! $this->is_mapped( (int) $existing ) ) {
+		if ( is_numeric( $existing ) && self::reusable( (int) $existing ) && ! $this->is_mapped( (int) $existing ) ) {
 			return (int) $existing;
 		}
 
 		throw new GoLiveException( GoLiveException::CATEGORY_FAILED );
+	}
+
+	/**
+	 * Whether an existing term with the name may become the creator's
+	 * category: it holds no products, has no sub-categories (a shop's
+	 * structure category often holds none itself, also at the top level,
+	 * ADR-101) and is not the store's default category (review 38.6).
+	 *
+	 * @param int $term_id Term.
+	 */
+	private static function reusable( int $term_id ): bool {
+		$children = get_term_children( $term_id, 'product_cat' );
+
+		return array() === get_objects_in_term( $term_id, 'product_cat' ) && is_array( $children ) && array() === $children && (int) get_option( 'default_product_cat', 0 ) !== $term_id;
 	}
 
 	/**

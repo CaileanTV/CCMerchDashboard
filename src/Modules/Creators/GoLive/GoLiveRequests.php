@@ -31,7 +31,8 @@ defined( 'ABSPATH' ) || exit;
  * ADR-091 pkt. 9 and ADR-093:
  * - A creator who is not live asks once the agreement is accepted; one
  *   request is pending at a time. The administrator is told.
- * - Approving needs the parent category and the shop: the creator goes live
+ * - Approving needs the shop (no parent category: without one the category
+ *   is at the top level, ADR-101): the creator goes live
  *   (in one transaction with the decision and the audit record), then the
  *   shop creates the category and sets the markup. Once the category is
  *   there, `merchboard_creator_went_live` lets the designer put the waiting
@@ -160,7 +161,6 @@ class GoLiveRequests {
 		$creator = $this->creators->find( $request['creator_id'] );
 		$name    = trim( sanitize_text_field( $name ) );
 		$shop    = ( $this->shop )();
-		$parent  = SignupSettings::parent_category();
 
 		if ( null === $creator || CreatorStatus::Active !== $creator->status ) {
 			self::refuse( GoLiveException::NOT_PENDING );
@@ -168,10 +168,6 @@ class GoLiveRequests {
 
 		if ( ! $shop->available() ) {
 			self::refuse( GoLiveException::SHOP_UNAVAILABLE );
-		}
-
-		if ( 0 === $parent ) {
-			self::refuse( GoLiveException::PARENT_MISSING );
 		}
 
 		if ( '' === $name || mb_strlen( $name ) > 191 ) {

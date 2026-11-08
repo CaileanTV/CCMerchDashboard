@@ -22,7 +22,6 @@ use MerchBoard\Modules\Creators\GoLive\GoLiveRequests;
 use MerchBoard\Modules\Creators\GoLive\GoLiveShop;
 use MerchBoard\Modules\Creators\Signup\FrontGroup;
 use MerchBoard\Modules\Creators\Signup\SignupRepository;
-use MerchBoard\Modules\Creators\Signup\SignupSettings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -147,11 +146,7 @@ final class GoLivePage {
 			printf( '<div class="notice notice-%1$s"><p>%2$s</p></div>', esc_attr( $notice[1] ), esc_html( $notice[0] ) );
 		}
 
-		echo '<p class="description">' . esc_html__( 'Creators who signed up themselves ask here to go live. Until you approve, nothing of theirs is shown in the shop. Approving creates their product category under the parent category, sets their markup and puts their approved designs in the shop.', 'merchboard' ) . '</p>';
-
-		if ( 0 === SignupSettings::parent_category() ) {
-			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'Choose the parent category for creators under Settings → Agreement before you approve.', 'merchboard' ) . '</p></div>';
-		}
+		echo '<p class="description">' . esc_html__( 'Creators who signed up themselves ask here to go live. Until you approve, nothing of theirs is shown in the shop. Approving creates their own product category (at the top level, or under the parent category if one is chosen under Settings → Agreement), sets their markup and puts their approved designs in the shop.', 'merchboard' ) . '</p>';
 
 		try {
 			$pending  = $this->requests->pending();

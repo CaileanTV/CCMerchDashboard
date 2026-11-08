@@ -213,16 +213,26 @@ final class GoLiveTest extends IntegrationTestCase {
 		self::assertFalse( ( new CreatorRepository( $this->wpdb ) )->find( $creator->id )?->is_live() );
 	}
 
-	public function test_approving_needs_the_parent_category_and_the_capability(): void {
+	public function test_approving_needs_the_capability(): void {
 		$creator = $this->asked();
 		$id      = $this->pending_id( $creator->id );
 
-		SignupSettings::save( true, 0 );
-		$this->refused( GoLiveException::PARENT_MISSING, fn() => $this->requests()->approve( $id, 'Nova', '10', FrontGroup::CREATOR ) );
-
-		SignupSettings::save( true, $this->parent );
 		wp_set_current_user( $this->user );
 		$this->refused( GoLiveException::NOT_AUTHORIZED, fn() => $this->requests()->approve( $id, 'Nova', '10', FrontGroup::CREATOR ) );
+	}
+
+	public function test_without_a_parent_category_the_creator_gets_a_category_at_the_top_level(): void {
+		$creator = $this->asked();
+
+		SignupSettings::save( true, 0 );
+
+		self::assertSame( GoLiveRequests::PROVISIONED, $this->requests( true )->approve( $this->pending_id( $creator->id ), 'Nova Top', '20', FrontGroup::CREATOR ), 'No parent is needed (ADR-101).' );
+
+		$mapping = ( new CreatorCategoryRepository( $this->wpdb ) )->for_creator( $creator->id );
+		self::assertCount( 1, $mapping );
+		$term = get_term( $mapping[0]->term_id, 'product_cat' );
+		self::assertInstanceOf( \WP_Term::class, $term );
+		self::assertSame( array( 'Nova Top', 0 ), array( $term->name, $term->parent ), 'Its own category at the top level.' );
 	}
 
 	public function test_the_go_live_tab_shows_the_request_and_decides_it(): void {
