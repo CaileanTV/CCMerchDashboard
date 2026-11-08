@@ -41,6 +41,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRepricing;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerTagSync;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRetirement;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
@@ -83,6 +84,7 @@ use wpdb;
 #[CoversClass( DesignerOrderFiles::class )]
 #[CoversClass( DesignerVersionFiles::class )]
 #[CoversClass( DesignerRepricing::class )]
+#[CoversClass( DesignerTagSync::class )]
 #[CoversClass( DesignerRetirement::class )]
 #[CoversClass( DesignerPrices::class )]
 #[CoversClass( MeDesignerController::class )]
@@ -120,6 +122,8 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	private BaseProductService $bases;
 
 	private DesignerRepricing $repricing;
+
+	private DesignerTagSync $tag_sync;
 
 	private DesignerRetirement $retirement;
 
@@ -236,10 +240,12 @@ final class DesignerReviewTest extends IntegrationTestCase {
 			}
 		);
 		$this->repricing   = new DesignerRepricing( $this->wpdb, $this->products, $bases, $this->guard, $this->writer, $this->queue, $this->service( AuditTrail::class ), $this->service( Logger::class ), 2 );
+		$this->tag_sync    = new DesignerTagSync( $this->wpdb, $this->products, $bases, $this->guard, $this->writer, $this->queue, $this->service( Logger::class ) );
 		$this->retirement  = new DesignerRetirement( $this->wpdb, $this->products, $this->guard, $this->writer, $this->queue, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->service( Logger::class ) );
 		$this->hooks       = array(
 			array( BaseProductService::PRICE_CHANGED, fn( mixed $base ) => $this->repricing->base_changed( $base ) ),
 			array( BaseProductService::RETIRED, fn( mixed $base ) => $this->retirement->base_retired( $base ) ),
+			array( BaseProductService::TAGS_CHANGED, fn( mixed $base ) => $this->tag_sync->base_changed( $base ) ),
 		);
 
 		foreach ( $this->hooks as [ $hook, $callback ] ) {
@@ -259,6 +265,14 @@ final class DesignerReviewTest extends IntegrationTestCase {
 
 		foreach ( $this->hooks as [ $hook, $callback ] ) {
 			remove_action( $hook, $callback );
+		}
+
+		if ( taxonomy_exists( 'product_tag' ) ) {
+			foreach ( (array) get_terms( array( 'taxonomy' => 'product_tag', 'hide_empty' => false, 'fields' => 'ids' ) ) as $term_id ) { // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Short query.
+				wp_delete_term( (int) $term_id, 'product_tag' );
+			}
+
+			unregister_taxonomy( 'product_tag' );
 		}
 
 		foreach ( get_posts( array( 'post_type' => 'attachment', 'post_status' => 'any', 'numberposts' => -1, 'fields' => 'ids', 'meta_key' => DesignerMedia::META ) ) as $attachment ) { // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound, WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Test cleanup.
@@ -1167,6 +1181,43 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$this->review->approve( $this->pending_id( $waiting ) );
 		$this->drain();
 		self::assertSame( 1919400, $this->writer->contents[1][1]->price_units, 'A design approved before is put in the shop at the new base price.' );
+	}
+
+	public function test_the_base_product_s_tags_reach_its_products_in_the_shop_and_new_approvals(): void {
+		register_taxonomy( 'product_tag', 'product' );
+		$term = wp_insert_term( 'MB37 Review hoodie', 'product_tag' );
+		self::assertIsArray( $term );
+		$tag     = (int) $term['term_id'];
+		$product = $this->submitted();
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+		$waiting = $this->submitted();
+		$shop    = (int) ( $this->products->product( $product )['wc_product_id'] ?? 0 );
+
+		self::assertSame( array(), $this->writer->contents[0][1]->tag_ids, 'No tags yet.' );
+
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '149,95' ), array( 'tag_ids' => (string) wp_json_encode( array( $tag ) ) ) ), $this->base_views() );
+
+		self::assertSame( 1, $this->bases_version(), 'Tags do not make designs stale (ADR-100).' );
+		self::assertSame( array( array( DesignerTagSync::HOOK, array( $product, 1 ) ) ), array_map( static fn( array $job ): array => array( $job['hook'], $job['args'] ), array_values( array_filter( $this->queue->pending, static fn( array $job ): bool => DesignerTagSync::HOOK === $job['hook'] ) ) ), 'Only the product in the shop.' );
+
+		$this->queue->drain(
+			function ( string $hook, array $args ): void {
+				if ( DesignerTagSync::HOOK === $hook ) {
+					$this->tag_sync->run( ...$args );
+				}
+			}
+		);
+
+		self::assertSame( array( array( $shop, array( $tag ) ) ), $this->writer->tags );
+
+		// Saved again unchanged: no job.
+		$this->bases->save( $this->base, array_merge( $this->base_fields( '149,95' ), array( 'tag_ids' => (string) wp_json_encode( array( $tag ) ) ) ), $this->base_views() );
+		self::assertSame( array(), array_values( array_filter( $this->queue->pending, static fn( array $job ): bool => DesignerTagSync::HOOK === $job['hook'] ) ) );
+
+		$this->review->approve( $this->pending_id( $waiting ) );
+		$this->drain();
+		self::assertSame( array( $tag ), $this->writer->contents[1][1]->tag_ids, 'A design approved later gets them with its content.' );
 	}
 
 	public function test_a_colour_with_a_design_of_its_own_has_its_own_price_and_print_files_from_the_shop_to_the_order_line(): void {

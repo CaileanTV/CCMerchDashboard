@@ -286,6 +286,7 @@ final class BaseProductsPage {
 			DesignerException::BASE_PRICE           => array( __( 'Enter a base price above 0 with at most the store\'s decimals.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_EXTRA           => array( __( 'Enter a price for extra design areas of at least 0 with at most the store\'s decimals.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_CATEGORY        => array( __( 'The category is not a product category.', 'merchboard' ), 'error' ),
+			DesignerException::BASE_TAG             => array( __( 'A product tag no longer exists. Choose the tags again.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_COLORS          => array( __( 'Enter one colour per line: a name and a colour code such as #1a2b3c. Names must differ.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_SIZES           => array( __( 'Sizes must differ and have at most 20 characters.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_VIEW            => array( __( 'Check the sides: each needs a unique name, a background or colour mask, a print area inside the template and a print size of 1–2000 mm at 72–600 dpi that gives a print file of at most 8000 × 8000 pixels.', 'merchboard' ), 'error' ),
@@ -473,12 +474,13 @@ final class BaseProductsPage {
 		/* translators: %s: currency code, e.g. "DKK". */
 		echo '<tr><th scope="row"><label for="merchboard-base-small">' . esc_html( sprintf( __( 'Price per extra small design area incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-small" name="small_side_price" value="' . esc_attr( null === $base ? '0' : $this->money( $base->small_side_units ) ) . '"><p class="description">' . esc_html__( 'The same for each further small design area, e.g. a sleeve or the neck. Each side is large or small under Sides.', 'merchboard' ) . '</p></td></tr>';
 		echo '<tr><th scope="row"><label for="merchboard-base-category">' . esc_html__( 'Default category', 'merchboard' ) . '</label></th><td>' . $this->category_select( $base->category_id ?? null ) . '<p class="description">' . esc_html__( 'Used for a creator without their own product category.', 'merchboard' ) . '</p></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- category_select() escapes.
+		echo '<tr><th scope="row">' . esc_html__( 'Product tags', 'merchboard' ) . '</th><td>' . $this->tag_choices( $base->tag_ids ?? array() ) . '<p class="description">' . esc_html__( 'Every designer product of this base product gets the ticked WooCommerce product tags, e.g. for features on the product page. Products in the shop get a change in the background; tags set by hand in WooCommerce stay. Creators do not see them.', 'merchboard' ) . '</p></td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- tag_choices() escapes.
 		echo '<tr><th scope="row"><label for="merchboard-base-colors">' . esc_html__( 'Colours', 'merchboard' ) . '</label></th><td><textarea id="merchboard-base-colors" name="colors" rows="5" class="large-text code">' . esc_textarea( $colors ) . '</textarea><p class="description">' . esc_html__( 'One per line: a name and a colour code, e.g. "Black #111111".', 'merchboard' ) . '</p></td></tr>';
 		echo '<tr><th scope="row"><label for="merchboard-base-sizes">' . esc_html__( 'Sizes', 'merchboard' ) . '</label></th><td><input type="text" id="merchboard-base-sizes" name="sizes" class="regular-text" value="' . esc_attr( implode( ', ', $base->sizes ?? array() ) ) . '"><p class="description">' . esc_html__( 'Separated by commas, e.g. "S, M, L, XL". Creators and customers see them in this order.', 'merchboard' ) . '</p><div id="merchboard-base-size-order"></div></td></tr>';
 		echo '</tbody></table>';
 
 		echo '<h2>' . esc_html__( 'Sides', 'merchboard' ) . '</h2>';
-		echo '<p class="description">' . esc_html__( 'Each side has a mockup template of PNG layers of the same size: the background, the colour mask (tinted in the product colour), the shading and the highlight. The print area is where the design is placed on the template (in pixels) and its real size when printed (millimetres at a resolution in dpi).', 'merchboard' ) . '</p>';
+		echo '<p class="description">' . esc_html__( 'Each side has a mockup template of PNG layers of the same size: the background, the colour mask (tinted in the product colour), the shading and the highlight, and optionally a cutout, where the product lies in front of the design. The print area is where the design is placed on the template (in pixels) and its real size when printed (millimetres at a resolution in dpi).', 'merchboard' ) . '</p>';
 
 		$index = 0;
 
@@ -528,7 +530,7 @@ final class BaseProductsPage {
 		if ( $psd ) {
 			// Read in the browser only: the field has no name, so the PSD is never sent.
 			echo '<p><label>' . esc_html__( 'Import from PSD', 'merchboard' ) . ' <input type="file" accept=".psd,image/vnd.adobe.photoshop" data-merchboard-psd="' . esc_attr( (string) $index ) . '"></label> ';
-			echo '<span class="description" id="' . esc_attr( 'merchboard-psd-status-' . $index ) . '" aria-live="polite">' . esc_html__( 'Layers mb_background, mb_color, mb_shading, mb_highlight and mb_print_area. The PSD stays on your computer; only the PNG layers are uploaded when you save.', 'merchboard' ) . '</span></p>';
+			echo '<span class="description" id="' . esc_attr( 'merchboard-psd-status-' . $index ) . '" aria-live="polite">' . esc_html__( 'Layers mb_background, mb_color, mb_shading, mb_highlight, mb_cutout (optional) and mb_print_area. The PSD stays on your computer; only the PNG layers are uploaded when you save.', 'merchboard' ) . '</span></p>';
 			// The field has no name: the script sends the photos in batches when the form is saved.
 			echo '<p><label>' . esc_html__( 'Colour photos', 'merchboard' ) . ' <input type="file" multiple accept="image/png" data-merchboard-photos="' . esc_attr( (string) $index ) . '"></label> ';
 			echo '<span class="description" id="' . esc_attr( 'merchboard-photos-status-' . $index ) . '" aria-live="polite">' . esc_html__( 'Choose all the PNG photos of this side at once. A file named after a colour, e.g. "Black.png", becomes that colour\'s background, and a new colour is added to the list. Check the small pictures: exactly these are uploaded when you save.', 'merchboard' ) . '</span></p>';
@@ -546,7 +548,13 @@ final class BaseProductsPage {
 				echo '<label><input type="checkbox" name="' . esc_attr( $field( 'clear' ) ) . '[]" value="' . esc_attr( $layer ) . '"> ' . esc_html__( 'Remove', 'merchboard' ) . '</label> ';
 			}
 
-			echo '<input type="file" name="' . esc_attr( 'layer_' . $index . '_' . $layer ) . '" accept="image/png"></td></tr>';
+			echo '<input type="file" name="' . esc_attr( 'layer_' . $index . '_' . $layer ) . '" accept="image/png">';
+
+			if ( BaseView::CUTOUT === $layer ) {
+				echo '<p class="description">' . esc_html__( 'Where this PNG is opaque, the product is shown in front of the design, e.g. the strings of a hoodie (a mask.png). It has the size of the other layers. The print file is not changed, and designs waiting for approval stay valid.', 'merchboard' ) . '</p>';
+			}
+
+			echo '</td></tr>';
 		}
 
 		// A colour's own background (a photo of the product in that colour; review 30.15): used instead of the background and the tinted mask.
@@ -1687,6 +1695,33 @@ final class BaseProductsPage {
 	}
 
 	/**
+	 * The product tags to tick (ADR-100): every existing `product_tag` term.
+	 *
+	 * @param int[] $selected Ticked terms.
+	 */
+	private function tag_choices( array $selected ): string {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'product_tag',
+				'hide_empty' => false,
+				'orderby'    => 'name',
+			)
+		);
+
+		if ( ! is_array( $terms ) || array() === $terms ) {
+			return '<p>' . esc_html__( 'There are no product tags in WooCommerce yet.', 'merchboard' ) . '</p>';
+		}
+
+		$html = '<fieldset><legend class="screen-reader-text">' . esc_html__( 'Product tags', 'merchboard' ) . '</legend>';
+
+		foreach ( $terms as $term ) {
+			$html .= '<label style="display:inline-block;margin:0 1em .25em 0"><input type="checkbox" name="tag_ids[]" value="' . esc_attr( (string) $term->term_id ) . '"' . checked( in_array( $term->term_id, $selected, true ), true, false ) . '> ' . esc_html( $term->name ) . '</label>';
+		}
+
+		return $html . '</fieldset>';
+	}
+
+	/**
 	 * The default category select.
 	 *
 	 * @param int|null $selected Selected term.
@@ -1740,6 +1775,7 @@ final class BaseProductsPage {
 			'background' => __( 'Background', 'merchboard' ),
 			'color'      => __( 'Colour mask', 'merchboard' ),
 			'shading'    => __( 'Shading', 'merchboard' ),
+			'cutout'     => __( 'Cutout (e.g. strings on a hoodie)', 'merchboard' ),
 			default      => __( 'Highlight', 'merchboard' ),
 		};
 	}

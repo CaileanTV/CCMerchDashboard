@@ -53,6 +53,11 @@ final class DesignerException extends RuntimeException {
 
 	public const BASE_CATEGORY = 'base_category';
 
+	/**
+	 * A product tag of a base product is not a `product_tag` term (ADR-100).
+	 */
+	public const BASE_TAG = 'base_tag';
+
 	public const BASE_COLORS = 'base_colors';
 
 	public const BASE_SIZES = 'base_sizes';

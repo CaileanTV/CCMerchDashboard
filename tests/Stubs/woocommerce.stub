@@ -461,6 +461,12 @@ class WC_Product extends WC_Data {
 
 	/**
 	 * @param string $context 'view' or 'edit'.
+	 * @return array<int|string>
+	 */
+	public function get_tag_ids( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
 	 * @return int
 	 */
 	public function get_parent_id( $context = 'view' ) {}
@@ -571,6 +577,14 @@ class WC_Product extends WC_Data {
 	 * @return void
 	 */
 	public function set_category_ids( $term_ids ) {}
+
+	/**
+	 * Product tags (ADR-100).
+	 *
+	 * @param array<int> $term_ids Term ids.
+	 * @return void
+	 */
+	public function set_tag_ids( $term_ids ) {}
 
 	/**
 	 * Sets the product image.

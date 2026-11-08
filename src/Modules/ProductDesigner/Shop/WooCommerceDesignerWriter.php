@@ -46,6 +46,9 @@ defined( 'ABSPATH' ) || exit;
  *   it at a first approval only after the price used for the settlement is
  *   stored (review 30.15), so no sale is made before it.
  * - unpublish() takes a designer product out of the shop (draft).
+ * - set_tags() gives a product in the shop its base product's product tags
+ *   (ADR-100); set_content() does the same with an approved version. Tags
+ *   set by hand stay: only the tags the plugin set itself are removed.
  *
  * WooCommerce CRUD only, no direct SQL; no transaction around WooCommerce
  * saves (HPOS commits outer transactions); every step can be repeated.
@@ -56,6 +59,12 @@ class WooCommerceDesignerWriter {
 	 * Product meta: the names of the colour and size attributes (JSON list).
 	 */
 	public const ATTRIBUTES_META = '_merchboard_designer_attributes';
+
+	/**
+	 * Product meta: the product tags the plugin set from the base product
+	 * (JSON list, ADR-100), so only those are removed again.
+	 */
+	public const TAGS_META = '_merchboard_designer_tags';
 
 	/**
 	 * Constructor.
@@ -170,6 +179,11 @@ class WooCommerceDesignerWriter {
 		$parent->set_name( $content->name );
 		$parent->set_description( $content->description );
 		$parent->set_category_ids( $content->category_ids );
+
+		if ( null !== $content->tag_ids ) {
+			self::apply_tags( $parent, $content->tag_ids );
+		}
+
 		$parent->set_image_id( $content->images[0] ?? 0 );
 		$parent->set_gallery_image_ids( array_slice( $content->images, 1 ) );
 
@@ -393,6 +407,61 @@ class WooCommerceDesignerWriter {
 		$parent->set_image_id( $images[0] ?? 0 );
 		$parent->set_gallery_image_ids( array_slice( $images, 1 ) );
 		self::save( $parent );
+	}
+
+	/**
+	 * Gives a designer product its base product's product tags (ADR-100).
+	 *
+	 * @param GuardedProduct $product The guard's proof.
+	 * @param int[]          $tags    The base product's product tags.
+	 * @return bool Whether the tags changed.
+	 * @throws DatabaseException When it cannot be saved.
+	 */
+	public function set_tags( GuardedProduct $product, array $tags ): bool {
+		$parent = wc_get_product( $product->wc_product_id );
+
+		if ( ! $parent instanceof WC_Product_Variable && ! $parent instanceof WC_Product_Simple ) {
+			return false;
+		}
+
+		if ( ! self::apply_tags( $parent, $tags ) ) {
+			return false;
+		}
+
+		self::save( $parent );
+
+		return true;
+	}
+
+	/**
+	 * Sets the base product's tags on the product: the tags the plugin set
+	 * before and the base product has no more are removed; the others, also
+	 * tags set by hand, stay.
+	 *
+	 * @param WC_Product_Simple|WC_Product_Variable $product The product.
+	 * @param int[]                                 $tags    The base product's product tags.
+	 * @return bool Whether the tags or what the plugin set changed.
+	 */
+	private static function apply_tags( WC_Product_Simple|WC_Product_Variable $product, array $tags ): bool {
+		$stored  = (string) $product->get_meta( self::TAGS_META, true, 'edit' );
+		$ours    = json_decode( $stored, true );
+		$ours    = is_array( $ours ) ? array_map( 'intval', $ours ) : array();
+		$current = array_map( 'intval', $product->get_tag_ids( 'edit' ) );
+		$kept    = array_diff( $current, array_diff( $ours, $tags ) );
+		$next    = array_values( array_unique( array_merge( $kept, $tags ) ) );
+		$json    = (string) wp_json_encode( array_values( $tags ) );
+
+		sort( $next );
+		sort( $current );
+
+		if ( $next === $current && $json === $stored ) {
+			return false;
+		}
+
+		$product->set_tag_ids( $next );
+		$product->update_meta_data( self::TAGS_META, $json );
+
+		return true;
 	}
 
 	/**

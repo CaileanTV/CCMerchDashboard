@@ -69,6 +69,7 @@ final readonly class BaseProduct {
 	 * @param array<string, int> $size_prices The price of a size that has its own; empty with one price for all.
 	 * @param int                $small_side_units Price incl. VAT of each further used small side.
 	 * @param bool               $background_color Whether the designer offers a background colour (ADR-095).
+	 * @param int[]              $tag_ids          The `product_tag` terms its designer products get (ADR-100).
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -88,7 +89,8 @@ final readonly class BaseProduct {
 		public string $note = '',
 		public array $size_prices = array(),
 		public int $small_side_units = 0,
-		public bool $background_color = false
+		public bool $background_color = false,
+		public array $tag_ids = array()
 	) {
 		if ( ( null !== $id && $id < 1 ) || ! in_array( $status, array( self::DRAFT, self::ACTIVE, self::RETIRED ), true ) || ! in_array( $source, self::SOURCES, true ) || $version < 1 || $extra_side_units < 0 || $small_side_units < 0 ) {
 			throw new InvalidArgumentException( 'Invalid base product.' );
@@ -96,6 +98,12 @@ final readonly class BaseProduct {
 
 		if ( '' === $name || mb_strlen( $name ) > 191 || $base_units < 1 || 1 !== preg_match( '/^[A-Z]{3}$/', $currency ) || ( null !== $category_id && $category_id < 1 ) ) {
 			throw new InvalidArgumentException( 'Invalid base product.' );
+		}
+
+		foreach ( $tag_ids as $tag_id ) {
+			if ( $tag_id < 1 ) {
+				throw new InvalidArgumentException( 'Invalid product tag.' );
+			}
 		}
 
 		foreach ( $size_prices as $size => $units ) {

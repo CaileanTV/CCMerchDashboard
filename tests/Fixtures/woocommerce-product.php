@@ -266,6 +266,16 @@ class WC_Product extends WC_Data {
 	}
 
 	/**
+	 * Direct product_tag term ids.
+	 *
+	 * @param string $context Context.
+	 * @return list<int>
+	 */
+	public function get_tag_ids( $context = 'view' ) {
+		return WcProductStorage::$products[ $this->id ]['tags'] ?? array();
+	}
+
+	/**
 	 * SKU.
 	 *
 	 * @param string $context Context.
@@ -381,6 +391,16 @@ class WC_Product extends WC_Data {
 	 */
 	public function set_category_ids( $ids ) {
 		$this->change( 'categories', $ids );
+	}
+
+	/**
+	 * Sets the product_tag term ids.
+	 *
+	 * @param list<int> $ids Term ids.
+	 * @return void
+	 */
+	public function set_tag_ids( $ids ) {
+		$this->change( 'tags', $ids );
 	}
 
 	/**
@@ -521,7 +541,7 @@ class WC_Product extends WC_Data {
 			$product['type'] = $this instanceof WC_Product_Simple ? 'simple' : 'variable';
 		}
 
-		foreach ( array( 'name', 'description', 'categories', 'image_id', 'gallery', 'attributes', 'status', 'parent_id' ) as $property ) {
+		foreach ( array( 'name', 'description', 'categories', 'tags', 'image_id', 'gallery', 'attributes', 'status', 'parent_id' ) as $property ) {
 			if ( array_key_exists( $property, $this->changes ) ) {
 				$product[ $property ] = $this->changes[ $property ];
 			}

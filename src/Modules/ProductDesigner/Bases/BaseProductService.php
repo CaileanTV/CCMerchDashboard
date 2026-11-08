@@ -57,6 +57,12 @@ class BaseProductService {
 	public const PRICE_CHANGED = 'merchboard_designer_base_price_changed';
 
 	/**
+	 * After a commit that changed a base product's product tags (ADR-100):
+	 * its products in the shop get them (DesignerTagSync).
+	 */
+	public const TAGS_CHANGED = 'merchboard_designer_base_tags_changed';
+
+	/**
 	 * Fired after a base product was retired: `( int $base_id )`.
 	 */
 	public const RETIRED = 'merchboard_designer_base_retired';
@@ -123,6 +129,8 @@ class BaseProductService {
 		$extra    = isset( $fields['extra_side_price'] ) ? $this->extra_price( $fields['extra_side_price'] ) : ( $existing->extra_side_units ?? 0 );
 		$by_size  = isset( $fields['size_prices'] ) ? $this->size_prices( $fields['size_prices'], $sizes ) : array_intersect_key( $existing->size_prices ?? array(), array_flip( $sizes ) );
 		$small    = isset( $fields['small_side_price'] ) ? $this->extra_price( $fields['small_side_price'] ) : ( $existing->small_side_units ?? 0 );
+		// Left out keeps them (a save without the admin form's field).
+		$tags = isset( $fields['tag_ids'] ) ? self::tags( $fields['tag_ids'] ) : ( $existing->tag_ids ?? array() );
 
 		if ( '' === $name || mb_strlen( $name ) > 191 ) {
 			self::reject( DesignerException::BASE_NAME );
@@ -161,7 +169,7 @@ class BaseProductService {
 			}
 
 			$saved = $this->transaction->run(
-				function () use ( $id, $existing, $name, $fields, $price, $extra, $by_size, $small, $category, $colors, $sizes, $plans ): array {
+				function () use ( $id, $existing, $name, $fields, $price, $extra, $by_size, $small, $category, $colors, $sizes, $plans, $tags ): array {
 					$sides = array();
 
 					foreach ( $plans as $plan ) {
@@ -174,7 +182,7 @@ class BaseProductService {
 						$sides[] = $this->view( $plan, $layers );
 					}
 
-					$base = $this->base( $existing, $name, $fields, $price, $category, $colors, $sizes, $sides, $extra, $by_size, $small );
+					$base = $this->base( $existing, $name, $fields, $price, $category, $colors, $sizes, $sides, $extra, $by_size, $small, $tags );
 
 					if ( null === $existing ) {
 						$new_id = $this->bases->insert( $base );
@@ -223,6 +231,10 @@ class BaseProductService {
 
 		if ( null !== $existing && ( $existing->base_units !== $price || $existing->extra_side_units !== $extra || $existing->size_prices !== $by_size || $existing->small_side_units !== $small || self::small_sides( $existing->views ) !== array_keys( array_filter( array_column( $plans, 'small', 'key' ) ) ) ) ) {
 			do_action( 'merchboard_designer_base_price_changed', $saved[0] );
+		}
+
+		if ( null !== $existing && $existing->tag_ids !== $tags ) {
+			do_action( 'merchboard_designer_base_tags_changed', $saved[0] );
 		}
 
 		return $saved[0];
@@ -774,9 +786,10 @@ class BaseProductService {
 	 * @param int                   $extra    Price of each used side after the first.
 	 * @param array<string, int>    $size_prices The price of a size that has its own.
 	 * @param int                   $small    Price of each further used small side.
+	 * @param int[]                 $tags     Product tags (ADR-100).
 	 * @throws DesignerException When the base product is invalid (an active one must stay complete).
 	 */
-	private function base( ?BaseProduct $existing, string $name, array $fields, int $price, ?int $category, array $colors, array $sizes, array $views, int $extra, array $size_prices = array(), int $small = 0 ): BaseProduct {
+	private function base( ?BaseProduct $existing, string $name, array $fields, int $price, ?int $category, array $colors, array $sizes, array $views, int $extra, array $size_prices = array(), int $small = 0, array $tags = array() ): BaseProduct {
 		$version = $existing->version ?? 1;
 
 		// A changed template, or a colour or size that is renamed or removed (the owner's choice
@@ -804,7 +817,8 @@ class BaseProductService {
 				$size_prices,
 				$small,
 				// Left out keeps it (e.g. a save without the admin form's tick).
-				isset( $fields['background_color'] ) ? '1' === (string) $fields['background_color'] : ( $existing->background_color ?? false )
+				isset( $fields['background_color'] ) ? '1' === (string) $fields['background_color'] : ( $existing->background_color ?? false ),
+				$tags
 			);
 		} catch ( InvalidArgumentException ) {
 			self::reject( BaseProduct::ACTIVE === ( $existing->status ?? '' ) ? DesignerException::BASE_INCOMPLETE : DesignerException::BASE_VIEW );
@@ -820,7 +834,7 @@ class BaseProductService {
 	 */
 	private function with_status( BaseProduct $base, string $status ): BaseProduct {
 		try {
-			return new BaseProduct( $base->id, $status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $base->views, $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color );
+			return new BaseProduct( $base->id, $status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $base->views, $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color, $base->tag_ids );
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_INCOMPLETE );
 		}
@@ -841,7 +855,7 @@ class BaseProductService {
 			$side  = new BaseView( $view->key, $view->name, $view->width, $view->height, $layers, $view->area, $view->width_mm, $view->height_mm, $view->dpi, $view->thread_pack, $view->flat, $view->scene, $view->sizes, $view->small );
 			$views = array_map( static fn( BaseView $other ): BaseView => $other->key === $side->key ? $side : $other, $base->views );
 
-			return new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version + 1, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color );
+			return new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version + 1, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color, $base->tag_ids );
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_VIEW );
 		}
@@ -941,6 +955,34 @@ class BaseProductService {
 	}
 
 	/**
+	 * The product tags as chosen (ADR-100): existing `product_tag` terms
+	 * only, in id order; the plugin never creates a tag (ADR-033).
+	 *
+	 * @param string $value Term ids as JSON.
+	 * @return list<int>
+	 * @throws DesignerException When one is not a product tag.
+	 */
+	private static function tags( string $value ): array {
+		$decoded = json_decode( $value, true );
+		$ids     = array();
+
+		foreach ( is_array( $decoded ) ? $decoded : array() as $id ) {
+			$id = is_numeric( $id ) ? (int) $id : 0;
+
+			if ( $id < 1 || ! get_term( $id, 'product_tag' ) instanceof WP_Term ) {
+				self::reject( DesignerException::BASE_TAG );
+			}
+
+			$ids[] = $id;
+		}
+
+		$ids = array_values( array_unique( $ids ) );
+		sort( $ids );
+
+		return $ids;
+	}
+
+	/**
 	 * A stored base product.
 	 *
 	 * @param int $id Id.
@@ -991,6 +1033,24 @@ class BaseProductService {
 	}
 
 	/**
+	 * The cutout layer of each side (ADR-099), by side key.
+	 *
+	 * @param BaseView[] $views Sides.
+	 * @return array<string, int>
+	 */
+	private static function cutouts( array $views ): array {
+		$cutouts = array();
+
+		foreach ( $views as $view ) {
+			if ( isset( $view->layers[ BaseView::CUTOUT ] ) ) {
+				$cutouts[ $view->key ] = $view->layers[ BaseView::CUTOUT ];
+			}
+		}
+
+		return $cutouts;
+	}
+
+	/**
 	 * What changed, for the audit (field names only).
 	 *
 	 * @param BaseProduct $before Before.
@@ -1009,9 +1069,12 @@ class BaseProductService {
 			'background_color' => array( $before->background_color, $after->background_color ),
 			'small_sides'      => array( self::small_sides( $before->views ), self::small_sides( $after->views ) ),
 			'category_id'      => array( $before->category_id, $after->category_id ),
+			'tag_ids'          => array( $before->tag_ids, $after->tag_ids ),
 			'colors'           => array( $before->colors, $after->colors ),
 			'sizes'            => array( $before->sizes, $after->sizes ),
 			'views'            => array( self::templates( $before->views ), self::templates( $after->views ) ),
+			// Not part of the templates (ADR-099), audited on its own.
+			'cutout'           => array( self::cutouts( $before->views ), self::cutouts( $after->views ) ),
 		);
 
 		return array_keys( array_filter( $fields, static fn( array $pair ): bool => $pair[0] !== $pair[1] ) );
@@ -1026,12 +1089,12 @@ class BaseProductService {
 	 * @return list<array<string, mixed>>
 	 */
 	private static function templates( array $views ): array {
-		// The switch of the preview and the order of the sides change nothing a design was made on.
+		// The switch of the preview, the cutout (ADR-099: only the mockups) and the order of the sides change nothing a design was made on.
 		$templates = array_map(
 			static function ( BaseView $view ): array {
 				$template = $view->to_array();
 
-				unset( $template['scene']['preview'] );
+				unset( $template['scene']['preview'], $template['layers'][ BaseView::CUTOUT ] );
 
 				return $template;
 			},

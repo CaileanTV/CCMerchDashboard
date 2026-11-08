@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class BaseProductRepository {
 
-	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price, creator_note, size_prices, small_side_price, background_color';
+	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price, creator_note, size_prices, small_side_price, background_color, tag_ids';
 
 	/**
 	 * The integer columns; every other column is a string or NULL.
@@ -419,6 +419,7 @@ class BaseProductRepository {
 			'size_prices'      => array() === $base->size_prices ? null : (string) wp_json_encode( array_map( array( SalesAmount::class, 'format' ), $base->size_prices ) ),
 			'small_side_price' => SalesAmount::format( $base->small_side_units ),
 			'background_color' => $base->background_color ? 1 : 0,
+			'tag_ids'          => array() === $base->tag_ids ? null : (string) wp_json_encode( $base->tag_ids ),
 		);
 	}
 
@@ -435,6 +436,18 @@ class BaseProductRepository {
 	 */
 	private static function formats( array $columns, array $more ): array {
 		return array_map( static fn( string $column ): string => in_array( $column, self::INTEGERS, true ) ? '%d' : '%s', array_merge( $columns, $more ) );
+	}
+
+	/**
+	 * The product tags of a row (ADR-100).
+	 *
+	 * @param mixed $json Stored JSON or null.
+	 * @return list<int>
+	 */
+	private static function tag_ids( mixed $json ): array {
+		$decoded = is_string( $json ) ? json_decode( $json, true ) : null;
+
+		return array_values( array_filter( array_map( static fn( mixed $id ): int => is_numeric( $id ) ? (int) $id : 0, is_array( $decoded ) ? $decoded : array() ), static fn( int $id ): bool => $id > 0 ) );
 	}
 
 	/**
@@ -496,7 +509,8 @@ class BaseProductRepository {
 				(string) ( $row['creator_note'] ?? '' ),
 				self::size_prices( $row['size_prices'] ?? null ),
 				SalesAmount::parse( (string) ( $row['small_side_price'] ?? '0' ) ),
-				1 === (int) ( $row['background_color'] ?? 0 )
+				1 === (int) ( $row['background_color'] ?? 0 ),
+				self::tag_ids( $row['tag_ids'] ?? null )
 			);
 		} catch ( InvalidArgumentException ) {
 			throw new DatabaseException( 'Invalid base product row.' );

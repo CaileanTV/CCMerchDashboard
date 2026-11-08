@@ -26,6 +26,18 @@ final class BaseProductTest extends TestCase {
 		self::assertEquals( $view, BaseView::from_array( json_decode( (string) wp_json_encode( $view->to_array() ), true ) ) );
 	}
 
+	public function test_a_side_keeps_its_cutout_and_a_base_product_its_product_tags(): void {
+		$view = self::view( layers: array( 'background' => 1, 'cutout' => 4 ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		self::assertSame( array( 'background', 'cutout' ), array_keys( $view->layers ), 'The cutout of ADR-099 is a known layer.' );
+		self::assertEquals( $view, BaseView::from_array( json_decode( (string) wp_json_encode( $view->to_array() ), true ) ) );
+		self::assertSame( array( 1, 4 ), ( new BaseProduct( null, BaseProduct::DRAFT, 'own', 'Hoodie', '', 1499500, 'DKK', null, array(), array(), array( $view ) ) )->layer_assets() );
+		self::assertSame( array( 20, 21 ), ( new BaseProduct( null, BaseProduct::DRAFT, 'own', 'Hoodie', '', 1499500, 'DKK', null, array(), array(), array(), tag_ids: array( 20, 21 ) ) )->tag_ids );
+
+		$this->expectException( InvalidArgumentException::class );
+		new BaseProduct( null, BaseProduct::DRAFT, 'own', 'Hoodie', '', 1499500, 'DKK', null, array(), array(), array(), tag_ids: array( 0 ) );
+	}
+
 	public function test_a_side_with_a_scene_keeps_it_and_has_its_mockup_size(): void {
 		$scene = self::scene();
 		$view  = new BaseView( 'front', 'Front', 1000, 1000, array( 'background' => 1, 'scene' => 2 ), array( 'x' => 83, 'y' => 639, 'width' => 843, 'height' => 324 ), 300, 115, 300, '', false, $scene ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
@@ -84,6 +96,7 @@ final class BaseProductTest extends TestCase {
 	public function test_invalid_sides_are_refused(): void {
 		$invalid = array(
 			'no background or mask' => static fn() => self::view( layers: array( 'shading' => 3 ) ),
+			'only a cutout'         => static fn() => self::view( layers: array( 'cutout' => 3 ) ),
 			'unknown layer'         => static fn() => self::view( layers: array( 'color' => 1, 'logo' => 2 ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			'area outside'          => static fn() => self::view( area: array( 'x' => 600, 'y' => 0, 'width' => 500, 'height' => 100 ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 			'empty area'            => static fn() => self::view( area: array( 'x' => 0, 'y' => 0, 'width' => 0, 'height' => 100 ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound

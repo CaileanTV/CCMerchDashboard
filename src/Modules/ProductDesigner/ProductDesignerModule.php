@@ -49,6 +49,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRepricing;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerTagSync;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRetirement;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
@@ -323,6 +324,19 @@ final class ProductDesignerModule implements Module {
 				$c->get( PricingProductStore::class )->decimals()
 			)
 		);
+		// The base product's product tags on its products in the shop (ADR-100).
+		$container->set(
+			DesignerTagSync::class,
+			static fn( Container $c ): DesignerTagSync => new DesignerTagSync(
+				$c->get( wpdb::class ),
+				$c->get( DesignerProductRepository::class ),
+				$c->get( BaseProductRepository::class ),
+				$c->get( DesignerProductGuard::class ),
+				$c->get( WooCommerceDesignerWriter::class ),
+				$c->get( JobQueue::class ),
+				$c->get( Logger::class )
+			)
+		);
 		$container->set(
 			DesignerRetirement::class,
 			static fn( Container $c ): DesignerRetirement => new DesignerRetirement(
@@ -471,6 +485,14 @@ final class ProductDesignerModule implements Module {
 			2
 		);
 		add_action(
+			DesignerTagSync::HOOK,
+			static function ( mixed $product, mixed $attempt = 1 ) use ( $container ): void {
+				$container->get( DesignerTagSync::class )->run( $product, $attempt );
+			},
+			10,
+			2
+		);
+		add_action(
 			DesignerRetirement::HOOK,
 			static function ( mixed $product, mixed $attempt = 1 ) use ( $container ): void {
 				$container->get( DesignerRetirement::class )->run( $product, $attempt );
@@ -482,6 +504,12 @@ final class ProductDesignerModule implements Module {
 			BaseProductService::PRICE_CHANGED,
 			static function ( mixed $base ) use ( $container ): void {
 				$container->get( DesignerRepricing::class )->base_changed( $base );
+			}
+		);
+		add_action(
+			BaseProductService::TAGS_CHANGED,
+			static function ( mixed $base ) use ( $container ): void {
+				$container->get( DesignerTagSync::class )->base_changed( $base );
 			}
 		);
 		add_action(

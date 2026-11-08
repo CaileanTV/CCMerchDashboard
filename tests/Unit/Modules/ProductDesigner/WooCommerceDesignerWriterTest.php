@@ -346,6 +346,35 @@ final class WooCommerceDesignerWriterTest extends TestCase {
 		self::assertSame( array( 10 ), WcProductStorage::$saved );
 	}
 
+	public function test_the_base_product_s_tags_are_added_and_only_its_own_are_removed(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Tee', '', 'publish' );
+		WcProductStorage::$products[10]['tags'] = array( 7 );
+		Functions\when( 'wp_json_encode' )->alias( 'json_encode' );
+
+		$writer = $this->writer();
+		$proof  = new GuardedProduct( 3, 10, 7 );
+
+		self::assertTrue( $writer->set_tags( $proof, array( 20, 21 ) ) );
+		self::assertSame( array( 7, 20, 21 ), WcProductStorage::$products[10]['tags'], 'A tag set by hand stays (ADR-100).' );
+		self::assertFalse( $writer->set_tags( $proof, array( 20, 21 ) ), 'Nothing changed: nothing is saved.' );
+
+		self::assertTrue( $writer->set_tags( $proof, array( 21 ) ) );
+		self::assertSame( array( 7, 21 ), WcProductStorage::$products[10]['tags'], 'Only the tag the plugin set is removed.' );
+		self::assertSame( array( 10, 10 ), WcProductStorage::$saved );
+	}
+
+	public function test_an_approved_version_gets_the_base_product_s_tags_and_keeps_tags_set_by_hand(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Draft', '', 'draft' );
+		WcProductStorage::$products[10]['tags'] = array( 7 );
+		$this->attribute_stubs();
+
+		$this->writer()->set_content( new GuardedProduct( 3, 10, 7 ), self::content( false, tags: array( 20 ) ) );
+		self::assertSame( array( 7, 20 ), WcProductStorage::$products[10]['tags'] );
+
+		$this->writer()->set_content( new GuardedProduct( 3, 10, 7 ), self::content( false ) );
+		self::assertSame( array( 7, 20 ), WcProductStorage::$products[10]['tags'], 'Content without tags leaves them alone.' );
+	}
+
 	/**
 	 * The content of an approved version.
 	 *
@@ -355,8 +384,9 @@ final class WooCommerceDesignerWriterTest extends TestCase {
 	 * @param bool               $publish Whether it is the first approval.
 	 * @param array<int, string> $colors  Colour keys.
 	 * @param array<int, string> $sizes   Sizes.
+	 * @param int[]|null         $tags    Product tags; null leaves them alone.
 	 */
-	private static function content( bool $publish, array $colors = array( 'black', 'sand' ), array $sizes = array( 'S', 'M' ) ): DesignerContent {
+	private static function content( bool $publish, array $colors = array( 'black', 'sand' ), array $sizes = array( 'S', 'M' ), ?array $tags = null ): DesignerContent {
 		$names = array(
 			'black' => 'Black',
 			'sand'  => 'Sand',
@@ -381,7 +411,11 @@ final class WooCommerceDesignerWriterTest extends TestCase {
 			),
 			2490000,
 			2,
-			$publish
+			$publish,
+			array(),
+			array(),
+			array(),
+			$tags
 		);
 	}
 

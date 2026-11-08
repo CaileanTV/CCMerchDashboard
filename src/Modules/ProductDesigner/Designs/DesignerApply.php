@@ -311,7 +311,9 @@ class DesignerApply {
 			array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $this->size_prices( $version, $base ) ),
 			$size_images,
 			// A colour's price is the one of its own design (ADR-096).
-			array_map( static fn( array $sizes ): array => array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $sizes ), $this->color_prices( $version, $base ) )
+			array_map( static fn( array $sizes ): array => array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $sizes ), $this->color_prices( $version, $base ) ),
+			// The base product's product tags; tags set by hand stay (ADR-100).
+			$base->tag_ids
 		);
 	}
 

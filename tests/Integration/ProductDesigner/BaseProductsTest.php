@@ -60,6 +60,15 @@ final class BaseProductsTest extends IntegrationTestCase {
 
 	protected function tearDown(): void {
 		DesignerFiles::remove_all();
+
+		if ( taxonomy_exists( 'product_tag' ) ) {
+			foreach ( (array) get_terms( array( 'taxonomy' => 'product_tag', 'hide_empty' => false, 'fields' => 'ids' ) ) as $term_id ) { // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Short query.
+				wp_delete_term( (int) $term_id, 'product_tag' );
+			}
+
+			unregister_taxonomy( 'product_tag' );
+		}
+
 		parent::tearDown();
 	}
 
@@ -308,6 +317,65 @@ final class BaseProductsTest extends IntegrationTestCase {
 		self::assertMatchesRegularExpression( '/^20\d{2}-/', (string) $stamps['created_at'] );
 		self::assertMatchesRegularExpression( '/^20\d{2}-/', (string) $stamps['updated_at'], 'A date, not a number (the formats followed the columns, review 33.2).' );
 		self::assertSame( '1', (string) $stamps['updated_by'] );
+	}
+
+	public function test_a_cutout_and_product_tags_change_no_version_and_are_audited(): void {
+		register_taxonomy( 'product_tag', 'product' );
+		$hoodie = wp_insert_term( 'MB37 Hoodie', 'product_tag' );
+		$cords  = wp_insert_term( 'MB37 Cords', 'product_tag' );
+		self::assertIsArray( $hoodie );
+		self::assertIsArray( $cords );
+		$tags    = array( (int) $hoodie['term_id'], (int) $cords['term_id'] );
+		$changed = 0;
+		$count   = static function () use ( &$changed ): void {
+			++$changed;
+		};
+		add_action( BaseProductService::TAGS_CHANGED, $count );
+
+		$id = $this->service->save( null, self::fields(), array( self::side( 'Front', array( 'background' => 1000 ) ) ) );
+		$this->service->save( $id, array_merge( self::fields(), array( 'tag_ids' => (string) wp_json_encode( array_reverse( $tags ) ) ) ), array( self::existing( 'front', array( 'cutout' => 1000 ) ) ) );
+		$base = $this->bases->find( $id );
+
+		self::assertNotNull( $base );
+		self::assertSame( 1, $base->version, 'A cutout and tags make no design stale (ADR-099, ADR-100).' );
+		self::assertArrayHasKey( BaseView::CUTOUT, $base->views[0]->layers );
+		self::assertSame( $tags, $base->tag_ids, 'In id order.' );
+		self::assertSame( 1, $changed );
+		$context = json_decode( (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT context FROM %i WHERE action = %s ORDER BY id DESC LIMIT 1', $this->table( Tables::AUDIT_LOG ), 'designer_base_changed' ) ), true );
+		self::assertIsArray( $context );
+		self::assertSame( array( 'tag_ids', 'cutout' ), $context['changed_fields'] ?? null );
+
+		// A save without the field keeps the tags; nothing changed, no event.
+		$this->service->save( $id, self::fields(), array( self::existing( 'front' ) ) );
+		self::assertSame( array( $tags, 1 ), array( $this->bases->find( $id )?->tag_ids, $changed ) );
+
+		// A cutout of another size is refused like any layer.
+		try {
+			$this->service->save( $id, self::fields(), array( self::existing( 'front', array( BaseView::CUTOUT => 500 ) ) ) );
+			self::fail( 'Another size.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::BASE_LAYER_SIZE, $e->reason() );
+		}
+
+		// "Remove" deletes the cutout and its file; still the same version.
+		$asset = $base->views[0]->layers[ BaseView::CUTOUT ];
+		$clear = self::existing( 'front' );
+
+		$clear['clear'] = array( BaseView::CUTOUT );
+		$this->service->save( $id, self::fields(), array( $clear ) );
+		self::assertArrayNotHasKey( BaseView::CUTOUT, $this->bases->find( $id )?->views[0]->layers ?? array() );
+		self::assertNull( $this->assets->find( $asset ) );
+		self::assertSame( 1, $this->bases->find( $id )?->version );
+
+		// A tag that is no product tag is refused.
+		try {
+			$this->service->save( $id, array_merge( self::fields(), array( 'tag_ids' => '[999999]' ) ), array( self::existing( 'front' ) ) );
+			self::fail( 'Unknown tag.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::BASE_TAG, $e->reason() );
+		}
+
+		remove_action( BaseProductService::TAGS_CHANGED, $count );
 	}
 
 	public function test_refused_changes_keep_no_file_and_change_nothing(): void {

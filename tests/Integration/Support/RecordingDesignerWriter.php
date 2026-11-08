@@ -66,6 +66,13 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	public array $images = array();
 
 	/**
+	 * Product tags written (ADR-100).
+	 *
+	 * @var list<array{0: int, 1: array<int>}>
+	 */
+	public array $tags = array();
+
+	/**
 	 * Unpublished products.
 	 *
 	 * @var list<int>
@@ -174,6 +181,18 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	 */
 	public function set_images( GuardedProduct $product, array $images ): void {
 		$this->images[] = array( $product->wc_product_id, $images );
+	}
+
+	/**
+	 * Records the product tags.
+	 *
+	 * @param GuardedProduct $product Proof.
+	 * @param int[]          $tags    Product tags.
+	 */
+	public function set_tags( GuardedProduct $product, array $tags ): bool {
+		$this->tags[] = array( $product->wc_product_id, $tags );
+
+		return true;
 	}
 
 	/**
