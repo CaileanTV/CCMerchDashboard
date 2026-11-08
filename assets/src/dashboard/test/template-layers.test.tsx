@@ -29,7 +29,10 @@ const IMAGES = new Map( [
  *
  * @param view The side.
  */
-async function over( view: DesignerView ): Promise< HTMLElement > {
+async function over(
+	view: DesignerView,
+	colorKey?: string
+): Promise< HTMLElement > {
 	const container = document.createElement( 'div' );
 
 	document.body.append( container );
@@ -40,6 +43,7 @@ async function over( view: DesignerView ): Promise< HTMLElement > {
 				view={ view }
 				images={ IMAGES }
 				color="#111111"
+				{ ...( colorKey === undefined ? {} : { colorKey } ) }
 				part="over"
 			/>
 		);
@@ -70,6 +74,21 @@ describe( 'the template over the design', () => {
 		expect( container.lastElementChild?.getAttribute( 'src' ) ).toBe(
 			IMAGES.get( 2 )
 		);
+	} );
+
+	it( "uses the colour's own photo in the cutout (review 37.11)", async () => {
+		const container = await over(
+			{ ...VIEW, backgrounds: { black: 1 }, layers: { cutout: 3 } },
+			'black'
+		);
+
+		expect(
+			Array.from(
+				container.querySelectorAll(
+					'.merchboard-product-designer__cutout img'
+				)
+			).map( ( image ) => image.getAttribute( 'src' ) )
+		).toEqual( [ IMAGES.get( 1 ) ] );
 	} );
 
 	it( 'draws nothing in front without a cutout', async () => {

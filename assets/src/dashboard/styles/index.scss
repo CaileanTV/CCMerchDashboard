@@ -2198,6 +2198,8 @@ input:disabled + .merchboard-sounds__upload {
 	position: absolute;
 	inset: 0;
 	pointer-events: none;
+	// As in the mockup: white where the template is transparent.
+	background: var(--merchboard-mockup-ground);
 	mask-repeat: no-repeat;
 	mask-size: 100% 100%;
 }

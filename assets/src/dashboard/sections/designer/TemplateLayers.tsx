@@ -135,6 +135,8 @@ export function TemplateLayers( props: TemplateLayersProps ) {
 					style={ {
 						maskImage: `url(${ cutout })`,
 						WebkitMaskImage: `url(${ cutout })`,
+						WebkitMaskSize: '100% 100%',
+						WebkitMaskRepeat: 'no-repeat',
 					} }
 				>
 					{ under }

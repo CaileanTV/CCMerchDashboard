@@ -1782,6 +1782,7 @@ function Editor( props: EditorProps ) {
 									view={ view }
 									images={ images }
 									color={ hex }
+									colorKey={ previewColor }
 									part="over"
 								/>
 							</div>

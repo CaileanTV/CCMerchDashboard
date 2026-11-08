@@ -245,6 +245,11 @@ class DesignerApply {
 		if ( null !== $now && $now->price_terms() !== $base->price_terms() && null !== $this->reprice ) {
 			( $this->reprice )( $product_id );
 		}
+
+		// Product tags changed while it was applied (review 37.11): the products in the shop, now also this one, get them.
+		if ( null !== $now && $now->tag_ids !== $base->tag_ids ) {
+			do_action( 'merchboard_designer_base_tags_changed', $now->id );
+		}
 	}
 
 	/**

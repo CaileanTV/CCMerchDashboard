@@ -5765,6 +5765,8 @@ Samme regler som de andre lag: PNG, højst 8000 px, samme størrelse som skabelo
 - Ingen schema- eller REST-ændring ud over den nye lagnøgle.
 - Eksisterende produktbilleder ændres ikke.
 
+**Statusnote 2026-11-08 (trin 37.11, review):** et uafhængigt review af fase 37 fandt, at lærredet i designeren viste den fælles baggrund i udskæringen i stedet for farvens eget foto (mockups var korrekte). Det er rettet og testet. Desuden: udskæringen på lærredet har nu hvid bund som mockuppen og de præfiksede mask-egenskaber til ældre browsere, og ændres et grundprodukts tags, mens en første godkendelse kører, får produktet dem bagefter (ADR-100).
+
 ## Related
 ADR-080, ADR-085, ADR-096, ADR-098
 

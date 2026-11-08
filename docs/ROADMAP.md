@@ -1031,7 +1031,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **37.8 Docs (tags) ✅:** ADR-100, product-designer.md og DATABASE.md.
 - **37.9 Server (tags) ✅:** migration 48 (`tag_ids`), grundproduktets felt, butiksproduktet og baggrundsjobbet.
 - **37.10 Tests (tags) ✅:** unit og integration, migration og schema-version.
-- **37.11 Review:** uafhængigt review af begge dele (kører sideløbende med CI). Projektejeren tester testpakken på staging i stedet for på Local (projektejerens ønske 2026-11-08).
+- **37.11 Review ✅ (2026-11-08):** uafhængigt review af begge dele; én fejl (lærredets udskæring viste den fælles baggrund i stedet for farvens foto) og tre mindre, rettet; se statusnoten i ADR-099. Projektejeren tester testpakken på staging i stedet for på Local (projektejerens ønske 2026-11-08).
 - **37.7 Release 1.7.4:** bump og testpakke til staging 2026-11-08 (projektejerens ønske); tag efter projektejerens OK fra staging. Se DEVELOPMENT.md "Release 1.7.4".
 
 ## Senere (uprioriteret)
