@@ -458,6 +458,26 @@ final class ProdigiTest extends IntegrationTestCase {
 		$this->assert_never_ordered();
 	}
 
+	public function test_an_asset_counts_as_ready_once_prodigi_knows_its_dimensions(): void {
+		$version = $this->submit( false, false );
+		$mockups = $this->mockups();
+		$asset   = 'GET ' . self::API . '/assets/asset1';
+
+		// Prodigi's v5 says "processing" for good (2026-11-08); the dimensions tell when it is done.
+		$this->answers[ $asset ] = self::answer( array( 'data' => array( 'id' => 'asset1', 'status' => 'processing', 'dimensions' => array() ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		$mockups->start_preview( $version );
+		$mockups->preview( $version );
+		self::assertNull( $this->call( 'POST', self::API . '/products' ), 'Not done yet: no product is saved.' );
+
+		$this->answers[ $asset ] = self::answer( array( 'data' => array( 'id' => 'asset1', 'status' => 'processing', 'dimensions' => array( 'widthPx' => 7970, 'heightPx' => 3910 ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		$this->rewind( $version );
+		$mockups->preview( $version );
+		self::assertNotNull( $this->call( 'POST', self::API . '/assets/asset1/mockups:fromProduct' ), 'Done: the mockup is asked for.' );
+		$mockups->clean_preview( $version, (int) ( get_transient( ProdigiMockups::PREVIEW . $version )['started'] ?? 0 ) );
+	}
+
 	public function test_a_failed_preview_deletes_what_was_saved(): void {
 		$version = $this->submit( false, false );
 		$mockups = $this->mockups();

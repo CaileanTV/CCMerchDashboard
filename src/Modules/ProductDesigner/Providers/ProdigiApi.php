@@ -182,8 +182,12 @@ class ProdigiApi {
 	 */
 	public function asset_status( string $id ): string {
 		$answer = $this->call( 'GET', '/assets/' . self::id( $id ) );
+		$data   = is_array( $answer['data'] ?? null ) ? $answer['data'] : array();
+		$status = is_string( $data['status'] ?? null ) ? $data['status'] : '';
+		$width  = is_array( $data['dimensions'] ?? null ) ? (int) ( $data['dimensions']['widthPx'] ?? 0 ) : 0;
 
-		return is_array( $answer['data'] ?? null ) && is_string( $answer['data']['status'] ?? null ) ? $answer['data']['status'] : '';
+		// Prodigi's v5 never reports `ready` (2026-11-08, also for assets from its own dashboard): an asset is done once its dimensions are known.
+		return 'failed' !== $status && $width > 0 ? 'ready' : $status;
 	}
 
 	/**
