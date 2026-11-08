@@ -23,7 +23,7 @@ defined( 'ABSPATH' ) || exit;
  * - `GET /catalogue/search`, `/catalogue/products`, `/catalogue/categories`,
  *   `/catalogue/products/{id}` and `/catalogue/products/{id}/variants`;
  * - `POST /assets:ingest`, `GET` and `DELETE /assets/{id}`;
- * - `POST` and `DELETE /products`, `GET /products/{id}/variants`,
+ * - `POST` and `DELETE /products`, `GET` and `POST /products/{id}/variants`,
  *   `POST /products/{id}/assets`: a saved product exists only to make a
  *   mockup and is deleted again;
  * - `POST /assets/{id}/mockups:fromProduct`, `GET /assets/{id}/mockups/{mockupId}`;
@@ -216,6 +216,23 @@ class ProdigiApi {
 	 */
 	public function product_variants( string $id ): array {
 		return $this->paged( '/products/' . self::id( $id ) . '/variants' );
+	}
+
+	/**
+	 * Adds a catalogue variant to a saved product: Prodigi does not keep the
+	 * `variants` of `POST /products` (tried 2026-11-08, ADR-102).
+	 *
+	 * @param string                $product    Saved product.
+	 * @param string                $sku        Catalogue variant.
+	 * @param array<string, string> $attributes Attribute selections, such as the colour.
+	 * @throws ProdigiException When the call fails.
+	 */
+	public function add_product_variant( string $product, string $sku, array $attributes ): void {
+		$this->call(
+			'POST',
+			'/products/' . self::id( $product ) . '/variants',
+			array_merge( array( 'catalogueVariantId' => $sku ), array() === $attributes ? array() : array( 'attributes' => $attributes ) )
+		);
 	}
 
 	/**

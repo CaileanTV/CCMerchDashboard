@@ -261,6 +261,29 @@ final class ProdigiTest extends IntegrationTestCase {
 		$this->assert_never_ordered();
 	}
 
+	public function test_a_variant_prodigi_did_not_keep_is_added_to_the_saved_product(): void {
+		$version = $this->submit();
+		$mockups = $this->mockups();
+		$kept    = $this->answers[ 'GET ' . self::API . '/products/saved1/variants?limit=100&offset=0' ];
+
+		// As Prodigi answered 2026-11-08: the product is saved without its variants.
+		$this->answers[ 'GET ' . self::API . '/products/saved1/variants?limit=100&offset=0' ] = fn(): array => null === $this->call( 'POST', self::API . '/products/saved1/variants' ) ? self::answer( array( 'data' => array() ) ) : $kept;
+		$this->answers[ 'POST ' . self::API . '/products/saved1/variants' ]                   = self::answer( array( 'data' => array( 'id' => 'v1' ) ), 201 ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		$mockups->submitted( $version );
+		$this->drain( $mockups );
+
+		self::assertSame( PrintfulMockups::READY, $this->products->version( $version )['mockup_state'] ?? null );
+		self::assertSame(
+			array(
+				'catalogueVariantId' => 'TEE-S',
+				'attributes'         => array( 'color' => 'White' ),
+			),
+			json_decode( (string) ( $this->call( 'POST', self::API . '/products/saved1/variants' )[2]['body'] ?? '' ), true )
+		);
+		$this->assert_never_ordered();
+	}
+
 	public function test_each_colour_design_has_a_saved_product_with_its_own_artwork(): void {
 		$version = $this->submit( true );
 		$mockups = $this->mockups();

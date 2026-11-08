@@ -5935,5 +5935,11 @@ Alt bygger på eksisterende flows: Printfuls forhåndsvisning, Prodigis mockups 
 
 Kendt grænse: oversigten læser højst 1.000 produkter (Prodigi har 275).
 
+**Statusnote 2026-11-08 (trin 40.10, rigtige kald mod Prodigi; alt testmateriale slettet igen):**
+- **Filerne bliver aldrig behandlet færdigt:** filer, der sendes til Prodigi, kommer ikke videre end `processing`. Det gælder ingest af en fil fra stg og af en JPEG fra Wikimedia, en direkte upload (`POST /assets` + `PUT`, der svarer `ready`, hvorefter `GET` siger `processing`) og projektejerens egne filer fra 2023–2026. Prodigis `validate` siger "pixel dimensions are not available", og `mockups:fromProduct` svarer 404 "Asset … was not found", også efter 3½ minut. Prodigi er spurgt.
+- **Varianter skal tilføjes for sig:** `POST /products` gemmer ikke `variants`. Projektejeren har godkendt `POST /products/{id}/variants` som tilladt kald (tilføjelse til ADR-084 pkt. 1). Koden tilføjer farverne med det, når det gemte produkt ikke har nogen.
+- **Prodigis fejlbesked logges:** kald og Prodigis egen fejlbesked logges ved forhåndsvisningen og ved mockups efter indsendelse, så de kan læses i loggen (WooCommerce → Status → Logs, kilde merchboard).
+- **Mockup-API'et fejler hos Prodigi (samme aften, med projektejerens OK til én test-mockup på hans egen fil, som blev slettet igen):** også på en fil, Prodigis dashboard har lavet mockups af, svarer `mockups:fromProduct` 404 "Product … was not found" for et produkt, `GET` kan læse, og `mockups:fromConfig` svarer 500 `mockup_failed` (correlation id `3e35b2f5-4c2c-4579-92e8-806e37f0ffa7` og `6694fc88-9222-43d3-a772-a832e013d2ed`). Dashboardets mockups har scenerne `HeadOn` og `Angled` (og Tech/Close Up), intet `productId` og bygger på en transformation af filen. En transformation (`POST /assets/{id}/transformations`) hjalp ikke. Fejlen ligger hos Prodigi; vi venter på deres svar.
+
 ## Related
 ADR-080, ADR-081, ADR-084, ADR-087

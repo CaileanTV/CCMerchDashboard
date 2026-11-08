@@ -1067,6 +1067,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **40.6 Tests ✅:** integration (`ProdigiTest`: forhåndsvisning, oprydning, begrænsning, REST, oversigt; `DesignerReviewTest`: navnejobbet), Jest (`fitted()`) og de faste hook-lister.
 - **40.8 " - " i produktnavne ✅:** `DesignerNames::SEPARATOR` og engangsjobbet `merchboard_designer_names`.
 - **40.9 Prodigis katalog som oversigt ✅:** hele kataloget som kort med søgning, kategori og sider.
+- **40.10 Prodigis rigtige svar ✅ (2026-11-08):** varianter tilføjes med `POST /products/{id}/variants`, og Prodigis fejlbeskeder logges. Prodigi gør ingen filer klar (statusnote i ADR-102), så mockups venter på Prodigi.
 - **40.7 Review og stg:** uafhængigt review ✅ (rettelser i statusnoten i ADR-102), push (CI), eksperimentel testpakke på stg og den fælles test med 39.4. Versionsbump (1.7.6) efter projektejerens OK.
 
 ## Senere (uprioriteret)

@@ -255,6 +255,7 @@ class ProdigiMockups {
 				}
 			} catch ( ProdigiException $e ) {
 				$this->release_saved( $id, $state );
+				$this->logger->warning( 'Prodigi could not make the photos of a draft.', self::refusal( $id, $e ) );
 
 				throw $e;
 			}
@@ -344,6 +345,7 @@ class ProdigiMockups {
 				}
 
 				$this->drop_preview( $id, $stored );
+				$this->logger->warning( 'Prodigi could not make the photos of a draft.', self::refusal( $id, $e ) );
 
 				throw $e;
 			}
@@ -459,15 +461,7 @@ class ProdigiMockups {
 		$state['product'] = $product;
 		set_transient( self::PREVIEW . $id, $state, self::PREVIEW_TTL );
 
-		$saved = array();
-
-		foreach ( $this->api->product_variants( $product ) as $variant ) {
-			if ( is_array( $variant ) && is_scalar( $variant['id'] ?? null ) ) {
-				$saved[] = $variant;
-			}
-		}
-
-		$variant = self::saved_variant( $saved, $color );
+		$variant = self::saved_variant( $this->saved_variants( $product, array( $color ) ), $color );
 
 		if ( null === $variant ) {
 			self::fail( ProdigiException::INVALID );
@@ -658,6 +652,23 @@ class ProdigiMockups {
 	}
 
 	/**
+	 * What the log keeps of a refusal: the call and Prodigi's own message
+	 * (never the key).
+	 *
+	 * @param int              $id Version.
+	 * @param ProdigiException $e  The refusal.
+	 * @return array<string, int|string>
+	 */
+	private static function refusal( int $id, ProdigiException $e ): array {
+		return array(
+			'version_id' => $id,
+			'reason'     => $e->reason(),
+			'call'       => $e->call,
+			'detail'     => $e->detail,
+		);
+	}
+
+	/**
 	 * Logs a delete Prodigi refused.
 	 *
 	 * @param ProdigiException $e The refusal.
@@ -721,6 +732,7 @@ class ProdigiMockups {
 			if ( ProdigiException::RATE_LIMITED === $e->reason() ) {
 				$this->schedule( $id, $e->retry_after );
 			} else {
+				$this->logger->warning( 'Prodigi refused a call for the mockups of a design.', self::refusal( $id, $e ) );
 				$this->failed( $id, $e->reason() );
 			}
 		} catch ( Throwable $e ) {
@@ -954,14 +966,7 @@ class ProdigiMockups {
 
 			$this->tasks->update( $task, array( 'result' => (string) wp_json_encode( $map ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
-			$saved = array();
-
-			foreach ( $this->api->product_variants( $product ) as $variant ) {
-				if ( is_array( $variant ) && is_scalar( $variant['id'] ?? null ) ) {
-					$saved[] = $variant;
-				}
-			}
-
+			$saved = $this->saved_variants( $product, array_values( $own ) );
 			$bound = array();
 
 			foreach ( $assets as $key => $asset ) {
@@ -995,6 +1000,41 @@ class ProdigiMockups {
 		$map['mockups'] = $mockups;
 
 		return $map;
+	}
+
+	/**
+	 * A saved product's variants. Prodigi does not keep the `variants` of
+	 * `POST /products` (tried 2026-11-08, ADR-102), so the colours are added
+	 * one by one when it has none.
+	 *
+	 * @param string                                                      $product Saved product.
+	 * @param list<array{sku: string, attributes: array<string, string>}> $colors  The colours it should have.
+	 * @return list<array<mixed>>
+	 * @throws ProdigiException When Prodigi refuses or fails.
+	 */
+	private function saved_variants( string $product, array $colors ): array {
+		$read  = function () use ( $product ): array {
+			$saved = array();
+
+			foreach ( $this->api->product_variants( $product ) as $variant ) {
+				if ( is_array( $variant ) && is_scalar( $variant['id'] ?? null ) ) {
+					$saved[] = $variant;
+				}
+			}
+
+			return $saved;
+		};
+		$saved = $read();
+
+		if ( array() !== $saved ) {
+			return $saved;
+		}
+
+		foreach ( $colors as $color ) {
+			$this->api->add_product_variant( $product, $color['sku'], $color['attributes'] );
+		}
+
+		return $read();
 	}
 
 	/**
