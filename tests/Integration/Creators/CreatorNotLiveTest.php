@@ -74,6 +74,8 @@ final class CreatorNotLiveTest extends IntegrationTestCase {
 	protected function tearDown(): void {
 		remove_filter( 'map_meta_cap', array( self::class, 'product_caps' ), 10 );
 		wp_delete_term( $this->term, 'product_cat' );
+		// The linked product would show up for a later test's creator with the same id.
+		( new ProductPosts( $this->wpdb ) )->remove_all();
 		parent::tearDown();
 	}
 
