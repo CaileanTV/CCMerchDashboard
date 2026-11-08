@@ -249,7 +249,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.7.3: "Send til godkendelse" som popup (fase 36)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-08** efter projektejerens OK på Local ("Dette er OK - så du må gerne commit og bumpe til 1.7.3"). Tag og SHA-256 noteres her, når draft-releasen er bygget.
+**Versions-bump og CHANGELOG-sektion og tagget `v1.7.3` (begge på `4853677`) 2026-11-08** efter projektejerens OK på Local ("Dette er OK - så du må gerne commit og bumpe til 1.7.3"). CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `fa2c2c7fcb6a87be372fba491451e05acf9fdb2198c795c2d44970ea0ed67a98`).
 - Fase 36 er reviewet uafhængigt (rettelser i statusnoten i ADR-098) og testet af projektejeren på Local.
 - CI skal være grøn med hele integrationssuiten på den taggede commit.
 
