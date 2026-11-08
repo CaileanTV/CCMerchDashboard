@@ -8,7 +8,7 @@ I gang (fase 32, ADR-091–094). 32.2 (live-status og spærringer) og 32.3 (afta
 
 ## User-facing functionality
 - **Oprettelse** på `/<dashboard-slug>/opret`:
-  - creatornavn, brugernavn, e-mail, kanal-link, "Vises på forsiden" ("Content creator", forudvalgt, eller "Forening & Community"; ADR-097), "Jeg er fyldt 18 år" og aftalepapiret med accept;
+  - "Creatornavn/Navn på forening/community", brugernavn, e-mail, kanal-link, "Hvad beskriver dig/jer bedst?" ("Content creator", forudvalgt, eller "Forening & Community"; skrives som bannerpluginets "Vises på forsiden" ved go-live; ADR-097), "Jeg er fyldt 18 år" og aftalepapiret med accept;
   - er e-mailen eller brugernavnet i brug, siger siden det (projektejerens valg 2026-11-06);
   - mailen "Bekræft e-mail og vælg adgangskode";
   - efter den første adgangskode åbner MitCCMerch.

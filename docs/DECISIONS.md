@@ -5686,5 +5686,7 @@ Creatoren kan kun vælge mellem to faste værdier, og kun én gang. Kun administ
 
 **Statusnote 2026-11-08 (trin 35.5, review og runtime-test på Local):** et uafhængigt review fandt, at en tom kategori med samme navn, som en anden creator havde, fik værdien skrevet, før tilknytningen blev afvist. Det er rettet (pkt. 5), og testet. Desuden fjernes creator meta'en nu med en udløbet tilmelding, og en ændring ved "Prøv igen" auditeres. Runtime-testen på Local: tilmelding over HTTP som "Forening & Community" (en ukendt værdi afvist med dansk besked, valget bevaret), fanen Go-live med valget forudvalgt, godkendelse under en midlertidig overkategori og bannerpluginets felt på den nye kategori med "Forening & community" valgt. Testdata er fjernet igen.
 
+**Statusnote 2026-11-08 (trin 35.7, 1.7.2):** efter projektejerens ønske hedder feltet på tilmeldingssiden "Hvad beskriver dig/jer bedst?" (ikke "Vises på forsiden"), og navnefeltet hedder "Creatornavn/Navn på forening/community". Overskriften er "Opret dig som creator eller forening/community". Kun teksterne ændres. Pkt. 1 gælder ellers uændret; fanen Go-live kalder stadig listen "Vises på forsiden", fordi den svarer til bannerpluginets felt.
+
 ## Related
 ADR-033, ADR-077, ADR-091, ADR-093
