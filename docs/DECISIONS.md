@@ -5690,3 +5690,44 @@ Creatoren kan kun vælge mellem to faste værdier, og kun én gang. Kun administ
 
 ## Related
 ADR-033, ADR-077, ADR-091, ADR-093
+
+# ADR-098: "Send til godkendelse" som popup med rækkefølge, hovedbillede og bekræftelse ved fortjeneste 0
+
+## Date
+2026-11-08
+
+## Status
+Accepteret af projektejeren 2026-11-08 (fase 36, plan godkendt samme dag). Udgives i 1.7.3.
+
+## Context
+Produktfanen i designeren blev for lang med mange farver (fx 23), fordi farvernes rækkefølge og produktbilledet lå dér; produktbilledet blev desuden vist både som liste og som galleri. På smalle skærme blev fanens indhold skåret af til højre (projektejerens skærmbillede 2026-11-08). Bekræftelsen ved "Send til godkendelse" var en boks over lærredet og viste prisen for den viste farves design, ikke den højeste pris (ADR-096 pkt. 4). Nye kladder starter med fortjeneste 0, og serveren tillader 0 (ADR-080), så en creator kunne sende et produkt uden fortjeneste uden at opdage det.
+
+## Decision
+1. **Popup ved send:** "Send til godkendelse" åbner en bred popup "Send til godkendelse" med:
+   - **Farvernes rækkefølge** (ved mere end én farve): farve, navn, det design farven bruger (ved farvedesigns) og pile op/ned. Butikken viser farverne i den rækkefølge (ADR-081).
+   - **Primært produktbillede i shoppen** (ved mindst to valg): galleriet fra ADR-096 pkt. 6. Et tryk gør billedet til produktets hovedbillede i shoppen, og det store billede viser "Hovedbillede i shoppen: <farve – side>". Uden valg gælder første farve og første side. Listen med de samme valg fjernes.
+   - **Opsummering:** gebyret for broderi (som før), antal billeder og kundens pris inkl. moms, nu den højeste pris af designenes priser (ADR-096 pkt. 4).
+   - "Send" og "Annullér". Annullér sender intet; valgene bliver i editoren og gemmes med næste gem eller send.
+2. **Fortjeneste 0:** er fortjenesten 0, når creatoren trykker "Send", viser popuppen i stedet en bekræftelse: "Din fortjeneste er 0 kr. …. Vil du lægge produktet op uden fortjeneste?" med "Ja, send uden fortjeneste" og "Tilbage og sæt fortjeneste" (lukker popuppen og sætter fokus i "Din fortjeneste"). Fortjenesten tæller som 0, når prisen med creatorens værdi er den samme som med 0, så også en lille procent, der rundes væk.
+3. **Produktfanen:** beholder navn, farver, "Vælg alle", syninger og størrelser. Ved mere end én farve vises "Design pr. farve" (farve, navn og designvalget), uden pile. Fanens indhold er aldrig bredere end fanen.
+4. **Live produkter:** kortet "Produktbillede" på et live produkt er uændret (ADR-096 pkt. 6), men det store billede viser den samme tekst "Hovedbillede i shoppen: …".
+
+## Alternatives considered
+- **En ny fane "Produktbillede":** fravalgt af projektejeren; rækkefølge og hovedbillede er valg, der hører til, når produktet er færdigt.
+- **Et afkrydsningsfelt ved fortjeneste 0:** fravalgt af projektejeren til fordel for en egen skærm.
+- **Afvise fortjeneste 0 på serveren:** fravalgt; 0 er et gyldigt valg (ADR-080), fx til en forening.
+
+## Reason
+Valgene træffes ét sted, lige før designet sendes, med plads til et stort galleri. Bekræftelsen ved 0 fanger den hyppigste fejl uden at forbyde valget.
+
+## Security
+Kun browseren ændres. Serveren validerer stadig rækkefølge, farver og hovedbillede (`DesignerImages::valid`) og tillader fortjeneste fra 0. Ingen ny route, ingen ny data.
+
+## Consequences
+- Ingen schemaændring og ingen serverændring.
+- Rækkefølgen ses først i popuppen; i produktfanen står farverne i deres valgte rækkefølge.
+
+**Statusnote 2026-11-08 (trin 36.7, review):** et uafhængigt review fandt, at tastetryk i en popup nåede designeren bag den (fx Delete og Ctrl+Z ændrede designet under popuppen). Det er rettet i `Dialog` for alle popups, og testet. Desuden: knappen "Send til godkendelse" er ikke længere slået fra under popuppen, så fokus vender tilbage til den. Billederne tegnes ikke igen, når farverne flyttes. Fortjeneste 0 tjekkes på alle designs. Teksten siger "prisen uden fortjeneste" (ekstra områder kan koste). Escape på skærmen "Send uden fortjeneste?" virker som "Tilbage og sæt fortjeneste". Projektejeren tester på Local før commit.
+
+## Related
+ADR-080, ADR-081, ADR-096

@@ -1005,6 +1005,19 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **35.7 Tekster på tilmeldingen (1.7.2) ✅ (2026-11-08):** projektejerens ønske 2026-11-08. Feltet hedder "Hvad beskriver dig/jer bedst?" i stedet for "Vises på forsiden", og "Creatornavn" bliver "Creatornavn/Navn på forening/community". Overskriften bliver "Opret dig som creator eller forening/community". Fejlbeskederne følger med. Værdierne, `ccm_front_group` og fanen Go-live er uændrede: dér beskriver "Vises på forsiden" stadig bannerpluginets felt på kategorien.
 - **35.8 Release 1.7.2 ✅ (2026-11-08):** projektejerens go (bump direkte, fuld CI på bump-commit'en). Tag `v1.7.2` på `b329416` (CI grøn), draft-release byte-identisk med den lokale pakke; se DEVELOPMENT.md "Release 1.7.2".
 
+## Fase 36 – "Send til godkendelse" som popup 🔄 (plan godkendt 2026-11-08; ADR-098; udgives i 1.7.3)
+
+**Projektejerens ønske (2026-11-08):** produktfanen skar indhold af og blev for lang med mange farver. Farvernes rækkefølge og det primære produktbillede i shoppen vælges i en popup ved "Send til godkendelse", og fortjeneste 0 skal bekræftes på en egen skærm.
+
+- **36.1 Docs ✅:** ADR-098, denne fase og product-designer.md.
+- **36.2 Dialog ✅:** en bred variant af `Dialog`.
+- **36.3 Popup ✅:** `SubmitDialog` med rækkefølge, hovedbillede, opsummering (højeste pris) og skærmen ved fortjeneste 0.
+- **36.4 Produktfanen ✅:** uden pile og produktbillede, med "Design pr. farve", og aldrig bredere end fanen.
+- **36.5 Tekster ✅:** danske oversættelser.
+- **36.6 Tests ✅:** Jest for popuppen, skærmen ved 0, produktfanen og galleriet.
+- **36.7 Review og tjek ✅ (2026-11-08):** uafhængigt review (rettelser: se statusnoten i ADR-098), lint, test og build, layout set i headless Chrome. Projektejeren har testet på Local og godkendt ("Dette er OK").
+- **36.8 Release 1.7.3:** efter projektejerens OK.
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |
