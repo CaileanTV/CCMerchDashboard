@@ -4,6 +4,22 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.7.5] - 2026-11-08
+
+Fase 38: rettelse af go-live uden overkategori og kategoriforslag før go-live. Ingen schemaændring (schema-version 48). Projektejeren tester på staging før tag. Opdateringen står i DEVELOPMENT.md ("Release 1.7.5").
+
+### Fixed
+
+- **Go-live uden overkategori (ADR-101):** go-live kunne ikke godkendes uden en overkategori under Indstillinger → Aftale. Overkategorien er nu valgfri, og uden en får creatoren sin egen kategori på øverste niveau.
+
+### Added
+
+- **Kategoriforslag før go-live (ADR-101):** et forslag til creatorens kategori kan godkendes, før creatoren er live. Det venter som "godkendt" og skrives på kategorien, når den oprettes ved go-live. Fanen Kategoriforslag viser dem under "Godkendt, venter på go-live" med "Skriv på kategorien", og creatoren ser "Godkendt – vises, når din shop går live."
+
+### Changed
+
+- Bannerteksten i dashboardet siger, at banneret vises i sin helhed og ikke beskæres.
+
 ## [1.7.4] - 2026-11-08
 
 Fase 37: udskæring på en side og produkttags fra grundproduktet. Schema-version 48 (migration 48 kører automatisk; ingen manuelle trin). Projektejeren tester på staging før tag. Opdateringen står i DEVELOPMENT.md ("Release 1.7.4").

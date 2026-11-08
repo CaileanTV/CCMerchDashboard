@@ -247,6 +247,23 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.7.5: go-live uden overkategori og kategoriforslag før go-live (fase 38)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-08** efter projektejerens fejlmelding ("Vi skal have lavet en hurtigt opdatering 1.7.5 da jeg har fundet en kritisk fejl"). Testpakke til staging; der tagges efter projektejerens OK, og tag og SHA-256 noteres her da.
+- Fase 38 (ADR-101) er testet med unit-, integrations- og Jest-tests og reviewet uafhængigt.
+- CI skal være grøn med hele integrationssuiten på den taggede commit.
+
+**Ingen schemaændring:** schema-version 48 som i 1.7.4. Forslag godkendt før go-live har status `accepted` i den eksisterende kolonne.
+
+1. **Backup:** tag backup af filer og database via hostingen. Notér den installerede version.
+2. **Opdatér** med ZIP'en ("Erstat nuværende med uploadet"). Overview skal vise version 1.7.5 og schema-version 48 uden advarsler.
+3. **Go-live uden overkategori:** sæt "Overkategori for creators" til "— Ingen (øverste niveau) —" under Indstillinger → Aftale. Godkend en testcreators go-live: kategorien oprettes på øverste niveau.
+4. **Kategoriforslag før go-live:** lad en testcreator, der ikke er live, foreslå fx en beskrivelse og et banner. Godkend dem: de står under "Godkendt, venter på go-live", og creatoren ser "Godkendt – vises, når din shop går live." Godkend go-live: værdierne står på den nye kategori.
+5. **Banner:** profilsiden siger, at banneret vises i sin helhed og ikke beskæres.
+6. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 1.7.4-ZIP'en igen. Forslag med status `accepted` ignoreres af 1.7.4 (de vises hverken som ventende eller godkendte), og go-live kræver igen en overkategori.
+
 ## Release 1.7.4: udskæring og produkttags (fase 37)
 
 **Versions-bump og CHANGELOG-sektion (`361e218`), review-rettelse (`874da79`) og tagget `v1.7.4` (på `874da79`) 2026-11-08.** Testpakken blev bygget efter projektejerens ønske ("vil du så ikke lave en plugin fil klar til mig, så jeg kan køre test på stg") og testet på staging; tagget efter projektejerens OK ("Vi er klar til update"). CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke og med testpakken fra staging (SHA-256 `921b1650c251a65e8d345609fd8246158abfe82090b8fdfc2f104c4e167de6c1`).
