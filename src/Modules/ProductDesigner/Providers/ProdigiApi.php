@@ -107,6 +107,17 @@ class ProdigiApi {
 	}
 
 	/**
+	 * Every product of the catalogue (`id`, `name`, `category`), the
+	 * catalogue's overview (ADR-102).
+	 *
+	 * @return list<mixed>
+	 * @throws ProdigiException When a call fails.
+	 */
+	public function all_products(): array {
+		return $this->paged( '/catalogue/products' );
+	}
+
+	/**
 	 * The catalogue's categories (`id`, `name`, `parentId`).
 	 *
 	 * @return list<mixed>

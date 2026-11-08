@@ -528,6 +528,51 @@ export function newImage(
 	};
 }
 
+/** How an element is sized to the print area (ADR-102). */
+export type FitMode = 'fill' | 'fit';
+
+/**
+ * An element centred on the print file, upright, and scaled evenly so it
+ * covers the whole print file ("fill"; what falls outside is cut away by
+ * the print area) or shows whole inside it ("fit"). Mirroring is kept.
+ *
+ * @param object      The element.
+ * @param printWidth  Print file width.
+ * @param printHeight Print file height.
+ * @param mode        Fill or fit.
+ */
+export function fitted(
+	object: DesignObject,
+	printWidth: number,
+	printHeight: number,
+	mode: FitMode
+): Pick< BaseObject, 'x' | 'y' | 'angle' | 'scaleX' | 'scaleY' > {
+	const width = Math.max( 1, object.width );
+	const height = Math.max( 1, object.height );
+	const across = printWidth / width;
+	const down = printHeight / height;
+	// Rounded outwards for fill and inwards for fit, so no edge is left bare or
+	// cut; within the server's 0.01–100 (DesignValidator), so a tiny image
+	// fills as far as it may.
+	const scale = Math.min(
+		100,
+		Math.max(
+			0.01,
+			mode === 'fill'
+				? Math.ceil( Math.max( across, down ) * 10000 ) / 10000
+				: Math.floor( Math.min( across, down ) * 10000 ) / 10000
+		)
+	);
+
+	return {
+		x: Math.round( printWidth / 2 ),
+		y: Math.round( printHeight / 2 ),
+		angle: 0,
+		scaleX: scale,
+		scaleY: scale,
+	};
+}
+
 /** What the sides per size need of a side. */
 export interface SizedSide {
 	readonly key: string;

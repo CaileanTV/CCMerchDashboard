@@ -55,6 +55,7 @@ import {
 	withBackground,
 	withKnownBackground,
 	moveObject,
+	fitted,
 	newImage,
 	newShape,
 	newText,
@@ -83,6 +84,7 @@ import type {
 	DesignDocument,
 	DesignObject,
 	ExtraArea,
+	FitMode,
 	ShapeType,
 	TextObject,
 } from './design-model';
@@ -340,7 +342,14 @@ function Editor( props: EditorProps ) {
 
 			return withPart( full, id, change( partDoc( full, id ) ) );
 		} );
-	const fullName = `${ overview.creator } ${ base.name } ${ title }`.trim();
+	// "Creator Base product - Addition", as the server names it (ADR-102).
+	const addition = title
+		.trim()
+		.replace( /^[\s\-–—]+/u, '' )
+		.trim();
+	const fullName = [ `${ overview.creator } ${ base.name }`.trim(), addition ]
+		.filter( ( part ) => part !== '' )
+		.join( ' - ' );
 	const objects = view === undefined ? [] : objectsOf( design, view.key );
 	const embroidery = view?.embroidery ?? null;
 	const swaps = view === undefined ? undefined : design.threads?.[ view.key ];
@@ -1893,6 +1902,16 @@ function Editor( props: EditorProps ) {
 								plan={ plan }
 								onThread={ pickThread }
 								onChange={ change }
+								onFit={ ( mode ) =>
+									change(
+										fitted(
+											selectedObject,
+											view.printWidth,
+											view.printHeight,
+											mode
+										)
+									)
+								}
 								onRemove={ () => remove( selectedObject.id ) }
 								onMove={ ( direction ) =>
 									setObjects(
@@ -3024,6 +3043,7 @@ function AssetGrid( props: {
  * @param props.plan     The side's threads.
  * @param props.onThread Called with the thread picked as the colour.
  * @param props.onChange Changes it.
+ * @param props.onFit    Sizes an image to the print area (ADR-102).
  * @param props.onRemove Removes it.
  * @param props.onMove   Moves it.
  */
@@ -3034,6 +3054,8 @@ function Properties( props: {
 	readonly plan: ThreadPlan | null;
 	readonly onThread: ( thread: DesignerThread ) => void;
 	readonly onChange: ( change: Partial< DesignObject > ) => void;
+	/** Sizes an image to the print area (ADR-102). */
+	readonly onFit: ( mode: FitMode ) => void;
 	readonly onRemove: () => void;
 	readonly onMove: ( direction: 1 | -1 ) => void;
 } ) {
@@ -3257,6 +3279,26 @@ function Properties( props: {
 					) }
 				</Labelled>
 			) }
+			{ object.type === 'image' ? (
+				<>
+					<Button
+						variant="secondary"
+						size="sm"
+						disabled={ object.locked }
+						onClick={ () => props.onFit( 'fill' ) }
+					>
+						{ __( 'Fill the print area', 'merchboard' ) }
+					</Button>
+					<Button
+						variant="secondary"
+						size="sm"
+						disabled={ object.locked }
+						onClick={ () => props.onFit( 'fit' ) }
+					>
+						{ __( 'Fit in the print area', 'merchboard' ) }
+					</Button>
+				</>
+			) : null }
 			<Button
 				variant="secondary"
 				size="sm"

@@ -46,6 +46,12 @@ defined( 'ABSPATH' ) || exit;
  * images stay, the administrator is told) on a failure or a timeout. A 429
  * waits for `Retry-After`. Never throws.
  *
+ * **Preview (ADR-102):** before a design is sent, "See the finished product"
+ * makes the photos of a draft's first colour the same way, moved on by the
+ * dashboard's polls instead of a job and kept in a transient; when they are
+ * done, or after a failure, everything is deleted at Prodigi, and a job
+ * deletes what an abandoned preview left after half an hour.
+ *
  * Written from Prodigi's OpenAPI file (2026-10-31) and not yet run against
  * Prodigi.
  */
@@ -63,6 +69,55 @@ class ProdigiMockups {
 	private const POLL_DELAY = 30;
 
 	private const MAX_POLLS = 40;
+
+	/**
+	 * A preview's state (transient prefix, by draft version).
+	 */
+	public const PREVIEW = 'merchboard_designer_prodigi_preview_';
+
+	/**
+	 * The job that deletes what an abandoned preview left at Prodigi.
+	 */
+	public const PREVIEW_HOOK = 'merchboard_designer_prodigi_preview';
+
+	private const PREVIEW_TTL = 2 * HOUR_IN_SECONDS;
+
+	/**
+	 * Seconds between two looks at Prodigi for one preview.
+	 */
+	private const PREVIEW_GAP = 5;
+
+	/**
+	 * Seconds between two starts of a draft's preview.
+	 */
+	private const PREVIEW_START_GAP = 60;
+
+	/**
+	 * Seconds after its start that an abandoned preview is deleted.
+	 */
+	private const PREVIEW_CLEANUP = 30 * MINUTE_IN_SECONDS;
+
+	/**
+	 * What a refused delete left at Prodigi (transient prefix, by draft version).
+	 */
+	public const PREVIEW_LEFT = 'merchboard_designer_prodigi_left_';
+
+	/**
+	 * Seconds a finished preview keeps its images.
+	 */
+	private const PREVIEW_DONE_TTL = 10 * MINUTE_IN_SECONDS;
+
+	/**
+	 * Seconds between two tries of a refused delete, and the most tries.
+	 */
+	private const PREVIEW_RETRY = 10 * MINUTE_IN_SECONDS;
+
+	private const PREVIEW_CLEAN_TRIES = 5;
+
+	/**
+	 * The largest images (as data URLs) a finished preview keeps.
+	 */
+	private const PREVIEW_KEEP_BYTES = 4 * 1024 * 1024;
 
 	/**
 	 * Constructor.
@@ -131,6 +186,512 @@ class ProdigiMockups {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Whether a base product's designs can be previewed before they are sent
+	 * (ADR-102): Prodigi only, and only while it is on.
+	 *
+	 * @param BaseProduct $base Base product.
+	 */
+	public function can_preview( BaseProduct $base ): bool {
+		return ProdigiCatalog::SOURCE === $base->source && $this->api->available();
+	}
+
+	/**
+	 * Starts the finished product's photos of a draft (ADR-102): the used
+	 * sides of its first colour's design go to Prodigi as signed URLs. A
+	 * former preview of the draft is deleted at Prodigi first; one start a
+	 * minute while one is under way, and one request at a time (a lock per
+	 * draft). Nothing waits here: the dashboard's polls move it on
+	 * (preview()), and a job deletes what is left after half an hour.
+	 *
+	 * @param int $id Draft version.
+	 * @throws ProdigiException When Prodigi refuses or fails, or too soon after the last start or busy (RATE_LIMITED); a DatabaseException when the draft cannot be read.
+	 */
+	public function start_preview( int $id ): void {
+		if ( ! $this->lock_preview( $id ) ) {
+			throw new ProdigiException( ProdigiException::RATE_LIMITED, self::PREVIEW_GAP );
+		}
+
+		try {
+			$former = get_transient( self::PREVIEW . $id );
+
+			if ( is_array( $former ) && in_array( $former['phase'] ?? '', array( 'assets', 'mockups' ), true ) && time() - (int) ( $former['started'] ?? 0 ) < self::PREVIEW_START_GAP ) {
+				throw new ProdigiException( ProdigiException::RATE_LIMITED, self::PREVIEW_START_GAP );
+			}
+
+			$this->drop_preview( $id, $former );
+
+			$version  = $this->products->version( $id );
+			$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
+			$base     = null === $version ? null : $this->bases->find( (int) $version['base_id'] );
+
+			if ( null === $version || null === $provider || null === $base || ProdigiCatalog::SOURCE !== $provider['source'] ) {
+				self::fail( ProdigiException::INVALID );
+			}
+
+			$colors = $this->chosen( $version, $base, $provider['variants'] );
+			$color  = array_key_first( $colors );
+			$design = json_decode( (string) $version['design'], true );
+			$part   = null === $color ? ColorDesigns::SHARED : ColorDesigns::part_of( is_array( $design ) ? $design : array(), (string) $color );
+			$sides  = self::sides( $version, $provider['placements'], $part );
+
+			if ( null === $color || array() === $sides ) {
+				self::fail( ProdigiException::INVALID );
+			}
+
+			$state = array(
+				'started' => time(),
+				'checked' => 0,
+				'phase'   => 'assets',
+				'color'   => (string) $color,
+				'assets'  => array(),
+			);
+
+			try {
+				foreach ( $sides as $side ) {
+					$state['assets'][ $side ] = $this->api->ingest_asset( SignedPrintFiles::url( $id, $side, null, $part ), (string) $version['title'] . ' ' . $side );
+				}
+			} catch ( ProdigiException $e ) {
+				$this->release_saved( $id, $state );
+
+				throw $e;
+			}
+
+			set_transient( self::PREVIEW . $id, $state, self::PREVIEW_TTL );
+
+			if ( ! $this->queue->enqueue( self::PREVIEW_HOOK, array( $id, $state['started'] ), self::PREVIEW_CLEANUP ) ) {
+				$this->logger->warning( 'The clean-up of a Prodigi preview could not be queued.', array( 'version_id' => $id ) );
+			}
+		} finally {
+			$this->unlock_preview( $id );
+		}
+	}
+
+	/**
+	 * A preview's state, moved on one step at most every few seconds and by
+	 * one request at a time: the assets ready → a saved product with the
+	 * colour, the assets bound and a mockup per side → the mockups as data
+	 * URLs (the dashboard's CSP takes no other host), after which everything
+	 * is deleted at Prodigi. The finished images are kept for ten minutes, so
+	 * a lost answer can be asked for again.
+	 *
+	 * @param int $id Draft version.
+	 * @return array{status: string, images: list<array{side: string, color: string, url: string}>}
+	 * @throws ProdigiException When Prodigi refuses or fails, or a mockup failed (what was saved is deleted); a DatabaseException when the draft cannot be read.
+	 */
+	public function preview( int $id ): array {
+		$state   = get_transient( self::PREVIEW . $id );
+		$pending = array(
+			'status' => 'pending',
+			'images' => array(),
+		);
+
+		if ( ! is_array( $state ) ) {
+			return array(
+				'status' => 'none',
+				'images' => array(),
+			);
+		}
+
+		if ( 'done' === ( $state['phase'] ?? '' ) ) {
+			return array(
+				'status' => 'done',
+				'images' => self::stored_images( $state ),
+			);
+		}
+
+		if ( time() - (int) ( $state['checked'] ?? 0 ) < self::PREVIEW_GAP || ! $this->lock_preview( $id ) ) {
+			return $pending;
+		}
+
+		try {
+			// Read again under the lock: another request may have moved it on.
+			$state = get_transient( self::PREVIEW . $id );
+
+			if ( ! is_array( $state ) || ! in_array( $state['phase'] ?? '', array( 'assets', 'mockups' ), true ) ) {
+				return $pending;
+			}
+
+			$state['checked'] = time();
+			set_transient( self::PREVIEW . $id, $state, self::PREVIEW_TTL );
+
+			try {
+				if ( 'assets' === $state['phase'] && $this->assets_ready( $state ) ) {
+					$state = $this->preview_mockups( $id, $state );
+				} elseif ( 'mockups' === $state['phase'] ) {
+					$images = $this->preview_images( $state );
+
+					if ( null !== $images ) {
+						$this->finish_preview( $id, $state, $images );
+
+						return array(
+							'status' => 'done',
+							'images' => $images,
+						);
+					}
+				}
+			} catch ( ProdigiException $e ) {
+				// The stored state knows what was saved meanwhile (preview_mockups() keeps it at once).
+				$stored = get_transient( self::PREVIEW . $id );
+
+				if ( ProdigiException::RATE_LIMITED === $e->reason() && is_array( $stored ) ) {
+					$stored['checked'] = time() + $e->retry_after;
+					set_transient( self::PREVIEW . $id, $stored, self::PREVIEW_TTL );
+
+					return $pending;
+				}
+
+				$this->drop_preview( $id, $stored );
+
+				throw $e;
+			}
+
+			set_transient( self::PREVIEW . $id, $state, self::PREVIEW_TTL );
+
+			return $pending;
+		} finally {
+			$this->unlock_preview( $id );
+		}
+	}
+
+	/**
+	 * The job: half an hour after a start (`started` > 0), deletes at Prodigi
+	 * what that preview left behind, leaving a newer preview of the draft
+	 * alone; with `started` 0, tries again what a delete left behind (at
+	 * most five times, ten minutes apart). Never throws.
+	 *
+	 * @param mixed $version_id Draft version.
+	 * @param mixed $started    When the preview started; 0 for what was left behind.
+	 * @param mixed $tries      Tries so far of what was left behind.
+	 */
+	public function clean_preview( mixed $version_id, mixed $started, mixed $tries = 0 ): void {
+		$id      = is_numeric( $version_id ) ? (int) $version_id : 0;
+		$started = is_numeric( $started ) ? (int) $started : 0;
+		$tries   = is_numeric( $tries ) ? (int) $tries : 0;
+
+		if ( $id < 1 ) {
+			return;
+		}
+
+		if ( $started > 0 ) {
+			$state = get_transient( self::PREVIEW . $id );
+
+			if ( is_array( $state ) && (int) ( $state['started'] ?? 0 ) === $started && 'done' !== ( $state['phase'] ?? '' ) ) {
+				$this->drop_preview( $id, $state );
+			}
+
+			return;
+		}
+
+		$left = get_transient( self::PREVIEW_LEFT . $id );
+		$keep = array();
+
+		foreach ( is_array( $left ) ? $left : array() as $saved ) {
+			$rest = is_array( $saved ) ? $this->remove_saved( $saved ) : array();
+
+			if ( array() !== $rest ) {
+				$keep[] = $rest;
+			}
+		}
+
+		if ( array() === $keep ) {
+			delete_transient( self::PREVIEW_LEFT . $id );
+
+			return;
+		}
+
+		if ( $tries >= self::PREVIEW_CLEAN_TRIES ) {
+			delete_transient( self::PREVIEW_LEFT . $id );
+			$this->logger->warning( 'What a Prodigi preview saved could not be deleted; delete it in Prodigi\'s dashboard.', array( 'version_id' => $id ) );
+
+			return;
+		}
+
+		set_transient( self::PREVIEW_LEFT . $id, $keep, DAY_IN_SECONDS );
+		$this->queue->enqueue( self::PREVIEW_HOOK, array( $id, 0, $tries + 1 ), self::PREVIEW_RETRY );
+	}
+
+	/**
+	 * Saves the product with the preview's colour, binds the assets and
+	 * starts a mockup per side. The product is kept in the state at once: a
+	 * failure later must still delete it, and a round after a 429 deletes
+	 * the product of the round before and starts over.
+	 *
+	 * @param int                  $id    Draft version.
+	 * @param array<string, mixed> $state The preview's state.
+	 * @return array<string, mixed> The new state.
+	 * @throws ProdigiException When Prodigi refuses or fails.
+	 * @throws DatabaseException When the draft cannot be read.
+	 */
+	private function preview_mockups( int $id, array $state ): array {
+		$version  = $this->products->version( $id );
+		$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
+		$base     = null === $version ? null : $this->bases->find( (int) $version['base_id'] );
+		$color    = null === $version || null === $provider || null === $base ? null : ( $this->chosen( $version, $base, $provider['variants'] )[ (string) ( $state['color'] ?? '' ) ] ?? null );
+
+		if ( null === $version || null === $provider || null === $color ) {
+			self::fail( ProdigiException::INVALID );
+		}
+
+		if ( is_string( $state['product'] ?? null ) ) {
+			$this->release_saved( $id, array( 'product' => $state['product'] ) );
+			unset( $state['product'] );
+			set_transient( self::PREVIEW . $id, $state, self::PREVIEW_TTL );
+		}
+
+		$product = $this->api->create_product(
+			array(
+				'title'                => (string) $version['title'],
+				'catalogueProductSlug' => $provider['ref'],
+				'catalogueProductId'   => $provider['ref'],
+				'status'               => 'draft',
+				'variants'             => array(
+					array(
+						'catalogueVariantId' => $color['sku'],
+						'attributes'         => $color['attributes'],
+					),
+				),
+			)
+		);
+
+		$state['product'] = $product;
+		set_transient( self::PREVIEW . $id, $state, self::PREVIEW_TTL );
+
+		$saved = array();
+
+		foreach ( $this->api->product_variants( $product ) as $variant ) {
+			if ( is_array( $variant ) && is_scalar( $variant['id'] ?? null ) ) {
+				$saved[] = $variant;
+			}
+		}
+
+		$variant = self::saved_variant( $saved, $color );
+
+		if ( null === $variant ) {
+			self::fail( ProdigiException::INVALID );
+		}
+
+		$mockups = array();
+
+		foreach ( is_array( $state['assets'] ?? null ) ? $state['assets'] : array() as $side => $asset ) {
+			$this->api->bind_asset( $product, (string) $asset, $provider['placements'][ (string) $side ] ?? '' );
+			$mockups[] = array(
+				'side'   => (string) $side,
+				'asset'  => (string) $asset,
+				'mockup' => $this->api->create_mockup( (string) $asset, $product, $variant ),
+			);
+		}
+
+		$state['phase']   = 'mockups';
+		$state['mockups'] = $mockups;
+
+		return $state;
+	}
+
+	/**
+	 * The preview's mockups as data URLs when all are done, else null.
+	 *
+	 * @param array<string, mixed> $state The preview's state.
+	 * @return list<array{side: string, color: string, url: string}>|null
+	 * @throws ProdigiException When Prodigi refuses or fails, or a mockup failed or is not an image.
+	 */
+	private function preview_images( array $state ): ?array {
+		$urls = array();
+
+		foreach ( is_array( $state['mockups'] ?? null ) ? $state['mockups'] : array() as $entry ) {
+			$mockup = is_array( $entry ) ? $this->api->mockup( (string) ( $entry['asset'] ?? '' ), (string) ( $entry['mockup'] ?? '' ) ) : array();
+			$status = $mockup['status'] ?? '';
+			$url    = is_array( $mockup['result'] ?? null ) && is_string( $mockup['result']['url'] ?? null ) ? $mockup['result']['url'] : '';
+
+			if ( 'failed' === $status ) {
+				self::fail( ProdigiException::FAILED );
+			}
+
+			if ( 'completed' !== $status || '' === $url ) {
+				return null;
+			}
+
+			$urls[ (string) ( $entry['side'] ?? '' ) ] = $url;
+		}
+
+		$images = array();
+
+		foreach ( $urls as $side => $url ) {
+			$bytes = $this->api->download( $url );
+			$info  = getimagesizefromstring( $bytes );
+
+			if ( ! is_array( $info ) || ! in_array( $info['mime'], array( 'image/jpeg', 'image/png' ), true ) ) {
+				self::fail( ProdigiException::INVALID );
+			}
+
+			$images[] = array(
+				'side'  => (string) $side,
+				'color' => (string) ( $state['color'] ?? '' ),
+				'url'   => 'data:' . $info['mime'] . ';base64,' . base64_encode( $bytes ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- An image for the dashboard's CSP.
+			);
+		}
+
+		return $images;
+	}
+
+	/**
+	 * Deletes what the finished preview saved at Prodigi and keeps its images
+	 * for a while (not when they are too large to keep).
+	 *
+	 * @param int                                                   $id     Draft version.
+	 * @param array<string, mixed>                                  $state  The preview's state.
+	 * @param list<array{side: string, color: string, url: string}> $images The images.
+	 */
+	private function finish_preview( int $id, array $state, array $images ): void {
+		$this->release_saved( $id, $state );
+
+		if ( array_sum( array_map( static fn( array $image ): int => strlen( $image['url'] ), $images ) ) > self::PREVIEW_KEEP_BYTES ) {
+			delete_transient( self::PREVIEW . $id );
+
+			return;
+		}
+
+		set_transient(
+			self::PREVIEW . $id,
+			array(
+				'started' => (int) ( $state['started'] ?? 0 ),
+				'phase'   => 'done',
+				'images'  => $images,
+			),
+			self::PREVIEW_DONE_TTL
+		);
+	}
+
+	/**
+	 * The images a finished preview kept.
+	 *
+	 * @param array<string, mixed> $state The preview's state.
+	 * @return list<array{side: string, color: string, url: string}>
+	 */
+	private static function stored_images( array $state ): array {
+		$images = array();
+
+		foreach ( is_array( $state['images'] ?? null ) ? $state['images'] : array() as $image ) {
+			if ( is_array( $image ) && is_string( $image['side'] ?? null ) && is_string( $image['color'] ?? null ) && is_string( $image['url'] ?? null ) ) {
+				$images[] = array(
+					'side'  => $image['side'],
+					'color' => $image['color'],
+					'url'   => $image['url'],
+				);
+			}
+		}
+
+		return $images;
+	}
+
+	/**
+	 * Deletes what a preview saved at Prodigi and forgets it.
+	 *
+	 * @param int   $id    Draft version.
+	 * @param mixed $state The preview's state, or anything else for none.
+	 */
+	private function drop_preview( int $id, mixed $state ): void {
+		if ( is_array( $state ) ) {
+			$this->release_saved( $id, $state );
+		}
+
+		delete_transient( self::PREVIEW . $id );
+	}
+
+	/**
+	 * Deletes what was saved at Prodigi; what could not be deleted is kept
+	 * and tried again later by the job.
+	 *
+	 * @param int                  $id    Draft version.
+	 * @param array<string, mixed> $saved `product`, `products` and `assets`.
+	 */
+	private function release_saved( int $id, array $saved ): void {
+		$rest = $this->remove_saved( $saved );
+
+		if ( array() === $rest ) {
+			return;
+		}
+
+		$left   = get_transient( self::PREVIEW_LEFT . $id );
+		$left   = is_array( $left ) ? $left : array();
+		$left[] = $rest;
+
+		set_transient( self::PREVIEW_LEFT . $id, $left, DAY_IN_SECONDS );
+
+		if ( ! $this->queue->has_pending( self::PREVIEW_HOOK, array( $id, 0, 1 ) ) ) {
+			$this->queue->enqueue( self::PREVIEW_HOOK, array( $id, 0, 1 ), self::PREVIEW_RETRY );
+		}
+	}
+
+	/**
+	 * Deletes the saved products and assets one by one, so one refused
+	 * delete does not keep the others; never throws.
+	 *
+	 * @param array<string, mixed> $saved `product`, `products` and `assets`.
+	 * @return array{products?: list<string>, assets?: list<string>} What could not be deleted.
+	 */
+	private function remove_saved( array $saved ): array {
+		$products = array_merge( is_string( $saved['product'] ?? null ) ? array( $saved['product'] ) : array(), is_array( $saved['products'] ?? null ) ? array_values( $saved['products'] ) : array() );
+		$rest     = array();
+
+		foreach ( array_unique( array_filter( $products, 'is_string' ) ) as $product ) {
+			try {
+				$this->api->delete_product( $product );
+			} catch ( ProdigiException $e ) {
+				$rest['products'][] = $product;
+				$this->left_behind( $e );
+			}
+		}
+
+		foreach ( is_array( $saved['assets'] ?? null ) ? $saved['assets'] : array() as $asset ) {
+			try {
+				$this->api->delete_asset( (string) $asset );
+			} catch ( ProdigiException $e ) {
+				$rest['assets'][] = (string) $asset;
+				$this->left_behind( $e );
+			}
+		}
+
+		return $rest;
+	}
+
+	/**
+	 * Logs a delete Prodigi refused.
+	 *
+	 * @param ProdigiException $e The refusal.
+	 */
+	private function left_behind( ProdigiException $e ): void {
+		$this->logger->warning(
+			'What was saved at Prodigi for a mockup could not be deleted.',
+			array(
+				'reason' => $e->reason(),
+				'call'   => $e->call,
+			)
+		);
+	}
+
+	/**
+	 * Takes the draft's preview lock; false when another request holds it.
+	 *
+	 * @param int $id Draft version.
+	 */
+	private function lock_preview( int $id ): bool {
+		$wpdb     = $this->wpdb;
+		$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', self::PREVIEW . $id, 0 ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A named lock; never cached.
+
+		return is_numeric( $acquired ) && 1 === (int) $acquired;
+	}
+
+	/**
+	 * Releases the draft's preview lock.
+	 *
+	 * @param int $id Draft version.
+	 */
+	private function unlock_preview( int $id ): void {
+		$wpdb = $this->wpdb;
+		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', self::PREVIEW . $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Releases the named lock.
 	}
 
 	/**
@@ -585,27 +1146,9 @@ class ProdigiMockups {
 	 */
 	private function clean_up( array $task ): void {
 		$map = json_decode( (string) $task['result'], true );
-		$map = is_array( $map ) ? $map : array();
 
-		try {
-			$products = array_merge( is_string( $map['product'] ?? null ) ? array( $map['product'] ) : array(), is_array( $map['products'] ?? null ) ? array_values( $map['products'] ) : array() );
-
-			foreach ( array_unique( array_filter( $products, 'is_string' ) ) as $product ) {
-				$this->api->delete_product( $product );
-			}
-
-			foreach ( is_array( $map['assets'] ?? null ) ? $map['assets'] : array() as $asset ) {
-				$this->api->delete_asset( (string) $asset );
-			}
-		} catch ( ProdigiException $e ) {
-			$this->logger->warning(
-				'What was saved at Prodigi for a mockup could not be deleted.',
-				array(
-					'reason' => $e->reason(),
-					'call'   => $e->call,
-				)
-			);
-		}
+		// Each delete on its own: one refused delete must not keep the others (review 40.7).
+		$this->remove_saved( is_array( $map ) ? $map : array() );
 	}
 
 	/**

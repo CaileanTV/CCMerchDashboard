@@ -59,6 +59,11 @@ class ProdigiCatalog implements CatalogRenderer {
 	public const CATEGORIES = 'merchboard_prodigi_categories';
 
 	/**
+	 * The cached product lists of the overview (transient prefix, by category).
+	 */
+	public const PRODUCTS = 'merchboard_prodigi_products_';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ProdigiApi $api Prodigi.
@@ -114,6 +119,111 @@ class ProdigiCatalog implements CatalogRenderer {
 		set_transient( $key, $found, HOUR_IN_SECONDS );
 
 		return $found;
+	}
+
+	/**
+	 * A page of the catalogue's overview (ADR-102): every product, or a
+	 * category's with its subcategories (Prodigi's own filter), narrowed to
+	 * the words. Each list is cached for 12 hours.
+	 *
+	 * @param string $query    Words; all must be in the name, id or category.
+	 * @param string $category Category; '' for all.
+	 * @param int    $page     Page, from 1.
+	 * @return array{products: list<array{id: string, title: string, category: string}>, total: int, page: int, pages: int}
+	 * @throws ProdigiException When Prodigi refuses or fails.
+	 */
+	public function browse( string $query, string $category = '', int $page = 1 ): array {
+		$split = preg_split( '/\s+/u', mb_strtolower( trim( $query ) ) );
+		$words = array_values( array_filter( false === $split ? array() : $split, static fn( string $word ): bool => '' !== $word ) );
+		$found = array_values(
+			array_filter(
+				$this->listed( $category ),
+				static function ( array $product ) use ( $words ): bool {
+					$text = mb_strtolower( $product['title'] . ' ' . $product['id'] . ' ' . $product['category'] );
+
+					foreach ( $words as $word ) {
+						if ( ! str_contains( $text, $word ) ) {
+							return false;
+						}
+					}
+
+					return true;
+				}
+			)
+		);
+		$pages = max( 1, (int) ceil( count( $found ) / self::MAX_RESULTS ) );
+		$page  = min( max( 1, $page ), $pages );
+
+		return array(
+			'products' => array_slice( $found, ( $page - 1 ) * self::MAX_RESULTS, self::MAX_RESULTS ),
+			'total'    => count( $found ),
+			'page'     => $page,
+			'pages'    => $pages,
+		);
+	}
+
+	/**
+	 * The categories by id with the names of the categories above them in
+	 * front ("Home & living › Drinkware"), sorted by that label. The id is
+	 * the full slug, so the path is read from it.
+	 *
+	 * @return array<string, string>
+	 * @throws ProdigiException When Prodigi refuses or fails.
+	 */
+	public function category_labels(): array {
+		$names  = array_column( $this->categories(), 'name', 'id' );
+		$labels = array();
+
+		foreach ( $names as $id => $name ) {
+			$path  = array();
+			$parts = explode( '/', (string) $id );
+			$deep  = count( $parts );
+
+			for ( $depth = 1; $depth <= $deep; $depth++ ) {
+				$path[] = $names[ implode( '/', array_slice( $parts, 0, $depth ) ) ] ?? $name;
+			}
+
+			$labels[ (string) $id ] = implode( ' › ', array_unique( $path ) );
+		}
+
+		asort( $labels, SORT_NATURAL | SORT_FLAG_CASE );
+
+		return $labels;
+	}
+
+	/**
+	 * Every product, or a category's, cached for 12 hours.
+	 *
+	 * @param string $category Category; '' for all.
+	 * @return list<array{id: string, title: string, category: string}>
+	 * @throws ProdigiException When Prodigi refuses or fails.
+	 */
+	private function listed( string $category ): array {
+		$key    = self::PRODUCTS . md5( $category );
+		$cached = get_transient( $key );
+
+		if ( is_array( $cached ) ) {
+			return self::cached_products( $cached );
+		}
+
+		$products = array();
+
+		foreach ( '' === $category ? $this->api->all_products() : $this->api->products( $category ) as $row ) {
+			$id = is_array( $row ) && is_string( $row['id'] ?? null ) ? $row['id'] : '';
+
+			if ( '' !== $id ) {
+				$products[] = array(
+					'id'       => $id,
+					'title'    => mb_substr( sanitize_text_field( (string) ( $row['name'] ?? $id ) ), 0, 191 ),
+					'category' => sanitize_text_field( (string) ( $row['category'] ?? '' ) ),
+				);
+			}
+		}
+
+		usort( $products, static fn( array $a, array $b ): int => strnatcasecmp( $a['title'], $b['title'] ) );
+		set_transient( $key, $products, 12 * HOUR_IN_SECONDS );
+
+		return $products;
 	}
 
 	/**

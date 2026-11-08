@@ -49,6 +49,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRepricing;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerNameSeparator;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerTagSync;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRetirement;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
@@ -278,7 +279,8 @@ final class ProductDesignerModule implements Module {
 				$c->get( AlertFonts::class ),
 				$c->get( Logger::class ),
 				$c->get( DesignerShop::class ),
-				$c->get( PrintfulMockups::class )
+				$c->get( PrintfulMockups::class ),
+				$c->get( ProdigiMockups::class )
 			)
 		);
 		// The approval queue and the designer's notifications (step 30.9).
@@ -331,6 +333,20 @@ final class ProductDesignerModule implements Module {
 				$c->get( wpdb::class ),
 				$c->get( DesignerProductRepository::class ),
 				$c->get( BaseProductRepository::class ),
+				$c->get( DesignerProductGuard::class ),
+				$c->get( WooCommerceDesignerWriter::class ),
+				$c->get( JobQueue::class ),
+				$c->get( Logger::class )
+			)
+		);
+		// " - " before the creator's addition in the names from before (ADR-102).
+		$container->set(
+			DesignerNameSeparator::class,
+			static fn( Container $c ): DesignerNameSeparator => new DesignerNameSeparator(
+				$c->get( wpdb::class ),
+				$c->get( DesignerProductRepository::class ),
+				$c->get( BaseProductRepository::class ),
+				$c->get( CreatorRepository::class ),
 				$c->get( DesignerProductGuard::class ),
 				$c->get( WooCommerceDesignerWriter::class ),
 				$c->get( JobQueue::class ),
@@ -422,6 +438,14 @@ final class ProductDesignerModule implements Module {
 			}
 		);
 		add_action(
+			ProdigiMockups::PREVIEW_HOOK,
+			static function ( mixed $version = 0, mixed $started = 0, mixed $tries = 0 ) use ( $container ): void {
+				$container->get( ProdigiMockups::class )->clean_preview( $version, $started, $tries );
+			},
+			10,
+			3
+		);
+		add_action(
 			ProdigiMockups::HOOK,
 			static function ( mixed $version ) use ( $container ): void {
 				$container->get( ProdigiMockups::class )->run( $version );
@@ -493,6 +517,12 @@ final class ProductDesignerModule implements Module {
 			2
 		);
 		add_action(
+			DesignerNameSeparator::HOOK,
+			static function ( mixed $after = 0 ) use ( $container ): void {
+				$container->get( DesignerNameSeparator::class )->run( $after );
+			}
+		);
+		add_action(
 			DesignerRetirement::HOOK,
 			static function ( mixed $product, mixed $attempt = 1 ) use ( $container ): void {
 				$container->get( DesignerRetirement::class )->run( $product, $attempt );
@@ -558,6 +588,11 @@ final class ProductDesignerModule implements Module {
 				$container->get( DesignerNotificationActions::class )->register();
 				$container->get( DesignerReviewActions::class )->register();
 				$container->get( DesignerVersionFiles::class )->register();
+
+				// " - " before the creator's addition in the names from before (ADR-102), once.
+				if ( DesignerNameSeparator::due() ) {
+					$container->get( DesignerNameSeparator::class )->start();
+				}
 			}
 		);
 	}

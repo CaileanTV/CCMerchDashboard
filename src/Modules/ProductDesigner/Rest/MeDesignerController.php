@@ -36,6 +36,8 @@ use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulMockups;
+use MerchBoard\Modules\ProductDesigner\Providers\ProdigiException;
+use MerchBoard\Modules\ProductDesigner\Providers\ProdigiMockups;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use WP_Error;
@@ -92,7 +94,8 @@ final class MeDesignerController extends RestController {
 	 * @param AlertFonts                $fonts       Approved fonts.
 	 * @param Logger                    $logger      Technical log.
 	 * @param DesignerShop              $shop        The creator's decisions about the shop.
-	 * @param PrintfulMockups|null      $mockups     Printful's mockups (the preview).
+	 * @param PrintfulMockups|null      $mockups     Printful's mockups (the preview, the stitch colours).
+	 * @param ProdigiMockups|null       $prodigi     Prodigi's mockups (the preview, ADR-102).
 	 */
 	public function __construct(
 		private CreatorContext $context,
@@ -106,7 +109,8 @@ final class MeDesignerController extends RestController {
 		private AlertFonts $fonts,
 		Logger $logger,
 		private DesignerShop $shop,
-		private ?PrintfulMockups $mockups = null
+		private ?PrintfulMockups $mockups = null,
+		private ?ProdigiMockups $prodigi = null
 	) {
 		parent::__construct( $logger );
 	}
@@ -593,17 +597,17 @@ final class MeDesignerController extends RestController {
 			self::ROUTE . '/products/{id}/preview',
 			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
 				try {
-					$draft = $this->preview_draft( $creator, (int) $request->get_param( 'id' ) );
+					[ $draft, $previewer ] = $this->preview_draft( $creator, (int) $request->get_param( 'id' ) );
 
 					if ( ! SubmissionFiles::complete( $draft ) ) {
 						throw new DesignerException( DesignerException::SUBMISSION_FILES );
 					}
 
-					$this->mockups?->start_preview( (int) $draft['id'] );
+					$previewer->start_preview( (int) $draft['id'] );
 				} catch ( DesignerException $e ) {
 					return self::refused( $e );
-				} catch ( PrintfulException $e ) {
-					return self::refused( new DesignerException( PrintfulException::RATE_LIMITED === $e->reason() ? DesignerException::PREVIEW_BUSY : DesignerException::PREVIEW_FAILED ) );
+				} catch ( PrintfulException | ProdigiException $e ) {
+					return self::refused( new DesignerException( self::rate_limited( $e ) ? DesignerException::PREVIEW_BUSY : DesignerException::PREVIEW_FAILED ) );
 				}
 
 				return new WP_REST_Response( array( 'status' => 'pending' ), 200 );
@@ -622,12 +626,12 @@ final class MeDesignerController extends RestController {
 			self::ROUTE . '/products/{id}/preview',
 			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
 				try {
-					$draft = $this->preview_draft( $creator, (int) $request->get_param( 'id' ) );
-					$state = null === $this->mockups ? array() : $this->mockups->preview( (int) $draft['id'] );
+					[ $draft, $previewer ] = $this->preview_draft( $creator, (int) $request->get_param( 'id' ) );
+					$state                 = $previewer->preview( (int) $draft['id'] );
 				} catch ( DesignerException $e ) {
 					return self::refused( $e );
-				} catch ( PrintfulException $e ) {
-					if ( PrintfulException::RATE_LIMITED === $e->reason() ) {
+				} catch ( PrintfulException | ProdigiException $e ) {
+					if ( self::rate_limited( $e ) ) {
 						return new WP_REST_Response(
 							array(
 								'status' => 'pending',
@@ -646,11 +650,35 @@ final class MeDesignerController extends RestController {
 	}
 
 	/**
-	 * The creator's draft of a product that can be previewed.
+	 * Whether a provider asked us to wait.
+	 *
+	 * @param PrintfulException|ProdigiException $e The refusal.
+	 */
+	private static function rate_limited( PrintfulException|ProdigiException $e ): bool {
+		return in_array( $e->reason(), array( PrintfulException::RATE_LIMITED, ProdigiException::RATE_LIMITED ), true );
+	}
+
+	/**
+	 * Who makes a base product's preview: Printful or Prodigi (ADR-102), or nobody.
+	 *
+	 * @param BaseProduct $base Base product.
+	 */
+	private function previewer( BaseProduct $base ): PrintfulMockups|ProdigiMockups|null {
+		foreach ( array( $this->mockups, $this->prodigi ) as $previewer ) {
+			if ( null !== $previewer && $previewer->can_preview( $base ) ) {
+				return $previewer;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * The creator's draft of a product that can be previewed, and who previews it.
 	 *
 	 * @param Creator $creator The creator.
 	 * @param int     $id      Designer product.
-	 * @return array<string, mixed>
+	 * @return array{0: array<string, mixed>, 1: PrintfulMockups|ProdigiMockups}
 	 * @throws DesignerException When there is none or it cannot be previewed.
 	 */
 	private function preview_draft( Creator $creator, int $id ): array {
@@ -666,11 +694,13 @@ final class MeDesignerController extends RestController {
 			throw new DesignerException( DesignerException::DESIGN_NOT_DRAFT );
 		}
 
-		if ( null === $base || null === $this->mockups || ! $this->mockups->can_preview( $base ) ) {
+		$previewer = null === $base ? null : $this->previewer( $base );
+
+		if ( null === $previewer ) {
 			throw new DesignerException( DesignerException::PREVIEW_UNAVAILABLE );
 		}
 
-		return $draft;
+		return array( $draft, $previewer );
 	}
 
 	/**
@@ -1053,7 +1083,7 @@ final class MeDesignerController extends RestController {
 	private function base_data( BaseProduct $base ): array {
 		return array(
 			'id'               => (int) $base->id,
-			'preview'          => null !== $this->mockups && $this->mockups->can_preview( $base ),
+			'preview'          => null !== $this->previewer( $base ),
 			'stitches'         => null === $this->mockups ? array() : $this->mockups->stitches( $base ),
 			'name'             => $base->name,
 			'description'      => $base->description,

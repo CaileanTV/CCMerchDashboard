@@ -700,6 +700,88 @@ class DesignerProductRepository {
 	}
 
 	/**
+	 * A product's drafts, waiting and approved versions with their names
+	 * (DesignerNameSeparator, ADR-102).
+	 *
+	 * @param int $product_id Designer product.
+	 * @return list<array{id: int, status: string, title: string}>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function named_versions( int $product_id ): array {
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, status, title FROM %i WHERE design_product_id = %d AND status IN ( %s, %s, %s ) ORDER BY id', $this->table( Tables::DESIGNER_VERSIONS ), $product_id, self::DRAFT, self::PENDING, self::APPROVED ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table; a one-time job.
+
+		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
+			throw new DatabaseException( 'Could not read the versions of the design.' );
+		}
+
+		return array_map(
+			static fn( array $row ): array => array(
+				'id'     => (int) $row['id'],
+				'status' => (string) $row['status'],
+				'title'  => (string) $row['title'],
+			),
+			$rows
+		);
+	}
+
+	/**
+	 * Renames a version, only while it still has the name read before.
+	 *
+	 * @param int    $version_id Version.
+	 * @param string $from       The name read before.
+	 * @param string $to         The new name.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function retitle( int $version_id, string $from, string $to ): void {
+		$wpdb    = $this->wpdb;
+		$sql     = $wpdb->prepare( 'UPDATE %i SET title = %s WHERE id = %d AND title = %s', $this->table( Tables::DESIGNER_VERSIONS ), $to, $version_id, $from );
+		$updated = null === $sql ? false : $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- The designer's own table; prepared above.
+
+		if ( false === $updated ) {
+			throw new DatabaseException( 'Could not rename the designer product.' );
+		}
+	}
+
+	/**
+	 * Products after an id, oldest first, with their creator, base product
+	 * and status (DesignerNameSeparator).
+	 *
+	 * @param int $after The last id done.
+	 * @param int $limit Most rows.
+	 * @return list<array{id: int, creator_id: int, base_id: int, status: string}>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function name_batch( int $after, int $limit ): array {
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT id, creator_id, base_id, status FROM %i WHERE id > %d AND status NOT IN ( %s, %s ) ORDER BY id LIMIT %d',
+				$this->table( Tables::DESIGNER_PRODUCTS ),
+				$after,
+				self::DELETED,
+				self::PURGED,
+				$limit
+			),
+			ARRAY_A
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own tables; a one-time job.
+
+		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
+			throw new DatabaseException( 'Could not read the designer products.' );
+		}
+
+		return array_map(
+			static fn( array $row ): array => array(
+				'id'         => (int) $row['id'],
+				'creator_id' => (int) $row['creator_id'],
+				'base_id'    => (int) $row['base_id'],
+				'status'     => (string) $row['status'],
+			),
+			$rows
+		);
+	}
+
+	/**
 	 * Whether a version of a product is on its way to the shop.
 	 *
 	 * @param int $product_id Designer product.

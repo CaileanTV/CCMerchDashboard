@@ -16,6 +16,7 @@ use MerchBoard\Core\Lifecycle\ScheduledJobs;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRepricing;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRetirement;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerNameSeparator;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerTagSync;
 use MerchBoard\Modules\ProductDesigner\Fees\DesignerFees;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
@@ -39,7 +40,7 @@ final class ScheduledJobsTest extends TestCase {
 
 	public function test_core_names_the_same_hook_as_the_module(): void {
 		self::assertSame( SalesBackfillScheduler::HOOK, ScheduledJobs::SALES_BACKFILL_HOOK );
-		self::assertSame( array( DesignerFees::HOOK, DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerTagSync::HOOK, DesignerRetirement::HOOK, PrintfulMockups::HOOK, GelatoMockups::HOOK, ProdigiMockups::HOOK, CatalogImport::HOOK, PrintifyCatalog::HOOK ), ScheduledJobs::DESIGNER_HOOKS );
+		self::assertSame( array( DesignerFees::HOOK, DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerTagSync::HOOK, DesignerNameSeparator::HOOK, DesignerRetirement::HOOK, PrintfulMockups::HOOK, GelatoMockups::HOOK, ProdigiMockups::HOOK, ProdigiMockups::PREVIEW_HOOK, CatalogImport::HOOK, PrintifyCatalog::HOOK ), ScheduledJobs::DESIGNER_HOOKS );
 	}
 
 	public function test_only_the_backfill_hook_is_cancelled(): void {

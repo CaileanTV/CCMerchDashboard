@@ -21,6 +21,7 @@ use MerchBoard\Modules\ProductDesigner\Providers\PrintifyAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 use MerchBoard\Modules\ProductDesigner\Bases\BasePriceSchedule;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerNameSeparator;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
@@ -278,6 +279,7 @@ final class Uninstaller {
 		delete_option( GelatoAccount::KEY_OPTION );
 		delete_option( GelatoAccount::STORE_OPTION );
 		delete_option( ProdigiAccount::KEY_OPTION );
+		delete_option( DesignerNameSeparator::OPTION );
 		delete_option( PrintifyAccount::TOKEN_OPTION );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );

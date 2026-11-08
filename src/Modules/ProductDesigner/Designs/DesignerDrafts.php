@@ -318,7 +318,7 @@ class DesignerDrafts {
 				$mark = sprintf( __( '(copy %d)', 'merchboard' ), $number );
 			}
 
-			$room  = max( 0, 120 - mb_strlen( $prefix ) - mb_strlen( $mark ) - 2 );
+			$room  = max( 0, 120 - mb_strlen( $prefix ) - mb_strlen( DesignerNames::SEPARATOR ) - mb_strlen( $mark ) - 1 );
 			$title = DesignerNames::full( $prefix, trim( mb_substr( $postfix, 0, $room ) . ' ' . $mark ) );
 
 			if ( ! $this->products->name_taken( $title, 0 ) ) {

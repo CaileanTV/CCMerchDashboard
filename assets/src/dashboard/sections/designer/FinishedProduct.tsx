@@ -14,8 +14,8 @@ import { Dialog } from '../../components/Dialog';
 /** Milliseconds between two looks at the photos. */
 const POLL_MS = 3000;
 
-/** Looks before giving up. */
-const MAX_POLLS = 40;
+/** Looks before giving up: five minutes, for one provider handles the file first (ADR-102). */
+const MAX_POLLS = 100;
 
 export interface FinishedProductProps {
 	readonly product: number;

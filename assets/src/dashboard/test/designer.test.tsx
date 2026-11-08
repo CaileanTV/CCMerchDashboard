@@ -14,6 +14,7 @@ import {
 	EMPTY_DESIGN,
 	extraAreas,
 	extraTotal,
+	fitted,
 	moveObject,
 	newImage,
 	newShape,
@@ -280,6 +281,42 @@ describe( 'the designer API', () => {
 } );
 
 describe( 'the design model', () => {
+	it( 'fills or fits an element to the print file, upright and centred (ADR-102)', () => {
+		const image = {
+			...newImage( 9, 4000, 2000, 3000, 2000 ),
+			x: 10,
+			y: 20,
+			angle: 33,
+			flipX: true,
+		};
+		const fill = fitted( image, 3000, 2000, 'fill' );
+		const fit = fitted( image, 3000, 2000, 'fit' );
+
+		expect( [ fill.x, fill.y, fill.angle ] ).toEqual( [ 1500, 1000, 0 ] );
+		// The wide image covers the height and spills over the sides.
+		expect( [ fill.scaleX, fill.scaleY ] ).toEqual( [ 1, 1 ] );
+		// Fit shows it whole: the width is the limit.
+		expect( [ fit.scaleX, fit.scaleY ] ).toEqual( [ 0.75, 0.75 ] );
+		expect( [ fit.x, fit.y, fit.angle ] ).toEqual( [ 1500, 1000, 0 ] );
+
+		const tall = { ...image, width: 1000, height: 3000 };
+
+		expect( fitted( tall, 3000, 2000, 'fill' ).scaleX ).toBe( 3 );
+		expect( fitted( tall, 3000, 2000, 'fit' ).scaleX ).toBeCloseTo(
+			0.6666,
+			4
+		);
+		// Rounded outwards for fill and inwards for fit.
+		const odd = { ...image, width: 3, height: 3 };
+
+		expect( fitted( odd, 100, 100, 'fill' ).scaleX ).toBe( 33.3334 );
+		expect( fitted( odd, 100, 100, 'fit' ).scaleX ).toBe( 33.3333 );
+		// Never past the server's largest scale: a tiny image fills as far as it may.
+		expect( fitted( odd, 1000, 1000, 'fill' ).scaleX ).toBe( 100 );
+		// Mirroring is the element's own and stays.
+		expect( 'flipX' in fill ).toBe( false );
+	} );
+
 	it( 'creates objects in the middle of the print file and keeps them valid', () => {
 		const text = newText( 3543, 4724, 'Roboto', 'Hello' );
 		const shape = newShape( 'ellipse', 3543, 4724 );
