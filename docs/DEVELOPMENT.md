@@ -247,6 +247,23 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.7.6: printfiler til leverandørerne, Fyld/Tilpas og " - " i produktnavne (fase 39 og 40)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-08** efter projektejerens ønske ("Gør 1.7.6 klar nu, gerne bump med det samme"). Tag efter projektejerens OK; tag og SHA-256 noteres her da.
+- Fase 39 og 40 (ADR-084 statusnoter, ADR-102, ADR-096 statusnote) er testet med unit-, integrations- og Jest-tests og reviewet uafhængigt (fase 40). Printfil-rettelsen har en test gennem WordPress' egen rute-matching.
+- CI skal være grøn med hele integrationssuiten på den taggede commit.
+
+**Ingen schemaændring:** schema-version 48 som i 1.7.5.
+
+1. **Backup:** tag backup af filer og database via hostingen. Notér den installerede version.
+2. **Opdatér** med ZIP'en ("Erstat nuværende med uploadet"). Overview skal vise version 1.7.6 og schema-version 48 uden advarsler.
+3. **Navne:** åbn en side i admin. Jobbet `merchboard_designer_names` (Værktøjer → Skemalagte handlinger) sætter " - " ind i de eksisterende produkters navne, 50 ad gangen. Tjek et produkt med en tilføjelse i butikken: "Creator Grundprodukt - Tilføjelse". Navne uden tilføjelse er uændrede.
+4. **Printful-mockups:** send et testdesign på et Printful-grundprodukt til godkendelse. Mockups fra Printful kommer (før 1.7.6 fejlede de og gav browserens billeder).
+5. **Fyld/Tilpas:** vælg et billede i designeren, og tryk "Fyld printfladen" og "Tilpas til printfladen".
+6. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 1.7.5-ZIP'en igen. Navnene beholder " - "; i 1.7.5 viser designeren så tilføjelsen som "- Tilføjelse", indtil den gemmes igen. Printfilerne virker igen ikke.
+
 ## Release 1.7.5: go-live uden overkategori og kategoriforslag før go-live (fase 38)
 
 **Versions-bump og CHANGELOG-sektion (`ced3293`), "Godkend alle" med én mail (`4131217`) og tagget `v1.7.5` (på `4131217`) 2026-11-08** efter projektejerens fejlmelding ("Vi skal have lavet en hurtigt opdatering 1.7.5 da jeg har fundet en kritisk fejl") og OK ("Jeg siger OK her nu - kører den på live"; projektejeren installerer den på live). CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke og testpakken (SHA-256 `69be6f603db84e5ca84aa591946e46b64b75ca271f618b82b879c7cbf028b19b`).

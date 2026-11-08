@@ -1046,7 +1046,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **38.7 Én mail ved "Godkend alle" ✅ (2026-11-08):** projektejerens ønske, med i 1.7.5.
 - **38.6 Review og release 1.7.5 ✅ (2026-11-08):** uafhængigt review (rettelser i statusnoten i ADR-101), CI grøn, testpakke og projektejerens OK. Tag `v1.7.5` på `4131217`, draft-release byte-identisk med den lokale pakke; se DEVELOPMENT.md "Release 1.7.5".
 
-## Fase 39 – Prodigi med en rigtig nøgle 🔄 (projektejerens OK 2026-11-08; statusnote på ADR-084)
+## Fase 39 – Prodigi med en rigtig nøgle 🔄 (projektejerens OK 2026-11-08; statusnote på ADR-084; rettelserne udgives i 1.7.6, mockups venter på Prodigi)
 
 **Baggrund (2026-11-08):** projektejeren har fået en v5-nøgle fra Prodigi. Læsekald med den viste to fejl, der gjorde Prodigi ubrugelig: dashboardets nøgle kunne ikke gemmes, og importen ledte efter `EU`, som Prodigi aldrig sender. Projektejeren har aftalt importen med Prodigi og vil kunne bruge alle produkter.
 
@@ -1055,7 +1055,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **39.3 Tekster og tests ✅:** danske oversættelser, `ProdigiTest` (nøgle uden præfiks, alle produkter, produkt uden printflade).
 - **39.4 Hele flowet på staging:** import af et grundprodukt (gaming-måtten, grundprodukt 20 på stg, ✅ 2026-11-08), et indsendt design og Prodigis mockups, derefter oprydning i Prodigi-kontoen. Afprøves sammen med fase 40.
 
-## Fase 40 – "Fyld/Tilpas", Prodigis forhåndsvisning, " - " i produktnavne og Prodigis katalog 🔄 (plan godkendt 2026-11-08; ADR-102)
+## Fase 40 – "Fyld/Tilpas", Prodigis forhåndsvisning, " - " i produktnavne og Prodigis katalog 🔄 (plan godkendt 2026-11-08; ADR-102; udgives i 1.7.6)
 
 **Projektejerens ønsker (2026-11-08)** under testen af Prodigi på stg: "skalér til fuld" i designeren, Prodigi-mockups før indsendelse, " - " mellem produktnavnet og creatorens tilføjelse (også på eksisterende produkter) og Prodigis katalog direkte i admin-menuen.
 
@@ -1069,6 +1069,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **40.9 Prodigis katalog som oversigt ✅:** hele kataloget som kort med søgning, kategori og sider.
 - **40.10 Prodigis rigtige svar ✅ (2026-11-08):** varianter tilføjes med `POST /products/{id}/variants`, og Prodigis fejlbeskeder logges. Prodigi gør ingen filer klar (statusnote i ADR-102), så mockups venter på Prodigi.
 - **40.11 Printfil-ruten ✅ (2026-11-08, kritisk):** ruten matchede aldrig siden 1.7.0 (`@` i mønstret, statusnote i ADR-096), så ingen leverandør kunne hente printfiler. Rettet med `.d1`, og der er en test gennem den rigtige rute-matching. Fundet, fordi projektejeren mistænkte vores side.
+- **40.12 Release 1.7.6 (2026-11-08):** bump efter projektejerens ønske; tag efter OK. Se DEVELOPMENT.md "Release 1.7.6".
 - **40.7 Review og stg:** uafhængigt review ✅ (rettelser i statusnoten i ADR-102), push (CI), eksperimentel testpakke på stg og den fælles test med 39.4. Versionsbump (1.7.6) efter projektejerens OK.
 
 ## Senere (uprioriteret)

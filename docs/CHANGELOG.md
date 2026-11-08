@@ -4,6 +4,27 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.7.6] - 2026-11-08
+
+Fase 39 og 40: printfiler til leverandørerne virker igen (kritisk), "Fyld/Tilpas" i designeren, " - " i produktnavne og Prodigi med en rigtig nøgle. Ingen schemaændring (schema-version 48). Opdateringen står i DEVELOPMENT.md ("Release 1.7.6").
+
+### Fixed
+
+- **Printfiler til leverandørerne (kritisk, ADR-096 statusnote):** fra 1.7.0 til 1.7.5 matchede linket til printfilerne aldrig en rute, så Printful, Gelato og Prodigi fik 404 på hver printfil, og deres mockups efter indsendelse fejlede (browserens billeder blev brugt). Linket virker igen.
+- **Prodigi-nøglen:** nøglen kan indsættes, som Prodigis dashboard viser den; pluginet sætter selv `live_` foran.
+- **Prodigis katalog:** alle produkter tilbydes. Filteret ledte efter `EU`, som Prodigi aldrig sender, og fandt intet.
+
+### Added
+
+- **Fyld/Tilpas (ADR-102):** et valgt billede i designeren kan fylde hele printfladen eller tilpasses, så hele billedet er inden for den.
+- **Prodigis katalog som oversigt (ADR-102):** hele kataloget som kort med søgning, kategori og sider.
+- **Prodigis forhåndsvisning (ADR-102, eksperimentel):** "Se det færdige produkt" for Prodigi-grundprodukter. Prodigis mockup-tjeneste fejler endnu på Prodigis side, så den giver ingen billeder, før Prodigi har rettet det.
+
+### Changed
+
+- **" - " i produktnavne (ADR-102):** et navn med creatorens tilføjelse hedder nu "Creator Grundprodukt - Tilføjelse". Et engangsjob opdaterer de eksisterende produkter, også navnet i butikken.
+- Dialogen "Se det færdige produkt" venter op til 5 minutter.
+
 ## [1.7.5] - 2026-11-08
 
 Fase 38: rettelse af go-live uden overkategori og kategoriforslag før go-live. Ingen schemaændring (schema-version 48). Projektejeren tester på staging før tag. Opdateringen står i DEVELOPMENT.md ("Release 1.7.5").
