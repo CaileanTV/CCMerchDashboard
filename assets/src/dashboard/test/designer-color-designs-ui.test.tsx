@@ -14,6 +14,7 @@ import {
 	NEW_DESIGN,
 } from '../sections/designer/ColorDesigns';
 import { ProductPanel } from '../sections/designer/DesignerEditor';
+import { SubmitDialog } from '../sections/designer/SubmitDialog';
 import { newShape, SHARED } from '../sections/designer/design-model';
 import type { DesignDocument } from '../sections/designer/design-model';
 import { submissionSize } from '../sections/designer/submission';
@@ -163,9 +164,7 @@ describe( 'colour designs in the editor', () => {
 		expect( onDesign ).toHaveBeenCalledWith( 'black', NEW_DESIGN );
 	} );
 
-	it( 'lets the creator choose the product image', async () => {
-		const onImage = jest.fn();
-
+	it( 'has no product image in the product panel (ADR-098)', async () => {
 		await show(
 			<ProductPanel
 				base={ BASE }
@@ -179,34 +178,161 @@ describe( 'colour designs in the editor', () => {
 				onSizes={ jest.fn() }
 				stitch="white"
 				onStitch={ jest.fn() }
-				images={ [
-					{ value: 'front:black', label: 'Black – Front' },
-					{ value: 'back:red', label: 'Red – Back' },
-				] }
-				image="back:red"
-				onImage={ onImage }
+				design={ DESIGN }
+				onDesign={ jest.fn() }
 			/>
 		);
 
-		const select = Array.from(
-			document.querySelectorAll< HTMLSelectElement >( 'select' )
-		).find( ( candidate ) => candidate.value === 'back:red' )!;
-
+		expect( document.body.textContent ).toContain(
+			'Design for each colour'
+		);
+		expect( document.body.textContent ).not.toContain( 'Product image' );
 		expect(
-			Array.from( select.options ).map( ( option ) => option.textContent )
-		).toEqual( [
-			'The first colour, first side',
-			'Black – Front',
-			'Red – Back',
-		] );
+			document.querySelector( '.merchboard-image-picker' )
+		).toBeNull();
+	} );
+
+	it( 'lets the creator choose the main image in the shop before sending', async () => {
+		const onImage = jest.fn();
+
+		await show(
+			<SubmitDialog
+				base={ BASE }
+				colors={ [ 'black', 'red' ] }
+				onColors={ jest.fn() }
+				images={ [
+					{ value: 'front:black', label: 'Black – Front' },
+					{ value: 'front:red', label: 'Red – Front' },
+				] }
+				image="front:red"
+				onImage={ onImage }
+				summary="Sent with 4 images."
+				zeroProfit={ false }
+				zeroText="0,00 kr."
+				onSend={ jest.fn() }
+				onCancel={ jest.fn() }
+				onSetProfit={ jest.fn() }
+			/>
+		);
+
+		expect( document.body.textContent ).toContain(
+			'Main product image in the shop'
+		);
+		expect( document.body.textContent ).toContain(
+			'Main image in the shop: Red – Front'
+		);
+		expect( document.querySelector( '[role="dialog"] select' ) ).toBeNull();
 
 		await act( async () => {
-			select.value = '';
-			select.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+			document
+				.querySelector< HTMLButtonElement >(
+					'button[title="Black – Front"]'
+				)
+				?.click();
 			await Promise.resolve();
 		} );
 
-		expect( onImage ).toHaveBeenCalledWith( null );
+		expect( onImage ).toHaveBeenCalledWith( 'front:black' );
+	} );
+
+	it( 'keeps keys pressed in the dialog away from the designer behind it', async () => {
+		const onKeyDown = jest.fn();
+
+		await show(
+			// eslint-disable-next-line jsx-a11y/no-static-element-interactions -- The designer's key handler.
+			<div onKeyDown={ onKeyDown }>
+				<SubmitDialog
+					base={ BASE }
+					colors={ [ 'black' ] }
+					onColors={ jest.fn() }
+					images={ [] }
+					image={ null }
+					onImage={ jest.fn() }
+					summary="Sent with 2 images."
+					zeroProfit={ false }
+					zeroText="0,00 kr."
+					onSend={ jest.fn() }
+					onCancel={ jest.fn() }
+					onSetProfit={ jest.fn() }
+				/>
+			</div>
+		);
+
+		await act( async () => {
+			document.querySelector( '[role="dialog"]' )?.dispatchEvent(
+				new KeyboardEvent( 'keydown', {
+					key: 'Delete',
+					bubbles: true,
+				} )
+			);
+			await Promise.resolve();
+		} );
+
+		expect( onKeyDown ).not.toHaveBeenCalled();
+	} );
+
+	it( 'asks before sending without profit (ADR-098)', async () => {
+		const onSend = jest.fn();
+		const onSetProfit = jest.fn();
+		const onCancel = jest.fn();
+		const dialog = ( zeroProfit: boolean ) => (
+			<SubmitDialog
+				base={ BASE }
+				colors={ [ 'black' ] }
+				onColors={ jest.fn() }
+				images={ [] }
+				image={ null }
+				onImage={ jest.fn() }
+				summary="Sent with 2 images."
+				zeroProfit={ zeroProfit }
+				zeroText="0,00 kr."
+				onSend={ onSend }
+				onCancel={ onCancel }
+				onSetProfit={ onSetProfit }
+			/>
+		);
+
+		await show( dialog( true ) );
+		await act( async () => {
+			button( 'Send' )?.click();
+			await Promise.resolve();
+		} );
+
+		expect( onSend ).not.toHaveBeenCalled();
+		expect(
+			document.querySelector( '[role="dialog"] h2' )?.textContent
+		).toBe( 'Send without profit?' );
+		expect( document.body.textContent ).toContain(
+			'Your profit is 0,00 kr.'
+		);
+
+		await act( async () => {
+			button( 'Back and set a profit' )?.click();
+			await Promise.resolve();
+		} );
+		expect( onSetProfit ).toHaveBeenCalledTimes( 1 );
+		expect( onSend ).not.toHaveBeenCalled();
+
+		await act( async () => {
+			button( 'Yes, send without profit' )?.click();
+			await Promise.resolve();
+		} );
+		expect( onSend ).toHaveBeenCalledTimes( 1 );
+
+		document.body.replaceChildren();
+		await show( dialog( false ) );
+		await act( async () => {
+			button( 'Send' )?.click();
+			await Promise.resolve();
+		} );
+		expect( onSend ).toHaveBeenCalledTimes( 2 );
+
+		await act( async () => {
+			button( 'Cancel' )?.click();
+			await Promise.resolve();
+		} );
+		expect( onCancel ).toHaveBeenCalledTimes( 1 );
+		expect( onSend ).toHaveBeenCalledTimes( 2 );
 	} );
 
 	it( 'asks how two designs are merged', async () => {

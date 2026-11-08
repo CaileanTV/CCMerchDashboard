@@ -535,6 +535,9 @@
 	inset: 0;
 	z-index: calc(var(--merchboard-z-nav) + 200);
 	display: grid;
+	// One column as wide as the screen, so the panel's 100 % never
+	// grows with its content (ADR-098).
+	grid-template-columns: minmax(0, 1fr);
 	place-items: center;
 	min-height: 0;
 	padding: var(--merchboard-space-4);
@@ -558,12 +561,19 @@
 	box-shadow: var(--merchboard-shadow);
 }
 
+// Room for the product image gallery when sending for approval (ADR-098).
+.merchboard-dialog__panel--wide {
+	width: min(56rem, 100%);
+}
+
 .merchboard-dialog__title {
 	margin: 0 0 var(--merchboard-space-3);
 }
 
 .merchboard-dialog__actions {
 	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
 	justify-content: flex-end;
 	margin-top: var(--merchboard-space-4);
 }
@@ -1901,15 +1911,25 @@ input:disabled + .merchboard-sounds__upload {
 		list-style: none;
 	}
 
+	// Swatch, name and arrows (before sending) or the colour's design (the
+	// product tab) on one line; the design wraps below only when narrow.
 	li {
 		display: flex;
-		gap: var(--merchboard-space-2);
+		flex-wrap: wrap;
+		gap: var(--merchboard-space-1) var(--merchboard-space-2);
 		align-items: center;
 		font-size: var(--merchboard-text-sm);
 
+		// The name wraps between words; a long word breaks only when alone.
 		> span:nth-child(2) {
-			flex: 1;
+			flex: 1 1 4.5rem;
 			min-width: 0;
+			overflow-wrap: break-word;
+		}
+
+		.merchboard-product-designer__design-choice {
+			flex: 1 1 8rem;
+			max-width: 100%;
 		}
 	}
 }
@@ -1988,18 +2008,28 @@ input:disabled + .merchboard-sounds__upload {
 }
 
 .merchboard-product-designer__panel {
+	min-width: 0;
 	padding: var(--merchboard-space-3);
 }
 
+// One column as wide as the panel: a wide row never pushes the rest out of
+// the tool panel, where it was cut off (1.7.3).
 .merchboard-product-designer__stack {
 	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	gap: var(--merchboard-space-3);
+}
+
+// A field is as wide as the panel too; an input is never wider than it.
+.merchboard-product-designer__stack .merchboard-field {
+	grid-template-columns: minmax(0, 1fr);
 }
 
 .merchboard-product-designer__options {
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--merchboard-space-2) var(--merchboard-space-3);
+	min-inline-size: 0; // A fieldset is never narrower than its content by default.
 	padding: 0;
 	margin: 0;
 	border: 0;
@@ -2207,6 +2237,17 @@ input:disabled + .merchboard-sounds__upload {
 		display: flex;
 		gap: 0.5rem;
 		justify-content: space-between;
+	}
+}
+
+// The main image in the shop, chosen before sending (ADR-098).
+.merchboard-product-designer__main-image {
+	display: grid;
+	gap: var(--merchboard-space-1);
+
+	h3 {
+		margin: 0;
+		font-size: inherit;
 	}
 }
 

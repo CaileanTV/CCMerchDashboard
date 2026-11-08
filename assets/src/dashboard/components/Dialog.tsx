@@ -14,6 +14,8 @@ export interface DialogProps {
 	readonly closeLabel?: string;
 	/** Buttons beside the close button. */
 	readonly actions?: ReactNode;
+	/** Room for a gallery (ADR-098). */
+	readonly wide?: boolean;
 	readonly children: ReactNode;
 }
 
@@ -28,6 +30,7 @@ export interface DialogProps {
  * @param props.onClose    Close handler.
  * @param props.closeLabel Close button text.
  * @param props.actions    Further buttons.
+ * @param props.wide       A wider panel.
  * @param props.children   Content.
  */
 export function Dialog( {
@@ -35,6 +38,7 @@ export function Dialog( {
 	onClose,
 	closeLabel = __( 'Close', 'merchboard' ),
 	actions,
+	wide = false,
 	children,
 }: DialogProps ) {
 	const headingId = useId();
@@ -105,13 +109,19 @@ export function Dialog( {
 	return createPortal(
 		<div className="merchboard-app merchboard-dialog">
 			<div className="merchboard-dialog__backdrop" />
+			{ /* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Only stops keys from reaching the page behind; nothing happens on a key here. */ }
 			<div
 				ref={ panel }
-				className="merchboard-dialog__panel"
+				className={ `merchboard-dialog__panel${
+					wide ? ' merchboard-dialog__panel--wide' : ''
+				}` }
 				role="dialog"
 				aria-modal="true"
 				aria-labelledby={ headingId }
 				tabIndex={ -1 }
+				// A key in the dialog is not a key on the page behind it, e.g. the
+				// designer's Delete and Ctrl+Z (React events bubble out of a portal).
+				onKeyDown={ ( event ) => event.stopPropagation() }
 			>
 				<h2 id={ headingId } className="merchboard-dialog__title">
 					{ title }

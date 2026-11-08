@@ -668,10 +668,26 @@ describe( 'DesignerSection', () => {
 		click( button( rendered, 'Edit' ) );
 		await flush();
 		click( button( rendered, 'Send for approval' ) );
-		expect( rendered.container.textContent ).toContain(
-			'sent with 2 images'
+		expect( document.body.textContent ).toContain( 'sent with 2 images' );
+
+		// The profit is 0: "Back and set a profit" sends nothing and goes to the field (ADR-098).
+		const before0 = requests.length;
+		click( dialogButton( 'Send' ) );
+		expect(
+			document.querySelector( '[role="dialog"] h2' )?.textContent
+		).toBe( 'Send without profit?' );
+		click( dialogButton( 'Back and set a profit' ) );
+		await flush();
+		expect( document.querySelector( '[role="dialog"]' ) ).toBeNull();
+		expect( requests.length ).toBe( before0 );
+		const profitField = rendered.container.querySelector(
+			'input[inputmode="decimal"]'
 		);
-		click( button( rendered, 'Send' ) );
+		expect( profitField?.ownerDocument.activeElement ).toBe( profitField );
+
+		click( button( rendered, 'Send for approval' ) );
+		click( dialogButton( 'Send' ) );
+		click( dialogButton( 'Yes, send without profit' ) );
 		await flush();
 		await flush();
 
@@ -707,7 +723,8 @@ describe( 'DesignerSection', () => {
 		await flush();
 		const before = requests.length;
 		click( button( rendered, 'Send for approval' ) );
-		click( button( rendered, 'Send' ) );
+		click( dialogButton( 'Send' ) );
+		click( dialogButton( 'Yes, send without profit' ) );
 		await flush();
 		expect( rendered.container.textContent ).toContain(
 			'could not be drawn in this browser'
@@ -821,6 +838,19 @@ describe( 'DesignerSection', () => {
 		);
 	} );
 } );
+
+/**
+ * A button in the open dialog by its text (the dialog is outside the tree).
+ *
+ * @param text Its text.
+ */
+function dialogButton( text: string ): HTMLElement | null {
+	return (
+		Array.from(
+			document.querySelectorAll< HTMLElement >( '[role="dialog"] button' )
+		).find( ( element ) => element.textContent === text ) ?? null
+	);
+}
 
 /**
  * A button by its text.

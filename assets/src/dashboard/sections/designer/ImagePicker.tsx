@@ -12,7 +12,7 @@ import {
 	useRef,
 	useState,
 } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 
 import { Button } from '../../components/Button';
 import { Dialog } from '../../components/Dialog';
@@ -195,7 +195,15 @@ export function ImagePicker( props: ImagePickerProps ) {
 							: __( 'Drawing the product image…', 'merchboard' ) }
 					</span>
 				) }
-				<span>{ chosen.label }</span>
+				<span>
+					{ sprintf(
+						/* translators: %s: colour and side, e.g. "Black – Front". */ __(
+							'Main image in the shop: %s',
+							'merchboard'
+						),
+						chosen.label
+					) }
+				</span>
 			</div>
 			{ sides.length > 1 ? (
 				<div

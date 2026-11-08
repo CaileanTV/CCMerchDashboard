@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-08T08:23:45+00:00\n"
+"PO-Revision-Date: 2026-11-08T09:58:44+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -7786,7 +7786,7 @@ msgstr "Mockup %s"
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1409
 #: build/base-products-admin.js:8
 #: build/base-products-admin.js:15
-#: build/dashboard.js:78
+#: build/dashboard.js:74
 #, js-format,php-format
 msgid "Move %s up"
 msgstr "Flyt %s op"
@@ -7798,7 +7798,7 @@ msgstr "Flyt %s op"
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1411
 #: build/base-products-admin.js:10
 #: build/base-products-admin.js:16
-#: build/dashboard.js:78
+#: build/dashboard.js:74
 #, js-format,php-format
 msgid "Move %s down"
 msgstr "Flyt %s ned"
@@ -16576,6 +16576,12 @@ msgstr "Billedet kan ikke vises."
 msgid "Drawing the product image…"
 msgstr "Tegner produktbilledet…"
 
+#. translators: %s: colour and side, e.g. "Black – Front".
+#: build/dashboard.js:74
+#, js-format
+msgid "Main image in the shop: %s"
+msgstr "Hovedbillede i shoppen: %s"
+
 #: build/dashboard.js:74
 msgid "Product images"
 msgstr "Produktbilleder"
@@ -16625,6 +16631,45 @@ msgstr "Lås"
 #: build/dashboard.js:74
 msgid "Duplicate layer"
 msgstr "Duplikér lag"
+
+#: build/dashboard.js:74
+msgid "Order of the colours"
+msgstr "Farvernes rækkefølge"
+
+#: build/dashboard.js:74
+msgid "The shop shows the colours in this order. The first is the one customers see first."
+msgstr "Butikken viser farverne i denne rækkefølge. Den første er den, kunderne ser først."
+
+#: build/dashboard.js:74
+msgid "Send without profit?"
+msgstr "Send uden fortjeneste?"
+
+#: build/dashboard.js:74
+msgid "Back and set a profit"
+msgstr "Tilbage og sæt fortjeneste"
+
+#: build/dashboard.js:74
+msgid "Yes, send without profit"
+msgstr "Ja, send uden fortjeneste"
+
+#. translators: %s: the profit 0 as money, e.g. "0,00 kr.".
+#: build/dashboard.js:74
+#, js-format
+msgid "Your profit is %s. Customers pay only the price without profit, and you earn nothing on the product. Do you want to put the product up without profit?"
+msgstr "Din fortjeneste er %s. Kunderne betaler kun prisen uden fortjeneste, og du tjener ikke noget på produktet. Vil du lægge produktet op uden fortjeneste?"
+
+#: build/dashboard.js:74
+#: build/dashboard.js:106
+msgid "Send for approval"
+msgstr "Send til godkendelse"
+
+#: build/dashboard.js:74
+msgid "Main product image in the shop"
+msgstr "Primært produktbillede i shoppen"
+
+#: build/dashboard.js:74
+msgid "Tap an image to make it the product’s main image in the shop."
+msgstr "Tryk på et billede for at gøre det til produktets hovedbillede i shoppen."
 
 #: build/dashboard.js:74
 msgid "The base product of this design is no longer available."
@@ -16691,11 +16736,6 @@ msgstr "Gemt"
 msgid "See the finished product"
 msgstr "Se det færdige produkt"
 
-#: build/dashboard.js:74
-#: build/dashboard.js:106
-msgid "Send for approval"
-msgstr "Send til godkendelse"
-
 #. translators: %s: the administrator's note.
 #: build/dashboard.js:74
 #, js-format
@@ -16710,17 +16750,17 @@ msgstr "Du ændrer et produkt i butikken. Butikken beholder den nuværende versi
 msgid "You view the dashboard as the creator: you can edit the draft, but only the creator can send it for approval."
 msgstr "Du ser dashboardet som creatoren: du kan redigere kladden, men kun creatoren kan sende den til godkendelse."
 
-#. translators: 1: number of files, 2: the customer's price.
-#: build/dashboard.js:74
-#, js-format
-msgid "Your design is saved and sent with %1$d images (a print file per side and a product image per colour). It waits for our approval (customer price incl. VAT: %2$s); until then it cannot be changed, but you can withdraw it."
-msgstr "Dit design gemmes og sendes med %1$d billeder (en printfil pr. side og et produktbillede pr. farve). Det venter på vores godkendelse (kundens pris inkl. moms: %2$s); indtil da kan det ikke ændres, men du kan trække det tilbage."
-
 #. translators: 1: files sent, 2: all files.
 #: build/dashboard.js:74
 #, js-format
 msgid "Preparing your design for approval: %1$d of %2$d files sent…"
 msgstr "Dit design gøres klar til godkendelse: %1$d af %2$d filer sendt …"
+
+#. translators: 1: number of files, 2: the customer's price.
+#: build/dashboard.js:74
+#, js-format
+msgid "Your design is saved and sent with %1$d images (a print file per side and a product image per colour). It waits for our approval (customer price incl. VAT: %2$s); until then it cannot be changed, but you can withdraw it."
+msgstr "Dit design gemmes og sendes med %1$d billeder (en printfil pr. side og et produktbillede pr. farve). Det venter på vores godkendelse (kundens pris inkl. moms: %2$s); indtil da kan det ikke ændres, men du kan trække det tilbage."
 
 #: build/dashboard.js:74
 msgid "Designer tools"
@@ -17043,16 +17083,12 @@ msgid "Stitching"
 msgstr "Syninger"
 
 #: build/dashboard.js:78
-msgid "Order of the colours"
-msgstr "Farvernes rækkefølge"
+msgid "Design for each colour"
+msgstr "Design pr. farve"
 
 #: build/dashboard.js:78
-msgid "The shop shows the colours in this order. The first is the one customers see first."
-msgstr "Butikken viser farverne i denne rækkefølge. Den første er den, kunderne ser først."
-
-#: build/dashboard.js:78
-msgid "The first colour, first side"
-msgstr "Første farve, første side"
+msgid "You choose the order of the colours and the main product image when you send for approval."
+msgstr "Farvernes rækkefølge og hovedbilledet i shoppen vælger du, når du sender til godkendelse."
 
 #: build/dashboard.js:78
 msgid "Weight"

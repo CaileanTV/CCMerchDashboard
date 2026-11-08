@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client';
 
 import { shifted } from '../sections/designer/design-model';
 import { ProductPanel } from '../sections/designer/DesignerEditor';
+import { ColorOrder } from '../sections/designer/SubmitDialog';
 import type { DesignerBase } from '../api/designer';
 
 jest.mock( '@wordpress/api-fetch', () => ( {
@@ -57,7 +58,30 @@ async function show(
 				onSizes={ jest.fn() }
 				stitch="white"
 				onStitch={ onStitch }
+				laterChoices={ colors.length > 1 }
 			/>
+		);
+		await Promise.resolve();
+	} );
+}
+
+/**
+ * Renders the order of the colours (in the dialog before sending, ADR-098).
+ *
+ * @param colors   The chosen colours.
+ * @param onColors Called with the new colours.
+ */
+async function showOrder(
+	colors: readonly string[],
+	onColors: ( value: readonly string[] ) => void
+): Promise< void > {
+	const container = document.createElement( 'div' );
+
+	document.body.append( container );
+
+	await act( async () => {
+		createRoot( container ).render(
+			<ColorOrder base={ BASE } colors={ colors } onColors={ onColors } />
 		);
 		await Promise.resolve();
 	} );
@@ -87,8 +111,17 @@ describe( 'the colours of a design', () => {
 		expect( shifted( [ 'a', 'b' ], 1, 1 ) ).toEqual( [ 'a', 'b' ] );
 	} );
 
-	it( 'lists the chosen colours in the creator’s order', async () => {
+	it( 'has no order in the product tab (ADR-098)', async () => {
 		await show( [ 'sand', 'black' ], jest.fn() );
+
+		expect( document.querySelector( '[aria-label^="Move "]' ) ).toBeNull();
+		expect( document.body.textContent ).toContain(
+			'You choose the order of the colours and the main product image when you send for approval.'
+		);
+	} );
+
+	it( 'lists the chosen colours in the creator’s order', async () => {
+		await showOrder( [ 'sand', 'black' ], jest.fn() );
 
 		expect(
 			Array.from( document.querySelectorAll( 'ol li' ) ).map(
@@ -105,13 +138,15 @@ describe( 'the colours of a design', () => {
 	it( 'moves a colour and puts a new one last', async () => {
 		const onColors = jest.fn();
 
-		await show( [ 'black', 'sand' ], onColors );
+		await showOrder( [ 'black', 'sand' ], onColors );
 		await act( async () => {
 			click( '[aria-label="Move Sand up"]' );
 			await Promise.resolve();
 		} );
 
 		expect( onColors ).toHaveBeenLastCalledWith( [ 'sand', 'black' ] );
+		document.body.replaceChildren();
+		await show( [ 'black', 'sand' ], onColors );
 
 		const boxes = document.querySelectorAll< HTMLInputElement >(
 			'input[type="checkbox"]'

@@ -57,7 +57,6 @@ import {
 	moveObject,
 	newImage,
 	newShape,
-	shifted,
 	newText,
 	objectsOf,
 	quotePrice,
@@ -107,7 +106,8 @@ import {
 	NEW_DESIGN,
 } from './ColorDesigns';
 import { ImagePicker } from './ImagePicker';
-import { IconButton, LayerList } from './LayerList';
+import { SubmitDialog } from './SubmitDialog';
+import { LayerList } from './LayerList';
 import { TemplateLayers } from './TemplateLayers';
 import { threadObject, threadSide } from './threads';
 import type { ThreadedSide, ThreadPlan } from './threads';
@@ -250,6 +250,9 @@ function Editor( props: EditorProps ) {
 	const impersonating = useContext( ConfigContext )?.impersonating === true;
 	const [ finished, setFinished ] = useState( false );
 	const [ confirming, setConfirming ] = useState( false );
+	// "Back and set a profit" (ADR-098): the profit field gets the focus.
+	const profitInput = useRef< HTMLInputElement | null >( null );
+	const [ toProfit, setToProfit ] = useState( false );
 	const [ sending, setSending ] = useState( false );
 	const draft = product.draft!;
 	const history = useHistory< DesignDocument >( props.design );
@@ -375,6 +378,35 @@ function Editor( props: EditorProps ) {
 		overview.priceDecimals,
 		extraTotal( extras )
 	);
+	// A design's price, and its price with profit 0 (ADR-098).
+	const partPrices = ( part: DesignDocument ) => {
+		const extra = extraTotal(
+			extraAreas(
+				base.views,
+				part,
+				sizes,
+				base.extraSidePrice,
+				base.smallSidePrice
+			)
+		);
+
+		return {
+			price: quotePrice(
+				base.basePrice,
+				profitKind,
+				profitValue,
+				overview.priceDecimals,
+				extra
+			),
+			zero: quotePrice(
+				base.basePrice,
+				'fixed',
+				'0',
+				overview.priceDecimals,
+				extra
+			),
+		};
+	};
 	// The price of each design the colours use, when there is more than one (ADR-096).
 	const designPrices =
 		designsOf( whole ).length === 0
@@ -385,22 +417,20 @@ function Editor( props: EditorProps ) {
 							base.colors.find( ( color ) => color.key === key )
 								?.name ?? key
 					),
-					price: quotePrice(
-						base.basePrice,
-						profitKind,
-						profitValue,
-						overview.priceDecimals,
-						extraTotal(
-							extraAreas(
-								base.views,
-								partDoc( whole, part.id ),
-								sizes,
-								base.extraSidePrice,
-								base.smallSidePrice
-							)
-						)
-					),
+					...partPrices( partDoc( whole, part.id ) ),
 				} ) );
+	// The highest of the prices is what the creator is told (ADR-096 pkt. 4).
+	const highest = designPrices.reduce< number | null >(
+		( top, item ) =>
+			item.price === null || ( top !== null && top >= item.price )
+				? top
+				: item.price,
+		price
+	);
+	// A profit is 0 when it changes no design's price, also a percent rounded away (ADR-098).
+	const zeroProfit = (
+		designPrices.length > 0 ? designPrices : [ partPrices( design ) ]
+	).every( ( item ) => item.price !== null && item.price === item.zero );
 	const scenePreview = base.views.some(
 		( candidate ) =>
 			candidate.scene?.preview === true || hasStitches( candidate )
@@ -436,7 +466,7 @@ function Editor( props: EditorProps ) {
 	};
 	// What the drawn images show: the design and its colours.
 	const drawKey = useMemo(
-		() => ( { whole, colors: colors.join() } ),
+		() => ( { whole, colors: [ ...colors ].sort().join() } ),
 		[ whole, colors ]
 	);
 
@@ -1060,6 +1090,13 @@ function Editor( props: EditorProps ) {
 		);
 	};
 
+	useEffect( () => {
+		if ( toProfit && ! confirming ) {
+			setToProfit( false );
+			profitInput.current?.focus();
+		}
+	}, [ toProfit, confirming ] );
+
 	const send = async () => {
 		setConfirming( false );
 		setSending( true );
@@ -1299,9 +1336,7 @@ function Editor( props: EditorProps ) {
 						<Button
 							variant="ghost"
 							onClick={ () => setFinished( true ) }
-							disabled={
-								sending || saving || confirming || finished
-							}
+							disabled={ sending || saving || finished }
 						>
 							{ __( 'See the finished product', 'merchboard' ) }
 						</Button>
@@ -1310,7 +1345,7 @@ function Editor( props: EditorProps ) {
 						<Button
 							onClick={ () => setConfirming( true ) }
 							isBusy={ sending }
-							disabled={ sending || saving || confirming }
+							disabled={ sending || saving }
 						>
 							{ __( 'Send for approval', 'merchboard' ) }
 						</Button>
@@ -1349,46 +1384,68 @@ function Editor( props: EditorProps ) {
 				</Alert>
 			) : null }
 
-			{ confirming &&
-			feeText !== null &&
-			base.views.some(
-				( candidate ) =>
-					candidate.embroidery !== null &&
-					usedSides( design ).includes( candidate.key )
-			) ? (
-				<Alert tone="info">{ feeNotice( feeText ) }</Alert>
-			) : null }
-
 			{ confirming ? (
-				<Alert tone="info">
-					{ sprintf(
-						/* translators: 1: number of files, 2: the customer's price. */ __(
-							'Your design is saved and sent with %1$d images (a print file per side and a product image per colour). It waits for our approval (customer price incl. VAT: %2$s); until then it cannot be changed, but you can withdraw it.',
-							'merchboard'
-						),
-						submissionSize( whole, colors, base.views ),
-						price === null
-							? '–'
-							: moneyText(
-									price.toFixed( overview.priceDecimals ),
-									base.currency,
-									locale
-								)
-					) }{ ' ' }
-					{ reviewNote() }{ ' ' }
-					<span className="merchboard-product-designer__actions">
-						<Button size="sm" onClick={ () => void send() }>
-							{ __( 'Send', 'merchboard' ) }
-						</Button>
-						<Button
-							size="sm"
-							variant="ghost"
-							onClick={ () => setConfirming( false ) }
-						>
-							{ __( 'Cancel', 'merchboard' ) }
-						</Button>
-					</span>
-				</Alert>
+				<SubmitDialog
+					base={ base }
+					colors={ colors }
+					onColors={ setColors }
+					design={ whole }
+					images={ imageChoices }
+					image={ primaryImage }
+					onImage={ setPrimaryImage }
+					imageDraw={ drawImage }
+					imageDrawKey={ drawKey }
+					zeroProfit={ zeroProfit }
+					zeroText={ moneyText(
+						( 0 ).toFixed( overview.priceDecimals ),
+						base.currency,
+						locale
+					) }
+					onSend={ () => void send() }
+					onCancel={ () => setConfirming( false ) }
+					onSetProfit={ () => {
+						setToProfit( true );
+						setConfirming( false );
+					} }
+					summary={
+						<>
+							{ feeText !== null &&
+							base.views.some(
+								( candidate ) =>
+									candidate.embroidery !== null &&
+									effectiveParts( whole, colors ).some(
+										( part ) =>
+											usedSides(
+												partDoc( whole, part.id )
+											).includes( candidate.key )
+									)
+							) ? (
+								<Alert tone="info">
+									{ feeNotice( feeText ) }
+								</Alert>
+							) : null }
+							<p>
+								{ sprintf(
+									/* translators: 1: number of files, 2: the customer's price. */ __(
+										'Your design is saved and sent with %1$d images (a print file per side and a product image per colour). It waits for our approval (customer price incl. VAT: %2$s); until then it cannot be changed, but you can withdraw it.',
+										'merchboard'
+									),
+									submissionSize( whole, colors, base.views ),
+									highest === null
+										? '–'
+										: moneyText(
+												highest.toFixed(
+													overview.priceDecimals
+												),
+												base.currency,
+												locale
+											)
+								) }{ ' ' }
+								{ reviewNote() }
+							</p>
+						</>
+					}
+				/>
 			) : null }
 
 			{ message === null ? null : (
@@ -1481,11 +1538,10 @@ function Editor( props: EditorProps ) {
 									onStitch={ setStitch }
 									design={ whole }
 									onDesign={ chooseDesign }
-									images={ imageChoices }
-									image={ primaryImage }
-									onImage={ setPrimaryImage }
-									imageDraw={ drawImage }
-									imageDrawKey={ drawKey }
+									laterChoices={
+										colors.length > 1 ||
+										imageChoices.length > 1
+									}
 								/>
 							) : null }
 							{ tab === 'text' ? (
@@ -1880,6 +1936,7 @@ function Editor( props: EditorProps ) {
 						sizes={ sizes }
 						onProfitKind={ setProfitKind }
 						onProfitValue={ setProfitValue }
+						profitRef={ profitInput }
 					/>
 					{ designPrices.length > 1 ? (
 						<section className="merchboard-product-designer__card">
@@ -1953,18 +2010,20 @@ function NextSteps() {
 /**
  * The creator's profit with the customer's price.
  *
- * @param props               Props.
- * @param props.base          The base product.
- * @param props.locale        Locale.
- * @param props.decimals      Store price decimals.
- * @param props.profitKind    Amount or percent.
- * @param props.profitValue   The profit as entered.
- * @param props.price         The customer's price; null when the profit is invalid.
- * @param props.extras        The design areas that cost extra.
- * @param props.sizeExtra     What the extra design areas of a size cost.
- * @param props.sizes         The chosen sizes.
- * @param props.onProfitKind  Changes the kind.
- * @param props.onProfitValue Changes the value.
+ * @param props                   Props.
+ * @param props.base              The base product.
+ * @param props.locale            Locale.
+ * @param props.decimals          Store price decimals.
+ * @param props.profitKind        Amount or percent.
+ * @param props.profitValue       The profit as entered.
+ * @param props.price             The customer's price; null when the profit is invalid.
+ * @param props.extras            The design areas that cost extra.
+ * @param props.sizeExtra         What the extra design areas of a size cost.
+ * @param props.sizes             The chosen sizes.
+ * @param props.onProfitKind      Changes the kind.
+ * @param props.onProfitValue     Changes the value.
+ * @param props.profitRef         The profit field.
+ * @param props.profitRef.current The field element.
  */
 function PricePanel( props: {
 	readonly base: DesignerBase;
@@ -1978,6 +2037,8 @@ function PricePanel( props: {
 	readonly sizes: readonly string[];
 	readonly onProfitKind: ( value: ProfitKind ) => void;
 	readonly onProfitValue: ( value: string ) => void;
+	/** The profit field, focused on "Back and set a profit" (ADR-098). */
+	readonly profitRef?: { current: HTMLInputElement | null };
 } ) {
 	const { base, locale, price, decimals } = props;
 	const extra = extraTotal( props.extras );
@@ -2040,6 +2101,7 @@ function PricePanel( props: {
 				{ ( id ) => (
 					<input
 						id={ id }
+						ref={ props.profitRef }
 						className="merchboard-input"
 						inputMode="decimal"
 						value={ props.profitValue }
@@ -2624,20 +2686,8 @@ interface ProductPanelProps {
 	readonly design?: DesignDocument;
 	/** A colour's new design: an id, SHARED or NEW_DESIGN. */
 	readonly onDesign?: ( color: string, choice: string ) => void;
-	/** The mockups the product's image can be (ADR-096). */
-	readonly images?: readonly {
-		readonly value: string;
-		readonly label: string;
-	}[];
-	/** The product's image; null for the first colour's first side. */
-	readonly image?: string | null;
-	readonly onImage?: ( value: string | null ) => void;
-	/** Draws a choice of the product image (`data:`). */
-	readonly imageDraw?: ( value: string ) => Promise< string | null >;
-	/** Changes when what imageDraw() shows changes. */
-	readonly imageDrawKey?: unknown;
-	/** How long the design must be still before the images are drawn (ms). */
-	readonly imageDrawDelay?: number;
+	/** Whether the order or the main image is chosen when sending (ADR-098). */
+	readonly laterChoices?: boolean;
 }
 
 /**
@@ -2698,7 +2748,7 @@ function stitchName( stitch: string ): string {
  * @param props Props.
  */
 export function ProductPanel( props: ProductPanelProps ) {
-	const { base } = props;
+	const { base, design, onDesign } = props;
 	const chosen = props.colors.flatMap( ( key ) =>
 		base.colors.filter( ( color ) => color.key === key )
 	);
@@ -2829,19 +2879,15 @@ export function ProductPanel( props: ProductPanelProps ) {
 					) ) }
 				</fieldset>
 			) : null }
-			{ chosen.length > 1 ? (
+			{ chosen.length > 1 &&
+			design !== undefined &&
+			onDesign !== undefined ? (
 				<div className="merchboard-product-designer__order">
 					<span className="merchboard-field__label">
-						{ __( 'Order of the colours', 'merchboard' ) }
+						{ __( 'Design for each colour', 'merchboard' ) }
 					</span>
-					<p className="merchboard-product-designer__hint">
-						{ __(
-							'The shop shows the colours in this order. The first is the one customers see first.',
-							'merchboard'
-						) }
-					</p>
 					<ol>
-						{ chosen.map( ( color, index ) => (
+						{ chosen.map( ( color ) => (
 							<li key={ color.key }>
 								<span
 									className="merchboard-product-designer__swatch merchboard-product-designer__swatch--small"
@@ -2849,66 +2895,15 @@ export function ProductPanel( props: ProductPanelProps ) {
 									aria-hidden="true"
 								/>
 								<span>{ color.name }</span>
-								{ props.design === undefined ||
-								props.onDesign === undefined ? null : (
-									<ColorDesignPicker
-										design={ props.design }
-										color={ color.key }
-										colorName={ color.name }
-										canAdd={
-											designsOf( props.design ).length <
-											MAX_DESIGNS
-										}
-										onChoose={ ( choice ) =>
-											props.onDesign?.(
-												color.key,
-												choice
-											)
-										}
-									/>
-								) }
-								<IconButton
-									icon="up"
-									label={ sprintf(
-										/* translators: %s: colour name. */ __(
-											'Move %s up',
-											'merchboard'
-										),
-										color.name
-									) }
-									disabled={ index === 0 }
-									onClick={ () =>
-										props.onColors(
-											shifted(
-												chosen.map(
-													( item ) => item.key
-												),
-												index,
-												-1
-											)
-										)
+								<ColorDesignPicker
+									design={ design }
+									color={ color.key }
+									colorName={ color.name }
+									canAdd={
+										designsOf( design ).length < MAX_DESIGNS
 									}
-								/>
-								<IconButton
-									icon="down"
-									label={ sprintf(
-										/* translators: %s: colour name. */ __(
-											'Move %s down',
-											'merchboard'
-										),
-										color.name
-									) }
-									disabled={ index === chosen.length - 1 }
-									onClick={ () =>
-										props.onColors(
-											shifted(
-												chosen.map(
-													( item ) => item.key
-												),
-												index,
-												1
-											)
-										)
+									onChoose={ ( choice ) =>
+										onDesign( color.key, choice )
 									}
 								/>
 							</li>
@@ -2916,69 +2911,14 @@ export function ProductPanel( props: ProductPanelProps ) {
 					</ol>
 				</div>
 			) : null }
-			{ props.images === undefined ||
-			props.onImage === undefined ||
-			props.images.length === 0 ? null : (
-				<Labelled
-					className="merchboard-field"
-					before
-					label={
-						<span className="merchboard-field__label">
-							{ __( 'Product image', 'merchboard' ) }
-						</span>
-					}
-				>
-					{ ( id ) => (
-						<select
-							id={ id }
-							className="merchboard-input"
-							value={
-								props.images?.some(
-									( choice ) => choice.value === props.image
-								)
-									? ( props.image ?? '' )
-									: ''
-							}
-							onChange={ ( event ) =>
-								props.onImage?.(
-									event.target.value === ''
-										? null
-										: event.target.value
-								)
-							}
-						>
-							<option value="">
-								{ __(
-									'The first colour, first side',
-									'merchboard'
-								) }
-							</option>
-							{ props.images?.map( ( choice ) => (
-								<option
-									key={ choice.value }
-									value={ choice.value }
-								>
-									{ choice.label }
-								</option>
-							) ) }
-						</select>
+			{ props.laterChoices === true ? (
+				<p className="merchboard-product-designer__hint">
+					{ __(
+						'You choose the order of the colours and the main product image when you send for approval.',
+						'merchboard'
 					) }
-				</Labelled>
-			) }
-			{ props.images === undefined || props.images.length === 0 ? null : (
-				<ImagePicker
-					choices={ props.images }
-					selected={ props.image ?? null }
-					onSelect={ ( value ) => props.onImage?.( value ) }
-					{ ...( props.imageDraw === undefined
-						? {}
-						: { draw: props.imageDraw } ) }
-					drawKey={ props.imageDrawKey }
-					{ ...( props.imageDrawDelay === undefined
-						? {}
-						: { delay: props.imageDrawDelay } ) }
-				/>
-			) }
+				</p>
+			) : null }
 			<fieldset className="merchboard-product-designer__options">
 				<legend className="merchboard-field__label">
 					{ __( 'Sizes', 'merchboard' ) }
