@@ -4,6 +4,19 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.7.4] - 2026-11-08
+
+Fase 37: udskæring på en side og produkttags fra grundproduktet. Schema-version 48 (migration 48 kører automatisk; ingen manuelle trin). Projektejeren tester på staging før tag. Opdateringen står i DEVELOPMENT.md ("Release 1.7.4").
+
+### Added
+
+- **Udskæring (ADR-099):** hver side på et grundprodukt kan få laget "Udskæring", en PNG i skabelonens størrelse (fx en mask.png med snorene på en hoodie). Hvor den er uigennemsigtig, ligger produktet foran designet, på designerens lærred og i alle mockups, browseren tegner. Printfilen er uændret, og ventende designs bliver ikke forældede. PSD-import læser `mb_cutout`.
+- **Produkttags (ADR-100):** grundproduktet har feltet "Produkttags" med de eksisterende WooCommerce-produkttags. Designerprodukterne får dem ved godkendelse, og ændres de, får produkterne i butikken dem i baggrunden. Tags sat i hånden i WooCommerce bevares. Creators ser dem ikke.
+
+### Changed
+
+- CI kører ikke på commits, der kun ændrer docs eller `.md`-filer; et tag kører stadig alle checks (projektejerens valg).
+
 ## [1.7.3] - 2026-11-08
 
 Fase 36: "Send til godkendelse" som popup. Ingen schemaændring og ingen serverændring (schema-version 47; ingen migration og ingen manuelle trin). Fase 36 er reviewet uafhængigt og testet af projektejeren på Local 2026-11-08. Opdateringen står i DEVELOPMENT.md ("Release 1.7.3").

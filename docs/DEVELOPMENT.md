@@ -247,6 +247,26 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.7.4: udskæring og produkttags (fase 37)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-08** efter projektejerens ønske om en testpakke til staging ("vil du så ikke lave en plugin fil klar til mig, så jeg kan køre test på stg"). Der tagges først efter projektejerens OK fra staging; tag og SHA-256 noteres her da.
+- Fase 37 (ADR-099 og ADR-100) er testet med unit-, integrations- og Jest-tests, og mockup-sammensætningen er set i en headless Chrome med projektejerens `Mask.png`.
+- CI skal være grøn med hele integrationssuiten på den taggede commit.
+
+**Schema-version 48:**
+- Migration 48 tilføjer `tag_ids` (JSON, NULL) til `merchboard_designer_bases`. Eksisterende grundprodukter har ingen tags; intet andet ændres.
+- Udskæringen ligger i sidernes lag og kræver ingen migration.
+
+Testpakken og den senere draft-release testes på staging af projektejeren. AI-agenter har ingen adgang til produktion.
+
+1. **Backup:** tag backup af filer og database via hostingen. Notér den installerede version.
+2. **Opdatér** med ZIP'en ("Erstat nuværende med uploadet"). Overview skal vise version 1.7.4 og schema-version 48 uden advarsler.
+3. **Udskæring:** upload `Mask.png` som "Udskæring" på hoodie-grundproduktets forside (samme størrelse som de andre lag), og gem. Grundproduktets version må ikke stige. Åbn et hoodie-design: snorene ligger foran designet på lærredet og i galleriet i popuppen ved "Send til godkendelse". Printfilen (efter godkendelse) har ingen udskæring.
+4. **Produkttags:** sæt flueben ved et produkttag på grundproduktet, og gem. Produkterne i butikken fra grundproduktet får tagget i baggrunden (Action Scheduler: `merchboard_designer_tags`), og funktionen på produktsiden virker. Et tag, du selv har sat på et produkt, bliver. Fjern fluebenet igen: kun grundproduktets tag forsvinder.
+5. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 1.7.3-ZIP'en igen. Kolonnen `tag_ids` og produktmeta'en `_merchboard_designer_tags` bliver liggende uden at blive brugt; tags på produkterne bliver, hvor de er. Udskæringslaget ignoreres af 1.7.3.
+
 ## Release 1.7.3: "Send til godkendelse" som popup (fase 36)
 
 **Versions-bump og CHANGELOG-sektion og tagget `v1.7.3` (begge på `4853677`) 2026-11-08** efter projektejerens OK på Local ("Dette er OK - så du må gerne commit og bumpe til 1.7.3"). CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `fa2c2c7fcb6a87be372fba491451e05acf9fdb2198c795c2d44970ea0ed67a98`).
