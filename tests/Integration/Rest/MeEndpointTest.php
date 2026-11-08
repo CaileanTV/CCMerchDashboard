@@ -255,7 +255,7 @@ final class MeEndpointTest extends IntegrationTestCase {
 
 		$profile = $this->request( 'GET', '/me/profile' );
 		self::assertSame( 200, $profile->get_status() );
-		self::assertSame( array( 'display_name', 'fields', 'category', 'pending', 'rejected' ), array_keys( (array) $profile->get_data() ) );
+		self::assertSame( array( 'display_name', 'fields', 'category', 'pending', 'accepted', 'rejected' ), array_keys( (array) $profile->get_data() ) );
 		self::assertSame( array( 'display_name' ), ( (array) $profile->get_data() )['fields'], 'Without WooCommerce only the name can be proposed.' );
 		self::assertNull( ( (array) $profile->get_data() )['category'] );
 

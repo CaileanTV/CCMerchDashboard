@@ -90,6 +90,10 @@ export interface Profile {
 	readonly pending: Readonly<
 		Partial< Record< ProposalField, PendingProposal > >
 	>;
+	/** Approved before go-live: shown in the shop when the category is made (ADR-101). */
+	readonly accepted: Readonly<
+		Partial< Record< ProposalField, PendingProposal > >
+	>;
 	readonly rejected: Readonly<
 		Partial< Record< ProposalField, RejectedProposal > >
 	>;

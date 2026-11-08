@@ -236,7 +236,8 @@ function parseByField< T >(
 }
 
 /**
- * Validates `/me/profile`: `{ display_name, fields, category, pending, rejected }`.
+ * Validates `/me/profile`: `{ display_name, fields, category, pending, accepted, rejected }`.
+ * `accepted` is left out by a server before ADR-101.
  *
  * @param body Response body.
  */
@@ -248,6 +249,10 @@ export function parseProfile( body: unknown ): Profile | null {
 	const { display_name: displayName, fields } = body;
 	const category = parseCategory( body.category );
 	const pending = parseByField( body.pending, parsePending );
+	const accepted =
+		body.accepted === undefined
+			? {}
+			: parseByField( body.accepted, parsePending );
 	const rejected = parseByField( body.rejected, parseRejected );
 
 	if (
@@ -257,12 +262,13 @@ export function parseProfile( body: unknown ): Profile | null {
 		! fields.every( isField ) ||
 		category === undefined ||
 		pending === null ||
+		accepted === null ||
 		rejected === null
 	) {
 		return null;
 	}
 
-	return { displayName, fields, category, pending, rejected };
+	return { displayName, fields, category, pending, accepted, rejected };
 }
 
 export function getMe( signal?: AbortSignal ): Promise< ApiResult< Me > > {

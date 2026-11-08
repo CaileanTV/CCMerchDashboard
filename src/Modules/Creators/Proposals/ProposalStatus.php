@@ -18,8 +18,10 @@ defined( 'ABSPATH' ) || exit;
  */
 enum ProposalStatus: string {
 
-	case Pending   = 'pending';
-	case Approved  = 'approved';
+	case Pending  = 'pending';
+	case Approved = 'approved';
+	// Approved before the creator had a category: written on it at go-live (ADR-101).
+	case Accepted  = 'accepted';
 	case Rejected  = 'rejected';
 	case Replaced  = 'replaced';
 	case Withdrawn = 'withdrawn';

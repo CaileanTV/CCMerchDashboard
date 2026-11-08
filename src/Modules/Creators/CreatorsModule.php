@@ -289,6 +289,13 @@ final class CreatorsModule implements Module {
 				);
 			}
 		);
+		// Proposals approved before go-live are written on the new category (ADR-101).
+		add_action(
+			GoLiveRequests::WENT_LIVE,
+			static function ( mixed $creator_id ) use ( $container ): void {
+				$container->get( CategoryProposals::class )->apply_accepted( $creator_id );
+			}
+		);
 		$container->set( CategoryProposalsCleanup::class, static fn( Container $c ): CategoryProposalsCleanup => new CategoryProposalsCleanup( $c->get( CategoryProposalRepository::class ), $c->get( ProposalFiles::class ) ) );
 		add_filter(
 			'merchboard_creator_data_cleaners',

@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-08T11:11:10+00:00\n"
+"PO-Revision-Date: 2026-11-08T14:22:14+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -41,7 +41,7 @@ msgstr "Du skal være logget ind."
 #: src/Core/Http/RestController.php:65
 #: src/Core/Http/RestController.php:79
 #: src/Modules/Alerts/Presets/AdminOverlayPresetsController.php:282
-#: src/Modules/Dashboard/Rest/MeController.php:516
+#: src/Modules/Dashboard/Rest/MeController.php:524
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:220
 msgid "You do not have access to this resource."
 msgstr "Du har ikke adgang til denne ressource."
@@ -116,14 +116,14 @@ msgid "Stop viewing as the creator"
 msgstr "Stop med at se som creatoren"
 
 #: src/Modules/Access/ImpersonationActions.php:141
-#: src/Modules/Creators/Admin/CategoryProposalActions.php:90
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:92
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:119
+#: src/Modules/Creators/Admin/CategoryProposalActions.php:93
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:97
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:124
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:212
 #: src/Modules/Creators/Admin/CreatorDeletionActions.php:97
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:142
-#: src/Modules/Creators/Admin/GoLivePage.php:137
-#: src/Modules/Creators/Admin/GoLivePage.php:321
+#: src/Modules/Creators/Admin/GoLivePage.php:136
+#: src/Modules/Creators/Admin/GoLivePage.php:316
 #: src/Modules/Creators/Admin/ProposalImageDownload.php:100
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:111
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:242
@@ -144,7 +144,7 @@ msgstr "Du har desværre ikke adgang til at administrere creators."
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:418
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:151
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsActions.php:92
-#: src/Modules/Creators/Admin/CategoryProposalActions.php:98
+#: src/Modules/Creators/Admin/CategoryProposalActions.php:101
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Creators/Admin/CreatorDeletionActions.php:104
 #: src/Modules/Creators/Admin/ProposalImageDownload.php:108
@@ -291,7 +291,7 @@ msgid "Fixed profit removed"
 msgstr "Fast profit fjernet"
 
 #: src/Modules/Admin/AuditLogFormatter.php:91
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:824
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:829
 msgid "VAT status changed"
 msgstr "Momsstatus ændret"
 
@@ -636,7 +636,7 @@ msgid "Category proposal approved"
 msgstr "Kategoriforslag godkendt"
 
 #: src/Modules/Admin/AuditLogFormatter.php:176
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:578
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:583
 msgid "Category proposal rejected"
 msgstr "Kategoriforslag afvist"
 
@@ -649,12 +649,12 @@ msgid "Creator asked to have a product removed"
 msgstr "Creator bad om at få et produkt slettet"
 
 #: src/Modules/Admin/AuditLogFormatter.php:179
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:888
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:893
 msgid "Product removal request handled"
 msgstr "Sletteanmodning behandlet"
 
 #: src/Modules/Admin/AuditLogFormatter.php:180
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:920
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:925
 msgid "Product removal request declined"
 msgstr "Sletteanmodning afvist"
 
@@ -735,7 +735,7 @@ msgid "Creator went live"
 msgstr "Creator gik live"
 
 #: src/Modules/Admin/AuditLogFormatter.php:200
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1167
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1172
 msgid "Request to go live declined"
 msgstr "Anmodning om at gå live afvist"
 
@@ -1818,8 +1818,8 @@ msgstr "Gem adgang"
 
 #: src/Modules/Alerts/Admin/AlertApiTab.php:175
 #: src/Modules/Alerts/Admin/AlertApiTab.php:202
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:312
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:350
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:368
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:406
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:383
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:652
 #: build/alerts-global-admin.js:16
@@ -2199,7 +2199,7 @@ msgstr[1] "%d sekunder"
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:340
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:394
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:124
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:330
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:386
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:548
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:569
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1372
@@ -3361,7 +3361,7 @@ msgid "Approved"
 msgstr "Godkendt"
 
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:178
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:272
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:328
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
 msgid "Approve"
 msgstr "Godkend"
@@ -3894,10 +3894,10 @@ msgid "Published"
 msgstr "Udgivet"
 
 #: src/Modules/Creators/Admin/AgreementSettingsSection.php:197
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:216
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:272
 #: src/Modules/Notifications/Catalog/AdminTypes.php:265
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:561
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:595
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:566
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:600
 msgid "Change"
 msgstr "Ændring"
 
@@ -3964,98 +3964,130 @@ msgid "The proposal is rejected. The creator sees your note."
 msgstr "Forslaget er afvist. Creatoren ser din note."
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:88
+msgid "The proposal is approved. The creator has no product category yet, so it is written on the category when the creator goes live."
+msgstr "Forslaget er godkendt. Creatoren har endnu ingen produktkategori, så det skrives på kategorien, når creatoren går live."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:89
+msgid "The proposals are approved. The creator has no product category yet, so they are written on the category when the creator goes live."
+msgstr "Forslagene er godkendt. Creatoren har endnu ingen produktkategori, så de skrives på kategorien, når creatoren går live."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:90
+msgid "The approved proposals are written on the creator's category."
+msgstr "De godkendte forslag er skrevet på creatorens kategori."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:91
+msgid "Some approved proposals are written on the category; the others are still waiting below."
+msgstr "Nogle godkendte forslag er skrevet på kategorien; de andre venter stadig nedenfor."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:92
+msgid "The approved proposals could not be written yet, e.g. because the creator has no category or the banner plugin is not active."
+msgstr "De godkendte forslag kunne ikke skrives endnu, fx fordi creatoren ingen kategori har, eller bannerpluginet ikke er aktivt."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:93
 msgid "The creator has no product category, so the proposal cannot be approved yet. Map a category on the creator's page first."
 msgstr "Creatoren har ingen produktkategori, så forslaget kan ikke godkendes endnu. Tilknyt først en kategori på creatorens side."
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:89
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:94
 msgid "This proposal needs WooCommerce and the plugin CCMerch Kategoribannere, which are not active."
 msgstr "Dette forslag kræver WooCommerce og pluginet CCMerch Kategoribannere, som ikke er aktive."
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:91
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:96
 msgid "The proposal is no longer waiting, e.g. because the creator withdrew or replaced it."
 msgstr "Forslaget venter ikke længere, fx fordi creatoren har trukket det tilbage eller erstattet det."
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:93
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:98
 msgid "The proposal is no longer valid and was not approved."
 msgstr "Forslaget er ikke længere gyldigt og blev ikke godkendt."
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:94
-#: src/Modules/Creators/Admin/GoLivePage.php:322
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:99
+#: src/Modules/Creators/Admin/GoLivePage.php:317
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:101
 msgid "A technical error occurred. Nothing was changed. Please try again later."
 msgstr "Der opstod en teknisk fejl. Intet blev ændret. Prøv igen senere."
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:104
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:127
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:178
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:109
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:132
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:234
 msgid "Category proposals"
 msgstr "Kategoriforslag"
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:133
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:138
 msgid "What creators propose for their product category in the creator dashboard. Nothing is shown in the shop, and the creator's name does not change, until you approve it. Check images and links for copyright before you approve them."
 msgstr "Det, creators foreslår til deres produktkategori i creator-dashboardet. Intet vises i butikken, og creatorens navn ændres ikke, før du godkender det. Tjek billeder og links for ophavsret, før du godkender dem."
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:139
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:146
 msgid "The proposals could not be read. Please try again later."
 msgstr "Forslagene kunne ikke læses. Prøv igen senere."
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:145
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:152
 msgid "No proposals are waiting."
 msgstr "Ingen forslag venter."
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:181
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:185
+msgid "Approved, waiting for go-live"
+msgstr "Godkendt, venter på go-live"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:186
+msgid "These are written on the creator's product category when it is created at go-live."
+msgstr "De skrives på creatorens produktkategori, når den oprettes ved go-live."
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:208
+msgid "Write on the category"
+msgstr "Skriv på kategorien"
+
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:237
 msgid "No proposals from the creator are waiting."
 msgstr "Ingen forslag fra creatoren venter."
 
 #. translators: %d: number of proposals.
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:186
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:242
 #, php-format
 msgid "%d proposal from the creator is waiting for approval."
 msgid_plural "%d proposals from the creator are waiting for approval."
 msgstr[0] "%d forslag fra creatoren venter på godkendelse."
 msgstr[1] "%d forslag fra creatoren venter på godkendelse."
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:189
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:245
 msgid "Review the proposals"
 msgstr "Se forslagene"
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:208
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:264
 msgid "The creator has no product category. Only a new name can be approved; the other proposals wait until a category is mapped on the creator's page."
 msgstr "Creatoren har ingen produktkategori. Kun et nyt navn kan godkendes; de andre forslag venter, til en kategori er tilknyttet på creatorens side."
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:210
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:266
 msgid "Product category:"
 msgstr "Produktkategori:"
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:217
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:803
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:273
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:808
 msgid "Now"
 msgstr "Nu"
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:218
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:274
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:520
 #: build/dashboard.js:106
 msgid "Proposed"
 msgstr "Foreslået"
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:219
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:275
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:166
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:194
 msgid "Decision"
 msgstr "Afgørelse"
 
 #. translators: %s: creator name.
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:237
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:293
 #, php-format
 msgid "Approve all from %s"
 msgstr "Godkend alle fra %s"
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:279
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:280
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:335
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:336
 msgid "Note to the creator (optional)"
 msgstr "Note til creatoren (valgfri)"
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:281
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:337
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:295
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:407
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:411
@@ -4063,15 +4095,15 @@ msgstr "Note til creatoren (valgfri)"
 msgid "Reject"
 msgstr "Afvis"
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:300
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:356
 msgid "No category"
 msgstr "Ingen kategori"
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:317
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:373
 msgid "Standard banner"
 msgstr "Standardbanner"
 
-#: src/Modules/Creators/Admin/CategoryProposalsPage.php:336
+#: src/Modules/Creators/Admin/CategoryProposalsPage.php:392
 msgid "The image is missing."
 msgstr "Billedet mangler."
 
@@ -4421,97 +4453,93 @@ msgstr "Ingen WordPress-bruger"
 msgid "Unknown user #%d"
 msgstr "Ukendt bruger #%d"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:92
+#: src/Modules/Creators/Admin/GoLivePage.php:91
 msgid "Go-live"
 msgstr "Go-live"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:144
+#: src/Modules/Creators/Admin/GoLivePage.php:143
 msgid "Requests to go live"
 msgstr "Anmodninger om at gå live"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:150
-msgid "Creators who signed up themselves ask here to go live. Until you approve, nothing of theirs is shown in the shop. Approving creates their product category under the parent category, sets their markup and puts their approved designs in the shop."
-msgstr "Creators, der har oprettet sig selv, anmoder her om at gå live. Indtil du godkender, vises intet af deres i butikken. En godkendelse opretter deres produktkategori under overkategorien, sætter deres tillæg og lægger deres godkendte designs i butikken."
+#: src/Modules/Creators/Admin/GoLivePage.php:149
+msgid "Creators who signed up themselves ask here to go live. Until you approve, nothing of theirs is shown in the shop. Approving creates their own product category (at the top level, or under the parent category if one is chosen under Settings → Agreement), sets their markup and puts their approved designs in the shop."
+msgstr "Creators, der selv har tilmeldt sig, anmoder her om at gå live. Indtil du godkender, vises intet af deres i butikken. En godkendelse opretter deres egen produktkategori (på øverste niveau eller under overkategorien, hvis der er valgt en under Indstillinger → Aftale), sætter deres tillæg og lægger deres godkendte designs i butikken."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:153
-msgid "Choose the parent category for creators under Settings → Agreement before you approve."
-msgstr "Vælg overkategorien for creators under Indstillinger → Aftale, før du godkender."
-
-#: src/Modules/Creators/Admin/GoLivePage.php:161
+#: src/Modules/Creators/Admin/GoLivePage.php:156
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:140
 msgid "The requests could not be read. Please try again later."
 msgstr "Anmodningerne kunne ikke læses. Prøv igen senere."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:167
+#: src/Modules/Creators/Admin/GoLivePage.php:162
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:146
 msgid "No requests are waiting."
 msgstr "Ingen anmodninger venter."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:175
+#: src/Modules/Creators/Admin/GoLivePage.php:170
 msgid "Live, but the category could not be made"
 msgstr "Live, men kategorien kunne ikke oprettes"
 
 #. translators: %s: date and time.
-#: src/Modules/Creators/Admin/GoLivePage.php:203
+#: src/Modules/Creators/Admin/GoLivePage.php:198
 #, php-format
 msgid "Asked %s"
 msgstr "Anmodet %s"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:206
+#: src/Modules/Creators/Admin/GoLivePage.php:201
 msgid "Channel:"
 msgstr "Kanal:"
 
 #. translators: %d: agreement version.
-#: src/Modules/Creators/Admin/GoLivePage.php:210
+#: src/Modules/Creators/Admin/GoLivePage.php:205
 #, php-format
 msgid "Accepted the agreement, version %d"
 msgstr "Har accepteret aftalen, version %d"
 
 #. translators: %d: agreement version.
-#: src/Modules/Creators/Admin/GoLivePage.php:210
+#: src/Modules/Creators/Admin/GoLivePage.php:205
 msgid "Must not accept the agreement"
 msgstr "Skal ikke acceptere aftalen"
 
 #. translators: %s: "Content creator" or "Association & community".
-#: src/Modules/Creators/Admin/GoLivePage.php:212
+#: src/Modules/Creators/Admin/GoLivePage.php:207
 #, php-format
 msgid "Shown on the front page as: %s"
 msgstr "Vises på forsiden som: %s"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:213
+#: src/Modules/Creators/Admin/GoLivePage.php:208
 msgid "Open the creator"
 msgstr "Åbn creatoren"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:217
-#: src/Modules/Creators/Admin/GoLivePage.php:247
+#: src/Modules/Creators/Admin/GoLivePage.php:212
+#: src/Modules/Creators/Admin/GoLivePage.php:242
 msgid "Category name"
 msgstr "Kategorinavn"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:218
-#: src/Modules/Creators/Admin/GoLivePage.php:248
+#: src/Modules/Creators/Admin/GoLivePage.php:213
+#: src/Modules/Creators/Admin/GoLivePage.php:243
 msgid "Markup (%)"
 msgstr "Tillæg (%)"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:221
+#: src/Modules/Creators/Admin/GoLivePage.php:216
 msgid "The front-page group is written on the new category. Later you change it on the category in WooCommerce; the creator cannot change it."
 msgstr "\"Vises på forsiden\" skrives på den nye kategori. Bagefter ændrer du det på kategorien i WooCommerce; creatoren kan ikke ændre det."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:222
+#: src/Modules/Creators/Admin/GoLivePage.php:217
 msgid "Approve and go live"
 msgstr "Godkend og gå live"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:226
+#: src/Modules/Creators/Admin/GoLivePage.php:221
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:293
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:176
 msgid "Note to the creator"
 msgstr "Note til creatoren"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:227
+#: src/Modules/Creators/Admin/GoLivePage.php:222
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:177
 msgid "Decline"
 msgstr "Afvis"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:251
+#: src/Modules/Creators/Admin/GoLivePage.php:246
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1457
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:212
 #: build/alerts-global-admin.js:1
@@ -4520,63 +4548,63 @@ msgstr "Afvis"
 msgid "Try again"
 msgstr "Prøv igen"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:263
+#: src/Modules/Creators/Admin/GoLivePage.php:258
 msgid "Shown on the front page"
 msgstr "Vises på forsiden"
 
-#: src/Modules/Creators/Admin/GoLivePage.php:307
+#: src/Modules/Creators/Admin/GoLivePage.php:302
 msgid "The creator is live: the category was made, the markup set and their approved designs are on their way to the shop."
 msgstr "Creatoren er live: kategorien er oprettet, tillægget sat, og de godkendte designs er på vej i butikken."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:308
+#: src/Modules/Creators/Admin/GoLivePage.php:303
 msgid "The creator is live, but the category could not be made. Try again below."
 msgstr "Creatoren er live, men kategorien kunne ikke oprettes. Prøv igen nedenfor."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:309
+#: src/Modules/Creators/Admin/GoLivePage.php:304
 msgid "The creator is live and the category was made, but the markup was not set. Set it on the creator's pricing."
 msgstr "Creatoren er live, og kategorien er oprettet, men tillægget blev ikke sat. Sæt det under creatorens priser."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:310
+#: src/Modules/Creators/Admin/GoLivePage.php:305
 msgid "The category was made and the markup set."
 msgstr "Kategorien er oprettet, og tillægget er sat."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:311
+#: src/Modules/Creators/Admin/GoLivePage.php:306
 msgid "The category was made, but the markup was not set. Set it on the creator's pricing."
 msgstr "Kategorien er oprettet, men tillægget blev ikke sat. Sæt det under creatorens priser."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:312
+#: src/Modules/Creators/Admin/GoLivePage.php:307
 msgid "The request was declined. The creator sees your note and can ask again."
 msgstr "Anmodningen er afvist. Creatoren ser din note og kan anmode igen."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:313
+#: src/Modules/Creators/Admin/GoLivePage.php:308
 msgid "Write a note to the creator before you decline."
 msgstr "Skriv en note til creatoren, før du afviser."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:314
+#: src/Modules/Creators/Admin/GoLivePage.php:309
 msgid "Enter a category name."
 msgstr "Skriv et kategorinavn."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:315
+#: src/Modules/Creators/Admin/GoLivePage.php:310
 msgid "Enter a markup from 0 to 100 %, with at most two decimals."
 msgstr "Skriv et tillæg fra 0 til 100 % med højst to decimaler."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:316
+#: src/Modules/Creators/Admin/GoLivePage.php:311
 msgid "Choose the parent category for creators under Settings → Agreement first."
 msgstr "Vælg først overkategorien for creators under Indstillinger → Aftale."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:317
+#: src/Modules/Creators/Admin/GoLivePage.php:312
 msgid "Going live needs WooCommerce."
 msgstr "Go-live kræver WooCommerce."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:318
+#: src/Modules/Creators/Admin/GoLivePage.php:313
 msgid "Choose where the creator is shown on the front page."
 msgstr "Vælg, hvor creatoren vises på forsiden."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:319
+#: src/Modules/Creators/Admin/GoLivePage.php:314
 msgid "The category could not be made, e.g. because a category with that name already has products or another creator. Try another name."
 msgstr "Kategorien kunne ikke oprettes, fx fordi en kategori med det navn allerede har produkter eller en anden creator. Prøv et andet navn."
 
-#: src/Modules/Creators/Admin/GoLivePage.php:320
+#: src/Modules/Creators/Admin/GoLivePage.php:315
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:99
 msgid "The request is no longer waiting."
 msgstr "Anmodningen venter ikke længere."
@@ -4602,8 +4630,8 @@ msgid "Creators who sign up themselves"
 msgstr "Creators, der opretter sig selv"
 
 #: src/Modules/Creators/Admin/SignupSettingsSection.php:118
-msgid "When this is on, anyone can sign up as a creator on the page below. They confirm their e-mail, accept the agreement and can prepare their shop, but nothing of theirs is shown in the shop until you approve their request to go live. Then their product category is created under the parent category."
-msgstr "Når dette er slået til, kan alle oprette sig som creator på siden nedenfor. De bekræfter deres e-mail, accepterer aftalen og kan forberede deres shop, men intet af deres vises i butikken, før du godkender deres anmodning om at gå live. Så oprettes deres produktkategori under overkategorien."
+msgid "When this is on, anyone can sign up as a creator on the page below. They confirm their e-mail, accept the agreement and can prepare their shop, but nothing of theirs is shown in the shop until you approve their request to go live. Then their own product category is created, at the top level unless you choose a parent category below."
+msgstr "Når dette er slået til, kan alle tilmelde sig som creator på siden nedenfor. De bekræfter deres e-mail, accepterer aftalen og kan forberede deres shop, men intet af deres vises i butikken, før du godkender deres anmodning om at gå live. Så oprettes deres egen produktkategori, på øverste niveau, medmindre du vælger en overkategori nedenfor."
 
 #: src/Modules/Creators/Admin/SignupSettingsSection.php:119
 msgid "Sign-up page:"
@@ -4622,12 +4650,12 @@ msgid "Parent category for creators"
 msgstr "Overkategori for creators"
 
 #: src/Modules/Creators/Admin/SignupSettingsSection.php:135
-msgid "— Choose a category —"
-msgstr "— Vælg en kategori —"
+msgid "— None (top level) —"
+msgstr "— Ingen (øverste niveau) —"
 
 #: src/Modules/Creators/Admin/SignupSettingsSection.php:140
-msgid "A creator's product category is created under it when you approve that they go live."
-msgstr "En creators produktkategori oprettes under den, når du godkender, at creatoren går live."
+msgid "Optional. Without one, a creator's product category is created at the top level when you approve that they go live; with one, under it."
+msgstr "Valgfri. Uden en oprettes en creators produktkategori på øverste niveau, når du godkender, at de går live; med en oprettes den under den."
 
 #: src/Modules/Creators/Admin/SignupSettingsSection.php:142
 msgid "Product categories need WooCommerce."
@@ -4738,7 +4766,7 @@ msgstr "Ikke fundet."
 msgid "The theme is not valid."
 msgstr "Temaet er ikke gyldigt."
 
-#: src/Modules/Dashboard/Rest/MeController.php:525
+#: src/Modules/Dashboard/Rest/MeController.php:533
 msgid "Some profile fields are invalid."
 msgstr "Nogle profilfelter er ugyldige."
 
@@ -5022,7 +5050,7 @@ msgstr "Forsøg"
 #: src/Modules/Notifications/Catalog/AdminTypes.php:325
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:411
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:490
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1181
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1186
 #: src/Modules/ProductDesigner/DesignerNotifications.php:377
 #: src/Modules/ProductDesigner/DesignerNotifications.php:422
 #: src/Modules/ProductDesigner/DesignerNotifications.php:463
@@ -5294,8 +5322,8 @@ msgstr "En creator har bedt om at få et produkt slettet. Der sker intet med pro
 
 #: src/Modules/Notifications/Catalog/AdminTypes.php:235
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:168
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:801
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:937
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:806
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:942
 #: src/Modules/ProductDesigner/Admin/DesignerFeesSection.php:122
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:187
 #: src/Modules/ProductDesigner/DesignerNotifications.php:142
@@ -5614,7 +5642,7 @@ msgid "When we cannot approve a change you proposed, with the reason."
 msgstr "Når vi ikke kan godkende en ændring, du har foreslået, med begrundelsen."
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:35
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:954
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:959
 msgid "New product in your shop"
 msgstr "Nyt produkt i din butik"
 
@@ -5659,7 +5687,7 @@ msgid "When a platform stops your chatbot from reaching your channel. You get on
 msgstr "Når en platform forhindrer din chatbot i at nå din kanal. Du får én mail, indtil den er forbundet igen."
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:41
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1090
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1095
 msgid "Your webhook was paused"
 msgstr "Din webhook er sat på pause"
 
@@ -5668,7 +5696,7 @@ msgid "When one of your webhooks is paused because 10 deliveries in a row failed
 msgstr "Når en af dine webhooks sættes på pause, fordi 10 leveringer i træk fejlede."
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:42
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1109
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1114
 msgid "New YouTube terms"
 msgstr "Nye YouTube-vilkår"
 
@@ -5881,8 +5909,8 @@ msgstr "Tak. Vi behandler din anmodning og giver besked, når pengene er på vej
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:412
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:491
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:533
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:842
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:874
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:847
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:879
 msgid "See your payouts"
 msgstr "Se dine udbetalinger"
 
@@ -6062,254 +6090,264 @@ msgid "When an administrator approves a change the creator proposed for their ca
 msgstr "Når en administrator godkender en ændring, creatoren har foreslået for sin kategori."
 
 #. translators: %s: the changed field, e.g. "Banner".
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:555
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:557
+#, php-format
+msgid "Your proposal for %s was approved and is shown in the shop when your shop goes live."
+msgstr "Dit forslag til %s er godkendt og vises i butikken, når din shop går live."
+
+#. translators: %s: the changed field, e.g. "Banner".
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:559
 #, php-format
 msgid "Your proposal for %s was approved and is now in the shop."
 msgstr "Dit forslag til %s er godkendt og vises nu i butikken."
 
 #. translators: %s: the changed field.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:558
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:562
 #, php-format
 msgid "Your proposal for %s was approved"
 msgstr "Dit forslag til %s er godkendt"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:559
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:563
 msgid "Your proposal was approved"
 msgstr "Dit forslag er godkendt"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:560
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:565
+msgid "Your change is approved and shown in the shop when your shop goes live."
+msgstr "Din ændring er godkendt og vises i butikken, når din shop går live."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:565
 msgid "Your change is approved and now shown in the shop."
 msgstr "Din ændring er godkendt og vises nu i butikken."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:564
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:598
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:569
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:603
 msgid "See your profile"
 msgstr "Se din profil"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:579
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:584
 msgid "When an administrator rejects a proposed change, with the note."
 msgstr "Når en administrator afviser en foreslået ændring, med noten."
 
 #. translators: %s: the changed field.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:589
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:594
 #, php-format
 msgid "Your proposal for %s was not approved."
 msgstr "Dit forslag til %s er ikke godkendt."
 
 #. translators: %s: the changed field.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:592
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:597
 #, php-format
 msgid "Your proposal for %s was not approved"
 msgstr "Dit forslag til %s er ikke godkendt"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:593
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:598
 msgid "Your proposal was not approved"
 msgstr "Dit forslag er ikke godkendt"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:594
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:599
 msgid "Your change was not approved, so nothing changed in the shop. You are welcome to propose it again."
 msgstr "Din ændring er ikke godkendt, så intet er ændret i butikken. Du er velkommen til at foreslå den igen."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:597
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:939
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:602
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:944
 msgid "Note from us"
 msgstr "Note fra os"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:612
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:617
 msgid "Discount code created"
 msgstr "Rabatkode oprettet"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:613
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:618
 msgid "When an administrator creates the creator's first discount code. The code is never in the e-mail."
 msgstr "Når en administrator opretter creatorens første rabatkode. Koden står aldrig i mailen."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:619
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:624
 msgid "Your own discount code is ready. See it under Profile."
 msgstr "Din egen rabatkode er klar. Se den under Profil."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:621
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:626
 msgid "Your own discount code is ready"
 msgstr "Din egen rabatkode er klar"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:622
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:627
 msgid "Your discount code is ready"
 msgstr "Din rabatkode er klar"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:624
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:629
 msgid "With your own discount code you can buy your own merchandise without paying for your profit."
 msgstr "Med din egen rabatkode kan du købe dit eget merchandise uden at betale for din fortjeneste."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:625
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:630
 msgid "For your security, the code is only shown in your dashboard. Orders with your own code do not count in your sales and profit."
 msgstr "Af hensyn til din sikkerhed vises koden kun i dit dashboard. Ordrer med din egen kode tæller ikke med i dit salg og din fortjeneste."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:630
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:662
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:635
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:667
 msgid "See your discount code"
 msgstr "Se din rabatkode"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:644
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:649
 msgid "Discount code reset"
 msgstr "Rabatkode nulstillet"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:645
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:650
 msgid "When the creator's discount code is replaced by a new one (security message)."
 msgstr "Når creatorens rabatkode udskiftes med en ny (sikkerhedsbesked)."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:651
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:656
 msgid "Your discount code was reset. The old code no longer works."
 msgstr "Din rabatkode er nulstillet. Den gamle kode virker ikke længere."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:653
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:654
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:658
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:659
 msgid "Your discount code was reset"
 msgstr "Din rabatkode er nulstillet"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:656
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:661
 msgid "Your discount code was replaced by a new one, and the old code no longer works. You can see the new code in your dashboard."
 msgstr "Din rabatkode er udskiftet med en ny, og den gamle kode virker ikke længere. Du kan se den nye kode i dit dashboard."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:657
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:662
 msgid "If you did not ask for this, please contact us."
 msgstr "Hvis det ikke var dig, så kontakt os venligst."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:676
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:681
 msgid "Discount code ended"
 msgstr "Rabatkode afsluttet"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:677
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:682
 msgid "When an administrator ends the creator's discount code."
 msgstr "Når en administrator afslutter creatorens rabatkode."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:683
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:688
 msgid "Your discount code was ended and no longer works."
 msgstr "Din rabatkode er afsluttet og virker ikke længere."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:685
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:686
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:690
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:691
 msgid "Your discount code was ended"
 msgstr "Din rabatkode er afsluttet"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:687
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:692
 msgid "Your discount code no longer works. Please contact us if you need a new one."
 msgstr "Din rabatkode virker ikke længere. Kontakt os, hvis du har brug for en ny."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:691
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:696
 msgid "Go to your dashboard"
 msgstr "Gå til dit dashboard"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:705
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:710
 msgid "Welcome"
 msgstr "Velkommen"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:706
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:711
 msgid "When a creator is created with a user, or a user is linked to a creator."
 msgstr "Når en creator oprettes med en bruger, eller en bruger tilknyttes en creator."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:712
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:717
 msgid "Welcome to Merch Dashboard."
 msgstr "Velkommen til Merch Dashboard."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:714
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:715
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:719
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:720
 msgid "Welcome to Merch Dashboard"
 msgstr "Velkommen til Merch Dashboard"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:717
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:722
 msgid "Your creator account is ready. In your dashboard you follow your sales and profit, request payouts and keep your profile up to date."
 msgstr "Din creator-konto er klar. I dit dashboard følger du dit salg og din fortjeneste, anmoder om udbetalinger og holder din profil opdateret."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:718
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:723
 msgid "Log in with your usual user name and password."
 msgstr "Log ind med dit sædvanlige brugernavn og din adgangskode."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:723
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:753
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1001
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1153
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1182
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1213
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:728
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:758
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1006
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1158
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1187
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1218
 msgid "Open your dashboard"
 msgstr "Åbn dit dashboard"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:725
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:730
 msgid "We look forward to working with you."
 msgstr "Vi glæder os til samarbejdet."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:737
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:742
 msgid "Account deactivated or activated"
 msgstr "Konto deaktiveret eller aktiveret"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:738
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:743
 msgid "When an administrator deactivates the creator or activates them again."
 msgstr "Når en administrator deaktiverer creatoren eller aktiverer den igen."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:744
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:749
 msgid "Your creator account is active again."
 msgstr "Din creator-konto er aktiv igen."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:744
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:749
 msgid "Your creator account was deactivated."
 msgstr "Din creator-konto er deaktiveret."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:747
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:752
 msgid "Your creator account is active again"
 msgstr "Din creator-konto er aktiv igen"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:748
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:753
 msgid "Your account is active again"
 msgstr "Din konto er aktiv igen"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:749
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:754
 msgid "Your creator account is active again, and you can use your dashboard as before."
 msgstr "Din creator-konto er aktiv igen, og du kan bruge dit dashboard som før."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:758
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:763
 msgid "Your creator account was deactivated"
 msgstr "Din creator-konto er deaktiveret"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:759
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:764
 msgid "Your account was deactivated"
 msgstr "Din konto er deaktiveret"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:760
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:765
 msgid "Your creator account was deactivated, so your dashboard is not available for now. Please contact us if you have questions."
 msgstr "Din creator-konto er deaktiveret, så dit dashboard er ikke tilgængeligt lige nu. Kontakt os, hvis du har spørgsmål."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:778
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:783
 msgid "Profit changed"
 msgstr "Fortjeneste ændret"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:779
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:784
 msgid "When an administrator changes the creator's profit, by default or for a product."
 msgstr "Når en administrator ændrer creatorens fortjeneste, som standard eller for et produkt."
 
 #. translators: 1: previous profit, 2: new profit.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:791
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:796
 #, php-format
 msgid "Your profit was changed from %1$s to %2$s."
 msgstr "Din fortjeneste er ændret fra %1$s til %2$s."
 
 #. translators: 1: product, 2: previous profit, 3: new profit.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:793
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:798
 #, php-format
 msgid "Your profit on %1$s was changed from %2$s to %3$s."
 msgstr "Din fortjeneste på %1$s er ændret fra %2$s til %3$s."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:795
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:796
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:800
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:801
 msgid "Your profit was changed"
 msgstr "Din fortjeneste er ændret"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:797
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:802
 msgid "The change applies to sales from now on. Earlier sales keep their profit."
 msgstr "Ændringen gælder salg fra nu af. Tidligere salg beholder deres fortjeneste."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:801
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:806
 msgid "All your products (your standard)"
 msgstr "Alle dine produkter (din standard)"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:802
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:807
 #: src/Modules/ProductDesigner/DesignerNotifications.php:260
 #: src/Modules/ProductDesigner/DesignerNotifications.php:308
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:808
@@ -6318,386 +6356,386 @@ msgstr "Alle dine produkter (din standard)"
 msgid "Before"
 msgstr "Før"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:810
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:906
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:940
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:972
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:815
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:911
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:945
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:977
 msgid "See your products"
 msgstr "Se dine produkter"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:825
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:830
 msgid "When an administrator changes whether the creator is VAT registered."
 msgstr "Når en administrator ændrer, om creatoren er momsregistreret."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:831
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:836
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:841
 msgid "You are now registered as VAT registered."
 msgstr "Du er nu registreret som momsregistreret."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:831
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:836
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:841
 msgid "You are no longer registered as VAT registered."
 msgstr "Du er ikke længere registreret som momsregistreret."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:833
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:834
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:838
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:839
 msgid "Your VAT status was changed"
 msgstr "Din momsstatus er ændret"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:837
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:842
 msgid "This affects your payouts for sales from now on. Earlier sales are not changed."
 msgstr "Det påvirker dine udbetalinger for salg fra nu af. Tidligere salg ændres ikke."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:856
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:861
 msgid "Billing details changed"
 msgstr "Stamdata ændret"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:857
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:862
 msgid "When an administrator changes the details shown on the creator's settlement documents."
 msgstr "Når en administrator ændrer oplysningerne på creatorens afregningsbilag."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:863
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:868
 msgid "The details on your settlement documents were changed."
 msgstr "Oplysningerne på dine afregningsbilag er ændret."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:865
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:866
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:870
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:871
 msgid "Your billing details were changed"
 msgstr "Dine stamdata er ændret"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:868
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:873
 msgid "The details shown on your settlement documents (name, address and registration numbers) were changed. They are used on documents from now on."
 msgstr "Oplysningerne på dine afregningsbilag (navn, adresse og registreringsnumre) er ændret. De bruges på bilag fra nu af."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:869
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:874
 msgid "If something is wrong, please contact us."
 msgstr "Hvis noget er forkert, så kontakt os venligst."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:889
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:894
 msgid "When an administrator has handled a request to remove a product."
 msgstr "Når en administrator har behandlet en anmodning om at slette et produkt."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:896
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:902
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:901
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:907
 #, php-format
 msgid "We have handled your request to remove %s."
 msgstr "Vi har behandlet din anmodning om at slette %s."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:899
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:904
 #, php-format
 msgid "Your request to remove %s is handled"
 msgstr "Din anmodning om at slette %s er behandlet"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:900
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:905
 msgid "Your request is handled"
 msgstr "Din anmodning er behandlet"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:921
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:926
 msgid "When an administrator declines a request to remove a product, with the note."
 msgstr "Når en administrator afviser en anmodning om at slette et produkt, med noten."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:931
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:936
 #, php-format
 msgid "We could not remove %s."
 msgstr "Vi kunne ikke slette %s."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:934
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:939
 #, php-format
 msgid "We could not remove %s"
 msgstr "Vi kunne ikke slette %s"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:935
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:940
 msgid "Your request was not approved"
 msgstr "Din anmodning blev ikke godkendt"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:936
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:941
 msgid "The product stays in the shop. You are welcome to ask again."
 msgstr "Produktet bliver i butikken. Du er velkommen til at spørge igen."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:955
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:960
 msgid "When a product is linked to the creator."
 msgstr "Når et produkt kobles til creatoren."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:962
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:967
 #, php-format
 msgid "%s is now one of your products."
 msgstr "%s er nu et af dine produkter."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:965
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:970
 #, php-format
 msgid "New product: %s"
 msgstr "Nyt produkt: %s"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:966
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:971
 msgid "A new product in your shop"
 msgstr "Et nyt produkt i din butik"
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:968
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:973
 #, php-format
 msgid "%s is now one of your products, and its sales count as yours."
 msgstr "%s er nu et af dine produkter, og salget tæller som dit."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:986
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:995
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:996
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:991
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1000
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1001
 msgid "An administrator viewed your dashboard"
 msgstr "En administrator har set dit dashboard"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:987
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:992
 msgid "When an administrator starts \"View as creator\" for the creator."
 msgstr "Når en administrator starter \"Se som creator\" for creatoren."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:993
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:998
 msgid "An administrator viewed your dashboard, e.g. to help you."
 msgstr "En administrator har set dit dashboard, fx for at hjælpe dig."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:997
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1002
 msgid "An administrator opened your dashboard as you see it, for example to help you. Changes made there are logged."
 msgstr "En administrator har åbnet dit dashboard, som du ser det, for eksempel for at hjælpe dig. Ændringer foretaget der bliver logget."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1015
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1020
 msgid "News from Merch Dashboard"
 msgstr "Nyheder fra Merch Dashboard"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1016
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1021
 msgid "When an administrator publishes news."
 msgstr "Når en administrator udgiver en nyhed."
 
 #. translators: %s: news title.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1023
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1026
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1028
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1031
 #, php-format
 msgid "News: %s"
 msgstr "Nyhed: %s"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1028
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1033
 msgid "There is news from Merch Dashboard. Read it in your dashboard."
 msgstr "Der er nyt fra Merch Dashboard. Læs det i dit dashboard."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1032
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1037
 msgid "Read the news"
 msgstr "Læs nyheden"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1046
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1051
 msgid "Chatbot lost access"
 msgstr "Chatbot mistede adgang"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1047
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1052
 msgid "When a platform refuses the chatbot's access to the creator's channel; once until it is connected again."
 msgstr "Når en platform afviser chatbottens adgang til creatorens kanal; én gang, indtil den er forbundet igen."
 
 #. translators: %s: platform, e.g. Twitch.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1054
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1059
 #, php-format
 msgid "The chatbot lost access to your %s channel. Connect it again under Alerts."
 msgstr "Chatbotten har mistet adgangen til din %s-kanal. Forbind den igen under Alerts."
 
 #. translators: %s: platform.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1057
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1062
 #, php-format
 msgid "The chatbot lost access to your %s channel"
 msgstr "Chatbotten har mistet adgangen til din %s-kanal"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1058
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1063
 msgid "Your chatbot needs to be connected again"
 msgstr "Din chatbot skal forbindes igen"
 
 #. translators: %s: platform.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1060
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1065
 #, php-format
 msgid "%s no longer lets the chatbot write in your channel, so purchases are not announced in your chat. Connect the channel again under Alerts."
 msgstr "%s lader ikke længere chatbotten skrive i din kanal, så køb bliver ikke annonceret i din chat. Forbind kanalen igen under Alerts."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1064
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1069
 msgid "Connect again"
 msgstr "Forbind igen"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1078
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1083
 msgid "Webhook paused"
 msgstr "Webhook sat på pause"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1079
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1084
 msgid "When one of the creator's webhooks is paused after 10 failed deliveries in a row."
 msgstr "Når en af creatorens webhooks sættes på pause efter 10 fejlede leveringer i træk."
 
 #. translators: %s: webhook name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1086
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1091
 #, php-format
 msgid "Your webhook \"%s\" was paused after 10 failed deliveries."
 msgstr "Din webhook \"%s\" er sat på pause efter 10 fejlede leveringer."
 
 #. translators: %s: webhook name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1089
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1094
 #, php-format
 msgid "Your webhook \"%s\" was paused"
 msgstr "Din webhook \"%s\" er sat på pause"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1091
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1096
 msgid "The last 10 deliveries to your webhook failed, so we paused it. Check the receiver, then resume the webhook under Alerts."
 msgstr "De seneste 10 leveringer til din webhook fejlede, så vi har sat den på pause. Tjek modtageren, og genoptag derefter webhooken under Alerts."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1092
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1097
 msgid "Webhook"
 msgstr "Webhook"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1095
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1100
 msgid "See your webhooks"
 msgstr "Se dine webhooks"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1110
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1115
 msgid "When an administrator renews the YouTube chatbot's terms, which every creator must accept again."
 msgstr "Når en administrator fornyer YouTube-chatbottens vilkår, som alle creators skal acceptere igen."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1116
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1121
 msgid "Please accept the new terms of the YouTube chatbot under Alerts."
 msgstr "Acceptér venligst YouTube-chatbottens nye vilkår under Alerts."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1118
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1123
 msgid "Please accept the new YouTube terms"
 msgstr "Acceptér venligst de nye YouTube-vilkår"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1119
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1124
 msgid "New terms for the YouTube chatbot"
 msgstr "Nye vilkår for YouTube-chatbotten"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1120
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1125
 msgid "The terms of the YouTube chatbot were updated. Until you accept them, the chatbot does not write in your YouTube chat."
 msgstr "YouTube-chatbottens vilkår er opdateret. Indtil du accepterer dem, skriver chatbotten ikke i din YouTube-chat."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1124
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1129
 msgid "Read and accept"
 msgstr "Læs og acceptér"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1138
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1143
 msgid "Live in the shop"
 msgstr "Live i butikken"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1139
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1144
 msgid "When an administrator approves that a creator who signed up goes live."
 msgstr "Når en administrator godkender, at en creator, der har oprettet sig selv, går live."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1145
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1150
 msgid "You are live in the shop! Your approved designs are on their way."
 msgstr "Du er live i butikken! Dine godkendte designs er på vej."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1147
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1152
 msgid "You are live in the shop"
 msgstr "Du er live i butikken"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1148
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1153
 msgid "You are live!"
 msgstr "Du er live!"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1149
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1154
 msgid "We approved your request: your shop is live, and your approved designs are on their way to the shop. Share the link with your followers."
 msgstr "Vi har godkendt din anmodning: din shop er live, og dine godkendte designs er på vej i butikken. Del linket med dine følgere."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1168
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1173
 msgid "When an administrator declines a request to go live, with the reason."
 msgstr "Når en administrator afviser en anmodning om at gå live, med begrundelsen."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1174
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1179
 msgid "Your request to go live was not approved yet. Read the reason in your dashboard."
 msgstr "Din anmodning om at gå live er ikke godkendt endnu. Læs begrundelsen i dit dashboard."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1176
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1181
 msgid "Your request to go live"
 msgstr "Din anmodning om at gå live"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1177
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1182
 msgid "Not live yet"
 msgstr "Ikke live endnu"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1178
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1183
 msgid "We could not approve your request to go live yet. You can change what is needed and ask again from your dashboard."
 msgstr "Vi kunne ikke godkende din anmodning om at gå live endnu. Du kan rette det nødvendige og anmode igen fra dit dashboard."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1198
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1208
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1203
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1213
 msgid "New version of the agreement"
 msgstr "Ny version af aftalen"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1199
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1204
 msgid "When an administrator publishes a new version of the agreement for creators; sent to creators who signed up themselves."
 msgstr "Når en administrator udgiver en ny version af aftalen for creators; sendes til creators, der har oprettet sig selv."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1205
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1210
 msgid "Our agreement was changed. Please read and accept the new version."
 msgstr "Vores aftale er ændret. Læs og acceptér den nye version."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1205
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1210
 msgid "Our agreement was updated. You can read the new version in your dashboard."
 msgstr "Vores aftale er opdateret. Du kan læse den nye version i dit dashboard."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1207
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1212
 msgid "Please accept our new agreement"
 msgstr "Acceptér venligst vores nye aftale"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1207
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1212
 msgid "Our agreement was updated"
 msgstr "Vores aftale er opdateret"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1209
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1214
 msgid "We changed our agreement with you. Please read and accept the new version in your dashboard; until then you cannot request a payout."
 msgstr "Vi har ændret vores aftale med dig. Læs og acceptér den nye version i dit dashboard; indtil da kan du ikke anmode om udbetaling."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1209
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1214
 msgid "We made a minor update to our agreement with you. You can read the new version in your dashboard; you do not need to do anything."
 msgstr "Vi har lavet en mindre opdatering af vores aftale med dig. Du kan læse den nye version i dit dashboard; du skal ikke gøre noget."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1227
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1232
 msgid "API key created or revoked"
 msgstr "API-nøgle oprettet eller tilbagekaldt"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1228
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1233
 msgid "When an API key is created for the creator, or an administrator revokes their keys (security message)."
 msgstr "Når der oprettes en API-nøgle til creatoren, eller en administrator tilbagekalder creatorens nøgler (sikkerhedsbesked)."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1238
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1243
 msgid "An administrator revoked your API keys."
 msgstr "En administrator har tilbagekaldt dine API-nøgler."
 
 #. translators: %s: key name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1240
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1245
 #, php-format
 msgid "A new API key \"%s\" was created."
 msgstr "En ny API-nøgle \"%s\" er oprettet."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1243
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1244
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1248
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1249
 msgid "Your API keys were revoked"
 msgstr "Dine API-nøgler er tilbagekaldt"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1245
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1250
 msgid "An administrator revoked your API keys, so they no longer work. Please contact us if you have questions."
 msgstr "En administrator har tilbagekaldt dine API-nøgler, så de virker ikke længere. Kontakt os, hvis du har spørgsmål."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1249
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1263
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1254
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1268
 msgid "See your API keys"
 msgstr "Se dine API-nøgler"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1254
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1255
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1259
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1260
 msgid "A new API key was created"
 msgstr "En ny API-nøgle er oprettet"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1257
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1262
 msgid "A new API key was created for your account."
 msgstr "Der er oprettet en ny API-nøgle til din konto."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1258
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1263
 msgid "If you did not create it, revoke it under Alerts and contact us."
 msgstr "Hvis du ikke selv har oprettet den, så tilbagekald den under Alerts, og kontakt os."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1260
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1265
 msgid "Key"
 msgstr "Nøgle"
 
@@ -17888,6 +17926,10 @@ msgid "Your last proposal was not approved: %s"
 msgstr "Dit seneste forslag blev ikke godkendt: %s"
 
 #: build/dashboard.js:106
+msgid "Approved – shown when your shop goes live."
+msgstr "Godkendt – vises, når din shop går live."
+
+#: build/dashboard.js:106
 msgid "Now: the shop’s standard banner with your logo."
 msgstr "Nu: butikkens standardbanner med dit logo."
 
@@ -17964,12 +18006,12 @@ msgid "Square, JPG, PNG or WebP, at least 300 × 300 pixels and at most 5 MB. La
 msgstr "Kvadratisk, JPG, PNG eller WebP, mindst 300 × 300 pixels og højst 5 MB. Større end 1000 × 1000 pixels skaleres ned. Uden eget banner vises det midt i butikkens standardbanner."
 
 #: build/dashboard.js:106
-msgid "JPG, PNG or WebP, at least 1280 pixels wide and at most 5 MB, e.g. 2000 × 394 pixels. Remove it to show the standard banner again."
-msgstr "JPG, PNG eller WebP, mindst 1280 pixels bredt og højst 5 MB, fx 2000 × 394 pixels. Fjern det for at vise standardbanneret igen."
+msgid "JPG, PNG or WebP, at least 1280 pixels wide and at most 5 MB, e.g. 2000 × 394 pixels. The banner is shown in full, without cropping. Remove it to show the standard banner again."
+msgstr "JPG, PNG eller WebP, mindst 1280 pixels bredt og højst 5 MB, fx 2000 × 394 pixels. Banneret vises i sin helhed og beskæres ikke. Fjern det for at vise standardbanneret igen."
 
 #: build/dashboard.js:106
-msgid "Optional, for screens below 768 pixels: JPG, PNG or WebP, at least 600 pixels wide and at most 5 MB."
-msgstr "Valgfrit, til skærme under 768 pixels: JPG, PNG eller WebP, mindst 600 pixels bredt og højst 5 MB."
+msgid "Optional, for screens below 768 pixels: JPG, PNG or WebP, at least 600 pixels wide and at most 5 MB. It is shown in full, without cropping."
+msgstr "Valgfrit, til skærme under 768 pixels: JPG, PNG eller WebP, mindst 600 pixels bredt og højst 5 MB. Det vises i sin helhed og beskæres ikke."
 
 #: build/dashboard.js:106
 msgid "Image sent for approval."

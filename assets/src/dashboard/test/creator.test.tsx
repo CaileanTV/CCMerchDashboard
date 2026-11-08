@@ -116,6 +116,7 @@ describe( 'response validation', () => {
 					createdAt: '2026-10-26T10:01:00Z',
 				},
 			},
+			accepted: {},
 			rejected: {
 				social_x: { id: 3, reason: 'Wrong account', decidedAt: null },
 			},
@@ -127,6 +128,24 @@ describe( 'response validation', () => {
 				pending: [],
 				rejected: [],
 			} )?.category
+		).toBeNull();
+		// Approved before go-live (ADR-101).
+		expect(
+			parseProfile( {
+				...PROFILE,
+				accepted: {
+					description: {
+						id: 9,
+						value: 'Luna story',
+						file: null,
+						remove: false,
+						created_at: '2026-11-08T10:00:00Z',
+					},
+				},
+			} )?.accepted.description?.value
+		).toBe( 'Luna story' );
+		expect(
+			parseProfile( { ...PROFILE, accepted: { nope: {} } } )
 		).toBeNull();
 	} );
 

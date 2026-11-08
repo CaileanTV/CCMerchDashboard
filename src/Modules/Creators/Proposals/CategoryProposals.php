@@ -36,6 +36,11 @@ defined( 'ABSPATH' ) || exit;
  *   written, an image first copied into the Media Library) or rejects with
  *   an optional note for the creator. Nothing changes before that, also not
  *   the name in Merch Dashboard.
+ * - **Before go-live** (ADR-101): a proposal for the category, approved while
+ *   the creator (not live yet) has none, is `accepted`: audited and told
+ *   to the creator now, written on the category when it is created at
+ *   go-live (apply_accepted(), on `merchboard_creator_went_live`). A later
+ *   approval for the same field replaces it.
  * - Every change is audited in the same transaction.
  */
 final class CategoryProposals {
@@ -120,6 +125,27 @@ final class CategoryProposals {
 	}
 
 	/**
+	 * The creator's proposals approved before go-live, by field (ADR-101).
+	 *
+	 * @param int $creator_id Creator.
+	 * @return array<string, CategoryProposal>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function accepted( int $creator_id ): array {
+		return $this->proposals->accepted_for( $creator_id );
+	}
+
+	/**
+	 * The creators with proposals approved before go-live (ADR-101).
+	 *
+	 * @return list<int>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function accepted_creators(): array {
+		return $this->proposals->accepted_creators();
+	}
+
+	/**
 	 * The creator's latest rejection per field, unless a later proposal followed.
 	 *
 	 * @param int $creator_id Creator.
@@ -178,12 +204,14 @@ final class CategoryProposals {
 
 		$category = $this->category( $creator->id );
 		$pending  = $this->proposals->pending_for( $creator->id );
+		$accepted = $this->proposals->accepted_for( $creator->id );
 		$submit   = array();
 		$withdraw = array();
 
 		foreach ( $values as $key => $value ) {
-			$field    = ProposalField::from( $key );
-			$current  = ProposalField::DisplayName === $field ? $creator->display_name : ( null === $category ? '' : $category->value( $field ) );
+			$field = ProposalField::from( $key );
+			// A value approved before go-live counts as the current one, so it can be changed or cleared (review 38.6).
+			$current  = ProposalField::DisplayName === $field ? $creator->display_name : ( isset( $accepted[ $key ] ) ? $accepted[ $key ]->value : ( null === $category ? '' : $category->value( $field ) ) );
 			$existing = $pending[ $key ] ?? null;
 
 			if ( $value === $current ) {
@@ -273,7 +301,16 @@ final class CategoryProposals {
 
 		if ( $field->needs_category() ) {
 			$this->assert_available( $field );
-			$category = $this->category( $creator->id ) ?? self::refuse( CategoryProposalException::NO_CATEGORY );
+			$category = $this->category( $creator->id );
+
+			// Before go-live the category does not exist yet: approved now, written at go-live (ADR-101).
+			if ( null === $category ) {
+				if ( $creator->is_live() || null === $this->target() ) {
+					self::refuse( CategoryProposalException::NO_CATEGORY );
+				}
+
+				return $this->accept( $proposal, $creator );
+			}
 		} elseif ( null !== $this->target() ) {
 			$category = $this->category( $creator->id );
 		}
@@ -288,13 +325,21 @@ final class CategoryProposals {
 
 		$replaced = 0;
 		$written  = false;
+		$earlier  = null;
 
 		try {
 			$this->transaction->run(
-				function () use ( $proposal, $creator, $field, $category, $media, &$replaced ): void {
+				function () use ( $proposal, $creator, $field, $category, $media, &$replaced, &$earlier ): void {
 					// Claimed first: a proposal withdrawn or replaced meanwhile changes nothing in the shop.
 					if ( ! $this->proposals->end( $proposal->id, ProposalStatus::Approved, null, self::user(), ( $this->clock )() ) ) {
 						self::refuse( CategoryProposalException::NOT_PENDING );
+					}
+
+					// A value approved before go-live and not written yet is replaced: it never overwrites this one (review 38.6).
+					$earlier = $this->proposals->accepted_for( $creator->id )[ $field->value ] ?? null;
+
+					if ( null !== $earlier ) {
+						$this->proposals->end( $earlier->id, ProposalStatus::Replaced, null, self::user(), ( $this->clock )(), ProposalStatus::Accepted );
 					}
 
 					if ( ProposalField::DisplayName === $field ) {
@@ -334,6 +379,12 @@ final class CategoryProposals {
 			$this->files->delete( $file );
 		}
 
+		$earlier_file = $earlier?->file();
+
+		if ( null !== $earlier_file ) {
+			$this->files->delete( $earlier_file );
+		}
+
 		if ( $replaced > 0 ) {
 			$this->release_image( $replaced );
 		}
@@ -341,6 +392,170 @@ final class CategoryProposals {
 		do_action( 'merchboard_notify', 'proposal_approved', $creator->id, array( 'field' => $field->value ), 'proposal:' . $proposal->id );
 
 		return $this->proposals->find( $proposal->id ) ?? self::fail( 'Approved category proposal could not be read back.' );
+	}
+
+	/**
+	 * Writes the proposals approved before go-live on the creator's new
+	 * category (ADR-101; `merchboard_creator_went_live`, and "Write on the
+	 * category" on the proposals page). Each on its own: one that cannot be
+	 * written stays accepted for a retry. Never throws.
+	 *
+	 * @param mixed $creator_id Creator.
+	 * @return int How many were written.
+	 */
+	public function apply_accepted( mixed $creator_id ): int {
+		$id = is_numeric( $creator_id ) ? (int) $creator_id : 0;
+
+		if ( $id < 1 || null === $this->target() ) {
+			return 0;
+		}
+
+		try {
+			$accepted = $this->proposals->accepted_for( $id );
+			$creator  = array() === $accepted ? null : $this->creators->find( $id );
+			$category = null === $creator ? null : $this->category( $id );
+		} catch ( DatabaseException ) {
+			return 0;
+		}
+
+		if ( null === $creator || null === $category ) {
+			return 0;
+		}
+
+		$written = 0;
+
+		foreach ( $accepted as $proposal ) {
+			try {
+				$this->write_accepted( $proposal, $creator, $category );
+				++$written;
+			} catch ( CategoryProposalException | DatabaseException ) {
+				continue;
+			}
+		}
+
+		return $written;
+	}
+
+	/**
+	 * Approves a proposal for the category before go-live (ADR-101): it waits
+	 * as accepted, and an earlier accepted one for the field is replaced.
+	 *
+	 * @param CategoryProposal $proposal The pending proposal.
+	 * @param Creator          $creator  Its creator (not live, no category).
+	 * @throws CategoryProposalException When it is no longer pending.
+	 * @throws DatabaseException When it cannot be stored (nothing is kept).
+	 */
+	private function accept( CategoryProposal $proposal, Creator $creator ): CategoryProposal {
+		$earlier = null;
+
+		$this->transaction->run(
+			function () use ( $proposal, $creator, &$earlier ): void {
+				$now     = ( $this->clock )();
+				$earlier = $this->proposals->accepted_for( $creator->id )[ $proposal->field->value ] ?? null;
+
+				if ( ! $this->proposals->end( $proposal->id, ProposalStatus::Accepted, null, self::user(), $now ) ) {
+					self::refuse( CategoryProposalException::NOT_PENDING );
+				}
+
+				if ( null !== $earlier ) {
+					$this->proposals->end( $earlier->id, ProposalStatus::Replaced, null, self::user(), $now, ProposalStatus::Accepted );
+				}
+
+				$this->audit->record(
+					AuditAction::CategoryProposalApproved,
+					$creator->id,
+					array(
+						'proposal_id'    => $proposal->id,
+						'proposal_field' => $proposal->field->value,
+						'term_id'        => 0,
+						'waits_for'      => 'go_live',
+					)
+				);
+			}
+		);
+
+		$file = $earlier?->file();
+
+		if ( null !== $file ) {
+			$this->files->delete( $file );
+		}
+
+		do_action(
+			'merchboard_notify',
+			'proposal_approved',
+			$creator->id,
+			array(
+				'field'   => $proposal->field->value,
+				'go_live' => true,
+			),
+			'proposal:' . $proposal->id
+		);
+
+		return $this->proposals->find( $proposal->id ) ?? self::fail( 'Approved category proposal could not be read back.' );
+	}
+
+	/**
+	 * Writes one accepted proposal on the category, as approve() writes a
+	 * pending one.
+	 *
+	 * @param CategoryProposal $proposal The accepted proposal.
+	 * @param Creator          $creator  Its creator.
+	 * @param CategoryProfile  $category The creator's category now.
+	 * @throws CategoryProposalException When it cannot be written (banner plugin missing, no longer accepted).
+	 * @throws DatabaseException When it cannot be stored (nothing is kept).
+	 */
+	private function write_accepted( CategoryProposal $proposal, Creator $creator, CategoryProfile $category ): void {
+		$field = $proposal->field;
+		$this->assert_available( $field );
+
+		$media = 0;
+		$file  = null;
+
+		if ( $field->is_file() && ! $proposal->is_removal() ) {
+			$file  = $proposal->file() ?? self::refuse( CategoryProposalException::NOT_FOUND );
+			$media = $this->files->to_media( $file, $creator->id, $creator->display_name . ' – ' . ProposalLabels::field( $field ) );
+		}
+
+		$replaced = 0;
+		$written  = false;
+
+		try {
+			$this->transaction->run(
+				function () use ( $proposal, $creator, $field, $category, $media, &$replaced ): void {
+					if ( ! $this->proposals->end( $proposal->id, ProposalStatus::Approved, null, $proposal->decided_by, ( $this->clock )(), ProposalStatus::Accepted ) ) {
+						self::refuse( CategoryProposalException::NOT_PENDING );
+					}
+
+					$target = $this->target() ?? self::refuse( CategoryProposalException::UNAVAILABLE );
+
+					$replaced = $target->apply( $creator->id, $field, $field->is_file() ? ( $media > 0 ? (string) $media : '' ) : $proposal->value );
+
+					$this->audit->record(
+						AuditAction::CategoryProposalApproved,
+						$creator->id,
+						array(
+							'proposal_id'    => $proposal->id,
+							'proposal_field' => $field->value,
+							'term_id'        => $category->term_id,
+							'written_at'     => 'go_live',
+						)
+					);
+				}
+			);
+			$written = true;
+		} finally {
+			if ( ! $written && $media > 0 ) {
+				wp_delete_attachment( $media, true );
+			}
+		}
+
+		if ( null !== $file ) {
+			$this->files->delete( $file );
+		}
+
+		if ( $replaced > 0 ) {
+			$this->release_image( $replaced );
+		}
 	}
 
 	/**

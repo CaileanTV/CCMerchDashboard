@@ -37,13 +37,16 @@ import { errorMessage, validateProfile } from './validation';
 import type { FieldErrors, ProfileValues } from './validation';
 
 /**
- * The form's starting values: a pending proposal, else the value now.
+ * The form's starting values: a pending proposal, else one approved
+ * before go-live (ADR-101), else the value now.
  *
  * @param profile Profile.
  */
 function initialValues( profile: Profile ): ProfileValues {
 	const text = ( field: ProposalField, now: string ): string =>
-		profile.pending[ field ]?.value ?? now;
+		profile.pending[ field ]?.value ??
+		profile.accepted[ field ]?.value ??
+		now;
 	const links: Partial< Record< SocialPlatform, string > > = {};
 
 	for ( const platform of SOCIAL_PLATFORMS ) {
@@ -147,12 +150,12 @@ function imageHelp( field: ImageField ): string {
 			);
 		case 'banner':
 			return __(
-				'JPG, PNG or WebP, at least 1280 pixels wide and at most 5 MB, e.g. 2000 × 394 pixels. Remove it to show the standard banner again.',
+				'JPG, PNG or WebP, at least 1280 pixels wide and at most 5 MB, e.g. 2000 × 394 pixels. The banner is shown in full, without cropping. Remove it to show the standard banner again.',
 				'merchboard'
 			);
 		default:
 			return __(
-				'Optional, for screens below 768 pixels: JPG, PNG or WebP, at least 600 pixels wide and at most 5 MB.',
+				'Optional, for screens below 768 pixels: JPG, PNG or WebP, at least 600 pixels wide and at most 5 MB. It is shown in full, without cropping.',
 				'merchboard'
 			);
 	}

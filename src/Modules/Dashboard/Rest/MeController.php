@@ -434,6 +434,12 @@ final class MeController extends RestController {
 			$pending[ $field ] = self::pending( $proposal );
 		}
 
+		$accepted = array();
+
+		foreach ( $this->proposals->accepted( $creator->id ) as $field => $proposal ) {
+			$accepted[ $field ] = self::pending( $proposal );
+		}
+
 		foreach ( $this->proposals->rejected( $creator->id ) as $field => $proposal ) {
 			$rejected[ $field ] = array(
 				'id'         => $proposal->id,
@@ -457,6 +463,8 @@ final class MeController extends RestController {
 					'social_links'      => $category->socials,
 				),
 				'pending'      => (object) $pending,
+				// Approved before go-live, shown in the shop when the category is made (ADR-101).
+				'accepted'     => (object) $accepted,
 				'rejected'     => (object) $rejected,
 			),
 			200

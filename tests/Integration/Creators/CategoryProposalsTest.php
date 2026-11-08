@@ -335,6 +335,61 @@ final class CategoryProposalsTest extends IntegrationTestCase {
 		self::assertSame( 0, $this->audit( 'category_proposal_approved' )[0]['term_id'] );
 	}
 
+	public function test_proposals_approved_before_go_live_are_written_on_the_new_category(): void {
+		$creators = $this->service( CreatorRepository::class );
+		$user     = $this->create_user( 'luna' );
+		$luna     = $creators->create( 'Luna', CreatorStatus::Active, $user, true );
+
+		wp_set_current_user( $user );
+		$ids = array_map(
+			static fn( CategoryProposal $p ): int => $p->id,
+			$this->proposals()->propose(
+				$luna,
+				array(
+					'description' => 'Luna story',
+					'banner_link' => 'twitch.tv/luna',
+				)
+			)
+		);
+
+		wp_set_current_user( 1 );
+		foreach ( $ids as $id ) {
+			self::assertSame( ProposalStatus::Accepted, $this->proposals()->approve( $id )->status, 'Not live and no category: approved, waiting (ADR-101).' );
+		}
+
+		self::assertSame( array( 'description', 'banner_link' ), array_keys( $this->proposals()->accepted( $luna->id ) ) );
+		self::assertSame( array( 0, 'go_live' ), array( $this->audit( 'category_proposal_approved' )[0]['term_id'], $this->audit( 'category_proposal_approved' )[0]['waits_for'] ?? null ) );
+		self::assertSame( array( $luna->id ), $this->proposals()->accepted_creators() );
+
+		// A later approval for the field replaces it.
+		wp_set_current_user( $user );
+		$again = $this->proposals()->propose( $luna, array( 'description' => 'Luna story 2' ) )[0]->id;
+		wp_set_current_user( 1 );
+		$this->proposals()->approve( $again );
+		self::assertSame( 'Luna story 2', $this->proposals()->accepted( $luna->id )['description']->value ?? null );
+		self::assertSame( 0, $this->proposals()->apply_accepted( $luna->id ), 'Still no category: nothing written.' );
+
+		// A value approved before go-live is the current one: clearing it is a new proposal (review 38.6).
+		wp_set_current_user( $user );
+		self::assertCount( 1, $this->proposals()->propose( $luna, array( 'banner_link' => '' ) ) );
+		self::assertSame( array(), $this->proposals()->propose( $luna, array( 'description' => 'Luna story 2' ) ), 'The approved value again: nothing new.' );
+		wp_set_current_user( 1 );
+
+		// Go-live made the category: the waiting proposals are written on it.
+		$term = wp_insert_term( 'Luna Shop', 'product_cat' );
+		self::assertIsArray( $term );
+		( new CreatorCategoryRepository( $this->wpdb ) )->insert( (int) $term['term_id'], $luna->id, 1 );
+		$creators->go_live( $luna->id );
+
+		self::assertSame( 2, $this->proposals()->apply_accepted( $luna->id ) );
+		self::assertSame( 'Luna story 2', get_term( (int) $term['term_id'], 'product_cat' )->description ?? null );
+		self::assertSame( 'https://twitch.tv/luna', get_term_meta( (int) $term['term_id'], 'ccm_banner_link', true ) );
+		self::assertSame( array(), $this->proposals()->accepted( $luna->id ) );
+		self::assertSame( (int) $term['term_id'], $this->audit( 'category_proposal_approved' )[3]['term_id'] ?? null, 'Audited again when written.' );
+
+		wp_delete_term( (int) $term['term_id'], 'product_cat' );
+	}
+
 	public function test_deleting_the_creator_removes_proposals_and_waiting_files(): void {
 		$this->propose_all();
 		$file = $this->proposals()->propose_image( $this->creator(), ProposalField::Image, AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'logo.png' ) )->file();

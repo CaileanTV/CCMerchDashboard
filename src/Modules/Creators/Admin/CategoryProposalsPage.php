@@ -85,6 +85,11 @@ final class CategoryProposalsPage {
 			'approved_all'                             => array( __( 'All proposals of the creator are approved and shown in the shop.', 'merchboard' ), 'success' ),
 			'approved_some'                            => array( __( 'Some proposals are approved; the others could not be approved. They are still waiting below.', 'merchboard' ), 'warning' ),
 			'rejected'                                 => array( __( 'The proposal is rejected. The creator sees your note.', 'merchboard' ), 'success' ),
+			'accepted'                                 => array( __( 'The proposal is approved. The creator has no product category yet, so it is written on the category when the creator goes live.', 'merchboard' ), 'success' ),
+			'accepted_all'                             => array( __( 'The proposals are approved. The creator has no product category yet, so they are written on the category when the creator goes live.', 'merchboard' ), 'success' ),
+			'applied'                                  => array( __( 'The approved proposals are written on the creator\'s category.', 'merchboard' ), 'success' ),
+			'applied_some'                             => array( __( 'Some approved proposals are written on the category; the others are still waiting below.', 'merchboard' ), 'warning' ),
+			'applied_none'                             => array( __( 'The approved proposals could not be written yet, e.g. because the creator has no category or the banner plugin is not active.', 'merchboard' ), 'error' ),
 			CategoryProposalException::NO_CATEGORY     => array( __( 'The creator has no product category, so the proposal cannot be approved yet. Map a category on the creator\'s page first.', 'merchboard' ), 'error' ),
 			CategoryProposalException::UNAVAILABLE     => array( __( 'This proposal needs WooCommerce and the plugin CCMerch Kategoribannere, which are not active.', 'merchboard' ), 'error' ),
 			CategoryProposalException::NOT_PENDING,
@@ -132,6 +137,8 @@ final class CategoryProposalsPage {
 
 		echo '<p class="description">' . esc_html__( 'What creators propose for their product category in the creator dashboard. Nothing is shown in the shop, and the creator\'s name does not change, until you approve it. Check images and links for copyright before you approve them.', 'merchboard' ) . '</p>';
 
+		$this->render_accepted();
+
 		try {
 			$waiting = $this->repository->pending_creators();
 		} catch ( DatabaseException $e ) {
@@ -156,6 +163,55 @@ final class CategoryProposalsPage {
 		}
 
 		echo '</div>';
+	}
+
+	/**
+	 * Proposals approved before go-live, waiting for the creator's category
+	 * (ADR-101), with "Write on the category" once there is one.
+	 */
+	private function render_accepted(): void {
+		try {
+			$creators = $this->proposals->accepted_creators();
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'Reading the accepted category proposals failed.', $e->context() );
+
+			return;
+		}
+
+		if ( array() === $creators ) {
+			return;
+		}
+
+		echo '<h3>' . esc_html__( 'Approved, waiting for go-live', 'merchboard' ) . '</h3>';
+		echo '<p class="description">' . esc_html__( 'These are written on the creator\'s product category when it is created at go-live.', 'merchboard' ) . '</p><ul>';
+
+		foreach ( $creators as $creator_id ) {
+			try {
+				$creator  = $this->creators->find( $creator_id );
+				$accepted = $this->proposals->accepted( $creator_id );
+				$category = $this->proposals->category( $creator_id );
+			} catch ( DatabaseException ) {
+				continue;
+			}
+
+			if ( null === $creator ) {
+				continue;
+			}
+
+			echo '<li><strong>' . esc_html( $creator->display_name ) . '</strong>: ' . esc_html( implode( ', ', array_map( static fn( CategoryProposal $proposal ): string => ProposalLabels::field( $proposal->field ), $accepted ) ) );
+
+			if ( null !== $category ) {
+				echo ' <form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline">';
+				echo '<input type="hidden" name="action" value="' . esc_attr( CategoryProposalActions::APPLY_ACCEPTED ) . '">';
+				echo '<input type="hidden" name="creator_id" value="' . esc_attr( (string) $creator->id ) . '">';
+				wp_nonce_field( CategoryProposalActions::nonce_action( CategoryProposalActions::APPLY_ACCEPTED, $creator->id ) );
+				echo '<button type="submit" class="button button-small">' . esc_html__( 'Write on the category', 'merchboard' ) . '</button></form>';
+			}
+
+			echo '</li>';
+		}
+
+		echo '</ul>';
 	}
 
 	/**

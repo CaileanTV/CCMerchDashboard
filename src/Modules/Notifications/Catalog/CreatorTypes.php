@@ -552,12 +552,17 @@ final class CreatorTypes {
 			'profile',
 			array( 'field' => 'banner' ),
 			/* translators: %s: the changed field, e.g. "Banner". */
-			static fn( NotificationData $d ): string => sprintf( __( 'Your proposal for %s was approved and is now in the shop.', 'merchboard' ), self::field( $d ) ),
+			static fn( NotificationData $d ): string => $d->flag( 'go_live' )
+				/* translators: %s: the changed field, e.g. "Banner". */
+				? sprintf( __( 'Your proposal for %s was approved and is shown in the shop when your shop goes live.', 'merchboard' ), self::field( $d ) )
+				/* translators: %s: the changed field, e.g. "Banner". */
+				: sprintf( __( 'Your proposal for %s was approved and is now in the shop.', 'merchboard' ), self::field( $d ) ),
 			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
 				/* translators: %s: the changed field. */
 				sprintf( __( 'Your proposal for %s was approved', 'merchboard' ), self::field( $d ) ),
 				__( 'Your proposal was approved', 'merchboard' ),
-				array( __( 'Your change is approved and now shown in the shop.', 'merchboard' ) ),
+				// Approved before go-live (ADR-101): shown when the shop goes live.
+				array( $d->flag( 'go_live' ) ? __( 'Your change is approved and shown in the shop when your shop goes live.', 'merchboard' ) : __( 'Your change is approved and now shown in the shop.', 'merchboard' ) ),
 				array( array( __( 'Change', 'merchboard' ), self::field( $d ) ) ),
 				null,
 				null,

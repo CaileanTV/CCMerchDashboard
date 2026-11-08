@@ -31,6 +31,7 @@ export function ProposalNote( props: ProposalNoteProps ) {
 		onWithdraw,
 	} = props;
 	const pending = profile.pending[ field ];
+	const accepted = profile.accepted[ field ];
 	const rejected = profile.rejected[ field ];
 
 	if ( pending !== undefined ) {
@@ -83,6 +84,18 @@ export function ProposalNote( props: ProposalNoteProps ) {
 							),
 							rejected.reason
 						) }
+			</Alert>
+		);
+	}
+
+	// Approved before go-live: it is shown when the shop goes live (ADR-101).
+	if ( accepted !== undefined ) {
+		return (
+			<Alert tone="success">
+				{ __(
+					'Approved – shown when your shop goes live.',
+					'merchboard'
+				) }
 			</Alert>
 		);
 	}

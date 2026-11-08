@@ -14,6 +14,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\Proposals\CategoryProposalException;
 use MerchBoard\Modules\Creators\Proposals\CategoryProposals;
+use MerchBoard\Modules\Creators\Proposals\ProposalStatus;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -30,6 +31,8 @@ final class CategoryProposalActions {
 	public const APPROVE     = 'merchboard_approve_category_proposal';
 	public const REJECT      = 'merchboard_reject_category_proposal';
 	public const APPROVE_ALL = 'merchboard_approve_category_proposals';
+	// Writes the proposals approved before go-live on the creator's category again (ADR-101).
+	public const APPLY_ACCEPTED = 'merchboard_apply_category_proposals';
 
 	/**
 	 * The field with the note on a rejection.
@@ -66,7 +69,7 @@ final class CategoryProposalActions {
 	 * Registers the handlers.
 	 */
 	public function register(): void {
-		foreach ( array( self::APPROVE, self::REJECT, self::APPROVE_ALL ) as $action ) {
+		foreach ( array( self::APPROVE, self::REJECT, self::APPROVE_ALL, self::APPLY_ACCEPTED ) as $action ) {
 			add_action( 'admin_post_' . $action, array( $this, 'handle_request' ) );
 		}
 	}
@@ -91,10 +94,10 @@ final class CategoryProposalActions {
 		}
 
 		$action = self::scalar( $input, 'action' );
-		$id     = absint( self::scalar( $input, self::APPROVE_ALL === $action ? 'creator_id' : 'proposal_id' ) );
+		$id     = absint( self::scalar( $input, in_array( $action, array( self::APPROVE_ALL, self::APPLY_ACCEPTED ), true ) ? 'creator_id' : 'proposal_id' ) );
 		$nonce  = self::scalar( $input, '_wpnonce' );
 
-		if ( ! in_array( $action, array( self::APPROVE, self::REJECT, self::APPROVE_ALL ), true ) || '' === $nonce || false === wp_verify_nonce( $nonce, self::nonce_action( $action, $id ) ) ) {
+		if ( ! in_array( $action, array( self::APPROVE, self::REJECT, self::APPROVE_ALL, self::APPLY_ACCEPTED ), true ) || '' === $nonce || false === wp_verify_nonce( $nonce, self::nonce_action( $action, $id ) ) ) {
 			wp_die( esc_html__( 'The link you followed has expired. Please try again.', 'merchboard' ), '', array( 'response' => 403 ) );
 		}
 
@@ -102,9 +105,17 @@ final class CategoryProposalActions {
 
 		try {
 			if ( self::APPROVE === $action ) {
-				$this->proposals->approve( $id );
+				$decided = $this->proposals->approve( $id );
 
-				return self::result( 'approved' );
+				// Before go-live it waits for the category (ADR-101).
+				return self::result( ProposalStatus::Accepted === $decided->status ? 'accepted' : 'approved' );
+			}
+
+			if ( self::APPLY_ACCEPTED === $action ) {
+				$written = $this->proposals->apply_accepted( $id );
+				$left    = count( $this->proposals->accepted( $id ) );
+
+				return self::result( 0 === $left ? 'applied' : ( $written > 0 ? 'applied_some' : 'applied_none' ) );
 			}
 
 			if ( self::REJECT === $action ) {
@@ -115,6 +126,7 @@ final class CategoryProposalActions {
 
 			$shown   = array_map( 'absint', explode( ',', self::scalar( $input, self::SHOWN_FIELD ) ) );
 			$skipped = 0;
+			$waiting = 0;
 			$reason  = CategoryProposalException::NOT_PENDING;
 
 			// Each on its own: one that cannot be approved does not stop the others.
@@ -125,7 +137,8 @@ final class CategoryProposalActions {
 				}
 
 				try {
-					$this->proposals->approve( $proposal->id );
+					// Before go-live they wait for the category (ADR-101).
+					$waiting += ProposalStatus::Accepted === $this->proposals->approve( $proposal->id )->status ? 1 : 0;
 					++$approved;
 				} catch ( CategoryProposalException $e ) {
 					++$skipped;
@@ -134,7 +147,7 @@ final class CategoryProposalActions {
 			}
 
 			if ( 0 === $skipped ) {
-				return self::result( $approved > 0 ? 'approved_all' : CategoryProposalException::NOT_PENDING );
+				return self::result( $approved > 0 ? ( $waiting === $approved ? 'accepted_all' : 'approved_all' ) : CategoryProposalException::NOT_PENDING );
 			}
 
 			return self::result( $approved > 0 ? 'approved_some' : $reason );

@@ -75,6 +75,41 @@ final class CategoryProposalRepository {
 	}
 
 	/**
+	 * A creator's proposals approved before they had a category, by field,
+	 * oldest first (ADR-101): written on the category at go-live.
+	 *
+	 * @param int $creator_id Creator.
+	 * @return array<string, CategoryProposal>
+	 * @throws DatabaseException When the query fails or a row is invalid.
+	 */
+	public function accepted_for( int $creator_id ): array {
+		$accepted = array();
+
+		foreach ( $this->rows( $this->wpdb->prepare( 'SELECT id, creator_id, field, value, status, reason, created_at, created_by, decided_at, decided_by FROM %i WHERE creator_id = %d AND status = %s ORDER BY id ASC', $this->table(), $creator_id, ProposalStatus::Accepted->value ) ) as $proposal ) {
+			$accepted[ $proposal->field->value ] = $proposal;
+		}
+
+		return $accepted;
+	}
+
+	/**
+	 * The creators with proposals approved before they had a category.
+	 *
+	 * @return list<int>
+	 * @throws DatabaseException When the query fails.
+	 */
+	public function accepted_creators(): array {
+		$wpdb = $this->wpdb;
+		$ids  = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT creator_id FROM %i WHERE status = %s ORDER BY creator_id ASC', $this->table(), ProposalStatus::Accepted->value ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The plugin's own table; read live.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the category proposals.' );
+		}
+
+		return array_map( 'intval', $ids );
+	}
+
+	/**
 	 * A creator's latest rejection per field that no later proposal followed
 	 * (what the creator should see: "rejected, with this note").
 	 *
@@ -186,10 +221,11 @@ final class CategoryProposalRepository {
 	 * @param string|null       $reason     Note on a rejection.
 	 * @param int|null          $decided_by Who ended it.
 	 * @param DateTimeImmutable $now        Now (UTC).
-	 * @return bool False when it was not pending (any longer).
+	 * @param ProposalStatus    $from       The state it must be in (pending, or accepted at go-live, ADR-101).
+	 * @return bool False when it was not in that state (any longer).
 	 * @throws DatabaseException When the update fails.
 	 */
-	public function end( int $id, ProposalStatus $status, ?string $reason, ?int $decided_by, DateTimeImmutable $now ): bool {
+	public function end( int $id, ProposalStatus $status, ?string $reason, ?int $decided_by, DateTimeImmutable $now, ProposalStatus $from = ProposalStatus::Pending ): bool {
 		// wpdb writes null as NULL.
 		$updated = $this->wpdb->update(
 			$this->table(),
@@ -202,7 +238,7 @@ final class CategoryProposalRepository {
 			),
 			array(
 				'id'     => $id,
-				'status' => ProposalStatus::Pending->value,
+				'status' => $from->value,
 			),
 			array( '%s', '%s', '%s', '%s', '%d' ),
 			array( '%d', '%s' )
