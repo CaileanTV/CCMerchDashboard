@@ -27,7 +27,7 @@ $merchboard_value  = static fn( string $key ): string => is_string( $merchboard_
 $merchboard_group  = FrontGroup::or_default( $merchboard_values['front_group'] ?? null );
 $merchboard_error  = match ( (string) ( $merchboard_view['error'] ?? '' ) ) {
 	''                             => '',
-	SignupException::NAME          => __( 'Enter your creator name (2 to 60 characters).', 'merchboard' ),
+	SignupException::NAME          => __( 'Enter your creator name or the name of your association or community (2 to 60 characters).', 'merchboard' ),
 	SignupException::EMAIL         => __( 'Enter a valid e-mail address.', 'merchboard' ),
 	SignupException::EMAIL_TAKEN   => __( 'There is already an account with this e-mail. Log in, and sign up as a creator from there.', 'merchboard' ),
 	SignupException::USERNAME      => __( 'Choose a username of 3 to 60 characters: letters, digits, and _ . - @ only.', 'merchboard' ),
@@ -39,13 +39,13 @@ $merchboard_error  = match ( (string) ( $merchboard_view['error'] ?? '' ) ) {
 	SignupException::TOO_MANY      => __( 'Too many sign-ups from here. Please try again in an hour.', 'merchboard' ),
 	SignupException::TOO_FAST      => __( 'Please take a moment to read the form, then send it again.', 'merchboard' ),
 	SignupException::ALREADY       => __( 'Your account is a creator already.', 'merchboard' ),
-	SignupException::FRONT_GROUP   => __( 'Choose how you are shown on the front page.', 'merchboard' ),
+	SignupException::FRONT_GROUP   => __( 'Choose what describes you best.', 'merchboard' ),
 	SignupException::EXPIRED_FORM  => __( 'The form expired. Please send it again.', 'merchboard' ),
 	default                        => __( 'Something went wrong. Nothing was saved; please try again later.', 'merchboard' ),
 };
 $merchboard_title = match ( $merchboard_state ) {
 	'sent'  => __( 'Check your e-mail', 'merchboard' ),
-	'form'  => __( 'Sign up as a creator', 'merchboard' ),
+	'form'  => __( 'Sign up as a creator, association or community', 'merchboard' ),
 	default => __( 'Sign-up is not open', 'merchboard' ),
 };
 ?>
@@ -90,7 +90,7 @@ $merchboard_title = match ( $merchboard_state ) {
 				<label for="merchboard-signup-website"><?php esc_html_e( 'Leave this field empty', 'merchboard' ); ?></label>
 				<input type="text" id="merchboard-signup-website" name="website" value="" tabindex="-1" autocomplete="off">
 			</div>
-			<label for="merchboard-signup-name"><?php esc_html_e( 'Creator name', 'merchboard' ); ?></label>
+			<label for="merchboard-signup-name"><?php esc_html_e( 'Creator name / name of association or community', 'merchboard' ); ?></label>
 			<input type="text" id="merchboard-signup-name" name="name" required minlength="2" maxlength="60" autocomplete="nickname" value="<?php echo esc_attr( $merchboard_value( 'name' ) ); ?>">
 	<?php if ( true !== ( $merchboard_view['logged_in'] ?? false ) ) : ?>
 			<label for="merchboard-signup-username"><?php esc_html_e( 'Username (for logging in)', 'merchboard' ); ?></label>
@@ -101,7 +101,7 @@ $merchboard_title = match ( $merchboard_state ) {
 			<label for="merchboard-signup-channel"><?php esc_html_e( 'Link to your channel (e.g. Twitch or YouTube)', 'merchboard' ); ?></label>
 			<input type="url" id="merchboard-signup-channel" name="channel" required maxlength="255" placeholder="https://" value="<?php echo esc_attr( $merchboard_value( 'channel' ) ); ?>">
 			<fieldset class="merchboard-signup__group">
-				<legend><?php esc_html_e( 'Shown on the front page', 'merchboard' ); ?></legend>
+				<legend><?php esc_html_e( 'What describes you best?', 'merchboard' ); ?></legend>
 				<?php foreach ( FrontGroup::VALUES as $merchboard_option ) : ?>
 				<label class="merchboard-signup__check"><input type="radio" name="front_group" value="<?php echo esc_attr( $merchboard_option ); ?>"<?php checked( $merchboard_group, $merchboard_option ); ?>> <?php echo esc_html( FrontGroup::label( $merchboard_option ) ); ?></label>
 				<?php endforeach; ?>

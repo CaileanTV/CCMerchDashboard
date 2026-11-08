@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-07T23:14:57+00:00\n"
+"PO-Revision-Date: 2026-11-08T08:23:45+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -4521,7 +4521,6 @@ msgid "Try again"
 msgstr "Prøv igen"
 
 #: src/Modules/Creators/Admin/GoLivePage.php:263
-#: templates/signup/signup.php:104
 msgid "Shown on the front page"
 msgstr "Vises på forsiden"
 
@@ -13037,8 +13036,8 @@ msgid "Questions? Just reply to this e-mail."
 msgstr "Spørgsmål? Svar blot på denne mail."
 
 #: templates/signup/signup.php:30
-msgid "Enter your creator name (2 to 60 characters)."
-msgstr "Skriv dit creatornavn (2 til 60 tegn)."
+msgid "Enter your creator name or the name of your association or community (2 to 60 characters)."
+msgstr "Skriv dit creatornavn eller navnet på jeres forening/community (2 til 60 tegn)."
 
 #: templates/signup/signup.php:31
 msgid "Enter a valid e-mail address."
@@ -13085,8 +13084,8 @@ msgid "Your account is a creator already."
 msgstr "Din konto er allerede en creator."
 
 #: templates/signup/signup.php:42
-msgid "Choose how you are shown on the front page."
-msgstr "Vælg, hvordan du vises på forsiden."
+msgid "Choose what describes you best."
+msgstr "Vælg, hvad der beskriver dig/jer bedst."
 
 #: templates/signup/signup.php:43
 msgid "The form expired. Please send it again."
@@ -13101,8 +13100,8 @@ msgid "Check your e-mail"
 msgstr "Tjek din e-mail"
 
 #: templates/signup/signup.php:48
-msgid "Sign up as a creator"
-msgstr "Opret dig som creator"
+msgid "Sign up as a creator, association or community"
+msgstr "Opret dig som creator eller forening/community"
 
 #: templates/signup/signup.php:49
 msgid "Sign-up is not open"
@@ -13125,8 +13124,8 @@ msgid "Leave this field empty"
 msgstr "Lad dette felt være tomt"
 
 #: templates/signup/signup.php:93
-msgid "Creator name"
-msgstr "Creatornavn"
+msgid "Creator name / name of association or community"
+msgstr "Creatornavn/Navn på forening/community"
 
 #: templates/signup/signup.php:96
 msgid "Username (for logging in)"
@@ -13135,6 +13134,10 @@ msgstr "Brugernavn (til login)"
 #: templates/signup/signup.php:101
 msgid "Link to your channel (e.g. Twitch or YouTube)"
 msgstr "Link til din kanal (fx Twitch eller YouTube)"
+
+#: templates/signup/signup.php:104
+msgid "What describes you best?"
+msgstr "Hvad beskriver dig/jer bedst?"
 
 #: templates/signup/signup.php:109
 #: build/dashboard.js:2

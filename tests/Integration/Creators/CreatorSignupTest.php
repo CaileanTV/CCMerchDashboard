@@ -238,6 +238,20 @@ final class CreatorSignupTest extends IntegrationTestCase {
 		self::assertSame( array( 404, 'closed' ), array( $closed['status'] ?? null, $closed['state'] ) );
 	}
 
+	public function test_the_form_asks_what_describes_the_creator_best(): void {
+		$merchboard_view = $this->service( SignupPage::class )->respond( false );
+		ob_start();
+		require dirname( __DIR__, 3 ) . '/templates/signup/signup.php';
+		$html = (string) ob_get_clean();
+
+		self::assertStringContainsString( '<legend>What describes you best?</legend>', $html, 'Not "Shown on the front page" (1.7.2).' );
+		self::assertStringNotContainsString( 'Shown on the front page', $html );
+		self::assertStringContainsString( '<h1>Sign up as a creator, association or community</h1>', $html, 'The heading names associations too (1.7.2).' );
+		self::assertStringContainsString( '>Creator name / name of association or community</label>', $html );
+		self::assertStringContainsString( 'value="creator" checked=\'checked\'> Content creator', $html, 'Content creator is preselected.' );
+		self::assertStringContainsString( 'value="community"> Association &amp; community', $html );
+	}
+
 	/**
 	 * The service with a clock `offset` seconds after now.
 	 */
