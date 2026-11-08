@@ -249,7 +249,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.7.5: go-live uden overkategori og kategoriforslag før go-live (fase 38)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-08** efter projektejerens fejlmelding ("Vi skal have lavet en hurtigt opdatering 1.7.5 da jeg har fundet en kritisk fejl"). Testpakke til staging; der tagges efter projektejerens OK, og tag og SHA-256 noteres her da.
+**Versions-bump og CHANGELOG-sektion (`ced3293`), "Godkend alle" med én mail (`4131217`) og tagget `v1.7.5` (på `4131217`) 2026-11-08** efter projektejerens fejlmelding ("Vi skal have lavet en hurtigt opdatering 1.7.5 da jeg har fundet en kritisk fejl") og OK ("Jeg siger OK her nu - kører den på live"; projektejeren installerer den på live). CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke og testpakken (SHA-256 `69be6f603db84e5ca84aa591946e46b64b75ca271f618b82b879c7cbf028b19b`).
 - Fase 38 (ADR-101) er testet med unit-, integrations- og Jest-tests og reviewet uafhængigt.
 - CI skal være grøn med hele integrationssuiten på den taggede commit.
 
