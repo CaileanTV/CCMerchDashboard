@@ -249,7 +249,8 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.7.1: "Vises på forsiden" ved tilmeldingen (fase 35)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-08** efter projektejerens go ("Når den er grøn i CI - så er vi klar"). Tag og SHA-256 noteres her, når draft-releasen er bygget.
+**Versions-bump og CHANGELOG-sektion (`14b17b6`) og tagget `v1.7.1` (på `cbcd446`) 2026-11-08** efter projektejerens go ("Når den er grøn i CI - så er vi klar"). CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `55a13d695484edb8415cf3e6ef52ae2c28ac296c751738ce7dcfc93d2a068df0`).
+- Tagget sidder på `cbcd446`, ikke på bump-commit'en: CI fandt to tests, der efterlod produkter (`d3b4db1`, `cbcd446`). Rettelserne ændrer kun tests; pluginets kode er den samme som i `14b17b6`.
 - Projektejeren valgte versionen 1.7.1 (en lille feature uden schemaændring).
 - Fase 35 er reviewet uafhængigt (rettelser i `56abb83`) og runtime-testet på Local (ROADMAP 35.5).
 - CI skal være grøn med hele integrationssuiten på den taggede commit.

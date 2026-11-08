@@ -1001,7 +1001,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **35.3 Formular og tekster ✅:** feltet på tilmeldingssiden og danske tekster.
 - **35.4 Tests ✅:** unit og integration (tilmelding og go-live).
 - **35.5 Review og runtime-test på Local ✅ (2026-11-08):** efter verificeret backup; se statusnoten i ADR-097. Reviewet fandt én fejl (værdien kunne skrives på en anden creators tomme kategori) og to mindre; alle rettet.
-- **35.6 Release 1.7.1:** projektejerens go 2026-11-08 ("Når den er grøn i CI - så er vi klar"); se DEVELOPMENT.md "Release 1.7.1".
+- **35.6 Release 1.7.1 ✅ (2026-11-08):** projektejerens go ("Når den er grøn i CI - så er vi klar"). Tag `v1.7.1` på `cbcd446` (CI grøn), draft-release byte-identisk med den lokale pakke; se DEVELOPMENT.md "Release 1.7.1".
 
 ## Senere (uprioriteret)
 
