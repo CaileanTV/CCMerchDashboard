@@ -247,6 +247,23 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.7.2: tekster på tilmeldingssiden (ROADMAP 35.7)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-08** efter projektejerens ønske om at bumpe direkte, så den fulde CI kører på bump-commit'en. Tag og SHA-256 noteres her, når draft-releasen er bygget.
+- Kun tekster på tilmeldingssiden ændres; testet med en integrationstest, der viser formularen, og set på Local.
+- CI skal være grøn med hele integrationssuiten på den taggede commit.
+
+**Ingen schemaændring:** schema-version 47 som i 1.7.1. Data og kategorier røres ikke.
+
+Tagget giver en draft-release. Projektejeren tester den på staging og udgiver den. AI-agenter har ingen adgang til produktion.
+
+1. **Backup:** tag backup af filer og database via hostingen. Notér den installerede version.
+2. **Opdatér** med release-ZIP'en ("Erstat nuværende med uploadet"). Overview skal vise version 1.7.2 og schema-version 47 uden advarsler.
+3. **Tilmelding:** åbn tilmeldingssiden. Overskriften skal være "Opret dig som creator eller forening/community", navnefeltet "Creatornavn/Navn på forening/community", og spørgsmålet "Hvad beskriver dig/jer bedst?" med "Content creator" valgt.
+4. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 1.7.1-ZIP'en igen.
+
 ## Release 1.7.1: "Vises på forsiden" ved tilmeldingen (fase 35)
 
 **Versions-bump og CHANGELOG-sektion (`14b17b6`) og tagget `v1.7.1` (på `cbcd446`) 2026-11-08** efter projektejerens go ("Når den er grøn i CI - så er vi klar"). CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke (SHA-256 `55a13d695484edb8415cf3e6ef52ae2c28ac296c751738ce7dcfc93d2a068df0`).

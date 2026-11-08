@@ -4,6 +4,14 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.7.2] - 2026-11-08
+
+Tekster på tilmeldingssiden (ROADMAP 35.7). Ingen schemaændring (schema-version 47; ingen migration og ingen manuelle trin). Opdateringen står i DEVELOPMENT.md ("Release 1.7.2").
+
+### Changed
+
+- **Tilmeldingen henvender sig også til foreninger og communities:** overskriften er "Opret dig som creator eller forening/community", navnefeltet "Creatornavn/Navn på forening/community", og spørgsmålet hedder "Hvad beskriver dig/jer bedst?" i stedet for "Vises på forsiden". Fejlbeskederne for navn og valg følger med. Valgene, `ccm_front_group` og fanen Go-live er uændrede.
+
 ## [1.7.1] - 2026-11-08
 
 Fase 35: creatoren vælger "Vises på forsiden" ved tilmeldingen. Ingen schemaændring (schema-version 47; ingen migration og ingen manuelle trin). Fase 35 er reviewet uafhængigt og runtime-testet på Local 2026-11-08. Opdateringen står i DEVELOPMENT.md ("Release 1.7.1").
