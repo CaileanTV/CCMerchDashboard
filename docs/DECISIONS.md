@@ -3446,6 +3446,9 @@ Besluttet af projektejeren 2026-10-18. Teksten ovenfor er bevaret som historik; 
 - **Uændret:** udstedte bilag, deres snapshots, PDF-gengivelsen og auditdata ændres ikke.
 - **API-fasen** skal afklare valideringen mod CVR-registret og håndteringen af virksomhedsoplysninger, herunder kilde, opdatering, hvad der gemmes og logges (i dag logger `payout_settings_changed` udsteders CVR-nummer i klartekst), og forholdet til numre, der allerede er registreret. Som ekstern tjeneste kræver den en særskilt ADR, projektejerens godkendelse og en særskilt plan.
 - **Forbehold 3 gælder uændret.** Udskydelsen ændrer ikke ADR-062's øvrige beslutninger eller R1's status og blokeringer.
+
+### Statusnote 2026-11-09: creatorens egne stamdata og CVR (ADR-104)
+Besluttet af projektejeren 2026-11-09 (fase 42). Creatoren udfylder selv stamdata, også CVR/SE-nr., og de bekræftes af en administrator før første udbetaling (ADR-104). Det afløser K09's implementeringsvalg "stamdata kræves ikke for at gennemføre en payout" og "creatoren kan ikke selv se eller redigere stamdata uden for sine bilag" og noten ovenfor, for så vidt den udelukker CVR-værdier: CVR/SE-numre må nu registreres, med formatkontrol som hidtil. Opslag i CVR-registret er fortsat udskudt til en senere fase med egen ADR. Feltlisten, snapshottet og udstedte bilag er uændrede.
 - **Runtime (2026-10-18):** K09's visning af manglende stamdata er runtime-verificeret på Merch Dashboard Local uden skrivninger: indstillingerne, creatorens side og payoutens side viser "Ikke registreret", og PDF'en for et bilag med skabelonversion 4 viser CVR-nr., adresse og CVR/SE-nr. som "Ikke registreret"; tidligere bilags PDF'er var byte-identiske før og efter. K09's skriveveje var på det tidspunkt ikke runtime-verificeret (se næste punkt). Dokumentationen ligger uden for repoet i `MerchBoard-r2-runtime\runs\2026-10-18-fase2-efter-trin5`.
 - **Skriveveje (2026-10-18, med projektejerens særskilte godkendelse, som fraviger "ingen CVR-værdier … heller ikke testdata" ovenfor for denne test):** projektejeren afprøvede skrivevejene i wp-admin og har bekræftet, at K09 virker som ønsket (samlet bekræftelse; hvilke deltrin der blev udført, er ikke dokumenteret). Før testen blev der taget en frisk før-status og en verificeret backup (`MerchBoard-r2-runtime\runs\2026-10-18-k09-k10-k15-runtime`). Teknisk dokumenteret read-only bagefter: auditposterne 511–512 (`creator_billing_details_changed` for creator 1, kun feltet `cvr`: gemt og tømt) og 513–514 (`payout_settings_changed`, `company_cvr`: tomt → testværdien `12345678` → tomt; værdien består ikke CVR-nummerets kontrolciffer og kan ikke være et rigtigt CVR-nummer, men står permanent i auditten); begge værdier er fjernet igen (ingen `billing_details` på nogen creator; `company_cvr` er tom, men nøglen findes nu i indstillingerne med tom værdi, så tilstanden er funktionelt tom, men ikke byte-identisk med fravær af nøglen); testen blev udført på creator 1, ikke den foreslåede creator 2; intet bilag eller payout blev udstedt i testvinduet, og auditposterne til og med 510 er uændrede. Auditposterne 511–514 er permanente, og der ryddes ikke op i databasen. Ikke teknisk dokumenteret: afvisning af ugyldige værdier, genindlæsning og at et uændret gem ikke auditeres. Ikke afprøvet: creatorens juridiske navn og adresse og udfyldte stamdata på et nyt bilag (kræver et nyt afregningsbilag).
 - **K10/K15, runtime (projektejerens beslutning 2026-10-18; valgmulighed D3 i planlægningen af K10/K15-testen, ikke ADR-060's beslutning D3 om afregningsstart):** runtime-testen af rettelsesbilag udskydes. Et rettelsesbilag knyttes altid permanent til et eksisterende afregningsbilag, og et isoleret testbilag ville kræve en ny payout og et nyt nummer i `AFR`-serien. K10/K15 har automatiske tests og grøn CI, men er ikke runtime-verificeret; det samme gælder K06's registrering af momsstatus og momsscenarierne i K05/K12/K15.
@@ -6035,3 +6038,56 @@ Ingen schemaændring. Ny option `merchboard_branding` med autoload, fordi den l�
 
 ## Related
 ADR-006, ADR-026, ADR-042, ADR-043, ADR-091
+
+# ADR-104: Creatorens egne stamdata til afregning, bekræftet før første udbetaling
+
+## Date
+2026-11-09
+
+## Status
+Accepteret af projektejeren 2026-11-09 (fase 42, plan godkendt samme dag). Afløser to implementeringsvalg i ADR-062 K09 ("stamdata kræves ikke for at gennemføre en payout" og "creatoren kan ikke selv se eller redigere stamdata uden for sine bilag") og statusnoten 2026-10-18 "CVR udskudt" for så vidt angår registrering af CVR/SE-numre. K09's feltliste, snapshot og bilag er uændrede.
+
+## Context
+Stamdata til afregningsbilag (ADR-062 K09: juridisk navn, adresse og CVR/SE-nr.) registreres i dag kun af en administrator, og et bilag uden stamdata viser dem som "Ikke registreret". Projektejeren ønsker (2026-11-09), at creatoren selv udfylder dem, at de bekræftes før første udbetaling, og at første udbetaling udskydes, til de er bekræftet. Et CVR-felt er ønsket; et automatisk opslag i CVR-registret kommer senere.
+
+Projektejerens valg 2026-11-09:
+- Creatoren kan anmode om første udbetaling, når stamdata er indsendt; udbetalingen venter (beløbet er reserveret), til stamdata er bekræftet.
+- Bekræftede stamdata kan creatoren selv rette; rettelsen godkendes, og indtil da bruges de bekræftede. Senere udbetalinger stoppes ikke af en rettelse.
+- Stamdata udfyldes på siden Udbetalinger i MitCCMerch, med en besked øverst, så længe de mangler før første udbetaling.
+
+## Decision
+1. **Lager:** creatormeta `billing_details` er fortsat de *bekræftede* stamdata, som bilagene kopierer (K09). Ny creatormeta `billing_submission` holder creatorens indsendte udgave (værdier, status `pending` eller `changes_requested`, tidspunkt og administratorens note). Ny creatormeta `billing_confirmed` holder tidspunkt og administrator for bekræftelsen. Ingen schemaændring.
+2. **Status:** `missing` (intet bekræftet og intet indsendt), `submitted` (venter på bekræftelse), `changes_requested` (administratoren har bedt om rettelser med en note) og `confirmed` (evt. med en ny indsendelse, der venter). Stamdata, en administrator selv har registreret, tæller som bekræftede: et gem på creatorens side sætter `billing_confirmed`, og tidligere registrerede, ikke-tomme `billing_details` uden flag tæller også som bekræftede.
+3. **Felter:** som K09. I creatorens formular er juridisk navn, adresselinje 1, postnummer, by og land påkrævet; adresselinje 2 og CVR/SE-nr. er valgfri. Et CVR/SE-nr. er otte cifre (mellemrum fjernes); der slås intet op i CVR-registret. Formularen sender altid alle felter, så et registreret nummer aldrig slettes af et manglende felt. Bankoplysninger er ikke stamdata og gemmes fortsat aldrig (ADR-056).
+4. **Første udbetaling:** gælder kun en creator uden afregningsbilag (`PayoutRepository::has_settlement_documents()`).
+   - **Anmodning:** med status `missing` afvises den med `billing_details_required` (409). Med `submitted` eller `changes_requested` modtages den og venter.
+   - **Gennemførsel:** `PayoutDecisions::complete()` og `PayoutGiftCards::register()` afviser `billing_details_unconfirmed`, før bilaget udstedes, så længe stamdata ikke er bekræftet. Payouten forbliver `pending`. Tjekket sker i transaktionen efter creatorens rækkelås, som saldotjekket (ADR-055).
+   - Senere udbetalinger påvirkes ikke af en ventende rettelse; bilaget bruger de bekræftede stamdata.
+5. **Bekræftelse:** fanen "Stamdata" under "Forslag" (`merchboard_approval_tabs`) viser de indsendte værdier ved siden af de bekræftede med de ændrede felter markeret. "Bekræft" skriver dem til `billing_details`, sætter `billing_confirmed` og rydder indsendelsen; "Bed om rettelser" kræver en note. Kun `merchboard_manage_payouts`; capability før nonce før service; samme lås- og transaktionsrækkefølge som udbetalinger.
+6. **Creatorens API:** `GET /me/billing-details` (status, bekræftede værdier, indsendelse og note, om første udbetaling kræver bekræftelse, og om en udbetaling venter) og `POST /me/billing-details` (indsend). `/me`-scoped (ADR-007); POST er blokeret under "Se som creator".
+7. **Notifikationer (ADR-079):** `admin_billing_details_submitted` til administratorer; `billing_details_confirmed` og `billing_details_changes_requested` (vigtig, med administratorens note) til creatoren. Mails nævner aldrig adresse eller CVR/SE-nr.
+8. **Audit:** `billing_details_submitted`, `billing_details_confirmed` og `billing_details_changes_requested` med navnene på de ændrede felter og, ved rettelser, noten; aldrig værdierne.
+
+## Alternatives considered
+- **Spærre selve anmodningen, til stamdata er bekræftet:** fravalgt af projektejeren; anmodningen må gerne ligge og vente.
+- **Låse stamdata efter bekræftelse:** fravalgt; creatoren retter selv, og en administrator godkender.
+- **Opslag i CVR-registret nu:** udskudt; kræver en særskilt ADR for en ekstern tjeneste.
+
+## Reason
+Bilagene får rigtige stamdata fra start, uden at administratoren skal indsamle dem, og en fejl opdages før første bilag udstedes. Reservationen i `pending` (ADR-055) gør, at en ventende første udbetaling ikke kræver et nyt flow.
+
+## Security
+- Creatoren kan kun se og indsende sine egne stamdata (CreatorContext, whitelist af felter); kun en administrator bekræfter.
+- Værdierne logges og auditeres aldrig og står aldrig i mails eller notifikationer.
+- Felterne valideres på serveren (længder, ingen kontroltegn, otte cifre for CVR/SE).
+
+## Migration/data implications
+Ingen schemaændring. To nye creatormeta-nøgler, som slettes ved opt-in-afinstallation sammen med anden creatormeta (ADR-059). Eksisterende stamdata tæller som bekræftede.
+
+## Consequences
+- ADR-062 K09's implementeringsvalg om, at stamdata ikke kræves, og at creatoren ikke kan se dem, gælder ikke længere.
+- CVR/SE-numre må registreres af creatoren og administratoren; formatet kontrolleres, men opslaget kommer i en senere fase med egen ADR.
+- Creatorer uden afregningsbilag skal have bekræftede stamdata, før deres første udbetaling kan gennemføres.
+
+## Related
+ADR-007, ADR-055, ADR-056, ADR-058, ADR-059, ADR-060, ADR-062, ADR-077, ADR-079, ADR-092
