@@ -1112,6 +1112,7 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 **Tilføjet undervejs af projektejeren (2026-11-09):**
 - CVR-feltet bliver et valg: "registreret virksomhed" (CVR påkrævet) eller privatperson, der angiver CPR-nummeret ved hver udbetaling (skatteindberetningslovens § 4, projektejerens oplysning). CPR-nummeret krypteres og slettes, når udbetalingen er behandlet, og ses kun som bankoplysninger (projektejerens valg). En infoboks forklarer hvorfor og anbefaler at oprette en PMV, fordi det er gratis (ADR-104 pkt. 9).
 - "Udfyld fra CVR-nummer" gennem cvrapi.dk (ADR-105).
+- En kort guide i admin (ved CPR-nummeret i betalingsoplysningerne) til at indberette B-honoraret i eIndkomst uden regnskabsprogram. Skrevet med egne ord ud fra Skattestyrelsens sider (skat.dk og info.skat.dk, læst 2026-11-09), med links; Dinero bruges ikke (ADR-016), og deres vejledning er ikke kopieret. Fristens dag og om arbejdsgiverregistrering kræves alene for B-honorar, er ikke bekræftet og står derfor ikke som fakta.
 
 - **42.1 Docs:** ✅ ADR-104 (med pkt. 9 om CPR), ADR-105, statusnote på ADR-062 (K09 og CVR-noten), SECURITY.md og denne fase.
 - **42.2 Domæne:** ✅ indsend, bekræft, bed om rettelser og status (`billing_submission`, `billing_confirmed`); admins direkte gem tæller som bekræftelse; typen virksomhed/privatperson.

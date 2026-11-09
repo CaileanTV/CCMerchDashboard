@@ -1007,6 +1007,45 @@ final class PayoutsPage {
 
 		echo '</tbody></table>';
 		echo '<p class="description">' . esc_html__( 'This view was recorded in the audit log. The details are deleted when the request has been handled.', 'merchboard' ) . '</p>';
+
+		if ( '' !== $details->cpr ) {
+			self::render_report_guide();
+		}
+	}
+
+	/**
+	 * How to report a fee to a private person as B-income in eIndkomst
+	 * without accounting software (ADR-104). Written from Skattestyrelsen's
+	 * own pages (skat.dk and info.skat.dk, read 2026-11-09); only what those
+	 * pages confirm, with links to them.
+	 */
+	private static function render_report_guide(): void {
+		echo '<details class="merchboard-report-guide"><summary><strong>' . esc_html__( 'How to report the fee in eIndkomst (without accounting software)', 'merchboard' ) . '</strong></summary>';
+		echo '<ol>';
+
+		foreach ( array(
+			__( 'Log in to TastSelv Erhverv on skat.dk with MitID Erhverv.', 'merchboard' ),
+			__( 'Choose "Ansatte" → "Indberet til eIndkomst eller LetLøn" → "Indberette/forespørge på eIndkomst/LetLøn" → "Indberet lønoplysninger - online".', 'merchboard' ),
+			__( 'Enter the period and the disposition date: the date the payout was made.', 'merchboard' ),
+			__( 'Enter the creator\'s CPR number (above) and the amount paid out in field 36, "B-indkomst, hvoraf der skal betales arbejdsmarkedsbidrag". For a recipient living in Denmark the CPR number is enough.', 'merchboard' ),
+			__( 'Nothing is withheld from the payout: the creator pays B-tax and labour market contribution on the B-income themselves.', 'merchboard' ),
+			__( 'Report every month: a report counts for the month of its disposition date. See the deadline in TastSelv Erhverv. Corrections are made in the same period, never in a later one.', 'merchboard' ),
+		) as $step ) {
+			echo '<li>' . esc_html( $step ) . '</li>';
+		}
+
+		echo '</ol>';
+		echo '<p>' . esc_html__( 'Skattestyrelsen\'s checklist for reporting in eIndkomst starts with registering as an employer on virk.dk. Check whether that applies to you.', 'merchboard' ) . '</p>';
+		printf(
+			'<p>%1$s <a href="%2$s" target="_blank" rel="noopener noreferrer">%3$s</a> · <a href="%4$s" target="_blank" rel="noopener noreferrer">%5$s</a></p>',
+			esc_html__( 'Sources:', 'merchboard' ),
+			esc_url( 'https://skat.dk/erhverv/ansatte-og-loen/indberet-loen-eindkomst/saadan-indberetter-du-loen-eindkomst' ),
+			esc_html__( 'How to report in eIndkomst (skat.dk)', 'merchboard' ),
+			esc_url( 'https://info.skat.dk/data.aspx?oid=2277175' ),
+			esc_html__( 'Field overview (info.skat.dk)', 'merchboard' )
+		);
+		echo '<p class="description">' . esc_html__( 'A short guide written from Skattestyrelsen\'s pages in November 2026, not tax advice. Check the details with Skattestyrelsen or your accountant.', 'merchboard' ) . '</p>';
+		echo '</details>';
 	}
 
 	/**
