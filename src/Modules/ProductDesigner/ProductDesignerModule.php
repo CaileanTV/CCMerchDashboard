@@ -82,6 +82,7 @@ use MerchBoard\Modules\ProductDesigner\Rest\MeDesignerController;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerOrderFiles;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
+use MerchBoard\Modules\ProductDesigner\Shop\MetaCatalogExclusion;
 use MerchBoard\Modules\ProductDesigner\Shop\WooCommerceDesignerWriter;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsSection;
 use MerchBoard\Modules\WooCommerce\CreatorCategoryRepository;
@@ -339,6 +340,16 @@ final class ProductDesignerModule implements Module {
 				$c->get( Logger::class )
 			)
 		);
+		// Designer products stay out of Meta's catalog (1.7.7).
+		$container->set(
+			MetaCatalogExclusion::class,
+			static fn( Container $c ): MetaCatalogExclusion => new MetaCatalogExclusion(
+				$c->get( DesignerProductRepository::class ),
+				$c->get( DesignerProductGuard::class ),
+				$c->get( JobQueue::class ),
+				$c->get( Logger::class )
+			)
+		);
 		// " - " before the creator's addition in the names from before (ADR-102).
 		$container->set(
 			DesignerNameSeparator::class,
@@ -516,6 +527,18 @@ final class ProductDesignerModule implements Module {
 			10,
 			2
 		);
+		add_filter(
+			MetaCatalogExclusion::FILTER,
+			static fn( mixed $sync = true, mixed $product = null ): mixed => $container->get( MetaCatalogExclusion::class )->should_sync( $sync, $product ),
+			20,
+			2
+		);
+		add_action(
+			MetaCatalogExclusion::HOOK,
+			static function ( mixed $after = 0 ) use ( $container ): void {
+				$container->get( MetaCatalogExclusion::class )->run( $after );
+			}
+		);
 		add_action(
 			DesignerNameSeparator::HOOK,
 			static function ( mixed $after = 0 ) use ( $container ): void {
@@ -592,6 +615,11 @@ final class ProductDesignerModule implements Module {
 				// " - " before the creator's addition in the names from before (ADR-102), once.
 				if ( DesignerNameSeparator::due() ) {
 					$container->get( DesignerNameSeparator::class )->start();
+				}
+
+				// Designer products already at Meta are taken out of its catalog (1.7.7), once.
+				if ( MetaCatalogExclusion::due() ) {
+					$container->get( MetaCatalogExclusion::class )->start();
 				}
 			}
 		);

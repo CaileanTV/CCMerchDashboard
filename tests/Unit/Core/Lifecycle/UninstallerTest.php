@@ -36,6 +36,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRepricing;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerRetirement;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerNameSeparator;
+use MerchBoard\Modules\ProductDesigner\Shop\MetaCatalogExclusion;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerTagSync;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoMockups;
@@ -495,7 +496,7 @@ final class UninstallerTest extends TestCase {
 
 		self::assertSame( array( AlertSounds::OWNER_META, AlertSoundLibrary::LIBRARY_META, GlobalOverlaySounds::OWNER_META, AlertImages::OWNER_META, AlertImageLibrary::LIBRARY_META, GlobalOverlayImages::OWNER_META ), Uninstaller::ALERT_MEDIA_META_KEYS );
 		self::assertSame( array(), array_diff( array_merge( Uninstaller::ALERT_MEDIA_META_KEYS, array( Uninstaller::ALERT_IMPORTED_META ) ), $keys ), 'The markers are removed from the files that stay.' );
-		self::assertSame( array( 'merchboard_sales_backfill', ChatSender::HOOK, WebhookDispatcher::HOOK, NotificationSender::HOOK, BalanceReadyNotices::HOOK, DesignerFees::HOOK, DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerTagSync::HOOK, DesignerNameSeparator::HOOK, DesignerRetirement::HOOK, PrintfulMockups::HOOK, GelatoMockups::HOOK, ProdigiMockups::HOOK, ProdigiMockups::PREVIEW_HOOK, CatalogImport::HOOK, PrintifyCatalog::HOOK ), $hooks, 'Queued chat messages, webhook deliveries, notification e-mails and designer applies are cancelled.' );
+		self::assertSame( array( 'merchboard_sales_backfill', ChatSender::HOOK, WebhookDispatcher::HOOK, NotificationSender::HOOK, BalanceReadyNotices::HOOK, DesignerFees::HOOK, DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerTagSync::HOOK, DesignerNameSeparator::HOOK, MetaCatalogExclusion::HOOK, DesignerRetirement::HOOK, PrintfulMockups::HOOK, GelatoMockups::HOOK, ProdigiMockups::HOOK, ProdigiMockups::PREVIEW_HOOK, CatalogImport::HOOK, PrintifyCatalog::HOOK ), $hooks, 'Queued chat messages, webhook deliveries, notification e-mails and designer applies are cancelled.' );
 	}
 
 	private function uninstaller(): Uninstaller {

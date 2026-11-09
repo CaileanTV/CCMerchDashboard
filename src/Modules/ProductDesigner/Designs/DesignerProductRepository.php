@@ -744,6 +744,32 @@ class DesignerProductRepository {
 	}
 
 	/**
+	 * Products after an id that have had a product in the shop, oldest
+	 * first, whatever their status (MetaCatalogExclusion).
+	 *
+	 * @param int $after The last id done.
+	 * @param int $limit Most rows.
+	 * @return list<array{id: int, wc_product_id: int}>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function shop_batch( int $after, int $limit ): array {
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, wc_product_id FROM %i WHERE id > %d AND wc_product_id IS NOT NULL ORDER BY id LIMIT %d', $this->table( Tables::DESIGNER_PRODUCTS ), $after, $limit ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table; a one-time job.
+
+		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
+			throw new DatabaseException( 'Could not read the designer products.' );
+		}
+
+		return array_map(
+			static fn( array $row ): array => array(
+				'id'            => (int) $row['id'],
+				'wc_product_id' => (int) $row['wc_product_id'],
+			),
+			$rows
+		);
+	}
+
+	/**
 	 * Products after an id, oldest first, with their creator, base product
 	 * and status (DesignerNameSeparator).
 	 *
