@@ -23,6 +23,7 @@ use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 use MerchBoard\Modules\ProductDesigner\Bases\BasePriceSchedule;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerNameSeparator;
 use MerchBoard\Modules\ProductDesigner\Shop\MetaCatalogExclusion;
+use MerchBoard\Modules\Dashboard\Branding\BrandingDesign;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
@@ -282,6 +283,7 @@ final class Uninstaller {
 		delete_option( ProdigiAccount::KEY_OPTION );
 		delete_option( DesignerNameSeparator::OPTION );
 		delete_option( MetaCatalogExclusion::OPTION );
+		delete_option( BrandingDesign::OPTION );
 		delete_option( PrintifyAccount::TOKEN_OPTION );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );

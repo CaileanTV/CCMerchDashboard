@@ -12,7 +12,9 @@ namespace MerchBoard\Modules\Dashboard;
 use MerchBoard\Core\Security\ImpersonationSession;
 use MerchBoard\Modules\Access\ImpersonationActions;
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Dashboard\Branding\BrandingDesign;
 use MerchBoard\Modules\Dashboard\Branding\BrandLogo;
+use MerchBoard\Modules\Dashboard\Branding\LogoAttachment;
 use RuntimeException;
 
 defined( 'ABSPATH' ) || exit;
@@ -135,6 +137,10 @@ final class ShellController {
 			'locale'                => determine_locale(),
 			'sections'              => $this->sections->for_current_user(),
 			'logo'                  => $this->logo_data(),
+			// ADR-103: the logo for dark themes, the logo's size and the plate behind it.
+			'logo_dark'             => $this->dark_logo_data(),
+			'logo_size'             => BrandingDesign::read()['logo_size'],
+			'logo_plate'            => BrandingDesign::read()['logo_plate'],
 			// "View as creator" (step 27.2, ADR-075): the link that ends the session, or null.
 			'impersonating'         => null !== ImpersonationSession::creator_id(),
 			'impersonation_end_url' => null === ImpersonationSession::creator_id() ? null : ImpersonationActions::end_url(),
@@ -163,6 +169,18 @@ final class ShellController {
 			'alt'    => $logo['custom'] ? (string) get_bloginfo( 'name' ) : '',
 			'custom' => $logo['custom'],
 		);
+	}
+
+	/**
+	 * The logo for the dark themes (ADR-103), shown without the plate; null
+	 * without one.
+	 *
+	 * @return array{url: string, width: int, height: int, alt: string}|null
+	 */
+	private function dark_logo_data(): ?array {
+		$logo = $this->logo->image( (int) BrandingDesign::read()['dark_logo_id'], LogoAttachment::KIND_LOGO );
+
+		return null === $logo ? null : $logo + array( 'alt' => (string) get_bloginfo( 'name' ) );
 	}
 
 	/**
@@ -220,8 +238,8 @@ final class ShellController {
 	 */
 	public static function security_headers( ?string $script_nonce = null ): array {
 		$policy = null === $script_nonce
-			? "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'self'"
-			: "default-src 'none'; script-src 'self' 'nonce-" . $script_nonce . "'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; media-src 'self'; connect-src 'self'; form-action 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'self'";
+			? "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; manifest-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'self'"
+			: "default-src 'none'; script-src 'self' 'nonce-" . $script_nonce . "'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; media-src 'self'; connect-src 'self'; manifest-src 'self'; form-action 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'self'";
 
 		return array(
 			'X-Robots-Tag'            => 'noindex, nofollow',
@@ -240,11 +258,21 @@ final class ShellController {
 	}
 
 	/**
-	 * Logout URL back to the dashboard, as a plain URL: wp_logout_url()
-	 * returns it HTML-escaped (`&amp;`), which must not end up in JSON or in
-	 * attributes that are escaped again.
+	 * Logout URL, as a plain URL: wp_logout_url() returns it HTML-escaped
+	 * (`&amp;`), which must not end up in JSON or in attributes that are
+	 * escaped again. After logging out, WordPress leads to its own login
+	 * with "You are now logged out" and the dashboard as `redirect_to`, so
+	 * MitCCMerch's login screen shows it (ADR-103).
 	 */
 	private function logout_url(): string {
-		return html_entity_decode( wp_logout_url( $this->route->url() ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$after = add_query_arg(
+			array(
+				'loggedout'   => 'true',
+				'redirect_to' => rawurlencode( $this->route->url() ),
+			),
+			site_url( 'wp-login.php', 'login' )
+		);
+
+		return html_entity_decode( wp_logout_url( $after ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 	}
 }

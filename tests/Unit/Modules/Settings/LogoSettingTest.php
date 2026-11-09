@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Unit\Modules\Settings;
 
+use Brain\Monkey\Filters;
 use Brain\Monkey\Functions;
 use MerchBoard\Core\Audit\AuditRepository;
 use MerchBoard\Core\Audit\AuditTrail;
@@ -202,7 +203,9 @@ final class LogoSettingTest extends TestCase {
 	}
 
 	public function test_the_handler_saves_resets_and_reports_rejections(): void {
-		self::assertStringContainsString( 'merchboard_notice=saved', $this->actions()->save_logo( $this->form() ) );
+		$saved = $this->actions()->save_logo( $this->form() );
+		self::assertStringContainsString( 'merchboard_notice=saved', $saved );
+		self::assertStringContainsString( 'tab=branding', $saved, 'Back to the tab "Branding".' );
 		self::assertSame( 5, Settings::logo_attachment_id() );
 
 		self::assertStringContainsString( 'merchboard_notice=logo_wrong_type', $this->actions()->save_logo( $this->form( array( SettingsPage::FIELD_LOGO => '7' ) ) ) );
@@ -236,7 +239,24 @@ final class LogoSettingTest extends TestCase {
 		Functions\when( 'home_url' )->alias( static fn( string $path = '' ): string => 'https://shop.test' . $path );
 		Functions\when( 'trailingslashit' )->alias( static fn( string $s ): string => rtrim( $s, '/' ) . '/' );
 		Functions\when( 'do_action' )->justReturn( null );
+		Functions\when( 'wp_unslash' )->returnArg();
+		Filters\expectApplied( 'merchboard_settings_tabs' )->andReturn( array( 'branding' => 'Branding' ) );
 
+		self::assertStringNotContainsString( SettingsActions::SAVE_LOGO_ACTION, $this->render(), 'The logo is on the tab "Branding", not on "General".' );
+
+		$_GET[ SettingsPage::TAB_ARG ] = 'branding';
+
+		try {
+			$this->assert_logo_section();
+		} finally {
+			unset( $_GET[ SettingsPage::TAB_ARG ] );
+		}
+	}
+
+	/**
+	 * The logo section on the tab "Branding": default, custom and unusable logo.
+	 */
+	private function assert_logo_section(): void {
 		$html = $this->render();
 		self::assertStringContainsString( 'name="action" value="' . SettingsActions::SAVE_LOGO_ACTION . '"', $html );
 		self::assertStringContainsString( 'value="nonce:' . SettingsActions::SAVE_LOGO_ACTION . '"', $html );

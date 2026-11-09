@@ -7,6 +7,7 @@ import type {
 	DashboardConfig,
 	DashboardLogo,
 	DashboardSection,
+	LogoStyle,
 	RoutingMode,
 } from './types/config';
 
@@ -99,6 +100,42 @@ function parseLogo( value: unknown, origin: string ): DashboardLogo | null {
 }
 
 /**
+ * How the logo is shown (ADR-103); nothing when the server sends no size.
+ * A bad dark logo is dropped; the plate is on unless it is explicitly off.
+ *
+ * @param raw    Raw bootstrap value.
+ * @param origin Origin of the current page.
+ */
+function parseLogoStyle(
+	raw: Record< string, unknown >,
+	origin: string
+): { logoStyle?: LogoStyle } {
+	const size = raw.logo_size;
+
+	if ( size !== 'small' && size !== 'medium' && size !== 'large' ) {
+		return {};
+	}
+
+	const value = raw.logo_dark;
+	let dark: LogoStyle[ 'dark' ] = null;
+
+	if ( isRecord( value ) ) {
+		const url = readSameOriginUrl( value.url, origin );
+		const { width, height, alt } = value;
+
+		dark =
+			url !== null &&
+			isSize( width ) &&
+			isSize( height ) &&
+			typeof alt === 'string'
+				? { url, width, height, alt }
+				: null;
+	}
+
+	return { logoStyle: { size, plate: raw.logo_plate !== false, dark } };
+}
+
+/**
  * The end link of a "view as creator" session (ADR-075), on the page's own
  * origin; nothing when there is none or it is invalid.
  *
@@ -163,6 +200,7 @@ export function parseConfig(
 		locale,
 		sections,
 		logo: parseLogo( raw.logo, origin ),
+		...parseLogoStyle( raw, origin ),
 		...( raw.impersonating === true ? { impersonating: true } : {} ),
 		...parseImpersonation( raw.impersonation_end_url, origin ),
 	};

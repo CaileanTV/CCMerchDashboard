@@ -154,4 +154,59 @@ describe( 'parseConfig', () => {
 		expect( config ).not.toBeNull();
 		expect( config?.logo ).toBeNull();
 	} );
+
+	const DARK = {
+		url: `${ ORIGIN }/wp-content/uploads/logo-dark.png`,
+		width: 400,
+		height: 100,
+		alt: 'Merch Shop',
+	};
+
+	it( 'reads the logo style (ADR-103)', () => {
+		expect(
+			parseConfig(
+				{
+					...RAW_CONFIG,
+					logo_size: 'large',
+					logo_plate: false,
+					logo_dark: DARK,
+				},
+				ORIGIN
+			)?.logoStyle
+		).toEqual( { size: 'large', plate: false, dark: DARK } );
+		expect(
+			parseConfig(
+				{ ...RAW_CONFIG, logo_size: 'medium', logo_dark: null },
+				ORIGIN
+			)?.logoStyle
+		).toEqual( { size: 'medium', plate: true, dark: null } );
+	} );
+
+	it.each( [ undefined, 'huge', 64, null ] )(
+		'leaves the logo style out for size %p',
+		( size ) => {
+			const config = parseConfig(
+				{ ...RAW_CONFIG, logo_size: size, logo_dark: DARK },
+				ORIGIN
+			);
+
+			expect( config ).not.toBeNull();
+			expect( config?.logoStyle ).toBeUndefined();
+		}
+	);
+
+	it.each( [
+		'logo-dark.png',
+		{ ...DARK, url: 'https://cdn.example/logo-dark.png' },
+		{ ...DARK, url: 'javascript:alert(1)' },
+		{ ...DARK, width: 0 },
+		{ ...DARK, alt: 42 },
+	] )( 'drops an invalid dark logo %# but keeps the style', ( dark ) => {
+		expect(
+			parseConfig(
+				{ ...RAW_CONFIG, logo_size: 'small', logo_dark: dark },
+				ORIGIN
+			)?.logoStyle
+		).toEqual( { size: 'small', plate: true, dark: null } );
+	} );
 } );

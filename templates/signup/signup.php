@@ -55,6 +55,7 @@ $merchboard_title = match ( $merchboard_state ) {
 <meta charset="<?php echo esc_attr( get_bloginfo( 'charset' ) ); ?>">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<?php echo apply_filters( 'merchboard_page_icons', '' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- BrandIcons::links() escapes every tag. ?>
 <title><?php echo esc_html( $merchboard_title . ' · ' . $merchboard_site ); ?></title>
 <style><?php echo FallbackStyles::css(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static CSS without input. ?>
 .merchboard-fallback { max-width: 40rem; }
@@ -112,7 +113,7 @@ $merchboard_title = match ( $merchboard_state ) {
 			<label class="merchboard-signup__check"><input type="checkbox" name="agree" value="1" required> <?php esc_html_e( 'I have read and accept the agreement.', 'merchboard' ); ?></label>
 			<button type="submit"><?php esc_html_e( 'Sign up', 'merchboard' ); ?></button>
 		</form>
-		<p><a href="<?php echo esc_url( wp_login_url() ); ?>"><?php esc_html_e( 'Already a creator? Log in', 'merchboard' ); ?></a></p>
+		<p><a href="<?php echo esc_url( (string) ( $merchboard_view['login_url'] ?? wp_login_url() ) ); ?>"><?php esc_html_e( 'Already a creator? Log in', 'merchboard' ); ?></a></p>
 <?php elseif ( 'error' === $merchboard_state ) : ?>
 		<p><?php esc_html_e( 'The page could not be shown right now. Please try again later.', 'merchboard' ); ?></p>
 <?php else : ?>

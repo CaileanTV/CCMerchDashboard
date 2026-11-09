@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Merch Dashboard 1.7.5\n"
+"Project-Id-Version: Merch Dashboard 1.7.7\n"
 "Report-Msgid-Bugs-To: https://github.com/CaileanTV/CCMerchDashboard/issues\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-08T19:55:58+00:00\n"
+"POT-Creation-Date: 2026-11-09T13:40:49+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -148,6 +148,7 @@ msgstr ""
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Creators/Admin/CreatorDeletionActions.php:104
 #: src/Modules/Creators/Admin/ProposalImageDownload.php:108
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:97
 #: src/Modules/News/Admin/NewsAdminActions.php:75
 #: src/Modules/Notifications/Admin/NotificationsAdminActions.php:74
 #: src/Modules/ProductDesigner/Admin/BaseProductActions.php:91
@@ -159,7 +160,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:163
 #: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:177
 #: src/Modules/ProductDesigner/Admin/PrintifyThumbnails.php:97
-#: src/Modules/Settings/Admin/SettingsActions.php:136
+#: src/Modules/Settings/Admin/SettingsActions.php:137
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:256
 #: src/Modules/WooCommerce/Admin/CreatorCodeActions.php:101
@@ -1683,7 +1684,7 @@ msgid "WooCommerce"
 msgstr ""
 
 #: src/Modules/Admin/OverviewPage.php:198
-#: src/Modules/Settings/Admin/SettingsPage.php:304
+#: src/Modules/Settings/Admin/SettingsPage.php:334
 msgid "Data on uninstall"
 msgstr ""
 
@@ -1697,7 +1698,7 @@ msgstr ""
 
 #: src/Modules/Admin/OverviewPage.php:206
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:197
-#: src/Modules/Settings/Admin/SettingsPage.php:178
+#: src/Modules/Settings/Admin/SettingsPage.php:183
 msgid "Settings"
 msgstr ""
 
@@ -1753,7 +1754,7 @@ msgstr ""
 #: src/Modules/Alerts/Admin/CompanyDetailsSection.php:50
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:57
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:54
-#: src/Modules/Settings/Admin/SettingsPage.php:247
+#: src/Modules/Settings/Admin/SettingsPage.php:273
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:64
 msgid "You are not allowed to change these settings."
 msgstr ""
@@ -2200,6 +2201,7 @@ msgstr[1] ""
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:394
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:124
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:386
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:271
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:547
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:568
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1372
@@ -4138,7 +4140,7 @@ msgid "Creator deactivated."
 msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:207
-#: src/Modules/Settings/Admin/SettingsPage.php:246
+#: src/Modules/Settings/Admin/SettingsPage.php:272
 msgid "No changes were made."
 msgstr ""
 
@@ -4744,6 +4746,301 @@ msgstr ""
 msgid "Choose a password"
 msgstr ""
 
+#: src/Modules/Dashboard/Branding/BrandIcons.php:100
+#: src/Modules/Settings/Admin/SettingsPage.php:471
+#: templates/alerts/legal.php:103
+#: templates/dashboard/shell.php:36
+msgid "Creator dashboard"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:91
+#: src/Modules/Settings/Admin/SettingsActions.php:131
+#: src/Modules/Settings/Admin/SettingsPage.php:291
+#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsActions.php:93
+msgid "Sorry, you are not allowed to manage Merch Dashboard settings."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:161
+msgid "Logos and icons in MitCCMerch"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:163
+msgid "Logo size"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:166
+msgid "Small (32 px)"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:167
+msgid "Medium (48 px)"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:168
+msgid "Large (64 px)"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:173
+msgid "The height of the logo at the top of MitCCMerch. On small screens it is at most 40 px."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:174
+msgid "Light plate"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:174
+msgid "Show a light plate behind the logo on dark themes"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:175
+msgid "Without the plate the logo must be readable on a dark background, or choose a logo for dark themes below; that one is always shown without a plate."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:176
+msgid "Logo for dark themes"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:176
+msgid "A light version of the logo, shown on the dark themes instead of the plate. Same rules as the logo."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:177
+msgid "Favicon"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:177
+msgid "The icon in the browser tab of MitCCMerch and its login. Square PNG, JPEG or WebP, at least 48 px (512 × 512 px recommended). Without one, the site icon of WordPress is used."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:178
+msgid "App icon"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:178
+msgid "The icon when a creator adds MitCCMerch to the home screen of a phone. Square, at least 180 px (512 × 512 px recommended). Without one, the favicon is used."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:179
+msgid "App name"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:179
+msgid "The name under the app icon on the home screen. Empty: the site name."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:182
+msgid "Login screen"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:183
+msgid "MitCCMerch's own login screen on WordPress' login page: login, lost password, new password and logged out, when creators log in to their dashboard. Other logins are not changed, and WordPress keeps the whole login."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:183
+msgid "See the login screen"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:185
+#: build/alerts-global-admin.js:16
+#: build/alerts-presets-admin.js:16
+#: build/dashboard.js:44
+msgid "Layout"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:188
+msgid "Split screen: image or colour beside the form"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:189
+msgid "Centred card on the image or colour"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:195
+msgid "Background image"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:195
+msgid "PNG, JPEG or WebP, at least 400 px high, at most 3000 px, between three times as high and three times as wide. Without one, the background colour is used."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:196
+msgid "Background colour"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:196
+msgid "Behind the image, and alone without one."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:197
+msgid "Text on the background"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:197
+msgid "Must be readable on the background colour (contrast at least 4.5:1)."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:198
+msgid "Button colour"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:198
+msgid "The login button; its white text must be readable (contrast at least 4.5:1)."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:199
+msgid "Login logo"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:199
+msgid "A large logo above the form. Without one, the logo of MitCCMerch is used. Same rules as the logo."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:202
+msgid "Login"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:203
+msgid "Lost password"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:204
+msgid "New password"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:205
+msgid "Logged out"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:209
+msgid "Heading"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:210
+msgid "Welcome text"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:214
+msgid "Links"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:215
+msgid "Show \"Become a creator\" while signing up is open"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:216
+msgid "Show the link back to the shop"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:217
+msgid "Support link (https or mailto)"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:218
+msgid "Its label"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:218
+#: src/Modules/Dashboard/Branding/LoginBranding.php:382
+msgid "Help and support"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:220
+msgid "Empty headings and texts use the standard texts. Leave an image empty to use the default."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:222
+msgid "Save branding"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:224
+msgid "Reset to standard"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:236
+msgid "The branding was saved."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:237
+msgid "No changes were made to the branding."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:238
+msgid "An image was not changed: it must be a PNG, JPEG or WebP on this site within the sizes of its kind. The other changes were saved."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:239
+msgid "A colour was not changed: use a colour like #4f46e5. The other changes were saved."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:240
+msgid "The colours were not changed: the text on the background and the white text on the button must have a contrast of at least 4.5:1. The other changes were saved."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:241
+msgid "The support link was not changed: use an https address or mailto:. The other changes were saved."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:242
+msgid "A technical error occurred. The branding was not changed."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:267
+msgid "The chosen image can no longer be used, so the default is shown."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/BrandingSettings.php:270
+msgid "Choose image"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/LoginBranding.php:378
+msgid "Become a creator"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/LoginBranding.php:387
+msgid "More"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/LoginBranding.php:432
+msgid "Forgot your password?"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/LoginBranding.php:432
+msgid "Enter your username or e-mail address, and we will send you a link to choose a new password."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/LoginBranding.php:433
+msgid "Choose a new password"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/LoginBranding.php:433
+msgid "Choose a strong password that you do not use anywhere else."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/LoginBranding.php:434
+msgid "You are logged out"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/LoginBranding.php:434
+msgid "See you soon."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/LoginBranding.php:435
+msgid "Welcome back"
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/LoginBranding.php:435
+msgid "Log in to your creator dashboard."
+msgstr ""
+
+#: src/Modules/Dashboard/Branding/LoginBranding.php:443
+msgid "Check your e-mail: we have sent you a link to choose a new password."
+msgstr ""
+
+#: src/Modules/Dashboard/DashboardModule.php:110
+#: src/Modules/Settings/Admin/SettingsPage.php:430
+msgid "Branding"
+msgstr ""
+
 #: src/Modules/Dashboard/DashboardSections.php:63
 msgid "Profile"
 msgstr ""
@@ -5081,7 +5378,7 @@ msgstr ""
 
 #: src/Modules/Notifications/Admin/NotificationSwitches.php:53
 #: src/Modules/Notifications/Admin/NotificationSwitches.php:89
-#: templates/signup/signup.php:98
+#: templates/signup/signup.php:99
 msgid "E-mail"
 msgstr ""
 
@@ -9254,210 +9551,202 @@ msgstr ""
 msgid "none stored"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsActions.php:130
-#: src/Modules/Settings/Admin/SettingsPage.php:265
-#: src/Modules/WooCommerce/Admin/SalesLedgerSettingsActions.php:93
-msgid "Sorry, you are not allowed to manage Merch Dashboard settings."
-msgstr ""
-
-#: src/Modules/Settings/Admin/SettingsPage.php:120
+#: src/Modules/Settings/Admin/SettingsPage.php:125
 msgid "General"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:177
-#: src/Modules/Settings/Admin/SettingsPage.php:276
+#: src/Modules/Settings/Admin/SettingsPage.php:182
+#: src/Modules/Settings/Admin/SettingsPage.php:302
 msgid "Merch Dashboard Settings"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:220
+#: src/Modules/Settings/Admin/SettingsPage.php:225
 msgid "Choose the Merch Dashboard logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:221
+#: src/Modules/Settings/Admin/SettingsPage.php:226
 msgid "Use this logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:222
+#: src/Modules/Settings/Admin/SettingsPage.php:227
 msgid "Logo chosen. Save the logo to use it."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:245
-msgid "Settings saved."
+#: src/Modules/Settings/Admin/SettingsPage.php:247
+msgid "Choose an image"
 msgstr ""
 
 #: src/Modules/Settings/Admin/SettingsPage.php:248
+msgid "Use this image"
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:271
+msgid "Settings saved."
+msgstr ""
+
+#: src/Modules/Settings/Admin/SettingsPage.php:274
 msgid "Permanent deletion was not enabled: type DELETE in the confirmation field to enable it."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:249
+#: src/Modules/Settings/Admin/SettingsPage.php:275
 msgid "The dashboard slug was not changed: use 3-50 lowercase letters, digits and single hyphens, and not a reserved WordPress or WooCommerce path."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:250
+#: src/Modules/Settings/Admin/SettingsPage.php:276
 msgid "The dashboard slug was not changed: a page, post, product or archive already uses it."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:251
+#: src/Modules/Settings/Admin/SettingsPage.php:277
 msgid "The logo was not changed: choose an image from the Media Library."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:252
+#: src/Modules/Settings/Admin/SettingsPage.php:278
 msgid "The logo was not changed: use a PNG, JPEG or WebP image. SVG is not allowed."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:253
+#: src/Modules/Settings/Admin/SettingsPage.php:279
 msgid "The logo was not changed: the image must be at least 64 px high, at most 2000 px on the longest side, and between square and six times as wide as high."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:254
+#: src/Modules/Settings/Admin/SettingsPage.php:280
 msgid "The logo was not changed: the image must be stored on this site, not on another domain."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:255
+#: src/Modules/Settings/Admin/SettingsPage.php:281
 msgid "A technical error occurred. The settings were not changed."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:305
+#: src/Modules/Settings/Admin/SettingsPage.php:335
 msgid "Deactivating the plugin never deletes data. Deleting the plugin also keeps all data unless permanent deletion is enabled here."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:308
+#: src/Modules/Settings/Admin/SettingsPage.php:338
 msgid "Permanent deletion is ENABLED."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:309
+#: src/Modules/Settings/Admin/SettingsPage.php:339
 msgid "When the plugin is deleted from the Plugins screen, the Merch Dashboard data listed below is permanently removed."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:312
+#: src/Modules/Settings/Admin/SettingsPage.php:342
 msgid "Permanent deletion is off. Deleting the plugin keeps all Merch Dashboard data."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:315
+#: src/Modules/Settings/Admin/SettingsPage.php:345
 msgid "If enabled, deleting the plugin permanently removes: the sales ledger, pricing and VAT data, creator metadata and categories, the encrypted payment details of payout requests, the creators' links to products and WordPress users, the Merch Dashboard settings and schema state, the \"Merch Dashboard Creator\" role and all merchboard_ capabilities. This cannot be undone."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:316
+#: src/Modules/Settings/Admin/SettingsPage.php:346
 msgid "Kept as historical documentation: the payout history, the settlement documents with their rows and numbering, the audit log and the creators. Every creator is archived: set to inactive and unlinked from its WordPress user, so no one gets dashboard access. Payment details are only kept masked (e.g. the last four digits of an account)."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:317
+#: src/Modules/Settings/Admin/SettingsPage.php:347
 msgid "Installing the plugin again shows this history, but only as documentation: reactivating an archived creator and normal payouts for it are not supported. The sales ledger is then rebuilt from the products' current creator links, so orders can be attributed to another creator than in the kept settlement documents, and balances, payouts and documents would not match."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:318
+#: src/Modules/Settings/Admin/SettingsPage.php:348
 msgid "While a payout is pending, deleting the plugin deletes nothing and is refused, so the pending payouts can still be handled."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:319
+#: src/Modules/Settings/Admin/SettingsPage.php:349
 msgid "Never removed: WordPress users, other roles and capabilities, posts, pages, media and WooCommerce products, orders and customers."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:325
+#: src/Modules/Settings/Admin/SettingsPage.php:355
 msgid "Permanent deletion"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:327
+#: src/Modules/Settings/Admin/SettingsPage.php:357
 msgid "Delete Merch Dashboard data when the plugin is deleted (the history listed above is kept)"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:331
+#: src/Modules/Settings/Admin/SettingsPage.php:361
 msgid "Confirmation"
 msgstr ""
 
 #. translators: %s: the word to type, "DELETE".
-#: src/Modules/Settings/Admin/SettingsPage.php:334
+#: src/Modules/Settings/Admin/SettingsPage.php:364
 #, php-format
 msgid "To enable permanent deletion, also type %s here."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:339
+#: src/Modules/Settings/Admin/SettingsPage.php:369
 msgid "Save settings"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:349
+#: src/Modules/Settings/Admin/SettingsPage.php:379
 msgid "Settings sections"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:382
+#: src/Modules/Settings/Admin/SettingsPage.php:412
 msgid "Whether payouts are pending cannot be checked right now. Deleting the plugin is refused until it can."
 msgstr ""
 
 #. translators: %d: number of pending payouts.
-#: src/Modules/Settings/Admin/SettingsPage.php:384
+#: src/Modules/Settings/Admin/SettingsPage.php:414
 #, php-format
 msgid "%d payout is pending. Deleting the plugin now deletes nothing and is refused; handle it under Payouts first."
 msgid_plural "%d payouts are pending. Deleting the plugin now deletes nothing and is refused; handle them under Payouts first."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:400
-msgid "Branding"
-msgstr ""
-
-#: src/Modules/Settings/Admin/SettingsPage.php:401
+#: src/Modules/Settings/Admin/SettingsPage.php:431
 msgid "The logo is shown at the top of the creator dashboard and on the WordPress login page when creators log in to their dashboard. Other login pages are not changed."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:404
+#: src/Modules/Settings/Admin/SettingsPage.php:434
 msgid "The chosen logo can no longer be used (deleted, changed or not on this site), so the default logo is shown."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:412
+#: src/Modules/Settings/Admin/SettingsPage.php:442
 msgid "Logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:415
+#: src/Modules/Settings/Admin/SettingsPage.php:445
 msgid "Current logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:418
+#: src/Modules/Settings/Admin/SettingsPage.php:448
 msgid "A custom logo is in use."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:418
+#: src/Modules/Settings/Admin/SettingsPage.php:448
 msgid "The default Merch Dashboard logo is in use."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:419
+#: src/Modules/Settings/Admin/SettingsPage.php:449
 msgid "Choose logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:420
+#: src/Modules/Settings/Admin/SettingsPage.php:450
 msgid "PNG, JPEG or WebP from the Media Library, at least 64 px high, at most 2000 px on the longest side, and between square and six times as wide as high. SVG is not allowed. Use a logo that is readable on a light background; on dark dashboard themes it is shown on a light plate."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:423
+#: src/Modules/Settings/Admin/SettingsPage.php:453
 msgid "Save logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:427
+#: src/Modules/Settings/Admin/SettingsPage.php:457
 msgid "Use the default logo"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:441
-#: templates/alerts/legal.php:103
-#: templates/dashboard/shell.php:35
-msgid "Creator dashboard"
-msgstr ""
-
-#: src/Modules/Settings/Admin/SettingsPage.php:442
+#: src/Modules/Settings/Admin/SettingsPage.php:472
 msgid "Creators log in and use their dashboard at this address:"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:445
+#: src/Modules/Settings/Admin/SettingsPage.php:475
 msgid "Plain permalinks are active, so the slug is not used; the dashboard address above works regardless."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:452
+#: src/Modules/Settings/Admin/SettingsPage.php:482
 msgid "Dashboard URL slug"
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:454
+#: src/Modules/Settings/Admin/SettingsPage.php:484
 msgid "Lowercase letters, digits and hyphens. Changing it moves the dashboard: the old address stops working and bookmarks must be updated. Pages, posts, products and archives that already use a slug cannot be chosen."
 msgstr ""
 
-#: src/Modules/Settings/Admin/SettingsPage.php:456
+#: src/Modules/Settings/Admin/SettingsPage.php:486
 msgid "Save dashboard URL"
 msgstr ""
 
@@ -13047,22 +13336,22 @@ msgstr ""
 msgid "Version %1$d, published %2$s"
 msgstr ""
 
-#: templates/dashboard/no-access.php:30
+#: templates/dashboard/no-access.php:31
 msgid "Access not active"
 msgstr ""
 
-#: templates/dashboard/no-access.php:36
+#: templates/dashboard/no-access.php:37
 msgid "Your access is not active"
 msgstr ""
 
 #. translators: %s: site name.
-#: templates/dashboard/no-access.php:38
+#: templates/dashboard/no-access.php:39
 #, php-format
 msgid "Your creator dashboard access is not active. Please contact %s."
 msgstr ""
 
-#: templates/dashboard/no-access.php:39
-#: templates/dashboard/shell.php:54
+#: templates/dashboard/no-access.php:40
+#: templates/dashboard/shell.php:55
 #: build/alerts-global-admin.js:1
 #: build/alerts-presets-admin.js:1
 #: build/dashboard.js:2
@@ -13070,20 +13359,20 @@ msgstr ""
 msgid "Log out"
 msgstr ""
 
-#: templates/dashboard/shell.php:47
+#: templates/dashboard/shell.php:48
 #: build/dashboard.js:110
 msgid "Loading your dashboard…"
 msgstr ""
 
-#: templates/dashboard/shell.php:48
+#: templates/dashboard/shell.php:49
 msgid "The creator dashboard needs JavaScript. Please enable it in your browser."
 msgstr ""
 
-#: templates/dashboard/shell.php:52
+#: templates/dashboard/shell.php:53
 msgid "The dashboard is temporarily unavailable."
 msgstr ""
 
-#: templates/dashboard/shell.php:53
+#: templates/dashboard/shell.php:54
 msgid "Please try again later."
 msgstr ""
 
@@ -13163,65 +13452,65 @@ msgstr ""
 msgid "Sign-up is not open"
 msgstr ""
 
-#: templates/signup/signup.php:78
+#: templates/signup/signup.php:79
 msgid "Thank you! We have sent you an e-mail. Use the link in it to choose a password; then you can log in and prepare your shop. The link works for 7 days."
 msgstr ""
 
-#: templates/signup/signup.php:79
+#: templates/signup/signup.php:80
 msgid "Nothing in your inbox? Check your spam folder."
 msgstr ""
 
-#: templates/signup/signup.php:81
+#: templates/signup/signup.php:82
 msgid "Get your own merch shop. Sign up, accept our agreement and prepare your shop; it goes live when we have approved your request."
 msgstr ""
 
-#: templates/signup/signup.php:90
+#: templates/signup/signup.php:91
 msgid "Leave this field empty"
 msgstr ""
 
-#: templates/signup/signup.php:93
+#: templates/signup/signup.php:94
 msgid "Creator name / name of association or community"
 msgstr ""
 
-#: templates/signup/signup.php:96
+#: templates/signup/signup.php:97
 msgid "Username (for logging in)"
 msgstr ""
 
-#: templates/signup/signup.php:101
+#: templates/signup/signup.php:102
 msgid "Link to your channel (e.g. Twitch or YouTube)"
 msgstr ""
 
-#: templates/signup/signup.php:104
+#: templates/signup/signup.php:105
 msgid "What describes you best?"
 msgstr ""
 
-#: templates/signup/signup.php:109
+#: templates/signup/signup.php:110
 #: build/dashboard.js:2
 msgid "Our agreement"
 msgstr ""
 
-#: templates/signup/signup.php:111
+#: templates/signup/signup.php:112
 msgid "I am 18 or older."
 msgstr ""
 
-#: templates/signup/signup.php:112
+#: templates/signup/signup.php:113
 msgid "I have read and accept the agreement."
 msgstr ""
 
-#: templates/signup/signup.php:113
+#: templates/signup/signup.php:114
 msgid "Sign up"
 msgstr ""
 
-#: templates/signup/signup.php:115
+#: templates/signup/signup.php:116
 msgid "Already a creator? Log in"
 msgstr ""
 
-#: templates/signup/signup.php:117
+#: templates/signup/signup.php:118
 msgid "The page could not be shown right now. Please try again later."
 msgstr ""
 
 #. translators: %s: site name.
-#: templates/signup/signup.php:120
+#: templates/signup/signup.php:121
 #, php-format
 msgid "It is not possible to sign up as a creator right now. Please contact %s."
 msgstr ""
@@ -14439,12 +14728,6 @@ msgstr ""
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
 msgid "Show the alert as long as its sound plays"
-msgstr ""
-
-#: build/alerts-global-admin.js:16
-#: build/alerts-presets-admin.js:16
-#: build/dashboard.js:44
-msgid "Layout"
 msgstr ""
 
 #: build/alerts-global-admin.js:16

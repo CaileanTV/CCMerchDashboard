@@ -12,6 +12,9 @@ namespace MerchBoard\Tests\Integration\Dashboard;
 
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Creators\CreatorService;
+use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\Dashboard\Branding\BrandingDesign;
 use MerchBoard\Modules\Dashboard\Branding\BrandLogo;
 use MerchBoard\Modules\Dashboard\Branding\LoginBranding;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
@@ -42,6 +45,7 @@ final class BrandingTest extends IntegrationTestCase {
 		}
 
 		delete_option( Settings::OPTION );
+		delete_option( BrandingDesign::OPTION );
 		$this->reset_login();
 		wp_dequeue_style( LoginBranding::HANDLE );
 		wp_deregister_style( LoginBranding::HANDLE );
@@ -251,21 +255,85 @@ final class BrandingTest extends IntegrationTestCase {
 		self::assertStringContainsString( '/assets/brand/logo.svg', implode( '', $inline ) );
 	}
 
+	public function test_the_lost_password_screens_are_branded_only_with_the_marker(): void {
+		$branding = $this->service( LoginBranding::class );
+
+		// Outside the context WordPress' URLs stay as they are.
+		self::assertStringNotContainsString( LoginBranding::MARKER . '=1', wp_lostpassword_url() );
+
+		// On the branded login, "Lost your password?" carries the marker.
+		$_REQUEST = array( 'redirect_to' => ( new DashboardRoute() )->url() ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Simulated login request.
+		do_action( 'login_form_login' );
+		$lost = wp_lostpassword_url();
+		self::assertStringContainsString( 'action=lostpassword', $lost );
+		self::assertStringContainsString( LoginBranding::MARKER . '=1', $lost );
+
+		// Without the marker the lost-password screen is WordPress' own.
+		$_REQUEST = array(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Simulated login request.
+		do_action( 'login_form_lostpassword' );
+		self::assertFalse( $branding->is_active() );
+		self::assertSame( 'wp-login.php?checkemail=confirm', apply_filters( 'lostpassword_redirect', 'wp-login.php?checkemail=confirm' ) );
+
+		// With the marker: branded, the marker stays in the form, the receipt is branded.
+		$_REQUEST = array( LoginBranding::MARKER => '1' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Simulated login request.
+		do_action( 'login_form_lostpassword' );
+		self::assertSame( 'lostpassword', $branding->screen() );
+		ob_start();
+		do_action( 'lostpassword_form' );
+		self::assertStringContainsString( 'name="' . LoginBranding::MARKER . '" value="1"', (string) ob_get_clean() );
+		$receipt = (string) apply_filters( 'lostpassword_redirect', '' );
+		self::assertStringContainsString( 'checkemail=confirm', $receipt );
+		self::assertStringContainsString( 'redirect_to=', $receipt );
+
+		$_REQUEST = array( // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Simulated login request.
+			'checkemail'  => 'confirm',
+			'redirect_to' => ( new DashboardRoute() )->url(),
+		);
+		do_action( 'login_form_checkemail' );
+		self::assertSame( 'lostpassword', $branding->screen(), 'The receipt (the action checkemail of WordPress) is branded.' );
+
+		$_REQUEST = array( 'checkemail' => 'confirm' ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Simulated login request.
+		do_action( 'login_form_checkemail' );
+		self::assertFalse( $branding->is_active(), 'The receipt of WordPress itself stays its own.' );
+	}
+
+	public function test_the_reset_screen_is_branded_only_for_creators(): void {
+		$branding = $this->service( LoginBranding::class );
+		$creator  = $this->create_user( 'reset_creator' );
+		$this->create_user( 'reset_customer' );
+		$this->service( CreatorService::class )->create( 'Reset Creator', CreatorStatus::Active, $creator );
+
+		$cookie = 'wp-resetpass-' . (string) constant( 'COOKIEHASH' );
+
+		$branding->observe_reset( array( 'login' => 'reset_customer' ), array() );
+		self::assertFalse( $branding->is_active(), 'A customer gets WordPress\' own screen.' );
+		self::assertSame( 'https://shop.test/wp-login.php', apply_filters( 'login_url', 'https://shop.test/wp-login.php', '' ) );
+
+		$branding->observe_reset( array(), array( $cookie => 'nobody:key' ) );
+		self::assertFalse( $branding->is_active(), 'An unknown user is not in context.' );
+
+		$branding->observe_reset( array(), array( $cookie => 'reset_creator:key' ) );
+		self::assertSame( 'resetpass', $branding->screen(), 'The reset cookie\'s user is a creator.' );
+		self::assertStringContainsString( 'redirect_to=', (string) apply_filters( 'login_url', 'https://shop.test/wp-login.php', '' ), '"Log in" leads to the branded login.' );
+	}
+
 	public function test_the_login_flow_itself_is_untouched(): void {
-		// Merch Dashboard adds no authentication, credential, redirect or URL
-		// filters of its own on top of the existing LoginRedirect (ADR-026).
+		// Merch Dashboard adds no authentication, credential, cookie or flow
+		// hooks of its own on top of the existing LoginRedirect (ADR-026, ADR-103).
 		$login_url = wp_login_url( home_url( '/' ) );
 
 		self::assertStringContainsString( '/wp-login.php', $login_url );
 		self::assertStringContainsString( '/wp-login.php', wp_lostpassword_url() );
 
-		$hooks = array( 'login_url', 'lostpassword_url', 'logout_url', 'authenticate', 'wp_authenticate', 'wp_login', 'login_redirect', 'login_init', 'login_form', 'login_form_lostpassword', 'login_form_retrievepassword', 'login_form_rp', 'login_form_resetpass', 'login_form_register', 'login_form_logout', 'lostpassword_redirect', 'secure_signon_cookie' );
+		$hooks = array( 'logout_url', 'authenticate', 'wp_authenticate', 'wp_login', 'wp_login_failed', 'login_redirect', 'login_init', 'login_form', 'login_form_register', 'login_form_logout', 'login_form_confirm_admin_email', 'secure_signon_cookie', 'login_errors', 'retrieve_password', 'password_reset', 'validate_password_reset' );
 
 		foreach ( $hooks as $hook ) {
 			self::assertSame( array(), $this->branding_callbacks( $hook ), $hook . ' has no branding callback.' );
 		}
 
-		self::assertNotSame( array(), $this->branding_callbacks( 'login_form_login' ), 'The only action observed is the login screen.' );
+		foreach ( array( 'login_form_login', 'login_form_lostpassword', 'login_form_retrievepassword', 'login_form_rp', 'login_form_resetpass', 'login_form_checkemail' ) as $hook ) {
+			self::assertNotSame( array(), $this->branding_callbacks( $hook ), $hook . ' is observed (ADR-103).' );
+		}
 	}
 
 	/**

@@ -1,11 +1,12 @@
 /*
- * Merch Dashboard branding of WordPress' own login screen (ADR-042).
+ * MitCCMerch's own login screen on WordPress' wp-login.php (ADR-103, ADR-042).
  *
  * Loaded by LoginBranding only in Merch Dashboard context; every rule is
  * scoped to body.merchboard-login, so it cannot style any other login. Only
  * presentation: the form, its fields and the whole login flow are
- * WordPress'. No fonts, no external resources and no JavaScript; the logo URL
- * is added as an inline rule.
+ * WordPress'. No fonts, no external resources and no JavaScript. The
+ * administrator's choices (BrandingDesign) arrive as an inline rule:
+ * --merchboard-login-bg, -panel-text, -accent and -image, and the logo.
  *
  * The colors mirror the dashboard tokens: Light, and Dark Black when the
  * system prefers dark (DesignTokensTest keeps the values in sync). The
@@ -50,12 +51,158 @@ body.merchboard-login {
 	}
 }
 
-/* The logo on its plate; the image keeps its own colors. */
+/* The page: the layout replaces WordPress' grey page. */
+body.merchboard-login {
+	min-height: 100vh;
+	margin: 0;
+}
+
+body.merchboard-login .merchboard-login-layout {
+	display: grid;
+	min-height: 100vh;
+	grid-template-columns: minmax(0, 1fr);
+}
+
+/* The panel: the administrator's colour and image, with the heading. */
+body.merchboard-login .merchboard-login-panel {
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	padding: 2rem;
+	color: var(--merchboard-login-panel-text, #fff);
+	background-color: var(--merchboard-login-bg, #1e1b4b);
+	background-image: var(--merchboard-login-image, none);
+	background-position: center;
+	background-size: cover;
+}
+
+/* A shade over an image so the text stays readable. */
+body.merchboard-login.merchboard-login--image .merchboard-login-panel::before {
+	position: absolute;
+	inset: 0;
+	content: "";
+	background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.1) 60%);
+}
+
+body.merchboard-login .merchboard-login-panel .merchboard-login-intro {
+	position: relative;
+	max-width: 32rem;
+}
+
+body.merchboard-login .merchboard-login-main {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 2rem 1rem;
+	background: var(--merchboard-bg);
+}
+
+body.merchboard-login #login {
+	width: min(100%, 22rem);
+	padding: 0;
+	margin: 0 auto;
+}
+
+/* The heading and welcome text. */
+body.merchboard-login .merchboard-login-intro__title {
+	margin: 0 0 0.5rem;
+	font-size: 1.75rem;
+	line-height: 1.2;
+	color: inherit;
+}
+
+body.merchboard-login .merchboard-login-intro__text {
+	margin: 0;
+	font-size: 1rem;
+	line-height: 1.5;
+}
+
+body.merchboard-login #login .merchboard-login-intro {
+	margin: 0 0 1.25rem;
+	color: var(--merchboard-text);
+	text-align: center;
+}
+
+body.merchboard-login #login .merchboard-login-intro__text {
+	color: var(--merchboard-text-muted);
+}
+
+/*
+ * Split screen: the panel beside the form on wide screens, a band above it
+ * on small ones.
+ */
+body.merchboard-login.merchboard-login--split .merchboard-login-panel {
+	min-height: 11rem;
+}
+
+@media (min-width: 900px) {
+
+	body.merchboard-login.merchboard-login--split .merchboard-login-layout {
+		grid-template-columns: minmax(0, 1fr) minmax(24rem, 32rem);
+	}
+
+	body.merchboard-login.merchboard-login--split .merchboard-login-panel {
+		padding: 3rem;
+	}
+
+	body.merchboard-login.merchboard-login--split .merchboard-login-intro__title {
+		font-size: 2.5rem;
+	}
+
+	body.merchboard-login.merchboard-login--split .merchboard-login-intro__text {
+		font-size: 1.125rem;
+	}
+}
+
+/* Centred card: colour and image behind the page, the form on a card. */
+body.merchboard-login.merchboard-login--centered .merchboard-login-layout {
+	position: relative;
+	color: var(--merchboard-login-panel-text, #fff);
+	background-color: var(--merchboard-login-bg, #1e1b4b);
+	background-image: var(--merchboard-login-image, none);
+	background-position: center;
+	background-size: cover;
+}
+
+body.merchboard-login.merchboard-login--centered .merchboard-login-panel {
+	display: none;
+}
+
+body.merchboard-login.merchboard-login--centered.merchboard-login--image .merchboard-login-layout::before {
+	position: absolute;
+	inset: 0;
+	content: "";
+	background: rgba(0, 0, 0, 0.35);
+}
+
+body.merchboard-login.merchboard-login--centered .merchboard-login-main {
+	position: relative;
+	background: transparent;
+}
+
+body.merchboard-login.merchboard-login--centered #login {
+	box-sizing: border-box;
+	width: min(100%, 26rem);
+	padding: 2rem 1.5rem;
+	color: var(--merchboard-text);
+	background: var(--merchboard-surface);
+	border-radius: 16px;
+	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+body.merchboard-login.merchboard-login--centered.login form {
+	padding: 0;
+	margin-top: 0;
+	border: 0;
+}
+
+/* The logo, larger than WordPress' own. */
 body.merchboard-login #login h1 a {
 	box-sizing: border-box;
 	width: 100%;
-	max-width: 15rem;
-	height: 5.25rem;
+	max-width: 18rem;
+	height: 6rem;
 	padding: 0.5rem;
 	margin: 0 auto 1.5rem;
 	background-color: var(--merchboard-logo-plate);
@@ -73,10 +220,11 @@ body.merchboard-login #login h1 a:focus {
 }
 
 body.merchboard-login.login form {
+	padding: 1.5rem;
 	color: var(--merchboard-text);
 	background: var(--merchboard-surface);
 	border: 1px solid var(--merchboard-border);
-	border-radius: 10px;
+	border-radius: 12px;
 	box-shadow: none;
 }
 
@@ -86,32 +234,42 @@ body.merchboard-login.login label {
 
 body.merchboard-login.login form .input,
 body.merchboard-login.login input[type="text"],
-body.merchboard-login.login input[type="password"] {
+body.merchboard-login.login input[type="password"],
+body.merchboard-login.login input[type="email"] {
+	min-height: 2.75rem;
 	color: var(--merchboard-text);
 	background: var(--merchboard-surface);
 	border-color: var(--merchboard-control-border);
+	border-radius: 8px;
 }
 
 body.merchboard-login.login form .input:focus,
 body.merchboard-login.login input[type="text"]:focus,
 body.merchboard-login.login input[type="password"]:focus,
+body.merchboard-login.login input[type="email"]:focus,
 body.merchboard-login.login input[type="checkbox"]:focus {
 	border-color: var(--merchboard-focus);
 	outline: 2px solid transparent;
 	box-shadow: 0 0 0 2px var(--merchboard-focus);
 }
 
+/* The button in the administrator's colour (white text, contrast checked). */
 body.merchboard-login.login .button-primary {
-	color: var(--merchboard-on-primary);
-	background: var(--merchboard-primary);
-	border-color: var(--merchboard-primary);
+	min-height: 2.75rem;
+	padding: 0 1.25rem;
+	font-weight: 600;
+	color: #fff;
+	background: var(--merchboard-login-accent, var(--merchboard-primary));
+	border-color: var(--merchboard-login-accent, var(--merchboard-primary));
+	border-radius: 8px;
 }
 
 body.merchboard-login.login .button-primary:hover,
 body.merchboard-login.login .button-primary:focus {
-	color: var(--merchboard-on-primary);
-	background: var(--merchboard-primary-hover);
-	border-color: var(--merchboard-primary-hover);
+	color: #fff;
+	background: var(--merchboard-login-accent, var(--merchboard-primary-hover));
+	border-color: var(--merchboard-login-accent, var(--merchboard-primary-hover));
+	filter: brightness(0.92);
 }
 
 body.merchboard-login.login .button-primary:focus {
@@ -121,6 +279,13 @@ body.merchboard-login.login .button-primary:focus {
 body.merchboard-login.login .button.wp-hide-pw,
 body.merchboard-login.login .button.wp-hide-pw .dashicons {
 	color: var(--merchboard-link);
+}
+
+body.merchboard-login.login #nav,
+body.merchboard-login.login #backtoblog {
+	padding: 0;
+	margin: 1rem 0 0;
+	text-align: center;
 }
 
 body.merchboard-login.login #nav a,
@@ -138,15 +303,50 @@ body.merchboard-login.login .privacy-policy-page-link a:focus {
 	color: var(--merchboard-link);
 }
 
+body.merchboard-login.merchboard-login--no-shop-link #backtoblog {
+	display: none;
+}
+
+/* The administrator's links below the form. */
+body.merchboard-login .merchboard-login-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1.25rem;
+	justify-content: center;
+	margin: 1.25rem 0 0;
+}
+
+body.merchboard-login .merchboard-login-links a {
+	font-weight: 600;
+	color: var(--merchboard-link);
+}
+
+body.merchboard-login.merchboard-login--centered .merchboard-login-links a {
+	color: var(--merchboard-login-panel-text, #fff);
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
 body.merchboard-login.login .message,
 body.merchboard-login.login .notice,
 body.merchboard-login.login .success {
 	color: var(--merchboard-text);
 	background: var(--merchboard-surface);
+	border-radius: 8px;
+}
+
+body.merchboard-login.login .language-switcher {
+	margin-top: 1.5rem;
 }
 
 body.merchboard-login.login .language-switcher label .dashicons {
 	color: var(--merchboard-text-muted);
+}
+
+/* Centred: the switcher stands on the background, like the links. */
+body.merchboard-login.merchboard-login--centered .language-switcher label,
+body.merchboard-login.merchboard-login--centered .language-switcher label .dashicons {
+	color: var(--merchboard-login-panel-text, #fff);
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 @media (prefers-reduced-motion: reduce) {

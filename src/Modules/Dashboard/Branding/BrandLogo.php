@@ -66,6 +66,19 @@ final class BrandLogo {
 	}
 
 	/**
+	 * Another image of the branding (ADR-103) when it is still usable: the
+	 * logo for dark themes or for the login, the login background, the
+	 * favicon or the app icon. Null for 0 or an unusable attachment.
+	 *
+	 * @param int    $id   Attachment id.
+	 * @param string $kind LogoAttachment::KIND_*.
+	 * @return array{url: string, width: int, height: int}|null
+	 */
+	public function image( int $id, string $kind ): ?array {
+		return $id > 0 ? $this->attachments->usable( $id, $kind ) : null;
+	}
+
+	/**
 	 * The default logo, or null when its file or URL is unusable.
 	 *
 	 * @return array{url: string, width: int, height: int, custom: bool}|null

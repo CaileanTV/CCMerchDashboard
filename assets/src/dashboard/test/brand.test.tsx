@@ -112,6 +112,58 @@ describe( 'header logo (ADR-042)', () => {
 		).toBe( 'Merch Shop' );
 	} );
 
+	it( 'is small with the plate when no style is sent', async () => {
+		const element = await header( { ...CONFIG, logo: CUSTOM_LOGO } );
+
+		expect( element.querySelector( '.merchboard-logo' )?.className ).toBe(
+			'merchboard-logo merchboard-logo--small'
+		);
+	} );
+
+	it( 'applies the size, the plate setting and the dark logo (ADR-103)', async () => {
+		const dark = {
+			url: `${ ORIGIN }/wp-content/uploads/logo-dark.png`,
+			width: 400,
+			height: 100,
+			alt: 'Merch Shop',
+		};
+		const element = await header( {
+			...CONFIG,
+			logo: CUSTOM_LOGO,
+			logoStyle: { size: 'large', plate: false, dark },
+		} );
+		const wrapper = element.querySelector( '.merchboard-logo' );
+
+		expect( wrapper?.className ).toBe(
+			'merchboard-logo merchboard-logo--large merchboard-logo--no-plate merchboard-logo--has-dark'
+		);
+		expect(
+			wrapper
+				?.querySelector( '.merchboard-logo__image--light' )
+				?.getAttribute( 'src' )
+		).toBe( CUSTOM_LOGO.url );
+		expect(
+			wrapper
+				?.querySelector( '.merchboard-logo__image--dark' )
+				?.getAttribute( 'src' )
+		).toBe( dark.url );
+	} );
+
+	it( 'has no dark image without a dark logo', async () => {
+		const element = await header( {
+			...CONFIG,
+			logo: CUSTOM_LOGO,
+			logoStyle: { size: 'medium', plate: true, dark: null },
+		} );
+
+		expect(
+			element.querySelectorAll( '.merchboard-logo img' )
+		).toHaveLength( 1 );
+		expect( element.querySelector( '.merchboard-logo' )?.className ).toBe(
+			'merchboard-logo merchboard-logo--medium'
+		);
+	} );
+
 	it( 'renders alt text as text only', async () => {
 		const element = await header( {
 			...CONFIG,

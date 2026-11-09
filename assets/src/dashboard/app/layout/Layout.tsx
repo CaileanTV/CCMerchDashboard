@@ -25,24 +25,46 @@ const MAIN_ID = 'merchboard-main';
  * name (alt = site name); the default logo is a mark next to the site name
  * (alt = ""). Without a logo, or when the image fails to load, only the site
  * name is shown, so there is never a broken image.
+ *
+ * ADR-103: the administrator's size (small, medium or large), the logo for
+ * the dark themes (shown there instead, without the plate; CSS picks the
+ * image by theme) and whether the light plate is used.
  */
 function Brand() {
-	const { logo, siteName } = useConfig();
+	const { logo, logoStyle, siteName } = useConfig();
 	const [ failed, setFailed ] = useState( false );
 	const showLogo = logo !== null && ! failed;
+	const dark = logoStyle?.dark ?? null;
+	const classes = [
+		'merchboard-logo',
+		`merchboard-logo--${ logoStyle?.size ?? 'small' }`,
+		logoStyle?.plate === false ? 'merchboard-logo--no-plate' : '',
+		dark !== null ? 'merchboard-logo--has-dark' : '',
+	]
+		.filter( ( name ) => name !== '' )
+		.join( ' ' );
 
 	return (
 		<div className="merchboard-topbar__brand">
 			{ showLogo && (
-				<span className="merchboard-logo">
+				<span className={ classes }>
 					<img
-						className="merchboard-logo__image"
+						className="merchboard-logo__image merchboard-logo__image--light"
 						src={ logo.url }
 						width={ logo.width }
 						height={ logo.height }
 						alt={ logo.alt }
 						onError={ () => setFailed( true ) }
 					/>
+					{ dark !== null && (
+						<img
+							className="merchboard-logo__image merchboard-logo__image--dark"
+							src={ dark.url }
+							width={ dark.width }
+							height={ dark.height }
+							alt={ dark.alt }
+						/>
+					) }
 				</span>
 			) }
 			{ ( ! showLogo || ! logo.custom ) && (

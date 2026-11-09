@@ -137,6 +137,48 @@
 	object-fit: contain;
 }
 
+// The administrator's size (ADR-103); at most 40 px high on small screens.
+.merchboard-logo--medium .merchboard-logo__image {
+	max-width: 16rem;
+	height: 3rem;
+}
+
+.merchboard-logo--large .merchboard-logo__image {
+	max-width: 20rem;
+	height: 4rem;
+}
+
+@media (max-width: 599px) {
+
+	.merchboard-logo--medium .merchboard-logo__image,
+	.merchboard-logo--large .merchboard-logo__image {
+		max-width: 12rem;
+		height: 2.5rem;
+	}
+}
+
+// Without the plate, or with a logo made for the dark themes (ADR-103).
+.merchboard-logo--no-plate {
+	background: transparent;
+}
+
+// The theme's tokens pick the image; a logo for the dark themes needs no plate.
+.merchboard-logo--has-dark {
+	background: transparent;
+}
+
+.merchboard-logo__image--dark {
+	display: none;
+}
+
+.merchboard-logo--has-dark .merchboard-logo__image--light {
+	display: var(--merchboard-logo-light-display);
+}
+
+.merchboard-logo--has-dark .merchboard-logo__image--dark {
+	display: var(--merchboard-logo-dark-display);
+}
+
 .merchboard-topbar__menu-button {
 	min-height: 40px;
 	padding: 0 var(--merchboard-space-3);

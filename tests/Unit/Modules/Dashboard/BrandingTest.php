@@ -11,6 +11,7 @@ namespace MerchBoard\Tests\Unit\Modules\Dashboard;
 
 use Brain\Monkey\Functions;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Dashboard\Branding\BrandIcons;
 use MerchBoard\Modules\Dashboard\Branding\BrandLogo;
 use MerchBoard\Modules\Dashboard\Branding\LoginBranding;
 use MerchBoard\Modules\Dashboard\Branding\LogoAttachment;
@@ -350,8 +351,8 @@ final class BrandingTest extends TestCase {
 		if ( $active ) {
 			self::assertSame( array( array( LoginBranding::HANDLE, 'https://shop.test/wp-content/plugins/merchboard/assets/css/login.css', array( 'login' ), false ) ), $this->styles['enqueued'] );
 			self::assertSame( LoginBranding::HANDLE, $this->styles['inline'][0][0] );
-			self::assertStringStartsWith( 'body.merchboard-login #login h1 a{background-image:url("' . self::DEFAULT_URL, $this->styles['inline'][0][1] );
-			self::assertSame( array( 'login', 'merchboard-login' ), $branding->body_class( array( 'login' ) ) );
+			self::assertStringContainsString( 'body.merchboard-login #login h1 a{background-image:url("' . self::DEFAULT_URL, $this->styles['inline'][0][1] );
+			self::assertSame( array( 'login', 'merchboard-login', 'merchboard-login--split', 'merchboard-login--login' ), $branding->body_class( array( 'login' ) ) );
 			self::assertSame( 'https://shop.test/', $branding->header_url( 'https://wordpress.org/' ) );
 			self::assertSame( 'Nova Merch', $branding->header_text( 'Powered by WordPress' ) );
 		} else {
@@ -362,12 +363,11 @@ final class BrandingTest extends TestCase {
 		}
 	}
 
-	public function test_the_branding_is_off_until_the_login_action_is_observed(): void {
-		// lostpassword, rp/resetpass, register, logout, checkemail …: WordPress
-		// fires login_form_{action} for them, never login_form_login, and only
-		// login_form_login is hooked (next test). Without the observation the
-		// branding stays off, even on a dashboard redirect_to. The integration
-		// test runs WordPress' real hooks.
+	public function test_the_branding_is_off_until_a_login_action_is_observed(): void {
+		// Every screen is decided by its own observer on login_form_{action}
+		// (ADR-103); register, logout and the rest have none. Without an
+		// observation the branding stays off. The integration test runs
+		// WordPress' real hooks.
 		$branding = $this->branding();
 		$branding->register();
 		$branding->enqueue();
@@ -377,20 +377,21 @@ final class BrandingTest extends TestCase {
 		self::assertSame( array( 'login' ), $branding->body_class( array( 'login' ) ) );
 	}
 
-	public function test_only_presentation_hooks_are_registered(): void {
+	public function test_only_the_hooks_of_adr_103_are_registered(): void {
 		$branding = $this->branding();
 		$branding->register();
 
-		foreach ( array( 'login_form_login', 'login_enqueue_scripts' ) as $hook ) {
+		// Observers and presentation (ADR-103 pkt. 2–3).
+		foreach ( array( 'login_form_login', 'login_form_lostpassword', 'login_form_retrievepassword', 'login_form_rp', 'login_form_resetpass', 'login_form_checkemail', 'login_enqueue_scripts', 'login_head', 'login_header', 'login_footer', 'lostpassword_form' ) as $hook ) {
 			self::assertNotFalse( has_action( $hook ), $hook );
 		}
 
-		foreach ( array( 'login_body_class', 'login_headerurl', 'login_headertext' ) as $hook ) {
+		foreach ( array( 'login_body_class', 'login_headerurl', 'login_headertext', 'login_message', 'lostpassword_url', 'lostpassword_redirect', 'login_url' ) as $hook ) {
 			self::assertNotFalse( has_filter( $hook ), $hook );
 		}
 
-		// Nothing that touches authentication, credentials, redirects or URLs.
-		foreach ( array( 'authenticate', 'wp_authenticate', 'wp_login', 'wp_login_failed', 'login_redirect', 'login_url', 'logout_url', 'lostpassword_url', 'login_init', 'login_form', 'login_form_lostpassword', 'login_form_rp', 'login_form_resetpass', 'login_form_register', 'login_form_logout', 'lostpassword_redirect', 'secure_signon_cookie', 'login_message', 'login_errors' ) as $hook ) {
+		// Never anything that touches authentication, credentials, cookies or the flow (ADR-103 pkt. 1).
+		foreach ( array( 'authenticate', 'wp_authenticate', 'wp_login', 'wp_login_failed', 'login_redirect', 'logout_url', 'login_init', 'login_form', 'login_form_register', 'login_form_logout', 'login_form_confirm_admin_email', 'secure_signon_cookie', 'login_errors', 'retrieve_password', 'password_reset', 'validate_password_reset' ) as $hook ) {
 			self::assertFalse( has_action( $hook ), $hook );
 			self::assertFalse( has_filter( $hook ), $hook );
 		}
@@ -462,6 +463,6 @@ final class BrandingTest extends TestCase {
 	}
 
 	private function branding(): LoginBranding {
-		return new LoginBranding( new DashboardRoute(), $this->logo(), self::ROOT );
+		return new LoginBranding( new DashboardRoute(), $this->logo(), new BrandIcons( $this->logo(), new DashboardRoute() ), self::ROOT );
 	}
 }

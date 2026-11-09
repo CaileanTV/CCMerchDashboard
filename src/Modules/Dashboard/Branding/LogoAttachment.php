@@ -26,6 +26,11 @@ defined( 'ABSPATH' ) || exit;
  *   2000 px on the longest side, between 1:1 and 6:1 (width:height);
  * - a URL on the site's own origin (the dashboard CSP allows images only
  *   from 'self'; offloaded media fall back to the default logo).
+ *
+ * The other images of the branding (ADR-103) are checked the same way with
+ * bounds of their own kind: a favicon and an app icon are square (at least
+ * 48 and 180 px), a login background is at most 3000 px and between 1:3 and
+ * 3:1.
  */
 final class LogoAttachment {
 
@@ -61,11 +66,33 @@ final class LogoAttachment {
 	public const FOREIGN_URL = 'foreign_url';
 
 	/**
-	 * The problem with an attachment as logo, or null when it is usable.
-	 *
-	 * @param int $id Attachment id.
+	 * Kinds of image (ADR-103); a logo when none is given.
 	 */
-	public function problem( int $id ): ?string {
+	public const KIND_LOGO = 'logo';
+
+	public const KIND_FAVICON = 'favicon';
+
+	public const KIND_APP_ICON = 'app_icon';
+
+	public const KIND_BACKGROUND = 'background';
+
+	/**
+	 * Bounds per kind: smallest height, largest side, narrowest and widest ratio (width / height).
+	 */
+	private const BOUNDS = array(
+		self::KIND_LOGO       => array( self::MIN_HEIGHT, self::MAX_SIDE, 1.0, self::MAX_RATIO ),
+		self::KIND_FAVICON    => array( 48, self::MAX_SIDE, 1.0, 1.0 ),
+		self::KIND_APP_ICON   => array( 180, self::MAX_SIDE, 1.0, 1.0 ),
+		self::KIND_BACKGROUND => array( 400, 3000, 1 / 3, 3.0 ),
+	);
+
+	/**
+	 * The problem with an attachment as logo (or another kind), or null when it is usable.
+	 *
+	 * @param int    $id   Attachment id.
+	 * @param string $kind Kind of image.
+	 */
+	public function problem( int $id, string $kind = self::KIND_LOGO ): ?string {
 		// get_post_status() resolves an attachment's `inherit` to its parent's
 		// status, or `publish` when it is unattached.
 		if ( $id <= 0 || 'attachment' !== get_post_type( $id ) || 'publish' !== get_post_status( $id ) ) {
@@ -78,7 +105,7 @@ final class LogoAttachment {
 			return self::WRONG_TYPE;
 		}
 
-		if ( ! self::size_fits( wp_get_attachment_metadata( $id ) ) ) {
+		if ( ! self::size_fits( wp_get_attachment_metadata( $id ), $kind ) ) {
 			return self::WRONG_SIZE;
 		}
 
@@ -86,13 +113,14 @@ final class LogoAttachment {
 	}
 
 	/**
-	 * The full-size image of a usable logo attachment, or null.
+	 * The full-size image of a usable attachment of a kind, or null.
 	 *
-	 * @param int $id Attachment id.
+	 * @param int    $id   Attachment id.
+	 * @param string $kind Kind of image.
 	 * @return array{url: string, width: int, height: int}|null
 	 */
-	public function usable( int $id ): ?array {
-		return null === $this->problem( $id ) ? $this->image( $id ) : null;
+	public function usable( int $id, string $kind = self::KIND_LOGO ): ?array {
+		return $id > 0 && null === $this->problem( $id, $kind ) ? $this->image( $id ) : null;
 	}
 
 	/**
@@ -137,21 +165,23 @@ final class LogoAttachment {
 	}
 
 	/**
-	 * Whether the stored dimensions are within the bounds.
+	 * Whether the stored dimensions are within the bounds of the kind.
 	 *
-	 * @param mixed $metadata Attachment metadata.
+	 * @param mixed  $metadata Attachment metadata.
+	 * @param string $kind     Kind of image.
 	 */
-	private static function size_fits( mixed $metadata ): bool {
+	private static function size_fits( mixed $metadata, string $kind ): bool {
 		if ( ! is_array( $metadata ) || ! is_int( $metadata['width'] ?? null ) || ! is_int( $metadata['height'] ?? null ) ) {
 			return false;
 		}
 
-		$width  = $metadata['width'];
-		$height = $metadata['height'];
+		$width                                  = $metadata['width'];
+		$height                                 = $metadata['height'];
+		[ $min_height, $max_side, $low, $high ] = self::BOUNDS[ $kind ] ?? self::BOUNDS[ self::KIND_LOGO ];
 
-		return $height >= self::MIN_HEIGHT
-			&& max( $width, $height ) <= self::MAX_SIDE
-			&& $width >= $height
-			&& $width <= self::MAX_RATIO * $height;
+		return $height >= $min_height
+			&& max( $width, $height ) <= $max_side
+			&& $width >= $low * $height
+			&& $width <= $high * $height;
 	}
 }

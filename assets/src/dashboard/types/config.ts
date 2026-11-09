@@ -32,6 +32,19 @@ export interface DashboardLogo {
 	readonly custom: boolean;
 }
 
+/** The logo's height in the top bar (ADR-103). */
+export type LogoSize = 'small' | 'medium' | 'large';
+
+/**
+ * How the logo is shown (ADR-103): its size, the logo for the dark themes
+ * (shown without the plate) and whether the light plate is used there.
+ */
+export interface LogoStyle {
+	readonly size: LogoSize;
+	readonly plate: boolean;
+	readonly dark: Omit< DashboardLogo, 'custom' > | null;
+}
+
 /** Validated configuration used by the app (camelCase, URLs checked). */
 export interface DashboardConfig {
 	readonly siteName: string;
@@ -46,6 +59,8 @@ export interface DashboardConfig {
 	readonly sections: readonly DashboardSection[];
 	/** Null: no usable logo; the site name is shown as text. */
 	readonly logo: DashboardLogo | null;
+	/** Size, dark variant and plate; missing: small, with the plate, no dark variant. */
+	readonly logoStyle?: LogoStyle;
 	/** Whether an administrator views and acts as this creator (ADR-075). */
 	readonly impersonating?: boolean;
 	/** The link that ends that session, when it is on the page's origin. */

@@ -89,11 +89,12 @@ final class SettingsActions {
 		$raw    = is_scalar( $input[ SettingsPage::FIELD_LOGO ] ?? null ) ? trim( (string) $input[ SettingsPage::FIELD_LOGO ] ) : '';
 		$id     = $remove ? 0 : ( 1 === preg_match( '/^\d{1,19}$/', $raw ) ? absint( $raw ) : -1 );
 
+		// The logo form is on the tab "Branding" (ADR-103).
 		if ( $id < 0 ) {
-			return SettingsPage::url( SettingsException::LOGO_NOT_FOUND );
+			return SettingsPage::url( SettingsException::LOGO_NOT_FOUND, 'branding' );
 		}
 
-		return $this->run( fn(): bool => $this->service->set_logo_attachment_id( $id ) );
+		return add_query_arg( array( SettingsPage::TAB_ARG => 'branding' ), $this->run( fn(): bool => $this->service->set_logo_attachment_id( $id ) ) );
 	}
 
 	/**

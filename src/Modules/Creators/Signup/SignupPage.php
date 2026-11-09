@@ -90,6 +90,8 @@ final class SignupPage {
 		$common = array(
 			'site_name' => get_bloginfo( 'name' ),
 			'action'    => $this->url(),
+			// MitCCMerch's own login screen (ADR-103): the dashboard as redirect_to.
+			'login_url' => wp_login_url( $this->route->url() ),
 		);
 
 		try {

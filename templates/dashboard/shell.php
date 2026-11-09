@@ -32,6 +32,7 @@ $merchboard_theme  = $merchboard_view['theme'] ?? null;
 <meta charset="<?php echo esc_attr( get_bloginfo( 'charset' ) ); ?>">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<?php echo apply_filters( 'merchboard_page_icons', '' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- BrandIcons::links() escapes every tag. ?>
 <title><?php echo esc_html( __( 'Creator dashboard', 'merchboard' ) . ' · ' . $merchboard_site ); ?></title>
 <?php
 if ( $merchboard_ready ) {

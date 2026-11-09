@@ -77,6 +77,11 @@ final class SettingsPage {
 	public const LOGO_SCRIPT = 'merchboard-settings-logo';
 
 	/**
+	 * Script handle of the other image pickers (ADR-103).
+	 */
+	public const IMAGES_SCRIPT = 'merchboard-settings-images';
+
+	/**
 	 * Query argument of the open tab.
 	 */
 	public const TAB_ARG = 'tab';
@@ -89,7 +94,7 @@ final class SettingsPage {
 	/**
 	 * The tabs' order; other tabs follow in the order they were added.
 	 */
-	private const ORDER = array( self::GENERAL, 'sales', 'alerts', 'designer' );
+	private const ORDER = array( self::GENERAL, 'branding', 'sales', 'alerts', 'designer' );
 
 	/**
 	 * Adds a tab for a module's sections.
@@ -225,6 +230,27 @@ final class SettingsPage {
 			) . ';',
 			'before'
 		);
+
+		// The other images of the tab "Branding" (ADR-103).
+		wp_enqueue_script(
+			self::IMAGES_SCRIPT,
+			plugins_url( 'assets/js/settings-images.js', self::plugin_root() . 'merchboard.php' ),
+			array( 'media-editor' ),
+			defined( 'MERCHBOARD_VERSION' ) ? (string) constant( 'MERCHBOARD_VERSION' ) : false,
+			true
+		);
+		wp_add_inline_script(
+			self::IMAGES_SCRIPT,
+			'window.merchboardImages = ' . (string) wp_json_encode(
+				array(
+					'types'  => LogoAttachment::MIME_TYPES,
+					'title'  => __( 'Choose an image', 'merchboard' ),
+					'button' => __( 'Use this image', 'merchboard' ),
+				),
+				JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+			) . ';',
+			'before'
+		);
 	}
 
 	/**
@@ -281,6 +307,11 @@ final class SettingsPage {
 		}
 
 		if ( self::GENERAL !== $tab ) {
+			// The main logo (ADR-042) leads the tab "Branding"; the rest is BrandingSettings (ADR-103).
+			if ( 'branding' === $tab ) {
+				$this->render_branding();
+			}
+
 			/** This action is documented below. */
 			do_action( 'merchboard_settings_sections', $tab );
 			echo '</div>';
@@ -289,7 +320,6 @@ final class SettingsPage {
 		}
 
 		$this->render_dashboard_slug();
-		$this->render_branding();
 
 		/**
 		 * Fires between the dashboard slug and "Data on uninstall" so other

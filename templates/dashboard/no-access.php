@@ -27,6 +27,7 @@ $merchboard_logout = (string) ( $merchboard_view['logout_url'] ?? '' );
 <meta charset="<?php echo esc_attr( get_bloginfo( 'charset' ) ); ?>">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
+<?php echo apply_filters( 'merchboard_page_icons', '' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- BrandIcons::links() escapes every tag. ?>
 <title><?php echo esc_html( __( 'Access not active', 'merchboard' ) . ' · ' . $merchboard_site ); ?></title>
 <style><?php echo FallbackStyles::css(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Static CSS without input. ?></style>
 </head>

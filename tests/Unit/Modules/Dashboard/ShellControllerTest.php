@@ -105,6 +105,7 @@ final class ShellControllerTest extends TestCase {
 		Functions\when( 'current_time' )->justReturn( '2026-09-24 12:00:00' );
 		Functions\when( 'home_url' )->alias( static fn( string $path = '' ): string => 'https://shop.test' . $path );
 		Functions\when( 'add_query_arg' )->alias( static fn( array $args, string $url ): string => $url . '?' . http_build_query( $args ) );
+		Functions\when( 'site_url' )->alias( static fn( string $path = '' ): string => 'https://shop.test/' . $path );
 		Functions\when( 'wp_login_url' )->alias( static fn( string $redirect = '' ): string => 'https://shop.test/wp-login.php?redirect_to=' . rawurlencode( $redirect ) );
 		// Like WordPress: HTML-escaped.
 		Functions\when( 'wp_logout_url' )->alias( static fn( string $redirect = '' ): string => 'https://shop.test/wp-login.php?action=logout&amp;_wpnonce=abc&amp;redirect_to=' . rawurlencode( $redirect ) );
@@ -376,7 +377,8 @@ final class ShellControllerTest extends TestCase {
 
 		$data = json_decode( substr( $inline, strlen( 'window.merchboardDashboard = ' ), -1 ), true );
 		self::assertIsArray( $data );
-		self::assertSame( array( 'site_name', 'dashboard_url', 'routing', 'logout_url', 'login_url', 'password_url', 'locale', 'sections', 'logo', 'impersonating', 'impersonation_end_url' ), array_keys( $data ) );
+		self::assertSame( array( 'site_name', 'dashboard_url', 'routing', 'logout_url', 'login_url', 'password_url', 'locale', 'sections', 'logo', 'logo_dark', 'logo_size', 'logo_plate', 'impersonating', 'impersonation_end_url' ), array_keys( $data ) );
+		self::assertSame( array( null, 'small', true ), array( $data['logo_dark'], $data['logo_size'], $data['logo_plate'] ), 'ADR-103 defaults.' );
 		self::assertFalse( $data['impersonating'] );
 		self::assertNull( $data['impersonation_end_url'], 'Only while an administrator views as the creator (ADR-075).' );
 		self::assertNull( $data['logo'], 'This fake plugin has no default logo file: the site name is shown as text.' );
@@ -384,7 +386,14 @@ final class ShellControllerTest extends TestCase {
 		self::assertSame( 'Shop <b>&</b> Co', $data['site_name'] );
 		self::assertSame( 'https://shop.test/creator-dashboard/', $data['dashboard_url'] );
 		self::assertSame( 'path', $data['routing'] );
-		self::assertSame( 'https://shop.test/wp-login.php?action=logout&_wpnonce=abc&redirect_to=' . rawurlencode( 'https://shop.test/creator-dashboard/' ), $data['logout_url'] );
+		// After logging out: MitCCMerch's login with "You are now logged out" (ADR-103).
+		$after = 'https://shop.test/wp-login.php?' . http_build_query(
+			array(
+				'loggedout'   => 'true',
+				'redirect_to' => rawurlencode( 'https://shop.test/creator-dashboard/' ),
+			)
+		);
+		self::assertSame( 'https://shop.test/wp-login.php?action=logout&_wpnonce=abc&redirect_to=' . rawurlencode( $after ), $data['logout_url'] );
 		self::assertSame( 'https://shop.test/wp-login.php?redirect_to=' . rawurlencode( 'https://shop.test/creator-dashboard/' ), $data['login_url'] );
 		self::assertSame( 'da_DK', $data['locale'] );
 		self::assertSame(

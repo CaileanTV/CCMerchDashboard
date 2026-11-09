@@ -66,6 +66,10 @@
 	// so a logo made for light backgrounds stays readable.
 	--merchboard-logo-plate: transparent;
 
+	// Which logo shows when there is one for the dark themes (ADR-103).
+	--merchboard-logo-light-display: block;
+	--merchboard-logo-dark-display: none;
+
 	// Data visualisation.
 	--merchboard-chart-series: var(--merchboard-primary);
 	--merchboard-chart-negative: var(--merchboard-negative);
@@ -124,6 +128,8 @@
 	--merchboard-on-inverse: #0f172a;
 
 	--merchboard-logo-plate: #f8fafc;
+	--merchboard-logo-light-display: none;
+	--merchboard-logo-dark-display: block;
 
 	--merchboard-shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
 	--merchboard-shadow: 0 1px 3px rgb(0 0 0 / 50%), 0 1px 2px rgb(0 0 0 / 30%);
