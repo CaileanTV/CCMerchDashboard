@@ -1078,17 +1078,36 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 
 ## Fase 41 – Egen login-skærm, logoer, favicon og app-ikon til MitCCMerch 🔄 (plan godkendt 2026-11-09; ADR-103; første del af 1.8.0)
 
-**Projektejerens ønske (2026-11-09):** en helt egen login-oplevelse til MitCCMerch, der ikke ligner WordPress' standard-login; et større logo i MitCCMerch, valgfrit uden den lyse plade; flere logoer (kompakt, til mørke temaer og til login), favicon og app-ikon til hjemskærmen.
+**Projektejerens ønske (2026-11-09):** en helt egen login-oplevelse til MitCCMerch, der ikke ligner WordPress' standard-login. Valgt: omklædt `wp-login.php`, kun MitCCMerch-login, alle fire skærme og tilpasning af layout, baggrund, tekster, farver, logo og links.
 
-- **41.1 Docs:** ADR-103, statusnote på ADR-042, SECURITY.md og denne fase.
-- **41.2 Kontekst for de fire skærme:** login, glemt adgangskode (markør), ny adgangskode (reset-cookiens bruger) og logget ud; signup-links med `redirect_to`.
-- **41.3 Indstillinger:** fanen "Branding" med login-design, logoer, ikoner og app-navn (`merchboard_branding`).
-- **41.4 Opbygning:** layout om `#login`, overskrifter og tekster pr. skærm, ny login-CSS.
-- **41.4b Logoer og ikoner i MitCCMerch:** logostørrelse, plade, logo til mørke temaer, favicon, app-ikon og manifest.
-- **41.5 Tekster:** danske oversættelser.
-- **41.6 Tests:** kontekst (også negative), validering, escaping, hook-vagter, manifest og bootstrap-data.
-- **41.7 Visuel kontrol:** headless Chrome på Local.
-- **41.8 Review og release:** uafhængigt review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK.
+**Tilføjet undervejs af projektejeren (2026-11-09), samme fase:**
+- Større logo i MitCCMerch: lille, mellem eller stor.
+- Den hvide plade bag logoet på mørke temaer kan slås fra.
+- Flere logoer: kompakt, til mørke temaer og til login.
+- Favicon.
+- App-ikon til hjemskærmen med web-manifest og app-navn.
+
+- **41.1 Docs:** ✅ ADR-103, statusnote på ADR-042, SECURITY.md og denne fase (`6716f8b`).
+- **41.2 Kontekst for de fire skærme:** ✅ login, glemt adgangskode (markør), ny adgangskode (reset-cookiens bruger) og logget ud; signup-links med `redirect_to`; dashboardets log ud fører til den brandede "Du er logget ud".
+- **41.3 Indstillinger:** ✅ fanen "Branding" med login-design, logoer, ikoner og app-navn (`merchboard_branding`); det globale logo er flyttet fra "Generelt" til "Branding"; Media Library-vælgere; audit; nulstil; slettes ved opt-in-afinstallation.
+- **41.4 Opbygning:** ✅ delt og centreret layout om `#login`, overskrifter og tekster pr. skærm, links ("Bliv creator", support), ny login-CSS.
+- **41.4b Logoer og ikoner i MitCCMerch:** ✅ logostørrelse, plade, logo til mørke temaer, favicon, app-ikon og manifest (`/<slug>/manifest`).
+- **41.5 Tekster:** ✅ danske oversættelser (68 nye tekster).
+- **41.6 Tests:** ✅ unit (kontekst inkl. negative, validering, kontrast, escaping, hook-vagter, manifest, bootstrap-data), Jest (logostil og -klasser) og integration (glemt adgangskode med markør, ny adgangskode kun for creators, hook-vagter) er grønne.
+- **41.7 Visuel kontrol:** ✅ headless Chrome på Local 2026-11-09 (de fire skærme, lyst og mørkt, desktop og 360 px; uden kontekst og admin-login er WordPress' standard). Fund rettet: kvitteringen efter glemt adgangskode blev ikke brandet (WordPress' egen handling `checkemail`, nu observeret), kvitteringen fik egen tekst, og sprogvælgeren var ulæselig i det centrerede layout. Logoer og ikoner i selve MitCCMerch ses på stg.
+- **41.8 Review og release:** flyttet til efter fase 42 (projektejerens ønske 2026-11-09): ét samlet review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK.
+
+## Fase 42 – Creatorens stamdata til afregning 📝 (ønske 2026-11-09; planlægges efter fase 41; 1.8.0)
+
+**Projektejerens ønske (2026-11-09):**
+- Creatoren kan selv udfylde sine stamdata til afregning.
+- Stamdataene bekræftes af admin før første udbetaling.
+- Er der brug for ændringer, udskydes første udbetaling, til stamdataene er bekræftet.
+- Der må gerne være et CVR-felt. Det skal senere bruges til at hente data automatisk fra CVR, når creatoren er registreret (selve opslaget er ikke en del af fasen og kræver en ADR, fordi det er en ekstern tjeneste).
+
+Plan og ADR laves, før der bygges.
+
+**Efter fase 42:** samlet review og release af fase 41 og 42 (det tidligere 41.8): uafhængigt review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK.
 
 ## Senere (uprioriteret)
 
