@@ -1082,11 +1082,12 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 
 **Tilføjet undervejs af projektejeren (2026-11-09), samme fase:**
 - Større logo i MitCCMerch: lille, mellem eller stor.
-- Den hvide plade bag logoet på mørke temaer kan slås fra.
+- Den hvide plade bag logoet på mørke temaer er slået fra som standard, både i MitCCMerch og på login-skærmen; den kan slås til under Indstillinger → Branding. Logoet til mørke temaer bruges også på login i mørkt tema.
 - Flere logoer: kompakt, til mørke temaer og til login.
 - Favicon.
 - App-ikon til hjemskærmen med web-manifest og app-navn.
 - "Bliv creator" som en rigtig knap, og logoets teal (`#007279`) som standard for baggrund og knapper på login-skærmen. Farverne kan skiftes under Indstillinger → Branding, hvis brandfarverne ændres.
+- Øje-ikon, fokusrammer og "Skift" i knapfarven: hvid baggrund i lyst tema, mørk baggrund i mørkt tema, hvor knapfarven lysnes netop nok til kontrast 4,5:1.
 
 - **41.1 Docs:** ✅ ADR-103, statusnote på ADR-042, SECURITY.md og denne fase (`6716f8b`).
 - **41.2 Kontekst for de fire skærme:** ✅ login, glemt adgangskode (markør), ny adgangskode (reset-cookiens bruger) og logget ud; signup-links med `redirect_to`; dashboardets log ud fører til den brandede "Du er logget ud".
