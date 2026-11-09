@@ -249,7 +249,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.7.7: designerprodukter holdes ude af Meta-kataloget
 
-**Versions-bump og CHANGELOG-sektion 2026-11-09** efter projektejerens krav ("Produkter oprettet gennem vores designer skal IKKE synkroniseres til Facebook/Meta"). Tag efter projektejerens OK; tag og SHA-256 noteres her da.
+**Versions-bump og CHANGELOG-sektion og tagget `v1.7.7` (begge på `b2e7101`) 2026-11-09** efter projektejerens krav ("Produkter oprettet gennem vores designer skal IKKE synkroniseres til Facebook/Meta"). Projektejeren testede testpakken på live ("den er testet på live, og virker"). CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke og testpakken (SHA-256 `eef8b909e68d9d0ac598c94028a080e4b8bf05b13fc1fe6532f31a6c171692bf`).
 - Testet med unit-tests (filteret, den lukkede fejl, engangsjobbet med og uden Meta-pluginet) og de faste hook-lister. Filteret og funktionen er pluginets egne, læst i dets offentlige kildekode (`ProductValidator::validate_product_sync_field()`, `Products::disable_sync_for_products()`), men ikke kørt mod pluginet.
 - CI skal være grøn med hele integrationssuiten på den taggede commit.
 
