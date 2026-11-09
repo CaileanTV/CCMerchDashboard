@@ -389,8 +389,11 @@ export function PayoutsSection() {
 			);
 	}, [ reloadBilling ] );
 
+	// Unknown (the read failed): offer the field; the server only uses it when required.
 	const cprRequired =
-		billing.state.status === 'success' && billing.state.data.cprRequired;
+		billing.state.status === 'success'
+			? billing.state.data.cprRequired
+			: billing.state.status === 'error';
 	const [ knownPages, setKnownPages ] = useState( 0 );
 	const [ notice, setNotice ] = useState< {
 		readonly tone: 'success' | 'danger';

@@ -27,7 +27,8 @@ defined( 'ABSPATH' ) || exit;
  * submitted values beside the confirmed ones with the changed fields marked,
  * whether a first payout waits, and "Confirm" or "Ask for corrections" with
  * a note. Only `merchboard_manage_payouts`. Submissions the creator is asked
- * to correct are listed below, without actions.
+ * to correct are not listed until the creator submits them again (the
+ * creator's page shows their status).
  */
 final class BillingDetailsReviewPage {
 

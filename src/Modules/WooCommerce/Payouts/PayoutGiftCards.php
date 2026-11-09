@@ -73,7 +73,9 @@ final class PayoutGiftCards {
 	 * @param Closure             $clock       Current time (`Closure(): DateTimeImmutable`).
 	 * @param SettlementDocuments $documents   Settlement documents issued with a completion (ADR-060).
 	 * @param Closure|null        $billing     Whether a creator's payout may be completed: the first one needs confirmed master data (ADR-104); null: always.
+	 * @param Closure|null        $cpr         Whether a creator is paid as a private person, so a payout needs the CPR number (ADR-104); null: never.
 	 * @phpstan-param (Closure(int): bool)|null $billing
+	 * @phpstan-param (Closure(int): bool)|null $cpr
 	 */
 	public function __construct(
 		private PayoutRepository $payouts,
@@ -84,7 +86,8 @@ final class PayoutGiftCards {
 		private Logger $logger,
 		private Closure $clock,
 		private SettlementDocuments $documents,
-		private ?Closure $billing = null
+		private ?Closure $billing = null,
+		private ?Closure $cpr = null
 	) {
 	}
 
@@ -142,6 +145,11 @@ final class PayoutGiftCards {
 					// The first payout waits until the master data are confirmed (ADR-104); it stays pending.
 					if ( null !== $this->billing && ! ( $this->billing )( $payout->creator_id ) ) {
 						throw new PayoutException( PayoutException::BILLING_DETAILS_UNCONFIRMED );
+					}
+
+					// A gift card payout's only encrypted detail is a private person's CPR number (ADR-104).
+					if ( null !== $this->cpr && ( $this->cpr )( $payout->creator_id ) && null === $this->payouts->secret( $payout->id ) ) {
+						throw new PayoutException( PayoutException::CPR_MISSING );
 					}
 
 					$balance = $this->balances->in_currency( $payout->creator_id, $payout->currency )->balance_units();

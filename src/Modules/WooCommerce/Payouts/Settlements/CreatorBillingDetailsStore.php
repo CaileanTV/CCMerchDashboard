@@ -141,6 +141,15 @@ final class CreatorBillingDetailsStore {
 	}
 
 	/**
+	 * Drops the creator's cached meta (after a rolled-back transaction).
+	 *
+	 * @param int $creator_id Creator.
+	 */
+	public function forget( int $creator_id ): void {
+		wp_cache_delete( $creator_id, CreatorMetaStore::META_TYPE . '_meta' );
+	}
+
+	/**
 	 * The creators with submitted master data, in ascending id order.
 	 *
 	 * @return list<int>

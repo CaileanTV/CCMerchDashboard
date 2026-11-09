@@ -248,6 +248,13 @@ final class PayoutException extends DomainException {
 	public const INVALID_CPR = 'invalid_cpr';
 
 	/**
+	 * The creator is paid as a private person, but the payout has no CPR
+	 * number to report (requested before the type was chosen); it can only
+	 * be rejected, so the creator requests it again with the number (ADR-104).
+	 */
+	public const CPR_MISSING = 'cpr_missing';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $reason One of the class constants.

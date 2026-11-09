@@ -813,6 +813,7 @@ final class WooCommerceModule implements Module {
 			static fn( Container $c ): BillingDetailsReview => new BillingDetailsReview( $c->get( CreatorBillingDetailsStore::class ), $c->get( PayoutRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $clock )
 		);
 		$may_complete = static fn( int $creator_id ): bool => $container->get( BillingDetailsReview::class )->allows_completion( $creator_id );
+		$needs_cpr    = static fn( int $creator_id ): bool => $container->get( BillingDetailsReview::class )->cpr_required( $creator_id );
 		$container->set(
 			PayoutGiftCards::class,
 			static fn( Container $c ): PayoutGiftCards => new PayoutGiftCards(
@@ -824,7 +825,8 @@ final class WooCommerceModule implements Module {
 				$c->get( Logger::class ),
 				$clock,
 				$c->get( SettlementDocuments::class ),
-				$may_complete
+				$may_complete,
+				$needs_cpr
 			)
 		);
 		$container->set(
@@ -857,7 +859,8 @@ final class WooCommerceModule implements Module {
 				$c->get( Transaction::class ),
 				$clock,
 				$c->get( SettlementDocuments::class ),
-				$may_complete
+				$may_complete,
+				$needs_cpr
 			)
 		);
 		$container->set(

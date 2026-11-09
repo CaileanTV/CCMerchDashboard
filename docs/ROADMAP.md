@@ -1083,7 +1083,7 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 **Tilføjet undervejs af projektejeren (2026-11-09), samme fase:**
 - Større logo i MitCCMerch: lille, mellem eller stor.
 - Den hvide plade bag logoet på mørke temaer er slået fra som standard, både i MitCCMerch og på login-skærmen; den kan slås til under Indstillinger → Branding. Logoet til mørke temaer bruges også på login i mørkt tema.
-- Flere logoer: kompakt, til mørke temaer og til login.
+- Flere logoer: til mørke temaer og til login (ud over MitCCMerch-logoet).
 - Favicon.
 - App-ikon til hjemskærmen med web-manifest og app-navn.
 - "Bliv creator" som en rigtig knap, og logoets teal (`#007279`) som standard for baggrund og knapper på login-skærmen. Farverne kan skiftes under Indstillinger → Branding, hvis brandfarverne ændres.

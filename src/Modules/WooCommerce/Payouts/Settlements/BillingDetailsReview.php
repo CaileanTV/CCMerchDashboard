@@ -167,7 +167,7 @@ final class BillingDetailsReview {
 	public function state( int $creator_id ): BillingDetailsState {
 		$confirmed  = $this->billing->find( $creator_id );
 		$submission = $this->billing->submission( $creator_id );
-		$has        = array() !== $confirmed->to_stored();
+		$has        = self::has( $confirmed );
 		$first      = ! $this->payouts->has_settlement_documents( $creator_id );
 		$status     = match ( true ) {
 			null !== $submission && self::CHANGES_REQUESTED === $submission['status'] => self::CHANGES_REQUESTED,
@@ -181,7 +181,7 @@ final class BillingDetailsReview {
 			$has ? $confirmed : null,
 			$has ? ( $this->billing->confirmation( $creator_id )['at'] ?? null ) : null,
 			$submission,
-			null === $submission ? '' : self::version( $submission ),
+			null === $submission ? '' : self::version( $submission, $confirmed ),
 			$first && ! $has,
 			$first && ! $has && $this->payouts->count_pending( $creator_id ) > 0,
 			self::is_private( $confirmed, $submission )
@@ -208,7 +208,7 @@ final class BillingDetailsReview {
 	 * @throws DatabaseException When a read fails.
 	 */
 	public function allows_request( int $creator_id ): bool {
-		return $this->payouts->has_settlement_documents( $creator_id ) || array() !== $this->billing->find( $creator_id )->to_stored() || null !== $this->billing->submission( $creator_id );
+		return $this->payouts->has_settlement_documents( $creator_id ) || self::has( $this->billing->find( $creator_id ) ) || null !== $this->billing->submission( $creator_id );
 	}
 
 	/**
@@ -220,7 +220,7 @@ final class BillingDetailsReview {
 	 * @throws DatabaseException When a read fails.
 	 */
 	public function allows_completion( int $creator_id ): bool {
-		return $this->payouts->has_settlement_documents( $creator_id ) || array() !== $this->billing->find( $creator_id )->to_stored();
+		return $this->payouts->has_settlement_documents( $creator_id ) || self::has( $this->billing->find( $creator_id ) );
 	}
 
 	/**
@@ -239,8 +239,10 @@ final class BillingDetailsReview {
 		$details = self::validate( $values );
 		$now     = $this->now();
 
-		$submitted = $this->transaction->run(
-			function () use ( $creator_id, $details, $now ): bool {
+		$submitted = $this->forgetting(
+			$creator_id,
+			fn(): bool => $this->transaction->run(
+				function () use ( $creator_id, $details, $now ): bool {
 				// Locks the creator's row (and refuses an unknown creator), as a confirmation does.
 				$this->payouts->settlement_start( $creator_id, true );
 				$changed = $details->changed_fields( $this->billing->find( $creator_id ) );
@@ -262,7 +264,8 @@ final class BillingDetailsReview {
 				$this->audit->record( AuditAction::BillingDetailsSubmitted, $creator_id, array( 'changed_fields' => $changed ) );
 
 				return true;
-			}
+				}
+			)
 		);
 
 		// Only that something waits: never the values.
@@ -288,19 +291,22 @@ final class BillingDetailsReview {
 		$now  = $this->now();
 		$user = get_current_user_id();
 
-		$this->payouts->with_creator_lock(
+		$this->forgetting(
 			$creator_id,
-			fn() => $this->transaction->run(
-				function () use ( $creator_id, $version, $now, $user ): void {
-					CreatorRowLock::acquire( $this->payouts, $creator_id );
-					$submission = $this->decidable( $creator_id, $version );
-					$changed    = $submission['values']->changed_fields( $this->billing->find( $creator_id ) );
+			fn() => $this->payouts->with_creator_lock(
+				$creator_id,
+				fn() => $this->transaction->run(
+					function () use ( $creator_id, $version, $now, $user ): void {
+						CreatorRowLock::acquire( $this->payouts, $creator_id );
+						$submission = $this->decidable( $creator_id, $version );
+						$changed    = $submission['values']->changed_fields( $this->billing->find( $creator_id ) );
 
-					$this->billing->save( $creator_id, $submission['values'] );
-					$this->billing->save_confirmation( $creator_id, $now, $user );
-					$this->billing->delete_submission( $creator_id );
-					$this->audit->record( AuditAction::BillingDetailsConfirmed, $creator_id, array( 'changed_fields' => $changed ) );
-				}
+						$this->billing->save( $creator_id, $submission['values'] );
+						$this->billing->save_confirmation( $creator_id, $now, $user );
+						$this->billing->delete_submission( $creator_id );
+						$this->audit->record( AuditAction::BillingDetailsConfirmed, $creator_id, array( 'changed_fields' => $changed ) );
+					}
+				)
 			)
 		);
 
@@ -324,14 +330,17 @@ final class BillingDetailsReview {
 			throw new PayoutException( PayoutException::INVALID_NOTE );
 		}
 
-		$this->transaction->run(
-			function () use ( $creator_id, $version, $note ): void {
-				$this->payouts->settlement_start( $creator_id, true );
-				$submission = $this->decidable( $creator_id, $version );
+		$this->forgetting(
+			$creator_id,
+			fn() => $this->transaction->run(
+				function () use ( $creator_id, $version, $note ): void {
+					$this->payouts->settlement_start( $creator_id, true );
+					$submission = $this->decidable( $creator_id, $version );
 
-				$this->billing->save_submission( $creator_id, $submission['values'], self::CHANGES_REQUESTED, $submission['submitted_at'], $note );
-				$this->audit->record( AuditAction::BillingDetailsChangesRequested, $creator_id, array( 'decision_note' => $note ) );
-			}
+					$this->billing->save_submission( $creator_id, $submission['values'], self::CHANGES_REQUESTED, $submission['submitted_at'], $note );
+					$this->audit->record( AuditAction::BillingDetailsChangesRequested, $creator_id, array( 'decision_note' => $note ) );
+				}
+			)
 		);
 
 		do_action( 'merchboard_notify', 'billing_details_changes_requested', $creator_id, array( 'note' => $note ), '' );
@@ -354,25 +363,62 @@ final class BillingDetailsReview {
 	}
 
 	/**
-	 * A stable token of a submission: it changes when the creator submits
-	 * again, so a decision never applies to values that were not shown.
+	 * A stable token of what the administrator saw: the submission with its
+	 * status and the confirmed master data. It changes when the creator
+	 * submits again, another administrator decides, or the master data are
+	 * edited directly, so a decision never applies to something not shown.
 	 *
 	 * @param array{values: CreatorBillingDetails, status: string, submitted_at: string, note: string} $submission Submission.
+	 * @param CreatorBillingDetails                                                                    $confirmed  Confirmed master data.
 	 */
-	public static function version( array $submission ): string {
-		return hash( 'sha256', (string) wp_json_encode( array( $submission['values']->values(), $submission['submitted_at'] ) ) );
+	public static function version( array $submission, CreatorBillingDetails $confirmed ): string {
+		return hash( 'sha256', (string) wp_json_encode( array( $submission['values']->values(), $submission['submitted_at'], $submission['status'], $confirmed->values() ) ) );
 	}
 
 	/**
-	 * Whether the type in force is a private person.
+	 * Whether master data hold more than a type.
+	 *
+	 * @param CreatorBillingDetails $details Master data.
+	 */
+	private static function has( CreatorBillingDetails $details ): bool {
+		return array() !== array_diff_key( $details->to_stored(), array( 'type' => true ) );
+	}
+
+	/**
+	 * Runs work that writes the creator's meta; when it fails, the meta
+	 * cache is dropped, so a persistent object cache never keeps values a
+	 * rolled-back transaction wrote.
+	 *
+	 * @template T
+	 * @param int           $creator_id Creator.
+	 * @param callable(): T $work       Work.
+	 * @return T
+	 * @throws \Throwable Whatever the work throws, after the cache is dropped.
+	 */
+	private function forgetting( int $creator_id, callable $work ): mixed {
+		try {
+			return $work();
+		} catch ( \Throwable $e ) {
+			$this->billing->forget( $creator_id );
+			throw $e;
+		}
+	}
+
+	/**
+	 * Whether the creator is paid as a private person: the confirmed type,
+	 * which documents use; a submission counts only while no type is
+	 * confirmed, so a waiting change to "business" never switches the CPR
+	 * number off.
 	 *
 	 * @param CreatorBillingDetails                                                                         $confirmed  Confirmed master data.
 	 * @param array{values: CreatorBillingDetails, status: string, submitted_at: string, note: string}|null $submission Waiting submission.
 	 */
 	private static function is_private( CreatorBillingDetails $confirmed, ?array $submission ): bool {
-		$type = null !== $submission && '' !== $submission['values']->type ? $submission['values']->type : $confirmed->type;
+		if ( '' !== $confirmed->type ) {
+			return CreatorBillingDetails::PRIVATE === $confirmed->type;
+		}
 
-		return CreatorBillingDetails::PRIVATE === $type;
+		return null !== $submission && CreatorBillingDetails::PRIVATE === $submission['values']->type;
 	}
 
 	/**
@@ -386,7 +432,12 @@ final class BillingDetailsReview {
 	private function decidable( int $creator_id, string $version ): array {
 		$submission = $this->billing->submission( $creator_id ) ?? throw new PayoutException( PayoutException::BILLING_SUBMISSION_MISSING );
 
-		if ( ! hash_equals( self::version( $submission ), $version ) ) {
+		// Asked for corrections: nothing waits for a decision until the creator submits again.
+		if ( self::PENDING !== $submission['status'] ) {
+			throw new PayoutException( PayoutException::BILLING_SUBMISSION_MISSING );
+		}
+
+		if ( ! hash_equals( self::version( $submission, $this->billing->find( $creator_id ) ), $version ) ) {
 			throw new PayoutException( PayoutException::BILLING_SUBMISSION_STALE );
 		}
 

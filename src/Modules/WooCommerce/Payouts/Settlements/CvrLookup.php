@@ -133,7 +133,7 @@ final class CvrLookup {
 			return self::cached( $cache );
 		}
 
-		$now  = ( $this->clock )();
+		$now  = ( $this->clock )()->setTimezone( new DateTimeZone( 'Europe/Copenhagen' ) );
 		$day  = $now->format( 'Ymd' );
 		$left = max( 60, (int) $now->setTime( 0, 0 )->modify( '+1 day' )->format( 'U' ) - (int) $now->format( 'U' ) );
 

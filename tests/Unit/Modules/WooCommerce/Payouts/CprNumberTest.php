@@ -32,6 +32,7 @@ final class CprNumberTest extends TestCase {
 	public function test_a_cpr_number_is_ten_digits_with_a_date(): void {
 		self::assertSame( '0101901234', CprNumber::from_input( '010190-1234' )->value );
 		self::assertSame( '0101901234', CprNumber::from_input( ' 010190 1234 ' )->value );
+		self::assertSame( '0101901234', CprNumber::from_input( '010190–1234' )->value, 'A typographic dash too.' );
 		self::assertSame( '290200-1234', CprNumber::from_input( '2902001234' )->formatted(), '29 February 2000.' );
 	}
 

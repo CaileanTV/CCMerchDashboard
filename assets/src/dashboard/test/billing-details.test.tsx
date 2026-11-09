@@ -209,6 +209,30 @@ describe( 'Master data for settlement documents (ADR-104)', () => {
 		expect( input( container, 'CVR number' ) ).toBeNull();
 	} );
 
+	it( 'keeps the CVR number of master data registered before the type existed', async () => {
+		const { container } = await show( {
+			[ `GET ${ DETAILS }` ]: () =>
+				response( 200, {
+					...MISSING,
+					status: 'confirmed',
+					confirmed: { ...NOVA, type: '' },
+					required_for_payout: false,
+				} ),
+		} );
+
+		expect(
+			(
+				input(
+					container,
+					'I am a registered business with a CVR number'
+				) as HTMLInputElement
+			 ).checked
+		).toBe( true );
+		expect(
+			( input( container, 'CVR number' ) as HTMLInputElement ).value
+		).toBe( '12345678' );
+	} );
+
 	it( 'checks the form first and sends every field with the type', async () => {
 		const { container, requests } = await show( {
 			[ `GET ${ DETAILS }` ]: () => response( 200, MISSING ),

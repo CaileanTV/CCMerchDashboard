@@ -179,6 +179,7 @@ final class PayoutsPage {
 			PayoutException::NOT_FOUND            => array( __( 'The payout does not exist.', 'merchboard' ), 'error' ),
 			PayoutException::INSUFFICIENT_BALANCE => array( __( 'Not registered: the creator\'s balance no longer covers this payout, for example after a refund. Handle it manually: do not transfer the amount, and reject the request if it cannot be paid.', 'merchboard' ), 'error' ),
 			PayoutException::BALANCE_UNKNOWN      => array( __( 'Not registered: the creator\'s balance is unknown, because some sales lack the data needed. Handle it manually; nothing is completed automatically.', 'merchboard' ), 'error' ),
+			PayoutException::CPR_MISSING          => array( __( 'Not registered: the creator is paid as a private person, but this request has no CPR number to report. Reject it, so the creator can request it again with the CPR number.', 'merchboard' ), 'error' ),
 			PayoutException::BILLING_DETAILS_UNCONFIRMED => array( __( 'Not registered: this is the creator\'s first payout, and it waits until you have confirmed the creator\'s master data under Proposals → Master data. The request stays pending.', 'merchboard' ), 'warning' ),
 			PayoutException::DETAILS_UNREADABLE   => array( __( 'The payment details cannot be decrypted (MERCHBOARD_PAYOUT_KEY is missing or was changed). This request can only be rejected.', 'merchboard' ), 'error' ),
 			PayoutException::NOT_AUTHORIZED       => array( __( 'You are not allowed to do this.', 'merchboard' ), 'error' ),
@@ -1024,6 +1025,7 @@ final class PayoutsPage {
 		echo '<ol>';
 
 		foreach ( array(
+			__( 'Report before you register the payout here: the CPR number is deleted when the payout has been handled.', 'merchboard' ),
 			__( 'Log in to TastSelv Erhverv on skat.dk with MitID Erhverv.', 'merchboard' ),
 			__( 'Choose "Ansatte" → "Indberet til eIndkomst eller LetLøn" → "Indberette/forespørge på eIndkomst/LetLøn" → "Indberet lønoplysninger - online".', 'merchboard' ),
 			__( 'Enter the period and the disposition date: the date the payout was made.', 'merchboard' ),

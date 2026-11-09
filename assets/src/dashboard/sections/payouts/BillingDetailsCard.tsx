@@ -103,9 +103,15 @@ function fieldError( code: string ): string {
  * @param state The server's state.
  */
 function initial( state: BillingDetailsState ): BillingValues {
+	const values = state.submission?.values ?? state.confirmed;
+
+	// Registered before phase 42 (no type) with a CVR number: a business, so the number is kept.
+	if ( values !== null && values.type === '' && values.cvr !== '' ) {
+		return { ...values, type: 'business' };
+	}
+
 	return (
-		state.submission?.values ??
-		state.confirmed ?? {
+		values ?? {
 			legal_name: '',
 			address_1: '',
 			address_2: '',
@@ -299,11 +305,17 @@ export function BillingDetailsCard() {
 		setLooking( false );
 
 		if ( result.ok ) {
-			setValues( {
-				...values,
-				...result.data,
-				address_2: '',
-				cvr,
+			// Typed meanwhile stays; empty answers never erase what is there.
+			setValues( ( shown ) => {
+				const next = { ...( shown ?? values ), cvr };
+
+				for ( const [ key, value ] of Object.entries( result.data ) ) {
+					if ( value !== '' ) {
+						next[ key as keyof typeof result.data ] = value;
+					}
+				}
+
+				return next;
 			} );
 			setErrors( {} );
 			setToast(

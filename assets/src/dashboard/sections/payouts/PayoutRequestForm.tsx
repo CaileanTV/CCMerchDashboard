@@ -143,7 +143,8 @@ export function PayoutRequestForm( {
 		details = { method: 'paypal', email: values.email.trim() };
 	}
 
-	if ( cprRequired ) {
+	// Sent only when given; a missing number is the server's `invalid_cpr`.
+	if ( cprRequired && values.cpr.trim() !== '' ) {
 		details = { ...details, cpr: values.cpr.trim() };
 	}
 
@@ -366,7 +367,7 @@ export function PayoutRequestForm( {
 						<Field
 							label={ __( 'CPR number', 'merchboard' ) }
 							help={ __(
-								'10 digits, e.g. 010190–1234. You are paid as a private person.',
+								'10 digits, written DDMMYY-XXXX. You are paid as a private person.',
 								'merchboard'
 							) }
 						>
@@ -376,7 +377,7 @@ export function PayoutRequestForm( {
 									type="text"
 									inputMode="numeric"
 									autoComplete="off"
-									maxLength={ 11 }
+									maxLength={ 14 }
 									className="merchboard-input"
 									required
 									value={ values.cpr }

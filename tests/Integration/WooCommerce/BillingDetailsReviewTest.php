@@ -133,7 +133,7 @@ final class BillingDetailsReviewTest extends IntegrationTestCase {
 		$documents        = new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), $creators, $vat, $audit, $transaction, $clock, null, $this->billing );
 		$this->review     = new BillingDetailsReview( $this->billing, $this->repository, $audit, $transaction, $clock );
 		$this->requests   = new PayoutRequests( $this->repository, $balances, $cipher, new PostMetaPricingProductStore(), $audit, $transaction, $clock, null, null, fn( int $id ): bool => $this->review->allows_request( $id ), fn( int $id ): bool => $this->review->cpr_required( $id ) );
-		$this->decisions  = new PayoutDecisions( $this->repository, $balances, $cipher, $audit, $transaction, $clock, $documents, fn( int $id ): bool => $this->review->allows_completion( $id ) );
+		$this->decisions  = new PayoutDecisions( $this->repository, $balances, $cipher, $audit, $transaction, $clock, $documents, fn( int $id ): bool => $this->review->allows_completion( $id ), fn( int $id ): bool => $this->review->cpr_required( $id ) );
 		$this->settings   = new PayoutSettings( $this->repository, $audit, $transaction, $clock, $this->billing );
 	}
 
@@ -225,6 +225,48 @@ final class BillingDetailsReviewTest extends IntegrationTestCase {
 		$everything = (string) wp_json_encode( array( $this->rows( Tables::AUDIT_LOG ), $this->rows( Tables::SETTLEMENT_DOCUMENTS ), $this->rows( Tables::PAYOUTS ) ) );
 		self::assertStringNotContainsString( self::CPR, $everything, 'Never in audit, documents or payouts.' );
 		self::assertStringNotContainsString( '010190-1234', $everything );
+	}
+
+	public function test_a_waiting_change_never_switches_the_cpr_number_off_and_stale_decisions_are_refused(): void {
+		$private = array(
+			'type' => 'private',
+			'cvr'  => '',
+		) + self::BUSINESS;
+		$this->review->submit( $this->creator, $private );
+		$this->review->confirm( $this->creator, $this->review->state( $this->creator )->version );
+
+		// A waiting change to "business" leaves the confirmed private person's CPR requirement on.
+		$this->review->submit( $this->creator, self::BUSINESS );
+		self::assertTrue( $this->review->cpr_required( $this->creator ) );
+		$this->refused( fn() => $this->request( 'key-bd-0005' ), PayoutException::INVALID_CPR );
+
+		// Asked for corrections: a confirm from a page shown before is refused.
+		$shown = $this->review->state( $this->creator )->version;
+		$this->review->request_changes( $this->creator, $shown, 'Forkert CVR.' );
+		$this->refused( fn() => $this->review->confirm( $this->creator, $shown ), PayoutException::BILLING_SUBMISSION_MISSING );
+
+		// A direct edit by an administrator after the page was shown makes the shown version stale.
+		$this->review->submit( $this->creator, array( 'address_1' => 'Nørregade 3' ) + self::BUSINESS );
+		$shown = $this->review->state( $this->creator )->version;
+		$this->settings->set_billing_details( $this->creator, array( 'address_2' => '1. th.' ) + $private );
+		$this->refused( fn() => $this->review->confirm( $this->creator, $shown ), PayoutException::BILLING_SUBMISSION_STALE );
+	}
+
+	public function test_a_private_persons_payout_without_a_cpr_number_cannot_be_completed(): void {
+		// Entered by an administrator before the type existed: no CPR number is asked for.
+		$this->settings->set_billing_details( $this->creator, array( 'type' => '' ) + self::BUSINESS );
+		$payout = $this->request( 'key-bd-0006' );
+
+		$this->settings->set_billing_details(
+			$this->creator,
+			array(
+				'type' => 'private',
+				'cvr'  => '',
+			) + self::BUSINESS
+		);
+		$this->refused( fn() => $this->decisions->complete( $payout->id ), PayoutException::CPR_MISSING );
+		self::assertSame( PayoutStatus::Pending, $this->repository->find( $payout->id )?->status );
+		self::assertSame( PayoutStatus::Rejected, $this->decisions->reject( $payout->id, 'Anmod igen med CPR-nummer.' )->status );
 	}
 
 	/**

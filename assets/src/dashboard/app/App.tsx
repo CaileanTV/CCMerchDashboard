@@ -35,7 +35,10 @@ function CurrentPage() {
 		<>
 			<AgreementNotice />
 			<GoLiveNotice />
-			{ payouts !== undefined && <BillingDetailsNotice /> }
+			{ /* Not on Payouts itself, where the master data card says the same. */ }
+			{ payouts !== undefined && path !== payouts.path && (
+				<BillingDetailsNotice />
+			) }
 			{ page.content }
 		</>
 	);

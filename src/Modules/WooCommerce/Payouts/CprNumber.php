@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * The CPR number of a creator paid as a private person (ADR-104): ten
- * digits (a hyphen and spaces are removed) whose first six are a valid date
+ * digits (dashes and spaces are removed) whose first six are a valid date
  * (DDMMYY). Modulus 11 is not checked, as not every number has it. Exists in
  * plain text only while a request is validated and encrypted, or shown to an
  * admin with `merchboard_view_payout_details`; never stored unencrypted,
@@ -36,7 +36,7 @@ final readonly class CprNumber {
 	 * @throws PayoutException `invalid_cpr` when it is missing or not a valid number.
 	 */
 	public static function from_input( mixed $input ): self {
-		$value = is_string( $input ) ? preg_replace( '/[\s-]+/', '', $input ) ?? '' : '';
+		$value = is_string( $input ) ? preg_replace( '/[\s\p{Pd}]+/u', '', $input ) ?? '' : '';
 
 		if ( 1 !== preg_match( '/^(\d{2})(\d{2})(\d{2})\d{4}$/', $value, $parts ) ) {
 			throw new PayoutException( PayoutException::INVALID_CPR );

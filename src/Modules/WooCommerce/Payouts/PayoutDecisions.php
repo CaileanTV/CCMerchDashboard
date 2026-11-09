@@ -72,7 +72,9 @@ final class PayoutDecisions {
 	 * @param Closure             $clock       Current time (`Closure(): DateTimeImmutable`).
 	 * @param SettlementDocuments $documents   Settlement documents issued with a completion (ADR-060).
 	 * @param Closure|null        $billing     Whether a creator's payout may be completed: the first one needs confirmed master data (ADR-104); null: always.
+	 * @param Closure|null        $cpr         Whether a creator is paid as a private person, so a payout needs the CPR number (ADR-104); null: never.
 	 * @phpstan-param (Closure(int): bool)|null $billing
+	 * @phpstan-param (Closure(int): bool)|null $cpr
 	 */
 	public function __construct(
 		private PayoutRepository $payouts,
@@ -82,7 +84,8 @@ final class PayoutDecisions {
 		private Transaction $transaction,
 		private Closure $clock,
 		private SettlementDocuments $documents,
-		private ?Closure $billing = null
+		private ?Closure $billing = null,
+		private ?Closure $cpr = null
 	) {
 	}
 
@@ -146,9 +149,16 @@ final class PayoutDecisions {
 					throw new PayoutException( PayoutException::WRONG_METHOD );
 				}
 
+				$details = $this->readable_details( $payout );
+
 				// The reference is kept (ADR-059): never the payout's own or other payment details.
-				if ( PayoutFreeText::contains_payment_details( $reference, $this->readable_details( $payout ) ) ) {
+				if ( PayoutFreeText::contains_payment_details( $reference, $details ) ) {
 					throw new PayoutException( PayoutException::PAYMENT_DETAILS_IN_TEXT );
+				}
+
+				// A private person's payout must carry the CPR number to report (ADR-104).
+				if ( '' === $details->cpr && null !== $this->cpr && ( $this->cpr )( $payout->creator_id ) ) {
+					throw new PayoutException( PayoutException::CPR_MISSING );
 				}
 
 				// The first payout waits until the master data are confirmed (ADR-104); it stays pending.
@@ -307,7 +317,8 @@ final class PayoutDecisions {
 	 * @param Payout $payout Payout.
 	 */
 	private function details_if_readable( Payout $payout ): ?PayoutDestination {
-		if ( PayoutMethod::GiftCard === $payout->method ) {
+		// A gift card payout has details only with a private person's CPR number (ADR-104).
+		if ( PayoutMethod::GiftCard === $payout->method && null === $this->payouts->secret( $payout->id ) ) {
 			return null;
 		}
 

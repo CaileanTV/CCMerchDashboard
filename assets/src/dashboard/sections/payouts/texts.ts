@@ -73,7 +73,7 @@ export function refusalMessage( error: ApiError ): string | null {
 			);
 		case 'invalid_cpr':
 			return __(
-				'Please enter a valid CPR number (10 digits, e.g. 010190–1234).',
+				'Please enter a valid CPR number (10 digits, written DDMMYY-XXXX).',
 				'merchboard'
 			);
 		case 'billing_details_required':
