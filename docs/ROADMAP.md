@@ -27,7 +27,7 @@ Overordnet plan. Hver fase er lille nok til én afgrænset Claude Code-prompt, o
 | Produktdesigner | 30 | Creatorens egen produktdesigner med grundprodukter, godkendelse og kataloger (plan godkendt 2026-10-28; ADR-080–087) |
 | Alert-designer 2.0 | 31 | Enklere alert-designer: lærred, sidebjælke, layouts, variationer og oplæsning (plan godkendt 2026-11-03; ADR-088–089) |
 | Selvoprettelse | 32 | Creators opretter sig selv, accepterer aftalepapiret og går live efter godkendelse; 14 dages prisvarsel (plan godkendt 2026-11-06; ADR-091–094) |
-| Senere | – | Integrations, campaigns, support, reporting, hardening og E2E |
+| Senere | – | Integrations, campaigns, support, reporting, hardening, E2E og egen login-skærm |
 
 ---
 
@@ -1069,7 +1069,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **40.9 Prodigis katalog som oversigt ✅:** hele kataloget som kort med søgning, kategori og sider.
 - **40.10 Prodigis rigtige svar ✅ (2026-11-08):** varianter tilføjes med `POST /products/{id}/variants`, og Prodigis fejlbeskeder logges. Prodigi gør ingen filer klar (statusnote i ADR-102), så mockups venter på Prodigi.
 - **40.11 Printfil-ruten ✅ (2026-11-08, kritisk):** ruten matchede aldrig siden 1.7.0 (`@` i mønstret, statusnote i ADR-096), så ingen leverandør kunne hente printfiler. Rettet med `.d1`, og der er en test gennem den rigtige rute-matching. Fundet, fordi projektejeren mistænkte vores side.
-- **40.12 Release 1.7.6 (2026-11-08):** bump efter projektejerens ønske; tag efter OK. Se DEVELOPMENT.md "Release 1.7.6".
+- **40.12 Release 1.7.6 ✅ (2026-11-09):** tag `v1.7.6` på `d6644e2`, CI grøn, draft-release byte-identisk med testpakken. Se DEVELOPMENT.md "Release 1.7.6".
 - **40.7 Review og stg:** uafhængigt review ✅ (rettelser i statusnoten i ADR-102), push (CI), eksperimentel testpakke på stg og den fælles test med 39.4. Versionsbump (1.7.6) efter projektejerens OK.
 
 ## Senere (uprioriteret)
@@ -1077,14 +1077,14 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 | Område | Indhold |
 | --- | --- |
 | Payouts | Manuelle udbetalinger i fase 23–24. Senere: eksport og evt. integration med betalingsudbyder (kræver ADR efter ADR-016) |
-| Creator-aftaler | Flyttet til fase 32 (ADR-092, 2026-11-06) for selvoprettede creators; eksisterende creators accepterer ikke og har fortsat deres aftale uden for pluginet. |
-| Integrations | Framework for eksterne tjenester med webhooks og HMAC. Hver konkret tjeneste kræver projektejerens eksplicitte godkendelse og en ADR. Dinero og Google Drive er fravalgt (ADR-016). |
+| Integrations | Et generelt framework for eksterne tjenester med webhooks og HMAC. Alerts har allerede webhooks og API-nøgler med HMAC (fase 25), og leverandørerne i produktdesigneren har hver deres ADR. Hver ny tjeneste kræver projektejerens eksplicitte godkendelse og en ADR. Dinero og Google Drive er fravalgt (ADR-016). |
 | CVR-register | Udskudt fra første version 2026-10-18 (ADR-062, statusnote): integration med CVR-registret via API, validering af udsteders og creatorens CVR-numre og håndtering af virksomhedsoplysninger. K09's CVR-felter findes, men der registreres ingen værdier før da. Ekstern tjeneste: kræver ADR og projektejerens godkendelse |
-| Campaigns | Tidsbegrænsede kampagner/drops pr. creator |
+| Campaigns | Tidsbegrænsede kampagner/drops pr. creator. Virksomhedens egne kampagner med delt rabat findes i produktdesigneren (fase 30). |
 | Support | Henvendelser fra creators til virksomheden |
 | Reporting | Admin-rapporter på tværs af creators og CSV-eksport |
-| Security hardening | Fuld CSP med nonces, rate limiting på `/me`-endpoints, GDPR exporter/eraser, security-review før produktion |
+| Security hardening | Rate limiting på `/me`-endpoints, GDPR exporter/eraser, styles uden `unsafe-inline` i dashboardets CSP og et samlet security-review. Dashboardets CSP med nonces til scripts findes allerede. |
 | Testing | Playwright E2E mod Playground i CI |
 | Teams | Flere brugere pr. creator |
-| Branding | Brand-font (self-hosted). Logo, temaer og branded login er flyttet til fase 21 |
+| Branding: egen login-skærm | Projektejerens ønske 2026-11-09: en helt egen login-oplevelse, der ikke ligner WordPress' standard-login, men stadig bruger WordPress' login-formular og flow, så adgangskoder, cookies, 2FA/CAPTCHA-plugins, glemt adgangskode og redirects virker som i dag. Fase 21 (ADR-042) gav kun logo og farver på `wp-login.php` og kun i Merch Dashboard-kontekst. Kræver en ny ADR, der afløser ADR-042's afgrænsning: om siden ligger på `wp-login.php` eller på en egen side med `wp_login_form()`, hvad der kan tilpasses (layout, baggrund, tekster, logo), og hvordan login-sikkerheden bevares. |
+| Branding: brand-font | Self-hosted brand-font. Logo og temaer findes (fase 21). |
 | Alerts: creatorens eget format | Projektejerens ønske 2026-10-23, ikke prioriteret: creatoren vælger selv, om chatbotten skriver én besked pr. ordrelinje eller én pr. ordre (i dag administratorens valg for alle), og kan gøre det samme med selve alerten i overlayet: én alert pr. ordre, fx "$UserName har købt merch", der skifter (cycler) mellem billederne af de købte varer. Kræver design af skabelon, varighed og billedskift, når det prioriteres |

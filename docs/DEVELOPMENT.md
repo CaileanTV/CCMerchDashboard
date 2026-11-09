@@ -249,7 +249,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.7.6: printfiler til leverandørerne, Fyld/Tilpas og " - " i produktnavne (fase 39 og 40)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-08** efter projektejerens ønske ("Gør 1.7.6 klar nu, gerne bump med det samme"). Tag efter projektejerens OK; tag og SHA-256 noteres her da.
+**Versions-bump og CHANGELOG-sektion og tagget `v1.7.6` (begge på `d6644e2`) 2026-11-09** efter projektejerens ønske ("Gør 1.7.6 klar nu, gerne bump med det samme") og OK ("Hvis CI er grøn, må du gerne tagge"). CI var grøn på alle fire jobs, også hele integrationssuiten. Testpakken kørte på staging. Draft-releasens ZIP er byte-identisk med den lokale pakke og testpakken (SHA-256 `3fcf018243df84f1fdd12450591ea05c67d9e7b9f960ec61a0497227d5fa3b0b`).
 - Fase 39 og 40 (ADR-084 statusnoter, ADR-102, ADR-096 statusnote) er testet med unit-, integrations- og Jest-tests og reviewet uafhængigt (fase 40). Printfil-rettelsen har en test gennem WordPress' egen rute-matching.
 - CI skal være grøn med hele integrationssuiten på den taggede commit.
 
