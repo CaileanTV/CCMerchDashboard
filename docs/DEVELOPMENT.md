@@ -247,6 +247,24 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.8.0: egen login-skærm, logoer og ikoner, og creatorens stamdata (fase 41 og 42)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-09** efter projektejerens ønske ("Kør de næste skridt så det næste jeg selv specifik skal er at teste på stg"). Tag efter projektejerens OK efter testen på stg; tag og SHA-256 noteres her da.
+- Testet med unit-, Jest- og integrationstests og runtime-testet på Local (fase 41: login-skærmene i headless Chrome; fase 42: stamdataflowet med "Udfyld fra CVR-nummer" live mod cvrapi.dk, uden at gennemføre en udbetaling). Uafhængigt review af begge faser.
+- CI skal være grøn med hele integrationssuiten på den taggede commit.
+
+**Ingen schemaændring:** schema-version 48. Nye indstillinger (`merchboard_branding`) og creatormeta (`billing_submission`, `billing_confirmed`) oprettes ved brug.
+
+1. **Backup:** tag backup af filer og database via hostingen.
+2. **Opdatér** med ZIP'en. Overview skal vise version 1.8.0.
+3. **Virksomhedsoplysninger:** Indstillinger → Generelt: virksomhedsnavn og kontakt-e-mail skal være udfyldt, ellers vises "Udfyld fra CVR-nummer" ikke (ADR-105).
+4. **Login:** log ud af MitCCMerch, se "Du er logget ud", log ind igen; prøv "Glemt adgangskode?" (formular og kvittering) og et nulstillingslink. Admin-login skal se ud som før.
+5. **Branding:** skift layout, farver, tekster og logoer under Indstillinger → Branding, og se login og MitCCMerch. Læg MitCCMerch på telefonens hjemskærm, hvis der er valgt app-ikon.
+6. **Stamdata:** som en testcreator uden afregningsbilag: udfyld stamdata (prøv "Udfyld fra CVR-nummer"), og se at en anmodning venter; bekræft under Forslag → Stamdata, eller bed om rettelser. Som privatperson: CPR-feltet ved anmodningen og vejledningen i admin.
+7. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 1.7.7-ZIP'en igen. Indstillingerne og creatormeta bliver liggende og bruges igen ved en senere opdatering.
+
 ## Release 1.7.7: designerprodukter holdes ude af Meta-kataloget
 
 **Versions-bump og CHANGELOG-sektion og tagget `v1.7.7` (begge på `b2e7101`) 2026-11-09** efter projektejerens krav ("Produkter oprettet gennem vores designer skal IKKE synkroniseres til Facebook/Meta"). Projektejeren testede testpakken på live ("den er testet på live, og virker"). CI var grøn på alle fire jobs, også hele integrationssuiten. Draft-releasens ZIP er byte-identisk med den lokale pakke og testpakken (SHA-256 `eef8b909e68d9d0ac598c94028a080e4b8bf05b13fc1fe6532f31a6c171692bf`).

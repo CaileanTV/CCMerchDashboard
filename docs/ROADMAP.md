@@ -1122,9 +1122,9 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 - **42.6 Dashboard:** ✅ kortet "Stamdata til afregning" på Udbetalinger (virksomhed/privatperson, CPR-infoboks med PMV-anbefaling, "Udfyld fra CVR-nummer"), CPR-felt i anmodningen, besked øverst og afvisningstekster.
 - **42.7 Notifikationer, audit og tekster:** ✅ tre notifikationer, tre audit-handlinger, danske oversættelser.
 - **42.8 Tests:** ✅ unit (validering, CPR, CVR-opslag), integration (flowet, CPR krypteret og slettet) og Jest; faste lister (notifikationer, audit, "Se som creator").
-- **42.9 Runtime-test på Local:** udfyld, anmod (venter), bed om rettelser, ret og bekræft, uden at gennemføre en udbetaling.
+- **42.9 Runtime-test på Local:** ✅ 2026-11-09 med testcreatoren MB26 Creator 01: anmodning uden stamdata afvist, udfyld med "Udfyld fra CVR-nummer" (live mod cvrapi.dk), bed om rettelser, ret og bekræft; ingen udbetaling gennemført. "Anmodningen venter" kunne ikke køres på Local (ingen creator uden bilag har saldo) og er dækket af integrationstesten. Fund: beskeden øverst vises ikke længere på selve Udbetalinger (rettet).
 
-**Efter fase 42:** samlet review og release af fase 41 og 42 (det tidligere 41.8): uafhængigt review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK.
+**Efter fase 42:** samlet review og release af fase 41 og 42 (det tidligere 41.8): uafhængigt review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK. **Status 2026-11-09:** review ✅, bump til 1.8.0 ✅, testpakke på stg; tag efter projektejerens test (DEVELOPMENT.md "Release 1.8.0").
 
 ## Senere (uprioriteret)
 
