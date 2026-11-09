@@ -232,6 +232,11 @@ body.merchboard-login #login h1 a {
 	border-radius: 10px;
 }
 
+/* The plate is off unless chosen on Settings -> Branding (ADR-103). */
+body.merchboard-login.merchboard-login--no-plate #login h1 a {
+	background-color: transparent;
+}
+
 body.merchboard-login #login h1 a:focus {
 	outline: 3px solid var(--merchboard-login-ring);
 	outline-offset: 2px;

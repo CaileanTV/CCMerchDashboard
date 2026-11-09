@@ -219,6 +219,27 @@ final class LoginScreenTest extends TestCase {
 		self::assertStringNotContainsString( '--merchboard-login-image', $css );
 	}
 
+	public function test_no_plate_by_default_and_the_dark_logo_on_the_dark_login(): void {
+		$branding = $this->branding();
+		$branding->observe( array( 'redirect_to' => self::DASHBOARD ) );
+
+		self::assertContains( 'merchboard-login--no-plate', (array) $branding->body_class( array( 'login' ) ), 'The plate is off by default.' );
+
+		$this->media->add( 6 );
+		$this->media->add( 7 );
+		$design                 = BrandingDesign::defaults();
+		$design['dark_logo_id'] = 6;
+		$css                    = $branding->inline_css( $design );
+
+		self::assertStringContainsString( '@media (prefers-color-scheme: dark){body.merchboard-login #login h1 a{background-image:url("https://shop.test/wp-content/uploads/logo-6.png");background-color:transparent;}}', $css );
+
+		$design['login_logo_id'] = 7;
+		self::assertStringNotContainsString( 'logo-6', $branding->inline_css( $design ), 'An own login logo is used in both themes.' );
+
+		$this->options->options['merchboard_branding'] = array( 'logo_plate' => true ) + BrandingDesign::defaults();
+		self::assertNotContains( 'merchboard-login--no-plate', (array) $branding->body_class( array( 'login' ) ), 'Chosen: the plate stays.' );
+	}
+
 	public function test_the_form_is_validated_and_refused_values_keep_the_stored_ones(): void {
 		$this->media->add(
 			3,

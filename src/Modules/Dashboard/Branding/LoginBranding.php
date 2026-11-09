@@ -262,11 +262,20 @@ final class LoginBranding {
 			$rules[] = '--merchboard-login-image:url("' . $background . '")';
 		}
 
-		$logo = $this->logo->image( (int) $design['login_logo_id'], LogoAttachment::KIND_LOGO ) ?? $this->logo->resolve();
+		$own  = $this->logo->image( (int) $design['login_logo_id'], LogoAttachment::KIND_LOGO );
+		$logo = $own ?? $this->logo->resolve();
 		$logo = null === $logo ? '' : self::css_url( $logo['url'] );
 
 		if ( '' !== $logo ) {
 			$css .= 'body.' . self::BODY_CLASS . ' #login h1 a{background-image:url("' . $logo . '");}';
+		}
+
+		// Without an own login logo, the dark themes' logo is used on the dark login, without the plate.
+		$dark = null === $own ? $this->logo->image( (int) $design['dark_logo_id'], LogoAttachment::KIND_LOGO ) : null;
+		$dark = null === $dark ? '' : self::css_url( $dark['url'] );
+
+		if ( '' !== $dark ) {
+			$css .= '@media (prefers-color-scheme: dark){body.' . self::BODY_CLASS . ' #login h1 a{background-image:url("' . $dark . '");background-color:transparent;}}';
 		}
 
 		return 'body.' . self::BODY_CLASS . '{' . implode( ';', $rules ) . ';}' . $css;
@@ -309,6 +318,10 @@ final class LoginBranding {
 
 		if ( ! $design['shop_link'] ) {
 			$classes[] = self::BODY_CLASS . '--no-shop-link';
+		}
+
+		if ( ! $design['logo_plate'] ) {
+			$classes[] = self::BODY_CLASS . '--no-plate';
 		}
 
 		if ( null !== $this->logo->image( (int) $design['background_id'], LogoAttachment::KIND_BACKGROUND ) ) {

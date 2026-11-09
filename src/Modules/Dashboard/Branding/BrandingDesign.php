@@ -109,7 +109,7 @@ final class BrandingDesign {
 			'support_label'    => '',
 			'shop_link'        => true,
 			'logo_size'        => 'small',
-			'logo_plate'       => true,
+			'logo_plate'       => false,
 			'dark_logo_id'     => 0,
 			'favicon_id'       => 0,
 			'app_icon_id'      => 0,

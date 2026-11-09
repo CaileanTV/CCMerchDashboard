@@ -378,7 +378,7 @@ final class ShellControllerTest extends TestCase {
 		$data = json_decode( substr( $inline, strlen( 'window.merchboardDashboard = ' ), -1 ), true );
 		self::assertIsArray( $data );
 		self::assertSame( array( 'site_name', 'dashboard_url', 'routing', 'logout_url', 'login_url', 'password_url', 'locale', 'sections', 'logo', 'logo_dark', 'logo_size', 'logo_plate', 'impersonating', 'impersonation_end_url' ), array_keys( $data ) );
-		self::assertSame( array( null, 'small', true ), array( $data['logo_dark'], $data['logo_size'], $data['logo_plate'] ), 'ADR-103 defaults.' );
+		self::assertSame( array( null, 'small', false ), array( $data['logo_dark'], $data['logo_size'], $data['logo_plate'] ), 'ADR-103 defaults: no plate.' );
 		self::assertFalse( $data['impersonating'] );
 		self::assertNull( $data['impersonation_end_url'], 'Only while an administrator views as the creator (ADR-075).' );
 		self::assertNull( $data['logo'], 'This fake plugin has no default logo file: the site name is shown as text.' );

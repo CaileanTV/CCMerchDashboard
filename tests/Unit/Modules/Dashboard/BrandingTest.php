@@ -352,7 +352,7 @@ final class BrandingTest extends TestCase {
 			self::assertSame( array( array( LoginBranding::HANDLE, 'https://shop.test/wp-content/plugins/merchboard/assets/css/login.css', array( 'login' ), false ) ), $this->styles['enqueued'] );
 			self::assertSame( LoginBranding::HANDLE, $this->styles['inline'][0][0] );
 			self::assertStringContainsString( 'body.merchboard-login #login h1 a{background-image:url("' . self::DEFAULT_URL, $this->styles['inline'][0][1] );
-			self::assertSame( array( 'login', 'merchboard-login', 'merchboard-login--split', 'merchboard-login--login' ), $branding->body_class( array( 'login' ) ) );
+			self::assertSame( array( 'login', 'merchboard-login', 'merchboard-login--split', 'merchboard-login--login', 'merchboard-login--no-plate' ), $branding->body_class( array( 'login' ) ) );
 			self::assertSame( 'https://shop.test/', $branding->header_url( 'https://wordpress.org/' ) );
 			self::assertSame( 'Nova Merch', $branding->header_text( 'Powered by WordPress' ) );
 		} else {
