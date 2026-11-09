@@ -214,7 +214,7 @@ final class LoginScreenTest extends TestCase {
 		$design['background_id'] = 9;
 		$css                     = $this->branding()->inline_css( $design );
 
-		self::assertStringStartsWith( 'body.merchboard-login{--merchboard-login-bg:#007279;--merchboard-login-panel-text:#ffffff;--merchboard-login-accent:#007279', $css );
+		self::assertStringStartsWith( 'body.merchboard-login{--merchboard-login-bg:#007279;--merchboard-login-panel-text:#ffffff;--merchboard-login-accent:#007279;--merchboard-login-accent-dark:#338e94', $css );
 		self::assertStringNotContainsString( 'a")', $css, 'A hostile image URL never reaches the CSS.' );
 		self::assertStringNotContainsString( '--merchboard-login-image', $css );
 	}
@@ -282,6 +282,15 @@ final class LoginScreenTest extends TestCase {
 		self::assertSame( 'https://shop.test/help', BrandingDesign::link( 'https://shop.test/help' ) );
 		self::assertNull( BrandingDesign::link( 'http://shop.test/help' ), 'https only.' );
 		self::assertGreaterThan( 20, BrandingDesign::contrast( '#000000', '#ffffff' ) );
+	}
+
+	public function test_the_button_colour_is_lightened_just_enough_for_the_dark_login(): void {
+		self::assertSame( '#338e94', BrandingDesign::on_dark( '#007279' ), 'The logo teal, 20 % white.' );
+		self::assertSame( '#9aa3f2', BrandingDesign::on_dark( '#9aa3f2' ), 'Already readable: unchanged.' );
+
+		foreach ( array( '#007279', '#000000', '#1e1b4b', '#b91c1c' ) as $color ) {
+			self::assertGreaterThanOrEqual( BrandingDesign::MIN_CONTRAST, BrandingDesign::contrast( BrandingDesign::on_dark( $color ), BrandingDesign::DARK_SURFACE ), $color );
+		}
 	}
 
 	public function test_the_manifest_holds_the_app_icon_and_no_personal_data(): void {

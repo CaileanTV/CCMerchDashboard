@@ -51,6 +51,25 @@ body.merchboard-login {
 	}
 }
 
+/*
+ * The focus ring, the eye and the secondary buttons in the button colour:
+ * as chosen on the light form (white on it has 4.5:1), and on the dark form
+ * lightened just enough to read (--merchboard-login-accent-dark, computed by
+ * BrandingDesign::on_dark()).
+ */
+body.merchboard-login {
+	--merchboard-login-ring: var(--merchboard-login-accent, var(--merchboard-focus));
+	--merchboard-login-icon: var(--merchboard-login-accent, var(--merchboard-link));
+}
+
+@media (prefers-color-scheme: dark) {
+
+	body.merchboard-login {
+		--merchboard-login-ring: var(--merchboard-login-accent-dark, var(--merchboard-focus));
+		--merchboard-login-icon: var(--merchboard-login-accent-dark, var(--merchboard-link));
+	}
+}
+
 /* The page: the layout replaces WordPress' grey page. */
 body.merchboard-login {
 	min-height: 100vh;
@@ -214,7 +233,7 @@ body.merchboard-login #login h1 a {
 }
 
 body.merchboard-login #login h1 a:focus {
-	outline: 3px solid var(--merchboard-focus);
+	outline: 3px solid var(--merchboard-login-ring);
 	outline-offset: 2px;
 	box-shadow: none;
 }
@@ -248,9 +267,9 @@ body.merchboard-login.login input[type="text"]:focus,
 body.merchboard-login.login input[type="password"]:focus,
 body.merchboard-login.login input[type="email"]:focus,
 body.merchboard-login.login input[type="checkbox"]:focus {
-	border-color: var(--merchboard-focus);
+	border-color: var(--merchboard-login-ring);
 	outline: 2px solid transparent;
-	box-shadow: 0 0 0 2px var(--merchboard-focus);
+	box-shadow: 0 0 0 2px var(--merchboard-login-ring);
 }
 
 /* The button in the administrator's colour (white text, contrast checked). */
@@ -273,12 +292,28 @@ body.merchboard-login.login .button-primary:focus {
 }
 
 body.merchboard-login.login .button-primary:focus {
-	box-shadow: 0 0 0 2px var(--merchboard-surface), 0 0 0 4px var(--merchboard-focus);
+	box-shadow: 0 0 0 2px var(--merchboard-surface), 0 0 0 4px var(--merchboard-login-ring);
 }
 
 body.merchboard-login.login .button.wp-hide-pw,
 body.merchboard-login.login .button.wp-hide-pw .dashicons {
-	color: var(--merchboard-link);
+	color: var(--merchboard-login-icon);
+}
+
+body.merchboard-login.login .button.wp-hide-pw:focus {
+	border-color: var(--merchboard-login-ring);
+	box-shadow: 0 0 0 1px var(--merchboard-login-ring);
+}
+
+/* WordPress' secondary buttons (e.g. the language switcher's). */
+body.merchboard-login.login .button:not(.button-primary):not(.wp-hide-pw) {
+	color: var(--merchboard-login-icon);
+	background: var(--merchboard-surface);
+	border-color: var(--merchboard-login-icon);
+}
+
+body.merchboard-login.login .button:not(.button-primary):not(.wp-hide-pw):focus {
+	box-shadow: 0 0 0 1px var(--merchboard-login-ring);
 }
 
 body.merchboard-login.login #nav,
@@ -346,7 +381,7 @@ body.merchboard-login .merchboard-login-links .merchboard-login-button:hover {
 
 body.merchboard-login .merchboard-login-links .merchboard-login-button:focus-visible {
 	outline: none;
-	box-shadow: 0 0 0 2px var(--merchboard-surface), 0 0 0 4px var(--merchboard-focus);
+	box-shadow: 0 0 0 2px var(--merchboard-surface), 0 0 0 4px var(--merchboard-login-ring);
 }
 
 /* Centred: on the background, so the panel colours reversed. */

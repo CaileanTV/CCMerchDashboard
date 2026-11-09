@@ -58,6 +58,11 @@ final class BrandingDesign {
 	public const MIN_CONTRAST = 4.5;
 
 	/**
+	 * The form's surface on the dark login (Dark Black, login.css).
+	 */
+	public const DARK_SURFACE = '#16181b';
+
+	/**
 	 * Images by key and kind.
 	 */
 	public const IMAGES = array(
@@ -249,6 +254,28 @@ final class BrandingDesign {
 		$light = array( self::luminance( $a ), self::luminance( $b ) );
 
 		return ( max( $light ) + 0.05 ) / ( min( $light ) + 0.05 );
+	}
+
+	/**
+	 * The colour lightened with white in 5 % steps until text in it reads on
+	 * the dark surface (contrast at least 4.5:1); the colour itself when it
+	 * already does. Used for the button colour as text on the dark login.
+	 *
+	 * @param string $color   #rrggbb.
+	 * @param string $surface #rrggbb.
+	 */
+	public static function on_dark( string $color, string $surface = self::DARK_SURFACE ): string {
+		$channels = array_map( 'hexdec', str_split( substr( $color, 1 ), 2 ) );
+
+		for ( $white = 0; $white <= 100; $white += 5 ) {
+			$mixed = '#' . implode( '', array_map( static fn( int|float $channel ): string => sprintf( '%02x', (int) round( $channel + ( 255 - $channel ) * $white / 100 ) ), $channels ) );
+
+			if ( self::contrast( $mixed, $surface ) >= self::MIN_CONTRAST ) {
+				return $mixed;
+			}
+		}
+
+		return '#ffffff';
 	}
 
 	/**

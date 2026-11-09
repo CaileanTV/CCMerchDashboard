@@ -251,6 +251,7 @@ final class LoginBranding {
 			'--merchboard-login-bg:' . (string) $design['background_color'],
 			'--merchboard-login-panel-text:' . (string) $design['panel_text'],
 			'--merchboard-login-accent:' . (string) $design['accent'],
+			'--merchboard-login-accent-dark:' . BrandingDesign::on_dark( (string) $design['accent'] ),
 		);
 		$css   = '';
 
