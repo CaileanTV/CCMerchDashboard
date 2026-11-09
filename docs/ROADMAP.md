@@ -1109,14 +1109,18 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 
 **Projektejerens valg (2026-11-09):** creatoren kan anmode om første udbetaling, når stamdata er indsendt, men den venter (reserveret), til de er bekræftet; bekræftede stamdata kan creatoren selv rette, og rettelsen godkendes, uden at senere udbetalinger stoppes; stamdata ligger under Udbetalinger med en besked øverst, så længe de mangler.
 
-- **42.1 Docs:** ✅ ADR-104, statusnote på ADR-062 (K09 og CVR-noten), SECURITY.md og denne fase.
-- **42.2 Domæne:** indsend, bekræft, bed om rettelser og status (`billing_submission`, `billing_confirmed`); admins direkte gem tæller som bekræftelse.
-- **42.3 Spærren for første udbetaling:** `billing_details_required` ved anmodning og `billing_details_unconfirmed` ved gennemførsel (bank, PayPal og gavekort); status i saldoen og besked i admins visning.
-- **42.4 REST:** `GET`/`POST /me/billing-details`, blokeret under "Se som creator".
-- **42.5 Admin:** fanen "Stamdata" under "Forslag" og status på creatorens side.
-- **42.6 Dashboard:** kortet "Stamdata til afregning" på Udbetalinger, besked øverst og afvisningstekst.
-- **42.7 Notifikationer, audit og tekster:** tre notifikationer, tre audit-handlinger, danske oversættelser.
-- **42.8 Tests:** unit, integration og Jest; faste lister (ruter, notifikationer, audit).
+**Tilføjet undervejs af projektejeren (2026-11-09):**
+- CVR-feltet bliver et valg: "registreret virksomhed" (CVR påkrævet) eller privatperson, der angiver CPR-nummeret ved hver udbetaling (skatteindberetningslovens § 4, projektejerens oplysning). CPR-nummeret krypteres og slettes, når udbetalingen er behandlet, og ses kun som bankoplysninger (projektejerens valg). En infoboks forklarer hvorfor og anbefaler at oprette en PMV, fordi det er gratis (ADR-104 pkt. 9).
+- "Udfyld fra CVR-nummer" gennem cvrapi.dk (ADR-105).
+
+- **42.1 Docs:** ✅ ADR-104 (med pkt. 9 om CPR), ADR-105, statusnote på ADR-062 (K09 og CVR-noten), SECURITY.md og denne fase.
+- **42.2 Domæne:** ✅ indsend, bekræft, bed om rettelser og status (`billing_submission`, `billing_confirmed`); admins direkte gem tæller som bekræftelse; typen virksomhed/privatperson.
+- **42.3 Spærren for første udbetaling:** ✅ `billing_details_required` ved anmodning og `billing_details_unconfirmed` ved gennemførsel (bank, PayPal og gavekort); besked i admins visning. CPR ved anmodningen for privatpersoner (`invalid_cpr`), krypteret og slettet ved behandlingen.
+- **42.4 REST:** ✅ `GET`/`POST /me/billing-details` (POST blokeret under "Se som creator") og `GET /me/billing-details/cvr/{cvr}`.
+- **42.5 Admin:** ✅ fanen "Stamdata" under "Forslag", status og type på creatorens side, CPR-nummeret i visningen af betalingsoplysninger.
+- **42.6 Dashboard:** ✅ kortet "Stamdata til afregning" på Udbetalinger (virksomhed/privatperson, CPR-infoboks med PMV-anbefaling, "Udfyld fra CVR-nummer"), CPR-felt i anmodningen, besked øverst og afvisningstekster.
+- **42.7 Notifikationer, audit og tekster:** ✅ tre notifikationer, tre audit-handlinger, danske oversættelser.
+- **42.8 Tests:** ✅ unit (validering, CPR, CVR-opslag), integration (flowet, CPR krypteret og slettet) og Jest; faste lister (notifikationer, audit, "Se som creator").
 - **42.9 Runtime-test på Local:** udfyld, anmod (venter), bed om rettelser, ret og bekræft, uden at gennemføre en udbetaling.
 
 **Efter fase 42:** samlet review og release af fase 41 og 42 (det tidligere 41.8): uafhængigt review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK.

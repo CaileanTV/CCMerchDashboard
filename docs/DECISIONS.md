@@ -6067,6 +6067,14 @@ Projektejerens valg 2026-11-09:
 6. **Creatorens API:** `GET /me/billing-details` (status, bekræftede værdier, indsendelse og note, om første udbetaling kræver bekræftelse, og om en udbetaling venter) og `POST /me/billing-details` (indsend). `/me`-scoped (ADR-007); POST er blokeret under "Se som creator".
 7. **Notifikationer (ADR-079):** `admin_billing_details_submitted` til administratorer; `billing_details_confirmed` og `billing_details_changes_requested` (vigtig, med administratorens note) til creatoren. Mails nævner aldrig adresse eller CVR/SE-nr.
 8. **Audit:** `billing_details_submitted`, `billing_details_confirmed` og `billing_details_changes_requested` med navnene på de ændrede felter og, ved rettelser, noten; aldrig værdierne.
+9. **CVR eller CPR (projektejerens tilføjelse 2026-11-09):** stamdata får typen "registreret virksomhed" eller "privatperson" (`type`: `business`/`private`).
+   - **Registreret virksomhed:** CVR/SE-nr. er påkrævet.
+   - **Privatperson:** intet CVR-nr.; i stedet kræves CPR-nummeret ved hver udbetalingsanmodning, fordi udbetalingen skal indberettes (projektejerens gengivelse af skatteindberetningsloven § 4; ikke vurderet af revisor eller advokat). Formularen forklarer hvorfor og anbefaler at oprette en personligt ejet mindre virksomhed (PMV), fordi det er gratis, og bruge dens CVR-nr. i stedet (projektejerens ønske og oplysning).
+   - **Opbevaring (projektejerens valg):** CPR-nummeret gemmes aldrig i stamdata. Det krypteres sammen med udbetalingens betalingsoplysninger (ADR-056, `MERCHBOARD_PAYOUT_KEY`; for gavekort i sin egen krypterede post) og slettes, når udbetalingen er behandlet (gennemført, afvist eller annulleret), som betalingsoplysningerne. Uden nøgle kan en privatperson ikke anmode om en udbetaling.
+   - **Adgang (projektejerens valg):** det fulde nummer ses kun af en administrator med `merchboard_manage_payouts` og `merchboard_view_payout_details`, og hver visning auditeres (uden nummeret), sammen med betalingsoplysningerne under "Vis fulde betalingsoplysninger". Ellers vises det ikke; der gemmes ingen maskeret udgave.
+   - **Aldrig:** på afregningsbilag, i audit, logs, mails, notifikationer eller REST-svar til creatoren.
+   - **Format:** ti cifre (bindestreg og mellemrum fjernes) med en gyldig dato i de første seks; modulus 11 kontrolleres ikke (bruges ikke af alle numre).
+   - Stamdata uden type (registreret før fase 42) kræver intet CPR-nr., før typen er valgt.
 
 ## Alternatives considered
 - **Spærre selve anmodningen, til stamdata er bekræftet:** fravalgt af projektejeren; anmodningen må gerne ligge og vente.
@@ -6091,3 +6099,51 @@ Ingen schemaændring. To nye creatormeta-nøgler, som slettes ved opt-in-afinsta
 
 ## Related
 ADR-007, ADR-055, ADR-056, ADR-058, ADR-059, ADR-060, ADR-062, ADR-077, ADR-079, ADR-092
+
+# ADR-105: Opslag i CVR-registret gennem cvrapi.dk ("Udfyld fra CVR-nummer")
+
+## Date
+2026-11-09
+
+## Status
+Accepteret af projektejeren 2026-11-09 (ønske i fase 42: "implementere en mulighed for CVR API kald gennem https://cvrapi.dk/ … en knap til 'udfyld fra CVR nummer'"). Godkender cvrapi.dk som ekstern tjeneste (CLAUDE.md: eksterne tjenester kun via ADR). Udfylder den API-fase, som statusnoten "CVR udskudt" (ADR-062) og ADR-104 pkt. 9 henviser til, for creatorens stamdata. Udstederens CVR-nr. slås ikke op.
+
+## Context
+Creatoren udfylder selv stamdata (ADR-104). En registreret virksomhed skal angive CVR/SE-nr.; navn og adresse står i CVR-registret. cvrapi.dk (CVR API ApS, Aarhus) gengiver data fra Det Centrale Virksomhedsregister (Erhvervsstyrelsen). Vilkår læst 2026-11-09 (https://cvrapi.dk/terms, i kraft fra 24. maj 2019, og /documentation):
+- `GET https://cvrapi.dk/api?search=<cvr>&country=dk` (version 6, JSON); valgfri `token`.
+- User-Agent skal indeholde virksomhedsnavn, projektnavn og en kontaktperson (telefon eller e-mail); standard-UA afvises (`INVALID_UA`), og misvisende UA kan udelukkes.
+- 50 gratis opslag pr. dag (`QUOTA_EXCEEDED`); grænsen må ikke omgås. Kommerciel brug er tilladt; data må ikke sælges videre.
+- Fejl: `QUOTA_EXCEEDED`, `BANNED`, `INVALID_VAT`, `NOT_FOUND`, `INTERNAL_ERROR`, `INVALID_UA`. Svarfelterne er ikke dokumenteret ud over enkelte navne (`zipcode`, `cityname`).
+- Ingen garanti for oppetid.
+
+## Decision
+1. **Knappen** "Udfyld fra CVR-nummer" ved CVR-feltet i creatorens stamdata (kun "registreret virksomhed"). Den udfylder navn, adresse, postnummer, by og land i formularen; creatoren kan rette dem, og intet gemmes, før formularen sendes til bekræftelse som hidtil (ADR-104). En administrator bekræfter stadig.
+2. **Kun serveren kalder cvrapi.dk** (`GET /me/billing-details/cvr/{cvr}`, `/me`-scoped), aldrig browseren: kun HTTPS, timeout 5 sekunder, ingen redirects, kun CVR-nummeret (otte cifre) sendes.
+3. **User-Agent:** `<virksomhedsnavn> - Merch Dashboard - <kontakt-e-mail>` fra Indstillinger → Virksomhedsoplysninger (`company_name`, `company_email`). Mangler en af dem, er opslag ikke tilgængeligt, og knappen vises ikke.
+4. **Grænser:** svar caches i 24 timer pr. CVR-nr. (også "ikke fundet"); højst 40 opslag mod cvrapi.dk pr. døgn for hele sitet og 10 pr. creator, så grænsen på 50 aldrig nås. Ved `QUOTA_EXCEEDED` stoppes opslag resten af døgnet.
+5. **Svaret valideres:** kun navn, adresse, postnummer og by læses som korte tekster (samme regler som stamdata); alt andet ignoreres. Et svar uden navn er "ikke fundet". Reklamebeskyttelse og ejere bruges ikke.
+6. **Fejl** vises som faste tekster (ikke fundet, ugyldigt nummer, for mange opslag, tjenesten svarer ikke); formularen kan altid udfyldes i hånden.
+7. **Logning:** kun fejlkoder, aldrig CVR-numre eller svar. Ingen audit for opslag (intet gemmes).
+
+## Alternatives considered
+- **Erhvervsstyrelsens egen CVR-distribution (system-til-system):** kræver aftale og adgangsoplysninger; fravalgt nu.
+- **Opslag i browseren:** ville sende creatorens IP til tredjepart og kræve CSP-undtagelse; fravalgt.
+
+## Reason
+Færre tastefejl i stamdata og hurtigere bekræftelse, uden at admin-bekræftelsen eller ADR-104's regler ændres.
+
+## Security
+- CVR-numre og virksomhedsdata er offentlige; for en PMV er navnet en persons navn, som allerede er offentligt i registret. Kun CVR-nummeret sendes; intet om creatoren.
+- Svaret er utroværdigt input og valideres som stamdata, før det vises.
+- Ruten kræver creator-adgang og er begrænset pr. creator og pr. site.
+
+## Migration/data implications
+Ingen schemaændring. Cache og tællere ligger i transients, der udløber af sig selv inden for et døgn.
+
+## Consequences
+- Afhængighed af en ekstern tjeneste uden garanti; formularen virker uden den.
+- Projektejeren skal have virksomhedsnavn og kontakt-e-mail udfyldt. Svarfelterne er ikke dokumenteret af cvrapi.dk og verificeres på stg.
+- Flere end 40 opslag pr. døgn kræver en aftale med cvrapi.dk (token) og en ny beslutning.
+
+## Related
+ADR-062, ADR-104
