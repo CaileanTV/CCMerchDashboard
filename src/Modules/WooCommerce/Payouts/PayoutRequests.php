@@ -77,7 +77,11 @@ final class PayoutRequests {
 	 * @param Closure                $clock       Current time (`Closure(): DateTimeImmutable`).
 	 * @param GiftCardProviders|null $gift_cards  Gift card providers; null = gift cards unavailable.
 	 * @param Closure|null           $agreement   Whether a creator has accepted what the agreement requires (ADR-092); null: always.
+	 * @param Closure|null           $billing     Whether a creator may request a payout: the first one needs submitted master data (ADR-104); null: always.
+	 * @param Closure|null           $cpr         Whether a creator is paid as a private person and must give the CPR number (ADR-104); null: never.
 	 * @phpstan-param (Closure(int): bool)|null $agreement
+	 * @phpstan-param (Closure(int): bool)|null $billing
+	 * @phpstan-param (Closure(int): bool)|null $cpr
 	 */
 	public function __construct(
 		private PayoutRepository $payouts,
@@ -88,7 +92,9 @@ final class PayoutRequests {
 		private Transaction $transaction,
 		private Closure $clock,
 		private ?GiftCardProviders $gift_cards = null,
-		private ?Closure $agreement = null
+		private ?Closure $agreement = null,
+		private ?Closure $billing = null,
+		private ?Closure $cpr = null
 	) {
 	}
 
@@ -113,7 +119,7 @@ final class PayoutRequests {
 	 * @param string       $currency        Currency.
 	 * @param string       $amount          Decimal amount or ALL.
 	 * @param string       $method          Method value.
-	 * @param array<mixed> $details         Bank or PayPal details (PayoutDestination::from_input()).
+	 * @param array<mixed> $details         Bank or PayPal details (PayoutDestination::from_input()) and, for a creator paid as a private person, `cpr`.
 	 * @param string       $idempotency_key The client's request key (UUID).
 	 * @param int|null     $user_id         WordPress user who requests it.
 	 * @throws PayoutException When the request is refused; nothing is stored.
@@ -126,6 +132,11 @@ final class PayoutRequests {
 		// A creator who signed up must have accepted the current agreement (ADR-092).
 		if ( null !== $this->agreement && ! ( $this->agreement )( $creator_id ) ) {
 			throw new PayoutException( PayoutException::AGREEMENT_REQUIRED );
+		}
+
+		// The first payout needs submitted master data; it then waits for their confirmation (ADR-104).
+		if ( null !== $this->billing && ! ( $this->billing )( $creator_id ) ) {
+			throw new PayoutException( PayoutException::BILLING_DETAILS_REQUIRED );
 		}
 
 		try {
@@ -152,6 +163,17 @@ final class PayoutRequests {
 			if ( ! $this->cipher->available() ) {
 				throw new PayoutException( PayoutException::METHOD_UNAVAILABLE );
 			}
+		}
+
+		// A creator paid as a private person gives the CPR number, encrypted with the payout (ADR-104).
+		if ( null !== $this->cpr && ( $this->cpr )( $creator_id ) ) {
+			$number = CprNumber::from_input( $details['cpr'] ?? null );
+
+			if ( ! $this->cipher->available() ) {
+				throw new PayoutException( PayoutException::METHOD_UNAVAILABLE );
+			}
+
+			$destination = null === $destination ? PayoutDestination::gift_card( $number ) : $destination->with_cpr( $number );
 		}
 
 		$decimals = $this->store->decimals();

@@ -22,7 +22,10 @@ defined( 'ABSPATH' ) || exit;
  * issued, so a later change never changes an issued document.
  *
  * A CVR or SE number is eight digits (spaces are removed). Texts are single
- * lines without control characters. Whether the field list meets the formal
+ * lines without control characters. The type (ADR-104) says whether the
+ * creator is paid as a registered business (with a CVR/SE number) or as a
+ * private person (then the CPR number is given with each payout request and
+ * never stored here); '' for master data registered before phase 42. Whether the field list meets the formal
  * requirements of self-billing is not validated (ADR-062, reservation 3).
  */
 final readonly class CreatorBillingDetails {
@@ -41,6 +44,16 @@ final readonly class CreatorBillingDetails {
 	);
 
 	/**
+	 * Paid as a registered business (ADR-104).
+	 */
+	public const BUSINESS = 'business';
+
+	/**
+	 * Paid as a private person (ADR-104): the CPR number goes with each payout.
+	 */
+	public const PRIVATE = 'private';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $legal_name Legal name of the person or business.
@@ -50,6 +63,7 @@ final readonly class CreatorBillingDetails {
 	 * @param string $city       City.
 	 * @param string $country    Country.
 	 * @param string $cvr        CVR or SE number (eight digits), '' when none.
+	 * @param string $type       self::BUSINESS, self::PRIVATE or '' (not chosen).
 	 */
 	public function __construct(
 		public string $legal_name = '',
@@ -58,7 +72,8 @@ final readonly class CreatorBillingDetails {
 		public string $postcode = '',
 		public string $city = '',
 		public string $country = '',
-		public string $cvr = ''
+		public string $cvr = '',
+		public string $type = ''
 	) {
 	}
 
@@ -66,10 +81,15 @@ final readonly class CreatorBillingDetails {
 	 * Validated master data from submitted values (missing keys are empty).
 	 *
 	 * @param array<string, string> $values Field => value.
-	 * @throws PayoutException `invalid_cvr` for a CVR/SE number that is not eight digits, `invalid_billing_details` for a text that is too long or has control characters.
+	 * @throws PayoutException `invalid_cvr` for a CVR/SE number that is not eight digits, `invalid_billing_details` for a text that is too long or has control characters or an unknown type.
 	 */
 	public static function from_input( array $values ): self {
 		$clean = array();
+		$type  = $values['type'] ?? '';
+
+		if ( ! in_array( $type, array( '', self::BUSINESS, self::PRIVATE ), true ) ) {
+			throw new PayoutException( PayoutException::INVALID_BILLING_DETAILS );
+		}
 
 		foreach ( self::FIELDS as $field => $max ) {
 			$value = trim( $values[ $field ] ?? '' );
@@ -87,7 +107,7 @@ final readonly class CreatorBillingDetails {
 			$clean[ $field ] = $value;
 		}
 
-		return new self( $clean['legal_name'], $clean['address_1'], $clean['address_2'], $clean['postcode'], $clean['city'], $clean['country'], $clean['cvr'] );
+		return new self( $clean['legal_name'], $clean['address_1'], $clean['address_2'], $clean['postcode'], $clean['city'], $clean['country'], $clean['cvr'], $type );
 	}
 
 	/**
@@ -102,7 +122,9 @@ final readonly class CreatorBillingDetails {
 			$values[ $field ] = is_array( $stored ) && is_string( $stored[ $field ] ?? null ) ? $stored[ $field ] : '';
 		}
 
-		return new self( $values['legal_name'], $values['address_1'], $values['address_2'], $values['postcode'], $values['city'], $values['country'], $values['cvr'] );
+		$type = is_array( $stored ) && in_array( $stored['type'] ?? null, array( self::BUSINESS, self::PRIVATE ), true ) ? (string) $stored['type'] : '';
+
+		return new self( $values['legal_name'], $values['address_1'], $values['address_2'], $values['postcode'], $values['city'], $values['country'], $values['cvr'], $type );
 	}
 
 	/**
@@ -117,7 +139,7 @@ final readonly class CreatorBillingDetails {
 	/**
 	 * Every field with its value.
 	 *
-	 * @return array{legal_name: string, address_1: string, address_2: string, postcode: string, city: string, country: string, cvr: string}
+	 * @return array{legal_name: string, address_1: string, address_2: string, postcode: string, city: string, country: string, cvr: string, type: string}
 	 */
 	public function values(): array {
 		return array(
@@ -128,6 +150,7 @@ final readonly class CreatorBillingDetails {
 			'city'       => $this->city,
 			'country'    => $this->country,
 			'cvr'        => $this->cvr,
+			'type'       => $this->type,
 		);
 	}
 

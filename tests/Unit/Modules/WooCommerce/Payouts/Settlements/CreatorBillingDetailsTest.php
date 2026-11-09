@@ -31,6 +31,7 @@ final class CreatorBillingDetailsTest extends TestCase {
 				'city'       => 'Aarhus C',
 				'country'    => 'Danmark',
 				'cvr'        => ' 8765 4321 ',
+				'type'       => 'business',
 			)
 		);
 

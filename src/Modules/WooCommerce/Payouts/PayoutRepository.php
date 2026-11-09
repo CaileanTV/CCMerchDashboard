@@ -524,6 +524,9 @@ final class PayoutRepository {
 		if ( 1 !== $result ) {
 			throw new DatabaseException( 'The payout write changed no row; the connection or the row changed.' );
 		}
+
+		// A creator paid as a private person gave the CPR number with it (ADR-104).
+		$this->purge_secret( $payout->id, $now );
 	}
 
 	/**

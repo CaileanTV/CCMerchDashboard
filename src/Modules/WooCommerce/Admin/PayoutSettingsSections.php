@@ -16,6 +16,7 @@ use MerchBoard\Modules\Settings\Admin\SettingsPage;
 use MerchBoard\Modules\WooCommerce\Payouts\GiftCards\GiftCardProviders;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutException;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\BillingDetailsReview;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CreatorBillingDetails;
 use Throwable;
 
@@ -40,10 +41,11 @@ final class PayoutSettingsSections {
 	/**
 	 * Constructor.
 	 *
-	 * @param PayoutSettings         $settings  Current values.
-	 * @param GiftCardProviders|null $providers Registered gift card adapters; null = none.
+	 * @param PayoutSettings            $settings  Current values.
+	 * @param GiftCardProviders|null    $providers Registered gift card adapters; null = none.
+	 * @param BillingDetailsReview|null $review    The creator's own master data (ADR-104); null = no status.
 	 */
-	public function __construct( private PayoutSettings $settings, private ?GiftCardProviders $providers = null ) {
+	public function __construct( private PayoutSettings $settings, private ?GiftCardProviders $providers = null, private ?BillingDetailsReview $review = null ) {
 	}
 
 	/**
@@ -231,6 +233,39 @@ final class PayoutSettingsSections {
 	}
 
 	/**
+	 * Where the creator's own master data stand (ADR-104), with a link to the
+	 * tab when a submission waits.
+	 *
+	 * @param Creator $creator Creator being edited.
+	 */
+	private function render_review_status( Creator $creator ): void {
+		if ( null === $this->review ) {
+			return;
+		}
+
+		try {
+			$state = $this->review->state( $creator->id );
+		} catch ( Throwable ) {
+			return;
+		}
+
+		$text = match ( true ) {
+			null !== $state->submission && BillingDetailsReview::CHANGES_REQUESTED === $state->submission['status'] => __( 'The creator is asked to correct the submitted master data.', 'merchboard' ),
+			null !== $state->submission => __( 'The creator submitted master data that wait for your confirmation.', 'merchboard' ),
+			BillingDetailsReview::CONFIRMED === $state->status => __( 'Confirmed. Saving here also counts as confirmed.', 'merchboard' ),
+			default => __( 'The creator has not filled in master data yet. The first payout can only be completed once they are confirmed; saving here also counts as confirmed.', 'merchboard' ),
+		};
+
+		echo '<p><strong>' . esc_html__( 'Status:', 'merchboard' ) . '</strong> ' . esc_html( $text );
+
+		if ( null !== $state->submission ) {
+			echo ' <a href="' . esc_url( BillingDetailsReviewPage::url() ) . '">' . esc_html__( 'Proposals → Master data', 'merchboard' ) . '</a>';
+		}
+
+		echo '</p>';
+	}
+
+	/**
 	 * The creator's master data for settlement documents (ADR-062 K09):
 	 * legal name, address and CVR/SE number, each optional. Missing data is
 	 * listed; nothing is filled in.
@@ -250,6 +285,7 @@ final class PayoutSettingsSections {
 		}
 
 		echo '<p class="description">' . esc_html__( 'Shown on new settlement documents of this creator; issued documents keep what they were issued with. Fields that are left empty are shown as not registered. Without a legal name, the display name is used.', 'merchboard' ) . '</p>';
+		$this->render_review_status( $creator );
 
 		$missing = array_filter(
 			array(
@@ -280,6 +316,18 @@ final class PayoutSettingsSections {
 		echo '<input type="hidden" name="creator_id" value="' . esc_attr( (string) $creator->id ) . '">';
 		wp_nonce_field( PayoutSettingsActions::billing_nonce_action( $creator->id ) );
 		echo '<table class="form-table" role="presentation"><tbody>';
+		echo '<tr><th scope="row"><label for="merchboard-billing-type">' . esc_html__( 'Paid as', 'merchboard' ) . '</label></th><td>';
+		echo '<select id="merchboard-billing-type" name="' . esc_attr( PayoutSettingsActions::FIELD_BILLING_PREFIX . 'type' ) . '">';
+
+		foreach ( array(
+			''                              => __( 'Not chosen', 'merchboard' ),
+			CreatorBillingDetails::BUSINESS => __( 'Registered business (CVR/SE number)', 'merchboard' ),
+			CreatorBillingDetails::PRIVATE  => __( 'Private person (CPR number with each payout)', 'merchboard' ),
+		) as $type => $type_label ) {
+			printf( '<option value="%1$s"%2$s>%3$s</option>', esc_attr( $type ), selected( $values['type'], $type, false ), esc_html( $type_label ) );
+		}
+
+		echo '</select></td></tr>';
 
 		foreach ( CreatorBillingDetails::FIELDS as $field => $max ) {
 			$id    = 'merchboard-billing-' . str_replace( '_', '-', $field );

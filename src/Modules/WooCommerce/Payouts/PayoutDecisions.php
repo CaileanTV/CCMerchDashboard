@@ -71,6 +71,8 @@ final class PayoutDecisions {
 	 * @param Transaction         $transaction Transactions.
 	 * @param Closure             $clock       Current time (`Closure(): DateTimeImmutable`).
 	 * @param SettlementDocuments $documents   Settlement documents issued with a completion (ADR-060).
+	 * @param Closure|null        $billing     Whether a creator's payout may be completed: the first one needs confirmed master data (ADR-104); null: always.
+	 * @phpstan-param (Closure(int): bool)|null $billing
 	 */
 	public function __construct(
 		private PayoutRepository $payouts,
@@ -79,7 +81,8 @@ final class PayoutDecisions {
 		private AuditTrail $audit,
 		private Transaction $transaction,
 		private Closure $clock,
-		private SettlementDocuments $documents
+		private SettlementDocuments $documents,
+		private ?Closure $billing = null
 	) {
 	}
 
@@ -148,6 +151,11 @@ final class PayoutDecisions {
 					throw new PayoutException( PayoutException::PAYMENT_DETAILS_IN_TEXT );
 				}
 
+				// The first payout waits until the master data are confirmed (ADR-104); it stays pending.
+				if ( null !== $this->billing && ! ( $this->billing )( $payout->creator_id ) ) {
+					throw new PayoutException( PayoutException::BILLING_DETAILS_UNCONFIRMED );
+				}
+
 				$balance = $this->balances->in_currency( $payout->creator_id, $payout->currency )->balance_units();
 
 				if ( null === $balance ) {
@@ -201,7 +209,8 @@ final class PayoutDecisions {
 			throw new PayoutException( PayoutException::NOT_PENDING );
 		}
 
-		if ( PayoutMethod::GiftCard === $payout->method ) {
+		// A gift card payout has details only when a private person gave the CPR number (ADR-104).
+		if ( PayoutMethod::GiftCard === $payout->method && null === $this->payouts->secret( $payout->id ) ) {
 			throw new PayoutException( PayoutException::WRONG_METHOD );
 		}
 

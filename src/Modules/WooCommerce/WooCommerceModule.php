@@ -54,6 +54,8 @@ use MerchBoard\Modules\WooCommerce\Admin\PayoutActions;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutRecalculationActions;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutRecalculationExportDownload;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutRecalculationsPage;
+use MerchBoard\Modules\WooCommerce\Admin\BillingDetailsReviewActions;
+use MerchBoard\Modules\WooCommerce\Admin\BillingDetailsReviewPage;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutSettingsActions;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutSettingsSections;
 use MerchBoard\Modules\WooCommerce\Admin\PayoutsPage;
@@ -75,7 +77,9 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutGiftCards;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRequests;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutSettings;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\BillingDetailsReview;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CreatorBillingDetailsStore;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CvrLookup;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementDocuments;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementPdf;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementRepository;
@@ -120,6 +124,7 @@ use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesProfit;
 use MerchBoard\Modules\WooCommerce\Pricing\WooCommercePricingProductStore;
 use MerchBoard\Modules\WooCommerce\Rest\MeOrdersController;
+use MerchBoard\Modules\WooCommerce\Rest\MeBillingDetailsController;
 use MerchBoard\Modules\WooCommerce\Rest\MePayoutsController;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
 use MerchBoard\Modules\WooCommerce\ProductRemovals\ProductRemovalRepository;
@@ -798,6 +803,16 @@ final class WooCommerceModule implements Module {
 			static fn( Container $c ): PayoutGiftCardCouponGuard => new PayoutGiftCardCouponGuard( static fn( string $code ): bool => $c->get( PayoutGiftCardOrders::class )->is_payout_card( $code ), $c->get( Logger::class ) )
 		);
 		$container->get( PayoutGiftCardCouponGuard::class )->register();
+		// The creator's own master data, confirmed before the first payout (ADR-104).
+		$container->set(
+			CreatorBillingDetailsStore::class,
+			static fn( Container $c ): CreatorBillingDetailsStore => new CreatorBillingDetailsStore( new CreatorMetaStore( $c->get( wpdb::class ) ) )
+		);
+		$container->set(
+			BillingDetailsReview::class,
+			static fn( Container $c ): BillingDetailsReview => new BillingDetailsReview( $c->get( CreatorBillingDetailsStore::class ), $c->get( PayoutRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $clock )
+		);
+		$may_complete = static fn( int $creator_id ): bool => $container->get( BillingDetailsReview::class )->allows_completion( $creator_id );
 		$container->set(
 			PayoutGiftCards::class,
 			static fn( Container $c ): PayoutGiftCards => new PayoutGiftCards(
@@ -808,7 +823,8 @@ final class WooCommerceModule implements Module {
 				$c->get( Transaction::class ),
 				$c->get( Logger::class ),
 				$clock,
-				$c->get( SettlementDocuments::class )
+				$c->get( SettlementDocuments::class ),
+				$may_complete
 			)
 		);
 		$container->set(
@@ -826,7 +842,9 @@ final class WooCommerceModule implements Module {
 					$creator = $c->get( CreatorRepository::class )->find( $creator_id );
 
 					return null === $creator || $c->get( Agreement::class )->satisfied( $creator );
-				}
+				},
+				static fn( int $creator_id ): bool => $c->get( BillingDetailsReview::class )->allows_request( $creator_id ),
+				static fn( int $creator_id ): bool => $c->get( BillingDetailsReview::class )->cpr_required( $creator_id )
 			)
 		);
 		$container->set(
@@ -838,12 +856,13 @@ final class WooCommerceModule implements Module {
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
 				$clock,
-				$c->get( SettlementDocuments::class )
+				$c->get( SettlementDocuments::class ),
+				$may_complete
 			)
 		);
 		$container->set(
 			PayoutSettings::class,
-			static fn( Container $c ): PayoutSettings => new PayoutSettings( $c->get( PayoutRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $clock, new CreatorBillingDetailsStore( new CreatorMetaStore( $c->get( wpdb::class ) ) ) )
+			static fn( Container $c ): PayoutSettings => new PayoutSettings( $c->get( PayoutRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $clock, $c->get( CreatorBillingDetailsStore::class ) )
 		);
 		$container->set(
 			MePayoutsController::class,
@@ -859,6 +878,10 @@ final class WooCommerceModule implements Module {
 			)
 		);
 		$container->set(
+			MeBillingDetailsController::class,
+			static fn( Container $c ): MeBillingDetailsController => new MeBillingDetailsController( $c->get( CreatorContext::class ), $c->get( BillingDetailsReview::class ), $c->get( Logger::class ), new CvrLookup( $c->get( Logger::class ) ) )
+		);
+		$container->set(
 			PayoutsPage::class,
 			static fn( Container $c ): PayoutsPage => new PayoutsPage(
 				$c->get( PayoutRepository::class ),
@@ -869,8 +892,17 @@ final class WooCommerceModule implements Module {
 				$c->get( GiftCardProviders::class ),
 				$c->get( SettlementDocuments::class ),
 				$c->get( PayoutBalances::class ),
-				$c->get( PayoutGiftCardOrders::class )
+				$c->get( PayoutGiftCardOrders::class ),
+				$c->get( BillingDetailsReview::class )
 			)
+		);
+		$container->set(
+			BillingDetailsReviewPage::class,
+			static fn( Container $c ): BillingDetailsReviewPage => new BillingDetailsReviewPage( $c->get( BillingDetailsReview::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ) )
+		);
+		$container->set(
+			BillingDetailsReviewActions::class,
+			static fn( Container $c ): BillingDetailsReviewActions => new BillingDetailsReviewActions( $c->get( BillingDetailsReview::class ), $c->get( Logger::class ) )
 		);
 		$container->set(
 			PayoutActions::class,
@@ -882,7 +914,7 @@ final class WooCommerceModule implements Module {
 		);
 		$container->set(
 			PayoutSettingsSections::class,
-			static fn( Container $c ): PayoutSettingsSections => new PayoutSettingsSections( $c->get( PayoutSettings::class ), $c->get( GiftCardProviders::class ) )
+			static fn( Container $c ): PayoutSettingsSections => new PayoutSettingsSections( $c->get( PayoutSettings::class ), $c->get( GiftCardProviders::class ), $c->get( BillingDetailsReview::class ) )
 		);
 
 		// Creator dashboard (phase 19, ADR-039): read-only product and order
@@ -965,6 +997,7 @@ final class WooCommerceModule implements Module {
 				$container->get( MeOrdersController::class )->register_routes();
 				$container->get( MeSalesController::class )->register_routes();
 				$container->get( MePayoutsController::class )->register_routes();
+				$container->get( MeBillingDetailsController::class )->register_routes();
 				$container->get( MeDiscountCodeController::class )->register_routes();
 			}
 		);
@@ -1001,7 +1034,7 @@ final class WooCommerceModule implements Module {
 		add_filter(
 			ApprovalsPage::FILTER,
 			static function ( mixed $tabs ) use ( $container ): array {
-				return array_merge( is_array( $tabs ) ? $tabs : array(), array( $container->get( ProductRemovalsPage::class )->approval_tab(), $container->get( PayoutsPage::class )->approval_tab() ) );
+				return array_merge( is_array( $tabs ) ? $tabs : array(), array( $container->get( ProductRemovalsPage::class )->approval_tab(), $container->get( PayoutsPage::class )->approval_tab(), $container->get( BillingDetailsReviewPage::class )->approval_tab() ) );
 			}
 		);
 		add_action(
@@ -1047,6 +1080,7 @@ final class WooCommerceModule implements Module {
 				$container->get( SalesLedgerSettingsSection::class )->register();
 				$container->get( PayoutSettingsActions::class )->register();
 				$container->get( PayoutActions::class )->register();
+				$container->get( BillingDetailsReviewActions::class )->register();
 				$container->get( PayoutRecalculationActions::class )->register();
 				$container->get( PayoutRecalculationExportDownload::class )->register();
 				$container->get( SettlementPdfDownload::class )->register();

@@ -166,6 +166,24 @@ enum AuditAction: string {
 	case CreatorBillingDetailsChanged = 'creator_billing_details_changed';
 
 	/**
+	 * The creator submitted master data for confirmation (ADR-104; context:
+	 * names of the fields that differ from the confirmed ones, no values).
+	 */
+	case BillingDetailsSubmitted = 'billing_details_submitted';
+
+	/**
+	 * An administrator confirmed the creator's submitted master data
+	 * (ADR-104; context: names of the changed fields, no values).
+	 */
+	case BillingDetailsConfirmed = 'billing_details_confirmed';
+
+	/**
+	 * An administrator asked the creator to correct the submitted master
+	 * data (ADR-104; context: decision_note, no values).
+	 */
+	case BillingDetailsChangesRequested = 'billing_details_changes_requested';
+
+	/**
 	 * A product-specific share was set or changed for a parent product of the
 	 * creator (context: product id, markup and the previous markup or null,
 	 * in basis points; ADR-049). No WooCommerce price and no snapshot is

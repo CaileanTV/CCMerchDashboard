@@ -143,6 +143,12 @@ final class PayoutSettings {
 				}
 
 				$billing->save( $creator_id, $details );
+
+				// Master data an administrator enters count as confirmed (ADR-104).
+				if ( array() !== $details->to_stored() ) {
+					$billing->save_confirmation( $creator_id, ( $this->clock )()->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' ), get_current_user_id() );
+				}
+
 				$this->audit->record( AuditAction::CreatorBillingDetailsChanged, $creator_id, array( 'changed_fields' => $changed ) );
 
 				return true;

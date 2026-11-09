@@ -36,6 +36,20 @@ final class CreatorMetaStore {
 	public const BILLING_DETAILS = 'billing_details';
 
 	/**
+	 * Master data the creator submitted for confirmation (phase 42, ADR-104):
+	 * `{ values, status: pending|changes_requested, submitted_at, note }`.
+	 * Written by BillingDetailsReview only; becomes `billing_details` only
+	 * when an administrator confirms it.
+	 */
+	public const BILLING_SUBMISSION = 'billing_submission';
+
+	/**
+	 * When and by whom the master data were last confirmed (ADR-104):
+	 * `{ at, by }`. Written by BillingDetailsReview and PayoutSettings only.
+	 */
+	public const BILLING_CONFIRMED = 'billing_confirmed';
+
+	/**
 	 * The amounts available for payout at the last daily check (phase 29,
 	 * ADR-079): `{ amounts: { currency: units } }`, also for a creator without
 	 * a balance yet. Written by the WooCommerce module's
@@ -75,7 +89,7 @@ final class CreatorMetaStore {
 	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BILLING_DETAILS, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP );
+	private const KEYS = array( self::BILLING_DETAILS, self::BILLING_SUBMISSION, self::BILLING_CONFIRMED, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP );
 
 	/**
 	 * Constructor.
@@ -130,6 +144,27 @@ final class CreatorMetaStore {
 		// The metadata API unslashes its input; slash so backslashes survive.
 		update_metadata( self::META_TYPE, $creator_id, $key, wp_slash( $value ) );
 		$this->assert_stored( $creator_id, $key, $value );
+	}
+
+	/**
+	 * The creators that have a value for the key, in ascending id order (at
+	 * most 500).
+	 *
+	 * @param string $key Whitelisted key.
+	 * @return list<int>
+	 * @throws DatabaseException When the read fails.
+	 */
+	public function creator_ids_with( string $key ): array {
+		self::assert_key( $key );
+		$wpdb   = $this->wpdb;
+		$column = self::META_TYPE . '_id';
+		$ids    = $wpdb->get_col( $wpdb->prepare( 'SELECT DISTINCT %i FROM %i WHERE meta_key = %s ORDER BY %i ASC LIMIT 500', $column, Tables::name( $wpdb, Tables::CREATOR_META ), $key, $column ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_query_meta_key -- A custom meta table; read for a short admin list.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read creator meta.' );
+		}
+
+		return array_values( array_filter( array_map( 'intval', $ids ), static fn( int $id ): bool => $id > 0 ) );
 	}
 
 	/**

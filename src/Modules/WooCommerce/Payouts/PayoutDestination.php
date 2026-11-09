@@ -14,7 +14,8 @@ use JsonException;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The full details a payout is sent to (ADR-056). Exists in plain text only
+ * The full details a payout is sent to (ADR-056), with the CPR number of a
+ * creator paid as a private person (ADR-104). Exists in plain text only
  * while a request is validated, encrypted or shown to an admin with
  * `merchboard_view_payout_details`; everywhere else only hint() is used.
  * Never stored for a later request (planning decision 11) and never logged.
@@ -32,13 +33,33 @@ final class PayoutDestination {
 	private const MASK = '•••';
 
 	/**
-	 * Constructor; use bank() or paypal().
+	 * Constructor; use bank(), paypal() or gift_card().
 	 *
 	 * @param PayoutMethod $method       Method.
 	 * @param string       $registration Danish registration number (bank only).
 	 * @param string       $account      Account number (bank) or e-mail address (PayPal).
+	 * @param string       $cpr          CPR number of a creator paid as a private person (ADR-104), '' for none.
 	 */
-	private function __construct( public readonly PayoutMethod $method, public readonly string $registration, public readonly string $account ) {
+	private function __construct( public readonly PayoutMethod $method, public readonly string $registration, public readonly string $account, public readonly string $cpr = '' ) {
+	}
+
+	/**
+	 * A gift card payout's encrypted part: only the CPR number (ADR-104).
+	 *
+	 * @param CprNumber $cpr CPR number.
+	 */
+	public static function gift_card( CprNumber $cpr ): self {
+		return new self( PayoutMethod::GiftCard, '', '', $cpr->value );
+	}
+
+	/**
+	 * The same details with the CPR number of a creator paid as a private
+	 * person (ADR-104).
+	 *
+	 * @param CprNumber $cpr CPR number.
+	 */
+	public function with_cpr( CprNumber $cpr ): self {
+		return new self( $this->method, $this->registration, $this->account, $cpr->value );
 	}
 
 	/**
@@ -98,6 +119,10 @@ final class PayoutDestination {
 	 * (never the registration number), "j•••@g•••.com" for PayPal.
 	 */
 	public function hint(): string {
+		if ( PayoutMethod::GiftCard === $this->method ) {
+			return '';
+		}
+
 		if ( PayoutMethod::Bank === $this->method ) {
 			return strlen( $this->account ) > 4 ? '•••• ' . substr( $this->account, -4 ) : '••••';
 		}
@@ -117,14 +142,17 @@ final class PayoutDestination {
 	 */
 	public function to_json(): string {
 		// json_encode() for JSON_THROW_ON_ERROR; wp_json_encode() returns false instead.
-		return json_encode( // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
-			array(
-				'method'       => $this->method->value,
-				'registration' => $this->registration,
-				'account'      => $this->account,
-			),
-			JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+		$data = array(
+			'method'       => $this->method->value,
+			'registration' => $this->registration,
+			'account'      => $this->account,
 		);
+
+		if ( '' !== $this->cpr ) {
+			$data['cpr'] = $this->cpr;
+		}
+
+		return json_encode( $data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE ); // phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
 	}
 
 	/**
@@ -147,11 +175,15 @@ final class PayoutDestination {
 		}
 
 		try {
-			return match ( $method ) {
+			$cpr = array_key_exists( 'cpr', $data ) ? CprNumber::from_input( $data['cpr'] ) : null;
+
+			$destination = match ( $method ) {
 				PayoutMethod::Bank     => self::bank( is_string( $data['registration'] ?? null ) ? $data['registration'] : '', is_string( $data['account'] ?? null ) ? $data['account'] : '' ),
 				PayoutMethod::PayPal   => self::paypal( is_string( $data['account'] ?? null ) ? $data['account'] : '' ),
-				PayoutMethod::GiftCard => throw new PayoutException( PayoutException::DETAILS_UNREADABLE ),
+				PayoutMethod::GiftCard => null === $cpr ? throw new PayoutException( PayoutException::DETAILS_UNREADABLE ) : self::gift_card( $cpr ),
 			};
+
+			return null === $cpr ? $destination : $destination->with_cpr( $cpr );
 		} catch ( PayoutException ) {
 			throw new PayoutException( PayoutException::DETAILS_UNREADABLE );
 		}

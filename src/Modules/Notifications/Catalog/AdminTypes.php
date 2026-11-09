@@ -34,6 +34,7 @@ final class AdminTypes {
 		return array(
 			self::payout_requested(),
 			self::proposal_submitted(),
+			self::billing_details_submitted(),
 			self::product_removal_requested(),
 			self::creator_signed_up(),
 			self::go_live_requested(),
@@ -265,6 +266,31 @@ final class AdminTypes {
 					array( __( 'Change', 'merchboard' ), self::fields( $d ) ),
 				),
 				__( 'Open Category proposals', 'merchboard' )
+			)
+		);
+	}
+
+	/**
+	 * A creator submitted master data for confirmation (ADR-104); never the
+	 * values.
+	 */
+	private static function billing_details_submitted(): NotificationType {
+		return self::type(
+			'billing_details_submitted',
+			static fn(): string => __( 'New master data to confirm', 'merchboard' ),
+			static fn(): string => __( 'When a creator fills in or changes the master data for settlement documents. A creator\'s first payout waits until you confirm them.', 'merchboard' ),
+			true,
+			'merchboard-approvals',
+			array( 'creator' => 'Nova' ),
+			/* translators: %s: creator name. */
+			static fn( NotificationData $d ): string => sprintf( __( '%s submitted master data to confirm.', 'merchboard' ), $d->text( 'creator' ) ),
+			static fn( NotificationData $d ): EmailMessage => self::message(
+				/* translators: %s: creator name. */
+				sprintf( __( 'New master data from %s', 'merchboard' ), $d->text( 'creator' ) ),
+				__( 'New master data to confirm', 'merchboard' ),
+				__( 'A creator filled in master data for settlement documents. The first payout can only be completed once you have confirmed them under Proposals → Master data.', 'merchboard' ),
+				array( array( __( 'Creator', 'merchboard' ), $d->text( 'creator' ) ) ),
+				__( 'Open Proposals', 'merchboard' )
 			)
 		);
 	}

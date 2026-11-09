@@ -163,6 +163,11 @@ final class PayoutFreeText {
 	 * @param PayoutDestination|null $destination The payout's own details, when readable.
 	 */
 	public static function contains_payment_details( string $text, ?PayoutDestination $destination ): bool {
+		// The payout's own CPR number (ADR-104), also written with a hyphen or spaces.
+		if ( null !== $destination && '' !== $destination->cpr && str_contains( preg_replace( '/[\s-]+/', '', $text ) ?? '', $destination->cpr ) ) {
+			return true;
+		}
+
 		if ( 1 === preg_match( '/[^\s@<>()"\',;]+@[^\s@<>()"\',;]+\.[a-z]{2,}/i', $text ) ) {
 			return true;
 		}

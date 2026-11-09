@@ -48,6 +48,8 @@ final class ImpersonationGuard {
 		array( 'POST', '#^/merchboard/v1/me/payouts$#i' ),
 		array( 'POST', '#^/merchboard/v1/me/payouts/\d+/cancel$#i' ),
 		array( 'GET', '#^/merchboard/v1/me/payouts/\d+/gift-card$#i' ),
+		// The creator's own master data for settlement documents (ADR-104).
+		array( 'POST', '#^/merchboard/v1/me/billing-details$#i' ),
 		array( 'POST', '#^/merchboard/v1/me/alerts/chatbot/[a-z]+/(connect|terms)$#i' ),
 		array( 'POST', '#^/merchboard/v1/me/alerts/api/keys$#i' ),
 		array( 'POST', '#^/merchboard/v1/me/alerts/api/webhooks/\d+/secret$#i' ),

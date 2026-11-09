@@ -71,6 +71,16 @@ export function refusalMessage( error: ApiError ): string | null {
 				'Please accept our agreement first. You find it at the top of your dashboard.',
 				'merchboard'
 			);
+		case 'invalid_cpr':
+			return __(
+				'Please enter a valid CPR number (10 digits, e.g. 010190–1234).',
+				'merchboard'
+			);
+		case 'billing_details_required':
+			return __(
+				'Please fill in your master data for settlement documents below first. Your first payout is paid once we have confirmed them.',
+				'merchboard'
+			);
 		case 'balance_unknown':
 			return __(
 				'Your balance cannot be calculated right now, because some sales lack the data needed. No payout can be requested until it is known.',

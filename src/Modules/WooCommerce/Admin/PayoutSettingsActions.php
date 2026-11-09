@@ -181,6 +181,9 @@ final class PayoutSettingsActions {
 			$values[ $field ] = sanitize_text_field( self::scalar( $input, self::FIELD_BILLING_PREFIX . $field ) );
 		}
 
+		// Business or private person (ADR-104); always sent, so saving never erases it.
+		$values['type'] = sanitize_key( self::scalar( $input, self::FIELD_BILLING_PREFIX . 'type' ) );
+
 		$result = $this->run( 'billing_details', $creator_id, fn(): bool => $this->settings->set_billing_details( $creator_id, $values ) );
 
 		return add_query_arg( array( self::BILLING_RESULT_ARG => $result ), CreatorsAdminPage::edit_url( $creator_id ) ) . '#merchboard-billing-details';

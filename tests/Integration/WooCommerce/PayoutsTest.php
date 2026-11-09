@@ -515,6 +515,7 @@ final class PayoutsTest extends IntegrationTestCase {
 				'city'       => 'Aarhus C',
 				'country'    => 'Danmark',
 				'cvr'        => '87654321',
+				'type'       => '',
 			),
 			$this->settings->billing_details( $this->creator )->values()
 		);

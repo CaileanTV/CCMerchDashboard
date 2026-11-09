@@ -16,6 +16,7 @@ import type {
 	PayoutMethod,
 } from '../../types/payouts';
 import { moneyText } from '../sales/format';
+import { CprInfo } from './CprInfo';
 import { methodLabel, refusalMessage } from './texts';
 
 /**
@@ -43,6 +44,7 @@ interface Values {
 	readonly registration: string;
 	readonly account: string;
 	readonly email: string;
+	readonly cpr: string;
 }
 
 export interface PayoutRequestFormProps {
@@ -50,6 +52,8 @@ export interface PayoutRequestFormProps {
 	readonly locale: string;
 	/** Called after a stored request, so balance and list are reloaded. */
 	readonly onRequested: () => void;
+	/** Whether the creator is paid as a private person and gives the CPR number (ADR-104). */
+	readonly cprRequired?: boolean;
 }
 
 /**
@@ -63,6 +67,7 @@ export function PayoutRequestForm( {
 	balance,
 	locale,
 	onRequested,
+	cprRequired = false,
 }: PayoutRequestFormProps ) {
 	const requestable = balance.currencies.filter(
 		( entry ) => entry.status === 'complete'
@@ -80,6 +85,7 @@ export function PayoutRequestForm( {
 		registration: '',
 		account: '',
 		email: '',
+		cpr: '',
 	} );
 	const [ key, setKey ] = useState( newRequestKey );
 	const [ busy, setBusy ] = useState( false );
@@ -137,6 +143,10 @@ export function PayoutRequestForm( {
 		details = { method: 'paypal', email: values.email.trim() };
 	}
 
+	if ( cprRequired ) {
+		details = { ...details, cpr: values.cpr.trim() };
+	}
+
 	const onSubmit = async ( event: FormEvent< HTMLFormElement > ) => {
 		event.preventDefault();
 		setRefusal( null );
@@ -162,6 +172,7 @@ export function PayoutRequestForm( {
 				registration: '',
 				account: '',
 				email: '',
+				cpr: '',
 			} ) );
 			setDone(
 				__(
@@ -348,6 +359,35 @@ export function PayoutRequestForm( {
 							/>
 						) }
 					</Field>
+				) }
+
+				{ cprRequired && (
+					<>
+						<Field
+							label={ __( 'CPR number', 'merchboard' ) }
+							help={ __(
+								'10 digits, e.g. 010190–1234. You are paid as a private person.',
+								'merchboard'
+							) }
+						>
+							{ ( control ) => (
+								<input
+									{ ...control }
+									type="text"
+									inputMode="numeric"
+									autoComplete="off"
+									maxLength={ 11 }
+									className="merchboard-input"
+									required
+									value={ values.cpr }
+									onChange={ ( event ) =>
+										set( { cpr: event.target.value } )
+									}
+								/>
+							) }
+						</Field>
+						<CprInfo />
+					</>
 				) }
 
 				<p className="merchboard-field__help">

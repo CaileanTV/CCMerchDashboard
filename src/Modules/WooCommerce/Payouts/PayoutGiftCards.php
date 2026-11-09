@@ -72,6 +72,8 @@ final class PayoutGiftCards {
 	 * @param Logger              $logger      Technical log (ids and codes of failures, never a card code).
 	 * @param Closure             $clock       Current time (`Closure(): DateTimeImmutable`).
 	 * @param SettlementDocuments $documents   Settlement documents issued with a completion (ADR-060).
+	 * @param Closure|null        $billing     Whether a creator's payout may be completed: the first one needs confirmed master data (ADR-104); null: always.
+	 * @phpstan-param (Closure(int): bool)|null $billing
 	 */
 	public function __construct(
 		private PayoutRepository $payouts,
@@ -81,7 +83,8 @@ final class PayoutGiftCards {
 		private Transaction $transaction,
 		private Logger $logger,
 		private Closure $clock,
-		private SettlementDocuments $documents
+		private SettlementDocuments $documents,
+		private ?Closure $billing = null
 	) {
 	}
 
@@ -135,6 +138,11 @@ final class PayoutGiftCards {
 					}
 
 					$this->validate( $payout, $card );
+
+					// The first payout waits until the master data are confirmed (ADR-104); it stays pending.
+					if ( null !== $this->billing && ! ( $this->billing )( $payout->creator_id ) ) {
+						throw new PayoutException( PayoutException::BILLING_DETAILS_UNCONFIRMED );
+					}
 
 					$balance = $this->balances->in_currency( $payout->creator_id, $payout->currency )->balance_units();
 

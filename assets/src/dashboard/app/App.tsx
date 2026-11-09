@@ -3,6 +3,7 @@ import { __ } from '@wordpress/i18n';
 
 import { AgreementNotice } from '../components/AgreementNotice';
 import { ApiErrorState } from '../components/ApiErrorState';
+import { BillingDetailsNotice } from '../components/BillingDetailsNotice';
 import { GoLiveNotice } from '../components/GoLiveNotice';
 import { Skeleton } from '../components/Skeleton';
 import type { DashboardConfig } from '../types/config';
@@ -23,6 +24,7 @@ function CurrentPage() {
 	const { sections, siteName } = useConfig();
 	const { state, retry } = useCreator();
 	const page = resolvePage( path, sections );
+	const payouts = sections.find( ( section ) => section.id === 'payouts' );
 
 	useEffect( () => {
 		document.title =
@@ -33,6 +35,7 @@ function CurrentPage() {
 		<>
 			<AgreementNotice />
 			<GoLiveNotice />
+			{ payouts !== undefined && <BillingDetailsNotice /> }
 			{ page.content }
 		</>
 	);

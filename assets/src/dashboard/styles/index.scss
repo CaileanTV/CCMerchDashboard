@@ -1160,6 +1160,32 @@
 	margin-bottom: var(--merchboard-space-2);
 }
 
+// Why the CPR number is needed (ADR-104).
+.merchboard-cpr-info {
+	padding: var(--merchboard-space-3) var(--merchboard-space-4);
+	margin: 0 0 var(--merchboard-space-4);
+	background: var(--merchboard-surface-muted);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius);
+
+	p {
+		margin: 0 0 var(--merchboard-space-2);
+	}
+
+	p:last-child {
+		margin-bottom: 0;
+	}
+}
+
+// The CVR number with "Fill in from the CVR number" (ADR-105).
+.merchboard-billing-form__cvr {
+	margin-bottom: var(--merchboard-space-4);
+
+	.merchboard-button {
+		margin-top: var(--merchboard-space-2);
+	}
+}
+
 .merchboard-payouts__hint,
 .merchboard-payouts__reason {
 	color: var(--merchboard-text-muted);

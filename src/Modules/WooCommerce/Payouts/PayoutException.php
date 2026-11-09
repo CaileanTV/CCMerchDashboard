@@ -221,6 +221,33 @@ final class PayoutException extends DomainException {
 	public const AGREEMENT_REQUIRED = 'agreement_required';
 
 	/**
+	 * The creator's first payout needs submitted master data (ADR-104).
+	 */
+	public const BILLING_DETAILS_REQUIRED = 'billing_details_required';
+
+	/**
+	 * The creator's first payout waits until the master data are confirmed
+	 * (ADR-104); the payout stays pending.
+	 */
+	public const BILLING_DETAILS_UNCONFIRMED = 'billing_details_unconfirmed';
+
+	/**
+	 * There is no submitted master data to decide on (ADR-104).
+	 */
+	public const BILLING_SUBMISSION_MISSING = 'billing_submission_missing';
+
+	/**
+	 * The submitted master data changed after the page was shown (ADR-104).
+	 */
+	public const BILLING_SUBMISSION_STALE = 'billing_submission_stale';
+
+	/**
+	 * A creator paid as a private person must give a valid CPR number with
+	 * the payout request (ADR-104).
+	 */
+	public const INVALID_CPR = 'invalid_cpr';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $reason One of the class constants.

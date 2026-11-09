@@ -28,6 +28,7 @@ use MerchBoard\Modules\WooCommerce\Payouts\PayoutDecisions;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutException;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutMethod;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
+use MerchBoard\Modules\WooCommerce\Payouts\Settlements\BillingDetailsReview;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutStatus;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\CommissionVat;
 use MerchBoard\Modules\WooCommerce\Payouts\Settlements\SettlementCorrection;
@@ -112,6 +113,7 @@ final class PayoutsPage {
 	 * @param SettlementDocuments|null  $documents Settlement documents (ADR-060); null = none.
 	 * @param PayoutBalances|null       $balances  Balances per creator and currency (ADR-054); null = no balances view.
 	 * @param PayoutGiftCardOrders|null $gift_card_orders Orders paid with payout gift cards (G1); null = not shown.
+	 * @param BillingDetailsReview|null $billing          Whether a first payout waits for confirmed master data (ADR-104); null = never.
 	 */
 	public function __construct(
 		private PayoutRepository $payouts,
@@ -122,7 +124,8 @@ final class PayoutsPage {
 		private ?GiftCardProviders $providers = null,
 		private ?SettlementDocuments $documents = null,
 		private ?PayoutBalances $balances = null,
-		private ?PayoutGiftCardOrders $gift_card_orders = null
+		private ?PayoutGiftCardOrders $gift_card_orders = null,
+		private ?BillingDetailsReview $billing = null
 	) {
 	}
 
@@ -176,6 +179,7 @@ final class PayoutsPage {
 			PayoutException::NOT_FOUND            => array( __( 'The payout does not exist.', 'merchboard' ), 'error' ),
 			PayoutException::INSUFFICIENT_BALANCE => array( __( 'Not registered: the creator\'s balance no longer covers this payout, for example after a refund. Handle it manually: do not transfer the amount, and reject the request if it cannot be paid.', 'merchboard' ), 'error' ),
 			PayoutException::BALANCE_UNKNOWN      => array( __( 'Not registered: the creator\'s balance is unknown, because some sales lack the data needed. Handle it manually; nothing is completed automatically.', 'merchboard' ), 'error' ),
+			PayoutException::BILLING_DETAILS_UNCONFIRMED => array( __( 'Not registered: this is the creator\'s first payout, and it waits until you have confirmed the creator\'s master data under Proposals → Master data. The request stays pending.', 'merchboard' ), 'warning' ),
 			PayoutException::DETAILS_UNREADABLE   => array( __( 'The payment details cannot be decrypted (MERCHBOARD_PAYOUT_KEY is missing or was changed). This request can only be rejected.', 'merchboard' ), 'error' ),
 			PayoutException::NOT_AUTHORIZED       => array( __( 'You are not allowed to do this.', 'merchboard' ), 'error' ),
 			PayoutException::BUSY                 => array( __( 'Another payout of this creator is being processed. Please try again in a moment.', 'merchboard' ), 'error' ),
@@ -557,7 +561,14 @@ final class PayoutsPage {
 			return;
 		}
 
+		$this->render_billing_wait( $payout );
+
 		if ( PayoutMethod::GiftCard === $payout->method ) {
+			// A private person's CPR number for the report (ADR-104), shown like bank details.
+			if ( $this->has_details( $payout ) ) {
+				$this->render_details( $payout, $reveal );
+			}
+
 			$this->render_gift_card_register( $payout );
 		} else {
 			$this->render_details( $payout, $reveal );
@@ -985,12 +996,62 @@ final class PayoutsPage {
 		if ( PayoutMethod::Bank === $details->method ) {
 			echo '<tr><th scope="row">' . esc_html__( 'Registration number', 'merchboard' ) . '</th><td><code>' . esc_html( $details->registration ) . '</code></td></tr>';
 			echo '<tr><th scope="row">' . esc_html__( 'Account number', 'merchboard' ) . '</th><td><code>' . esc_html( $details->account ) . '</code></td></tr>';
-		} else {
+		} elseif ( PayoutMethod::PayPal === $details->method ) {
 			echo '<tr><th scope="row">' . esc_html__( 'PayPal email address', 'merchboard' ) . '</th><td><code>' . esc_html( $details->account ) . '</code></td></tr>';
+		}
+
+		// Paid as a private person (ADR-104): for the report of the payout, never kept afterwards.
+		if ( '' !== $details->cpr ) {
+			echo '<tr><th scope="row">' . esc_html__( 'CPR number (for the report)', 'merchboard' ) . '</th><td><code>' . esc_html( substr( $details->cpr, 0, 6 ) . '-' . substr( $details->cpr, 6 ) ) . '</code></td></tr>';
 		}
 
 		echo '</tbody></table>';
 		echo '<p class="description">' . esc_html__( 'This view was recorded in the audit log. The details are deleted when the request has been handled.', 'merchboard' ) . '</p>';
+	}
+
+	/**
+	 * Whether the payout has encrypted details left (a gift card payout only
+	 * when a private person gave the CPR number, ADR-104).
+	 *
+	 * @param Payout $payout Pending payout.
+	 */
+	private function has_details( Payout $payout ): bool {
+		try {
+			return null !== $this->payouts->secret( $payout->id );
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'Reading the payout details failed.', $e->context() );
+
+			return false;
+		}
+	}
+
+	/**
+	 * A first payout that waits for the creator's confirmed master data
+	 * (ADR-104): said before the forms, with a link to the tab.
+	 *
+	 * @param Payout $payout Pending payout.
+	 */
+	private function render_billing_wait( Payout $payout ): void {
+		if ( null === $this->billing ) {
+			return;
+		}
+
+		try {
+			if ( $this->billing->allows_completion( $payout->creator_id ) ) {
+				return;
+			}
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'Reading a creator\'s master data failed.', $e->context() );
+
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-warning inline"><p>%1$s <a href="%2$s">%3$s</a></p></div>',
+			esc_html__( 'This is the creator\'s first payout. It can only be registered once the creator\'s master data are confirmed; until then the request stays pending.', 'merchboard' ),
+			esc_url( BillingDetailsReviewPage::url() ),
+			esc_html__( 'Proposals → Master data', 'merchboard' )
+		);
 	}
 
 	/**
