@@ -1087,4 +1087,59 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 | Teams | Flere brugere pr. creator |
 | Branding: egen login-skærm | Projektejerens ønske 2026-11-09: en helt egen login-oplevelse, der ikke ligner WordPress' standard-login, men stadig bruger WordPress' login-formular og flow, så adgangskoder, cookies, 2FA/CAPTCHA-plugins, glemt adgangskode og redirects virker som i dag. Fase 21 (ADR-042) gav kun logo og farver på `wp-login.php` og kun i Merch Dashboard-kontekst. Kræver en ny ADR, der afløser ADR-042's afgrænsning: om siden ligger på `wp-login.php` eller på en egen side med `wp_login_form()`, hvad der kan tilpasses (layout, baggrund, tekster, logo), og hvordan login-sikkerheden bevares. |
 | Branding: brand-font | Self-hosted brand-font. Logo og temaer findes (fase 21). |
+| Community Features (MitCCMerch) | Projektejerens ønske 2026-11-09: en ny menu "Community Features" i creator-dashboardet (MitCCMerch) med giveaway-links, Twitch-gifting, rabat til Twitch-subscribers (og evt. YouTube-medlemmer) og platform-integrationer som YouTube Product Shelf, inspireret af Fourthwall. Se afsnittet "Community Features (MitCCMerch)" nedenfor. |
 | Alerts: creatorens eget format | Projektejerens ønske 2026-10-23, ikke prioriteret: creatoren vælger selv, om chatbotten skriver én besked pr. ordrelinje eller én pr. ordre (i dag administratorens valg for alle), og kan gøre det samme med selve alerten i overlayet: én alert pr. ordre, fx "$UserName har købt merch", der skifter (cycler) mellem billederne af de købte varer. Kræver design af skabelon, varighed og billedskift, når det prioriteres |
+
+### Community Features (MitCCMerch)
+
+Projektejerens ønske 2026-11-09, ikke prioriteret. En ny menu "Community Features" i creator-dashboardet (MitCCMerch) med funktioner, som Fourthwall tilbyder sine creators (Fourthwalls hjælpesider læst 2026-11-09). Hver funktion planlægges som sin egen fase med ADR, når den prioriteres.
+
+**Fælles regler (projektejerens):**
+- **Gavekort tæller ikke som fortjeneste:** en gavekortkode, som en giveaway eller et gift udløser, fratrækkes creatorens fortjeneste, så den ikke tælles to gange.
+- **Kører gennem CCMerch-chatbotten:** giveaways og gifts styres i chatten af CCMerch-chatbotten (ADR-066 for Twitch, og senere de andre platforme, chatbotten kender: YouTube og Kick).
+  - Det kan ikke bruges med en creators separate chatbot.
+  - Det virker også, selvom almindelige alert-beskeder i chatten er slået fra.
+
+**1. Giveaway-links**
+- **Hos Fourthwall:** creatoren vælger ét produkt og et antal unikke links til engangsbrug. Vinderen vælger størrelse og farve, indtaster adresse og får varen gratis. Creatoren betaler produktets grundpris plus den billigste fragt til vinderens adresse, trukket fra saldoen. Links kan ikke ændres eller annulleres.
+- **Hos os (projektejerens model):** creatoren vælger produkterne og køber et gavekort, der sendes til vinderen.
+  - Creatoren betaler kun grundbeløbet.
+  - Gavekortet lyder på den fulde produktpris plus billigste tilgængelige fragt.
+  - Gavekortet tæller ikke med i fortjenesten.
+  - Eventuelt kan hele giveawayen køre gennem CCMerch-chatbotten (indtræden, lodtrækning og udsendelse af koden).
+- **Afklares:**
+  - Om det er et gavekort (frit valg i butikken) eller et link til et bestemt produkt.
+  - Hvordan creatoren betaler grundbeløbet: modregning i saldoen eller betaling.
+  - Gyldighed, og hvad der sker med et ubrugt gavekort.
+  - Hvordan gavekortet hænger sammen med payout-gavekortene (G1, fase 23–24).
+  - Hvordan vinderen får koden uden at dele adresse i chatten.
+
+**2. Twitch-gifting**
+- **Hos Fourthwall:** mens creatoren er live, kan en seer købe et produkt som gave. Botten annoncerer gaven og åbner et indtrædelsesvindue (`!enter`, 20–180 sekunder). Botten trækker en tilfældig vinder, og vinderen henter gaven ved at logge ind med Twitch. Bliver gaven ikke hentet, kan den trækkes om. Køberen betaler en gennemsnitlig fragt; forskellen dækkes efter creatorens valg.
+- **Hos os (projektejerens model):** creatoren får fortjeneste af købet, men den gavekortkode, vinderen får, fratrækkes fortjenesten. Giveawayen kører gennem CCMerch-chatbotten.
+- **Afklares:**
+  - Hvordan vinderen bevises: Twitch-login ved indløsning, som hos Fourthwall.
+  - Hvad der sker med en gave, der ikke bliver hentet.
+  - Hvem der dækker fragtforskellen.
+  - Om det kun er Twitch, eller også YouTube og Kick.
+
+**3. Rabat til Twitch-subscribers**
+- **Hos Fourthwall:** en automatisk rabat (procent, fast beløb eller gratis fragt) på hele ordren eller udvalgte produkter, valgt pr. subscriber-tier og eventuelt land. Subscriberen logger ind med Twitch ved checkout, og abonnementet tjekkes. Gratis produkter som rabat understøttes ikke.
+- **Hos os:**
+  - Kræver, at kunden logger ind med Twitch i checkout (Twitch-OAuth for kunder). Det er en ny brug af Twitch ud over alerts, så det kræver en ADR.
+  - Abonnementet tjekkes mod creatorens kanal.
+  - **Afklares:** hvem der betaler rabatten. Følger den produktdesignerens regel (uden for virksomhedens kampagner tages en rabat af creatorens fortjeneste, fase 30)?
+
+**4. Rabat til YouTube-medlemmer (eventuelt)**
+- **Hos Fourthwall:** findes ikke. Ingen af Fourthwalls sider nævner YouTube-kanalmedlemskaber.
+- **Hos os:**
+  - Det skal undersøges, om YouTube Data API lader en kunde bevise sit medlemskab af creatorens kanal. API'et lister kun medlemmer for kanalens ejer, og adgangen kræver særlig godkendelse fra Google.
+  - Kræver en ADR og projektejerens godkendelse af kundens login med Google.
+
+**5. YouTube Product Shelf og andre platform-integrationer**
+- **Hos Fourthwall:**
+  - **YouTube Product Shelf:** kræver YouTube Partner Program, mindst 500 abonnenter og at kanalen ikke er "Made for Kids". Kanalens ejer forbinder selv og vælger butikken i YouTube Studio. Google godkender produkterne på 3–5 dage. Op til 30 produkter i butiksvalget og 60 tags pr. video. YouTube er ved at udfase hylden under videoer, og produkter kan ikke vises som element på en slutskærm.
+  - **Andre integrationer:** TikTok Shop (kun US-sælgerkonto) og Instagram/Facebook Shop (Business-konto og Commerce Manager).
+- **Hos os:**
+  - YouTube Shopping forbinder en kanal med en godkendt butiksplatform via Google Merchant Center. WooCommerce kan forbindes gennem Googles egen udvidelse "Google for WooCommerce". Butikken er virksomhedens, så det skal afklares, hvordan en creators kanal kan vise netop creatorens produkter, og om Google tillader det.
+  - Ekstern tjeneste: kræver ADR og projektejerens godkendelse, ligesom hver af de andre platforme.
