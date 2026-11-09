@@ -1072,6 +1072,10 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 - **40.12 Release 1.7.6 ✅ (2026-11-09):** tag `v1.7.6` på `d6644e2`, CI grøn, draft-release byte-identisk med testpakken. Se DEVELOPMENT.md "Release 1.7.6".
 - **40.7 Review og stg:** uafhængigt review ✅ (rettelser i statusnoten i ADR-102), push (CI), eksperimentel testpakke på stg og den fælles test med 39.4. Versionsbump (1.7.6) efter projektejerens OK.
 
+## Release 1.7.7 – designerprodukter holdes ude af Meta-kataloget (2026-11-09)
+
+Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til Facebook/Meta. Filteret `wc_facebook_should_sync_product` og et engangsjob, der slår sync fra og fjerner dem fra kataloget (ADR-080 statusnote). Se DEVELOPMENT.md "Release 1.7.7".
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |

@@ -247,6 +247,22 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 1.7.7: designerprodukter holdes ude af Meta-kataloget
+
+**Versions-bump og CHANGELOG-sektion 2026-11-09** efter projektejerens krav ("Produkter oprettet gennem vores designer skal IKKE synkroniseres til Facebook/Meta"). Tag efter projektejerens OK; tag og SHA-256 noteres her da.
+- Testet med unit-tests (filteret, den lukkede fejl, engangsjobbet med og uden Meta-pluginet) og de faste hook-lister. Filteret og funktionen er pluginets egne, læst i dets offentlige kildekode (`ProductValidator::validate_product_sync_field()`, `Products::disable_sync_for_products()`), men ikke kørt mod pluginet.
+- CI skal være grøn med hele integrationssuiten på den taggede commit.
+
+**Ingen schemaændring:** schema-version 48.
+
+1. **Backup:** tag backup af filer og database via hostingen.
+2. **Opdatér** med ZIP'en. Overview skal vise version 1.7.7.
+3. **Fjernelse:** åbn en side i admin. Jobbet `merchboard_designer_meta_catalog` (Værktøjer → Skemalagte handlinger) slår sync fra på designerprodukterne og sletter dem fra Meta-kataloget, 50 ad gangen. Tjek et designerprodukt: Facebook-sync står som slået fra, og produktet forsvinder fra Commerce Manager (Meta sletter i baggrunden).
+4. **Andre produkter:** et almindeligt produkt synkroniseres stadig.
+5. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 1.7.6-ZIP'en igen. Designerprodukterne beholder Meta-pluginets indstilling "no", til den ændres manuelt.
+
 ## Release 1.7.6: printfiler til leverandørerne, Fyld/Tilpas og " - " i produktnavne (fase 39 og 40)
 
 **Versions-bump og CHANGELOG-sektion og tagget `v1.7.6` (begge på `d6644e2`) 2026-11-09** efter projektejerens ønske ("Gør 1.7.6 klar nu, gerne bump med det samme") og OK ("Hvis CI er grøn, må du gerne tagge"). CI var grøn på alle fire jobs, også hele integrationssuiten. Testpakken kørte på staging. Draft-releasens ZIP er byte-identisk med den lokale pakke og testpakken (SHA-256 `3fcf018243df84f1fdd12450591ea05c67d9e7b9f960ec61a0497227d5fa3b0b`).

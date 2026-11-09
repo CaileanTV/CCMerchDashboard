@@ -4,6 +4,14 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [1.7.7] - 2026-11-09
+
+Hurtig opdatering efter projektejerens krav: produkter fra produktdesigneren synkroniseres ikke til Facebook/Meta. Ingen schemaændring (schema-version 48). Opdateringen står i DEVELOPMENT.md ("Release 1.7.7").
+
+### Fixed
+
+- **Designerprodukter holdes ude af Meta-kataloget (ADR-080 statusnote):** "Facebook for WooCommerce" (Meta for WooCommerce) synkroniserer ikke længere produkter fra produktdesigneren til Facebook og Instagram. Designerprodukter, der allerede ligger hos Meta, får sync slået fra og slettes fra kataloget én gang efter opdateringen. Alle andre produkter synkroniseres som før.
+
 ## [1.7.6] - 2026-11-08
 
 Fase 39 og 40: printfiler til leverandørerne virker igen (kritisk), "Fyld/Tilpas" i designeren, " - " i produktnavne og Prodigi med en rigtig nøgle. Ingen schemaændring (schema-version 48). Opdateringen står i DEVELOPMENT.md ("Release 1.7.6").
