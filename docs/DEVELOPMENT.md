@@ -251,11 +251,11 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 1.8.0: egen login-skærm, logoer og ikoner, og creatorens stamdata (fase 41 og 42)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-09** efter projektejerens ønske ("Kør de næste skridt så det næste jeg selv specifik skal er at teste på stg"). Tag efter projektejerens OK efter testen på stg; tag og SHA-256 noteres her da.
+**Versions-bump og CHANGELOG-sektion 2026-11-09** efter projektejerens ønske ("Kør de næste skridt så det næste jeg selv specifik skal er at teste på stg"). Efter testen på stg blev admin-bekræftelsen af stamdata fjernet, og CPR-nummeret flyttet til stamdata (ADR-104 pkt. 11, `9d50bc0`). **Tagget `v1.8.0` på `9d50bc0` 2026-11-09** efter projektejerens OK ("Du må gerne tagge den nu"). CI var grøn på alle fire jobs, også hele integrationssuiten. Testpakken kørte på staging. Draft-releasens ZIP er byte-identisk med den lokale pakke og testpakken (SHA-256 `eccfd56bdccb39a914fe894d8d7877cd9902b2f0c9c9d52e12ed751f05886d1b`).
 - Testet med unit-, Jest- og integrationstests og runtime-testet på Local (fase 41: login-skærmene i headless Chrome; fase 42: stamdataflowet med "Udfyld fra CVR-nummer" live mod cvrapi.dk, uden at gennemføre en udbetaling). Uafhængigt review af begge faser.
 - CI skal være grøn med hele integrationssuiten på den taggede commit.
 
-**Ingen schemaændring:** schema-version 48. Nye indstillinger (`merchboard_branding`) og creatormeta (`billing_confirmed`, `billing_cpr`) oprettes ved brug.
+**Ingen schemaændring:** schema-version 48. Nye indstillinger (`merchboard_branding`) og creatormeta (`billing_confirmed`, `billing_cpr`) oprettes ved brug. `MERCHBOARD_PAYOUT_KEY` skal være sat, for at en privatperson kan gemme sit CPR-nummer.
 
 1. **Backup:** tag backup af filer og database via hostingen.
 2. **Opdatér** med ZIP'en. Overview skal vise version 1.8.0.

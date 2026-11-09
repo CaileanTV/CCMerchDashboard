@@ -1076,7 +1076,7 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 
 Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til Facebook/Meta. Filteret `wc_facebook_should_sync_product` og et engangsjob, der slår sync fra og fjerner dem fra kataloget (ADR-080 statusnote). Se DEVELOPMENT.md "Release 1.7.7".
 
-## Fase 41 – Egen login-skærm, logoer, favicon og app-ikon til MitCCMerch 🔄 (plan godkendt 2026-11-09; ADR-103; første del af 1.8.0)
+## Fase 41 – Egen login-skærm, logoer, favicon og app-ikon til MitCCMerch ✅ (plan godkendt 2026-11-09; ADR-103; udgivet i 1.8.0)
 
 **Projektejerens ønske (2026-11-09):** en helt egen login-oplevelse til MitCCMerch, der ikke ligner WordPress' standard-login. Valgt: omklædt `wp-login.php`, kun MitCCMerch-login, alle fire skærme og tilpasning af layout, baggrund, tekster, farver, logo og links.
 
@@ -1099,7 +1099,7 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 - **41.7 Visuel kontrol:** ✅ headless Chrome på Local 2026-11-09 (de fire skærme, lyst og mørkt, desktop og 360 px; uden kontekst og admin-login er WordPress' standard). Fund rettet: kvitteringen efter glemt adgangskode blev ikke brandet (WordPress' egen handling `checkemail`, nu observeret), kvitteringen fik egen tekst, og sprogvælgeren var ulæselig i det centrerede layout. Logoer og ikoner i selve MitCCMerch ses på stg.
 - **41.8 Review og release:** flyttet til efter fase 42 (projektejerens ønske 2026-11-09): ét samlet review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK.
 
-## Fase 42 – Creatorens stamdata til afregning 🔄 (plan godkendt 2026-11-09; ADR-104; 1.8.0)
+## Fase 42 – Creatorens stamdata til afregning ✅ (plan godkendt 2026-11-09; ADR-104; udgivet i 1.8.0)
 
 **Projektejerens ønske (2026-11-09):**
 - Creatoren kan selv udfylde sine stamdata til afregning.
@@ -1126,7 +1126,7 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 
 **Ændret efter testen på stg (projektejerens beslutning 2026-11-09, ADR-104 pkt. 11):** ingen admin-bekræftelse af stamdata: creatorens stamdata gælder straks, fanen "Stamdata" under "Forslag" er fjernet, og første udbetaling kræver kun udfyldte stamdata. En privatpersons CPR-nummer angives i stamdataformularen, gemmes krypteret (`billing_cpr`) og kopieres til hver udbetaling; anmodningen spørger ikke længere. To creator-notifikationer er fjernet (45 typer).
 
-**Efter fase 42:** samlet review og release af fase 41 og 42 (det tidligere 41.8): uafhængigt review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK. **Status 2026-11-09:** review ✅, bump til 1.8.0 ✅, testpakke på stg; tag efter projektejerens test (DEVELOPMENT.md "Release 1.8.0").
+**Efter fase 42:** samlet review og release af fase 41 og 42 (det tidligere 41.8): uafhængigt review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK. **Status 2026-11-09:** review ✅, bump til 1.8.0 ✅, testpakke på stg ✅, ingen bekræftelse og CPR i stamdata ✅ (`9d50bc0`), tagget `v1.8.0` på `9d50bc0` efter projektejerens OK; draft-release byte-identisk med testpakken (DEVELOPMENT.md "Release 1.8.0").
 
 ## Senere (uprioriteret)
 
