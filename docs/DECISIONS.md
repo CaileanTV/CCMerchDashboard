@@ -2026,7 +2026,7 @@ Lille bundle, ingen nye afhængigheder, uændret CSP og fuld tilgængelighed via
 2026-10-07
 
 ## Status
-Accepteret (fase 21, trin 2, før implementering). Besluttet af projektejeren efter arkitekturafklaringen (trin 1) og login-undersøgelsen (trin 2), se [reports/2026-10-07-fase-21-branding-themes.md](reports/2026-10-07-fase-21-branding-themes.md) afsnit B, F, G og K. Bekræfter SECURITY.md's regel om SVG-upload. Supplerer ADR-006 (WordPress-authentication) og ADR-026 (dashboard-indgang og login-redirect) uden at ændre dem. Bruges af ADR-043.
+Accepteret (fase 21, trin 2, før implementering). Besluttet af projektejeren efter arkitekturafklaringen (trin 1) og login-undersøgelsen (trin 2), se [reports/2026-10-07-fase-21-branding-themes.md](reports/2026-10-07-fase-21-branding-themes.md) afsnit B, F, G og K. Bekræfter SECURITY.md's regel om SVG-upload. Supplerer ADR-006 (WordPress-authentication) og ADR-026 (dashboard-indgang og login-redirect) uden at ændre dem. Bruges af ADR-043. **Statusnote 2026-11-09:** pkt. 5, 8, 10, 11 og 13 er afløst af ADR-103 (egen login-skærm på `wp-login.php` for login, glemt adgangskode, ny adgangskode og logget ud; flere logoer, favicon og app-ikon).
 
 ## Context
 Dashboard-headeren viser i dag kun sitenavnet som tekst, og pluginet rører ikke `wp-login.php`'s udseende. Repoet har ingen logo-assets. Fase 21 skal give Merch Dashboard et logo i headeren og en brandet login-oplevelse.
@@ -5951,3 +5951,86 @@ Kendt grænse: oversigten læser højst 1.000 produkter (Prodigi har 275).
 
 ## Related
 ADR-080, ADR-081, ADR-084, ADR-087
+
+# ADR-103: Egen login-skærm, flere logoer, favicon og app-ikon til MitCCMerch
+
+## Date
+2026-11-09
+
+## Status
+Accepteret af projektejeren 2026-11-09 (fase 41, plan godkendt samme dag). Afløser ADR-042 pkt. 5 (én logovariant), 8 (kun login-handlingen), 10 (kun fire præsentations-hooks), 11 (forbud mod `login_url`/`lostpassword_url`) og 13 (glemt adgangskode og reset i standarddesign). ADR-042 pkt. 1–4, 6, 7, 9, 12 og 14 gælder fortsat.
+
+## Context
+Projektejeren vil have en helt egen login-oplevelse til MitCCMerch, der ikke ligner WordPress' standard-login. Fase 21 gav kun logo og farver på selve login-skærmen.
+
+Projektejerens valg 2026-11-09:
+- **Placering:** `wp-login.php`, omklædt.
+- **Hvem:** kun MitCCMerch-login.
+- **Tilpasning:** layout, baggrund, tekster, farver, logo og links.
+- **Skærme:** login, glemt adgangskode, ny adgangskode og logget ud.
+
+Samtidig ønskede projektejeren:
+- et større logo i MitCCMerch, valgfrit uden den lyse plade;
+- et logo til mørke temaer, et login-logo, et favicon og et app-ikon til hjemskærmen.
+
+## Decision
+1. **WordPress bevarer hele login-flowet:**
+   - formular, POST-mål, adgangskoder, cookies, test-cookie, fejl, 2FA/CAPTCHA/lockout-plugins, nonces, redirects, logout og nulstilling.
+   - Merch Dashboard håndterer aldrig adgangskoder og kalder aldrig `wp_signon()`.
+   - Ingen egen login-rute, ingen JS på login-siden og ingen hooks på `authenticate`, `wp_login`, `login_init`, `secure_signon_cookie` eller `login_errors`.
+   - `login_form_*` bruges kun som passiv observatør (ingen output, redirect eller exit), som i ADR-042.
+2. **Konteksten "MitCCMerch"** styrer kun udseendet, aldrig adgang:
+   - **Login:** handlingen `login`, ikke interim-login, og en `redirect_to`, der består `DashboardRoute::dashboard_url_for()` (som i dag). Det dækker også "logget ud" og kvitteringen efter glemt adgangskode.
+   - **Glemt adgangskode:** handlingerne `lostpassword`/`retrievepassword` med markøren `merchboard=1`. Linket "Glemt adgangskode?" får markøren via `lostpassword_url`, kun i kontekst, og peger på WordPress' egen side (ikke WooCommerce'), så nulstillingsmailen bruger `wp-login.php`. Formularen bærer markøren videre (skjult felt via `lostpassword_form`). Efter afsendelsen fører `lostpassword_redirect` til kvitteringen med dashboardets `redirect_to`.
+   - **Ny adgangskode:** handlingerne `rp`/`resetpass`, når brugeren fra linket eller WordPress' egen reset-cookie (`login:key`) er knyttet til en creator, også en ventende tilmelding. Kun brugernavnet læses; nøglen bruges aldrig (WordPress validerer den selv og sender ugyldige links videre). Efter nulstillingen fører "Log ind" til den brandede login (`login_url`, kun i kontekst).
+   - **Uden kontekst:** alt andet (admin-login, kunders login, `register`, `confirm_admin_email`, interim-login) er WordPress' standard.
+3. **Opbygning** med WordPress' egne hooks:
+   - `login_header` og `login_footer` lægger layoutet om WordPress' uændrede `#login`-formular (et panel med baggrund, overskrift, tekst og links);
+   - `login_message` sætter overskrift og velkomsttekst foran WordPress' egen besked;
+   - `login_enqueue_scripts` står for CSS og de escapede indstillinger som custom properties;
+   - `login_head` står for favicon og app-ikon;
+   - `login_body_class`, `login_headerurl` og `login_headertext` bruges som i dag.
+   - Al output escapes. Farver er valideret hex, og URL'er i CSS må kun indeholde rene URL-tegn.
+4. **Tilpasning** under Merch Dashboard → Indstillinger → fanen "Branding" (egen formular, nonce, `merchboard_manage_settings` før nonce, audit `settings_updated`), gemt i én option `merchboard_branding`:
+   - **Login:**
+     - layout "Delt skærm" eller "Centreret kort";
+     - baggrundsbillede og -farve;
+     - panelets tekst- og accentfarve, hvor accenten skal have kontrast mindst 4,5:1 mod hvid knaptekst;
+     - login-logo;
+     - overskrift og velkomsttekst til de fire skærme (ren tekst, højst 80 og 300 tegn; tomt giver den oversatte standardtekst);
+     - links: "Bliv creator" (kun når tilmelding er åben), support (https eller mailto med label) og "Tilbage til butikken".
+   - **MitCCMerch:**
+     - logostørrelse Lille 32 px, Mellem 48 px eller Stor 64 px (højst 40 px på små skærme);
+     - lys plade på mørke temaer til/fra;
+     - logo til mørke temaer, der bruges uden plade.
+   - **Ikoner:** favicon (kvadratisk, mindst 48 px) og app-ikon (kvadratisk, mindst 180 px, anbefalet 512) samt app-navn (standard: sitets navn).
+   - **Billeder:** alle billeder valideres som logoet (ADR-042 pkt. 3: offentlig vedhæftning, PNG/JPEG/WebP med matchende endelse, same-origin) med grænser pr. type. Baggrund er højst 3000 px, mellem 1:3 og 3:1 i forhold.
+5. **Favicon og app-ikon:**
+   - **Favicon** vises i MitCCMerch (dashboard, ingen adgang og tilmelding) og på den brandede login. Uden eget favicon bruges WordPress' sideikon, hvis sitet har et.
+   - **App-ikon:** `<link rel="apple-touch-icon">` og et web-manifest på `/<slug>/manifest`. Manifestet er offentligt, har ingen service worker og ingen offline-funktion, og indeholder navn, ikon, `start_url` = dashboardet, `display: standalone` og farver.
+   - Dashboardets CSP får `manifest-src 'self'`.
+
+## Alternatives considered
+- **Egen login-side:** fravalgt af projektejeren og i ADR-042 (A1/A2), fordi 2FA, CAPTCHA, lockout og WAF ikke dækker en ny endpoint.
+- **Branding af alle login på sitet:** fravalgt; kun MitCCMerch-login ændres.
+- **PWA med offline-funktion:** fravalgt; kun ikon og manifest.
+
+## Reason
+`wp-login.php` har hooks nok til at lægge et helt eget layout om formularen, uden at login-sikkerheden ændres. Glemt adgangskode og reset kan brandes uden at stole på input som adgang, fordi konteksten kun styrer udseendet.
+
+## Security
+- Ingen adgangskode passerer pluginets kode. Markøren og `redirect_to` er kun betingelser for udseendet; `redirect_to` valideres af `dashboard_url_for()` og udskrives aldrig.
+- Reset-nøglen læses aldrig. At en reset-side er brandet, viser kun, at linket hører til en creator, og WordPress viser kun siden for et gyldigt link.
+- Tekster er ren tekst (`sanitize_text_field`, længdegrænser) og escapes ved output. Links er kun https eller mailto (`esc_url`).
+- Manifestet er en statisk JSON uden persondata, med `nosniff`, `noindex` og `Content-Type: application/manifest+json`.
+
+## Migration/data implications
+Ingen schemaændring. Ny option `merchboard_branding` med autoload, fordi den læses på hver side i MitCCMerch. Den slettes ved opt-in-afinstallation. Det eksisterende logo bliver i `merchboard_settings`.
+
+## Consequences
+- CSS'en afhænger af WordPress' login-markup og skal tjekkes ved hver WordPress-version (ADR-042 pkt. 14).
+- "Glemt adgangskode" fra MitCCMerch bruger WordPress' egen side, også når WooCommerce er aktivt.
+- Hook-vagterne i testene tillader de nye hooks og forbyder fortsat dem i pkt. 1.
+
+## Related
+ADR-006, ADR-026, ADR-042, ADR-043, ADR-091

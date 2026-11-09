@@ -114,7 +114,8 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
   - Der er ingen SVG-upload og intet `upload_mimes`-filter; pluginet åbner ingen ny uploadvej (logoet vælges blandt eksisterende medier).
   - Billeder fra et andet domæne bruges aldrig (dashboardets CSP `img-src 'self' data:` er uændret); så vises standardlogoet.
 - **Standardlogo:** `assets/brand/logo.svg` er pluginets egen, reviewede SVG uden script, event-attributter, eksterne referencer eller fonte. Den vises kun som `<img>` og CSS-baggrund, hvor scripts ikke kører.
-- **Login:** `wp-login.php` brandes kun i Merch Dashboard-kontekst (login-handlingen, ikke interim login, og en `redirect_to`, der består `DashboardRoute::dashboard_url_for()`).
+- **Login (ADR-103 afløser dele af ADR-042):** `wp-login.php` får MitCCMerch' egen login-skærm på login, glemt adgangskode, ny adgangskode og logget ud, kun i kontekst. Se ADR-103 pkt. 1–2 for konteksten og de tilladte hooks; WordPress bevarer hele login-flowet, og pluginet håndterer aldrig adgangskoder eller reset-nøgler. Punkterne herunder beskriver fase 21 og gælder for login-handlingen.
+- **Login (fase 21):** `wp-login.php` brandes kun i Merch Dashboard-kontekst (login-handlingen, ikke interim login, og en `redirect_to`, der består `DashboardRoute::dashboard_url_for()`).
   - Kun præsentation via `login_form_login` (passiv observatør), `login_enqueue_scripts`, `login_body_class`, `login_headerurl` og `login_headertext`.
   - Ingen egen login-route, formular, credential-håndtering, `wp_signon()`, `authenticate`-hook, `login_url`-filter eller ændring af glemt adgangskode, reset eller logout. CAPTCHA, 2FA og hosting-regler på `/wp-login.php` virker uændret.
   - `redirect_to` er kun en betingelse og udskrives aldrig af pluginet.

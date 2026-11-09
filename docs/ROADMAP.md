@@ -1076,6 +1076,20 @@ Det gøres færdigt før review og test af fase 30 (30.15).
 
 Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til Facebook/Meta. Filteret `wc_facebook_should_sync_product` og et engangsjob, der slår sync fra og fjerner dem fra kataloget (ADR-080 statusnote). Se DEVELOPMENT.md "Release 1.7.7".
 
+## Fase 41 – Egen login-skærm, logoer, favicon og app-ikon til MitCCMerch 🔄 (plan godkendt 2026-11-09; ADR-103; første del af 1.8.0)
+
+**Projektejerens ønske (2026-11-09):** en helt egen login-oplevelse til MitCCMerch, der ikke ligner WordPress' standard-login; et større logo i MitCCMerch, valgfrit uden den lyse plade; flere logoer (kompakt, til mørke temaer og til login), favicon og app-ikon til hjemskærmen.
+
+- **41.1 Docs:** ADR-103, statusnote på ADR-042, SECURITY.md og denne fase.
+- **41.2 Kontekst for de fire skærme:** login, glemt adgangskode (markør), ny adgangskode (reset-cookiens bruger) og logget ud; signup-links med `redirect_to`.
+- **41.3 Indstillinger:** fanen "Branding" med login-design, logoer, ikoner og app-navn (`merchboard_branding`).
+- **41.4 Opbygning:** layout om `#login`, overskrifter og tekster pr. skærm, ny login-CSS.
+- **41.4b Logoer og ikoner i MitCCMerch:** logostørrelse, plade, logo til mørke temaer, favicon, app-ikon og manifest.
+- **41.5 Tekster:** danske oversættelser.
+- **41.6 Tests:** kontekst (også negative), validering, escaping, hook-vagter, manifest og bootstrap-data.
+- **41.7 Visuel kontrol:** headless Chrome på Local.
+- **41.8 Review og release:** uafhængigt review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK.
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |
@@ -1089,7 +1103,7 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 | Security hardening | Rate limiting på `/me`-endpoints, GDPR exporter/eraser, styles uden `unsafe-inline` i dashboardets CSP og et samlet security-review. Dashboardets CSP med nonces til scripts findes allerede. |
 | Testing | Playwright E2E mod Playground i CI |
 | Teams | Flere brugere pr. creator |
-| Branding: egen login-skærm | Projektejerens ønske 2026-11-09: en helt egen login-oplevelse, der ikke ligner WordPress' standard-login, men stadig bruger WordPress' login-formular og flow, så adgangskoder, cookies, 2FA/CAPTCHA-plugins, glemt adgangskode og redirects virker som i dag. Fase 21 (ADR-042) gav kun logo og farver på `wp-login.php` og kun i Merch Dashboard-kontekst. Kræver en ny ADR, der afløser ADR-042's afgrænsning: om siden ligger på `wp-login.php` eller på en egen side med `wp_login_form()`, hvad der kan tilpasses (layout, baggrund, tekster, logo), og hvordan login-sikkerheden bevares. |
+| Branding: egen login-skærm | **Flyttet til fase 41 (ADR-103).** Projektejerens ønske 2026-11-09: en helt egen login-oplevelse, der ikke ligner WordPress' standard-login, men stadig bruger WordPress' login-formular og flow, så adgangskoder, cookies, 2FA/CAPTCHA-plugins, glemt adgangskode og redirects virker som i dag. Fase 21 (ADR-042) gav kun logo og farver på `wp-login.php` og kun i Merch Dashboard-kontekst. Kræver en ny ADR, der afløser ADR-042's afgrænsning: om siden ligger på `wp-login.php` eller på en egen side med `wp_login_form()`, hvad der kan tilpasses (layout, baggrund, tekster, logo), og hvordan login-sikkerheden bevares. |
 | Branding: brand-font | Self-hosted brand-font. Logo og temaer findes (fase 21). |
 | Community Features (MitCCMerch) | Projektejerens ønske 2026-11-09: en ny menu "Community Features" i creator-dashboardet (MitCCMerch) med giveaway-links, Twitch-gifting, rabat til Twitch-subscribers (og evt. YouTube-medlemmer) og platform-integrationer som YouTube Product Shelf, inspireret af Fourthwall. Se afsnittet "Community Features (MitCCMerch)" nedenfor. |
 | Alerts: creatorens eget format | Projektejerens ønske 2026-10-23, ikke prioriteret: creatoren vælger selv, om chatbotten skriver én besked pr. ordrelinje eller én pr. ordre (i dag administratorens valg for alle), og kan gøre det samme med selve alerten i overlayet: én alert pr. ordre, fx "$UserName har købt merch", der skifter (cycler) mellem billederne af de købte varer. Kræver design af skabelon, varighed og billedskift, når det prioriteres |
