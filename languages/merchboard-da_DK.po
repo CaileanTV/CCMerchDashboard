@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-09T13:40:55+00:00\n"
+"PO-Revision-Date: 2026-11-09T14:01:16+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -4940,7 +4940,7 @@ msgid "Its label"
 msgstr "Linkets tekst"
 
 #: src/Modules/Dashboard/Branding/BrandingSettings.php:218
-#: src/Modules/Dashboard/Branding/LoginBranding.php:382
+#: src/Modules/Dashboard/Branding/LoginBranding.php:384
 msgid "Help and support"
 msgstr "Hjælp og support"
 
@@ -4969,8 +4969,8 @@ msgid "An image was not changed: it must be a PNG, JPEG or WebP on this site wit
 msgstr "Et billede blev ikke ændret: det skal være en PNG, JPEG eller WebP på dette websted inden for størrelserne for sin type. De øvrige ændringer blev gemt."
 
 #: src/Modules/Dashboard/Branding/BrandingSettings.php:239
-msgid "A colour was not changed: use a colour like #4f46e5. The other changes were saved."
-msgstr "En farve blev ikke ændret: brug en farve som #4f46e5. De øvrige ændringer blev gemt."
+msgid "A colour was not changed: use a colour like #007279. The other changes were saved."
+msgstr "En farve blev ikke ændret: brug en farve som #007279. De øvrige ændringer blev gemt."
 
 #: src/Modules/Dashboard/Branding/BrandingSettings.php:240
 msgid "The colours were not changed: the text on the background and the white text on the button must have a contrast of at least 4.5:1. The other changes were saved."
@@ -4992,47 +4992,47 @@ msgstr "Det valgte billede kan ikke længere bruges, så standarden vises."
 msgid "Choose image"
 msgstr "Vælg billede"
 
-#: src/Modules/Dashboard/Branding/LoginBranding.php:378
+#: src/Modules/Dashboard/Branding/LoginBranding.php:380
 msgid "Become a creator"
 msgstr "Bliv creator"
 
-#: src/Modules/Dashboard/Branding/LoginBranding.php:387
+#: src/Modules/Dashboard/Branding/LoginBranding.php:389
 msgid "More"
 msgstr "Mere"
 
-#: src/Modules/Dashboard/Branding/LoginBranding.php:432
+#: src/Modules/Dashboard/Branding/LoginBranding.php:434
 msgid "Forgot your password?"
 msgstr "Glemt din adgangskode?"
 
-#: src/Modules/Dashboard/Branding/LoginBranding.php:432
+#: src/Modules/Dashboard/Branding/LoginBranding.php:434
 msgid "Enter your username or e-mail address, and we will send you a link to choose a new password."
 msgstr "Skriv dit brugernavn eller din e-mailadresse, så sender vi dig et link til at vælge en ny adgangskode."
 
-#: src/Modules/Dashboard/Branding/LoginBranding.php:433
+#: src/Modules/Dashboard/Branding/LoginBranding.php:435
 msgid "Choose a new password"
 msgstr "Vælg en ny adgangskode"
 
-#: src/Modules/Dashboard/Branding/LoginBranding.php:433
+#: src/Modules/Dashboard/Branding/LoginBranding.php:435
 msgid "Choose a strong password that you do not use anywhere else."
 msgstr "Vælg en stærk adgangskode, som du ikke bruger andre steder."
 
-#: src/Modules/Dashboard/Branding/LoginBranding.php:434
+#: src/Modules/Dashboard/Branding/LoginBranding.php:436
 msgid "You are logged out"
 msgstr "Du er logget ud"
 
-#: src/Modules/Dashboard/Branding/LoginBranding.php:434
+#: src/Modules/Dashboard/Branding/LoginBranding.php:436
 msgid "See you soon."
 msgstr "Vi ses snart."
 
-#: src/Modules/Dashboard/Branding/LoginBranding.php:435
+#: src/Modules/Dashboard/Branding/LoginBranding.php:437
 msgid "Welcome back"
 msgstr "Velkommen tilbage"
 
-#: src/Modules/Dashboard/Branding/LoginBranding.php:435
+#: src/Modules/Dashboard/Branding/LoginBranding.php:437
 msgid "Log in to your creator dashboard."
 msgstr "Log ind på dit creator-dashboard."
 
-#: src/Modules/Dashboard/Branding/LoginBranding.php:443
+#: src/Modules/Dashboard/Branding/LoginBranding.php:445
 msgid "Check your e-mail: we have sent you a link to choose a new password."
 msgstr "Tjek din e-mail: vi har sendt dig et link til at vælge en ny adgangskode."
 

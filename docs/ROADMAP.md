@@ -1086,6 +1086,7 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 - Flere logoer: kompakt, til mørke temaer og til login.
 - Favicon.
 - App-ikon til hjemskærmen med web-manifest og app-navn.
+- "Bliv creator" som en rigtig knap, og logoets teal (`#007279`) som standard for baggrund og knapper på login-skærmen. Farverne kan skiftes under Indstillinger → Branding, hvis brandfarverne ændres.
 
 - **41.1 Docs:** ✅ ADR-103, statusnote på ADR-042, SECURITY.md og denne fase (`6716f8b`).
 - **41.2 Kontekst for de fire skærme:** ✅ login, glemt adgangskode (markør), ny adgangskode (reset-cookiens bruger) og logget ud; signup-links med `redirect_to`; dashboardets log ud fører til den brandede "Du er logget ud".

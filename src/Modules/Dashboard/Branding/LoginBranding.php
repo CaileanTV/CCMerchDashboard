@@ -377,7 +377,7 @@ final class LoginBranding {
 		$signup = null === $this->signup_url ? null : ( $this->signup_url )();
 
 		if ( $design['signup_link'] && is_string( $signup ) && '' !== $signup ) {
-			$links[] = '<a href="' . esc_url( $signup ) . '">' . esc_html__( 'Become a creator', 'merchboard' ) . '</a>';
+			$links[] = '<a class="merchboard-login-button" href="' . esc_url( $signup ) . '">' . esc_html__( 'Become a creator', 'merchboard' ) . '</a>';
 		}
 
 		if ( '' !== $design['support_url'] ) {

@@ -236,7 +236,7 @@ final class BrandingSettings {
 			'saved'                          => array( __( 'The branding was saved.', 'merchboard' ), 'success' ),
 			'no_changes'                     => array( __( 'No changes were made to the branding.', 'merchboard' ), 'info' ),
 			BrandingDesign::BAD_IMAGE        => array( __( 'An image was not changed: it must be a PNG, JPEG or WebP on this site within the sizes of its kind. The other changes were saved.', 'merchboard' ), 'error' ),
-			BrandingDesign::BAD_COLOR        => array( __( 'A colour was not changed: use a colour like #4f46e5. The other changes were saved.', 'merchboard' ), 'error' ),
+			BrandingDesign::BAD_COLOR        => array( __( 'A colour was not changed: use a colour like #007279. The other changes were saved.', 'merchboard' ), 'error' ),
 			BrandingDesign::LOW_CONTRAST     => array( __( 'The colours were not changed: the text on the background and the white text on the button must have a contrast of at least 4.5:1. The other changes were saved.', 'merchboard' ), 'error' ),
 			BrandingDesign::BAD_LINK         => array( __( 'The support link was not changed: use an https address or mailto:. The other changes were saved.', 'merchboard' ), 'error' ),
 			'error'                          => array( __( 'A technical error occurred. The branding was not changed.', 'merchboard' ), 'error' ),

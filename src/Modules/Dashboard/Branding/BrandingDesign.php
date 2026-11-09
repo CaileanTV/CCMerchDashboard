@@ -88,9 +88,9 @@ final class BrandingDesign {
 		return array(
 			'layout'           => 'split',
 			'background_id'    => 0,
-			'background_color' => '#1e1b4b',
+			'background_color' => '#007279',
 			'panel_text'       => '#ffffff',
-			'accent'           => '#4f46e5',
+			'accent'           => '#007279',
 			'login_logo_id'    => 0,
 			'texts'            => array_fill_keys(
 				self::SCREENS,

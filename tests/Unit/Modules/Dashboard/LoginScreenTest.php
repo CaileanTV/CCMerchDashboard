@@ -214,7 +214,7 @@ final class LoginScreenTest extends TestCase {
 		$design['background_id'] = 9;
 		$css                     = $this->branding()->inline_css( $design );
 
-		self::assertStringStartsWith( 'body.merchboard-login{--merchboard-login-bg:#1e1b4b;--merchboard-login-panel-text:#ffffff;--merchboard-login-accent:#4f46e5', $css );
+		self::assertStringStartsWith( 'body.merchboard-login{--merchboard-login-bg:#007279;--merchboard-login-panel-text:#ffffff;--merchboard-login-accent:#007279', $css );
 		self::assertStringNotContainsString( 'a")', $css, 'A hostile image URL never reaches the CSS.' );
 		self::assertStringNotContainsString( '--merchboard-login-image', $css );
 	}
@@ -253,7 +253,7 @@ final class LoginScreenTest extends TestCase {
 		);
 
 		self::assertSame( 'centered', $design['layout'] );
-		self::assertSame( '#1e1b4b', $design['background_color'], 'A bad colour keeps the stored one.' );
+		self::assertSame( '#007279', $design['background_color'], 'A bad colour keeps the stored one.' );
 		self::assertSame( '#ffffff', $design['panel_text'] );
 		self::assertSame( 3, $design['favicon_id'], 'A square favicon.' );
 		self::assertSame( 0, $design['app_icon_id'], 'Not square: refused.' );
@@ -277,7 +277,7 @@ final class LoginScreenTest extends TestCase {
 		);
 
 		self::assertSame( array( BrandingDesign::LOW_CONTRAST ), $problems );
-		self::assertSame( array( '#1e1b4b', '#ffffff', '#4f46e5' ), array( $design['background_color'], $design['panel_text'], $design['accent'] ) );
+		self::assertSame( array( '#007279', '#ffffff', '#007279' ), array( $design['background_color'], $design['panel_text'], $design['accent'] ) );
 		self::assertSame( 'mailto:help@shop.test', BrandingDesign::link( 'mailto:help@shop.test' ) );
 		self::assertSame( 'https://shop.test/help', BrandingDesign::link( 'https://shop.test/help' ) );
 		self::assertNull( BrandingDesign::link( 'http://shop.test/help' ), 'https only.' );
@@ -320,6 +320,22 @@ final class LoginScreenTest extends TestCase {
 
 	private function logo(): BrandLogo {
 		return new BrandLogo( new LogoAttachment(), self::ROOT );
+	}
+
+	public function test_become_a_creator_is_a_button_only_while_signing_up_is_open(): void {
+		$open = new LoginBranding( new DashboardRoute(), $this->logo(), new BrandIcons( $this->logo(), new DashboardRoute() ), self::ROOT, null, static fn(): string => 'https://shop.test/opret/' );
+		$open->observe( array( 'redirect_to' => self::DASHBOARD ) );
+
+		ob_start();
+		$open->close_layout();
+		self::assertStringContainsString( '<a class="merchboard-login-button" href="https://shop.test/opret/">Become a creator</a>', (string) ob_get_clean() );
+
+		$closed = new LoginBranding( new DashboardRoute(), $this->logo(), new BrandIcons( $this->logo(), new DashboardRoute() ), self::ROOT, null, static fn(): string => '' );
+		$closed->observe( array( 'redirect_to' => self::DASHBOARD ) );
+
+		ob_start();
+		$closed->close_layout();
+		self::assertStringNotContainsString( 'Become a creator', (string) ob_get_clean(), 'Signing up is closed.' );
 	}
 
 	private function branding(): LoginBranding {
