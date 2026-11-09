@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
-import { BILLING_DETAILS_CHANGED, getBillingDetails } from '../../api/billing';
 import { cancelPayout, getPayoutBalance, getPayouts } from '../../api/payouts';
 import { useConfig } from '../../app/config-context';
 import { Alert } from '../../components/Alert';
@@ -376,24 +375,6 @@ export function PayoutsSection() {
 	const config = useConfig();
 	const balance = useApi( getPayoutBalance );
 	const list = usePagedApi( getPayouts );
-	const billing = useApi( getBillingDetails );
-	const reloadBilling = billing.retry;
-
-	useEffect( () => {
-		window.addEventListener( BILLING_DETAILS_CHANGED, reloadBilling );
-
-		return () =>
-			window.removeEventListener(
-				BILLING_DETAILS_CHANGED,
-				reloadBilling
-			);
-	}, [ reloadBilling ] );
-
-	// Unknown (the read failed): offer the field; the server only uses it when required.
-	const cprRequired =
-		billing.state.status === 'success'
-			? billing.state.data.cprRequired
-			: billing.state.status === 'error';
 	const [ knownPages, setKnownPages ] = useState( 0 );
 	const [ notice, setNotice ] = useState< {
 		readonly tone: 'success' | 'danger';
@@ -458,7 +439,6 @@ export function PayoutsSection() {
 						balance={ shown }
 						locale={ config.locale }
 						onRequested={ reload }
-						cprRequired={ cprRequired }
 					/>
 				</>
 			) }

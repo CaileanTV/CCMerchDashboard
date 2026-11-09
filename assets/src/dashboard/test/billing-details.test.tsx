@@ -35,10 +35,10 @@ const MISSING = {
 	status: 'missing',
 	confirmed: null,
 	confirmed_at: null,
-	submission: null,
 	required_for_payout: true,
 	payout_waiting: false,
 	cpr_required: false,
+	cpr_saved: false,
 	cvr_lookup: true,
 };
 
@@ -53,15 +53,12 @@ const NOVA = {
 	type: 'business',
 };
 
-const SUBMITTED = {
+const SAVED = {
 	...MISSING,
-	status: 'submitted',
-	submission: {
-		values: NOVA,
-		status: 'pending',
-		submitted_at: '2026-11-09T12:00:00Z',
-		note: '',
-	},
+	status: 'confirmed',
+	confirmed: NOVA,
+	confirmed_at: '2026-11-09T12:00:00Z',
+	required_for_payout: false,
 };
 
 const BALANCE_BODY = {
@@ -160,9 +157,8 @@ async function submit( form: Element | null ): Promise< void > {
 
 describe( 'parseBillingDetails', () => {
 	it( 'reads the documented fields', () => {
-		expect( parseBillingDetails( SUBMITTED )?.submission?.values ).toEqual(
-			NOVA
-		);
+		expect( parseBillingDetails( SAVED )?.confirmed ).toEqual( NOVA );
+		expect( parseBillingDetails( SAVED )?.cprSaved ).toBe( false );
 		expect( parseBillingDetails( MISSING )?.cvrLookup ).toBe( true );
 		expect(
 			parseBillingDetails( { ...MISSING, cvr_lookup: undefined } )
@@ -172,10 +168,10 @@ describe( 'parseBillingDetails', () => {
 
 	it.each( [
 		null,
-		{ ...MISSING, status: 'approved' },
+		{ ...MISSING, status: 'submitted' },
 		{ ...MISSING, cpr_required: 'yes' },
+		{ ...MISSING, cpr_saved: undefined },
 		{ ...MISSING, confirmed: { ...NOVA, type: 'company' } },
-		{ ...SUBMITTED, submission: { ...SUBMITTED.submission, note: 1 } },
 	] )( 'rejects %p', ( body ) => {
 		expect( parseBillingDetails( body ) ).toBeNull();
 	} );
@@ -206,17 +202,17 @@ describe( 'Master data for settlement documents (ADR-104)', () => {
 		expect( text ).toContain( 'Why do we need your CPR number?' );
 		expect( text ).toContain( 'personligt ejet mindre virksomhed, PMV' );
 		expect( text ).toContain( 'It is free' );
+		expect( text ).toContain( 'stored encrypted' );
 		expect( input( container, 'CVR number' ) ).toBeNull();
+		expect( input( container, 'CPR number' ) ).not.toBeNull();
 	} );
 
 	it( 'keeps the CVR number of master data registered before the type existed', async () => {
 		const { container } = await show( {
 			[ `GET ${ DETAILS }` ]: () =>
 				response( 200, {
-					...MISSING,
-					status: 'confirmed',
+					...SAVED,
 					confirmed: { ...NOVA, type: '' },
-					required_for_payout: false,
 				} ),
 		} );
 
@@ -231,12 +227,13 @@ describe( 'Master data for settlement documents (ADR-104)', () => {
 		expect(
 			( input( container, 'CVR number' ) as HTMLInputElement ).value
 		).toBe( '12345678' );
+		expect( input( container, 'CPR number' ) ).toBeNull();
 	} );
 
-	it( 'checks the form first and sends every field with the type', async () => {
+	it( 'checks the form first and saves every field with the type at once', async () => {
 		const { container, requests } = await show( {
 			[ `GET ${ DETAILS }` ]: () => response( 200, MISSING ),
-			[ `POST ${ DETAILS }` ]: () => response( 200, SUBMITTED ),
+			[ `POST ${ DETAILS }` ]: () => response( 200, SAVED ),
 		} );
 
 		click(
@@ -263,15 +260,84 @@ describe( 'Master data for settlement documents (ADR-104)', () => {
 			cvr: '1234 5678',
 			country: 'Denmark',
 		} );
+		expect( container.textContent ).toContain( 'Master data saved.' );
 		expect( container.textContent ).toContain(
-			'Your master data wait for our confirmation.'
+			'Your master data are saved.'
 		);
+		expect( container.textContent ).not.toContain( 'confirm' );
+	} );
+
+	it( 'asks a private person for the CPR number in the master data', async () => {
+		const { container, requests } = await show( {
+			[ `GET ${ DETAILS }` ]: () => response( 200, MISSING ),
+			[ `POST ${ DETAILS }` ]: () =>
+				response( 200, {
+					...SAVED,
+					confirmed: { ...NOVA, type: 'private', cvr: '' },
+					cpr_required: true,
+					cpr_saved: true,
+				} ),
+		} );
+
+		type( input( container, 'Name or company name' ), 'Nova Jensen' );
+		type( input( container, 'Address' ), 'Nørregade 2' );
+		type( input( container, 'Postcode' ), '8000' );
+		type( input( container, 'City' ), 'Aarhus C' );
+		await submit( billingForm( container ) );
+		expect(
+			requests.filter( ( request ) => request.method === 'POST' )
+		).toHaveLength( 0 );
+
+		type( input( container, 'CPR number' ), '12345' );
+		await submit( billingForm( container ) );
+		expect( container.textContent ).toContain(
+			'Please enter a valid CPR number'
+		);
+
+		type( input( container, 'CPR number' ), '010190-1234' );
+		await submit( billingForm( container ) );
+
+		const post = requests.find( ( request ) => request.method === 'POST' );
+		expect( post?.data ).toMatchObject( {
+			type: 'private',
+			cvr: '',
+			legal_name: 'Nova Jensen',
+			cpr: '010190-1234',
+		} );
+		expect(
+			( input( container, 'CPR number' ) as HTMLInputElement ).value
+		).toBe( '' );
+		expect( container.textContent ).toContain(
+			'Your CPR number is stored encrypted and is not shown.'
+		);
+	} );
+
+	it( 'saves a private person again without typing a stored CPR number', async () => {
+		const { container, requests } = await show( {
+			[ `GET ${ DETAILS }` ]: () =>
+				response( 200, {
+					...SAVED,
+					confirmed: { ...NOVA, type: 'private', cvr: '' },
+					cpr_required: true,
+					cpr_saved: true,
+				} ),
+			[ `POST ${ DETAILS }` ]: () => response( 200, SAVED ),
+		} );
+
+		type( input( container, 'City' ), 'Aarhus N' );
+		await submit( billingForm( container ) );
+
+		const post = requests.find( ( request ) => request.method === 'POST' );
+		expect( post?.data ).toMatchObject( {
+			type: 'private',
+			city: 'Aarhus N',
+		} );
+		expect( post?.data ).not.toHaveProperty( 'cpr' );
 	} );
 
 	it( 'fills the form from the CVR register', async () => {
 		const { container, requests } = await show( {
-			[ `GET ${ DETAILS }` ]: () =>
-				response( 200, { ...MISSING, confirmed: null } ),
+			[ `GET ${ DETAILS }` ]: () => response( 200, MISSING ),
 			[ `GET ${ DETAILS }/cvr/12345678` ]: () =>
 				response( 200, {
 					values: {
@@ -309,46 +375,22 @@ describe( 'Master data for settlement documents (ADR-104)', () => {
 		).toBe( 'Nova ApS' );
 	} );
 
-	it( 'asks for the CPR number with the payout of a private person', async () => {
-		const { container, requests } = await show( {
+	it( 'never asks for the CPR number with a payout', async () => {
+		const { container } = await show( {
 			[ `GET ${ DETAILS }` ]: () =>
 				response( 200, {
-					...MISSING,
-					status: 'confirmed',
+					...SAVED,
 					confirmed: { ...NOVA, type: 'private', cvr: '' },
-					required_for_payout: false,
 					cpr_required: true,
-				} ),
-			'POST /merchboard/v1/me/payouts': () =>
-				response( 400, {
-					code: 'merchboard_payout_refused',
-					data: { status: 400, reason: 'invalid_cpr' },
+					cpr_saved: true,
 				} ),
 		} );
 
-		type( input( container, 'Amount' ), '10' );
-		type( input( container, 'Registration number' ), '1234' );
-		type( input( container, 'Account number' ), '0012345678' );
-		type( input( container, 'CPR number' ), '010190-1234' );
-		await submit(
-			container.querySelector( 'form:not(.merchboard-billing-form)' )
+		const payoutForm = container.querySelector(
+			'form:not(.merchboard-billing-form)'
 		);
-
-		const post = requests.find(
-			( request ) =>
-				request.method === 'POST' &&
-				request.path === '/merchboard/v1/me/payouts'
-		);
-		expect(
-			( post?.data as { details: Record< string, string > } ).details
-		).toEqual( {
-			registration: '1234',
-			account: '0012345678',
-			cpr: '010190-1234',
-		} );
-		expect( container.textContent ).toContain(
-			'Please enter a valid CPR number'
-		);
+		expect( payoutForm ).not.toBeNull();
+		expect( payoutForm?.querySelector( '[name="cpr"]' ) ).toBeNull();
 	} );
 } );
 
@@ -376,22 +418,8 @@ describe( 'BillingDetailsNotice', () => {
 		);
 	} );
 
-	it( 'asks for corrections', async () => {
-		expect(
-			await notice( {
-				...SUBMITTED,
-				status: 'changes_requested',
-				submission: {
-					...SUBMITTED.submission,
-					status: 'changes_requested',
-					note: 'Skriv hele gadenavnet.',
-				},
-			} )
-		).toContain( 'Please correct your master data' );
-	} );
-
-	it( 'is hidden once they are sent or not needed', async () => {
-		expect( await notice( SUBMITTED ) ).toBe( '' );
+	it( 'is hidden once they are saved or not needed', async () => {
+		expect( await notice( SAVED ) ).toBe( '' );
 		rendered?.unmount();
 		expect(
 			await notice( { ...MISSING, required_for_payout: false } )

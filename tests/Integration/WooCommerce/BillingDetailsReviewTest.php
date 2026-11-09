@@ -1,7 +1,7 @@
 <?php
 /**
- * The creator's own master data, confirmed before the first payout, and the
- * CPR number of a private person (ADR-104), on a real database.
+ * The creator's own master data, needed before the first payout, and the
+ * encrypted CPR number of a private person (ADR-104), on a real database.
  *
  * @package MerchBoard
  */
@@ -20,6 +20,7 @@ use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
+use MerchBoard\Modules\WooCommerce\Payouts\CprNumber;
 use MerchBoard\Modules\WooCommerce\Payouts\Payout;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutCipher;
@@ -131,8 +132,8 @@ final class BillingDetailsReviewTest extends IntegrationTestCase {
 		$this->billing    = new CreatorBillingDetailsStore( new CreatorMetaStore( $this->wpdb ) );
 		$balances         = new PayoutBalances( new LedgerCreatorPayouts( $this->wpdb ), $this->repository, $clock );
 		$documents        = new SettlementDocuments( new SettlementRepository( $this->wpdb ), $this->repository, new LedgerCreatorPayouts( $this->wpdb ), $creators, $vat, $audit, $transaction, $clock, null, $this->billing );
-		$this->review     = new BillingDetailsReview( $this->billing, $this->repository, $audit, $transaction, $clock );
-		$this->requests   = new PayoutRequests( $this->repository, $balances, $cipher, new PostMetaPricingProductStore(), $audit, $transaction, $clock, null, null, fn( int $id ): bool => $this->review->allows_request( $id ), fn( int $id ): bool => $this->review->cpr_required( $id ) );
+		$this->review     = new BillingDetailsReview( $this->billing, $this->repository, $audit, $transaction, $clock, $cipher );
+		$this->requests   = new PayoutRequests( $this->repository, $balances, $cipher, new PostMetaPricingProductStore(), $audit, $transaction, $clock, null, null, fn( int $id ): bool => $this->review->allows_request( $id ), fn( int $id ): ?CprNumber => $this->review->cpr( $id ) );
 		$this->decisions  = new PayoutDecisions( $this->repository, $balances, $cipher, $audit, $transaction, $clock, $documents, fn( int $id ): bool => $this->review->allows_completion( $id ), fn( int $id ): bool => $this->review->cpr_required( $id ) );
 		$this->settings   = new PayoutSettings( $this->repository, $audit, $transaction, $clock, $this->billing );
 	}
@@ -142,37 +143,24 @@ final class BillingDetailsReviewTest extends IntegrationTestCase {
 		parent::tearDown();
 	}
 
-	public function test_the_first_payout_waits_until_the_master_data_are_confirmed(): void {
+	public function test_the_first_payout_needs_master_data_which_apply_at_once(): void {
 		self::assertSame( BillingDetailsReview::MISSING, $this->review->state( $this->creator )->status );
 		$this->refused( fn() => $this->request( 'key-bd-0001' ), PayoutException::BILLING_DETAILS_REQUIRED );
 
 		self::assertTrue( $this->review->submit( $this->creator, self::BUSINESS ) );
 		self::assertFalse( $this->review->submit( $this->creator, self::BUSINESS ), 'The same values again change nothing.' );
-		self::assertSame( array( $this->creator ), $this->review->waiting() );
-
-		$payout = $this->request( 'key-bd-0002' );
-		self::assertSame( PayoutStatus::Pending, $payout->status, 'Submitted: the request is taken and waits.' );
-
-		$this->refused( fn() => $this->decisions->complete( $payout->id ), PayoutException::BILLING_DETAILS_UNCONFIRMED );
-		self::assertSame( PayoutStatus::Pending, $this->repository->find( $payout->id )?->status );
-		self::assertSame( 0, $this->count_rows( Tables::SETTLEMENT_DOCUMENTS ) );
 
 		$state = $this->review->state( $this->creator );
-		self::assertSame( array( BillingDetailsReview::SUBMITTED, true, true ), array( $state->status, $state->required, $state->payout_waiting ) );
+		self::assertSame( array( BillingDetailsReview::CONFIRMED, false, false ), array( $state->status, $state->required, $state->cpr_required ) );
 
-		$this->refused( fn() => $this->review->confirm( $this->creator, 'stale' ), PayoutException::BILLING_SUBMISSION_STALE );
-		$this->review->confirm( $this->creator, $state->version );
-		self::assertSame( BillingDetailsReview::CONFIRMED, $this->review->state( $this->creator )->status );
-		self::assertSame( array(), $this->review->waiting() );
-
-		self::assertSame( PayoutStatus::Completed, $this->decisions->complete( $payout->id )->status );
+		$payout = $this->request( 'key-bd-0002' );
+		self::assertSame( PayoutStatus::Completed, $this->decisions->complete( $payout->id )->status, 'No confirmation: the first payout can be completed.' );
 		$snapshot = (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT snapshot FROM %i ORDER BY id DESC LIMIT 1', $this->table( Tables::SETTLEMENT_DOCUMENTS ) ) );
 		self::assertStringContainsString( '"legal_name":"Nova ApS"', $snapshot );
 		self::assertStringContainsString( '"cvr":"12345678"', $snapshot );
 
 		$audit = $this->rows( Tables::AUDIT_LOG );
 		self::assertContains( 'billing_details_submitted', array_column( $audit, 'action' ) );
-		self::assertContains( 'billing_details_confirmed', array_column( $audit, 'action' ) );
 		self::assertStringNotContainsString( 'Nørregade', (string) wp_json_encode( $audit ), 'Values are never audited.' );
 
 		// After the first settlement document nothing is held back.
@@ -180,83 +168,59 @@ final class BillingDetailsReviewTest extends IntegrationTestCase {
 		self::assertTrue( $this->review->allows_request( $this->creator ) && $this->review->allows_completion( $this->creator ) );
 	}
 
-	public function test_corrections_and_master_data_entered_by_an_administrator(): void {
-		$this->review->submit( $this->creator, self::BUSINESS );
-		$version = $this->review->state( $this->creator )->version;
-
-		$this->refused( fn() => $this->review->request_changes( $this->creator, $version, '  ' ), PayoutException::INVALID_NOTE );
-		$this->review->request_changes( $this->creator, $version, 'Skriv hele gadenavnet.' );
-
-		$state = $this->review->state( $this->creator );
-		self::assertSame( array( BillingDetailsReview::CHANGES_REQUESTED, 'Skriv hele gadenavnet.' ), array( $state->status, $state->submission['note'] ?? null ) );
-		self::assertSame( array(), $this->review->waiting(), 'Asked to correct: not waiting for an administrator.' );
-		self::assertTrue( $this->review->allows_request( $this->creator ) );
-
-		self::assertTrue( $this->review->submit( $this->creator, array( 'address_1' => 'Nørregade 2A' ) + self::BUSINESS ) );
-		self::assertSame( BillingDetailsReview::SUBMITTED, $this->review->state( $this->creator )->status );
-
-		self::assertFalse( $this->review->allows_completion( $this->creator ) );
-		$this->settings->set_billing_details( $this->creator, self::BUSINESS );
-		self::assertTrue( $this->review->allows_completion( $this->creator ), 'Master data an administrator enters count as confirmed.' );
-		self::assertNotNull( $this->billing->confirmation( $this->creator ) );
-	}
-
-	public function test_a_private_person_gives_the_cpr_number_with_each_payout_and_it_is_deleted_afterwards(): void {
+	public function test_a_private_person_saves_the_cpr_number_once_encrypted_and_it_goes_with_each_payout(): void {
 		$private = array(
 			'type' => 'private',
 			'cvr'  => '',
 		) + self::BUSINESS;
-		$this->review->submit( $this->creator, $private );
-		$this->review->confirm( $this->creator, $this->review->state( $this->creator )->version );
-		self::assertTrue( $this->review->cpr_required( $this->creator ) );
 
-		$this->refused( fn() => $this->request( 'key-bd-0003' ), PayoutException::INVALID_CPR );
-		$payout = $this->request( 'key-bd-0004', '010190-1234' );
+		try {
+			$this->review->submit( $this->creator, $private );
+			self::fail( 'Expected BillingDetailsInvalid.' );
+		} catch ( \MerchBoard\Modules\WooCommerce\Payouts\Settlements\BillingDetailsInvalid $e ) {
+			self::assertSame( array( 'cpr' => 'required' ), $e->fields() );
+		}
 
-		$stored = (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT ciphertext FROM %i WHERE payout_id = %d', $this->table( Tables::PAYOUT_SECRETS ), $payout->id ) );
-		self::assertNotSame( '', $stored );
-		self::assertStringNotContainsString( self::CPR, $stored, 'Encrypted.' );
-		self::assertSame( self::CPR, $this->decisions->details( $payout->id )->cpr );
+		self::assertTrue( $this->review->submit( $this->creator, array( 'cpr' => '010190-1234' ) + $private ) );
+		$state = $this->review->state( $this->creator );
+		self::assertSame( array( true, true ), array( $state->cpr_required, $state->cpr_saved ) );
 
+		$stored = (string) wp_json_encode( $this->billing->cpr( $this->creator ) );
+		self::assertStringNotContainsString( self::CPR, $stored, 'Stored encrypted.' );
+		self::assertStringNotContainsString( self::CPR, (string) wp_json_encode( $this->rows( Tables::AUDIT_LOG ) ) );
+		self::assertTrue( $this->review->submit( $this->creator, array( 'city' => 'Aarhus N' ) + $private ), 'Saved without typing it again.' );
+		self::assertSame( self::CPR, $this->review->cpr( $this->creator )?->value );
+
+		$payout = $this->request( 'key-bd-0003' );
+		self::assertSame( self::CPR, $this->decisions->details( $payout->id )->cpr, 'Copied into the payout for the report.' );
 		$this->refused( fn() => $this->decisions->complete( $payout->id, 'CPR 010190-1234' ), PayoutException::PAYMENT_DETAILS_IN_TEXT );
 		$this->decisions->complete( $payout->id, 'Bank 7781' );
+		self::assertNull( $this->repository->secret( $payout->id ), "The payout's copy is deleted once handled." );
+		self::assertNotNull( $this->billing->cpr( $this->creator ), 'The master data keep it.' );
 
-		self::assertNull( $this->repository->secret( $payout->id ), 'Deleted once the payout is handled.' );
 		$everything = (string) wp_json_encode( array( $this->rows( Tables::AUDIT_LOG ), $this->rows( Tables::SETTLEMENT_DOCUMENTS ), $this->rows( Tables::PAYOUTS ) ) );
-		self::assertStringNotContainsString( self::CPR, $everything, 'Never in audit, documents or payouts.' );
-		self::assertStringNotContainsString( '010190-1234', $everything );
-	}
+		self::assertStringNotContainsString( self::CPR, $everything );
 
-	public function test_a_waiting_change_never_switches_the_cpr_number_off_and_stale_decisions_are_refused(): void {
-		$private = array(
-			'type' => 'private',
-			'cvr'  => '',
-		) + self::BUSINESS;
-		$this->review->submit( $this->creator, $private );
-		$this->review->confirm( $this->creator, $this->review->state( $this->creator )->version );
-
-		// A waiting change to "business" leaves the confirmed private person's CPR requirement on.
+		// Becoming a business removes it.
 		$this->review->submit( $this->creator, self::BUSINESS );
-		self::assertTrue( $this->review->cpr_required( $this->creator ) );
-		$this->refused( fn() => $this->request( 'key-bd-0005' ), PayoutException::INVALID_CPR );
-
-		// Asked for corrections: a confirm from a page shown before is refused.
-		$shown = $this->review->state( $this->creator )->version;
-		$this->review->request_changes( $this->creator, $shown, 'Forkert CVR.' );
-		$this->refused( fn() => $this->review->confirm( $this->creator, $shown ), PayoutException::BILLING_SUBMISSION_MISSING );
-
-		// A direct edit by an administrator after the page was shown makes the shown version stale.
-		$this->review->submit( $this->creator, array( 'address_1' => 'Nørregade 3' ) + self::BUSINESS );
-		$shown = $this->review->state( $this->creator )->version;
-		$this->settings->set_billing_details( $this->creator, array( 'address_2' => '1. th.' ) + $private );
-		$this->refused( fn() => $this->review->confirm( $this->creator, $shown ), PayoutException::BILLING_SUBMISSION_STALE );
+		self::assertNull( $this->billing->cpr( $this->creator ) );
+		self::assertNull( $this->review->cpr( $this->creator ) );
 	}
 
-	public function test_a_private_persons_payout_without_a_cpr_number_cannot_be_completed(): void {
-		// Entered by an administrator before the type existed: no CPR number is asked for.
-		$this->settings->set_billing_details( $this->creator, array( 'type' => '' ) + self::BUSINESS );
-		$payout = $this->request( 'key-bd-0006' );
+	public function test_a_private_person_without_a_cpr_number_cannot_be_paid(): void {
+		// Entered by an administrator as a private person, without a CPR number.
+		$this->settings->set_billing_details(
+			$this->creator,
+			array(
+				'type' => 'private',
+				'cvr'  => '',
+			) + self::BUSINESS
+		);
+		$this->refused( fn() => $this->request( 'key-bd-0004' ), PayoutException::CPR_MISSING );
 
+		// Requested before the type was chosen, completed after: refused.
+		$this->settings->set_billing_details( $this->creator, array( 'type' => '' ) + self::BUSINESS );
+		$payout = $this->request( 'key-bd-0005' );
 		$this->settings->set_billing_details(
 			$this->creator,
 			array(
@@ -265,25 +229,19 @@ final class BillingDetailsReviewTest extends IntegrationTestCase {
 			) + self::BUSINESS
 		);
 		$this->refused( fn() => $this->decisions->complete( $payout->id ), PayoutException::CPR_MISSING );
-		self::assertSame( PayoutStatus::Pending, $this->repository->find( $payout->id )?->status );
-		self::assertSame( PayoutStatus::Rejected, $this->decisions->reject( $payout->id, 'Anmod igen med CPR-nummer.' )->status );
+		self::assertSame( PayoutStatus::Rejected, $this->decisions->reject( $payout->id, 'Tilføj CPR-nummeret i stamdata og anmod igen.' )->status );
 	}
 
 	/**
 	 * A bank request of 10.00, as user 1.
 	 *
 	 * @param string $key Request key.
-	 * @param string $cpr CPR number ('' for none).
 	 */
-	private function request( string $key, string $cpr = '' ): Payout {
+	private function request( string $key ): Payout {
 		$details = array(
 			'registration' => '1234',
 			'account'      => '0012345678',
 		);
-
-		if ( '' !== $cpr ) {
-			$details['cpr'] = $cpr;
-		}
 
 		return $this->requests->request( $this->creator, 'DKK', '10', 'bank', $details, $key, 1 );
 	}

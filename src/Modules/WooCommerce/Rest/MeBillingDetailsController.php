@@ -28,12 +28,12 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * The creator's own master data for settlement documents (ADR-104):
- * - `GET /me/billing-details`: the status, the confirmed master data, the
- *   waiting submission with the administrator's note, whether the first
- *   payout still needs confirmed master data and whether one waits;
- * - `POST /me/billing-details`: submits master data for confirmation (every
- *   field of CreatorBillingDetails::FIELDS; blocked while viewing as the
- *   creator, ImpersonationGuard);
+ * - `GET /me/billing-details`: the status, the saved master data, whether
+ *   the first payout still needs them and whether one waits, and whether a
+ *   private person's CPR number is stored (never the number);
+ * - `POST /me/billing-details`: saves master data (every field of
+ *   CreatorBillingDetails::FIELDS, `type` and, for a private person, `cpr`;
+ *   blocked while viewing as the creator, ImpersonationGuard);
  * - `GET /me/billing-details/cvr/{cvr}`: name and address of a company from
  *   the CVR register for the form (ADR-105); nothing is stored.
  * The creator comes only from CreatorContext (ADR-007). Every response is
@@ -71,6 +71,10 @@ final class MeBillingDetailsController extends RestController {
 			);
 		}
 
+		$fields['cpr']  = array(
+			'type'      => 'string',
+			'maxLength' => 20,
+		);
 		$fields['type'] = array(
 			'type' => 'string',
 			'enum' => array( CreatorBillingDetails::BUSINESS, CreatorBillingDetails::PRIVATE ),
@@ -194,7 +198,7 @@ final class MeBillingDetailsController extends RestController {
 				$body   = array() === $body ? $request->get_body_params() : $body;
 				$values = array();
 
-				foreach ( array_merge( array_keys( CreatorBillingDetails::FIELDS ), array( 'type' ) ) as $field ) {
+				foreach ( array_merge( array_keys( CreatorBillingDetails::FIELDS ), array( 'type', 'cpr' ) ) as $field ) {
 					$values[ $field ] = $body[ $field ] ?? '';
 				}
 
@@ -222,15 +226,10 @@ final class MeBillingDetailsController extends RestController {
 			'status'              => $state->status,
 			'confirmed'           => null === $state->confirmed ? null : $state->confirmed->values(),
 			'confirmed_at'        => null === $state->confirmed_at ? null : str_replace( ' ', 'T', $state->confirmed_at ) . 'Z',
-			'submission'          => null === $state->submission ? null : array(
-				'values'       => $state->submission['values']->values(),
-				'status'       => $state->submission['status'],
-				'submitted_at' => '' === $state->submission['submitted_at'] ? null : str_replace( ' ', 'T', $state->submission['submitted_at'] ) . 'Z',
-				'note'         => $state->submission['note'],
-			),
 			'required_for_payout' => $state->required,
 			'payout_waiting'      => $state->payout_waiting,
 			'cpr_required'        => $state->cpr_required,
+			'cpr_saved'           => $state->cpr_saved,
 		);
 	}
 

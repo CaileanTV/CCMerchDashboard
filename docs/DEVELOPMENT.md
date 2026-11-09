@@ -255,14 +255,14 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 - Testet med unit-, Jest- og integrationstests og runtime-testet på Local (fase 41: login-skærmene i headless Chrome; fase 42: stamdataflowet med "Udfyld fra CVR-nummer" live mod cvrapi.dk, uden at gennemføre en udbetaling). Uafhængigt review af begge faser.
 - CI skal være grøn med hele integrationssuiten på den taggede commit.
 
-**Ingen schemaændring:** schema-version 48. Nye indstillinger (`merchboard_branding`) og creatormeta (`billing_submission`, `billing_confirmed`) oprettes ved brug.
+**Ingen schemaændring:** schema-version 48. Nye indstillinger (`merchboard_branding`) og creatormeta (`billing_confirmed`, `billing_cpr`) oprettes ved brug.
 
 1. **Backup:** tag backup af filer og database via hostingen.
 2. **Opdatér** med ZIP'en. Overview skal vise version 1.8.0.
 3. **Virksomhedsoplysninger:** Indstillinger → Generelt: virksomhedsnavn og kontakt-e-mail skal være udfyldt, ellers vises "Udfyld fra CVR-nummer" ikke (ADR-105).
 4. **Login:** log ud af MitCCMerch, se "Du er logget ud", log ind igen; prøv "Glemt adgangskode?" (formular og kvittering) og et nulstillingslink. Admin-login skal se ud som før.
 5. **Branding:** skift layout, farver, tekster og logoer under Indstillinger → Branding, og se login og MitCCMerch. Læg MitCCMerch på telefonens hjemskærm, hvis der er valgt app-ikon.
-6. **Stamdata:** som en testcreator uden afregningsbilag: udfyld stamdata (prøv "Udfyld fra CVR-nummer"), og se at en anmodning venter; bekræft under Forslag → Stamdata, eller bed om rettelser. Som privatperson: CPR-feltet ved anmodningen og vejledningen i admin.
+6. **Stamdata:** som en testcreator uden afregningsbilag: en anmodning afvises, så længe stamdata mangler; udfyld stamdata (prøv "Udfyld fra CVR-nummer"), og se at de gælder straks (ingen fane "Stamdata" under Forslag). Som privatperson: CPR-feltet i stamdata (vises ikke igen efter gem), at anmodningen ikke spørger om det, og vejledningen i admin ved udbetalingens betalingsoplysninger.
 7. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
 
 **Tilbagerulning:** installér 1.7.7-ZIP'en igen. Indstillingerne og creatormeta bliver liggende og bruges igen ved en senere opdatering.

@@ -15,9 +15,11 @@ use MerchBoard\Modules\Creators\CreatorMetaStore;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The creator meta `billing_details` (ADR-062 K09). No authorization or
- * audit here (PayoutSettings does that). Saving empty master data removes
- * the meta; every write is read back (CreatorMetaStore).
+ * The creator meta `billing_details` (ADR-062 K09), when and by whom they
+ * were last saved (`billing_confirmed`) and a private person's encrypted CPR
+ * number (`billing_cpr`, ADR-104). No authorization or audit here
+ * (PayoutSettings and BillingDetailsReview do that). Saving empty master data
+ * removes the meta; every write is read back (CreatorMetaStore).
  */
 final class CreatorBillingDetailsStore {
 
@@ -50,64 +52,7 @@ final class CreatorBillingDetailsStore {
 	}
 
 	/**
-	 * The master data the creator submitted for confirmation (ADR-104), or
-	 * null when none waits.
-	 *
-	 * @param int $creator_id Creator.
-	 * @return array{values: CreatorBillingDetails, status: string, submitted_at: string, note: string}|null
-	 */
-	public function submission( int $creator_id ): ?array {
-		$stored = $this->meta->get( $creator_id, CreatorMetaStore::BILLING_SUBMISSION );
-
-		if ( ! is_array( $stored ) || ! is_array( $stored['values'] ?? null ) ) {
-			return null;
-		}
-
-		$status = in_array( $stored['status'] ?? null, array( BillingDetailsReview::PENDING, BillingDetailsReview::CHANGES_REQUESTED ), true ) ? (string) $stored['status'] : BillingDetailsReview::PENDING;
-
-		return array(
-			'values'       => CreatorBillingDetails::from_stored( $stored['values'] ),
-			'status'       => $status,
-			'submitted_at' => is_string( $stored['submitted_at'] ?? null ) ? $stored['submitted_at'] : '',
-			'note'         => is_string( $stored['note'] ?? null ) ? $stored['note'] : '',
-		);
-	}
-
-	/**
-	 * Stores the submitted master data (ADR-104).
-	 *
-	 * @param int                   $creator_id   Creator.
-	 * @param CreatorBillingDetails $values       Submitted master data.
-	 * @param string                $status       BillingDetailsReview::PENDING or ::CHANGES_REQUESTED.
-	 * @param string                $submitted_at When submitted (UTC, Y-m-d H:i:s).
-	 * @param string                $note         The administrator's note ('' for none).
-	 * @throws DatabaseException When it cannot be stored.
-	 */
-	public function save_submission( int $creator_id, CreatorBillingDetails $values, string $status, string $submitted_at, string $note ): void {
-		$this->meta->set(
-			$creator_id,
-			CreatorMetaStore::BILLING_SUBMISSION,
-			array(
-				'values'       => $values->to_stored(),
-				'status'       => $status,
-				'submitted_at' => $submitted_at,
-				'note'         => $note,
-			)
-		);
-	}
-
-	/**
-	 * Removes the submitted master data.
-	 *
-	 * @param int $creator_id Creator.
-	 * @throws DatabaseException When it cannot be removed.
-	 */
-	public function delete_submission( int $creator_id ): void {
-		$this->meta->set( $creator_id, CreatorMetaStore::BILLING_SUBMISSION, array() );
-	}
-
-	/**
-	 * When and by whom the master data were confirmed, or null.
+	 * When and by whom the master data were last saved, or null.
 	 *
 	 * @param int $creator_id Creator.
 	 * @return array{at: string, by: int}|null
@@ -122,11 +67,11 @@ final class CreatorBillingDetailsStore {
 	}
 
 	/**
-	 * Records the confirmation (ADR-104).
+	 * Records when and by whom the master data were saved.
 	 *
 	 * @param int    $creator_id Creator.
 	 * @param string $at         When (UTC, Y-m-d H:i:s).
-	 * @param int    $by         Administrator (user id).
+	 * @param int    $by         User id.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function save_confirmation( int $creator_id, string $at, int $by ): void {
@@ -141,21 +86,65 @@ final class CreatorBillingDetailsStore {
 	}
 
 	/**
+	 * The private person's encrypted CPR number, or null.
+	 *
+	 * @param int $creator_id Creator.
+	 * @return array{ciphertext: string, key_id: string}|null
+	 */
+	public function cpr( int $creator_id ): ?array {
+		$stored = $this->meta->get( $creator_id, CreatorMetaStore::BILLING_CPR );
+
+		return is_array( $stored ) && is_string( $stored['ciphertext'] ?? null ) && is_string( $stored['key_id'] ?? null ) ? array(
+			'ciphertext' => $stored['ciphertext'],
+			'key_id'     => $stored['key_id'],
+		) : null;
+	}
+
+	/**
+	 * Stores the encrypted CPR number.
+	 *
+	 * @param int    $creator_id Creator.
+	 * @param string $ciphertext PayoutCipher's ciphertext.
+	 * @param string $key_id     PayoutCipher's key id.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function save_cpr( int $creator_id, string $ciphertext, string $key_id ): void {
+		$this->meta->set(
+			$creator_id,
+			CreatorMetaStore::BILLING_CPR,
+			array(
+				'ciphertext' => $ciphertext,
+				'key_id'     => $key_id,
+			)
+		);
+	}
+
+	/**
+	 * Removes the CPR number (a business, or the creator's deletion).
+	 *
+	 * @param int $creator_id Creator.
+	 * @throws DatabaseException When it cannot be removed.
+	 */
+	public function delete_cpr( int $creator_id ): void {
+		$this->meta->set( $creator_id, CreatorMetaStore::BILLING_CPR, array() );
+	}
+
+	/**
+	 * Removes a submission left from before the confirmation was dropped.
+	 *
+	 * @param int $creator_id Creator.
+	 * @throws DatabaseException When it cannot be removed.
+	 */
+	public function delete_submission( int $creator_id ): void {
+		$this->meta->set( $creator_id, CreatorMetaStore::BILLING_SUBMISSION, array() );
+	}
+
+	/**
 	 * Drops the creator's cached meta (after a rolled-back transaction).
 	 *
 	 * @param int $creator_id Creator.
 	 */
 	public function forget( int $creator_id ): void {
 		wp_cache_delete( $creator_id, CreatorMetaStore::META_TYPE . '_meta' );
-	}
-
-	/**
-	 * The creators with submitted master data, in ascending id order.
-	 *
-	 * @return list<int>
-	 * @throws DatabaseException When the read fails.
-	 */
-	public function submitted_creator_ids(): array {
-		return $this->meta->creator_ids_with( CreatorMetaStore::BILLING_SUBMISSION );
 	}
 }

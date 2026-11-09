@@ -69,18 +69,14 @@ export interface PayoutBalance {
 }
 
 /** Details of a new request, per method. */
-export type PayoutDetails = (
+export type PayoutDetails =
 	| {
 			readonly method: 'bank';
 			readonly registration: string;
 			readonly account: string;
 	  }
 	| { readonly method: 'paypal'; readonly email: string }
-	| { readonly method: 'gift_card' }
-) & {
-	/** The CPR number of a creator paid as a private person (ADR-104). */
-	readonly cpr?: string;
-};
+	| { readonly method: 'gift_card' };
 
 /**
  * The gift card of a completed gift card payout, read live from the gift card

@@ -33,18 +33,27 @@ final class BillingDetailsValidationTest extends TestCase {
 	);
 
 	public function test_a_business_needs_its_cvr_number(): void {
-		$details = BillingDetailsReview::validate( self::BUSINESS );
+		[ $details, $cpr ] = BillingDetailsReview::validate( self::BUSINESS + array( 'cpr' => '0101901234' ) );
+		self::assertNull( $cpr, 'A business never keeps a CPR number.' );
 
 		self::assertSame( array( 'Nova ApS', '12345678', CreatorBillingDetails::BUSINESS ), array( $details->legal_name, $details->cvr, $details->type ) );
 		self::assertSame( array( 'cvr' => 'required' ), $this->errors( array( 'cvr' => '' ) + self::BUSINESS ) );
 		self::assertSame( array( 'cvr' => 'invalid_cvr' ), $this->errors( array( 'cvr' => '1234' ) + self::BUSINESS ) );
 	}
 
-	public function test_a_private_person_keeps_no_cvr_number(): void {
-		$details = BillingDetailsReview::validate( array( 'type' => 'private', 'cvr' => 'not even digits' ) + self::BUSINESS ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	public function test_a_private_person_keeps_no_cvr_number_and_gives_the_cpr_number_once(): void {
+		$private = array(
+			'type' => 'private',
+			'cvr'  => 'not even digits',
+		) + self::BUSINESS;
 
-		self::assertSame( array( '', CreatorBillingDetails::PRIVATE ), array( $details->cvr, $details->type ) );
-		self::assertArrayNotHasKey( 'cpr', $details->values(), 'The CPR number is never master data.' );
+		[ $details, $cpr ] = BillingDetailsReview::validate( array( 'cpr' => '010190-1234' ) + $private );
+		self::assertSame( array( '', CreatorBillingDetails::PRIVATE, '0101901234' ), array( $details->cvr, $details->type, $cpr?->value ) );
+		self::assertArrayNotHasKey( 'cpr', $details->values(), 'The CPR number is stored apart, encrypted.' );
+
+		self::assertSame( array( 'cpr' => 'required' ), $this->errors( $private ) );
+		self::assertSame( array( 'cpr' => 'invalid_cpr' ), $this->errors( array( 'cpr' => '3213901234' ) + $private ) );
+		self::assertNull( BillingDetailsReview::validate( $private, true )[1], 'Stored already: it need not be typed again.' );
 	}
 
 	public function test_required_fields_and_the_type_are_checked_together(): void {

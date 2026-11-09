@@ -36,10 +36,8 @@ final class CreatorMetaStore {
 	public const BILLING_DETAILS = 'billing_details';
 
 	/**
-	 * Master data the creator submitted for confirmation (phase 42, ADR-104):
-	 * `{ values, status: pending|changes_requested, submitted_at, note }`.
-	 * Written by BillingDetailsReview only; becomes `billing_details` only
-	 * when an administrator confirms it.
+	 * Master data waiting for confirmation, from the first version of phase 42
+	 * (ADR-104, dropped the same day): only removed now.
 	 */
 	public const BILLING_SUBMISSION = 'billing_submission';
 
@@ -48,6 +46,13 @@ final class CreatorMetaStore {
 	 * `{ at, by }`. Written by BillingDetailsReview and PayoutSettings only.
 	 */
 	public const BILLING_CONFIRMED = 'billing_confirmed';
+
+	/**
+	 * A private person's CPR number, encrypted with PayoutCipher (ADR-104):
+	 * `{ ciphertext, key_id }`. Written by BillingDetailsReview only; copied into
+	 * each payout's encrypted details and never shown to the creator.
+	 */
+	public const BILLING_CPR = 'billing_cpr';
 
 	/**
 	 * The amounts available for payout at the last daily check (phase 29,
@@ -89,7 +94,7 @@ final class CreatorMetaStore {
 	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BILLING_DETAILS, self::BILLING_SUBMISSION, self::BILLING_CONFIRMED, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP );
+	private const KEYS = array( self::BILLING_DETAILS, self::BILLING_SUBMISSION, self::BILLING_CONFIRMED, self::BILLING_CPR, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP );
 
 	/**
 	 * Constructor.

@@ -58,8 +58,6 @@ final class CreatorTypes {
 			self::pricing_changed(),
 			self::vat_changed(),
 			self::billing_details_changed(),
-			self::billing_details_confirmed(),
-			self::billing_details_changes_requested(),
 			self::product_linked(),
 			self::product_removal_completed(),
 			self::product_removal_declined(),
@@ -885,69 +883,6 @@ final class CreatorTypes {
 				null,
 				null,
 				__( 'See your payouts', 'merchboard' ),
-				'',
-				self::closing()
-			)
-		);
-	}
-
-	/**
-	 * The creator's own master data were confirmed (ADR-104); never the values.
-	 */
-	private static function billing_details_confirmed(): NotificationType {
-		return self::type(
-			'billing_details_confirmed',
-			'account',
-			static fn(): string => __( 'Master data confirmed', 'merchboard' ),
-			static fn(): string => __( 'When an administrator confirms the master data the creator filled in for settlement documents.', 'merchboard' ),
-			true,
-			true,
-			true,
-			'payouts',
-			array(),
-			static fn(): string => __( 'Your master data for settlement documents are confirmed.', 'merchboard' ),
-			static fn(): EmailMessage => new EmailMessage(
-				__( 'Your master data are confirmed', 'merchboard' ),
-				__( 'Your master data are confirmed', 'merchboard' ),
-				array(
-					__( 'We have confirmed the master data you filled in (name, address and registration numbers). They are used on your settlement documents from now on, and a waiting first payout can now be completed.', 'merchboard' ),
-				),
-				array(),
-				null,
-				null,
-				__( 'See your payouts', 'merchboard' ),
-				'',
-				self::closing()
-			)
-		);
-	}
-
-	/**
-	 * The creator is asked to correct the submitted master data (ADR-104),
-	 * with the administrator's note; never the values.
-	 */
-	private static function billing_details_changes_requested(): NotificationType {
-		return self::type(
-			'billing_details_changes_requested',
-			'account',
-			static fn(): string => __( 'Master data need corrections', 'merchboard' ),
-			static fn(): string => __( 'When an administrator asks the creator to correct the master data for settlement documents, with the note.', 'merchboard' ),
-			true,
-			true,
-			true,
-			'payouts',
-			array( 'note' => 'Please write the full street name and number.' ),
-			static fn(): string => __( 'Please correct your master data for settlement documents.', 'merchboard' ),
-			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
-				__( 'Please correct your master data', 'merchboard' ),
-				__( 'Please correct your master data', 'merchboard' ),
-				array(
-					__( 'We could not confirm the master data you filled in for your settlement documents. Please correct them under Payouts. Your first payout waits until they are confirmed.', 'merchboard' ),
-				),
-				array(),
-				null,
-				'' === $d->text( 'note' ) ? null : array( __( 'Note from us', 'merchboard' ), $d->text( 'note' ) ),
-				__( 'Correct your master data', 'merchboard' ),
 				'',
 				self::closing()
 			)

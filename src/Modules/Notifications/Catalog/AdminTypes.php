@@ -271,26 +271,25 @@ final class AdminTypes {
 	}
 
 	/**
-	 * A creator submitted master data for confirmation (ADR-104); never the
-	 * values.
+	 * A creator saved or changed master data (ADR-104); never the values.
 	 */
 	private static function billing_details_submitted(): NotificationType {
 		return self::type(
 			'billing_details_submitted',
-			static fn(): string => __( 'New master data to confirm', 'merchboard' ),
-			static fn(): string => __( 'When a creator fills in or changes the master data for settlement documents. A creator\'s first payout waits until you confirm them.', 'merchboard' ),
+			static fn(): string => __( 'Master data changed', 'merchboard' ),
+			static fn(): string => __( 'When a creator fills in or changes the master data for settlement documents.', 'merchboard' ),
 			true,
-			'merchboard-approvals',
+			'merchboard-creators',
 			array( 'creator' => 'Nova' ),
 			/* translators: %s: creator name. */
-			static fn( NotificationData $d ): string => sprintf( __( '%s submitted master data to confirm.', 'merchboard' ), $d->text( 'creator' ) ),
+			static fn( NotificationData $d ): string => sprintf( __( '%s changed the master data.', 'merchboard' ), $d->text( 'creator' ) ),
 			static fn( NotificationData $d ): EmailMessage => self::message(
 				/* translators: %s: creator name. */
-				sprintf( __( 'New master data from %s', 'merchboard' ), $d->text( 'creator' ) ),
-				__( 'New master data to confirm', 'merchboard' ),
-				__( 'A creator filled in master data for settlement documents. The first payout can only be completed once you have confirmed them under Proposals → Master data.', 'merchboard' ),
+				sprintf( __( 'Master data changed by %s', 'merchboard' ), $d->text( 'creator' ) ),
+				__( 'Master data changed', 'merchboard' ),
+				__( 'A creator filled in or changed the master data for settlement documents. They apply at once; you can see and correct them on the creator\'s page.', 'merchboard' ),
 				array( array( __( 'Creator', 'merchboard' ), $d->text( 'creator' ) ) ),
-				__( 'Open Proposals', 'merchboard' )
+				__( 'Open Creators', 'merchboard' )
 			)
 		);
 	}

@@ -1,8 +1,8 @@
 /**
  * `GET /me/billing-details` and `POST /me/billing-details` (ADR-104): the
  * creator's own master data for settlement documents, where they stand, and
- * submitting them for confirmation. The creator is always the one the server
- * resolves; nothing here sends an id.
+ * saving them (in force at once). A private person's CPR number is sent only
+ * to add or change it and never comes back.
  */
 import { request } from './client';
 import type { ApiResult } from './client';
@@ -28,28 +28,20 @@ export type BillingValues = Readonly< Record< BillingField, string > > & {
 	readonly type: BillingType;
 };
 
-export type BillingStatus =
-	'missing' | 'submitted' | 'changes_requested' | 'confirmed';
-
-export interface BillingSubmission {
-	readonly values: BillingValues;
-	readonly status: 'pending' | 'changes_requested';
-	readonly submittedAt: string | null;
-	/** The administrator's note when corrections are asked for ('' for none). */
-	readonly note: string;
-}
+export type BillingStatus = 'missing' | 'confirmed';
 
 export interface BillingDetailsState {
 	readonly status: BillingStatus;
 	readonly confirmed: BillingValues | null;
 	readonly confirmedAt: string | null;
-	readonly submission: BillingSubmission | null;
-	/** Whether the first payout still needs confirmed master data. */
+	/** Whether the first payout still needs master data. */
 	readonly requiredForPayout: boolean;
 	/** Whether a requested first payout waits for them. */
 	readonly payoutWaiting: boolean;
-	/** Whether payout requests need the CPR number (paid as a private person). */
+	/** Whether the creator is paid as a private person. */
 	readonly cprRequired: boolean;
+	/** Whether an encrypted CPR number is stored (never the number). */
+	readonly cprSaved: boolean;
 	/** Whether "Fill in from the CVR number" is available (ADR-105). */
 	readonly cvrLookup: boolean;
 }
@@ -62,18 +54,11 @@ export type CvrValues = Readonly<
 	>
 >;
 
-/** Fired after master data were submitted, so other parts reload. */
+/** Fired after master data were saved, so other parts reload. */
 export const BILLING_DETAILS_CHANGED = 'merchboard:billing-details-changed';
 
-const STATUSES: readonly BillingStatus[] = [
-	'missing',
-	'submitted',
-	'changes_requested',
-	'confirmed',
-];
-
 /**
- * Validates master data values: every field a string.
+ * Validates master data values: every field a string and a known type.
  *
  * @param value Raw value.
  */
@@ -119,19 +104,19 @@ export function parseBillingDetails(
 		status,
 		confirmed,
 		confirmed_at: confirmedAt,
-		submission,
 		required_for_payout: requiredForPayout,
 		payout_waiting: payoutWaiting,
 		cpr_required: cprRequired,
+		cpr_saved: cprSaved,
 		cvr_lookup: cvrLookup,
 	} = body;
 
 	if (
-		typeof status !== 'string' ||
-		! ( STATUSES as readonly string[] ).includes( status ) ||
+		( status !== 'missing' && status !== 'confirmed' ) ||
 		typeof requiredForPayout !== 'boolean' ||
 		typeof payoutWaiting !== 'boolean' ||
 		typeof cprRequired !== 'boolean' ||
+		typeof cprSaved !== 'boolean' ||
 		( confirmedAt !== null && typeof confirmedAt !== 'string' )
 	) {
 		return null;
@@ -144,46 +129,54 @@ export function parseBillingDetails(
 		return null;
 	}
 
-	let parsedSubmission: BillingSubmission | null = null;
-
-	if ( submission !== null ) {
-		if ( ! isRecord( submission ) ) {
-			return null;
-		}
-
-		const values = parseValues( submission.values );
-		const submissionStatus = submission.status;
-		const submittedAt = submission.submitted_at;
-		const note = submission.note;
-
-		if (
-			values === null ||
-			( submissionStatus !== 'pending' &&
-				submissionStatus !== 'changes_requested' ) ||
-			( submittedAt !== null && typeof submittedAt !== 'string' ) ||
-			typeof note !== 'string'
-		) {
-			return null;
-		}
-
-		parsedSubmission = {
-			values,
-			status: submissionStatus,
-			submittedAt,
-			note,
-		};
-	}
-
 	return {
-		status: status as BillingStatus,
+		status,
 		confirmed: confirmedValues,
 		confirmedAt,
-		submission: parsedSubmission,
 		requiredForPayout,
 		payoutWaiting,
 		cprRequired,
+		cprSaved,
 		cvrLookup: cvrLookup === true,
 	};
+}
+
+/**
+ * The creator's master data and where they stand.
+ *
+ * @param signal Cancels the request.
+ */
+export function getBillingDetails(
+	signal?: AbortSignal
+): Promise< ApiResult< BillingDetailsState > > {
+	return request(
+		{
+			path: '/merchboard/v1/me/billing-details',
+			...( signal === undefined ? {} : { signal } ),
+		},
+		parseBillingDetails
+	);
+}
+
+/**
+ * Saves master data. Invalid fields come back as `fields` (`required`,
+ * `too_long`, `invalid`, `invalid_cvr`, `invalid_cpr` or `unavailable`).
+ *
+ * @param values Every field.
+ * @param cpr    A private person's CPR number to add or change ('' keeps the stored one).
+ */
+export function submitBillingDetails(
+	values: BillingValues,
+	cpr = ''
+): Promise< ApiResult< BillingDetailsState > > {
+	return request(
+		{
+			path: '/merchboard/v1/me/billing-details',
+			method: 'POST',
+			data: { ...values, ...( cpr === '' ? {} : { cpr } ) },
+		},
+		parseBillingDetails
+	);
 }
 
 /**
@@ -231,41 +224,5 @@ export function lookupCvr( cvr: string ): Promise< ApiResult< CvrValues > > {
 			path: `/merchboard/v1/me/billing-details/cvr/${ encodeURIComponent( cvr ) }`,
 		},
 		parseCvrValues
-	);
-}
-
-/**
- * The creator's master data and where they stand.
- *
- * @param signal Cancels the request.
- */
-export function getBillingDetails(
-	signal?: AbortSignal
-): Promise< ApiResult< BillingDetailsState > > {
-	return request(
-		{
-			path: '/merchboard/v1/me/billing-details',
-			...( signal === undefined ? {} : { signal } ),
-		},
-		parseBillingDetails
-	);
-}
-
-/**
- * Submits master data for confirmation. Invalid fields come back as
- * `fields` (`required`, `too_long`, `invalid` or `invalid_cvr`).
- *
- * @param values Every field.
- */
-export function submitBillingDetails(
-	values: BillingValues
-): Promise< ApiResult< BillingDetailsState > > {
-	return request(
-		{
-			path: '/merchboard/v1/me/billing-details',
-			method: 'POST',
-			data: { ...values },
-		},
-		parseBillingDetails
 	);
 }

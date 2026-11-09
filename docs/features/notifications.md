@@ -39,7 +39,7 @@ I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog
 | Profil | Kategoriforslag afvist (med note) | administratorens afvisning | M+D | |
 | Konto | Sletteanmodning behandlet | administratoren lukker sagen (ADR-083) | M+D | |
 | Konto | Sletteanmodning afvist (med note) | administratorens afvisning (ADR-083) | M+D | |
-| Admin | Nye stamdata til bekræftelse (`admin_billing_details_submitted`) | en creator udfylder eller ændrer stamdata til afregningsbilag (ADR-104); aldrig værdierne | M | |
+| Admin | Stamdata ændret (`admin_billing_details_submitted`) | en creator udfylder eller ændrer stamdata til afregningsbilag; de gælder straks uden bekræftelse (ADR-104, statusnote 2026-11-09); aldrig værdierne | M | |
 | Admin | Ny sletteanmodning (`admin_product_removal_requested`) | en creator beder om at få slettet et legacy-produkt (ADR-083) | M+D | |
 | Rabatkode | Din rabatkode er oprettet (koden ses i dashboardet) | administratorens første kode | M+D | ✓ |
 | Rabatkode | Din rabatkode er nulstillet | ny kode (creatoren, "Se som creator" eller admin) | M+D | ✓ |
@@ -55,8 +55,6 @@ I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog
 | Konto | Din fortjeneste er ændret (standard eller pr. produkt) | prisindstillinger | M+D | ✓ |
 | Konto | Din momsstatus er ændret | momsstatus | M+D | ✓ |
 | Konto | Dine stamdata til afregning er ændret | administratorens ændring | M+D | ✓ |
-| Konto | Dine stamdata er bekræftet (`billing_details_confirmed`) | administratoren bekræfter creatorens indsendte stamdata (ADR-104) | M+D | ✓ |
-| Konto | Stamdata skal rettes (`billing_details_changes_requested`, med note) | administratoren beder om rettelser (ADR-104) | M+D | ✓ |
 | Konto | Nyt produkt i din butik | produkt koblet til creatoren | D | |
 | Konto | En administrator har set dit dashboard | "Se som creator" startet | D | |
 | Nyheder | Ny nyhed fra Merch Dashboard | udgivelse | D | |

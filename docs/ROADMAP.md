@@ -1124,6 +1124,8 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 - **42.8 Tests:** ✅ unit (validering, CPR, CVR-opslag), integration (flowet, CPR krypteret og slettet) og Jest; faste lister (notifikationer, audit, "Se som creator").
 - **42.9 Runtime-test på Local:** ✅ 2026-11-09 med testcreatoren MB26 Creator 01: anmodning uden stamdata afvist, udfyld med "Udfyld fra CVR-nummer" (live mod cvrapi.dk), bed om rettelser, ret og bekræft; ingen udbetaling gennemført. "Anmodningen venter" kunne ikke køres på Local (ingen creator uden bilag har saldo) og er dækket af integrationstesten. Fund: beskeden øverst vises ikke længere på selve Udbetalinger (rettet).
 
+**Ændret efter testen på stg (projektejerens beslutning 2026-11-09, ADR-104 pkt. 11):** ingen admin-bekræftelse af stamdata: creatorens stamdata gælder straks, fanen "Stamdata" under "Forslag" er fjernet, og første udbetaling kræver kun udfyldte stamdata. En privatpersons CPR-nummer angives i stamdataformularen, gemmes krypteret (`billing_cpr`) og kopieres til hver udbetaling; anmodningen spørger ikke længere. To creator-notifikationer er fjernet (45 typer).
+
 **Efter fase 42:** samlet review og release af fase 41 og 42 (det tidligere 41.8): uafhængigt review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK. **Status 2026-11-09:** review ✅, bump til 1.8.0 ✅, testpakke på stg; tag efter projektejerens test (DEVELOPMENT.md "Release 1.8.0").
 
 ## Senere (uprioriteret)

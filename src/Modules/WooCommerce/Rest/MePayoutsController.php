@@ -731,7 +731,7 @@ final class MePayoutsController extends RestController {
 		}
 
 		$status = match ( $reason ) {
-			PayoutException::BALANCE_UNKNOWN, PayoutException::INSUFFICIENT_BALANCE, PayoutException::NOT_PENDING, PayoutException::BUSY, PayoutException::AGREEMENT_REQUIRED, PayoutException::BILLING_DETAILS_REQUIRED => 409,
+			PayoutException::BALANCE_UNKNOWN, PayoutException::INSUFFICIENT_BALANCE, PayoutException::NOT_PENDING, PayoutException::BUSY, PayoutException::AGREEMENT_REQUIRED, PayoutException::BILLING_DETAILS_REQUIRED, PayoutException::CPR_MISSING => 409,
 			// A missing or invalid CPR number (ADR-104) is 400 like other invalid details; never echoed.
 			PayoutException::TOO_MANY_PENDING, PayoutException::TOO_MANY_REQUESTS => 429,
 			PayoutException::GIFT_CARDS_UNAVAILABLE => 503,

@@ -78,10 +78,10 @@ final class PayoutRequests {
 	 * @param GiftCardProviders|null $gift_cards  Gift card providers; null = gift cards unavailable.
 	 * @param Closure|null           $agreement   Whether a creator has accepted what the agreement requires (ADR-092); null: always.
 	 * @param Closure|null           $billing     Whether a creator may request a payout: the first one needs submitted master data (ADR-104); null: always.
-	 * @param Closure|null           $cpr         Whether a creator is paid as a private person and must give the CPR number (ADR-104); null: never.
+	 * @param Closure|null           $cpr         The stored CPR number of a creator paid as a private person, null for a business; throws `cpr_missing` when it is missing (ADR-104); null: never.
 	 * @phpstan-param (Closure(int): bool)|null $agreement
 	 * @phpstan-param (Closure(int): bool)|null $billing
-	 * @phpstan-param (Closure(int): bool)|null $cpr
+	 * @phpstan-param (Closure(int): ?CprNumber)|null $cpr
 	 */
 	public function __construct(
 		private PayoutRepository $payouts,
@@ -119,7 +119,7 @@ final class PayoutRequests {
 	 * @param string       $currency        Currency.
 	 * @param string       $amount          Decimal amount or ALL.
 	 * @param string       $method          Method value.
-	 * @param array<mixed> $details         Bank or PayPal details (PayoutDestination::from_input()) and, for a creator paid as a private person, `cpr`.
+	 * @param array<mixed> $details         Bank or PayPal details (PayoutDestination::from_input()).
 	 * @param string       $idempotency_key The client's request key (UUID).
 	 * @param int|null     $user_id         WordPress user who requests it.
 	 * @throws PayoutException When the request is refused; nothing is stored.
@@ -165,10 +165,10 @@ final class PayoutRequests {
 			}
 		}
 
-		// A creator paid as a private person gives the CPR number, encrypted with the payout (ADR-104).
-		if ( null !== $this->cpr && ( $this->cpr )( $creator_id ) ) {
-			$number = CprNumber::from_input( $details['cpr'] ?? null );
+		// A private person's stored CPR number goes with the payout, encrypted, for the report (ADR-104).
+		$number = null === $this->cpr ? null : ( $this->cpr )( $creator_id );
 
+		if ( null !== $number ) {
 			if ( ! $this->cipher->available() ) {
 				throw new PayoutException( PayoutException::METHOD_UNAVAILABLE );
 			}

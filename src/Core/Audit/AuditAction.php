@@ -166,20 +166,21 @@ enum AuditAction: string {
 	case CreatorBillingDetailsChanged = 'creator_billing_details_changed';
 
 	/**
-	 * The creator submitted master data for confirmation (ADR-104; context:
-	 * names of the fields that differ from the confirmed ones, no values).
+	 * The creator saved master data (ADR-104; context: names of the changed
+	 * fields, also `cpr`, no values).
 	 */
 	case BillingDetailsSubmitted = 'billing_details_submitted';
 
 	/**
-	 * An administrator confirmed the creator's submitted master data
-	 * (ADR-104; context: names of the changed fields, no values).
+	 * An administrator confirmed the creator's submitted master data (first
+	 * version of ADR-104, no longer written; kept for the audit history).
 	 */
 	case BillingDetailsConfirmed = 'billing_details_confirmed';
 
 	/**
 	 * An administrator asked the creator to correct the submitted master
-	 * data (ADR-104; context: decision_note, no values).
+	 * data (first version of ADR-104, no longer written; kept for the audit
+	 * history).
 	 */
 	case BillingDetailsChangesRequested = 'billing_details_changes_requested';
 

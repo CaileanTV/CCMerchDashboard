@@ -249,20 +249,15 @@ final class PayoutSettingsSections {
 			return;
 		}
 
-		$text = match ( true ) {
-			null !== $state->submission && BillingDetailsReview::CHANGES_REQUESTED === $state->submission['status'] => __( 'The creator is asked to correct the submitted master data.', 'merchboard' ),
-			null !== $state->submission => __( 'The creator submitted master data that wait for your confirmation.', 'merchboard' ),
-			BillingDetailsReview::CONFIRMED === $state->status => __( 'Confirmed. Saving here also counts as confirmed.', 'merchboard' ),
-			default => __( 'The creator has not filled in master data yet. The first payout can only be completed once they are confirmed; saving here also counts as confirmed.', 'merchboard' ),
-		};
+		$text = BillingDetailsReview::CONFIRMED === $state->status
+			? __( 'The creator fills in and changes the master data in the creator dashboard; they apply at once.', 'merchboard' )
+			: __( 'The creator has not filled in master data yet. The first payout can only be completed once there are master data.', 'merchboard' );
 
-		echo '<p><strong>' . esc_html__( 'Status:', 'merchboard' ) . '</strong> ' . esc_html( $text );
+		echo '<p><strong>' . esc_html__( 'Status:', 'merchboard' ) . '</strong> ' . esc_html( $text ) . '</p>';
 
-		if ( null !== $state->submission ) {
-			echo ' <a href="' . esc_url( BillingDetailsReviewPage::url() ) . '">' . esc_html__( 'Proposals → Master data', 'merchboard' ) . '</a>';
+		if ( $state->cpr_required ) {
+			echo '<p>' . esc_html( $state->cpr_saved ? __( 'CPR number: stored encrypted. It is copied into each payout, where you can see it with the payment details.', 'merchboard' ) : __( 'CPR number: missing. The creator adds it in the creator dashboard; until then no payout can be requested.', 'merchboard' ) ) . '</p>';
 		}
-
-		echo '</p>';
 	}
 
 	/**

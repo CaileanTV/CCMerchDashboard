@@ -6,15 +6,15 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [1.8.0] - 2026-11-09
 
-Fase 41 og 42: MitCCMerchs egen login-skærm med logoer, favicon og app-ikon, og creatorens egne stamdata til afregning, bekræftet før første udbetaling, med CPR for privatpersoner og opslag i CVR-registret. Ingen schemaændring (schema-version 48). Opdateringen står i DEVELOPMENT.md ("Release 1.8.0").
+Fase 41 og 42: MitCCMerchs egen login-skærm med logoer, favicon og app-ikon, og creatorens egne stamdata til afregning, som kræves før første udbetaling, med CPR for privatpersoner og opslag i CVR-registret. Ingen schemaændring (schema-version 48). Opdateringen står i DEVELOPMENT.md ("Release 1.8.0").
 
 ### Added
 
 - **Egen login-skærm (ADR-103):** `wp-login.php` får MitCCMerchs eget udseende, når man logger ind til dashboardet: login, glemt adgangskode (også kvitteringen), ny adgangskode og logget ud. WordPress står fortsat for hele login, så 2FA, CAPTCHA og sikkerhedsplugins virker som før. Andre logins er uændrede.
 - **Fanen "Branding" under Indstillinger:** layout (delt skærm eller centreret kort), baggrundsbillede og -farve, tekst- og knapfarve med kontrastkontrol, tekster til de fire skærme, links ("Bliv creator" som knap og support), login-logo, logostørrelse i MitCCMerch (lille, mellem, stor), lys plade bag logoet (fra som standard), logo til mørke temaer, favicon, app-ikon og app-navn. Standardfarven er logoets teal.
 - **Favicon og app-ikon:** i MitCCMerch og på login; app-ikonet bruges, når MitCCMerch lægges på telefonens hjemskærm (web-manifest).
-- **Stamdata til afregning (ADR-104):** creatoren udfylder selv navn, adresse og CVR-nummer under Udbetalinger; administratoren bekræfter dem eller beder om rettelser under Forslag → Stamdata. Første udbetaling kan anmodes, når stamdata er sendt ind, men gennemføres først, når de er bekræftet. Notifikationer til begge parter.
-- **CPR for privatpersoner:** uden CVR-nummer angiver creatoren CPR-nummeret ved hver udbetaling. Det krypteres med betalingsoplysningerne og slettes, når udbetalingen er behandlet; kun administratorer med begge betalingsrettigheder kan se det, og hver visning logges. En infoboks forklarer hvorfor og anbefaler at oprette en PMV (gratis).
+- **Stamdata til afregning (ADR-104):** creatoren udfylder selv navn, adresse og CVR-nummer under Udbetalinger. De gælder straks uden bekræftelse, og administratorerne får en notifikation. Første udbetaling kræver udfyldte stamdata.
+- **CPR for privatpersoner:** uden CVR-nummer angiver creatoren CPR-nummeret i stamdata. Det gemmes krypteret, vises aldrig igen for creatoren og følger krypteret med hver udbetaling, hvor kopien slettes, når udbetalingen er behandlet; kun administratorer med begge betalingsrettigheder kan se det, og hver visning logges. En infoboks forklarer hvorfor og anbefaler at oprette en PMV (gratis).
 - **"Udfyld fra CVR-nummer" (ADR-105):** navn og adresse hentes fra CVR-registret via cvrapi.dk (kræver virksomhedsnavn og kontakt-e-mail under Indstillinger).
 - **Vejledning til indberetning:** ved CPR-nummeret i admin står en kort vejledning til at indberette B-honoraret i eIndkomst (felt 36) uden regnskabsprogram, med links til Skattestyrelsen.
 

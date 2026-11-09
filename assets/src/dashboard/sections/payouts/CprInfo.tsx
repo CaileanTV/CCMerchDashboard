@@ -19,7 +19,7 @@ export function CprInfo() {
 			<p>
 				<strong>{ __( 'Your data are safe:', 'merchboard' ) }</strong>{ ' ' }
 				{ __(
-					'Your CPR number is encrypted, used only to report this payout and deleted when the payout has been handled. It is never shown on your settlement document.',
+					'Your CPR number is stored encrypted and used only to report your payouts. It is never shown on your settlement documents.',
 					'merchboard'
 				) }
 			</p>

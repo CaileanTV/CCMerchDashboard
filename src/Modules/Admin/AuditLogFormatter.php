@@ -91,7 +91,7 @@ final class AuditLogFormatter {
 			AuditAction::CreatorVatStatusChanged   => __( 'VAT status changed', 'merchboard' ),
 			AuditAction::CreatorVatHistoryRecorded => __( 'VAT status registered in the history', 'merchboard' ),
 			AuditAction::CreatorBillingDetailsChanged => __( 'Master data for settlement documents changed', 'merchboard' ),
-			AuditAction::BillingDetailsSubmitted => __( 'Master data submitted by the creator', 'merchboard' ),
+			AuditAction::BillingDetailsSubmitted => __( 'Master data saved by the creator', 'merchboard' ),
 			AuditAction::BillingDetailsConfirmed => __( 'Master data confirmed', 'merchboard' ),
 			AuditAction::BillingDetailsChangesRequested => __( 'Master data corrections requested', 'merchboard' ),
 			AuditAction::ProductMarkupSet          => __( 'Product markup set', 'merchboard' ),

@@ -91,19 +91,29 @@ function fieldError( code: string ): string {
 			return __( 'This is too long.', 'merchboard' );
 		case 'invalid_cvr':
 			return __( 'A CVR number is eight digits.', 'merchboard' );
+		case 'invalid_cpr':
+			return __(
+				'Please enter a valid CPR number (10 digits, written DDMMYY-XXXX).',
+				'merchboard'
+			);
+		case 'unavailable':
+			return __(
+				'The CPR number cannot be saved right now. Please contact us.',
+				'merchboard'
+			);
 		default:
 			return __( 'Please check this field.', 'merchboard' );
 	}
 }
 
 /**
- * The form's starting values: the waiting submission, else the confirmed
- * master data, else empty with Denmark as the country.
+ * The form's starting values: the saved master data, else empty with
+ * Denmark as the country.
  *
  * @param state The server's state.
  */
 function initial( state: BillingDetailsState ): BillingValues {
-	const values = state.submission?.values ?? state.confirmed;
+	const values = state.confirmed;
 
 	// Registered before phase 42 (no type) with a CVR number: a business, so the number is kept.
 	if ( values !== null && values.type === '' && values.cvr !== '' ) {
@@ -127,10 +137,26 @@ function initial( state: BillingDetailsState ): BillingValues {
 /**
  * Checks the form like the server does, so most mistakes show at once.
  *
- * @param values Values.
+ * @param values   Values.
+ * @param cpr      The typed CPR number ('' for none).
+ * @param cprSaved Whether a CPR number is stored already.
  */
-function validate( values: BillingValues ): Record< string, string > {
+function validate(
+	values: BillingValues,
+	cpr: string,
+	cprSaved: boolean
+): Record< string, string > {
 	const errors: Record< string, string > = {};
+
+	if ( values.type !== 'business' ) {
+		const digits = cpr.replace( /[\s\-\u2010-\u2015]+/g, '' );
+
+		if ( digits === '' && ! cprSaved ) {
+			errors.cpr = 'required';
+		} else if ( digits !== '' && ! /^\d{10}$/.test( digits ) ) {
+			errors.cpr = 'invalid_cpr';
+		}
+	}
 
 	for ( const field of BILLING_FIELDS ) {
 		const value = values[ field ].trim();
@@ -164,53 +190,11 @@ function validate( values: BillingValues ): Record< string, string > {
  * @param props.state The server's state.
  */
 function StatusMessage( { state }: { readonly state: BillingDetailsState } ) {
-	if ( state.submission?.status === 'changes_requested' ) {
-		return (
-			<Alert tone="warning">
-				{ __(
-					'We could not confirm your master data. Please correct them and send them again.',
-					'merchboard'
-				) }
-				{ state.submission.note !== '' && (
-					<>
-						<br />
-						<strong>
-							{ __( 'Note from us:', 'merchboard' ) }
-						</strong>{ ' ' }
-						{ state.submission.note }
-					</>
-				) }
-			</Alert>
-		);
-	}
-
-	if ( state.submission !== null ) {
-		return (
-			<Alert tone="info">
-				{ state.confirmed === null
-					? __(
-							'Thank you. Your master data wait for our confirmation.',
-							'merchboard'
-						)
-					: __(
-							'Your changes wait for our confirmation. Until then, your confirmed master data are used.',
-							'merchboard'
-						) }
-				{ state.payoutWaiting &&
-					' ' +
-						__(
-							'Your first payout is paid once they are confirmed.',
-							'merchboard'
-						) }
-			</Alert>
-		);
-	}
-
 	if ( state.confirmed !== null ) {
 		return (
 			<Alert tone="success">
 				{ __(
-					'Your master data are confirmed. If something changes, correct it here; we confirm it again.',
+					'Your master data are saved. If something changes, correct it here.',
 					'merchboard'
 				) }
 			</Alert>
@@ -220,7 +204,7 @@ function StatusMessage( { state }: { readonly state: BillingDetailsState } ) {
 	return (
 		<Alert tone={ state.requiredForPayout ? 'warning' : 'info' }>
 			{ __(
-				'Please fill in your master data. We need them for your settlement documents, and we confirm them before your first payout.',
+				'Please fill in your master data. We need them for your settlement documents and before your first payout.',
 				'merchboard'
 			) }
 		</Alert>
@@ -229,10 +213,11 @@ function StatusMessage( { state }: { readonly state: BillingDetailsState } ) {
 
 /**
  * "Master data for settlement documents" (ADR-104): the creator's legal
- * name, address and CVR number, sent for confirmation with
- * `POST /me/billing-details`. The first payout can be requested once they
- * are sent and is paid once they are confirmed. Every rule is the server's;
- * the form only checks the same things first.
+ * name, address and CVR number, or a private person's CPR number, saved
+ * with `POST /me/billing-details` and in force at once. The CPR number is
+ * stored encrypted and never shown back; it is typed only to add or change
+ * it. The first payout needs master data. Every rule is the server's; the
+ * form only checks the same things first.
  */
 export function BillingDetailsCard() {
 	const { state, retry } = useApi( getBillingDetails );
@@ -240,6 +225,8 @@ export function BillingDetailsCard() {
 		null
 	);
 	const [ values, setValues ] = useState< BillingValues | null >( null );
+	const [ cpr, setCpr ] = useState( '' );
+	const cprId = useId();
 	const [ errors, setErrors ] = useState< Record< string, string > >( {} );
 	const [ failure, setFailure ] = useState< ApiError | null >( null );
 	const [ busy, setBusy ] = useState( false );
@@ -320,7 +307,7 @@ export function BillingDetailsCard() {
 			setErrors( {} );
 			setToast(
 				__(
-					'Filled in from the CVR register. Please check the details before you send them.',
+					'Filled in from the CVR register. Please check the details before you save them.',
 					'merchboard'
 				)
 			);
@@ -333,7 +320,7 @@ export function BillingDetailsCard() {
 
 	const submit = async ( event: FormEvent< HTMLFormElement > ) => {
 		event.preventDefault();
-		const found = validate( values );
+		const found = validate( values, cpr, current.cprSaved );
 		setErrors( found );
 		setFailure( null );
 
@@ -342,21 +329,22 @@ export function BillingDetailsCard() {
 		}
 
 		setBusy( true );
-		const result = await submitBillingDetails( {
-			...values,
-			type: values.type === 'business' ? 'business' : 'private',
-			cvr: values.type === 'business' ? values.cvr : '',
-		} );
+		const business = values.type === 'business';
+		const result = await submitBillingDetails(
+			{
+				...values,
+				type: business ? 'business' : 'private',
+				cvr: business ? values.cvr : '',
+			},
+			business ? '' : cpr.trim()
+		);
 		setBusy( false );
 
 		if ( result.ok ) {
 			setCurrent( result.data );
 			setValues( initial( result.data ) );
-			setToast(
-				result.data.submission === null
-					? __( 'Nothing was changed.', 'merchboard' )
-					: __( 'Sent for confirmation.', 'merchboard' )
-			);
+			setCpr( '' );
+			setToast( __( 'Master data saved.', 'merchboard' ) );
 			window.dispatchEvent( new Event( BILLING_DETAILS_CHANGED ) );
 
 			return;
@@ -403,11 +391,62 @@ export function BillingDetailsCard() {
 					<>
 						<p className="merchboard-field__help">
 							{ __(
-								'Without a CVR number you are paid as a private person, and you give your CPR number each time you request a payout.',
+								'Without a CVR number you are paid as a private person, and we need your CPR number.',
 								'merchboard'
 							) }
 						</p>
 						<CprInfo />
+						<div className="merchboard-field">
+							<label
+								className="merchboard-field__label"
+								htmlFor={ cprId }
+							>
+								{ __( 'CPR number', 'merchboard' ) }
+							</label>
+							<input
+								id={ cprId }
+								className="merchboard-input"
+								type="text"
+								name="cpr"
+								value={ cpr }
+								maxLength={ 14 }
+								inputMode="numeric"
+								autoComplete="off"
+								required={ ! current.cprSaved }
+								aria-describedby={ `${ cprId }-help` }
+								aria-invalid={
+									errors.cpr === undefined ? undefined : true
+								}
+								onChange={ ( event ) => {
+									setCpr( event.target.value );
+									setErrors( ( previous ) => {
+										const next = { ...previous };
+										delete next.cpr;
+
+										return next;
+									} );
+								} }
+							/>
+							<p
+								id={ `${ cprId }-help` }
+								className="merchboard-field__help"
+							>
+								{ current.cprSaved
+									? __(
+											'Your CPR number is stored encrypted and is not shown. Type it only to change it.',
+											'merchboard'
+										)
+									: __(
+											'10 digits, written DDMMYY-XXXX.',
+											'merchboard'
+										) }
+							</p>
+							{ errors.cpr !== undefined && (
+								<p className="merchboard-field__error">
+									{ fieldError( errors.cpr ) }
+								</p>
+							) }
+						</div>
 					</>
 				) }
 				{ values.type === 'business' && (
@@ -494,7 +533,7 @@ export function BillingDetailsCard() {
 				) }
 				{ failure !== null && <ApiErrorState error={ failure } /> }
 				<Button type="submit" isBusy={ busy }>
-					{ __( 'Send for confirmation', 'merchboard' ) }
+					{ __( 'Save master data', 'merchboard' ) }
 				</Button>
 			</form>
 			<Toast message={ toast } onDismiss={ dismissToast } />

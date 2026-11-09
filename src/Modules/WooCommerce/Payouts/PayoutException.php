@@ -221,25 +221,17 @@ final class PayoutException extends DomainException {
 	public const AGREEMENT_REQUIRED = 'agreement_required';
 
 	/**
-	 * The creator's first payout needs submitted master data (ADR-104).
+	 * The creator's first payout needs master data (ADR-104).
 	 */
 	public const BILLING_DETAILS_REQUIRED = 'billing_details_required';
 
 	/**
-	 * The creator's first payout waits until the master data are confirmed
-	 * (ADR-104); the payout stays pending.
+	 * The creator's first payout waits until there are master data (ADR-104);
+	 * the payout stays pending.
 	 */
 	public const BILLING_DETAILS_UNCONFIRMED = 'billing_details_unconfirmed';
 
-	/**
-	 * There is no submitted master data to decide on (ADR-104).
-	 */
-	public const BILLING_SUBMISSION_MISSING = 'billing_submission_missing';
 
-	/**
-	 * The submitted master data changed after the page was shown (ADR-104).
-	 */
-	public const BILLING_SUBMISSION_STALE = 'billing_submission_stale';
 
 	/**
 	 * A creator paid as a private person must give a valid CPR number with
@@ -248,9 +240,9 @@ final class PayoutException extends DomainException {
 	public const INVALID_CPR = 'invalid_cpr';
 
 	/**
-	 * The creator is paid as a private person, but the payout has no CPR
-	 * number to report (requested before the type was chosen); it can only
-	 * be rejected, so the creator requests it again with the number (ADR-104).
+	 * The creator is paid as a private person, but there is no CPR number to
+	 * report: the master data have none (request refused), or the payout was
+	 * requested before the type was chosen (it can only be rejected, ADR-104).
 	 */
 	public const CPR_MISSING = 'cpr_missing';
 
