@@ -225,6 +225,30 @@ final class TwitchController extends RestController {
 				is_string( $event['color'] ?? null ) ? $event['color'] : '',
 				is_string( $message['text'] ?? null ) ? $message['text'] : ''
 			);
+
+			$badges = array();
+
+			foreach ( is_array( $event['badges'] ?? null ) ? $event['badges'] : array() as $badge ) {
+				if ( is_array( $badge ) && is_string( $badge['set_id'] ?? null ) ) {
+					$badges[] = sanitize_key( $badge['set_id'] );
+				}
+			}
+
+			$chatter = is_string( $event['chatter_user_id'] ?? null ) ? $event['chatter_user_id'] : '';
+
+			// Twitch gifting (ADR-107): `!enter` and `!gift` commands, from the signed webhook only.
+			if ( 1 === preg_match( '/^\d{1,20}$/', $chatter ) ) {
+				/**
+				 * A chat message in a creator's Twitch channel.
+				 *
+				 * @param int          $creator_id Creator.
+				 * @param string       $chatter_id Chatter's Twitch id.
+				 * @param string       $login      Chatter's login.
+				 * @param string       $text       Message text.
+				 * @param list<string> $badges     Badge set ids (`broadcaster`, `moderator`, …).
+				 */
+				do_action( 'merchboard_twitch_chat_message', $channel->creator_id, $chatter, is_string( $event['chatter_user_login'] ?? null ) ? strtolower( $event['chatter_user_login'] ) : '', is_string( $message['text'] ?? null ) ? $message['text'] : '', $badges );
+			}
 		}
 
 		return new WP_REST_Response( null, 204 );

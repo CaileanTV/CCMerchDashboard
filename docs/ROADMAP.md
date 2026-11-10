@@ -1170,7 +1170,7 @@ Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR. **Testes samme
 **Trin (ADR-107):**
 - **44.1 Docs:** ✅ ADR-107.
 - **44.2 Data:** ✅ migration 50 (`merchboard_gifts`), gave-repository og creatorens indstillinger (`twitch_gifting`).
-- **44.3 Twitch:** om creatoren er live (`helix/streams`) og chatbeskeder fra webhooken videre til gifting, med badges.
+- **44.3 Twitch:** ✅ om creatoren er live (`helix/streams`) og chatbeskeder fra webhooken videre til gifting, med badges.
 - **44.4 Køb:** knappen på produktsiden, gave-kurven (ét produkt, laveste variantpris, 50 kr. gave-fragt), køberens navn eller anonym og gaven oprettet ved betaling.
 - **44.5 Lodtrækning:** annoncering, `!enter`-vindue, trækning og vinder i chatten, `!gift start/pause/resume`, frist på 24 timer og højst 3 omtrækninger, derefter til køberen.
 - **44.6 Indløsning:** siden med Twitch-login, gavekoden (produkt plus op til 50 kr. fragt), fortjeneste kun af det, vinderen betaler, og e-mails til køberen.

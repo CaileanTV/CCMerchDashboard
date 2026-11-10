@@ -83,6 +83,7 @@ use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchApi;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerLogin;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerSession;
+use MerchBoard\Modules\Alerts\Chatbot\TwitchLiveStatus;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchOAuth;
 use MerchBoard\Modules\Alerts\Chatbot\WooCommerceCustomerSessionStore;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchPlatform;
@@ -403,6 +404,8 @@ final class AlertsModule implements Module {
 				static fn( string $target ): string => ShopTwitchController::target_url( $target )
 			)
 		);
+		// Whether a creator's channel is live (Twitch gifting, ADR-107).
+		$container->set( TwitchLiveStatus::class, static fn( Container $c ): TwitchLiveStatus => new TwitchLiveStatus( $c->get( TwitchAccount::class ), $c->get( TwitchApi::class ) ) );
 		$container->set(
 			ShopTwitchController::class,
 			static fn( Container $c ): ShopTwitchController => new ShopTwitchController( $c->get( TwitchCustomerLogin::class ), $c->get( TwitchCustomerSession::class ) )

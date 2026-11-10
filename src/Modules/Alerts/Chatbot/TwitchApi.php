@@ -40,6 +40,11 @@ final class TwitchApi {
 	private const USER_SUBSCRIPTION_URL = 'https://api.twitch.tv/helix/subscriptions/user';
 
 	/**
+	 * Live streams (ADR-107).
+	 */
+	private const STREAMS_URL = 'https://api.twitch.tv/helix/streams';
+
+	/**
 	 * Twitch's longest chat message in characters.
 	 */
 	public const MESSAGE_MAX = 500;
@@ -212,6 +217,27 @@ final class TwitchApi {
 			'tier'   => intdiv( (int) $tier, 1000 ),
 			'gifted' => true === ( $data['is_gift'] ?? false ),
 		);
+	}
+
+	/**
+	 * Whether a channel is live now (ADR-107), with the app access token.
+	 *
+	 * @param string $client_id      Client ID.
+	 * @param string $app_token      App access token.
+	 * @param string $broadcaster_id Channel.
+	 * @throws TwitchException When the token is refused (`unauthorized`) or Twitch cannot be reached.
+	 */
+	public function stream_live( string $client_id, string $app_token, string $broadcaster_id ): bool {
+		if ( 1 !== preg_match( '/^\d{1,20}$/', $broadcaster_id ) ) {
+			throw new TwitchException( TwitchException::UNAVAILABLE );
+		}
+
+		$answer = $this->json( 'GET', self::STREAMS_URL . '?' . http_build_query( array( 'user_id' => $broadcaster_id ) ), $client_id, $app_token, null );
+
+		self::check( $answer['status'] );
+		$data = $answer['body']['data'] ?? null;
+
+		return is_array( $data ) && array() !== $data && 'live' === ( is_array( $data[0] ?? null ) ? ( $data[0]['type'] ?? 'live' ) : '' );
 	}
 
 	/**
