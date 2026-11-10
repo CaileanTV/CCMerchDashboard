@@ -495,7 +495,17 @@ final class OrderHistoryPage {
 			echo '<td>' . esc_html( null === $event['tax'] ? __( 'Missing', 'merchboard' ) : CreatorSalesSection::money( SalesAmount::format( $event['tax']['tax'] ), $event['tax']['currency'] ) ) . '</td>';
 			echo '<td>' . ( null === $diagnosis->profit
 				? '<strong>' . esc_html__( 'Unknown', 'merchboard' ) . '</strong><br><span class="description">' . esc_html( self::gap_text( $diagnosis->gap ?? ProfitGap::Other ) ) . '</span>'
-				: esc_html( CreatorSalesSection::money( SalesAmount::format( $diagnosis->profit ), $entry->currency ) ) ) . '</td>';
+				: esc_html( CreatorSalesSection::money( SalesAmount::format( $diagnosis->profit ), $entry->currency ) ) )
+				// ADR-106 pkt. 7: the creator paid the row's Twitch subscriber discount.
+				. ( null !== $event['tax'] && ( $event['tax']['sub_discount'] ?? 0 ) > 0
+					? '<br><span class="description">' . esc_html(
+						sprintf(
+							/* translators: %s: amount incl. VAT. */
+							__( 'Twitch subscriber discount %s, paid from the profit', 'merchboard' ),
+							CreatorSalesSection::money( SalesAmount::format( (int) $event['tax']['sub_discount'] ), $entry->currency )
+						)
+					) . '</span>'
+					: '' ) . '</td>';
 
 			if ( null !== $settled ) {
 				$document = $settled[ $entry->event_key ] ?? null;
