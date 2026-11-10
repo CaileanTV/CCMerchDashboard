@@ -61,6 +61,14 @@ final class ScheduledJobs {
 	public const DESIGNER_HOOKS = array( 'merchboard_designer_fee_charge', 'merchboard_designer_apply', 'merchboard_designer_reprice', 'merchboard_designer_tags', 'merchboard_designer_names', 'merchboard_designer_meta_catalog', 'merchboard_designer_retire', 'merchboard_designer_printful', 'merchboard_designer_gelato', 'merchboard_designer_prodigi', 'merchboard_designer_prodigi_preview', 'merchboard_designer_import', 'merchboard_designer_printify_producers' );
 
 	/**
+	 * Action Scheduler hooks of Twitch gifting: closing a draw's window and a
+	 * claim deadline (Modules\Community\Gifting\GiftDraws::DRAW_HOOK and
+	 * ::EXPIRE_HOOK; a test keeps them equal, ADR-107). Cancelled on
+	 * uninstall with the opt-in.
+	 */
+	public const COMMUNITY_HOOKS = array( 'merchboard_gift_draw', 'merchboard_gift_expire' );
+
+	/**
 	 * Cancels the pending backfill pages; never throws.
 	 */
 	public static function cancel_sales_backfill(): void {
@@ -84,7 +92,7 @@ final class ScheduledJobs {
 			return;
 		}
 
-		foreach ( array_merge( self::ALERT_HOOKS, self::NOTIFICATION_HOOKS, self::DESIGNER_HOOKS ) as $hook ) {
+		foreach ( array_merge( self::ALERT_HOOKS, self::NOTIFICATION_HOOKS, self::DESIGNER_HOOKS, self::COMMUNITY_HOOKS ) as $hook ) {
 			try {
 				as_unschedule_all_actions( $hook );
 			} catch ( Throwable ) {
