@@ -322,6 +322,12 @@ final class Tables {
 	public const GO_LIVE_REQUESTS = 'merchboard_go_live_requests';
 
 	/**
+	 * Gifts viewers bought in a creator's Twitch stream (phase 44, ADR-107):
+	 * one row per gift order, from the draw to the claimed or returned code.
+	 */
+	public const GIFTS = 'merchboard_gifts';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -377,6 +383,7 @@ final class Tables {
 		self::AGREEMENT_ACCEPTANCES,
 		self::CREATOR_SIGNUPS,
 		self::GO_LIVE_REQUESTS,
+		self::GIFTS,
 	);
 
 	/**

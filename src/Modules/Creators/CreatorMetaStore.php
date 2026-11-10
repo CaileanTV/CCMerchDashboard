@@ -99,9 +99,16 @@ final class CreatorMetaStore {
 	public const TWITCH_SUB_DISCOUNT = 'twitch_sub_discount';
 
 	/**
+	 * The creator's Twitch gifting (phase 44, ADR-107 pkt. 2): on/off, pause,
+	 * window and language. Written by the creator through `/me` and paused
+	 * or resumed from the chat.
+	 */
+	public const TWITCH_GIFTING = 'twitch_gifting';
+
+	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BILLING_DETAILS, self::BILLING_SUBMISSION, self::BILLING_CONFIRMED, self::BILLING_CPR, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP, self::TWITCH_SUB_DISCOUNT );
+	private const KEYS = array( self::BILLING_DETAILS, self::BILLING_SUBMISSION, self::BILLING_CONFIRMED, self::BILLING_CPR, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP, self::TWITCH_SUB_DISCOUNT, self::TWITCH_GIFTING );
 
 	/**
 	 * Constructor.

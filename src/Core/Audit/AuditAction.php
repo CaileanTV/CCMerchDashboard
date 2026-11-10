@@ -901,4 +901,10 @@ enum AuditAction: string {
 	 * Context: changed_fields.
 	 */
 	case TwitchSubDiscountChanged = 'twitch_sub_discount_changed';
+
+	/**
+	 * A creator changed the Twitch gifting settings (ADR-107).
+	 * Context: changed_fields.
+	 */
+	case TwitchGiftingChanged = 'twitch_gifting_changed';
 }
