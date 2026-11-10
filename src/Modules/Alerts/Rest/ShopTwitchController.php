@@ -27,7 +27,8 @@ defined( 'ABSPATH' ) || exit;
  *   customer's Twitch login and remembered account, and goes back (302).
  *
  * Both need the nonce of the page that showed them (action
- * `merchboard_twitch_shop`); a logged-in customer's link also carries the
+ * `woocommerce_merchboard_twitch_shop`: WooCommerce binds a guest's nonce of
+ * a "woocommerce…" action to the guest's session); a logged-in customer's link also carries the
  * REST nonce, so the request runs as that user. Responses are never cached.
  */
 final class ShopTwitchController extends RestController {
@@ -35,7 +36,7 @@ final class ShopTwitchController extends RestController {
 	/**
 	 * The nonce action of the shop's links.
 	 */
-	public const NONCE_ACTION = 'merchboard_twitch_shop';
+	public const NONCE_ACTION = 'woocommerce_merchboard_twitch_shop';
 
 	/**
 	 * Query argument of a gift's claim link (ADR-107).

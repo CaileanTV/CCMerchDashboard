@@ -156,7 +156,7 @@ final class GiftPrivacy {
 	}
 
 	/**
-	 * The customer's orders (by billing e-mail).
+	 * The customer's orders (by billing e-mail or account).
 	 *
 	 * @param string $email E-mail address.
 	 * @param int    $page  Page.
@@ -167,12 +167,14 @@ final class GiftPrivacy {
 			return array();
 		}
 
+		$user  = get_user_by( 'email', $email );
 		$found = wc_get_orders(
 			array(
-				'billing_email' => $email,
-				'limit'         => self::PER_PAGE,
-				'paged'         => max( 1, $page ),
-				'type'          => 'shop_order',
+				// By billing e-mail and, for a registered customer, by account.
+				'customer' => false === $user ? $email : array( $email, (int) $user->ID ),
+				'limit'    => self::PER_PAGE,
+				'paged'    => max( 1, $page ),
+				'type'     => 'shop_order',
 			)
 		);
 

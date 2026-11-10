@@ -176,6 +176,13 @@ final class TwitchCustomerLogin {
 			return $this->result( $target, TwitchException::DENIED );
 		}
 
+		// The callback is a REST request without the REST nonce, so WordPress runs
+		// it as nobody, and WooCommerce would throw away a logged-in customer's
+		// session (cart, coupons). The state is bound to this user and browser.
+		if ( $user_id > 0 && get_current_user_id() !== $user_id ) {
+			wp_set_current_user( $user_id );
+		}
+
 		try {
 			$client = $this->account->client_id();
 			$token  = $this->api->user_token( $client, $this->account->require_secret(), $code, TwitchAccount::redirect_uri() );

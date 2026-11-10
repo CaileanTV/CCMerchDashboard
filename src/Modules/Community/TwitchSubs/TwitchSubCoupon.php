@@ -93,6 +93,13 @@ final class TwitchSubCoupon {
 	private array $recalculated = array();
 
 	/**
+	 * Orders whose earlier Twitch data was cleared in this request, by object id.
+	 *
+	 * @var array<int, true>
+	 */
+	private array $reset = array();
+
+	/**
 	 * Constructor.
 	 *
 	 * @param TwitchSubDiscount     $discount Which lines qualify.
@@ -120,6 +127,9 @@ final class TwitchSubCoupon {
 		add_filter( 'woocommerce_cart_totals_coupon_label', array( $this, 'label' ), 10, 2 );
 		add_filter( 'woocommerce_cart_totals_coupon_html', array( $this, 'coupon_html' ), 10, 3 );
 		add_filter( 'woocommerce_order_recalculate_coupons_coupon_object', array( $this, 'order_coupon' ), 10, 3 );
+		add_filter( 'woocommerce_order_get_items', array( $this, 'coupons_last' ), 10, 3 );
+		add_filter( 'woocommerce_coupon_error', array( $this, 'quiet' ), 10, 3 );
+		add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'reset_order' ), 5, 4 );
 		add_action( 'woocommerce_checkout_create_order_line_item', array( $this, 'record_line' ), 10, 4 );
 		add_action( 'woocommerce_order_after_calculate_totals', array( $this, 'record_recalculation' ), 10, 2 );
 	}
@@ -379,6 +389,64 @@ final class TwitchSubCoupon {
 		$coupon->set_amount( 0 );
 
 		return $coupon;
+	}
+
+	/**
+	 * `woocommerce_order_get_items`: the reserved code is the order's last
+	 * coupon, so an administrator's recalculation (which applies the coupons
+	 * in item order, without `woocommerce_coupon_sort`) tops up after the
+	 * others, as in the cart.
+	 *
+	 * @param mixed $items Items by id.
+	 * @param mixed $order The order.
+	 * @param mixed $types Item types.
+	 * @return mixed
+	 */
+	public function coupons_last( mixed $items, mixed $order = null, mixed $types = null ): mixed {
+		unset( $order );
+
+		if ( ! is_array( $items ) || ! in_array( 'coupon', (array) $types, true ) ) {
+			return $items;
+		}
+
+		$ours = array_filter( $items, static fn( mixed $item ): bool => $item instanceof WC_Order_Item_Coupon && SubDiscountMeta::COUPON_CODE === CouponCode::normalize( (string) $item->get_code() ) );
+
+		return array() === $ours ? $items : array_diff_key( $items, $ours ) + $ours;
+	}
+
+	/**
+	 * `woocommerce_coupon_error`: no notice about the reserved code (the
+	 * shop card tells the customer about the discount; the cart sync adds
+	 * and removes it).
+	 *
+	 * @param mixed $error  Message.
+	 * @param mixed $code   Error code.
+	 * @param mixed $coupon Coupon.
+	 * @return mixed
+	 */
+	public function quiet( mixed $error, mixed $code = null, mixed $coupon = null ): mixed {
+		unset( $code );
+
+		return self::ours( $coupon ) ? '' : $error;
+	}
+
+	/**
+	 * `woocommerce_checkout_create_order_line_item` (first): an order reused
+	 * from an earlier attempt (a draft or one awaiting payment) starts without
+	 * the earlier attempt's Twitch account and tiers.
+	 *
+	 * @param mixed $item          The new order line.
+	 * @param mixed $cart_item_key Its cart item key.
+	 * @param mixed $values        The cart item.
+	 * @param mixed $order         The order.
+	 */
+	public function reset_order( mixed $item, mixed $cart_item_key, mixed $values, mixed $order ): void {
+		unset( $item, $cart_item_key, $values );
+
+		if ( $order instanceof WC_Abstract_Order && ! isset( $this->reset[ spl_object_id( $order ) ] ) ) {
+			$this->reset[ spl_object_id( $order ) ] = true;
+			$order->delete_meta_data( SubDiscountMeta::ORDER );
+		}
 	}
 
 	/**

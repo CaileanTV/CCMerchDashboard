@@ -56,6 +56,8 @@ final class TwitchSubCheckout {
 
 		if ( $errors instanceof WP_Error && $this->changed() ) {
 			$errors->add( 'merchboard_twitch_sub_changed', self::message() );
+			// checkout.js shows the new total only when told to refresh.
+			WC()->session?->set( 'refresh_totals', true );
 		}
 	}
 

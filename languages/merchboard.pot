@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-10T23:28:56+00:00\n"
+"POT-Creation-Date: 2026-11-10T23:51:28+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -3840,7 +3840,7 @@ msgid "The chatbot settings are invalid."
 msgstr ""
 
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:45
-#: src/Modules/Community/TwitchSubs/TwitchSubCoupon.php:340
+#: src/Modules/Community/TwitchSubs/TwitchSubCoupon.php:357
 #: src/Modules/Community/TwitchSubs/TwitchSubOrderInfo.php:83
 #: build/dashboard.js:68
 msgid "Twitch subscriber discount"
@@ -3880,16 +3880,16 @@ msgid "Congratulations! Choose size and colour and add the product to the cart; 
 msgstr ""
 
 #. translators: %d: gift id.
-#: src/Modules/Community/Gifting/GiftCodes.php:90
+#: src/Modules/Community/Gifting/GiftCodes.php:96
 #, php-format
 msgid "Merch Dashboard: the code of Twitch gift #%d. Valid once, only for the gifted product; managed by Merch Dashboard."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftCodes.php:128
+#: src/Modules/Community/Gifting/GiftCodes.php:134
 msgid "Merch Dashboard: Twitch gift"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftCodes.php:213
+#: src/Modules/Community/Gifting/GiftCodes.php:224
 msgid "Gift shipping covered"
 msgstr ""
 
@@ -4067,48 +4067,61 @@ msgstr ""
 msgid "The names of the Twitch gifts could not be erased. Please try again."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:160
+#: src/Modules/Community/Gifting/GiftPurchase.php:164
 msgid "Give as a gift in the stream"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:160
+#: src/Modules/Community/Gifting/GiftPurchase.php:164
 msgid "A viewer in the chat wins it and chooses size and colour. Shipping of the gift: 50 kr."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:178
+#: src/Modules/Community/Gifting/GiftPurchase.php:182
+#: src/Modules/Community/Gifting/GiftPurchase.php:196
 msgid "The gift cannot be bought right now."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:184
+#: src/Modules/Community/Gifting/GiftPurchase.php:188
 msgid "A gift is bought on its own. Please finish or empty your cart first, and then give the gift."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:203
+#: src/Modules/Community/Gifting/GiftPurchase.php:212
 msgid "A gift is bought on its own. Finish the gift first."
 msgstr ""
 
+#: src/Modules/Community/Gifting/GiftPurchase.php:234
+msgid "A gift is bought on its own. Remove the other products from the cart to give the gift."
+msgstr ""
+
 #: src/Modules/Community/Gifting/GiftPurchase.php:243
+msgid "Gifts cannot be bought for this stream right now. Please remove the gift from the cart."
+msgstr ""
+
+#: src/Modules/Community/Gifting/GiftPurchase.php:261
+msgid "Codes cannot be used on a gift."
+msgstr ""
+
+#: src/Modules/Community/Gifting/GiftPurchase.php:299
 msgid "Gift"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:244
+#: src/Modules/Community/Gifting/GiftPurchase.php:300
 msgid "A viewer in the stream wins it and chooses size and colour."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:303
+#: src/Modules/Community/Gifting/GiftPurchase.php:356
 msgid "Gift shipping"
 msgstr ""
 
-#: src/Modules/Community/Rest/MeTwitchGiftingController.php:215
-#: src/Modules/Community/Rest/MeTwitchGiftingController.php:243
+#: src/Modules/Community/Rest/MeTwitchGiftingController.php:217
+#: src/Modules/Community/Rest/MeTwitchGiftingController.php:249
 msgid "Some fields of Twitch gifting are missing or invalid."
 msgstr ""
 
-#: src/Modules/Community/Rest/MeTwitchGiftingController.php:247
+#: src/Modules/Community/Rest/MeTwitchGiftingController.php:253
 msgid "Twitch gifting is turned off."
 msgstr ""
 
-#: src/Modules/Community/Rest/MeTwitchGiftingController.php:275
+#: src/Modules/Community/Rest/MeTwitchGiftingController.php:281
 msgid "Twitch gifting is turned off or paused."
 msgstr ""
 
@@ -4116,11 +4129,11 @@ msgstr ""
 msgid "Some fields of the Twitch subscriber discount are missing or invalid."
 msgstr ""
 
-#: src/Modules/Community/TwitchSubs/TwitchSubCheckout.php:77
+#: src/Modules/Community/TwitchSubs/TwitchSubCheckout.php:79
 msgid "Your Twitch subscriber discount has changed. Please check the new total and place the order again."
 msgstr ""
 
-#: src/Modules/Community/TwitchSubs/TwitchSubCoupon.php:155
+#: src/Modules/Community/TwitchSubs/TwitchSubCoupon.php:166
 msgid "Merch Dashboard: Twitch subscriber discount"
 msgstr ""
 
@@ -4150,7 +4163,21 @@ msgid "Twitch account"
 msgstr ""
 
 #: src/Modules/Community/TwitchSubs/TwitchSubPrivacy.php:124
+msgid "Twitch user ID"
+msgstr ""
+
+#: src/Modules/Community/TwitchSubs/TwitchSubPrivacy.php:128
+msgid "Subscription tier per creator"
+msgstr ""
+
+#: src/Modules/Community/TwitchSubs/TwitchSubPrivacy.php:132
 msgid "Subscription checked"
+msgstr ""
+
+#. translators: 1: creator id, 2: Twitch subscription tier.
+#: src/Modules/Community/TwitchSubs/TwitchSubPrivacy.php:197
+#, php-format
+msgid "creator %1$d: tier %2$d"
 msgstr ""
 
 #. translators: %s: the customer's Twitch name.
@@ -17385,6 +17412,10 @@ msgstr ""
 
 #: build/dashboard.js:63
 msgid "Twitch gifting on"
+msgstr ""
+
+#: build/dashboard.js:63
+msgid "When you switch gifting off, gifts that have not been won yet go back to their buyers with a gift code."
 msgstr ""
 
 #: build/dashboard.js:63

@@ -121,6 +121,14 @@ final class TwitchSubPrivacy {
 						'value' => is_string( $stored['login'] ?? null ) ? $stored['login'] : '',
 					),
 					array(
+						'name'  => __( 'Twitch user ID', 'merchboard' ),
+						'value' => is_string( $stored['twitch_user_id'] ?? null ) ? $stored['twitch_user_id'] : '',
+					),
+					array(
+						'name'  => __( 'Subscription tier per creator', 'merchboard' ),
+						'value' => self::tiers( $stored ),
+					),
+					array(
 						'name'  => __( 'Subscription checked', 'merchboard' ),
 						'value' => is_string( $stored['checked_at'] ?? null ) ? $stored['checked_at'] : '',
 					),
@@ -155,6 +163,14 @@ final class TwitchSubPrivacy {
 
 		foreach ( $orders as $order ) {
 			$order->delete_meta_data( SubDiscountMeta::ORDER );
+
+			// The lines keep their discount (accounting), not the customer's tier.
+			foreach ( $order->get_items( 'line_item' ) as $item ) {
+				$item->delete_meta_data( SubDiscountMeta::LINE_TIER );
+				$item->delete_meta_data( SubDiscountMeta::LINE_BPS );
+				$item->save();
+			}
+
 			$order->save();
 			$removed = true;
 		}
@@ -168,7 +184,25 @@ final class TwitchSubPrivacy {
 	}
 
 	/**
-	 * The customer's orders (by billing e-mail) with Twitch data.
+	 * The stored tiers as text ("creator 3: tier 2"), '' for none.
+	 *
+	 * @param array<mixed> $stored Order meta.
+	 */
+	private static function tiers( array $stored ): string {
+		$tiers = array();
+
+		foreach ( is_array( $stored['creators'] ?? null ) ? $stored['creators'] : array() as $creator_id => $rate ) {
+			if ( is_array( $rate ) && is_int( $rate['tier'] ?? null ) ) {
+				/* translators: 1: creator id, 2: Twitch subscription tier. */
+				$tiers[] = sprintf( __( 'creator %1$d: tier %2$d', 'merchboard' ), (int) $creator_id, $rate['tier'] );
+			}
+		}
+
+		return implode( ', ', $tiers );
+	}
+
+	/**
+	 * The customer's orders (by billing e-mail or account) with Twitch data.
 	 *
 	 * @param string $email E-mail address.
 	 * @param int    $page  Page.
@@ -180,11 +214,13 @@ final class TwitchSubPrivacy {
 			return array();
 		}
 
+		$user = get_user_by( 'email', $email );
+		// By billing e-mail and, for a registered customer, by account (as WooCommerce's own exporter).
 		$args = array(
-			'billing_email' => $email,
-			'limit'         => self::PER_PAGE,
-			'paged'         => max( 1, $page ),
-			'type'          => 'shop_order',
+			'customer' => false === $user ? $email : array( $email, (int) $user->ID ),
+			'limit'    => self::PER_PAGE,
+			'paged'    => max( 1, $page ),
+			'type'     => 'shop_order',
 		);
 
 		if ( $with ) {
