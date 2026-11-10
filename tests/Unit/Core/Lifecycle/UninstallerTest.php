@@ -19,6 +19,7 @@ use MerchBoard\Core\Security\ImpersonationSession;
 use MerchBoard\Core\Security\ProtectedProductMeta;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\Chatbot\ChatSender;
+use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerSession;
 use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlayImages;
 use MerchBoard\Modules\Alerts\GlobalOverlay\GlobalOverlaySounds;
 use MerchBoard\Modules\Alerts\Images\AlertImageLibrary;
@@ -448,7 +449,7 @@ final class UninstallerTest extends TestCase {
 
 		self::assertTrue( $this->uninstaller()->run(), 'Nothing to delete is not a failure.' );
 
-		self::assertSame( array( ThemePreference::META_KEY, MeAlertsHistoryController::ANONYMIZE_META, YouTubeTerms::META, ImpersonationSession::META, NotificationPreferences::META ), Uninstaller::USER_META_KEYS );
+		self::assertSame( array( ThemePreference::META_KEY, MeAlertsHistoryController::ANONYMIZE_META, YouTubeTerms::META, ImpersonationSession::META, NotificationPreferences::META, TwitchCustomerSession::USER_META ), Uninstaller::USER_META_KEYS );
 		self::assertSame(
 			array(
 				array( 'user', 0, 'merchboard_dashboard_theme', '', true, true ),
@@ -456,6 +457,7 @@ final class UninstallerTest extends TestCase {
 				array( 'user', 0, 'merchboard_youtube_terms_accepted', '', true, true ),
 				array( 'user', 0, 'merchboard_impersonating', '', true, true ),
 				array( 'user', 0, 'merchboard_notification_email_off', '', true, true ),
+				array( 'user', 0, 'merchboard_twitch_customer', '', true, true ),
 			),
 			$calls,
 			'Exact key, every user, through the meta API, while the opt-in still exists.'

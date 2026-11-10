@@ -35,6 +35,11 @@ final class TwitchApi {
 	private const SUBSCRIPTIONS_URL = 'https://api.twitch.tv/helix/eventsub/subscriptions';
 
 	/**
+	 * A user's subscription to a channel (ADR-106).
+	 */
+	private const USER_SUBSCRIPTION_URL = 'https://api.twitch.tv/helix/subscriptions/user';
+
+	/**
 	 * Twitch's longest chat message in characters.
 	 */
 	public const MESSAGE_MAX = 500;
@@ -120,6 +125,22 @@ final class TwitchApi {
 	 * @throws TwitchException When Twitch refuses the code or cannot be reached.
 	 */
 	public function exchange_code( string $client_id, string $secret, string $code, string $redirect_uri ): string {
+		return $this->user_token( $client_id, $secret, $code, $redirect_uri )['token'];
+	}
+
+	/**
+	 * The user access token of an authorization code and its lifetime in
+	 * seconds (1 hour when Twitch does not say). The refresh token Twitch
+	 * also sends is never read (ADR-066, ADR-106).
+	 *
+	 * @param string $client_id    Client ID.
+	 * @param string $secret       Client secret.
+	 * @param string $code         Authorization code.
+	 * @param string $redirect_uri The redirect URI of the authorization.
+	 * @return array{token: string, expires_in: int}
+	 * @throws TwitchException When Twitch refuses the code or cannot be reached.
+	 */
+	public function user_token( string $client_id, string $secret, string $code, string $redirect_uri ): array {
 		$answer = $this->form(
 			self::TOKEN_URL,
 			array(
@@ -136,7 +157,61 @@ final class TwitchApi {
 			throw new TwitchException( TwitchException::UNAVAILABLE );
 		}
 
-		return $token;
+		$expires = $answer['expires_in'] ?? null;
+
+		return array(
+			'token'      => $token,
+			'expires_in' => is_int( $expires ) && $expires > 0 ? min( $expires, 86400 ) : 3600,
+		);
+	}
+
+	/**
+	 * A user's subscription to a channel (ADR-106), with the user's own
+	 * token (scope `user:read:subscriptions`): the tier (1, 2 or 3; Prime is
+	 * tier 1) and whether it was a gift, or null when the user does not
+	 * subscribe (Twitch answers 404).
+	 *
+	 * @param string $client_id      Client ID.
+	 * @param string $user_token     The user's access token.
+	 * @param string $broadcaster_id The channel.
+	 * @param string $user_id        The user (the token's account).
+	 * @return array{tier: int, gifted: bool}|null
+	 * @throws TwitchException When the token is refused (`unauthorized`) or Twitch cannot be reached or answers unreadably.
+	 */
+	public function user_subscription( string $client_id, string $user_token, string $broadcaster_id, string $user_id ): ?array {
+		if ( 1 !== preg_match( '/^\d{1,20}$/', $broadcaster_id ) || 1 !== preg_match( '/^\d{1,20}$/', $user_id ) ) {
+			throw new TwitchException( TwitchException::UNAVAILABLE );
+		}
+
+		$answer = $this->json(
+			'GET',
+			self::USER_SUBSCRIPTION_URL . '?' . http_build_query(
+				array(
+					'broadcaster_id' => $broadcaster_id,
+					'user_id'        => $user_id,
+				)
+			),
+			$client_id,
+			$user_token,
+			null
+		);
+
+		if ( 404 === $answer['status'] ) {
+			return null;
+		}
+
+		self::check( $answer['status'] );
+		$data = is_array( $answer['body']['data'] ?? null ) ? ( $answer['body']['data'][0] ?? null ) : null;
+		$tier = is_array( $data ) ? ( $data['tier'] ?? null ) : null;
+
+		if ( ! is_array( $data ) || ! in_array( $tier, array( '1000', '2000', '3000' ), true ) ) {
+			throw new TwitchException( TwitchException::UNAVAILABLE );
+		}
+
+		return array(
+			'tier'   => intdiv( (int) $tier, 1000 ),
+			'gifted' => true === ( $data['is_gift'] ?? false ),
+		);
 	}
 
 	/**

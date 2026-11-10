@@ -1139,8 +1139,8 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 **Trin:**
 - **43.1 Docs:** ADR-106 ✅ (med statusnote på ADR-066) og SECURITY.md ✅ (`bcab345`). DATABASE.md, MODULES.md og `docs/features/twitch-sub-discount.md` skrives, når modulet er færdigt.
 - **43.2 Regnskab:** ✅ (`bcab345`) creatoren betaler subscriber-rabatten på alle produkttyper. Migration 49 (`sub_discount`), rækkernes fortjeneste og udbetaling gemmes, og PHP og SQL læser de samme beløb. Unit-tests er grønne; integrationstestene køres i CI.
-- **43.3 Twitch-login for kunder:** 🔄 i gang. subscription-tjek, OAuth bundet til kurvens session, log ind og log ud.
-- **43.4 Kurv og ordre:** en automatisk rabat, hvor den bedste rabat vinder pr. linje. Abonnementet tjekkes igen før ordren, og ordren gemmer, hvilken Twitch-konto og tier der gav rabatten.
+- **43.3 Twitch-login for kunder:** ✅ login og log ud fra kurv og checkout (`/shop/twitch/login` og `/logout`) via appens eksisterende callback. `state` er bundet til en cookie i browseren og til WordPress-brugeren. Tokenet ligger krypteret i WooCommerce-sessionen. Subscription-tjekket (`helix/subscriptions/user`) genbruges i 10 minutter i kurven, men spørger altid Twitch igen før ordren. Kontoen huskes på kundekontoen og slettes ved afinstallation.
+- **43.4 Kurv og ordre:** 🔄 næste: en automatisk rabat, hvor den bedste rabat vinder pr. linje. Abonnementet tjekkes igen før ordren, og ordren gemmer, hvilken Twitch-konto og tier der gav rabatten.
 - **43.5 Creator-dashboard:** menuen "Community Features" med siden "Twitch-subscriber-rabat" og en produktvælger.
 - **43.6 Butiksvisning:** et kort i kurv og checkout, både klassisk og med blokke.
 - **43.7 Visning i admin:** ordrehistorik, afregningsbilag og ordresiden.

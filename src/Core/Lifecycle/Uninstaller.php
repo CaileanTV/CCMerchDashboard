@@ -67,7 +67,8 @@ defined( 'ABSPATH' ) || exit;
  *    (Capabilities::all()) granted directly; other roles and capabilities stay,
  *    and users themselves are never deleted;
  * 1a. from users: the user meta in USER_META_KEYS (the dashboard theme,
- *    ADR-044), through WordPress' meta API; users and other meta stay;
+ *    ADR-044; a shop customer's remembered Twitch account, ADR-106),
+ *    through WordPress' meta API; users and other meta stay;
  * 2. from roles: the plugin's capabilities (Capabilities::all()), then the
  *    `merchboard_creator` role itself.
  *
@@ -143,7 +144,7 @@ final class Uninstaller {
 	 * (Modules\Alerts\Legal\YouTubeTerms::META, step 8.5); a test keeps them
 	 * equal, so core does not depend on the modules.
 	 */
-	public const USER_META_KEYS = array( 'merchboard_dashboard_theme', 'merchboard_alerts_anonymize', 'merchboard_youtube_terms_accepted', 'merchboard_impersonating', 'merchboard_notification_email_off' );
+	public const USER_META_KEYS = array( 'merchboard_dashboard_theme', 'merchboard_alerts_anonymize', 'merchboard_youtube_terms_accepted', 'merchboard_impersonating', 'merchboard_notification_email_off', 'merchboard_twitch_customer' );
 
 	/**
 	 * Attachment meta keys of the alerts' files: the sounds and images of

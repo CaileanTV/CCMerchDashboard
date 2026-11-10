@@ -229,7 +229,66 @@ final class WooCommerce {
 	 * @var mixed
 	 */
 	public $countries;
+
+	/**
+	 * @var WC_Session|null
+	 */
+	public $session;
+
+	/**
+	 * Starts the customer session.
+	 *
+	 * @return void
+	 */
+	public function initialize_session() {}
 }
+
+/**
+ * The customer session.
+ */
+abstract class WC_Session {
+
+	/**
+	 * @param string $key
+	 * @param mixed  $default
+	 * @return mixed
+	 */
+	public function get( $key, $default = null ) {}
+
+	/**
+	 * @param string $key
+	 * @param mixed  $value
+	 * @return void
+	 */
+	public function set( $key, $value ) {}
+}
+
+/**
+ * The cookie-based customer session.
+ */
+class WC_Session_Handler extends WC_Session {
+
+	/**
+	 * @return bool
+	 */
+	public function has_session() {}
+
+	/**
+	 * @param bool $set
+	 * @return void
+	 */
+	public function set_customer_session_cookie( $set ) {}
+}
+
+/**
+ * @return string
+ */
+function wc_get_cart_url() {}
+
+/**
+ * @return string
+ */
+function wc_get_checkout_url() {}
 
 /**
  * The main WooCommerce instance.

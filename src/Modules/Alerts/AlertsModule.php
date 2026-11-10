@@ -81,7 +81,10 @@ use MerchBoard\Modules\Alerts\Chatbot\KickPlatform;
 use MerchBoard\Modules\Alerts\Chatbot\KickWebhookVerifier;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchApi;
+use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerLogin;
+use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerSession;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchOAuth;
+use MerchBoard\Modules\Alerts\Chatbot\WooCommerceCustomerSessionStore;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchPlatform;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubeAccount;
 use MerchBoard\Modules\Alerts\Chatbot\YouTubeApi;
@@ -112,6 +115,7 @@ use MerchBoard\Modules\Alerts\Rest\ChatbotChatController;
 use MerchBoard\Modules\Alerts\Rest\MeAlertsHistoryController;
 use MerchBoard\Modules\Alerts\Rest\KickController;
 use MerchBoard\Modules\Alerts\Rest\MeChatbotController;
+use MerchBoard\Modules\Alerts\Rest\ShopTwitchController;
 use MerchBoard\Modules\Alerts\Rest\TwitchController;
 use MerchBoard\Modules\Alerts\Rest\YouTubeController;
 use MerchBoard\Modules\Alerts\Sounds\AlertSoundLibrary;
@@ -381,8 +385,27 @@ final class AlertsModule implements Module {
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
 				$dashboard_url,
-				$c->get( CreatorContext::class )
+				$c->get( CreatorContext::class ),
+				$c->get( TwitchCustomerLogin::class )
 			)
+		);
+		// Shop customers' own Twitch login (phase 43, ADR-106).
+		$container->set(
+			TwitchCustomerSession::class,
+			static fn(): TwitchCustomerSession => new TwitchCustomerSession( new WooCommerceCustomerSessionStore(), new ChatCipher( 'shop-twitch-customer' ) )
+		);
+		$container->set(
+			TwitchCustomerLogin::class,
+			static fn( Container $c ): TwitchCustomerLogin => new TwitchCustomerLogin(
+				$c->get( TwitchAccount::class ),
+				$c->get( TwitchApi::class ),
+				$c->get( TwitchCustomerSession::class ),
+				static fn( string $target ): string => ShopTwitchController::target_url( $target )
+			)
+		);
+		$container->set(
+			ShopTwitchController::class,
+			static fn( Container $c ): ShopTwitchController => new ShopTwitchController( $c->get( TwitchCustomerLogin::class ), $c->get( TwitchCustomerSession::class ) )
 		);
 		$container->set(
 			KickOAuth::class,
@@ -645,6 +668,7 @@ final class AlertsModule implements Module {
 				$container->get( MeAlertsApiController::class )->register_routes();
 				$container->get( AlertApiFeedController::class )->register_routes();
 				$container->get( TwitchController::class )->register_routes();
+				$container->get( ShopTwitchController::class )->register_routes();
 				$container->get( KickController::class )->register_routes();
 				$container->get( YouTubeController::class )->register_routes();
 				$container->get( ChatbotChatController::class )->register_routes();

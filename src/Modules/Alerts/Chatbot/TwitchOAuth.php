@@ -66,10 +66,11 @@ final class TwitchOAuth {
 	 * @param Transaction              $transaction   Database transaction.
 	 * @param Closure                  $dashboard_url The dashboard URL of a path.
 	 * @param CreatorContext           $context       Current creator access.
+	 * @param TwitchCustomerLogin|null $customer      Shop customers' Twitch login (ADR-106), which gets the states it started.
 	 *
 	 * @phpstan-param Closure(string): string $dashboard_url
 	 */
-	public function __construct( private TwitchAccount $account, private TwitchApi $api, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url, private CreatorContext $context ) {
+	public function __construct( private TwitchAccount $account, private TwitchApi $api, private ChatbotChannelRepository $channels, private ChatSubscriptions $subscriptions, private AuditTrail $audit, private Transaction $transaction, Closure $dashboard_url, private CreatorContext $context, private ?TwitchCustomerLogin $customer = null ) {
 		$this->dashboard_url = $dashboard_url;
 	}
 
@@ -105,6 +106,13 @@ final class TwitchOAuth {
 	 * @param string $error Twitch's error ('' for none).
 	 */
 	public function finish( string $state, string $code, string $error ): string {
+		// A shop customer's login (ADR-106) through the same callback URL.
+		if ( null !== $this->customer && $this->customer->owns( $state ) ) {
+			$binding = isset( $_COOKIE[ TwitchCustomerLogin::COOKIE ] ) && is_string( $_COOKIE[ TwitchCustomerLogin::COOKIE ] ) ? sanitize_key( wp_unslash( $_COOKIE[ TwitchCustomerLogin::COOKIE ] ) ) : '';
+
+			return $this->customer->finish( $state, $code, $error, $binding, (int) wp_validate_auth_cookie( '', 'logged_in' ) );
+		}
+
 		$data = 1 === preg_match( '/^[0-9a-f]{32}$/', $state ) ? get_transient( self::STATE_PREFIX . $state ) : false;
 
 		if ( ! is_array( $data ) || ! in_array( $data['purpose'] ?? null, array( 'bot', 'channel' ), true ) || ! is_int( $data['user'] ?? null ) || ! is_int( $data['creator'] ?? null ) ) {
