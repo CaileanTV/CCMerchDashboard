@@ -43,7 +43,7 @@ final class GiftRepository {
 	 * @param string      $shipping_credit Shipping covered.
 	 * @param string      $currency        Currency.
 	 * @param string|null $buyer_name      Name to announce, null for anonymous.
-	 * @return Gift|null The gift (also when it existed already), null when it cannot be stored.
+	 * @return Gift|null The new gift; null when the order's gift existed already.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function create( int $creator_id, int $order_id, int $product_id, string $unit_price, string $shipping_credit, string $currency, ?string $buyer_name ): ?Gift {
@@ -63,11 +63,14 @@ final class GiftRepository {
 			$now
 		);
 
-		if ( false === $this->wpdb->query( (string) $sql ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Prepared above; own table.
+		$inserted = $this->wpdb->query( (string) $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Prepared above; own table.
+
+		if ( false === $inserted ) {
 			throw new DatabaseException( 'Could not store the gift.', array( 'order_id' => $order_id ) );
 		}
 
-		return $this->find_by( 'order_id', $order_id );
+		// Two requests marking the order paid at once: only the one that inserted goes on.
+		return 1 === (int) $inserted ? $this->find_by( 'order_id', $order_id ) : null;
 	}
 
 	/**
@@ -252,7 +255,7 @@ final class GiftRepository {
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function return_to_buyer( int $id, string $from, int $coupon_id ): bool {
-		return $this->change( $id, $from, 'status = %s, coupon_id = %d, claim_token = NULL, claim_deadline = NULL', array( Gift::RETURNED, $coupon_id ) );
+		return $this->change( $id, $from, 'status = %s, coupon_id = %d, entrants = NULL, window_ends = NULL, claim_token = NULL, claim_deadline = NULL', array( Gift::RETURNED, $coupon_id ) );
 	}
 
 	/**
@@ -280,7 +283,9 @@ final class GiftRepository {
 	}
 
 	/**
-	 * Deletes every gift of a creator (creator deletion).
+	 * Deletes a creator's finished gifts (creator deletion): cancelled ones
+	 * and claimed ones whose code was used. A code not used yet keeps its
+	 * gift, so it still works.
 	 *
 	 * @param int $creator_id Creator.
 	 * @return int Deleted rows.
@@ -288,7 +293,8 @@ final class GiftRepository {
 	 */
 	public function delete_for_creator( int $creator_id ): int {
 		$wpdb    = $this->wpdb;
-		$deleted = $wpdb->delete( $this->table(), array( 'creator_id' => $creator_id ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Own table.
+		$sql     = $wpdb->prepare( 'DELETE FROM %i WHERE creator_id = %d AND ( status = %s OR ( status = %s AND claimed_order_id IS NOT NULL ) )', $this->table(), $creator_id, Gift::CANCELLED, Gift::CLAIMED );
+		$deleted = null === $sql ? false : $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared above; own table.
 
 		if ( false === $deleted ) {
 			throw new DatabaseException( 'Could not delete the creator\'s gifts.' );

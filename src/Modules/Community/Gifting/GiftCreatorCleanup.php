@@ -15,8 +15,10 @@ use MerchBoard\Modules\Creators\CreatorDataCleaner;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Removes a deleted creator's gifts (ADR-076, ADR-107). The gift orders and
- * the sales ledger stay; only the gift rows (names, winners, draws) go.
+ * A deleted creator's gifts (ADR-076, ADR-107): gifts not claimed yet go
+ * back to their buyers with the code (the buyer paid), and finished gifts
+ * are removed. Gifts with a code not used yet stay, so the code works. The
+ * gift orders and the sales ledger stay.
  */
 final class GiftCreatorCleanup implements CreatorDataCleaner {
 
@@ -24,8 +26,9 @@ final class GiftCreatorCleanup implements CreatorDataCleaner {
 	 * Constructor.
 	 *
 	 * @param GiftRepository $gifts Gifts.
+	 * @param GiftDraws      $draws The draws (gives gifts back).
 	 */
-	public function __construct( private GiftRepository $gifts ) {
+	public function __construct( private GiftRepository $gifts, private GiftDraws $draws ) {
 	}
 
 	/**
@@ -44,12 +47,17 @@ final class GiftCreatorCleanup implements CreatorDataCleaner {
 	}
 
 	/**
-	 * Deletes the gifts.
+	 * Gives open gifts back and deletes the finished ones.
 	 *
 	 * @param Creator $creator The creator.
 	 * @return array<string, int>
 	 */
 	public function remove( Creator $creator ): array {
-		return array( 'gifts' => $this->gifts->delete_for_creator( $creator->id ) );
+		$returned = $this->draws->give_back_open( $creator->id, true );
+
+		return array(
+			'gifts_returned' => $returned,
+			'gifts'          => $this->gifts->delete_for_creator( $creator->id ),
+		);
 	}
 }

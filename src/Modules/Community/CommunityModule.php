@@ -163,7 +163,7 @@ final class CommunityModule implements Module {
 		( new GiftPrivacy( $container->get( GiftRepository::class ) ) )->register();
 		add_filter(
 			'merchboard_creator_data_cleaners',
-			static fn( mixed $cleaners ): array => array_merge( is_array( $cleaners ) ? $cleaners : array(), array( new GiftCreatorCleanup( $container->get( GiftRepository::class ) ) ) ),
+			static fn( mixed $cleaners ): array => array_merge( is_array( $cleaners ) ? $cleaners : array(), array( new GiftCreatorCleanup( $container->get( GiftRepository::class ), $container->get( GiftDraws::class ) ) ) ),
 			30
 		);
 		// The customer's Twitch account and tiers on the administrator's order page.

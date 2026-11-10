@@ -186,6 +186,12 @@ class WC_Coupon extends WC_Data {
 	public function set_usage_limit( $usage_limit ) {}
 
 	/**
+	 * @param int|null $limit_usage_to_x_items Most items the coupon discounts.
+	 * @return void
+	 */
+	public function set_limit_usage_to_x_items( $limit_usage_to_x_items ) {}
+
+	/**
 	 * @return int Coupon id.
 	 */
 	public function save() {}
@@ -939,6 +945,13 @@ class WC_Product_Variable extends WC_Product {
 	 * @return array<int, mixed>
 	 */
 	public function get_available_variations( $return = 'array' ) {}
+
+	/**
+	 * The attributes used for variations and their options.
+	 *
+	 * @return array<string, list<string>>
+	 */
+	public function get_variation_attributes() {}
 
 	/**
 	 * Prices of the visible variations by variation id, sorted ascending:

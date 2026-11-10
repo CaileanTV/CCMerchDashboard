@@ -10,10 +10,12 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Community\Gifting;
 
 use Closure;
+use Exception;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Alerts\WooCommercePaidOrderReader;
 use WC_Cart;
+use WC_Discounts;
 use WC_Order;
 use WC_Order_Item_Product;
 use WC_Product;
@@ -112,6 +114,8 @@ final class GiftPurchase {
 		add_action( 'woocommerce_after_add_to_cart_form', array( $this, 'button' ) );
 		add_action( 'template_redirect', array( $this, 'add' ) );
 		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'only_the_gift' ), 20 );
+		add_action( 'woocommerce_check_cart_items', array( $this, 'check_cart' ) );
+		add_filter( 'woocommerce_coupon_is_valid', array( $this, 'no_codes' ), 20, 3 );
 		add_action( 'woocommerce_before_calculate_totals', array( $this, 'one_unit' ), 5 );
 		add_filter( 'woocommerce_get_item_data', array( $this, 'item_data' ), 20, 2 );
 		add_filter( 'woocommerce_cart_item_quantity', array( $this, 'quantity_html' ), 20, 3 );
@@ -188,7 +192,12 @@ final class GiftPurchase {
 
 		[ $variation_id, $attributes ] = self::cheapest( $product );
 
-		WC()->cart->add_to_cart( $product_id, 1, $variation_id, $attributes, array( self::ITEM_KEY => true ) );
+		if ( false === WC()->cart->add_to_cart( $product_id, 1, $variation_id, $attributes, array( self::ITEM_KEY => true ) ) ) {
+			wc_add_notice( __( 'The gift cannot be bought right now.', 'merchboard' ), 'error' );
+			wp_safe_redirect( $back );
+			exit;
+		}
+
 		wp_safe_redirect( wc_get_checkout_url() );
 		exit;
 	}
@@ -206,6 +215,53 @@ final class GiftPurchase {
 		}
 
 		return (bool) $passed;
+	}
+
+	/**
+	 * `woocommerce_check_cart_items` (also the block checkout's cart check): a
+	 * gift is alone, one unit, and its creator's gifting is still open. A
+	 * guest who logs in gets the saved cart merged in; this stops that order.
+	 */
+	public function check_cart(): void {
+		$cart = function_exists( 'WC' ) ? WC()->cart : null;
+		$gift = self::gift_item( $cart );
+
+		if ( null === $gift || ! $cart instanceof WC_Cart ) {
+			return;
+		}
+
+		if ( 1 !== count( $cart->get_cart() ) || 1 !== (int) ( $gift['quantity'] ?? 1 ) ) {
+			wc_add_notice( __( 'A gift is bought on its own. Remove the other products from the cart to give the gift.', 'merchboard' ), 'error' );
+
+			return;
+		}
+
+		$product    = $gift['data'] ?? null;
+		$creator_id = $product instanceof WC_Product ? ( $this->creator_of )( self::parent_of( $product ) ) : null;
+
+		if ( null === $creator_id || ! $this->settings->find( $creator_id )->open() ) {
+			wc_add_notice( __( 'Gifts cannot be bought for this stream right now. Please remove the gift from the cart.', 'merchboard' ), 'error' );
+		}
+	}
+
+	/**
+	 * `woocommerce_coupon_is_valid`: no code on a gift (its paid price is
+	 * what the winner's code covers).
+	 *
+	 * @param mixed $valid     WooCommerce' verdict.
+	 * @param mixed $coupon    Coupon.
+	 * @param mixed $discounts The discounts' cart or order.
+	 * @throws Exception With the reason, which WooCommerce shows.
+	 */
+	public function no_codes( mixed $valid, mixed $coupon, mixed $discounts = null ): bool {
+		$object = $discounts instanceof WC_Discounts ? $discounts->get_object() : null;
+		$gift   = ( $object instanceof WC_Cart && null !== self::gift_item( $object ) ) || ( $object instanceof WC_Order && null !== self::gift_line( $object ) );
+
+		if ( $gift && (bool) $valid ) {
+			throw new Exception( esc_html__( 'Codes cannot be used on a gift.', 'merchboard' ) );
+		}
+
+		return (bool) $valid;
 	}
 
 	/**
@@ -285,13 +341,10 @@ final class GiftPurchase {
 	 */
 	public function shipping( mixed $rates, mixed $package ): mixed {
 		$contents = is_array( $package ) && is_array( $package['contents'] ?? null ) ? $package['contents'] : array();
-		$gift     = false;
+		$only     = 1 === count( $contents ) ? reset( $contents ) : null;
 
-		foreach ( $contents as $item ) {
-			$gift = $gift || ( is_array( $item ) && true === ( $item[ self::ITEM_KEY ] ?? false ) );
-		}
-
-		if ( ! $gift || ! class_exists( WC_Shipping_Rate::class ) ) {
+		// Only a package of the gift alone (anything else is stopped by check_cart()).
+		if ( ! is_array( $only ) || true !== ( $only[ self::ITEM_KEY ] ?? false ) || 1 !== (int) ( $only['quantity'] ?? 1 ) || ! class_exists( WC_Shipping_Rate::class ) ) {
 			return $rates;
 		}
 
@@ -344,6 +397,15 @@ final class GiftPurchase {
 			return;
 		}
 
+		$paid = (float) $line->get_total( 'edit' ) + (float) $line->get_total_tax( 'edit' );
+
+		if ( $paid <= 0 ) {
+			// Nothing paid for the product: nothing to give.
+			$this->logger->warning( 'A gift order without a paid product was not made a gift.', array( 'order_id' => (int) $order->get_id() ) );
+
+			return;
+		}
+
 		try {
 			if ( null !== $this->gifts->find_by_order( (int) $order->get_id() ) ) {
 				return;
@@ -354,7 +416,7 @@ final class GiftPurchase {
 				(int) $line->get_meta( self::LINE_META, true, 'edit' ),
 				(int) $order->get_id(),
 				(int) $line->get_product_id(),
-				number_format( (float) $line->get_total( 'edit' ) + (float) $line->get_total_tax( 'edit' ), 4, '.', '' ),
+				number_format( $paid, 4, '.', '' ),
 				number_format( min( (float) self::SHIPPING, (float) $order->get_shipping_total( 'edit' ) + (float) $order->get_shipping_tax( 'edit' ) ), 4, '.', '' ),
 				(string) $order->get_currency( 'edit' ),
 				'' === $name ? null : $name
@@ -420,7 +482,7 @@ final class GiftPurchase {
 	 * @param mixed $cart The cart.
 	 * @return array<string, mixed>|null
 	 */
-	private static function gift_item( mixed $cart ): ?array {
+	public static function gift_item( mixed $cart ): ?array {
 		if ( ! $cart instanceof WC_Cart ) {
 			return null;
 		}
@@ -466,12 +528,31 @@ final class GiftPurchase {
 			return array( 0, array() );
 		}
 
+		// A variation for "any" value has '' there: the product's first option.
+		$options = array();
+
+		foreach ( $product->get_variation_attributes() as $name => $values ) {
+			$options[ sanitize_title( (string) $name ) ] = array() !== $values ? (string) reset( $values ) : '';
+		}
+
 		$attributes = array();
 
 		foreach ( $best->get_attributes() as $name => $value ) {
-			$attributes[ 'attribute_' . $name ] = (string) $value;
+			$value                              = (string) $value;
+			$attributes[ 'attribute_' . $name ] = '' === $value ? ( $options[ sanitize_title( (string) $name ) ] ?? '' ) : $value;
 		}
 
 		return array( (int) $best->get_id(), $attributes );
+	}
+
+	/**
+	 * A product's parent (the product itself when it has none).
+	 *
+	 * @param WC_Product $product Product or variation.
+	 */
+	private static function parent_of( WC_Product $product ): int {
+		$parent = (int) $product->get_parent_id();
+
+		return $parent > 0 ? $parent : (int) $product->get_id();
 	}
 }

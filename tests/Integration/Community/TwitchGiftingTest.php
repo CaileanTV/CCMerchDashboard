@@ -24,6 +24,7 @@ use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
+use MerchBoard\Tests\Integration\Support\FakeGiftCodes;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 
 /**
@@ -152,9 +153,9 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		$second = $this->gifts->create( $this->nova, 1042, 501, '249.0000', '50.0000', 'DKK', null );
 
 		self::assertNotNull( $first );
-		self::assertSame( $first->id, $second?->id );
-		self::assertSame( 'Mads', $second->buyer_name );
-		self::assertSame( Gift::WAITING, $second->status );
+		self::assertSame( 'Mads', $first->buyer_name );
+		self::assertSame( Gift::WAITING, $first->status );
+		self::assertNull( $second, 'The second request for the same order does not start the gift again.' );
 		self::assertCount( 1, $this->rows( Tables::GIFTS ) );
 	}
 
@@ -301,8 +302,62 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		$row = $this->rows( Tables::GIFTS )[0];
 		self::assertSame( array( null, null ), array( $row['buyer_name'], $row['winner_login'] ) );
 
-		self::assertSame( 1, $this->gifts->delete_for_creator( $this->nova ) );
-		self::assertSame( array(), $this->rows( Tables::GIFTS ) );
+		$cancelled = $this->gift( null );
+		$this->gifts->cancel( $cancelled->id );
+
+		self::assertSame( 1, $this->gifts->delete_for_creator( $this->nova ), 'Only finished gifts go; a won gift is given back first.' );
+		self::assertSame( array( $gift->id ), array_map( 'intval', array_column( $this->rows( Tables::GIFTS ), 'id' ) ) );
+	}
+
+	public function test_switching_off_and_the_last_draw_give_gifts_back(): void {
+		$this->settings->save( $this->nova, $this->values( true ) );
+		$this->live = false;
+		$waiting    = $this->gift( 'Mads' );
+		$won        = $this->gift( null );
+		$this->gifts->open_window( $won->id, gmdate( 'Y-m-d H:i:s', time() + 60 ) );
+		$this->gifts->win( $won->id, '111', 'viewer1', gmdate( 'Y-m-d H:i:s', time() - 5 ), str_repeat( 'c', 32 ) );
+
+		$this->settings->save( $this->nova, $this->values( false ) );
+		$codes = new FakeGiftCodes( $this->gifts );
+		$draws = $this->draws_with( $codes );
+
+		self::assertSame( 1, $draws->give_back_open( $this->nova, false ), 'Not won yet: given back.' );
+		self::assertSame( Gift::RETURNED, $this->gifts->find( $waiting->id )?->status );
+		self::assertSame( Gift::WON, $this->gifts->find( $won->id )?->status );
+
+		$draws->expire( $won->id );
+		$returned = $this->gifts->find( $won->id );
+		self::assertSame( Gift::RETURNED, $returned->status, 'Gifting is off: an unclaimed win goes back instead of waiting.' );
+		self::assertNull( $returned->claim_token );
+		self::assertSame( array( 'returned', 'returned' ), array_column( $this->events, 0 ) );
+		self::assertSame( array( 'gave-test' . $waiting->id, 'gave-test' . $won->id ), array_map( static fn( array $event ): string => $event[2]['code'] ?? '', $this->events ) );
+		self::assertSame( 2, $codes->created );
+	}
+
+	/**
+	 * Draws with other gift codes.
+	 *
+	 * @param GiftCodes $codes Gift codes.
+	 */
+	private function draws_with( GiftCodes $codes ): GiftDraws {
+		return new GiftDraws(
+			$this->gifts,
+			$this->settings,
+			$codes,
+			function ( int $creator_id, string $message ): bool {
+				$this->sent[] = array( $creator_id, $message );
+
+				return true;
+			},
+			fn(): bool => $this->live,
+			static fn( string $token ): string => 'https://shop.test/?merchboard_gift_claim=' . $token,
+			static fn(): string => 'Stream tee',
+			static fn(): bool => true,
+			function ( string $event, Gift $gift, array $data ): void {
+				$this->events[] = array( $event, $gift->id, $data );
+			},
+			new RecordingLogger()
+		);
 	}
 
 	/**

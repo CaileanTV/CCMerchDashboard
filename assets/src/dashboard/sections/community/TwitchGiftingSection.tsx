@@ -336,6 +336,14 @@ export function TwitchGiftingSection() {
 						/>{ ' ' }
 						{ __( 'Twitch gifting on', 'merchboard' ) }
 					</label>
+					{ current.enabled && ! values.enabled && (
+						<p className="merchboard-field__help">
+							{ __(
+								'When you switch gifting off, gifts that have not been won yet go back to their buyers with a gift code.',
+								'merchboard'
+							) }
+						</p>
+					) }
 					{ errors.enabled !== undefined && (
 						<p className="merchboard-field__error">
 							{ fieldError( errors.enabled ) }

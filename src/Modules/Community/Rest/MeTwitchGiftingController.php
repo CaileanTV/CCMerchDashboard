@@ -34,7 +34,8 @@ defined( 'ABSPATH' ) || exit;
  *   latest 50 gifts (status, product, the buyer's chosen name, the winner).
  * - `POST /me/community/twitch-gifting`: saves on/off, the `!enter` window
  *   and the chat language (400 `merchboard_invalid_twitch_gifting` with a
- *   code per field). Pausing has its own route.
+ *   code per field). Pausing has its own route. Switching off gives the
+ *   gifts not won yet back to their buyers (with the code).
  * - `POST …/pause` `{paused}`: pauses or resumes; the chat is told.
  * - `POST …/start`: starts the waiting gifts (as `!gift start`);
  *   `started` says whether one started.
@@ -203,7 +204,8 @@ final class MeTwitchGiftingController extends RestController {
 				}
 
 				$body   = (array) $request->get_json_params();
-				$values = array( 'paused' => $this->settings->find( $creator->id )->paused );
+				$before = $this->settings->find( $creator->id );
+				$values = array( 'paused' => $before->paused );
 
 				foreach ( array( 'enabled', 'window', 'language' ) as $field ) {
 					$values[ $field ] = $body[ $field ] ?? null;
@@ -213,6 +215,10 @@ final class MeTwitchGiftingController extends RestController {
 					$saved = $this->settings->save( $creator->id, $values );
 				} catch ( TwitchSubDiscountInvalid $e ) {
 					return self::error( 'merchboard_invalid_twitch_gifting', __( 'Some fields of Twitch gifting are missing or invalid.', 'merchboard' ), 400, array( 'fields' => $e->fields() ) );
+				}
+
+				if ( $before->enabled && ! $saved->enabled ) {
+					$this->draws->give_back_open( $creator->id, false );
 				}
 
 				return $this->answer( $creator->id, $saved );

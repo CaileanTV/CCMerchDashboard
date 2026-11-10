@@ -17,6 +17,7 @@ use WC_Cart;
 use WC_Coupon;
 use WC_Order;
 use WC_Product;
+use WC_Tax;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -27,8 +28,11 @@ defined( 'ABSPATH' ) || exit;
  * (50 incl. VAT). A dearer variant or shipping is paid by the winner. The
  * line's amount after the code is what the ledger sees, so only what the
  * winner pays gives the creator profit (pkt. 8).
+ *
+ * Not final: the integration tests replace create(), as WooCommerce is not
+ * loaded there.
  */
-final class GiftCodes {
+class GiftCodes {
 
 	/**
 	 * The coupon's discount type.
@@ -86,6 +90,8 @@ final class GiftCodes {
 			$coupon->set_amount( $gift->unit_price );
 			$coupon->set_individual_use( false );
 			$coupon->set_usage_limit( 1 );
+			// One unit in total, also when the winner adds several variants.
+			$coupon->set_limit_usage_to_x_items( 1 );
 			/* translators: %d: gift id. */
 			$coupon->set_description( sprintf( __( 'Merch Dashboard: the code of Twitch gift #%d. Valid once, only for the gifted product; managed by Merch Dashboard.', 'merchboard' ), $gift->id ) );
 			$coupon->update_meta_data( self::GIFT_META, (string) $gift->id );
@@ -175,17 +181,15 @@ final class GiftCodes {
 			return is_numeric( $discount ) ? (float) $discount : 0.0;
 		}
 
-		$gift     = $this->gift( $coupon );
-		$quantity = is_array( $item ) && is_numeric( $item['quantity'] ?? null ) ? max( 1, (int) $item['quantity'] ) : 1;
+		unset( $item, $single );
+		$gift = $this->gift( $coupon );
 
 		if ( null === $gift || ! is_numeric( $discounting_amount ) ) {
 			return 0.0;
 		}
 
-		// One unit is covered; spread over the line when WooCommerce asks per unit.
-		$covered = min( (float) $discounting_amount, (float) $gift->unit_price );
-
-		return (bool) $single ? $covered / $quantity : $covered;
+		// One unit up to the paid price; the coupon's item limit (1) makes it one unit in total.
+		return min( (float) $discounting_amount, (float) $gift->unit_price );
 	}
 
 	/**
@@ -209,9 +213,15 @@ final class GiftCodes {
 			$shipping = (float) $cart->get_shipping_total() + (float) $cart->get_shipping_tax();
 			$credit   = min( (float) $gift->shipping_credit, $shipping );
 
-			if ( $credit > 0 ) {
-				$cart->add_fee( __( 'Gift shipping covered', 'merchboard' ), -$credit, false );
+			if ( $credit <= 0 ) {
+				continue;
 			}
+
+			// WooCommerce adds VAT to a negative fee as if it excluded VAT, so the
+			// fee is the credit without VAT: with it, the winner gets exactly the credit.
+			$rates = wc_tax_enabled() ? WC_Tax::get_shipping_tax_rates() : array();
+			$share = array_sum( array_map( static fn( array $rate ): float => is_numeric( $rate['rate'] ?? null ) ? (float) $rate['rate'] / 100 : 0.0, $rates ) );
+			$cart->add_fee( __( 'Gift shipping covered', 'merchboard' ), -round( $credit / ( 1 + $share ), 4 ), array() !== $rates );
 		}
 	}
 

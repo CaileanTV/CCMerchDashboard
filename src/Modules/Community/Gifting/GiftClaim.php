@@ -104,7 +104,7 @@ final class GiftClaim {
 		$session = self::session();
 		$code    = null === $session ? null : $session->get( self::SESSION_KEY );
 
-		if ( null === $session || ! $cart instanceof WC_Cart || ! is_string( $code ) || '' === $code || in_array( $code, $cart->get_applied_coupons(), true ) ) {
+		if ( null === $session || ! $cart instanceof WC_Cart || ! is_string( $code ) || '' === $code || in_array( $code, $cart->get_applied_coupons(), true ) || null !== GiftPurchase::gift_item( $cart ) ) {
 			return;
 		}
 

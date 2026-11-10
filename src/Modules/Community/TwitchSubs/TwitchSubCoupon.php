@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Community\TwitchSubs;
 
+use MerchBoard\Modules\Community\Gifting\GiftPurchase;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerLogin;
@@ -310,6 +311,12 @@ final class TwitchSubCoupon {
 		try {
 			foreach ( $cart->get_cart() as $cart_item ) {
 				$product = $cart_item['data'] ?? null;
+
+				// A Twitch gift (ADR-107) is bought without discounts.
+				if ( true === ( $cart_item[ GiftPurchase::ITEM_KEY ] ?? false ) ) {
+					$qualifies = false;
+					break;
+				}
 
 				if ( $product instanceof WC_Product && null !== $this->discount->rate( self::parent_id( $product ) ) ) {
 					$qualifies = true;

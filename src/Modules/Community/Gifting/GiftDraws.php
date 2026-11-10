@@ -32,7 +32,9 @@ defined( 'ABSPATH' ) || exit;
  *   account once, the buyer too) wins and gets the claim link; nobody: the
  *   gift waits again.
  * - A win not claimed within 24 hours waits for the next draw; after the
- *   third draw the buyer gets the code.
+ *   third draw (or when gifting is off) the buyer gets the code.
+ * - Switching gifting off gives the gifts not won yet back to their buyers;
+ *   deleting the creator gives back every gift not claimed yet.
  *
  * Every change is a conditional update in GiftRepository, so a job, a
  * webhook delivery and a click can never move a gift twice. Times run out
@@ -223,7 +225,7 @@ final class GiftDraws {
 		}
 
 		$command = strtolower( (string) preg_replace( '/\s+/', ' ', trim( $text ) ) );
-		$staff   = is_array( $badges ) && array() !== array_intersect( array( 'broadcaster', 'moderator' ), $badges );
+		$staff   = is_array( $badges ) && array() !== array_intersect( array( 'broadcaster', 'lead_moderator', 'moderator' ), $badges );
 
 		try {
 			$this->catch_up();
@@ -331,7 +333,8 @@ final class GiftDraws {
 			$ends = gmdate( 'Y-m-d H:i:s', time() + $settings->window );
 
 			if ( ! $this->gifts->open_window( $gift->id, $ends ) ) {
-				continue;
+				// Another request opened a window just now: one at a time.
+				return false;
 			}
 
 			$tried[] = $gift->id;
@@ -393,17 +396,55 @@ final class GiftDraws {
 			return;
 		}
 
-		if ( $gift->draws < Gift::MAX_DRAWS ) {
+		if ( $gift->draws < Gift::MAX_DRAWS && $this->settings->find( $gift->creator_id )->enabled ) {
 			$this->gifts->wait_again( $gift->id, Gift::WON );
 
 			return;
 		}
 
+		$this->give_back( $gift );
+	}
+
+	/**
+	 * Gives a gift back to its buyer with the code (after the last draw,
+	 * when gifting is switched off, or when the creator is deleted).
+	 *
+	 * @param Gift $gift A gift that is waiting, in its window or won.
+	 * @return bool Whether this request gave it back.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function give_back( Gift $gift ): bool {
 		$code = $this->codes->create( $gift );
 
-		if ( $this->gifts->return_to_buyer( $gift->id, Gift::WON, $code['id'] ) ) {
+		if ( $this->gifts->return_to_buyer( $gift->id, $gift->status, $code['id'] ) ) {
 			( $this->notify )( 'returned', $gift, array( 'code' => $code['code'] ) );
+
+			return true;
 		}
+
+		// Another request moved it first; its code is not needed.
+		wp_delete_post( $code['id'], true );
+
+		return false;
+	}
+
+	/**
+	 * Gives back a creator's gifts that are not won yet (gifting switched
+	 * off) or not claimed yet as well (`$won`, the creator is deleted).
+	 *
+	 * @param int  $creator_id Creator.
+	 * @param bool $won        Also won gifts.
+	 * @return int Gifts given back.
+	 * @throws DatabaseException When they cannot be read or stored.
+	 */
+	public function give_back_open( int $creator_id, bool $won ): int {
+		$given = 0;
+
+		foreach ( $this->gifts->for_creator( $creator_id, $won ? array( Gift::WAITING, Gift::ENTERING, Gift::WON ) : array( Gift::WAITING, Gift::ENTERING ), 500 ) as $gift ) {
+			$given += $this->give_back( $gift ) ? 1 : 0;
+		}
+
+		return $given;
 	}
 
 	/**
