@@ -1128,7 +1128,7 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 
 **Efter fase 42:** samlet review og release af fase 41 og 42 (det tidligere 41.8): uafhængigt review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK. **Status 2026-11-09:** review ✅, bump til 1.8.0 ✅, testpakke på stg ✅, ingen bekræftelse og CPR i stamdata ✅ (`9d50bc0`), tagget `v1.8.0` på `9d50bc0` efter projektejerens OK; draft-release byte-identisk med testpakken (DEVELOPMENT.md "Release 1.8.0").
 
-## Fase 43 – Twitch-login for kunder og rabat til Twitch-subscribers 📝 (plan godkendt 2026-11-10; ADR-106; Community Features punkt 3)
+## Fase 43 – Twitch-login for kunder og rabat til Twitch-subscribers 🔄 (plan godkendt 2026-11-10; ADR-106; Community Features punkt 3)
 
 **Projektejerens valg (2026-11-10):** se "Community Features (MitCCMerch)", punkt 3, nedenfor. Tilføjet efter undersøgelsen:
 - Creatoren betaler hele rabatten af sin fortjeneste på alle produkttyper, også almindelige andelsprodukter (en ny regnskabsregel).
@@ -1137,9 +1137,9 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 - Rabatten gives også oven i en tilbudspris.
 
 **Trin:**
-- **43.1 Docs:** ADR-106, SECURITY.md, DATABASE.md, MODULES.md og `docs/features/twitch-sub-discount.md`.
-- **43.2 Regnskab:** creatoren betaler subscriber-rabatten på alle produkttyper. Migration 49, med tests af at PHP og SQL giver samme resultat.
-- **43.3 Twitch-login for kunder:** subscription-tjek, OAuth bundet til kurvens session, log ind og log ud.
+- **43.1 Docs:** ADR-106 ✅ (med statusnote på ADR-066) og SECURITY.md ✅ (`bcab345`). DATABASE.md, MODULES.md og `docs/features/twitch-sub-discount.md` skrives, når modulet er færdigt.
+- **43.2 Regnskab:** ✅ (`bcab345`) creatoren betaler subscriber-rabatten på alle produkttyper. Migration 49 (`sub_discount`), rækkernes fortjeneste og udbetaling gemmes, og PHP og SQL læser de samme beløb. Unit-tests er grønne; integrationstestene køres i CI.
+- **43.3 Twitch-login for kunder:** 🔄 i gang. subscription-tjek, OAuth bundet til kurvens session, log ind og log ud.
 - **43.4 Kurv og ordre:** en automatisk rabat, hvor den bedste rabat vinder pr. linje. Abonnementet tjekkes igen før ordren, og ordren gemmer, hvilken Twitch-konto og tier der gav rabatten.
 - **43.5 Creator-dashboard:** menuen "Community Features" med siden "Twitch-subscriber-rabat" og en produktvælger.
 - **43.6 Butiksvisning:** et kort i kurv og checkout, både klassisk og med blokke.
