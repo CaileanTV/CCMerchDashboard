@@ -4,6 +4,24 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-11-11
+
+Fase 43 og 44, de første Community Features: rabat til creatorens Twitch-subscribers og Twitch-gaver i creatorens stream. Kunder kan nu logge ind med Twitch i butikken. Schemaændring 48 → 50 (`merchboard_sales_tax.sub_discount` og tabellen `merchboard_gifts`). Opdateringen står i DEVELOPMENT.md ("Release 2.0.0").
+
+### Added
+
+- **Kundens Twitch-login (ADR-106):** i kurv og checkout kan kunden logge ind med Twitch (også uden konto). Tokenet ligger kun krypteret i kundens session; en kundekonto husker kun Twitch-navnet.
+- **Rabat til Twitch-subscribers (ADR-106):** under Community Features → Twitch subscriber discount laver creatoren kampagner med en procent pr. tier (op til 2 decimaler), for alle egne produkter eller udvalgte, med valgfri periode, og vælger, om gifted subs tæller. Højst creatorens laveste fortjeneste på kampagnens produkter. Kortet i kurven vises kun, når kurven har creatorens varer, og creatoren har rabat slået til.
+- **Rabatten i kurven:** bedste rabat vinder pr. linje (sub-rabatten fylder kun op til sin egen størrelse ud over andre koder). Abonnementet tjekkes igen før ordren. Ordresiden i admin viser Twitch-konto, tier og procent.
+- **Twitch-gaver (ADR-107):** mens creatoren er live, kan seere købe et produkt som gave til chatten (fast gave-fragt 50 kr., navn i annonceringen eller anonym). Botten annoncerer gaven, trækker en vinder blandt dem, der skriver `!enter`, og vinderen henter gaven med Twitch-login og en engangskode (produktet plus op til 50 kr. af fragten). 24 timers frist, højst 3 lodtrækninger, derefter går koden til køberen. Creator og moderatorer styrer med `!gift start`, `!gift pause` og `!gift resume`.
+- **Siden Twitch gifting** i MitCCMerch: til/fra, vinduets længde, dansk eller engelsk i chatten, pause, "Start ventende gaver" og listen over gaver.
+- **Notifikationer:** creatoren i klokken, når en gave er købt og hentet; administratoren på e-mail, når en gave går tilbage til køberen. Køberen får e-mails i WooCommerces design.
+
+### Changed
+
+- **Regnskab (ADR-106 pkt. 7):** Twitch-subscriber-rabatten betales fuldt af creatorens fortjeneste på alle produkttyper. Gamle ordrer er uændrede.
+- Ordresiden for en gave-ordre advarer mod refundering, når gaven er trukket. En refundering annullerer kun en gave uden vinder.
+
 ## [1.8.0] - 2026-11-09
 
 Fase 41 og 42: MitCCMerchs egen login-skærm med logoer, favicon og app-ikon, og creatorens egne stamdata til afregning, som kræves før første udbetaling, med CPR for privatpersoner og opslag i CVR-registret. Ingen schemaændring (schema-version 48). Opdateringen står i DEVELOPMENT.md ("Release 1.8.0").

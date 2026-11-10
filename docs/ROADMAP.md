@@ -1176,7 +1176,7 @@ Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR. **Testes samme
 - **44.6 Indløsning:** ✅ (3675573) siden med Twitch-login, gavekoden (produkt plus op til 50 kr. fragt) og fortjeneste kun af det, vinderen betaler. Vinderen kan åbne linket igen og se koden. E-mails til køberen kommer i 44.8.
 - **44.7 Creator-dashboard:** ✅ (c173506) siden "Twitch gifting" (til/fra, pause, vindue, sprog, "Start ventende gaver" og liste over gaver).
 - **44.8 Admin, beskeder, privacy, tekster og tests:** ✅ (296a01e, c030ade, ab770f1) ordresiden, advarsel ved refundering, notifikationer, privacy, afinstallation, danske tekster og faste lister.
-- **44.9 Review, CI og testpakke 2.0.0** for fase 43 og 44 på stg.
+- **44.9 Review, CI og testpakke 2.0.0** for fase 43 og 44 på stg. 🔄 Review ✅ (fund rettet i 43a0fc7, c71c745, 76ac116), bump til 2.0.0 ✅; testpakke på stg, tag efter projektejerens test.
 
 - **Efter fase 44** kører jeg automatisk videre: review, rettelser, grøn CI, testpakke for fase 43 og 44 og upload til stg. Projektejeren tester, og tag og release sker først efter projektejerens OK. **Versionen bliver 2.0.0.**
 

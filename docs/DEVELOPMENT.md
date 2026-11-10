@@ -249,6 +249,25 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 2.0.0: rabat til Twitch-subscribers og Twitch-gaver (fase 43 og 44)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-11** efter projektejerens valg ("Til testpakke på stg", version 2.0.0). Tag efter projektejerens OK efter testen på stg; tag og SHA-256 noteres her da.
+- Testet med unit-, Jest- og integrationstests. Uafhængigt review af begge faser; fundene er rettet (`43a0fc7`, `c71c745`, `76ac116`). Twitch-login, kurven, kuponerne og chatten kan kun testes rigtigt på stg (HTTPS og Twitch-webhook).
+- **Tjek særligt på stg:** blok-kurven viser den reserverede kode `merchboard-twitch-sub` i stedet for "Twitch subscriber discount" (ikke rettet: kræver JS), og om blok-checkouten henter kurven igen efter beskeden "Din Twitch-subscriber-rabat er ændret".
+- CI skal være grøn med hele integrationssuiten på den taggede commit.
+
+**Schemaændring 48 → 50:** migration 49 tilføjer `sub_discount` til `merchboard_sales_tax` (NULL på eksisterende rækker, så deres resultat er uændret), og migration 50 opretter `merchboard_gifts`. Migrationerne kører af sig selv ved første request.
+
+1. **Backup:** tag backup af filer og database via hostingen.
+2. **Opdatér** med ZIP'en. Overview skal vise version 2.0.0 og schema-version 50.
+3. **Twitch:** Indstillinger → Alerts → Twitch: appen og botten skal være sat op, og chatbottens webhook skal virke (HTTPS). Ingen ny redirect-URI: kundens login bruger det eksisterende callback.
+4. **Subscriber-rabat:** som testcreator med forbundet Twitch-kanal: lav en kampagne (alle produkter og en med udvalgte produkter) under Community Features. Læg creatorens vare i kurven som kunde, log ind med Twitch (en konto, der subscriber), se rabatten og gennemfør ordren. Se Twitch-kontoen og tier på ordresiden og creatorens fortjeneste i ordrehistorikken. Prøv også med en creatorkode i kurven (ingen sub-rabat på den creators varer) og uden subscription (ingen rabat).
+5. **Gifting:** slå Twitch gifting til for testcreatoren, gå live, og køb en gave fra produktsiden (med og uden navn). Botten annoncerer gaven; skriv `!enter` fra en anden konto, og vent på vinderen. Åbn linket, log ind med vinderens Twitch-konto, og se at koden lægges på produktet. Prøv også `!gift pause`, `!gift resume` og `!gift start` (som creator eller moderator), en gave købt offline og "Start ventende gaver" i MitCCMerch.
+6. **Admin:** se gaven på gave-ordrens side (status og advarslen mod refundering) og notifikationerne (klokken for creatoren, Notifikationer → Community Features).
+7. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 1.8.0-ZIP'en igen. Kolonnen og tabellen bliver liggende (1.8.0 bruger dem ikke), men ordrer med sub-rabat, der er synkroniseret under 2.0.0, regnes med 1.8.0's regel, hvis de synkroniseres igen. Gaver, der venter, trækkes ikke under 1.8.0.
+
 ## Release 1.8.0: egen login-skærm, logoer og ikoner, og creatorens stamdata (fase 41 og 42)
 
 **Versions-bump og CHANGELOG-sektion 2026-11-09** efter projektejerens ønske ("Kør de næste skridt så det næste jeg selv specifik skal er at teste på stg"). Efter testen på stg blev admin-bekræftelsen af stamdata fjernet, og CPR-nummeret flyttet til stamdata (ADR-104 pkt. 11, `9d50bc0`). **Tagget `v1.8.0` på `9d50bc0` 2026-11-09** efter projektejerens OK ("Du må gerne tagge den nu"). CI var grøn på alle fire jobs, også hele integrationssuiten. Testpakken kørte på staging. Draft-releasens ZIP er byte-identisk med den lokale pakke og testpakken (SHA-256 `eccfd56bdccb39a914fe894d8d7877cd9902b2f0c9c9d52e12ed751f05886d1b`).
