@@ -62,6 +62,8 @@ I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog
 | Alerts | Din webhook er sat på pause efter 10 fejl | levering | M+D | |
 | Alerts | Nye YouTube-vilkår skal accepteres | administratoren fornyer vilkårene | M+D | |
 | Alerts | API-nøgle oprettet / tilbagekaldt af administrator | nøgler | M+D | ✓ |
+| Community Features | En seer har købt en gave i din stream (fase 44, ADR-107) | gave-ordren er betalt | D | |
+| Community Features | Gaven er hentet af vinderen | vinderen har fået gavekoden | D | |
 
 **Til administratoren** (kun e-mail, til sitets admin-e-mail):
 - ny udbetalingsanmodning;
@@ -72,7 +74,10 @@ I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog
 - regulering fejlede;
 - gavekort afvist som kupon;
 - creator har nulstillet sin rabatkode (fra som standard);
-- creator har annulleret en udbetaling (fra som standard).
+- creator har annulleret en udbetaling (fra som standard);
+- en Twitch-gave er gået tilbage til køberen efter tre lodtrækninger (fase 44, ADR-107).
+
+Køberen af en Twitch-gave får sine e-mails gennem WooCommerces mailer og design (vinder trukket, gave hentet, koden tilbage), ikke gennem dette katalog (`GiftNotices`).
 
 ## Admin functionality
 Merch Dashboard → **Notifikationer** (`merchboard_manage_settings`):
