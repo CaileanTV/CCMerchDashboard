@@ -1,0 +1,22 @@
+<?php
+/**
+ * The part of WooCommerce' Store API the plugin uses (PHPStan only).
+ *
+ * @package MerchBoard
+ */
+
+namespace Automattic\WooCommerce\StoreApi\Exceptions;
+
+/**
+ * An error the Store API returns to the block checkout.
+ */
+class RouteException extends \Exception {
+
+	/**
+	 * @param string       $error_code      Machine-readable code.
+	 * @param string       $message         Message for the customer.
+	 * @param int          $http_status_code HTTP status.
+	 * @param array<mixed> $additional_data Extra data.
+	 */
+	public function __construct( $error_code, $message, $http_status_code = 400, $additional_data = array() ) {}
+}

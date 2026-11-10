@@ -45,6 +45,8 @@ parameters:
     # Declares the WooCommerce and WP-CLI API the plugin uses (no stubs package, ADR-030 D5).
     scanFiles:
         - tests/Stubs/woocommerce.stub
+        # The Store API's exception (the block checkout, phase 43).
+        - tests/Stubs/woocommerce-store-api.stub
         - tests/Stubs/wp-cli.stub
         # The banner plugin CCMerch Kategoribannere (phase 28, ADR-077).
         - tests/Stubs/ccmerch-kategoribannere.stub

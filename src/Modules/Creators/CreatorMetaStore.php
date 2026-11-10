@@ -92,9 +92,16 @@ final class CreatorMetaStore {
 	public const FRONT_GROUP = 'front_group';
 
 	/**
+	 * The creator's discount for Twitch subscribers (phase 43, ADR-106 pkt.
+	 * 3): on/off, percent per tier, whether gifted subs count and which
+	 * products. Written by the creator through `/me` only.
+	 */
+	public const TWITCH_SUB_DISCOUNT = 'twitch_sub_discount';
+
+	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BILLING_DETAILS, self::BILLING_SUBMISSION, self::BILLING_CONFIRMED, self::BILLING_CPR, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP );
+	private const KEYS = array( self::BILLING_DETAILS, self::BILLING_SUBMISSION, self::BILLING_CONFIRMED, self::BILLING_CPR, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP, self::TWITCH_SUB_DISCOUNT );
 
 	/**
 	 * Constructor.

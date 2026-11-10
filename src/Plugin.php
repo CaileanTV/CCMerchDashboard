@@ -29,6 +29,7 @@ use MerchBoard\Core\Security\RoleManager;
 use MerchBoard\Modules\Access\AccessModule;
 use MerchBoard\Modules\Admin\AdminModule;
 use MerchBoard\Modules\Alerts\AlertsModule;
+use MerchBoard\Modules\Community\CommunityModule;
 use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Modules\Dashboard\DashboardModule;
 use MerchBoard\Modules\Dashboard\DashboardRoute;
@@ -285,6 +286,8 @@ final class Plugin {
 			$modules[] = new AlertsModule();
 			// The creators' product designer makes WooCommerce products (phase 30, ADR-080).
 			$modules[] = new ProductDesignerModule();
+			// Community Features: the Twitch subscriber discount uses the Alerts module's Twitch login (phase 43, ADR-106).
+			$modules[] = new CommunityModule();
 		}
 
 		$woocommerce->register_notice();

@@ -20,6 +20,7 @@ use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CouponCode;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeRepository;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingRows;
+use MerchBoard\Modules\WooCommerce\SubDiscount\SubDiscountMeta;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -225,6 +226,11 @@ class CampaignService {
 
 		if ( array() !== $list && array() !== $this->codes->matching( $list ) ) {
 			self::reject( DesignerException::CAMPAIGN_CREATOR_CODE );
+		}
+
+		// ADR-106 pkt. 4: the Twitch subscriber discount's reserved code.
+		if ( in_array( SubDiscountMeta::COUPON_CODE, $list, true ) ) {
+			self::reject( DesignerException::CAMPAIGN_RESERVED_CODE );
 		}
 
 		try {

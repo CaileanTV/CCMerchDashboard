@@ -31,6 +31,7 @@ use MerchBoard\Modules\Creators\CreatorsModule;
 use MerchBoard\Modules\Dashboard\DashboardModule;
 use MerchBoard\Modules\Settings\SettingsModule;
 use MerchBoard\Modules\Alerts\AlertsModule;
+use MerchBoard\Modules\Community\CommunityModule;
 use MerchBoard\Modules\ProductDesigner\ProductDesignerModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceModule;
 use MerchBoard\Modules\WooCommerce\WooCommerceSupport;
@@ -483,7 +484,7 @@ final class PluginTest extends TestCase {
 
 		Filters\expectApplied( 'merchboard_modules' )
 			->once()
-			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 10 === count( $modules ) && $modules[5] instanceof NewsModule && $modules[6] instanceof NotificationsModule && $modules[7] instanceof WooCommerceModule && $modules[8] instanceof AlertsModule && $modules[9] instanceof ProductDesignerModule ) )
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 11 === count( $modules ) && $modules[5] instanceof NewsModule && $modules[6] instanceof NotificationsModule && $modules[7] instanceof WooCommerceModule && $modules[8] instanceof AlertsModule && $modules[9] instanceof ProductDesignerModule && $modules[10] instanceof CommunityModule ) )
 			->andReturnFirstArg();
 		$notices = $this->capture_admin_notices();
 
@@ -500,7 +501,7 @@ final class PluginTest extends TestCase {
 
 		Filters\expectApplied( 'merchboard_modules' )
 			->once()
-			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 7 === count( $modules ) && array() === array_filter( $modules, static fn( $module ): bool => $module instanceof WooCommerceModule || $module instanceof AlertsModule || $module instanceof ProductDesignerModule ) ) )
+			->with( Mockery::on( static fn( $modules ): bool => is_array( $modules ) && 7 === count( $modules ) && array() === array_filter( $modules, static fn( $module ): bool => $module instanceof WooCommerceModule || $module instanceof AlertsModule || $module instanceof ProductDesignerModule || $module instanceof CommunityModule ) ) )
 			->andReturnFirstArg();
 		$notices = $this->capture_admin_notices();
 

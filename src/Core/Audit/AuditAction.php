@@ -895,4 +895,10 @@ enum AuditAction: string {
 	 * at go-live (ADR-097). Context: from, to.
 	 */
 	case CreatorFrontGroupChanged = 'creator_front_group_changed';
+
+	/**
+	 * A creator changed the discount for Twitch subscribers (ADR-106).
+	 * Context: changed_fields.
+	 */
+	case TwitchSubDiscountChanged = 'twitch_sub_discount_changed';
 }

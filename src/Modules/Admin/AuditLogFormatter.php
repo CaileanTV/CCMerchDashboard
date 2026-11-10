@@ -206,6 +206,7 @@ final class AuditLogFormatter {
 			AuditAction::DesignerPriceApplied => __( 'Planned base price set', 'merchboard' ),
 			AuditAction::DesignerPrimaryImageChanged => __( 'Creator chose another product image', 'merchboard' ),
 			AuditAction::CreatorFrontGroupChanged => __( 'Front-page group changed', 'merchboard' ),
+			AuditAction::TwitchSubDiscountChanged => __( 'Twitch subscriber discount changed', 'merchboard' ),
 			AuditAction::DesignerProductCreated => __( 'Creator started a designer product', 'merchboard' ),
 			AuditAction::DesignerProductDeleted => __( 'Creator deleted a designer draft', 'merchboard' ),
 			AuditAction::DesignerVersionSubmitted => __( 'Creator submitted a design for approval', 'merchboard' ),

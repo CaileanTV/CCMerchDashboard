@@ -31,6 +31,8 @@ final class DesignerException extends RuntimeException {
 
 	public const CAMPAIGN_CREATOR_CODE = 'campaign_creator_code';
 
+	public const CAMPAIGN_RESERVED_CODE = 'campaign_reserved_code';
+
 	public const CAMPAIGN_UNKNOWN = 'campaign_unknown';
 
 	public const CAMPAIGN_IN_USE = 'campaign_in_use';

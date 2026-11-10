@@ -193,7 +193,10 @@ final class TwitchCustomerLogin {
 	public function subscription( string $broadcaster_id, bool $fresh = false ): ?array {
 		$account = $this->session->account();
 
-		if ( null === $account ) {
+		// Without a usable token nothing counts, not even a recent answer.
+		$token = null === $account ? null : $this->session->token();
+
+		if ( null === $account || null === $token ) {
 			return null;
 		}
 
@@ -203,12 +206,6 @@ final class TwitchCustomerLogin {
 			if ( null !== $cached ) {
 				return $cached;
 			}
-		}
-
-		$token = $this->session->token();
-
-		if ( null === $token ) {
-			return null;
 		}
 
 		try {
@@ -231,6 +228,26 @@ final class TwitchCustomerLogin {
 			'tier'   => $tier,
 			'gifted' => $gifted,
 		);
+	}
+
+	/**
+	 * Keeps "no subscription" for a channel Twitch could not answer about,
+	 * so the cart does not ask again on every page (the next fresh check
+	 * asks again).
+	 *
+	 * @param string $broadcaster_id Channel.
+	 */
+	public function forget_subscription( string $broadcaster_id ): void {
+		$this->session->keep_subscription( $broadcaster_id, 0, false );
+	}
+
+	/**
+	 * The customer's Twitch account of this visit, or null.
+	 *
+	 * @return array{id: string, login: string}|null
+	 */
+	public function account(): ?array {
+		return $this->session->account();
 	}
 
 	/**

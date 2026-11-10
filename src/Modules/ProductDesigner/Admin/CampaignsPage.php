@@ -90,6 +90,7 @@ final class CampaignsPage {
 			DesignerException::CAMPAIGN_SCOPE        => array( __( 'A campaign needs coupon codes, sale prices or both.', 'merchboard' ), 'error' ),
 			DesignerException::CAMPAIGN_CODES        => array( __( 'Enter at most 100 coupon codes of at most 191 characters each.', 'merchboard' ), 'error' ),
 			DesignerException::CAMPAIGN_CREATOR_CODE => array( __( 'A creator\'s own discount code cannot be a campaign code: it would let the creator take the company below its base price.', 'merchboard' ), 'error' ),
+			DesignerException::CAMPAIGN_RESERVED_CODE => array( __( 'The code merchboard-twitch-sub is reserved for the Twitch subscriber discount.', 'merchboard' ), 'error' ),
 			DesignerException::CAMPAIGN_UNKNOWN      => array( __( 'The campaign no longer exists.', 'merchboard' ), 'error' ),
 			DesignerException::CAMPAIGN_IN_USE       => array( __( 'The campaign covers registered sales and cannot be deleted. Move its end to end it.', 'merchboard' ), 'error' ),
 			DesignerException::NOT_AUTHORIZED        => array( __( 'You are not allowed to manage campaigns.', 'merchboard' ), 'error' ),

@@ -20,6 +20,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Security\ImpersonationSession;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\WooCommerce\SubDiscount\SubDiscountMeta;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -257,7 +258,8 @@ final class CreatorCodeService {
 				self::refuse( CreatorCodeException::GIFT_CARD_UNVERIFIED );
 			}
 
-			if ( '' !== $code && ! $gift_card && null === $this->coupons->find( $code ) && array() === $this->codes->matching( array( $code ) ) ) {
+			// ADR-106 pkt. 4: never the Twitch subscriber discount's reserved code.
+			if ( '' !== $code && SubDiscountMeta::COUPON_CODE !== $code && ! $gift_card && null === $this->coupons->find( $code ) && array() === $this->codes->matching( array( $code ) ) ) {
 				return $code;
 			}
 		}

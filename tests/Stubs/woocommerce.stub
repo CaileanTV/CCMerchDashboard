@@ -20,6 +20,13 @@ abstract class WC_Data {
 	public function get_id() {}
 
 	/**
+	 * Saves the object.
+	 *
+	 * @return int
+	 */
+	public function save() {}
+
+	/**
 	 * @return list<WC_Meta_Data>
 	 */
 	public function get_meta_data() {}
@@ -211,6 +218,22 @@ class WC_Cart {
 	 * @return array<string, array<string, mixed>>
 	 */
 	public function get_cart() {}
+
+	/**
+	 * @return list<string>
+	 */
+	public function get_applied_coupons() {}
+
+	/**
+	 * @param list<string> $value Coupon codes.
+	 * @return void
+	 */
+	public function set_applied_coupons( $value = array() ) {}
+
+	/**
+	 * @return void
+	 */
+	public function calculate_totals() {}
 }
 
 /**
@@ -317,6 +340,14 @@ class WC_Discounts {
 	 * @return WC_Cart|WC_Abstract_Order|array<mixed>
 	 */
 	public function get_object() {}
+
+	/**
+	 * Discounts by coupon code and item key.
+	 *
+	 * @param bool $in_cents Whether in cents.
+	 * @return array<string, array<string, float|int>>
+	 */
+	public function get_discounts( $in_cents = false ) {}
 }
 
 /**
