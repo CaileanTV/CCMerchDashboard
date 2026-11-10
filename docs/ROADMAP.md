@@ -1151,6 +1151,24 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 
 Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR. **Testes sammen med fase 43** i én testpakke på stg (projektejerens beslutning 2026-11-10); derefter samlet review, CI og release.
 
+**Projektejerens valg (2026-11-10), ud over valgene i "Community Features" pkt. 2:**
+- **Køb:** knappen "Giv som gave i streamen" står på produktsiden og vises kun, når creatoren er live, har gifting slået til og ikke har sat gifting på pause. Gaven købes som en ordre for sig, uden andre varer. Alle creatorens produkter kan gives.
+- **Pris:** køberen betaler den laveste variantpris plus 50 kr. i gave-fragt. Vinderen betaler forskellen, hvis den valgte variant eller fragten er dyrere.
+- **Sen betaling:** er gaven betalt, efter streamen er slut, venter den til næste stream.
+- **Indløsning:** vinderen logger ind med Twitch via linket i chatten. Vinderen får en gavekode, der kun gælder det vundne produkt (alle varianter) og dækker købsprisen plus 50 kr. fragt. Koden bruges i den normale checkout.
+- **Ikke hentet:** vinderen har 24 timer. Derefter trækkes en ny vinder ved næste stream, højst 3 gange. Hentes gaven stadig ikke, får køberen selv koden.
+- **Start af ventende lodtrækninger** (sene betalinger og omtrækninger): streameren starter dem selv, med `!gift start` i chatten (creator eller mods) eller med knappen "Start ventende gaver" i MitCCMerch. Botten kører gaverne én ad gangen.
+- **Pause:** creator og mods skriver `!gift pause` og `!gift resume`, og der er også en knap i MitCCMerch. Under pause kan der ikke købes gaver, og der startes ingen lodtrækning; ventende gaver venter.
+- **Ellers kører alt automatisk:** annoncering, `!enter`-vindue, lodtrækning og annoncering af vinderen. Vinduet er 60 sekunder som standard, og creatoren kan vælge 20–180 sekunder.
+- **Chat-tekster:** faste tekster. Creatoren vælger dansk eller engelsk.
+- **Fortjeneste:** creatoren får fortjeneste af køberens gave-ordre. På vinderens ordre giver kun det, vinderen selv betaler (en difference), fortjeneste; den del, gavekoden dækker, giver ingen.
+- **Refundering:** køberens gave-ordre kan ikke refunderes, når der er trukket en vinder.
+- **Beskeder:**
+  - creatoren i klokken, når en gave er købt, og når den er hentet;
+  - køberen på e-mail, når vinderen er trukket, når gaven er hentet, og når koden går tilbage til køberen;
+  - admin, når en gave er gået tilbage til køberen.
+- **Efter fase 44** kører jeg automatisk videre: review, rettelser, grøn CI, testpakke for fase 43 og 44 og upload til stg. Projektejeren tester, og tag og release sker først efter projektejerens OK. **Versionen bliver 2.0.0.**
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |
