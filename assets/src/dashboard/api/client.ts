@@ -135,7 +135,8 @@ function failure(
 }
 
 const SAFE_CODE = /^[a-z_]{1,50}$/;
-const SAFE_FIELD = /^[a-z_]{1,50}(?:\.[a-z_]{1,50})?$/;
+/** A field name, optionally with a list index: `name`, `name.part`, `campaigns.2.tier_one`. */
+const SAFE_FIELD = /^[a-z_]{1,50}(?:\.(?:[a-z_]{1,50}|\d{1,3})){0,2}$/;
 
 /**
  * Field error codes from `data.fields` of a WP_Error body. Anything that is

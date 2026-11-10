@@ -1,6 +1,6 @@
 <?php
 /**
- * A creator's discount for Twitch subscribers.
+ * A creator's discount campaigns for Twitch subscribers.
  *
  * @package MerchBoard
  */
@@ -12,69 +12,39 @@ namespace MerchBoard\Modules\Community\TwitchSubs;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * ADR-106 pkt. 3: on or off, a whole percent per tier (0–100, stored in
- * basis points), whether gifted subscriptions count, and whether the
- * discount covers all the creator's products or a selection (at most
- * MAX_PRODUCTS parent products).
+ * ADR-106 pkt. 3 (status note 2026-11-10): whether gifted subscriptions
+ * count (for all the creator's campaigns) and up to MAX_CAMPAIGNS
+ * campaigns. On a product, an active campaign of selected products goes
+ * before an active campaign of all products; a product is in at most one
+ * active campaign of each kind (the repository checks it when saving).
  */
 final readonly class TwitchSubDiscountSettings {
 
 	/**
-	 * All the creator's products.
+	 * Most campaigns.
 	 */
-	public const ALL = 'all';
-
-	/**
-	 * Only the selected products.
-	 */
-	public const SELECTED = 'selected';
-
-	/**
-	 * Most selected products.
-	 */
-	public const MAX_PRODUCTS = 500;
+	public const MAX_CAMPAIGNS = 20;
 
 	/**
 	 * Constructor.
 	 *
-	 * @phpstan-param list<int> $product_ids
+	 * @phpstan-param list<TwitchSubCampaign> $campaigns
 	 *
-	 * @param bool                          $enabled     Whether the discount is on.
-	 * @param array{1: int, 2: int, 3: int} $tiers       Basis points per tier (0–10 000, whole percents).
-	 * @param bool                          $gifted      Whether gifted subscriptions count.
-	 * @param string                        $scope       ALL or SELECTED.
-	 * @param int[]                         $product_ids Selected parent products (SELECTED only).
+	 * @param bool                $gifted    Whether gifted subscriptions count.
+	 * @param TwitchSubCampaign[] $campaigns Campaigns.
 	 */
-	public function __construct(
-		public bool $enabled,
-		public array $tiers,
-		public bool $gifted,
-		public string $scope,
-		public array $product_ids
-	) {
+	public function __construct( public bool $gifted, public array $campaigns ) {
 	}
 
 	/**
-	 * The settings of a creator who has set nothing: off, 0 %, gifted
-	 * subscriptions count, all products.
+	 * Nothing set: gifted subscriptions count, no campaigns.
 	 */
 	public static function defaults(): self {
-		return new self(
-			false,
-			array(
-				1 => 0,
-				2 => 0,
-				3 => 0,
-			),
-			true,
-			self::ALL,
-			array()
-		);
+		return new self( true, array() );
 	}
 
 	/**
-	 * The stored settings; anything unreadable falls back to the defaults
-	 * (off).
+	 * The stored settings; unreadable campaigns are left out.
 	 *
 	 * @param mixed $stored Stored creator meta.
 	 */
@@ -83,107 +53,63 @@ final readonly class TwitchSubDiscountSettings {
 			return self::defaults();
 		}
 
-		$tiers = array();
+		$campaigns = array();
 
-		foreach ( array( 1, 2, 3 ) as $tier ) {
-			$bps = $stored['tiers'][ $tier ] ?? ( $stored['tiers'][ (string) $tier ] ?? null );
+		foreach ( is_array( $stored['campaigns'] ?? null ) ? $stored['campaigns'] : array() as $campaign ) {
+			$read = TwitchSubCampaign::from_stored( $campaign );
 
-			if ( ! is_int( $bps ) || $bps < 0 || $bps > 10000 || 0 !== $bps % 100 ) {
-				return self::defaults();
+			if ( null !== $read ) {
+				$campaigns[] = $read;
 			}
-
-			$tiers[ $tier ] = $bps;
 		}
 
-		$scope = $stored['scope'] ?? null;
-		$ids   = $stored['product_ids'] ?? array();
-
-		if ( ! in_array( $scope, array( self::ALL, self::SELECTED ), true ) || ! is_array( $ids ) ) {
-			return self::defaults();
-		}
-
-		return new self(
-			true === ( $stored['enabled'] ?? false ),
-			array(
-				1 => $tiers[1],
-				2 => $tiers[2],
-				3 => $tiers[3],
-			),
-			true === ( $stored['gifted'] ?? true ),
-			$scope,
-			self::SELECTED === $scope ? self::ids( $ids ) : array()
-		);
+		return new self( true === ( $stored['gifted'] ?? true ), array_slice( $campaigns, 0, self::MAX_CAMPAIGNS ) );
 	}
 
 	/**
 	 * The value to store.
 	 *
-	 * @return array{enabled: bool, tiers: array{1: int, 2: int, 3: int}, gifted: bool, scope: string, product_ids: list<int>}
+	 * @return array{gifted: bool, campaigns: list<array<string, mixed>>}
 	 */
 	public function to_stored(): array {
 		return array(
-			'enabled'     => $this->enabled,
-			'tiers'       => $this->tiers,
-			'gifted'      => $this->gifted,
-			'scope'       => $this->scope,
-			'product_ids' => $this->product_ids,
+			'gifted'    => $this->gifted,
+			'campaigns' => array_map( static fn( TwitchSubCampaign $campaign ): array => $campaign->to_stored(), $this->campaigns ),
 		);
 	}
 
 	/**
-	 * The basis points for a subscription, or 0 when it gives none (off, no
-	 * subscription, a gift that does not count).
+	 * The campaign that applies to a parent product on a day: an active
+	 * campaign of selected products before one of all products; null for
+	 * none.
 	 *
-	 * @param int  $tier   Tier 1–3, 0 for none.
-	 * @param bool $gifted Whether the subscription was a gift.
+	 * @param int    $product_id Parent product.
+	 * @param string $today      The day (Y-m-d, site time zone).
 	 */
-	public function bps_for( int $tier, bool $gifted ): int {
-		if ( ! $this->enabled || ( $gifted && ! $this->gifted ) || ! in_array( $tier, array( 1, 2, 3 ), true ) ) {
-			return 0;
-		}
+	public function campaign_for( int $product_id, string $today ): ?TwitchSubCampaign {
+		$all = null;
 
-		return $this->tiers[ $tier ];
-	}
-
-	/**
-	 * Whether the discount covers a parent product of the creator.
-	 *
-	 * @param int $product_id Parent product.
-	 */
-	public function covers( int $product_id ): bool {
-		return self::ALL === $this->scope || in_array( $product_id, $this->product_ids, true );
-	}
-
-	/**
-	 * Whether the discount can give anything (on, a percent above 0, and a
-	 * product when only selected ones count).
-	 */
-	public function active(): bool {
-		return $this->enabled && max( $this->tiers ) > 0 && ( self::ALL === $this->scope || array() !== $this->product_ids );
-	}
-
-	/**
-	 * The highest percent of any tier (for the shop's card).
-	 */
-	public function highest_percent(): int {
-		return intdiv( max( $this->tiers ), 100 );
-	}
-
-	/**
-	 * Positive unique product ids, at most MAX_PRODUCTS.
-	 *
-	 * @param array<mixed> $ids Ids.
-	 * @return list<int>
-	 */
-	private static function ids( array $ids ): array {
-		$clean = array();
-
-		foreach ( $ids as $id ) {
-			if ( is_int( $id ) && $id > 0 ) {
-				$clean[ $id ] = $id;
+		foreach ( $this->campaigns as $campaign ) {
+			if ( ! $campaign->active( $today ) || ! $campaign->covers( $product_id ) ) {
+				continue;
 			}
+
+			if ( TwitchSubCampaign::SELECTED === $campaign->scope ) {
+				return $campaign;
+			}
+
+			$all ??= $campaign;
 		}
 
-		return array_slice( array_values( $clean ), 0, self::MAX_PRODUCTS );
+		return $all;
+	}
+
+	/**
+	 * Whether a subscription counts: gifted ones as the creator chose.
+	 *
+	 * @param bool $gifted Whether it was a gift.
+	 */
+	public function counts( bool $gifted ): bool {
+		return ! $gifted || $this->gifted;
 	}
 }

@@ -21,10 +21,10 @@ use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchApi;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerLogin;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerSession;
+use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCampaign;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscount;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscountInvalid;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscountRepository;
-use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscountSettings;
 use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
@@ -94,12 +94,22 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 			502 => $this->nova,
 			601 => $this->orion,
 		);
+		$percents       = array(
+			501 => 25,
+			502 => 18,
+			601 => 30,
+		);
 		$this->settings = new TwitchSubDiscountRepository(
 			$this->service( CreatorMetaStore::class ),
 			$this->service( AuditTrail::class ),
 			$this->service( Transaction::class ),
 			static fn( int $creator_id, int $product_id ): bool => ( $owners[ $product_id ] ?? null ) === $creator_id,
-			static fn( int $creator_id ): bool => $channels->find( $creator_id, ChatPlatform::Twitch )->connected()
+			static fn( int $creator_id ): bool => $channels->find( $creator_id, ChatPlatform::Twitch )->connected(),
+			static function ( int $creator_id, ?array $product_ids ) use ( $owners, $percents ): array {
+				$own = array_keys( array_filter( $owners, static fn( int $owner ): bool => $owner === $creator_id ) );
+
+				return array_intersect_key( $percents, array_flip( $product_ids ?? $own ) );
+			}
 		);
 
 		$api     = new TwitchApi( $this->transport() );
@@ -162,17 +172,18 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 		parent::tearDown();
 	}
 
-	public function test_the_creator_saves_percents_per_tier_and_the_audit_names_only_fields(): void {
-		$saved = $this->settings->save( $this->nova, $this->input() );
+	public function test_the_creator_saves_campaigns_and_the_audit_names_only_fields(): void {
+		$saved = $this->settings->save( $this->nova, $this->input( array( self::campaign() ) ) );
+		$id    = $saved->campaigns[0]->id;
 
-		self::assertTrue( $saved->active() );
+		self::assertMatchesRegularExpression( '/^[0-9a-f]{16}$/', $id );
 		self::assertSame(
 			array(
 				1 => 1000,
 				2 => 1500,
-				3 => 2000,
+				3 => 1800,
 			),
-			$this->settings->find( $this->nova )->tiers
+			$this->settings->find( $this->nova )->campaigns[0]->tiers
 		);
 
 		$audit = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT action, context FROM %i ORDER BY id DESC LIMIT 1', $this->table( Tables::AUDIT_LOG ) ), ARRAY_A );
@@ -180,120 +191,108 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 		self::assertStringNotContainsString( '1500', (string) ( $audit['context'] ?? '' ), 'Field names only.' );
 
 		$before = (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(*) FROM %i', $this->table( Tables::AUDIT_LOG ) ) );
-		$this->settings->save( $this->nova, $this->input() );
+		$again  = $this->settings->save( $this->nova, $this->input( array( self::campaign( array( 'id' => $id ) ) ) ) );
+		self::assertSame( $id, $again->campaigns[0]->id, 'The id is kept.' );
 		self::assertSame( $before, (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(*) FROM %i', $this->table( Tables::AUDIT_LOG ) ) ), 'Nothing changed, nothing audited.' );
 	}
 
-	public function test_invalid_settings_are_refused_per_field(): void {
-		$this->refused(
-			array( 'tier_two' => 'invalid' ),
-			$this->nova,
-			array(
-				'tiers' => array(
-					1 => 10,
-					2 => 101,
-					3 => 0,
-				),
-			)
-		);
-		$this->refused(
-			array( 'tier_one' => 'required' ),
-			$this->nova,
-			array(
-				'tiers' => array(
-					1 => 0,
-					2 => 0,
-					3 => 0,
-				),
-			)
-		);
-		$this->refused(
-			array( 'product_ids' => 'invalid' ),
-			$this->nova,
-			array(
-				'scope'       => TwitchSubDiscountSettings::SELECTED,
-				'product_ids' => array( 601 ),
-			)
-		);
-		$this->refused(
-			array( 'product_ids' => 'required' ),
-			$this->nova,
-			array(
-				'scope'       => TwitchSubDiscountSettings::SELECTED,
-				'product_ids' => array(),
-			)
-		);
-		$this->refused( array( 'enabled' => 'not_connected' ), $this->orion, array() );
+	public function test_invalid_campaigns_are_refused_per_field(): void {
+		$this->refused( array( 'campaigns.0.tier_two' => 'invalid' ), $this->nova, array( self::campaign( array( 'tiers' => array( 1 => 10, 2 => 101, 3 => 0 ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		$this->refused( array( 'campaigns.0.tier_one' => 'required' ), $this->nova, array( self::campaign( array( 'tiers' => array( 1 => 0, 2 => 0, 3 => 0 ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		$this->refused( array( 'campaigns.0.name' => 'required' ), $this->nova, array( self::campaign( array( 'name' => ' ' ) ) ) );
+		$this->refused( array( 'campaigns.0.product_ids' => 'invalid' ), $this->nova, array( self::selection( array( 601 ) ) ) );
+		$this->refused( array( 'campaigns.0.product_ids' => 'required' ), $this->nova, array( self::selection( array() ) ) );
+		$this->refused( array( 'campaigns.0.ends' => 'before_start' ), $this->nova, array( self::campaign( array( 'starts' => '2026-11-20', 'ends' => '2026-11-19' ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		$this->refused( array( 'campaigns.0.enabled' => 'not_connected' ), $this->orion, array( self::campaign() ) );
 
-		$off = $this->settings->save( $this->orion, $this->input( array( 'enabled' => false ) ) );
-		self::assertFalse( $off->enabled, 'Without a channel it can be saved switched off.' );
+		$off = $this->settings->save( $this->orion, $this->input( array( self::campaign( array( 'enabled' => false ) ) ) ) );
+		self::assertFalse( $off->campaigns[0]->enabled, 'Without a channel it can be saved switched off.' );
 	}
 
-	public function test_lines_get_the_discount_of_the_customers_tier_on_the_creators_channel(): void {
+	public function test_no_percent_above_the_lowest_profit_percent_of_the_campaigns_products(): void {
+		// Nova's products: 501 at 25 %, 502 at 18 %. "All" may give at most 18 %.
+		$this->refused( array( 'campaigns.0.tier_three' => 'too_high' ), $this->nova, array( self::campaign( array( 'tiers' => array( 1 => 10, 2 => 15, 3 => 19 ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+
+		// A selection of 501 only may give up to 25 %.
+		$saved = $this->settings->save( $this->nova, $this->input( array( self::selection( array( 501 ), array( 'tiers' => array( 1 => 25, 2 => 25, 3 => 25 ) ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		self::assertSame( 2500, $saved->campaigns[0]->tiers[3] );
+		self::assertSame( array( 501 => 25, 502 => 18 ), $this->settings->profit_percents( $this->nova ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+	}
+
+	public function test_a_product_is_in_one_selection_and_one_all_campaign_at_a_time(): void {
+		$this->refused( array( 'campaigns.1.product_ids' => 'taken' ), $this->nova, array( self::selection( array( 501 ) ), self::selection( array( 501, 502 ) ) ) );
+		$this->refused( array( 'campaigns.1.scope' => 'taken' ), $this->nova, array( self::campaign(), self::campaign() ) );
+
+		// Periods that do not meet, or a campaign that is off, are fine.
+		$saved = $this->settings->save(
+			$this->nova,
+			$this->input(
+				array(
+					self::campaign( array( 'ends' => '2026-11-30' ) ),
+					self::campaign( array( 'starts' => '2026-12-01' ) ),
+					self::selection( array( 501 ) ),
+					self::selection( array( 501 ), array( 'enabled' => false ) ),
+				)
+			)
+		);
+		self::assertCount( 4, $saved->campaigns );
+	}
+
+	public function test_lines_get_the_campaign_of_the_product_and_the_customers_tier(): void {
 		$this->settings->save(
 			$this->nova,
 			$this->input(
 				array(
-					'scope'       => TwitchSubDiscountSettings::SELECTED,
-					'product_ids' => array( 501 ),
+					self::campaign( array( 'tiers' => array( 1 => 5, 2 => 10, 3 => 15 ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+					self::selection( array( 501 ), array( 'tiers' => array( 1 => 10, 2 => 20, 3 => 25 ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
 				)
 			)
 		);
+		$selection = $this->settings->find( $this->nova )->campaigns[1]->id;
 
 		self::assertNull( $this->discount->rate( 501 ), 'Not logged in with Twitch.' );
-		self::assertSame( 20, $this->discount->highest_offer( array( 501, 601 ) ), 'Offered anyway (up to 20 %).' );
+		self::assertSame( 25, $this->discount->highest_offer( array( 501, 601 ) ), 'Offered anyway (up to 25 %).' );
 
 		$this->log_in();
-		$this->answer(
-			self::SUB_URL,
-			200,
-			array(
-				'data' => array(
-					array(
-						'tier'    => '2000',
-						'is_gift' => false,
-					),
-				),
-			)
-		);
+		$this->answer( self::SUB_URL, 200, array( 'data' => array( array( 'tier' => '2000', 'is_gift' => false ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
 		$this->discount = $this->discount();
 
 		self::assertSame(
 			array(
-				'creator_id' => $this->nova,
-				'tier'       => 2,
-				'bps'        => 1500,
-				'gifted'     => false,
+				'creator_id'  => $this->nova,
+				'campaign_id' => $selection,
+				'tier'        => 2,
+				'bps'         => 2000,
+				'gifted'      => false,
 			),
-			$this->discount->rate( 501 )
+			$this->discount->rate( 501 ),
+			'The selection goes before "all".'
 		);
-		self::assertNull( $this->discount->rate( 502 ), 'Not selected.' );
-		self::assertNull( $this->discount->rate( 601 ), 'Another creator without the discount.' );
+		self::assertSame( 1000, $this->discount->rate( 502 )['bps'] ?? null, '"All" covers the rest.' );
+		self::assertNull( $this->discount->rate( 601 ), 'Another creator without campaigns.' );
 
 		$this->coded    = array( $this->nova );
 		$this->discount = $this->discount();
 		self::assertNull( $this->discount->rate( 501 ), 'The creator\'s own code is in the cart (ADR-068).' );
 	}
 
-	public function test_gifted_subscriptions_follow_the_creators_choice_and_the_check_before_the_order_sees_changes(): void {
-		$this->settings->save( $this->nova, $this->input( array( 'gifted' => false ) ) );
+	public function test_a_campaign_outside_its_period_gives_nothing(): void {
+		$this->settings->save( $this->nova, $this->input( array( self::campaign( array( 'starts' => '2026-11-14', 'ends' => '2026-11-15' ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
 		$this->log_in();
-		$this->answer(
-			self::SUB_URL,
-			200,
-			array(
-				'data' => array(
-					array(
-						'tier'    => '1000',
-						'is_gift' => true,
-					),
-				),
-			)
-		);
+		$this->answer( self::SUB_URL, 200, array( 'data' => array( array( 'tier' => '1000', 'is_gift' => false ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+
+		self::assertNull( $this->discount( '2026-11-13' )->rate( 501 ) );
+		self::assertSame( 1000, $this->discount( '2026-11-14' )->rate( 501 )['bps'] ?? null );
+	}
+
+	public function test_gifted_subscriptions_follow_the_creators_choice_and_the_check_before_the_order_sees_changes(): void {
+		$this->settings->save( $this->nova, $this->input( array( self::campaign() ), false ) );
+		$this->log_in();
+		$this->answer( self::SUB_URL, 200, array( 'data' => array( array( 'tier' => '1000', 'is_gift' => true ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
 
 		self::assertNull( $this->discount->rate( 501 ), 'A gift does not count.' );
 
-		$this->settings->save( $this->nova, $this->input() );
+		$this->settings->save( $this->nova, $this->input( array( self::campaign() ) ) );
 		$this->discount = $this->discount();
 		self::assertSame( 1000, $this->discount->rate( 501 )['bps'] ?? null, 'Reused answer: tier 1, gift counts now.' );
 
@@ -306,7 +305,7 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 	}
 
 	public function test_twitch_not_answering_gives_no_discount(): void {
-		$this->settings->save( $this->nova, $this->input() );
+		$this->settings->save( $this->nova, $this->input( array( self::campaign() ) ) );
 		$this->log_in();
 		$this->answer( self::SUB_URL, 500, array() );
 
@@ -316,8 +315,10 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 
 	/**
 	 * A fresh discount service (its answers are per request).
+	 *
+	 * @param string $today Today (Y-m-d).
 	 */
-	private function discount(): TwitchSubDiscount {
+	private function discount( string $today = '2026-11-10' ): TwitchSubDiscount {
 		$owners = array(
 			501 => $this->nova,
 			502 => $this->nova,
@@ -330,7 +331,8 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 			static fn( int $product_id ): ?int => $owners[ $product_id ] ?? null,
 			fn( int $creator_id ): ?string => $creator_id === $this->nova ? self::CHANNEL : null,
 			fn(): array => $this->coded,
-			new RecordingLogger()
+			new RecordingLogger(),
+			static fn(): string => $today
 		);
 	}
 
@@ -363,40 +365,76 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * The creator's form with changes.
+	 * The creator's form.
+	 *
+	 * @param list<array<string, mixed>> $campaigns Campaigns.
+	 * @param bool                       $gifted    Whether gifted subscriptions count.
+	 * @return array<string, mixed>
+	 */
+	private function input( array $campaigns, bool $gifted = true ): array {
+		return array(
+			'gifted'    => $gifted,
+			'campaigns' => $campaigns,
+		);
+	}
+
+	/**
+	 * A campaign of all products (10/15/18 %), on, without a period.
 	 *
 	 * @param array<string, mixed> $changes Changed fields.
 	 * @return array<string, mixed>
 	 */
-	private function input( array $changes = array() ): array {
+	private static function campaign( array $changes = array() ): array {
 		return $changes + array(
+			'id'          => '',
+			'name'        => 'Subs',
 			'enabled'     => true,
 			'tiers'       => array(
 				1 => 10,
 				2 => 15,
-				3 => 20,
+				3 => 18,
 			),
-			'gifted'      => true,
-			'scope'       => TwitchSubDiscountSettings::ALL,
+			'scope'       => TwitchSubCampaign::ALL,
 			'product_ids' => array(),
+			'starts'      => '',
+			'ends'        => '',
+		);
+	}
+
+	/**
+	 * A campaign of selected products.
+	 *
+	 * @phpstan-param list<int> $products
+	 *
+	 * @param int[]                $products Products.
+	 * @param array<string, mixed> $changes  Changed fields.
+	 * @return array<string, mixed>
+	 */
+	private static function selection( array $products, array $changes = array() ): array {
+		return self::campaign(
+			$changes + array(
+				'scope'       => TwitchSubCampaign::SELECTED,
+				'product_ids' => $products,
+			)
 		);
 	}
 
 	/**
 	 * Asserts a refusal with exactly these field codes.
 	 *
-	 * @param array<string, string> $fields     Expected codes.
-	 * @param int                   $creator_id Creator.
-	 * @param array<string, mixed>  $changes    Changed fields.
+	 * @param array<string, string>      $fields     Expected codes.
+	 * @param int                        $creator_id Creator.
+	 * @param list<array<string, mixed>> $campaigns  Campaigns.
 	 */
-	private function refused( array $fields, int $creator_id, array $changes ): void {
+	private function refused( array $fields, int $creator_id, array $campaigns ): void {
 		try {
-			$this->settings->save( $creator_id, $this->input( $changes ) );
+			$this->settings->save( $creator_id, $this->input( $campaigns ) );
 			self::fail( 'Refused expected.' );
 		} catch ( TwitchSubDiscountInvalid $e ) {
 			self::assertSame( $fields, $e->fields() );
 		}
 	}
+
 
 	/**
 	 * The recording transport.

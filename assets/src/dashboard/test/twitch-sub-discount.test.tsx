@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { act } from 'react';
 
-import { parseTwitchSubDiscount } from '../api/community';
+import { maxPercent, parseTwitchSubDiscount } from '../api/community';
 import { ConfigContext } from '../app/config-context';
 import { RouterProvider } from '../app/router';
 import { TwitchSubDiscountSection } from '../sections/community/TwitchSubDiscountSection';
@@ -18,14 +18,33 @@ jest.mock( '@wordpress/api-fetch', () => ( {
 const PATH = '/merchboard/v1/me/community/twitch-sub-discount';
 const PRODUCTS = '/merchboard/v1/me/products?page=1&per_page=100';
 
-const SAVED = {
+const ALL = {
+	id: 'aaaaaaaaaaaaaaaa',
+	name: 'Alle subs',
 	enabled: true,
-	tiers: { 1: 10, 2: 15, 3: 20 },
-	gifted: true,
+	tiers: { 1: 10, 2: 15, 3: 18 },
 	scope: 'all',
 	product_ids: [],
+	starts: null,
+	ends: null,
+};
+
+const SAVED = {
+	gifted: true,
+	campaigns: [ ALL ],
+	profit_percents: { 7: 25, 8: 18 },
 	channel: { login: 'nova' },
 	twitch: true,
+};
+
+const PRODUCT = {
+	status: 'publish',
+	price: null,
+	stock_status: 'instock',
+	image: null,
+	profit: null,
+	designer: false,
+	removal_pending: false,
 };
 
 let rendered: Rendered | null = null;
@@ -64,14 +83,31 @@ async function submit( container: HTMLElement ): Promise< void > {
 	await flush();
 }
 
+function button( container: HTMLElement, text: string ): Element | null {
+	return (
+		Array.from( container.querySelectorAll( 'button' ) ).find(
+			( candidate ) => candidate.textContent === text
+		) ?? null
+	);
+}
+
 describe( 'parseTwitchSubDiscount', () => {
 	it( 'reads the documented fields', () => {
 		expect( parseTwitchSubDiscount( SAVED ) ).toEqual( {
-			enabled: true,
-			tiers: { 1: 10, 2: 15, 3: 20 },
 			gifted: true,
-			scope: 'all',
-			productIds: [],
+			campaigns: [
+				{
+					id: 'aaaaaaaaaaaaaaaa',
+					name: 'Alle subs',
+					enabled: true,
+					tiers: { 1: 10, 2: 15, 3: 18 },
+					scope: 'all',
+					productIds: [],
+					starts: '',
+					ends: '',
+				},
+			],
+			profitPercents: { 7: 25, 8: 18 },
 			channel: 'nova',
 			twitch: true,
 		} );
@@ -81,14 +117,17 @@ describe( 'parseTwitchSubDiscount', () => {
 		expect(
 			parseTwitchSubDiscount( {
 				...SAVED,
-				tiers: { 1: 101, 2: 0, 3: 0 },
+				campaigns: [ { ...ALL, tiers: { 1: 101, 2: 0, 3: 0 } } ],
 			} )
 		).toBeNull();
 		expect(
-			parseTwitchSubDiscount( { ...SAVED, scope: 'some' } )
+			parseTwitchSubDiscount( {
+				...SAVED,
+				campaigns: [ { ...ALL, starts: '10-11-2026' } ],
+			} )
 		).toBeNull();
 		expect(
-			parseTwitchSubDiscount( { ...SAVED, product_ids: [ 0 ] } )
+			parseTwitchSubDiscount( { ...SAVED, profit_percents: { x: 5 } } )
 		).toBeNull();
 		expect(
 			parseTwitchSubDiscount( {
@@ -97,26 +136,49 @@ describe( 'parseTwitchSubDiscount', () => {
 			} )
 		).toBeNull();
 	} );
+
+	it( 'gives the lowest profit percent as the most a campaign may give', () => {
+		const percents = { 7: 25, 8: 18 };
+
+		expect( maxPercent( { scope: 'all', productIds: [] }, percents ) ).toBe(
+			18
+		);
+		expect(
+			maxPercent( { scope: 'selected', productIds: [ 7 ] }, percents )
+		).toBe( 25 );
+		expect(
+			maxPercent( { scope: 'selected', productIds: [] }, {} )
+		).toBeNull();
+	} );
 } );
 
-describe( 'Twitch subscriber discount (ADR-106)', () => {
-	it( 'saves every field and shows the connected channel', async () => {
+describe( 'Twitch subscriber discount campaigns (ADR-106)', () => {
+	it( 'saves every campaign and shows the most it may give', async () => {
 		const { container, requests } = await show( {
 			[ `GET ${ PATH }` ]: () => response( 200, SAVED ),
 			[ `POST ${ PATH }` ]: () => response( 200, SAVED ),
 		} );
 
 		expect( container.textContent ).toContain( 'Twitch channel: nova' );
+		expect( container.textContent ).toContain( 'At most 18 %' );
 
 		await submit( container );
 
 		const saved = requests.find( ( request ) => request.method === 'POST' );
 		expect( saved?.data ).toEqual( {
-			enabled: true,
-			tiers: { 1: 10, 2: 15, 3: 20 },
 			gifted: true,
-			scope: 'all',
-			product_ids: [],
+			campaigns: [
+				{
+					id: 'aaaaaaaaaaaaaaaa',
+					name: 'Alle subs',
+					enabled: true,
+					tiers: { 1: 10, 2: 15, 3: 18 },
+					scope: 'all',
+					product_ids: [],
+					starts: '',
+					ends: '',
+				},
+			],
 		} );
 		expect( container.textContent ).toContain(
 			'Twitch subscriber discount saved.'
@@ -126,52 +188,26 @@ describe( 'Twitch subscriber discount (ADR-106)', () => {
 	it( 'asks to connect Twitch without a channel', async () => {
 		const { container } = await show( {
 			[ `GET ${ PATH }` ]: () =>
-				response( 200, { ...SAVED, enabled: false, channel: null } ),
+				response( 200, { ...SAVED, campaigns: [], channel: null } ),
 		} );
 
 		expect( container.textContent ).toContain(
 			'Connect your Twitch channel'
 		);
-		expect(
-			Array.from( container.querySelectorAll( 'button' ) ).some(
-				( button ) => button.textContent === 'Connect Twitch'
-			)
-		).toBe( true );
+		expect( button( container, 'Connect Twitch' ) ).not.toBeNull();
+		expect( container.textContent ).toContain(
+			'You have no campaigns yet.'
+		);
 	} );
 
-	it( 'lets the creator choose products and shows field errors', async () => {
+	it( 'adds a campaign of chosen products and shows its field errors', async () => {
 		const { container, requests } = await show( {
-			[ `GET ${ PATH }` ]: () =>
-				response( 200, {
-					...SAVED,
-					scope: 'selected',
-					product_ids: [ 7 ],
-				} ),
+			[ `GET ${ PATH }` ]: () => response( 200, SAVED ),
 			[ `GET ${ PRODUCTS }` ]: () =>
 				listResponse(
 					[
-						{
-							id: 7,
-							name: 'Hoodie',
-							status: 'publish',
-							price: null,
-							stock_status: 'instock',
-							image: null,
-							profit: null,
-							designer: false,
-							removal_pending: false,
-						},
-						{
-							id: 8,
-							name: 'Mug',
-							status: 'publish',
-							price: null,
-							stock_status: 'instock',
-							image: null,
-							profit: null,
-							designer: false,
-							removal_pending: false,
-						},
+						{ ...PRODUCT, id: 7, name: 'Hoodie' },
+						{ ...PRODUCT, id: 8, name: 'Mug' },
 					],
 					2,
 					1
@@ -180,20 +216,32 @@ describe( 'Twitch subscriber discount (ADR-106)', () => {
 				response( 400, {
 					code: 'merchboard_invalid_twitch_sub_discount',
 					message: 'Invalid.',
-					data: { status: 400, fields: { tier_two: 'invalid' } },
+					data: {
+						status: 400,
+						fields: { 'campaigns.1.tier_two': 'too_high' },
+					},
 				} ),
 		} );
+
+		click( button( container, 'Add campaign' ) );
+		await flush();
 		await flush();
 
-		expect( container.textContent ).toContain( '1 chosen' );
-
-		click( container.querySelector( '#merchboard-twitch-sub-product-8' ) );
+		click(
+			container.querySelector( '#merchboard-twitch-sub-1-product-7' )
+		);
 		await submit( container );
 
 		const saved = requests.find( ( request ) => request.method === 'POST' );
-		expect(
-			( saved?.data as { product_ids: number[] } ).product_ids
-		).toEqual( [ 7, 8 ] );
-		expect( container.textContent ).toContain( 'Check this field.' );
+		const campaigns = ( saved?.data as { campaigns: unknown[] } ).campaigns;
+		expect( campaigns ).toHaveLength( 2 );
+		expect( campaigns[ 1 ] ).toMatchObject( {
+			id: '',
+			scope: 'selected',
+			product_ids: [ 7 ],
+		} );
+		expect( container.textContent ).toContain(
+			"Higher than your lowest profit on the campaign's products."
+		);
 	} );
 } );

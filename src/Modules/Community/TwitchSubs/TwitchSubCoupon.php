@@ -59,6 +59,11 @@ final class TwitchSubCoupon {
 	public const LINE_CREATOR = '_merchboard_sub_creator';
 
 	/**
+	 * Line meta: the creator's campaign that gave the discount.
+	 */
+	public const LINE_CAMPAIGN = '_merchboard_sub_campaign';
+
+	/**
 	 * The calculation running now.
 	 *
 	 * @var WC_Discounts|null
@@ -75,7 +80,7 @@ final class TwitchSubCoupon {
 	/**
 	 * Discounts given in the cart by cart item key.
 	 *
-	 * @var array<string, array{amount: float, unit: float, creator_id: int, tier: int, bps: int, gifted: bool}>
+	 * @var array<string, array{amount: float, unit: float, creator_id: int, campaign_id: string, tier: int, bps: int, gifted: bool}>
 	 */
 	private array $given = array();
 
@@ -392,6 +397,7 @@ final class TwitchSubCoupon {
 		$item->update_meta_data( SubDiscountMeta::LINE_BPS, (string) $given['bps'] );
 		$item->update_meta_data( self::LINE_UNIT, number_format( $given['unit'], 4, '.', '' ) );
 		$item->update_meta_data( self::LINE_CREATOR, (string) $given['creator_id'] );
+		$item->update_meta_data( self::LINE_CAMPAIGN, $given['campaign_id'] );
 
 		$account = $this->login->account();
 		$stored  = json_decode( (string) $order->get_meta( SubDiscountMeta::ORDER, true, 'edit' ), true );
@@ -444,7 +450,7 @@ final class TwitchSubCoupon {
 	 *
 	 * @param mixed $item               Cart item (array) or order item.
 	 * @param float $discounting_amount WooCommerce' unit price (a fallback).
-	 * @return array{key: string, quantity: int, unit: float, order_item_id: int|null, rate: array{creator_id: int, tier: int, bps: int, gifted: bool}|null}|null
+	 * @return array{key: string, quantity: int, unit: float, order_item_id: int|null, rate: array{creator_id: int, campaign_id: string, tier: int, bps: int, gifted: bool}|null}|null
 	 */
 	private function line( mixed $item, float $discounting_amount ): ?array {
 		if ( $item instanceof WC_Order_Item_Product ) {

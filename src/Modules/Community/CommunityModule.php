@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\Community;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Http\Pagination;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\Access\CreatorContext;
@@ -65,7 +66,8 @@ final class CommunityModule implements Module {
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
 				static fn( int $creator_id, int $product_id ): bool => $c->get( CreatorProducts::class )->owns( $creator_id, $product_id ),
-				static fn( int $creator_id ): bool => $c->get( ChatbotChannelRepository::class )->find( $creator_id, ChatPlatform::Twitch )->connected()
+				static fn( int $creator_id ): bool => $c->get( ChatbotChannelRepository::class )->find( $creator_id, ChatPlatform::Twitch )->connected(),
+				static fn( int $creator_id, ?array $product_ids ): array => self::profit_percents( $c, $creator_id, $product_ids )
 			)
 		);
 		$container->set(
@@ -116,6 +118,41 @@ final class CommunityModule implements Module {
 				$container->get( MeTwitchSubDiscountController::class )->register_routes();
 			}
 		);
+	}
+
+	/**
+	 * The creator's profit percent (whole, rounded down) per parent product:
+	 * the creator's profit on a unit priced 100 (the share, or a designer
+	 * product's profit ÷ list price), as the cap per line uses it. Products
+	 * that are not the creator's are left out.
+	 *
+	 * @param Container      $c           Container.
+	 * @param int            $creator_id  Creator.
+	 * @param list<int>|null $product_ids Products; null for all the creator's.
+	 * @return array<int, int>
+	 */
+	private static function profit_percents( Container $c, int $creator_id, ?array $product_ids ): array {
+		if ( null === $product_ids ) {
+			$products    = $c->get( CreatorProducts::class );
+			$product_ids = array();
+			$pages       = (int) ceil( $products->count( $creator_id ) / Pagination::MAX_PER_PAGE );
+
+			for ( $page = 1; $page <= $pages; $page++ ) {
+				array_push( $product_ids, ...$products->ids( $creator_id, new Pagination( $page, Pagination::MAX_PER_PAGE ) ) );
+			}
+		}
+
+		$percents = array();
+
+		foreach ( $product_ids as $product_id ) {
+			$profit = $c->get( CreatorProfitDiscount::class )->per_unit( $product_id, $creator_id, 100.0 );
+
+			if ( null !== $profit ) {
+				$percents[ $product_id ] = (int) floor( $profit + 1e-9 );
+			}
+		}
+
+		return $percents;
 	}
 
 	/**

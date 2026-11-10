@@ -1754,8 +1754,40 @@ input:disabled + .merchboard-sounds__upload {
 	}
 }
 
-.merchboard-community-form__tiers .merchboard-input {
+.merchboard-community-form .merchboard-community-campaign {
+	padding: var(--merchboard-space-4);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius);
+
+	legend {
+		padding: 0 var(--merchboard-space-2);
+	}
+
+	> button {
+		justify-self: start;
+	}
+}
+
+.merchboard-community-campaign__tiers,
+.merchboard-community-campaign__period {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-3);
+}
+
+.merchboard-community-campaign__tiers .merchboard-input {
 	max-width: 8rem;
+}
+
+.merchboard-community-campaign__scope {
+	display: grid;
+	gap: var(--merchboard-space-1);
+}
+
+.merchboard-community-form__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
 }
 
 .merchboard-product-picker {

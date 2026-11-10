@@ -6164,6 +6164,13 @@ ADR-062, ADR-104
 ## Status
 Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" pkt. 3 og planen for fase 43). Udvider ADR-066 (Twitch som ekstern service) med kunde-login og subscription-opslag og udvider ADR-080 pkt. 8 (rabat af creatorens fortjeneste) til alle produkttyper for denne rabat.
 
+**Statusnote 2026-11-10 (projektejerens valg under trin 43.5; erstatter pkt. 3, hvor de afviger):** rabatten opsættes som **kampagner**.
+- En creator kan have op til 20 kampagner samtidig. Hver har et navn, en procent pr. tier, alle egne produkter eller udvalgte (højst 500), slået til/fra og en valgfri periode (første og sidste dag, hele dage i sitets tidszone). Om gifted subs tæller, gælder for alle creatorens kampagner.
+- Kampagner, der er slået til, og hvis perioder mødes: et produkt kan kun være i én kampagne med udvalgte produkter, og der kan kun være én kampagne for alle produkter.
+- På et produkt går en kampagne med udvalgte produkter forud for kampagnen for alle produkter.
+- **Max-procent:** ved gem afvises en procent over creatorens laveste fortjeneste-% blandt kampagnens produkter (alle creatorens produkter for "alle"). Fortjeneste-% er creatorens fortjeneste på en vare til 100 kr. (andelen eller designerproduktets fortjeneste ÷ listepris), rundet ned til hele procent. Loftet pr. linje (pkt. 4) gælder stadig, fx når et nyt produkt med lavere fortjeneste kommer til senere.
+- Ordrelinjen gemmer også, hvilken kampagne der gav rabatten (`_merchboard_sub_campaign`).
+
 ## Context
 Projektejeren vil, inspireret af Fourthwall, give creatorens Twitch-subscribers en automatisk rabat på creatorens produkter. Det kræver to ting: kunden skal bevise sin Twitch-konto, og abonnementet på creatorens kanal skal tjekkes.
 

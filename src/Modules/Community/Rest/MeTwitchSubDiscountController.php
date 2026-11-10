@@ -13,6 +13,7 @@ use Closure;
 use MerchBoard\Core\Http\RestController;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCampaign;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscountInvalid;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscountRepository;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscountSettings;
@@ -26,10 +27,13 @@ defined( 'ABSPATH' ) || exit;
 /**
  * `/me`-scoped (ADR-007; the creator only through CreatorContext):
  *
- * - `GET /me/community/twitch-sub-discount`: the settings (percents as
- *   whole numbers), the connected Twitch channel and whether Twitch is set
+ * - `GET /me/community/twitch-sub-discount`: whether gifted subscriptions
+ *   count, the campaigns (percents as whole numbers), the creator's profit
+ *   percent per product (the most a campaign may give is the lowest among
+ *   its products), the connected Twitch channel and whether Twitch is set
  *   up on the site.
- * - `PUT /me/community/twitch-sub-discount`: saves every field (400
+ * - `POST` (or `PUT`) `/me/community/twitch-sub-discount`: saves all
+ *   campaigns (400
  *   `merchboard_invalid_twitch_sub_discount` with a code per field).
  *   Blocked under "View as creator" (ImpersonationGuard).
  */
@@ -141,7 +145,7 @@ final class MeTwitchSubDiscountController extends RestController {
 				$body   = (array) $request->get_json_params();
 				$values = array();
 
-				foreach ( array( 'enabled', 'tiers', 'gifted', 'scope', 'product_ids' ) as $field ) {
+				foreach ( array( 'gifted', 'campaigns' ) as $field ) {
 					$values[ $field ] = $body[ $field ] ?? null;
 				}
 
@@ -166,17 +170,28 @@ final class MeTwitchSubDiscountController extends RestController {
 		$login    = ( $this->channel )( $creator_id );
 		$response = new WP_REST_Response(
 			array(
-				'enabled'     => $settings->enabled,
-				'tiers'       => array(
-					'1' => intdiv( $settings->tiers[1], 100 ),
-					'2' => intdiv( $settings->tiers[2], 100 ),
-					'3' => intdiv( $settings->tiers[3], 100 ),
+				'gifted'          => $settings->gifted,
+				'campaigns'       => array_map(
+					static fn( TwitchSubCampaign $campaign ): array => array(
+						'id'          => $campaign->id,
+						'name'        => $campaign->name,
+						'enabled'     => $campaign->enabled,
+						'tiers'       => array(
+							'1' => intdiv( $campaign->tiers[1], 100 ),
+							'2' => intdiv( $campaign->tiers[2], 100 ),
+							'3' => intdiv( $campaign->tiers[3], 100 ),
+						),
+						'scope'       => $campaign->scope,
+						'product_ids' => $campaign->product_ids,
+						'starts'      => $campaign->starts,
+						'ends'        => $campaign->ends,
+					),
+					$settings->campaigns
 				),
-				'gifted'      => $settings->gifted,
-				'scope'       => $settings->scope,
-				'product_ids' => $settings->product_ids,
-				'channel'     => null === $login ? null : array( 'login' => $login ),
-				'twitch'      => ( $this->ready )(),
+				// The most a campaign may give is the lowest of these among its products.
+				'profit_percents' => (object) $this->settings->profit_percents( $creator_id ),
+				'channel'         => null === $login ? null : array( 'login' => $login ),
+				'twitch'          => ( $this->ready )(),
 			),
 			200
 		);
