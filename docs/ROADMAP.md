@@ -1128,6 +1128,29 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 
 **Efter fase 42:** samlet review og release af fase 41 og 42 (det tidligere 41.8): uafhængigt review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK. **Status 2026-11-09:** review ✅, bump til 1.8.0 ✅, testpakke på stg ✅, ingen bekræftelse og CPR i stamdata ✅ (`9d50bc0`), tagget `v1.8.0` på `9d50bc0` efter projektejerens OK; draft-release byte-identisk med testpakken (DEVELOPMENT.md "Release 1.8.0").
 
+## Fase 43 – Twitch-login for kunder og rabat til Twitch-subscribers 📝 (plan godkendt 2026-11-10; ADR-106; Community Features punkt 3)
+
+**Projektejerens valg (2026-11-10):** se "Community Features (MitCCMerch)", punkt 3, nedenfor. Tilføjet efter undersøgelsen:
+- Creatoren betaler hele rabatten af sin fortjeneste på alle produkttyper, også almindelige andelsprodukter (en ny regnskabsregel).
+- Kundekontoen husker kun Twitch-id og -navn. Ved et nyt besøg kræver tjekket ét klik.
+- Creatorens kanal kendes, når creatoren forbinder Twitch (samme forbindelse som chatbotten; beskederne kan stadig være slået fra).
+- Rabatten gives også oven i en tilbudspris.
+
+**Trin:**
+- **43.1 Docs:** ADR-106, SECURITY.md, DATABASE.md, MODULES.md og `docs/features/twitch-sub-discount.md`.
+- **43.2 Regnskab:** creatoren betaler subscriber-rabatten på alle produkttyper. Migration 49, med tests af at PHP og SQL giver samme resultat.
+- **43.3 Twitch-login for kunder:** subscription-tjek, OAuth bundet til kurvens session, log ind og log ud.
+- **43.4 Kurv og ordre:** en automatisk rabat, hvor den bedste rabat vinder pr. linje. Abonnementet tjekkes igen før ordren, og ordren gemmer, hvilken Twitch-konto og tier der gav rabatten.
+- **43.5 Creator-dashboard:** menuen "Community Features" med siden "Twitch-subscriber-rabat" og en produktvælger.
+- **43.6 Butiksvisning:** et kort i kurv og checkout, både klassisk og med blokke.
+- **43.7 Visning i admin:** ordrehistorik, afregningsbilag og ordresiden.
+- **43.8 Tekster og faste lister.**
+- **43.9 Runtime-test:** på Local. En rigtig Twitch-test på stg kun efter projektejerens OK.
+
+## Fase 44 – Twitch-gifting 📝 (efter fase 43; Community Features punkt 2)
+
+Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR, når fase 43 er færdig.
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |
@@ -1173,18 +1196,34 @@ Projektejerens ønske 2026-11-09, ikke prioriteret. En ny menu "Community Featur
 **2. Twitch-gifting**
 - **Hos Fourthwall:** mens creatoren er live, kan en seer købe et produkt som gave. Botten annoncerer gaven og åbner et indtrædelsesvindue (`!enter`, 20–180 sekunder). Botten trækker en tilfældig vinder, og vinderen henter gaven ved at logge ind med Twitch. Bliver gaven ikke hentet, kan den trækkes om. Køberen betaler en gennemsnitlig fragt; forskellen dækkes efter creatorens valg.
 - **Hos os (projektejerens model):** creatoren får fortjeneste af købet, men den gavekortkode, vinderen får, fratrækkes fortjenesten. Giveawayen kører gennem CCMerch-chatbotten.
-- **Afklares:**
-  - Hvordan vinderen bevises: Twitch-login ved indløsning, som hos Fourthwall.
-  - Hvad der sker med en gave, der ikke bliver hentet.
-  - Hvem der dækker fragtforskellen.
-  - Om det kun er Twitch, eller også YouTube og Kick.
+- **Projektejerens valg 2026-11-10** (afløser de tidligere afklaringspunkter; bygges i fasen efter punkt 3 og genbruger dens Twitch-login):
+  - **Kun Twitch** i første omgang; Kick og YouTube kan komme senere.
+  - **Til og fra pr. creator:** creatoren slår Twitch-gifting til og fra under "Community Features". Er det slået fra, kan seerne ikke købe gaver til creatorens stream, heller ikke mens creatoren er live.
+  - **Gaven er et bestemt produkt:** køberen vælger produktet, og vinderen vælger selv størrelse og farve ved indløsning.
+  - **Kun mens creatoren er live:** gave-købet tilbydes kun, mens creatorens Twitch-kanal streamer (kræver et nyt Twitch-endpoint i ADR'en).
+  - **Én gave pr. køb** (ét køb = én vinder).
+  - **Fragt:** køberen betaler en fast gave-fragt, som er den billigste standardfragt (50 kr.). Bliver fragten til vinderens adresse dyrere, betaler vinderen forskellen.
+  - **Dyrere variant:** gaven dækker købsprisen; vælger vinderen en dyrere variant (fx 3XL), betaler vinderen forskellen.
+  - **Køberen i chatten:** som hos Fourthwall vælger køberen selv, om navnet skal med i annonceringen, eller om gaven gives anonymt.
+  - **Indtræden:** botten annoncerer gaven og åbner et `!enter`-vindue, hvis længde (20–180 sekunder) creatoren vælger i MitCCMerch. Botten trækker og annoncerer vinderen. Alle i chatten kan deltage, også køberen.
+  - **Vinderen beviser sig med Twitch-login ved indløsning:** botten skriver et link i chatten, og kun den Twitch-konto, der vandt, kan hente gaven. Koden vises aldrig i chatten.
+  - **Ikke hentet:** vinderen har en frist (fx 24 timer). Derefter kan gaven trækkes om, fx ved næste stream.
 
 **3. Rabat til Twitch-subscribers**
 - **Hos Fourthwall:** en automatisk rabat (procent, fast beløb eller gratis fragt) på hele ordren eller udvalgte produkter, valgt pr. subscriber-tier og eventuelt land. Subscriberen logger ind med Twitch ved checkout, og abonnementet tjekkes. Gratis produkter som rabat understøttes ikke.
 - **Hos os:**
   - Kræver, at kunden logger ind med Twitch i checkout (Twitch-OAuth for kunder). Det er en ny brug af Twitch ud over alerts, så det kræver en ADR.
   - Abonnementet tjekkes mod creatorens kanal.
-  - **Afklares:** hvem der betaler rabatten. Følger den produktdesignerens regel (uden for virksomhedens kampagner tages en rabat af creatorens fortjeneste, fase 30)?
+- **Projektejerens valg 2026-11-10:**
+  - **Rækkefølge:** Twitch-login for kunder og subscriber-rabatten bygges først i én fase; Twitch-gifting (punkt 2) følger i fasen efter og genbruger login'et.
+  - **Kun Twitch** i første omgang.
+  - **Twitch-login:** knappen sidder i kurv og checkout og virker uden kundekonto (Twitch-id'et gemmes på sessionen og ordren). Er kunden logget ind i butikken, kan Twitch-kontoen også huskes på kundekontoen.
+  - **Rabattype:** procent pr. tier (Tier 1, 2 og 3), som creatoren sætter.
+  - **Produkter:** creatoren opsætter selv rabatten og vælger, om den gælder alle creatorens egne produkter eller udvalgte produkter. Andre creatores produkter i samme kurv får ingen rabat.
+  - **Gifted subs:** creatoren vælger, om subs, kunden har fået i gave, giver rabat. Prime-subs tæller som Tier 1, som Twitch melder dem.
+  - **Betaler:** rabatten tages af creatorens fortjeneste (som produktdesignerens regel, fase 30), med loft ved fortjenesten: rabatten på en linje kan højst være creatorens fortjeneste på den, så fortjenesten aldrig går i minus.
+  - **Andre rabatter:** bedste rabat vinder pr. linje; subscriber-rabat og rabatkoder (fx creatorens egen kode) lægges ikke sammen.
+  - **Tjek:** abonnementet tjekkes ved login og igen lige før ordren oprettes.
 
 **4. Rabat til YouTube-medlemmer (eventuelt)**
 - **Hos Fourthwall:** findes ikke. Ingen af Fourthwalls sider nævner YouTube-kanalmedlemskaber.
