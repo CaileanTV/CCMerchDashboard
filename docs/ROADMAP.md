@@ -1147,7 +1147,7 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 - **43.8 Tekster og faste lister:** ✅ alle nye tekster er oversat til dansk (`npm run i18n`). Faste lister er opdateret: audit, afinstallation (user meta og ordre-meta), "Se som creator", schema-version 49, `SchemaTest` og `PluginTest`. Dokumentation: DATABASE.md, MODULES.md og `docs/features/twitch-sub-discount.md`. CI-fejl rettet: modulet opretter først Twitch-tjenesterne på `init`, testene bruger gyldige Twitch-nøgler, og et subscription-svar gemt under kanal-id'et blev forkastet, fordi PHP gør tal-nøgler til heltal. De berørte integrationstests er grønne lokalt (47 tests).
 - **43.9 Runtime-test:** ⏸ udskudt efter projektejerens beslutning 2026-11-10. Fase 43 testes sammen med fase 44 i én testpakke på stg: rigtigt Twitch-login, subscription-tjek, rabat i kurven og ordre. Der bygges ingen testpakke til fase 43 alene.
 
-## Fase 44 – Twitch-gifting 📝 (efter fase 43; Community Features punkt 2)
+## Fase 44 – Twitch-gifting 🔄 (valg 2026-11-10; ADR-107; Community Features punkt 2)
 
 Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR. **Testes sammen med fase 43** i én testpakke på stg (projektejerens beslutning 2026-11-10); derefter samlet review, CI og release.
 
@@ -1167,6 +1167,17 @@ Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR. **Testes samme
   - creatoren i klokken, når en gave er købt, og når den er hentet;
   - køberen på e-mail, når vinderen er trukket, når gaven er hentet, og når koden går tilbage til køberen;
   - admin, når en gave er gået tilbage til køberen.
+**Trin (ADR-107):**
+- **44.1 Docs:** ✅ ADR-107.
+- **44.2 Data:** migration 50 (`merchboard_gifts`), gave-repository og creatorens indstillinger (`twitch_gifting`).
+- **44.3 Twitch:** om creatoren er live (`helix/streams`) og chatbeskeder fra webhooken videre til gifting, med badges.
+- **44.4 Køb:** knappen på produktsiden, gave-kurven (ét produkt, laveste variantpris, 50 kr. gave-fragt), køberens navn eller anonym og gaven oprettet ved betaling.
+- **44.5 Lodtrækning:** annoncering, `!enter`-vindue, trækning og vinder i chatten, `!gift start/pause/resume`, frist på 24 timer og højst 3 omtrækninger, derefter til køberen.
+- **44.6 Indløsning:** siden med Twitch-login, gavekoden (produkt plus op til 50 kr. fragt), fortjeneste kun af det, vinderen betaler, og e-mails til køberen.
+- **44.7 Creator-dashboard:** siden "Twitch gifting" (til/fra, pause, vindue, sprog, "Start ventende gaver" og liste over gaver).
+- **44.8 Admin, beskeder, privacy, tekster og tests:** ordresiden, advarsel ved refundering, notifikationer, privacy, afinstallation, danske tekster og faste lister.
+- **44.9 Review, CI og testpakke 2.0.0** for fase 43 og 44 på stg.
+
 - **Efter fase 44** kører jeg automatisk videre: review, rettelser, grøn CI, testpakke for fase 43 og 44 og upload til stg. Projektejeren tester, og tag og release sker først efter projektejerens OK. **Versionen bliver 2.0.0.**
 
 ## Senere (uprioriteret)

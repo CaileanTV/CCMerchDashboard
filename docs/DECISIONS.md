@@ -6255,3 +6255,71 @@ Eksisterende rækker beregnes uændret.
 
 ## Related
 ADR-016, ADR-049, ADR-064, ADR-066, ADR-068, ADR-078, ADR-080
+
+# ADR-107: Twitch-gifting (gaver i creatorens stream)
+
+## Date
+2026-11-10
+
+## Status
+Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" pkt. 2 og under "Fase 44"). Udvider ADR-066 med `GET helix/streams` (om creatoren er live) og bruger chatbottens eksisterende chat-webhook (EventSub `channel.chat.message`) til `!enter` og `!gift`-kommandoer. Bygger på kundens Twitch-login fra ADR-106.
+
+## Context
+Hos Fourthwall kan en seer købe et produkt som gave, mens creatoren streamer. Botten trækker en vinder blandt dem, der skriver `!enter`, og vinderen henter gaven ved at logge ind med Twitch. Projektejeren vil have det samme gennem CCMerch-chatbotten, med en til/fra-knap og en pause pr. creator.
+
+## Decision
+1. **Twitch:**
+   - Nyt endpoint `GET https://api.twitch.tv/helix/streams?user_id=<kanal>` med app-tokenet, så vi ved, om creatoren er live. Svaret gemmes i 60 sekunder.
+   - Chatbeskeder kommer fra chatbottens webhook, der kun er tilgængelig på et site med HTTPS. Kommandoer fra broadcaster og moderatorer genkendes på beskedens badges.
+2. **Creatorens indstillinger** gemmes i creator-meta `twitch_gifting`: slået til/fra, pause, vinduets længde (20–180 sekunder, standard 60) og sproget for chatteksterne (dansk eller engelsk). Gifting kræver forbundet Twitch-kanal.
+3. **Køb:**
+   - Knappen "Giv som gave i streamen" står på produktsiden. Den vises kun, når creatoren har gifting slået til, ikke har sat på pause og er live.
+   - Gaven er en ordre for sig med ét produkt til den laveste variantpris plus 50 kr. i fast gave-fragt.
+   - Køberen vælger selv, om navnet skal med i annonceringen (frivilligt felt), eller om gaven er anonym.
+   - Ordren er et almindeligt salg i regnskabet, så creatoren får fortjeneste som ved ethvert salg.
+4. **Gaven** gemmes i tabellen `merchboard_gifts` (migration 50). Status er `waiting` (betalt, venter på lodtrækning), `entering` (vinduet er åbent), `won` (vinder trukket, frist 24 timer), `claimed`, `returned` (koden er gået til køberen) eller `cancelled`.
+5. **Lodtrækning:**
+   - Når gave-ordren er betalt, mens creatoren er live og gifting ikke er på pause, annoncerer botten gaven og åbner `!enter`-vinduet.
+   - Når vinduet lukker, trækkes en tilfældig vinder (`random_int`) blandt de unikke Twitch-konti, der skrev `!enter`. Køberen kan også vinde. Botten annoncerer vinderen med linket til at hente gaven.
+   - Er der ingen deltagere, venter gaven igen.
+   - Gaver betalt efter streamen og gaver, der skal trækkes om, venter, til creatoren eller en moderator skriver `!gift start` eller trykker "Start ventende gaver" i MitCCMerch. Gaverne køres én ad gangen.
+   - `!gift pause` og `!gift resume` (eller knappen) stopper og genoptager. Under pause kan der ikke købes gaver, og der startes ingen lodtrækning.
+   - Teksterne er faste, på dansk eller engelsk efter creatorens valg.
+6. **Indløsning:**
+   - Linket fører til en side, der kræver Twitch-login (ADR-106). Kun den vindende Twitch-konto får koden.
+   - Koden er en WooCommerce-kupon af egen type, der kun gælder det vundne produkt (alle varianter) og kun kan bruges én gang. Den dækker købsprisen på produktet plus op til 50 kr. af fragten (som et negativt gebyr).
+   - Vinderen bruger koden i den normale checkout og betaler selv forskellen ved en dyrere variant eller fragt.
+7. **Ikke hentet:** vinderen har 24 timer. Derefter venter gaven på en ny lodtrækning (højst 3). Efter tredje gang sendes koden til køberen på e-mail, og gaven får status `returned`.
+8. **Fortjeneste:** på vinderens ordre giver kun det, vinderen selv betaler, fortjeneste. Den del, koden dækker, er allerede talt med ved købet. Linjens beløb efter koden er grundlaget, så reglerne i ADR-049 og ADR-080 gælder uændret.
+9. **Refundering:** når der er trukket en vinder, kan gave-ordren ikke refunderes. Admin får en advarsel på ordresiden, og en refundering ændrer ikke gaven.
+10. **Beskeder:**
+    - creatoren i klokken, når en gave er købt og hentet;
+    - køberen på e-mail (WooCommerces e-mail-design), når vinderen er trukket, når gaven er hentet, og når koden går tilbage;
+    - admin, når en gave er gået tilbage til køberen.
+11. **Audit:** `twitch_gifting_changed` med feltnavne. Lodtrækninger logges i gave-tabellen, ikke i audit.
+
+## Alternatives considered
+- **Afkrydsning "gave" i kurven blandet med andre varer:** sværere at følge og refundere. Fravalgt.
+- **En særlig gaveside, der opretter ordren for vinderen:** mere at bygge, og forskellen skal alligevel betales. Fravalgt.
+- **Chat-kommandoer til alt (redraw og cancel):** projektejeren vil kun have pause, resume og start.
+
+## Reason
+Seere kan give merch til fællesskabet live, creatoren får fortjeneste af købet, og intet gives væk to gange.
+
+## Security
+- Kun den vindende Twitch-konto kan hente koden. Login sker med state og cookie fra ADR-106, og koden vises kun til den konto.
+- Lodtrækningen bruger `random_int`. Hver Twitch-konto tæller én gang. Deltagerne gemmes kun, så længe vinduet er åbent, og slettes ved lodtrækningen.
+- Kun broadcaster og moderatorer kan styre gaver fra chatten (badges fra den signerede webhook).
+- Persondata: køberens valgfrie navn og vinderens Twitch-login gemmes i gave-tabellen, slettes med privacy-værktøjerne og ved opt-in-afinstallation og vises offentligt i chatten (køberen vælger navnet selv).
+
+## Migration/data implications
+- Migration 50: tabellen `merchboard_gifts`.
+- Creator-meta `twitch_gifting`.
+- Ordre-meta `_merchboard_gift` på gave-ordren og kupon-meta `_merchboard_gift_id` på koden.
+
+## Consequences
+- Lodtrækningen kræver chat-webhooken og kan kun testes på stg eller devpage.
+- Fase 43 og 44 testes sammen og udgives som 2.0.0.
+
+## Related
+ADR-049, ADR-066, ADR-080, ADR-106
