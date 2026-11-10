@@ -27,6 +27,8 @@ use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCoupon;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscount;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscountRepository;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubPrivacy;
+use MerchBoard\Modules\Community\TwitchSubs\TwitchSubShopCard;
+use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerSession;
 use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CouponCode;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeRepository;
@@ -110,6 +112,8 @@ final class CommunityModule implements Module {
 		$container->get( TwitchSubCoupon::class )->register();
 		$container->get( TwitchSubCheckout::class )->register();
 		( new TwitchSubPrivacy() )->register();
+		// The Twitch login card in the cart and the checkout (its hooks only fire on the front end).
+		( new TwitchSubShopCard( $container->get( TwitchSubDiscount::class ), $container->get( TwitchCustomerLogin::class ), $container->get( TwitchCustomerSession::class ) ) )->register();
 		( new CommunityDashboardSection() )->register();
 
 		add_action(
