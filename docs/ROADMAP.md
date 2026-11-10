@@ -1145,11 +1145,11 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 - **43.6 Butiksvisning:** ✅ (lokalt; testes i 43.9) kortet vises i klassisk kurv og checkout og foran kurv- og checkout-blokkene. **Det vises kun, når kurven har creator-merchandise, hvor creatoren har en aktiv kampagne for produktet og forbundet Twitch** (projektejerens krav 2026-11-10). Ikke logget ind: "Log ind med Twitch" og den højeste procent, der tilbydes (for en husket konto "Tjek min subscription som …"). Logget ind: Twitch-navnet, om rabatten gælder, og "Log ud fra Twitch". Resultatet af et login vises én gang. WooCommerces egne notice-klasser bruges, så temaet styler kortet. Oprindelig plan: et kort i kurv og checkout, både klassisk og med blokke.
 - **43.7 Visning i admin:** ✅ ordrehistorikken viser "Twitch subscriber discount X, paid from the profit" på rækken. Ordresiden viser kundens Twitch-konto og tier og procent pr. creator. Afregningsbilaget kræver ingen ændring: det lægger de gemte fortjenester og udbetalinger sammen, og de indeholder allerede rabatten. Oprindelig plan: ordrehistorik, afregningsbilag og ordresiden.
 - **43.8 Tekster og faste lister:** ✅ alle nye tekster er oversat til dansk (`npm run i18n`). Faste lister er opdateret: audit, afinstallation (user meta og ordre-meta), "Se som creator", schema-version 49, `SchemaTest` og `PluginTest`. Dokumentation: DATABASE.md, MODULES.md og `docs/features/twitch-sub-discount.md`. CI-fejl rettet: modulet opretter først Twitch-tjenesterne på `init`, testene bruger gyldige Twitch-nøgler, og et subscription-svar gemt under kanal-id'et blev forkastet, fordi PHP gør tal-nøgler til heltal. De berørte integrationstests er grønne lokalt (47 tests).
-- **43.9 Runtime-test:** på Local. En rigtig Twitch-test på stg kun efter projektejerens OK.
+- **43.9 Runtime-test:** ⏸ udskudt efter projektejerens beslutning 2026-11-10. Fase 43 testes sammen med fase 44 i én testpakke på stg: rigtigt Twitch-login, subscription-tjek, rabat i kurven og ordre. Der bygges ingen testpakke til fase 43 alene.
 
 ## Fase 44 – Twitch-gifting 📝 (efter fase 43; Community Features punkt 2)
 
-Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR, når fase 43 er færdig.
+Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR. **Testes sammen med fase 43** i én testpakke på stg (projektejerens beslutning 2026-11-10); derefter samlet review, CI og release.
 
 ## Senere (uprioriteret)
 
