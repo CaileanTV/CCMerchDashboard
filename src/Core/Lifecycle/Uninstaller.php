@@ -129,11 +129,13 @@ final class Uninstaller {
 	 * (Modules\WooCommerce\Sales\WooCommerceSalesFailureMarker::META_KEY) and
 	 * the customer's username for alerts from the classic and the block
 	 * checkout (Modules\Alerts\WooCommercePaidOrderReader::USERNAME_META and
-	 * Modules\Alerts\Checkout\CheckoutUsername::BLOCK_META, step 25.9.1); tests
+	 * Modules\Alerts\Checkout\CheckoutUsername::BLOCK_META, step 25.9.1) and the
+	 * customer's Twitch account on an order with the subscriber discount
+	 * (Modules\WooCommerce\SubDiscount\SubDiscountMeta::ORDER, ADR-106); tests
 	 * keep them equal, so core does not depend on the modules. MerchAlert's
 	 * `_ccmerch_username` is not the plugin's and stays.
 	 */
-	public const ORDER_META_KEYS = array( '_merchboard_ledger_failure', '_merchboard_alert_username', '_wc_other/merchboard/alert-username', '_wc_other/merchboard/alert-username-show' );
+	public const ORDER_META_KEYS = array( '_merchboard_ledger_failure', '_merchboard_alert_username', '_wc_other/merchboard/alert-username', '_wc_other/merchboard/alert-username-show', '_merchboard_twitch_sub' );
 
 	/**
 	 * User meta keys owned by the plugin: the dashboard theme preference

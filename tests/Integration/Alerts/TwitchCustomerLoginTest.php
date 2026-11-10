@@ -36,9 +36,9 @@ use MerchBoard\Tests\Integration\IntegrationTestCase;
  */
 final class TwitchCustomerLoginTest extends IntegrationTestCase {
 
-	private const CLIENT_ID = 'client-c';
+	private const CLIENT_ID = 'clientcustomer01';
 
-	private const SECRET = 'secret-c';
+	private const SECRET = 'secretcustomer01';
 
 	private const CHANNEL = '4711';
 
@@ -182,7 +182,7 @@ final class TwitchCustomerLoginTest extends IntegrationTestCase {
 		self::assertStringStartsWith( TwitchApi::AUTHORIZE_URL . '?', $url );
 		self::assertSame( 'user:read:subscriptions', $query['scope'] ?? null );
 		self::assertSame( TwitchAccount::redirect_uri(), $query['redirect_uri'] ?? null, 'The app\'s existing callback.' );
-		self::assertArrayNotHasKey( 'force_verify', $query, 'A returning customer is not asked again.' );
+		self::assertSame( 'false', $query['force_verify'] ?? null, 'A returning customer is not asked again.' );
 		self::assertMatchesRegularExpression( '/^[0-9a-f]{32}$/', $this->cookie, 'The state is bound to this browser.' );
 
 		$location = $this->finish( $query['state'] ?? '', $this->cookie );

@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * ADR-106 pkt. 3 (status note 2026-11-10): a named campaign with a whole
- * percent per tier (0–100, stored in basis points), all the creator's
+ * percent per tier (0–100 with up to 2 decimals, stored in basis points), all the creator's
  * products or a selection (at most MAX_PRODUCTS parent products), on or off,
  * and an optional period of whole days in the site's time zone (inclusive).
  */
@@ -47,7 +47,7 @@ final readonly class TwitchSubCampaign {
 	 * @param string                        $id          Stable id (16 hex).
 	 * @param string                        $name        The creator's name for it.
 	 * @param bool                          $enabled     Whether it is on.
-	 * @param array{1: int, 2: int, 3: int} $tiers       Basis points per tier (whole percents).
+	 * @param array{1: int, 2: int, 3: int} $tiers       Basis points per tier (0–10 000).
 	 * @param string                        $scope       ALL or SELECTED.
 	 * @param int[]                         $product_ids Selected parent products (SELECTED only).
 	 * @param string|null                   $starts      First day (Y-m-d), null for none.
@@ -80,7 +80,7 @@ final readonly class TwitchSubCampaign {
 		foreach ( array( 1, 2, 3 ) as $tier ) {
 			$bps = $stored['tiers'][ $tier ] ?? ( $stored['tiers'][ (string) $tier ] ?? null );
 
-			if ( ! is_int( $bps ) || $bps < 0 || $bps > 10000 || 0 !== $bps % 100 ) {
+			if ( ! is_int( $bps ) || $bps < 0 || $bps > 10000 ) {
 				return null;
 			}
 
@@ -170,6 +170,16 @@ final readonly class TwitchSubCampaign {
 	 */
 	public function bps( int $tier ): int {
 		return in_array( $tier, array( 1, 2, 3 ), true ) ? $this->tiers[ $tier ] : 0;
+	}
+
+	/**
+	 * A percent in basis points as shown: without decimals when whole,
+	 * else with two (16.67 %), in the site's number format.
+	 *
+	 * @param int $bps Basis points.
+	 */
+	public static function percent_label( int $bps ): string {
+		return number_format_i18n( $bps / 100, 0 === $bps % 100 ? 0 : 2 );
 	}
 
 	/**

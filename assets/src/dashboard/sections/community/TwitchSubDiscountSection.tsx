@@ -8,6 +8,7 @@ import { MAX_PER_PAGE } from '../../api/client';
 import {
 	MAX_CAMPAIGNS,
 	getTwitchSubDiscount,
+	formatPercent,
 	maxPercent,
 	saveTwitchSubDiscount,
 } from '../../api/community';
@@ -23,6 +24,7 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Skeleton } from '../../components/Skeleton';
 import { Toast } from '../../components/Toast';
+import { useConfig } from '../../app/config-context';
 import { useApi } from '../../hooks/useApi';
 
 /** Most product pages read for the picker (100 each; a selection has at most 500). */
@@ -165,6 +167,7 @@ function CampaignEditor( {
 		);
 	};
 	const most = maxPercent( campaign, profitPercents );
+	const locale = useConfig().locale.replace( '_', '-' );
 	const shown = useMemo( () => {
 		const needle = search.trim().toLowerCase();
 
@@ -189,9 +192,13 @@ function CampaignEditor( {
 			...campaign,
 			tiers: {
 				...campaign.tiers,
+				// Up to 2 decimals (16.67 %).
 				[ tier ]: Math.max(
 					0,
-					Math.min( 100, Math.round( Number( value ) || 0 ) )
+					Math.min(
+						100,
+						Math.round( ( Number( value ) || 0 ) * 100 ) / 100
+					)
 				),
 			},
 		} );
@@ -263,7 +270,7 @@ function CampaignEditor( {
 							type="number"
 							min={ 0 }
 							max={ most ?? 100 }
-							step={ 1 }
+							step={ 0.01 }
 							value={ campaign.tiers[ tier ] }
 							onChange={ ( event ) =>
 								setTier( tier, event.target.value )
@@ -277,12 +284,12 @@ function CampaignEditor( {
 				{ most === null
 					? __( 'Prime subscriptions count as tier 1.', 'merchboard' )
 					: sprintf(
-							/* translators: %d: the highest percent allowed. */
+							/* translators: %s: the highest percent allowed, e.g. 16.67. */
 							__(
-								"At most %d %%: your lowest profit on the campaign's products. Prime subscriptions count as tier 1.",
+								"At most %s %%: your lowest profit on the campaign's products. Prime subscriptions count as tier 1.",
 								'merchboard'
 							),
-							most
+							formatPercent( most, locale )
 						) }
 			</p>
 			<div className="merchboard-community-campaign__scope">

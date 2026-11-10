@@ -145,9 +145,9 @@ final class TwitchSubShopCard {
 			$remembered = $this->session->remembered( get_current_user_id() );
 			$parts[]    = '<p>' . esc_html(
 				sprintf(
-					/* translators: %d: the highest discount in percent. */
-					__( 'Do you subscribe on Twitch? Log in with Twitch and get up to %d %% off as a subscriber.', 'merchboard' ),
-					$highest
+					/* translators: %s: the highest discount in percent (e.g. 16.67). */
+					__( 'Do you subscribe on Twitch? Log in with Twitch and get up to %s %% off as a subscriber.', 'merchboard' ),
+					TwitchSubCampaign::percent_label( $highest )
 				)
 			) . '</p>';
 			$parts[] = '<p><a class="button" href="' . esc_url( ShopTwitchController::link( 'login', $target ) ) . '">' . esc_html(

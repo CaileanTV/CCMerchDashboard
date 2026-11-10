@@ -232,7 +232,10 @@ final class TwitchCustomerSession {
 		$subs = array();
 
 		foreach ( is_array( $data['subs'] ?? null ) ? $data['subs'] : array() as $channel => $sub ) {
-			if ( is_string( $channel ) && 1 === preg_match( '/^\d{1,20}$/', $channel ) && is_array( $sub ) && in_array( $sub['tier'] ?? null, array( 0, 1, 2, 3 ), true ) && is_bool( $sub['gifted'] ?? null ) && is_int( $sub['at'] ?? null ) ) {
+			// PHP makes a numeric channel id an integer key.
+			$channel = (string) $channel;
+
+			if ( 1 === preg_match( '/^\d{1,20}$/', $channel ) && is_array( $sub ) && in_array( $sub['tier'] ?? null, array( 0, 1, 2, 3 ), true ) && is_bool( $sub['gifted'] ?? null ) && is_int( $sub['at'] ?? null ) ) {
 				$subs[ $channel ] = array(
 					'tier'   => $sub['tier'],
 					'gifted' => $sub['gifted'],

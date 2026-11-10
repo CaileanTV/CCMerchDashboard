@@ -15,6 +15,7 @@ use MerchBoard\Core\Lifecycle\Uninstaller;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\Checkout\CheckoutUsername;
 use MerchBoard\Modules\Alerts\WooCommercePaidOrderReader;
+use MerchBoard\Modules\WooCommerce\SubDiscount\SubDiscountMeta;
 use MerchBoard\Tests\Unit\Support\InMemoryOptions;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\Support\RecordingWpdb;
@@ -46,7 +47,7 @@ final class UninstallerOrderMetaTest extends TestCase {
 	}
 
 	public function test_the_alert_username_is_removed_and_merchalerts_stays(): void {
-		self::assertSame( array( self::KEY, WooCommercePaidOrderReader::USERNAME_META, CheckoutUsername::BLOCK_META, CheckoutUsername::BLOCK_SHOW_META ), Uninstaller::ORDER_META_KEYS );
+		self::assertSame( array( self::KEY, WooCommercePaidOrderReader::USERNAME_META, CheckoutUsername::BLOCK_META, CheckoutUsername::BLOCK_SHOW_META, SubDiscountMeta::ORDER ), Uninstaller::ORDER_META_KEYS );
 		Functions\when( 'delete_post_meta_by_key' )->justReturn( true );
 		WcOrderStorage::add_order( 1, 'completed' );
 		WcOrderStorage::$meta[1] = array(

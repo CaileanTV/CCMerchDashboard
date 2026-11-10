@@ -110,14 +110,21 @@ final class CommunityModule implements Module {
 			)
 		);
 
-		// Every request: carts are priced on the front end, in the Store API and in AJAX.
-		$container->get( TwitchSubCoupon::class )->register();
-		$container->get( TwitchSubCheckout::class )->register();
+		// Every request (carts are priced on the front end, in the Store API and in AJAX), once
+		// WordPress is loaded: the services need its salts, and carts are read later (wp_loaded).
+		add_action(
+			'init',
+			static function () use ( $container ): void {
+				$container->get( TwitchSubCoupon::class )->register();
+				$container->get( TwitchSubCheckout::class )->register();
+				// The Twitch login card in the cart and the checkout (its hooks only fire on the front end).
+				( new TwitchSubShopCard( $container->get( TwitchSubDiscount::class ), $container->get( TwitchCustomerLogin::class ), $container->get( TwitchCustomerSession::class ) ) )->register();
+			},
+			5
+		);
 		( new TwitchSubPrivacy() )->register();
 		// The customer's Twitch account and tiers on the administrator's order page.
 		( new TwitchSubOrderInfo( static fn( int $creator_id ): string => $container->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '' ) )->register();
-		// The Twitch login card in the cart and the checkout (its hooks only fire on the front end).
-		( new TwitchSubShopCard( $container->get( TwitchSubDiscount::class ), $container->get( TwitchCustomerLogin::class ), $container->get( TwitchCustomerSession::class ) ) )->register();
 		( new CommunityDashboardSection() )->register();
 
 		add_action(
@@ -129,7 +136,7 @@ final class CommunityModule implements Module {
 	}
 
 	/**
-	 * The creator's profit percent (whole, rounded down) per parent product:
+	 * The creator's profit percent in basis points (rounded down) per parent product:
 	 * the creator's profit on a unit priced 100 (the share, or a designer
 	 * product's profit ÷ list price), as the cap per line uses it. Products
 	 * that are not the creator's are left out.
@@ -156,7 +163,7 @@ final class CommunityModule implements Module {
 			$profit = $c->get( CreatorProfitDiscount::class )->per_unit( $product_id, $creator_id, 100.0 );
 
 			if ( null !== $profit ) {
-				$percents[ $product_id ] = (int) floor( $profit + 1e-9 );
+				$percents[ $product_id ] = (int) floor( $profit * 100 + 1e-6 );
 			}
 		}
 

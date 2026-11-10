@@ -294,6 +294,8 @@ final class SchemaTest extends IntegrationTestCase {
 				'designer_profit' => array( 'decimal(19,4)', '', 'YES', '' ),
 				'designer_payout' => array( 'decimal(19,4)', '', 'YES', '' ),
 				'campaign_id'     => array( 'bigint', 'unsigned', 'YES', '' ),
+				// Migration 49 (ADR-106 pkt. 7): rows of a line with a Twitch subscriber discount only.
+				'sub_discount'    => array( 'decimal(19,4)', '', 'YES', '' ),
 			),
 			$this->columns( Tables::SALES_TAX )
 		);

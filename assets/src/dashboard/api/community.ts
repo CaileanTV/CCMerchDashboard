@@ -55,17 +55,34 @@ const PATH = '/merchboard/v1/me/community/twitch-sub-discount';
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * A whole percent 0–100, or null.
+ * A percent 0–100 with at most 2 decimals (16.67), or null.
  *
  * @param value Value.
  */
 function percent( value: unknown ): number | null {
 	return typeof value === 'number' &&
-		Number.isInteger( value ) &&
+		Number.isFinite( value ) &&
 		value >= 0 &&
-		value <= 100
-		? value
+		value <= 100 &&
+		Math.abs( value * 100 - Math.round( value * 100 ) ) < 1e-6
+		? Math.round( value * 100 ) / 100
 		: null;
+}
+
+/**
+ * A percent as shown: whole without decimals, else with two (16,67 in
+ * Danish).
+ *
+ * @param value  Percent.
+ * @param locale The dashboard's language (e.g. `da-DK`); the browser's when empty.
+ */
+export function formatPercent( value: number, locale = '' ): string {
+	const digits = Number.isInteger( value ) ? 0 : 2;
+
+	return new Intl.NumberFormat( locale === '' ? undefined : locale, {
+		minimumFractionDigits: digits,
+		maximumFractionDigits: digits,
+	} ).format( value );
 }
 
 /**

@@ -95,9 +95,9 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 			601 => $this->orion,
 		);
 		$percents       = array(
-			501 => 25,
-			502 => 18,
-			601 => 30,
+			501 => 2500,
+			502 => 1667,
+			601 => 3000,
 		);
 		$this->settings = new TwitchSubDiscountRepository(
 			$this->service( CreatorMetaStore::class ),
@@ -163,7 +163,7 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 				'expires_in'   => 5000000,
 			)
 		);
-		$account->save_app( 'client-c', 'secret-c' );
+		$account->save_app( 'clientcustomer01', 'secretcustomer01' );
 		wp_set_current_user( 0 );
 	}
 
@@ -181,7 +181,7 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 			array(
 				1 => 1000,
 				2 => 1500,
-				3 => 1800,
+				3 => 1667,
 			),
 			$this->settings->find( $this->nova )->campaigns[0]->tiers
 		);
@@ -210,13 +210,15 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 	}
 
 	public function test_no_percent_above_the_lowest_profit_percent_of_the_campaigns_products(): void {
-		// Nova's products: 501 at 25 %, 502 at 18 %. "All" may give at most 18 %.
-		$this->refused( array( 'campaigns.0.tier_three' => 'too_high' ), $this->nova, array( self::campaign( array( 'tiers' => array( 1 => 10, 2 => 15, 3 => 19 ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		// Nova's products: 501 at 25 %, 502 at 16.67 %. "All" may give at most 16.67 %.
+		$this->refused( array( 'campaigns.0.tier_three' => 'too_high' ), $this->nova, array( self::campaign( array( 'tiers' => array( 1 => 10, 2 => 15, 3 => 16.68 ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		$this->refused( array( 'campaigns.0.tier_one' => 'invalid' ), $this->nova, array( self::campaign( array( 'tiers' => array( 1 => 10.555, 2 => 15, 3 => 16 ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		self::assertSame( 1667, $this->settings->save( $this->nova, $this->input( array( self::campaign() ) ) )->campaigns[0]->tiers[3], 'Exactly the lowest profit, with decimals.' );
 
 		// A selection of 501 only may give up to 25 %.
 		$saved = $this->settings->save( $this->nova, $this->input( array( self::selection( array( 501 ), array( 'tiers' => array( 1 => 25, 2 => 25, 3 => 25 ) ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
 		self::assertSame( 2500, $saved->campaigns[0]->tiers[3] );
-		self::assertSame( array( 501 => 25, 502 => 18 ), $this->settings->profit_percents( $this->nova ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		self::assertSame( array( 501 => 2500, 502 => 1667 ), $this->settings->profit_percents( $this->nova ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
 	}
 
 	public function test_a_product_is_in_one_selection_and_one_all_campaign_at_a_time(): void {
@@ -251,7 +253,7 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 		$selection = $this->settings->find( $this->nova )->campaigns[1]->id;
 
 		self::assertNull( $this->discount->rate( 501 ), 'Not logged in with Twitch.' );
-		self::assertSame( 25, $this->discount->highest_offer( array( 501, 601 ) ), 'Offered anyway (up to 25 %).' );
+		self::assertSame( 2500, $this->discount->highest_offer( array( 501, 601 ) ), 'Offered anyway (up to 25 %, in basis points).' );
 
 		$this->log_in();
 		$this->answer( self::SUB_URL, 200, array( 'data' => array( array( 'tier' => '2000', 'is_gift' => false ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
@@ -379,7 +381,7 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * A campaign of all products (10/15/18 %), on, without a period.
+	 * A campaign of all products (10/15/16.67 %), on, without a period.
 	 *
 	 * @param array<string, mixed> $changes Changed fields.
 	 * @return array<string, mixed>
@@ -392,7 +394,7 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 			'tiers'       => array(
 				1 => 10,
 				2 => 15,
-				3 => 18,
+				3 => 16.67,
 			),
 			'scope'       => TwitchSubCampaign::ALL,
 			'product_ids' => array(),

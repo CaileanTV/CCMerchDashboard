@@ -6168,7 +6168,7 @@ Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" p
 - En creator kan have op til 20 kampagner samtidig. Hver har et navn, en procent pr. tier, alle egne produkter eller udvalgte (højst 500), slået til/fra og en valgfri periode (første og sidste dag, hele dage i sitets tidszone). Om gifted subs tæller, gælder for alle creatorens kampagner.
 - Kampagner, der er slået til, og hvis perioder mødes: et produkt kan kun være i én kampagne med udvalgte produkter, og der kan kun være én kampagne for alle produkter.
 - På et produkt går en kampagne med udvalgte produkter forud for kampagnen for alle produkter.
-- **Max-procent:** ved gem afvises en procent over creatorens laveste fortjeneste-% blandt kampagnens produkter (alle creatorens produkter for "alle"). Fortjeneste-% er creatorens fortjeneste på en vare til 100 kr. (andelen eller designerproduktets fortjeneste ÷ listepris), rundet ned til hele procent. Loftet pr. linje (pkt. 4) gælder stadig, fx når et nyt produkt med lavere fortjeneste kommer til senere.
+- **Max-procent:** ved gem afvises en procent over creatorens laveste fortjeneste-% blandt kampagnens produkter (alle creatorens produkter for "alle"). Fortjeneste-% er creatorens fortjeneste på en vare til 100 kr. (andelen eller designerproduktets fortjeneste ÷ listepris), rundet ned til to decimaler. Både fortjeneste-% og procenterne pr. tier har op til to decimaler og vises med decimaler, når de ikke er hele (fx "Højst 16,67 %"; projektejerens krav 2026-11-10). Loftet pr. linje (pkt. 4) gælder stadig, fx når et nyt produkt med lavere fortjeneste kommer til senere.
 - Ordrelinjen gemmer også, hvilken kampagne der gav rabatten (`_merchboard_sub_campaign`).
 
 ## Context

@@ -76,7 +76,7 @@ final class TwitchSubOrderInfo {
 				__( '%1$s: tier %2$d, %3$s %%', 'merchboard' ),
 				'' === $name ? '#' . (int) $creator_id : $name,
 				$rate['tier'],
-				number_format_i18n( $rate['bps'] / 100 )
+				TwitchSubCampaign::percent_label( $rate['bps'] )
 			) . ( true === ( $rate['gifted'] ?? false ) ? ' ' . __( '(gifted)', 'merchboard' ) : '' );
 		}
 

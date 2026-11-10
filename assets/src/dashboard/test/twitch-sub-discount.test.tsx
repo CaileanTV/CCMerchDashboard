@@ -22,7 +22,7 @@ const ALL = {
 	id: 'aaaaaaaaaaaaaaaa',
 	name: 'Alle subs',
 	enabled: true,
-	tiers: { 1: 10, 2: 15, 3: 18 },
+	tiers: { 1: 10, 2: 15, 3: 16.67 },
 	scope: 'all',
 	product_ids: [],
 	starts: null,
@@ -32,7 +32,7 @@ const ALL = {
 const SAVED = {
 	gifted: true,
 	campaigns: [ ALL ],
-	profit_percents: { 7: 25, 8: 18 },
+	profit_percents: { 7: 25, 8: 16.67 },
 	channel: { login: 'nova' },
 	twitch: true,
 };
@@ -100,14 +100,14 @@ describe( 'parseTwitchSubDiscount', () => {
 					id: 'aaaaaaaaaaaaaaaa',
 					name: 'Alle subs',
 					enabled: true,
-					tiers: { 1: 10, 2: 15, 3: 18 },
+					tiers: { 1: 10, 2: 15, 3: 16.67 },
 					scope: 'all',
 					productIds: [],
 					starts: '',
 					ends: '',
 				},
 			],
-			profitPercents: { 7: 25, 8: 18 },
+			profitPercents: { 7: 25, 8: 16.67 },
 			channel: 'nova',
 			twitch: true,
 		} );
@@ -118,6 +118,12 @@ describe( 'parseTwitchSubDiscount', () => {
 			parseTwitchSubDiscount( {
 				...SAVED,
 				campaigns: [ { ...ALL, tiers: { 1: 101, 2: 0, 3: 0 } } ],
+			} )
+		).toBeNull();
+		expect(
+			parseTwitchSubDiscount( {
+				...SAVED,
+				campaigns: [ { ...ALL, tiers: { 1: 10.555, 2: 0, 3: 0 } } ],
 			} )
 		).toBeNull();
 		expect(
@@ -138,10 +144,10 @@ describe( 'parseTwitchSubDiscount', () => {
 	} );
 
 	it( 'gives the lowest profit percent as the most a campaign may give', () => {
-		const percents = { 7: 25, 8: 18 };
+		const percents = { 7: 25, 8: 16.67 };
 
 		expect( maxPercent( { scope: 'all', productIds: [] }, percents ) ).toBe(
-			18
+			16.67
 		);
 		expect(
 			maxPercent( { scope: 'selected', productIds: [ 7 ] }, percents )
@@ -160,7 +166,7 @@ describe( 'Twitch subscriber discount campaigns (ADR-106)', () => {
 		} );
 
 		expect( container.textContent ).toContain( 'Twitch channel: nova' );
-		expect( container.textContent ).toContain( 'At most 18 %' );
+		expect( container.textContent ).toContain( 'At most 16,67 %' );
 
 		await submit( container );
 
@@ -172,7 +178,7 @@ describe( 'Twitch subscriber discount campaigns (ADR-106)', () => {
 					id: 'aaaaaaaaaaaaaaaa',
 					name: 'Alle subs',
 					enabled: true,
-					tiers: { 1: 10, 2: 15, 3: 18 },
+					tiers: { 1: 10, 2: 15, 3: 16.67 },
 					scope: 'all',
 					product_ids: [],
 					starts: '',

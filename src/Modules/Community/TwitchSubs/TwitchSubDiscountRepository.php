@@ -23,7 +23,8 @@ defined( 'ABSPATH' ) || exit;
  * 2026-11-10) in creator meta. The creator saves them all at once through
  * `/me` (the caller resolved the creator with CreatorContext):
  *
- * - At most 20 campaigns, each with a name, whole percents 0–100 per tier,
+ * - At most 20 campaigns, each with a name, percents 0–100 per tier (up to
+ *   2 decimals),
  *   all products or a selection of the creator's own (at most 500), and an
  *   optional period (first and last day).
  * - Campaigns that are on and whose periods meet: a product is in at most
@@ -72,7 +73,7 @@ final class TwitchSubDiscountRepository {
 	private Closure $connected;
 
 	/**
-	 * The creator's profit percent (whole, rounded down) per parent product:
+	 * The creator's profit percent in basis points (rounded down) per parent product:
 	 * the given ones, or all the creator's products for null.
 	 *
 	 * @var Closure(int, list<int>|null): array<int, int>
@@ -253,12 +254,14 @@ final class TwitchSubDiscountRepository {
 		foreach ( self::TIER_FIELDS as $tier => $field ) {
 			$percent = $input[ $tier ] ?? ( $input[ (string) $tier ] ?? null );
 
-			if ( ! is_int( $percent ) || $percent < 0 || $percent > 100 ) {
+			$bps = self::bps( $percent );
+
+			if ( null === $bps ) {
 				$errors[ $prefix . $field ] = 'invalid';
 				continue;
 			}
 
-			$tiers[ $tier ] = $percent * 100;
+			$tiers[ $tier ] = $bps;
 		}
 
 		if ( ! in_array( $scope, array( TwitchSubCampaign::ALL, TwitchSubCampaign::SELECTED ), true ) ) {
@@ -318,7 +321,7 @@ final class TwitchSubDiscountRepository {
 		$lowest   = array() === $percents ? null : min( $percents );
 
 		foreach ( self::TIER_FIELDS as $tier => $field ) {
-			if ( null !== $lowest && $tiers[ $tier ] > $lowest * 100 ) {
+			if ( null !== $lowest && $tiers[ $tier ] > $lowest ) {
 				$errors[ $prefix . $field ] = 'too_high';
 			}
 		}
@@ -360,6 +363,22 @@ final class TwitchSubDiscountRepository {
 				}
 			}
 		}
+	}
+
+	/**
+	 * A percent from the form (0–100, up to 2 decimals) in basis points, or
+	 * null when it is not one.
+	 *
+	 * @param mixed $percent Submitted value.
+	 */
+	private static function bps( mixed $percent ): ?int {
+		if ( ! is_int( $percent ) && ! is_float( $percent ) ) {
+			return null;
+		}
+
+		$bps = (int) round( $percent * 100 );
+
+		return $percent >= 0 && $percent <= 100 && abs( $percent * 100 - $bps ) < 0.0001 ? $bps : null;
 	}
 
 	/**

@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
  * `/me`-scoped (ADR-007; the creator only through CreatorContext):
  *
  * - `GET /me/community/twitch-sub-discount`: whether gifted subscriptions
- *   count, the campaigns (percents as whole numbers), the creator's profit
+ *   count, the campaigns (percents with up to 2 decimals), the creator's profit
  *   percent per product (the most a campaign may give is the lowest among
  *   its products), the connected Twitch channel and whether Twitch is set
  *   up on the site.
@@ -177,9 +177,9 @@ final class MeTwitchSubDiscountController extends RestController {
 						'name'        => $campaign->name,
 						'enabled'     => $campaign->enabled,
 						'tiers'       => array(
-							'1' => intdiv( $campaign->tiers[1], 100 ),
-							'2' => intdiv( $campaign->tiers[2], 100 ),
-							'3' => intdiv( $campaign->tiers[3], 100 ),
+							'1' => $campaign->tiers[1] / 100,
+							'2' => $campaign->tiers[2] / 100,
+							'3' => $campaign->tiers[3] / 100,
 						),
 						'scope'       => $campaign->scope,
 						'product_ids' => $campaign->product_ids,
@@ -189,7 +189,7 @@ final class MeTwitchSubDiscountController extends RestController {
 					$settings->campaigns
 				),
 				// The most a campaign may give is the lowest of these among its products.
-				'profit_percents' => (object) $this->settings->profit_percents( $creator_id ),
+				'profit_percents' => (object) array_map( static fn( int $bps ): float|int => $bps / 100, $this->settings->profit_percents( $creator_id ) ),
 				'channel'         => null === $login ? null : array( 'login' => $login ),
 				'twitch'          => ( $this->ready )(),
 			),

@@ -154,7 +154,7 @@ final class TwitchSubDiscount {
 	}
 
 	/**
-	 * The highest percent offered on a set of parent products today (for the
+	 * The highest percent (in basis points) offered on a set of parent products today (for the
 	 * shop's card), 0 when none is offered.
 	 *
 	 * @phpstan-param list<int> $product_ids
@@ -169,7 +169,7 @@ final class TwitchSubDiscount {
 				$offer = $this->offer( $product_id );
 
 				if ( null !== $offer ) {
-					$highest = max( $highest, intdiv( max( $offer['campaign']->tiers ), 100 ) );
+					$highest = max( $highest, max( $offer['campaign']->tiers ) );
 				}
 			}
 		} catch ( DatabaseException $e ) {
