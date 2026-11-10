@@ -608,10 +608,12 @@ final class SalesRepository {
 
 	/**
 	 * The Twitch subscriber discount a row carries (ADR-106 pkt. 7), or null
-	 * when its line has none: the line's discount on its first positive row,
-	 * 0 on every other row. A line counts as discounted when the order has
-	 * the discount now or an earlier row of the line carried one, so a later
-	 * refund stays in the same calculation.
+	 * when its line has none, signed (SubDiscountAmounts::carried()): the
+	 * line's rows add up to the discount it still has, so a cancelled and
+	 * reopened order charges the discount again, and a row after the
+	 * discount was taken off the order gives it back. A line counts as
+	 * discounted when the order has the discount now or an earlier row of
+	 * the line carried one, so a later refund stays in the same calculation.
 	 *
 	 * @param SalesEntry      $entry         Row written now.
 	 * @param int             $tax           The row's actual tax in units.
@@ -620,9 +622,9 @@ final class SalesRepository {
 	 */
 	private function carried_sub_discount( SalesEntry $entry, int $tax, array $sub_discounts ): ?int {
 		$wpdb    = $this->wpdb;
-		$earlier = $wpdb->get_col( $wpdb->prepare( 'SELECT sub_discount FROM %i WHERE order_id = %d AND order_item_id = %d AND event_key <> %s AND sub_discount IS NOT NULL', $this->table( Tables::SALES_TAX ), $entry->order_id, $entry->order_item_id, $entry->event_key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The ledger's own table, under the order's lock.
+		$earlier = $wpdb->get_results( $wpdb->prepare( 'SELECT s.net_amount, t.tax_amount, t.sub_discount FROM %i s JOIN %i t ON t.event_key = s.event_key WHERE s.order_id = %d AND s.order_item_id = %d AND s.event_key <> %s AND t.sub_discount IS NOT NULL', $this->table( Tables::SALES ), $this->table( Tables::SALES_TAX ), $entry->order_id, $entry->order_item_id, $entry->event_key ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The ledger's own tables, under the order's lock.
 
-		if ( '' !== $wpdb->last_error ) {
+		if ( '' !== $wpdb->last_error || ! is_array( $earlier ) ) {
 			throw new DatabaseException( 'Could not read the subscriber discount of the order line.', array( 'order_id' => $entry->order_id ) );
 		}
 
@@ -632,13 +634,15 @@ final class SalesRepository {
 			return null;
 		}
 
-		$given = 0;
+		$outstanding = 0;
+		$paid        = 0;
 
-		foreach ( $earlier as $value ) {
-			$given = SalesAmount::add( $given, SalesAmount::parse( (string) $value ) );
+		foreach ( $earlier as $row ) {
+			$outstanding = SalesAmount::add( $outstanding, SalesAmount::parse( (string) $row['sub_discount'] ) );
+			$paid        = SalesAmount::add( $paid, SalesAmount::add( SalesAmount::parse( (string) $row['net_amount'] ), SalesAmount::parse( (string) $row['tax_amount'] ) ) );
 		}
 
-		return SubDiscountAmounts::carried( SalesAmount::add( SalesAmount::parse( $entry->net_amount ), $tax ), $line ?? $given, $given );
+		return SubDiscountAmounts::carried( SalesAmount::add( SalesAmount::parse( $entry->net_amount ), $tax ), $line, $outstanding, $paid );
 	}
 
 	/**

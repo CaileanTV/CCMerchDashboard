@@ -160,10 +160,38 @@ final class SubDiscountLedgerTest extends IntegrationTestCase {
 
 		self::assertSame( 0, array_sum( $this->profits() ) );
 		self::assertSame( 0, array_sum( $this->payouts() ) );
-		self::assertSame( array( '40.0000', '0.0000', '0.0000' ), $this->stored_sub_discounts() );
+		self::assertSame( array( '40.0000', '-20.0000', '-20.0000' ), $this->stored_sub_discounts(), 'Each refund takes back its share of the discount.' );
 
 		$sql = ( new LedgerCreatorProfits( $this->wpdb ) )->by_order_line( $this->creator, array( self::ORDER ) );
 		self::assertSame( 0, $sql[1274]['profit']->amount_units() );
+	}
+
+	public function test_a_cancelled_and_paid_again_order_charges_the_discount_again(): void {
+		$product = $this->product();
+		$this->recorder->record( 1276, self::ORDER, $product, 0, 'DKK' );
+		$line = $this->line( 1276, 1, '144', '36', '20' );
+
+		$this->sell( array( $line ) );
+		$this->set_status( 'cancelled' );
+		$this->set_status( 'processing' );
+
+		self::assertSame( array( '30.0000', '-30.0000', '30.0000' ), $this->formatted( $this->profits() ), 'The second sale is charged the discount again (review 44.9).' );
+		self::assertSame( array( '20.0000', '-20.0000', '20.0000' ), $this->stored_sub_discounts() );
+
+		$sql = ( new LedgerCreatorProfits( $this->wpdb ) )->by_order_line( $this->creator, array( self::ORDER ) );
+		self::assertSame( 300000, $sql[1276]['profit']->amount_units() );
+	}
+
+	public function test_a_discount_taken_off_the_order_is_given_back(): void {
+		$product = $this->product();
+		$this->recorder->record( 1277, self::ORDER, $product, 0, 'DKK' );
+
+		$this->sell( array( $this->line( 1277, 1, '144', '36', '20' ) ) );
+		// An administrator removes the coupon: the customer pays 200.00 in full.
+		$this->sell( array( $this->line( 1277, 1, '160', '40', null ) ) );
+
+		self::assertSame( array( '20.0000', '-20.0000' ), $this->stored_sub_discounts() );
+		self::assertSame( 500000, array_sum( $this->profits() ), 'The share of the full 200.00, as without the discount.' );
 	}
 
 	public function test_migration_49_adds_the_column_once_and_it_is_null_by_default(): void {
@@ -203,6 +231,16 @@ final class SubDiscountLedgerTest extends IntegrationTestCase {
 			'lines'    => $lines,
 			'refunds'  => $refunds,
 		);
+		$this->sync->sync( self::ORDER );
+	}
+
+	/**
+	 * Changes the order's status and synchronizes the ledger.
+	 *
+	 * @param string $status Status.
+	 */
+	private function set_status( string $status ): void {
+		$this->reader->orders[ self::ORDER ]['status'] = $status;
 		$this->sync->sync( self::ORDER );
 	}
 

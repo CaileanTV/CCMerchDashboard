@@ -72,16 +72,35 @@ final class SubDiscountAmountsTest extends TestCase {
 	}
 
 	/**
-	 * The line's first positive row carries the discount; refunds and later
-	 * rows carry nothing.
+	 * The line's rows carry the discount signed: the first sale all of it, a
+	 * refund its share back, a sale after a reversal all of it again, and a
+	 * row after the discount was taken off the order gives it back.
 	 */
 	public function test_carried(): void {
 		$line = SalesAmount::parse( '20' );
+		$paid = SalesAmount::parse( '180' );
 
-		$this->assertSame( $line, SubDiscountAmounts::carried( SalesAmount::parse( '180' ), $line, 0 ) );
-		$this->assertSame( 0, SubDiscountAmounts::carried( SalesAmount::parse( '15' ), $line, $line ) );
-		$this->assertSame( 0, SubDiscountAmounts::carried( SalesAmount::parse( '-90' ), $line, $line ) );
-		$this->assertSame( 0, SubDiscountAmounts::carried( 0, $line, 0 ) );
+		$this->assertSame( $line, SubDiscountAmounts::carried( $paid, $line, 0, 0 ) );
+		$this->assertSame( 0, SubDiscountAmounts::carried( SalesAmount::parse( '15' ), $line, $line, $paid ), 'A correction keeps the discount.' );
+		$this->assertSame( SalesAmount::parse( '-10' ), SubDiscountAmounts::carried( SalesAmount::parse( '-90' ), $line, $line, $paid ), 'Half refunded: half the discount back.' );
+		$this->assertSame( -$line, SubDiscountAmounts::carried( -$paid, $line, $line, $paid ), 'A reversal takes all of it back.' );
+		$this->assertSame( $line, SubDiscountAmounts::carried( $paid, $line, 0, 0 ), 'Paid again after the reversal: charged again.' );
+		$this->assertSame( -$line, SubDiscountAmounts::carried( $line, null, $line, $paid ), 'The discount taken off the order: given back.' );
+		$this->assertSame( SalesAmount::parse( '-5' ), SubDiscountAmounts::carried( SalesAmount::parse( '5' ), null, $line, $paid ), 'Never more than the row paid.' );
+		$this->assertSame( 0, SubDiscountAmounts::carried( 0, $line, 0, 0 ) );
+	}
+
+	/**
+	 * A discount given back on a later row: the line ends where a line
+	 * without the discount would be.
+	 */
+	public function test_a_discount_given_back_restores_the_share(): void {
+		$share = static fn( int $units ): int => CreatorShare::profit( $units, 2500, 2 );
+		$first = SubDiscountAmounts::sale( SalesAmount::parse( '180' ), SalesAmount::parse( '20' ), $share );
+		$back  = SubDiscountAmounts::sale( SalesAmount::parse( '20' ), SalesAmount::parse( '-20' ), $share );
+
+		$this->assertSame( '30.0000', SalesAmount::format( $first ) );
+		$this->assertSame( $share( SalesAmount::parse( '200' ) ), SalesAmount::add( $first, $back ) );
 	}
 
 	/**
@@ -104,6 +123,6 @@ final class SubDiscountAmountsTest extends TestCase {
 	public function test_negative_amounts_are_refused(): void {
 		$this->expectException( InvalidArgumentException::class );
 
-		SubDiscountAmounts::sale( 100, -1, static fn( int $units ): int => $units );
+		SubDiscountAmounts::sale( 100, -101, static fn( int $units ): int => $units );
 	}
 }
