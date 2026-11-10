@@ -39,6 +39,15 @@ final class TwitchSubDiscountRepository {
 	private array $cache = array();
 
 	/**
+	 * The form field of each tier (field codes are letters only).
+	 */
+	public const TIER_FIELDS = array(
+		1 => 'tier_one',
+		2 => 'tier_two',
+		3 => 'tier_three',
+	);
+
+	/**
 	 * Whether a creator owns a parent product.
 	 *
 	 * @var Closure(int, int): bool
@@ -160,7 +169,7 @@ final class TwitchSubDiscountRepository {
 			$percent = $input[ $tier ] ?? ( $input[ (string) $tier ] ?? null );
 
 			if ( ! is_int( $percent ) || $percent < 0 || $percent > 100 ) {
-				$errors[ 'tier_' . $tier ] = 'invalid';
+				$errors[ self::TIER_FIELDS[ $tier ] ] = 'invalid';
 				continue;
 			}
 
@@ -194,8 +203,8 @@ final class TwitchSubDiscountRepository {
 			}
 		}
 
-		if ( true === $enabled && ! isset( $errors['tier_1'] ) && ! isset( $errors['tier_2'] ) && ! isset( $errors['tier_3'] ) && 0 === max( $tiers ) ) {
-			$errors['tier_1'] = 'required';
+		if ( true === $enabled && array() === array_intersect_key( $errors, array_flip( self::TIER_FIELDS ) ) && 0 === max( $tiers ) ) {
+			$errors['tier_one'] = 'required';
 		}
 
 		if ( true === $enabled && ! $this->connected( $creator_id ) ) {

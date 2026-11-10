@@ -59,6 +59,10 @@ final class ImpersonationGuard {
 		array( 'PATCH', '#^/merchboard/v1/me/notification-preferences$#i' ),
 		// Submitting a design and its files (ADR-080 pkt. 1, step 30.9); drafts stay editable.
 		array( 'POST', '#^/merchboard/v1/me/designer/products/\d+/(submit|files)$#i' ),
+		// The creator's Twitch subscriber discount is paid from the creator's profit (ADR-106).
+		array( 'PUT', '#^/merchboard/v1/me/community/twitch-sub-discount$#i' ),
+		array( 'PATCH', '#^/merchboard/v1/me/community/twitch-sub-discount$#i' ),
+		array( 'POST', '#^/merchboard/v1/me/community/twitch-sub-discount$#i' ),
 	);
 
 	/**

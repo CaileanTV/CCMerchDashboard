@@ -14,9 +14,13 @@ use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
+use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
+use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerLogin;
+use MerchBoard\Modules\Community\Dashboard\CommunityDashboardSection;
+use MerchBoard\Modules\Community\Rest\MeTwitchSubDiscountController;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCheckout;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCoupon;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscount;
@@ -85,10 +89,33 @@ final class CommunityModule implements Module {
 		);
 		$container->set( TwitchSubCheckout::class, static fn( Container $c ): TwitchSubCheckout => new TwitchSubCheckout( $c->get( TwitchSubDiscount::class ) ) );
 
+		$container->set(
+			MeTwitchSubDiscountController::class,
+			static fn( Container $c ): MeTwitchSubDiscountController => new MeTwitchSubDiscountController(
+				$c->get( CreatorContext::class ),
+				$c->get( TwitchSubDiscountRepository::class ),
+				static function ( int $creator_id ) use ( $c ): ?string {
+					$channel = $c->get( ChatbotChannelRepository::class )->find( $creator_id, ChatPlatform::Twitch );
+
+					return $channel->connected() ? $channel->broadcaster_login : null;
+				},
+				static fn(): bool => $c->get( TwitchAccount::class )->ready(),
+				$c->get( Logger::class )
+			)
+		);
+
 		// Every request: carts are priced on the front end, in the Store API and in AJAX.
 		$container->get( TwitchSubCoupon::class )->register();
 		$container->get( TwitchSubCheckout::class )->register();
 		( new TwitchSubPrivacy() )->register();
+		( new CommunityDashboardSection() )->register();
+
+		add_action(
+			'rest_api_init',
+			static function () use ( $container ): void {
+				$container->get( MeTwitchSubDiscountController::class )->register_routes();
+			}
+		);
 	}
 
 	/**

@@ -186,7 +186,7 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 
 	public function test_invalid_settings_are_refused_per_field(): void {
 		$this->refused(
-			array( 'tier_2' => 'invalid' ),
+			array( 'tier_two' => 'invalid' ),
 			$this->nova,
 			array(
 				'tiers' => array(
@@ -197,7 +197,7 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 			)
 		);
 		$this->refused(
-			array( 'tier_1' => 'required' ),
+			array( 'tier_one' => 'required' ),
 			$this->nova,
 			array(
 				'tiers' => array(

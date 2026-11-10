@@ -7,6 +7,7 @@ import { AlertsChatbotSection } from '../sections/alerts/AlertsChatbotSection';
 import { AlertsHistorySection } from '../sections/alerts/AlertsHistorySection';
 import { AlertsSection } from '../sections/alerts/AlertsSection';
 import { AlertsWebhooksSection } from '../sections/alerts/AlertsWebhooksSection';
+import { TwitchSubDiscountSection } from '../sections/community/TwitchSubDiscountSection';
 import { DesignerSection } from '../sections/designer/DesignerSection';
 import { NewsSection } from '../sections/news/NewsSection';
 import { OrdersSection } from '../sections/orders/OrdersSection';
@@ -39,6 +40,7 @@ const SECTION_COMPONENTS: Readonly< Record< string, () => ReactNode > > = {
 	'alerts-chatbot': () => <AlertsChatbotSection />,
 	'alerts-api': () => <AlertsApiSection />,
 	'alerts-webhooks': () => <AlertsWebhooksSection />,
+	'community-twitch-discount': () => <TwitchSubDiscountSection />,
 	profile: () => <ProfileSection />,
 };
 
