@@ -38,6 +38,11 @@ final class ShopTwitchController extends RestController {
 	public const NONCE_ACTION = 'merchboard_twitch_shop';
 
 	/**
+	 * Query argument of a gift's claim link (ADR-107).
+	 */
+	public const CLAIM_QUERY = 'merchboard_gift_claim';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param TwitchCustomerLogin   $login   The customer's Twitch login.
@@ -61,8 +66,8 @@ final class ShopTwitchController extends RestController {
 						'permission_callback' => '__return_true',
 						'args'                => array(
 							'target' => array(
-								'type' => 'string',
-								'enum' => TwitchCustomerLogin::TARGETS,
+								'type'      => 'string',
+								'maxLength' => 40,
 							),
 							'nonce'  => array(
 								'type'      => 'string',
@@ -79,7 +84,7 @@ final class ShopTwitchController extends RestController {
 	 * The shop URL of a login or logout link.
 	 *
 	 * @param string $action `login` or `logout`.
-	 * @param string $target `cart` or `checkout`.
+	 * @param string $target `cart`, `checkout` or `claim:<token>`.
 	 */
 	public static function link( string $action, string $target ): string {
 		$args = array(
@@ -132,9 +137,14 @@ final class ShopTwitchController extends RestController {
 	/**
 	 * The shop page of a target.
 	 *
-	 * @param string $target `cart` or `checkout`.
+	 * @param string $target `cart`, `checkout` or `claim:<token>`.
 	 */
 	public static function target_url( string $target ): string {
+		// A gift's claim link (ADR-107).
+		if ( str_starts_with( $target, 'claim:' ) ) {
+			return add_query_arg( self::CLAIM_QUERY, substr( $target, 6 ), home_url( '/' ) );
+		}
+
 		if ( ! function_exists( 'wc_get_cart_url' ) ) {
 			return home_url( '/' );
 		}
@@ -149,7 +159,9 @@ final class ShopTwitchController extends RestController {
 	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
 	 */
 	private static function target( WP_REST_Request $request ): string {
-		return 'checkout' === $request->get_param( 'target' ) ? 'checkout' : 'cart';
+		$target = $request->get_param( 'target' );
+
+		return TwitchCustomerLogin::valid_target( $target ) ? (string) $target : 'cart';
 	}
 
 	/**

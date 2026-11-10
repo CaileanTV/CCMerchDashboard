@@ -124,7 +124,7 @@ final class WooCommercePaidOrderReader implements PaidOrderReader {
 	 *
 	 * @param WC_Order $order Order.
 	 */
-	private static function username( WC_Order $order ): string {
+	public static function username( WC_Order $order ): string {
 		$keys = array( self::USERNAME_META, CheckoutUsername::BLOCK_META, self::LEGACY_USERNAME_META );
 
 		if ( ! CheckoutUsernameField::ticked( $order->get_meta( CheckoutUsername::BLOCK_SHOW_META, true, 'edit' ) ) ) {

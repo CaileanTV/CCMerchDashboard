@@ -43,9 +43,19 @@ final class TwitchCustomerLogin {
 	public const COOKIE = 'merchboard_twitch_oauth';
 
 	/**
-	 * Where the customer goes back to.
+	 * Where the customer goes back to: the cart, the checkout, or a gift's
+	 * claim link (`claim:<token>`, ADR-107).
 	 */
 	public const TARGETS = array( 'cart', 'checkout' );
+
+	/**
+	 * Whether a target is allowed.
+	 *
+	 * @param mixed $target Target.
+	 */
+	public static function valid_target( mixed $target ): bool {
+		return in_array( $target, self::TARGETS, true ) || ( is_string( $target ) && 1 === preg_match( '/^claim:[0-9a-f]{32}$/', $target ) );
+	}
 
 	/**
 	 * The shop URL of a target.
@@ -103,11 +113,11 @@ final class TwitchCustomerLogin {
 	 * The URL that sends the customer to Twitch, or the target with
 	 * `twitch=unavailable` when the app is not set up.
 	 *
-	 * @param string $target  `cart` or `checkout`.
+	 * @param string $target  `cart`, `checkout` or `claim:<token>`.
 	 * @param int    $user_id The logged-in WordPress user, 0 for a guest.
 	 */
 	public function start( string $target, int $user_id ): string {
-		$target = in_array( $target, self::TARGETS, true ) ? $target : 'cart';
+		$target = self::valid_target( $target ) ? $target : 'cart';
 
 		if ( ! $this->available() ) {
 			return $this->result( $target, 'unavailable' );
@@ -152,7 +162,7 @@ final class TwitchCustomerLogin {
 	public function finish( string $state, string $code, string $error, string $binding, int $user_id ): string {
 		$data = 1 === preg_match( '/^[0-9a-f]{32}$/', $state ) ? get_transient( self::STATE_PREFIX . $state ) : false;
 
-		if ( ! is_array( $data ) || ! is_string( $data['binding'] ?? null ) || ! is_int( $data['user'] ?? null ) || ! in_array( $data['target'] ?? null, self::TARGETS, true ) ) {
+		if ( ! is_array( $data ) || ! is_string( $data['binding'] ?? null ) || ! is_int( $data['user'] ?? null ) || ! self::valid_target( $data['target'] ?? null ) ) {
 			return ( $this->target_url )( 'cart' );
 		}
 

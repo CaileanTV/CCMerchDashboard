@@ -230,7 +230,8 @@ final class GiftRepository {
 	}
 
 	/**
-	 * The winner got the gift code.
+	 * The winner got the gift code. The claim token stays, so the winner's
+	 * link shows the code again.
 	 *
 	 * @param int $id        Gift.
 	 * @param int $coupon_id The code's coupon.
@@ -238,7 +239,7 @@ final class GiftRepository {
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function claim( int $id, int $coupon_id ): bool {
-		return $this->change( $id, Gift::WON, 'status = %s, coupon_id = %d, claim_token = NULL', array( Gift::CLAIMED, $coupon_id ) );
+		return $this->change( $id, Gift::WON, 'status = %s, coupon_id = %d', array( Gift::CLAIMED, $coupon_id ) );
 	}
 
 	/**

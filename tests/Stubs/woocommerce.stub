@@ -180,6 +180,12 @@ class WC_Coupon extends WC_Data {
 	public function set_description( $description ) {}
 
 	/**
+	 * @param int|null $usage_limit Usage limit.
+	 * @return void
+	 */
+	public function set_usage_limit( $usage_limit ) {}
+
+	/**
 	 * @return int Coupon id.
 	 */
 	public function save() {}
@@ -223,6 +229,54 @@ class WC_Cart {
 	 * @return list<string>
 	 */
 	public function get_applied_coupons() {}
+
+	/**
+	 * @param string $coupon_code Coupon code.
+	 * @return bool
+	 */
+	public function apply_coupon( $coupon_code ) {}
+
+	/**
+	 * @return float|string
+	 */
+	public function get_shipping_total() {}
+
+	/**
+	 * @return float|string
+	 */
+	public function get_shipping_tax() {}
+
+	/**
+	 * @param string          $name      Name.
+	 * @param float           $amount    Amount.
+	 * @param bool            $taxable   Taxable.
+	 * @param string          $tax_class Tax class.
+	 * @return void
+	 */
+	public function add_fee( $name, $amount, $taxable = false, $tax_class = '' ) {}
+
+	/**
+	 * @return bool
+	 */
+	public function is_empty() {}
+
+	/**
+	 * @param int                   $product_id     Product.
+	 * @param int                   $quantity       Quantity.
+	 * @param int                   $variation_id   Variation.
+	 * @param array<string, string> $variation      Attributes.
+	 * @param array<string, mixed>  $cart_item_data Extra data.
+	 * @return string|false The cart item key.
+	 */
+	public function add_to_cart( $product_id = 0, $quantity = 1, $variation_id = 0, $variation = array(), $cart_item_data = array() ) {}
+
+	/**
+	 * @param string $cart_item_key Key.
+	 * @param int    $quantity      Quantity.
+	 * @param bool   $refresh_totals Whether to recalculate.
+	 * @return bool
+	 */
+	public function set_quantity( $cart_item_key, $quantity = 1, $refresh_totals = true ) {}
 
 	/**
 	 * @param list<string> $value Coupon codes.
@@ -356,6 +410,23 @@ class WC_Discounts {
 class WC_Order extends WC_Abstract_Order {
 
 	/**
+	 * @return list<string>
+	 */
+	public function get_coupon_codes() {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_shipping_total( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_shipping_tax( $context = 'view' ) {}
+
+	/**
 	 * @param string $context 'view' or 'edit'.
 	 * @return WC_DateTime|null
 	 */
@@ -486,6 +557,23 @@ class WC_Order_Item_Product extends WC_Order_Item {
 class WC_Tax {
 
 	/**
+	 * The shipping tax rates of the customer's location.
+	 *
+	 * @param string|null $tax_class Tax class.
+	 * @return array<int|string, array<string, mixed>>
+	 */
+	public static function get_shipping_tax_rates( $tax_class = null ) {}
+
+	/**
+	 * Taxes of a shipping price.
+	 *
+	 * @param float                                   $price Price excl. tax.
+	 * @param array<int|string, array<string, mixed>> $rates Tax rates.
+	 * @return array<int|string, float>
+	 */
+	public static function calc_shipping_tax( $price, $rates ) {}
+
+	/**
 	 * The shop base location's rates of a tax class.
 	 *
 	 * @param string $tax_class Tax class.
@@ -592,6 +680,16 @@ class WC_Product extends WC_Data {
 	 * @return string|float
 	 */
 	public function get_price( $context = 'view' ) {}
+
+	/**
+	 * @return bool
+	 */
+	public function is_purchasable() {}
+
+	/**
+	 * @return bool
+	 */
+	public function is_in_stock() {}
 
 	/**
 	 * @param string $context 'view' or 'edit'.
@@ -790,6 +888,14 @@ class WC_Product_Attribute {
  * Variable product (class-wc-product-variable.php).
  */
 class WC_Product_Variable extends WC_Product {
+
+	/**
+	 * The available variations.
+	 *
+	 * @param string $return 'array' or 'objects'.
+	 * @return array<int, mixed>
+	 */
+	public function get_available_variations( $return = 'array' ) {}
 
 	/**
 	 * Prices of the visible variations by variation id, sorted ascending:
@@ -1040,3 +1146,27 @@ function woocommerce_register_additional_checkout_field( $options ) {}
  * @return void
  */
 function woocommerce_store_api_register_endpoint_data( $args ) {}
+
+/**
+ * A shipping rate.
+ */
+class WC_Shipping_Rate {
+
+	/**
+	 * @param string                   $id          Rate id.
+	 * @param string                   $label       Label.
+	 * @param float|string             $cost        Cost excl. tax.
+	 * @param array<int|string, float> $taxes       Taxes.
+	 * @param string                   $method_id   Method id.
+	 * @param int                      $instance_id Instance id.
+	 */
+	public function __construct( $id = '', $label = '', $cost = 0, $taxes = array(), $method_id = '', $instance_id = 0 ) {}
+}
+
+/**
+ * @param string               $message Message.
+ * @param string               $notice_type Type.
+ * @param array<string, mixed> $data Data.
+ * @return void
+ */
+function wc_add_notice( $message, $notice_type = 'success', $data = array() ) {}
