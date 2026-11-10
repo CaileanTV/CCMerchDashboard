@@ -388,7 +388,7 @@ Den faktiske WooCommerce-moms pr. sales ledger-række. Den er en følgetabel til
 | `currency` | `char(3) NOT NULL` | Rækkens valuta |
 | `created_at` | `datetime NOT NULL` | UTC |
 | `designer_profit`, `designer_payout` | `decimal(19,4) NULL` | Rækkens gemte fortjeneste og udbetaling med fortegn, beregnet én gang, når rækken skrives: designer-rækker (schema-version 36, ADR-080 pkt. 8) og fra schema-version 49 alle rækker af en linje med Twitch-subscriber-rabat (ADR-106 pkt. 7). Udbetalingen er NULL ved ukendt momsstatus. NULL for alle andre rækker |
-| `sub_discount` | `decimal(19,4) NULL` | Twitch-subscriber-rabatten, rækken bærer (schema-version 49, ADR-106 pkt. 7), i betalt grundlag (inkl. moms). Linjens første positive række bærer hele rabatten, de øvrige 0. Sat på alle rækker af en linje med rabatten (så PROFIT/PAYOUT læser de gemte beløb), NULL ellers |
+| `sub_discount` | `decimal(19,4) NULL` | Twitch-subscriber-rabatten, rækken bærer (schema-version 49, ADR-106 pkt. 7), i betalt grundlag (inkl. moms). Med fortegn (review 2026-11-11): linjens rækker summerer til den rabat, linjen stadig har. En refundering eller tilbageførsel bærer −S forholdsmæssigt, et nyt salg efter en annullering bærer S igen, og en række efter at rabatten er fjernet fra ordren giver S tilbage (højst rækkens beløb). Sat på alle rækker af en linje med rabatten (så PROFIT/PAYOUT læser de gemte beløb), NULL ellers |
 | `campaign_id` | `bigint(20) unsigned NULL` | Virksomhedens kampagne, der dækker en designer-række (trin 30.4, ADR-080 pkt. 9). Afgøres ved ordrelinjens første designer-række; alle senere rækker af linjen får samme værdi |
 
 Indexes: `PRIMARY KEY (event_key)`, `KEY order_id (order_id)`.

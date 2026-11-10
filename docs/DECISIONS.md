@@ -6164,6 +6164,8 @@ ADR-062, ADR-104
 ## Status
 Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" pkt. 3 og planen for fase 43). Udvider ADR-066 (Twitch som ekstern service) med kunde-login og subscription-opslag og udvider ADR-080 pkt. 8 (rabat af creatorens fortjeneste) til alle produkttyper for denne rabat.
 
+**Statusnote 2026-11-11 (review i 44.9; erstatter "Lagring" i pkt. 7, hvor de afviger):** `sub_discount` gemmes med fortegn, så en linjes rækker summerer til den rabat, linjen stadig har. En refundering eller tilbageførsel bærer −S i forhold til det, den tager tilbage. Et nyt salg (en annulleret ordre, der betales igen) bærer derfor S igen, så creatoren også betaler rabatten anden gang; før betalte virksomheden den. En række efter at en administrator har fjernet rabatten fra ordren bærer −S (højst rækkens beløb), så creatorens fortjeneste ender som uden rabat. Rækkernes fortjeneste og udbetaling gemmes stadig, så SQL-summerne er uændrede.
+
 **Statusnote 2026-11-10 (projektejerens valg under trin 43.5; erstatter pkt. 3, hvor de afviger):** rabatten opsættes som **kampagner**.
 - En creator kan have op til 20 kampagner samtidig. Hver har et navn, en procent pr. tier, alle egne produkter eller udvalgte (højst 500), slået til/fra og en valgfri periode (første og sidste dag, hele dage i sitets tidszone). Om gifted subs tæller, gælder for alle creatorens kampagner.
 - Kampagner, der er slået til, og hvis perioder mødes: et produkt kan kun være i én kampagne med udvalgte produkter, og der kan kun være én kampagne for alle produkter.
@@ -6213,7 +6215,7 @@ I dag deles en rabat på et almindeligt andelsprodukt mellem virksomhed og creat
    - Pr. ordre: kundens Twitch-id og login, tidspunktet for tjekket og tier pr. creator (`_merchboard_twitch_sub`).
    - Genberegner en administrator ordren, bevares kupontypen og det frosne beløb.
 7. **Regnskab: creatoren betaler hele subscriber-rabatten (S) på alle produkttyper.**
-   - **Lagring:** `merchboard_sales_tax` får kolonnen `sub_discount` (migration 49). Alle rækker af en linje med subscriber-rabat får den sat: S på linjens første positive række og 0 på de øvrige. Rækkernes fortjeneste og udbetaling gemmes i `designer_profit` og `designer_payout`, som designerrækker allerede gør. De to kolonner betyder fremover "rækkens gemte fortjeneste og udbetaling".
+   - **Lagring:** `merchboard_sales_tax` får kolonnen `sub_discount` (migration 49). Alle rækker af en linje med subscriber-rabat får den sat: S på linjens første positive række og 0 på de øvrige (se statusnoten om fortegn). Rækkernes fortjeneste og udbetaling gemmes i `designer_profit` og `designer_payout`, som designerrækker allerede gør. De to kolonner betyder fremover "rækkens gemte fortjeneste og udbetaling".
    - **Salg:** fortjeneste = `max( 0, f( betalt + S ) − S )`. f er linjens normale regel uden subscriber-rabat: andelen (ADR-049) eller designerreglen i eller uden for kampagne (ADR-080). Virksomhedens del ændres derfor ikke af subscriber-rabatten, og creatorens fortjeneste bliver aldrig negativ.
    - **Refundering:** linjens fortjeneste tages tilbage i forhold til den refunderede andel af det betalte (`DesignerRowAmounts::refund()`), så en helt refunderet linje ender på 0.
    - **Udbetaling (ADR-064):** fortjenesten, når creatoren var momsregistreret. Ellers fortjenesten uden salgets moms (fortjeneste × net ÷ betalt), som for designerrækker.
