@@ -24,6 +24,9 @@ defined( 'ABSPATH' ) || exit;
  * - Gifts paid after the stream and gifts to draw again wait until the
  *   creator or a moderator types `!gift start` (or the dashboard's button);
  *   then the bot runs them one after the other.
+ * - A gift whose window closed without entrants waits; it is not opened
+ *   again by itself (the next `!gift start` tries it again), so the chat is
+ *   never flooded with the same gift.
  * - `!gift pause` / `!gift resume` (creator or moderator) pause and resume.
  * - When the window closes, a random entrant (`random_int`, each Twitch
  *   account once, the buyer too) wins and gets the claim link; nobody: the
@@ -181,6 +184,8 @@ final class GiftDraws {
 	 */
 	public function start( int $creator_id ): bool {
 		set_transient( self::run_key( $creator_id ), '1', self::RUN_HOURS * HOUR_IN_SECONDS );
+		// A new run tries every waiting gift again.
+		delete_transient( self::tried_key( $creator_id ) );
 
 		if ( array() !== $this->gifts->for_creator( $creator_id, array( Gift::ENTERING ), 1 ) ) {
 			return true;
@@ -316,9 +321,10 @@ final class GiftDraws {
 
 		$run   = '1' === get_transient( self::run_key( $creator_id ) );
 		$fresh = gmdate( 'Y-m-d H:i:s', time() - self::FRESH_MINUTES * MINUTE_IN_SECONDS );
+		$tried = self::tried( $creator_id );
 
-		foreach ( $this->gifts->for_creator( $creator_id, array( Gift::WAITING ), 20 ) as $gift ) {
-			if ( ! $run && ( 0 !== $gift->draws || $gift->created_at < $fresh ) ) {
+		foreach ( $this->gifts->for_creator( $creator_id, array( Gift::WAITING ), 50 ) as $gift ) {
+			if ( in_array( $gift->id, $tried, true ) || ( ! $run && ( 0 !== $gift->draws || $gift->created_at < $fresh ) ) ) {
 				continue;
 			}
 
@@ -327,6 +333,9 @@ final class GiftDraws {
 			if ( ! $this->gifts->open_window( $gift->id, $ends ) ) {
 				continue;
 			}
+
+			$tried[] = $gift->id;
+			set_transient( self::tried_key( $creator_id ), $tried, self::RUN_HOURS * HOUR_IN_SECONDS );
 
 			( $this->send )( $creator_id, GiftTexts::announce( $settings->language, $gift->buyer_name, ( $this->product_name )( $gift->product_id ), $settings->window ) );
 			( $this->enqueue )( self::DRAW_HOOK, array( $gift->id ), $settings->window + 1 );
@@ -395,6 +404,27 @@ final class GiftDraws {
 		if ( $this->gifts->return_to_buyer( $gift->id, Gift::WON, $code['id'] ) ) {
 			( $this->notify )( 'returned', $gift, array( 'code' => $code['code'] ) );
 		}
+	}
+
+	/**
+	 * The gifts whose window opened since the last `!gift start`.
+	 *
+	 * @param int $creator_id Creator.
+	 * @return list<int>
+	 */
+	private static function tried( int $creator_id ): array {
+		$tried = get_transient( self::tried_key( $creator_id ) );
+
+		return is_array( $tried ) ? array_values( array_filter( $tried, 'is_int' ) ) : array();
+	}
+
+	/**
+	 * The transient of the gifts tried since the last `!gift start`.
+	 *
+	 * @param int $creator_id Creator.
+	 */
+	private static function tried_key( int $creator_id ): string {
+		return 'merchboard_gift_tried_' . $creator_id;
 	}
 
 	/**

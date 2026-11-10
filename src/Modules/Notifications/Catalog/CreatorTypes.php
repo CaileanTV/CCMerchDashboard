@@ -67,6 +67,8 @@ final class CreatorTypes {
 			self::webhook_paused(),
 			self::youtube_terms_renewed(),
 			self::api_key_changed(),
+			self::gift_bought(),
+			self::gift_claimed(),
 		);
 	}
 
@@ -1041,6 +1043,88 @@ final class CreatorTypes {
 				null,
 				null,
 				__( 'Read the news', 'merchboard' ),
+				'',
+				self::closing()
+			)
+		);
+	}
+
+	/**
+	 * A viewer bought a gift in the creator's stream (ADR-107 pkt. 10).
+	 */
+	private static function gift_bought(): NotificationType {
+		return self::type(
+			'gift_bought',
+			'community',
+			static fn(): string => __( 'Gift bought in the stream', 'merchboard' ),
+			static fn(): string => __( 'When a viewer buys one of the creator\'s products as a Twitch gift.', 'merchboard' ),
+			false,
+			true,
+			false,
+			'community/twitch-gifting',
+			array(
+				'product' => 'Stream tee',
+				'buyer'   => 'Mads',
+			),
+			static fn( NotificationData $d ): string => '' === $d->text( 'buyer' )
+				/* translators: %s: product name. */
+				? sprintf( __( 'Someone bought %s as a gift in your stream.', 'merchboard' ), $d->text( 'product' ) )
+				/* translators: 1: the buyer's chosen name, 2: product name. */
+				: sprintf( __( '%1$s bought %2$s as a gift in your stream.', 'merchboard' ), $d->text( 'buyer' ), $d->text( 'product' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: product name. */
+				sprintf( __( 'A gift was bought in your stream: %s', 'merchboard' ), $d->text( 'product' ) ),
+				__( 'A gift for your chat', 'merchboard' ),
+				array( __( 'A viewer bought one of your products as a gift for your chat. The bot draws a winner among those who type !enter. The sale counts for you as usual.', 'merchboard' ) ),
+				array_values(
+					array_filter(
+						array(
+							array( __( 'Product', 'merchboard' ), $d->text( 'product' ) ),
+							array( __( 'From', 'merchboard' ), $d->text( 'buyer' ) ),
+						),
+						static fn( array $line ): bool => '' !== $line[1]
+					)
+				),
+				null,
+				null,
+				__( 'Open Twitch gifting', 'merchboard' ),
+				'',
+				self::closing()
+			)
+		);
+	}
+
+	/**
+	 * The winner claimed a gift (ADR-107 pkt. 10).
+	 */
+	private static function gift_claimed(): NotificationType {
+		return self::type(
+			'gift_claimed',
+			'community',
+			static fn(): string => __( 'Gift claimed by the winner', 'merchboard' ),
+			static fn(): string => __( 'When the winner of a Twitch gift in the creator\'s stream claims it.', 'merchboard' ),
+			false,
+			true,
+			false,
+			'community/twitch-gifting',
+			array(
+				'product' => 'Stream tee',
+				'winner'  => 'viewer1',
+			),
+			/* translators: 1: the winner's Twitch name, 2: product name. */
+			static fn( NotificationData $d ): string => sprintf( __( '%1$s claimed the gift %2$s.', 'merchboard' ), $d->text( 'winner' ), $d->text( 'product' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: product name. */
+				sprintf( __( 'The gift %s was claimed', 'merchboard' ), $d->text( 'product' ) ),
+				__( 'A gift was claimed', 'merchboard' ),
+				array( __( 'The winner of a gift in your stream logged in with Twitch and got the gift code.', 'merchboard' ) ),
+				array(
+					array( __( 'Product', 'merchboard' ), $d->text( 'product' ) ),
+					array( __( 'Winner', 'merchboard' ), $d->text( 'winner' ) ),
+				),
+				null,
+				null,
+				__( 'Open Twitch gifting', 'merchboard' ),
 				'',
 				self::closing()
 			)

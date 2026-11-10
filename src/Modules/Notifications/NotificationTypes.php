@@ -91,14 +91,15 @@ final class NotificationTypes {
 	 */
 	public static function groups(): array {
 		return array(
-			'sales'   => __( 'Sales', 'merchboard' ),
-			'payouts' => __( 'Payouts', 'merchboard' ),
-			'profile' => __( 'Profile and category', 'merchboard' ),
-			'code'    => __( 'Discount code', 'merchboard' ),
-			'account' => __( 'Account and prices', 'merchboard' ),
-			'news'    => __( 'News', 'merchboard' ),
-			'alerts'  => __( 'Alerts', 'merchboard' ),
-			'admin'   => __( 'To the administrator', 'merchboard' ),
+			'sales'     => __( 'Sales', 'merchboard' ),
+			'payouts'   => __( 'Payouts', 'merchboard' ),
+			'profile'   => __( 'Profile and category', 'merchboard' ),
+			'code'      => __( 'Discount code', 'merchboard' ),
+			'account'   => __( 'Account and prices', 'merchboard' ),
+			'news'      => __( 'News', 'merchboard' ),
+			'alerts'    => __( 'Alerts', 'merchboard' ),
+			'community' => __( 'Community Features', 'merchboard' ),
+			'admin'     => __( 'To the administrator', 'merchboard' ),
 		);
 	}
 }

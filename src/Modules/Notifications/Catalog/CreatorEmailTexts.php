@@ -39,6 +39,8 @@ final class CreatorEmailTexts {
 			'news_published'        => array( __( 'News', 'merchboard' ), __( 'When we have news for you.', 'merchboard' ) ),
 			'chatbot_lost_access'   => array( __( 'Your chatbot lost access', 'merchboard' ), __( 'When a platform stops your chatbot from reaching your channel. You get one e-mail until it is connected again.', 'merchboard' ) ),
 			'webhook_paused'        => array( __( 'Your webhook was paused', 'merchboard' ), __( 'When one of your webhooks is paused because 10 deliveries in a row failed.', 'merchboard' ) ),
+			'gift_bought'           => array( __( 'Gift bought in your stream', 'merchboard' ), __( 'When a viewer buys one of your products as a Twitch gift.', 'merchboard' ) ),
+			'gift_claimed'          => array( __( 'Gift claimed', 'merchboard' ), __( 'When the winner of a Twitch gift in your stream claims it.', 'merchboard' ) ),
 			'youtube_terms_renewed' => array( __( 'New YouTube terms', 'merchboard' ), __( 'When the terms of the YouTube chatbot change and you need to accept them again.', 'merchboard' ) ),
 			'designer_submitted'    => array( __( 'Design sent for approval', 'merchboard' ), __( 'A receipt when you send a new product or a change for approval.', 'merchboard' ) ),
 			'designer_approved'     => array( __( 'Your product is in the shop', 'merchboard' ), __( 'When we have approved your new product and it is in the shop.', 'merchboard' ) ),

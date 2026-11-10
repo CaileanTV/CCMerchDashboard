@@ -45,6 +45,7 @@ final class AdminTypes {
 			self::gift_card_coupon(),
 			self::code_reset(),
 			self::payout_cancelled(),
+			self::gift_returned(),
 		);
 	}
 
@@ -449,6 +450,39 @@ final class AdminTypes {
 				__( 'A creator replaced their own discount code. The old code no longer works.', 'merchboard' ),
 				array( array( __( 'Creator', 'merchboard' ), $d->text( 'creator' ) ) ),
 				__( 'Open Creators', 'merchboard' )
+			)
+		);
+	}
+
+	/**
+	 * Nobody claimed a Twitch gift after the last draw; the buyer got the
+	 * code (ADR-107 pkt. 7 and 10).
+	 */
+	private static function gift_returned(): NotificationType {
+		return self::type(
+			'gift_returned',
+			static fn(): string => __( 'Twitch gift given back to the buyer', 'merchboard' ),
+			static fn(): string => __( 'When nobody claimed a Twitch gift after the third draw, so the buyer got the gift code by e-mail.', 'merchboard' ),
+			true,
+			'wc-orders',
+			array(
+				'creator'      => 'Nova',
+				'product'      => 'Stream tee',
+				'order_number' => '1042',
+			),
+			/* translators: 1: product name, 2: creator name, 3: order number. */
+			static fn( NotificationData $d ): string => sprintf( __( 'Nobody claimed the gift %1$s in %2$s\'s stream (order %3$s); the buyer got the code.', 'merchboard' ), $d->text( 'product' ), $d->text( 'creator' ), $d->text( 'order_number' ) ),
+			static fn( NotificationData $d ): EmailMessage => self::message(
+				/* translators: %s: order number. */
+				sprintf( __( 'A Twitch gift went back to the buyer (order %s)', 'merchboard' ), $d->text( 'order_number' ) ),
+				__( 'A gift went back to the buyer', 'merchboard' ),
+				__( 'Nobody claimed a gift after three draws, so the buyer got the gift code by e-mail. Nothing needs to be done unless the buyer asks.', 'merchboard' ),
+				array(
+					array( __( 'Creator', 'merchboard' ), $d->text( 'creator' ) ),
+					array( __( 'Product', 'merchboard' ), $d->text( 'product' ) ),
+					array( __( 'Order', 'merchboard' ), $d->text( 'order_number' ) ),
+				),
+				__( 'Open Orders', 'merchboard' )
 			)
 		);
 	}

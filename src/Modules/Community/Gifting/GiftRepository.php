@@ -256,14 +256,16 @@ final class GiftRepository {
 	}
 
 	/**
-	 * Cancels a gift that has no winner yet.
+	 * Cancels a gift that has no winner yet (also one whose window is open:
+	 * its draw then finds nothing to draw).
 	 *
 	 * @param int $id Gift.
 	 * @return bool Whether this request cancelled it.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function cancel( int $id ): bool {
-		return $this->change( $id, Gift::WAITING, 'status = %s', array( Gift::CANCELLED ) );
+		return $this->change( $id, Gift::WAITING, 'status = %s', array( Gift::CANCELLED ) )
+			|| $this->change( $id, Gift::ENTERING, 'status = %s, entrants = NULL, window_ends = NULL', array( Gift::CANCELLED ) );
 	}
 
 	/**

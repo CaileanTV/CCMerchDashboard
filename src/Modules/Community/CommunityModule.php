@@ -30,8 +30,12 @@ use MerchBoard\Modules\Community\Dashboard\CommunityDashboardSection;
 use MerchBoard\Modules\Community\Gifting\Gift;
 use MerchBoard\Modules\Community\Gifting\GiftClaim;
 use MerchBoard\Modules\Community\Gifting\GiftCodes;
+use MerchBoard\Modules\Community\Gifting\GiftCreatorCleanup;
 use MerchBoard\Modules\Community\Gifting\GiftDraws;
 use MerchBoard\Modules\Community\Gifting\GiftingSettingsRepository;
+use MerchBoard\Modules\Community\Gifting\GiftNotices;
+use MerchBoard\Modules\Community\Gifting\GiftOrderInfo;
+use MerchBoard\Modules\Community\Gifting\GiftPrivacy;
 use MerchBoard\Modules\Community\Gifting\GiftPurchase;
 use MerchBoard\Modules\Community\Gifting\GiftRepository;
 use MerchBoard\Modules\Community\Rest\MeTwitchGiftingController;
@@ -148,6 +152,20 @@ final class CommunityModule implements Module {
 			5
 		);
 		( new TwitchSubPrivacy() )->register();
+		// Gifts (ADR-107): who hears about them, the order page, privacy and creator deletion.
+		( new GiftNotices(
+			static fn( int $creator_id ): string => $container->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '',
+			self::product_name( ... ),
+			self::product_url( ... ),
+			$container->get( Logger::class )
+		) )->register();
+		( new GiftOrderInfo( $container->get( GiftRepository::class ) ) )->register();
+		( new GiftPrivacy( $container->get( GiftRepository::class ) ) )->register();
+		add_filter(
+			'merchboard_creator_data_cleaners',
+			static fn( mixed $cleaners ): array => array_merge( is_array( $cleaners ) ? $cleaners : array(), array( new GiftCreatorCleanup( $container->get( GiftRepository::class ) ) ) ),
+			30
+		);
 		// The customer's Twitch account and tiers on the administrator's order page.
 		( new TwitchSubOrderInfo( static fn( int $creator_id ): string => $container->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '' ) )->register();
 		( new CommunityDashboardSection() )->register();
@@ -234,11 +252,7 @@ final class CommunityModule implements Module {
 				$c->get( GiftRepository::class ),
 				$c->get( GiftCodes::class ),
 				$c->get( TwitchCustomerSession::class ),
-				static function ( int $product_id ): string {
-					$url = get_permalink( $product_id );
-
-					return is_string( $url ) && '' !== $url ? $url : home_url( '/' );
-				},
+				self::product_url( ... ),
 				self::notify( ... ),
 				$c->get( Logger::class )
 			)
@@ -256,6 +270,17 @@ final class CommunityModule implements Module {
 	private static function notify( string $event, Gift $gift, array $data ): void {
 		// GiftDraws::EVENT_HOOK.
 		do_action( 'merchboard_gift_event', $event, $gift, $data );
+	}
+
+	/**
+	 * A product's page (the home page when it is gone).
+	 *
+	 * @param int $product_id Product.
+	 */
+	private static function product_url( int $product_id ): string {
+		$url = get_permalink( $product_id );
+
+		return is_string( $url ) && '' !== $url ? $url : home_url( '/' );
 	}
 
 	/**

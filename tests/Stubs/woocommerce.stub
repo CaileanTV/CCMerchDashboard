@@ -318,6 +318,35 @@ final class WooCommerce {
 	 * @return void
 	 */
 	public function initialize_session() {}
+
+	/**
+	 * @return WC_Emails
+	 */
+	public function mailer() {}
+}
+
+/**
+ * The e-mails (class-wc-emails.php).
+ */
+class WC_Emails {
+
+	/**
+	 * @param string $email_heading Heading.
+	 * @param string $message       HTML.
+	 * @param bool   $plain_text    Plain text.
+	 * @return string
+	 */
+	public function wrap_message( $email_heading, $message, $plain_text = false ) {}
+
+	/**
+	 * @param string|string[] $to          Recipient.
+	 * @param string          $subject     Subject.
+	 * @param string          $message     HTML.
+	 * @param string          $headers     Headers.
+	 * @param string|string[] $attachments Attachments.
+	 * @return bool
+	 */
+	public function send( $to, $subject, $message, $headers = "Content-Type: text/html\r\n", $attachments = '' ) {}
 }
 
 /**
@@ -408,6 +437,20 @@ class WC_Discounts {
  * Order (class-wc-order.php).
  */
 class WC_Order extends WC_Abstract_Order {
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_billing_email( $context = 'view' ) {}
+
+	/**
+	 * @param string $note              Note.
+	 * @param int    $is_customer_note  Whether the customer sees it.
+	 * @param bool   $added_by_user     Whether a user added it.
+	 * @return int
+	 */
+	public function add_order_note( $note, $is_customer_note = 0, $added_by_user = false ) {}
 
 	/**
 	 * @return list<string>
