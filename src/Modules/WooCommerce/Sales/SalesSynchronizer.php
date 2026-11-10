@@ -489,6 +489,8 @@ final class SalesSynchronizer implements SalesSync, SalesBackfillSync {
 						$planned = null === $this->campaigns ? $result->write : $result->write->with_campaigns( $this->campaigns->campaigns( $order ) );
 						// Review 30.15: a designer line sold without VAT compares without VAT.
 						$planned = $planned->with_vat_exempt( array_filter( array_map( static fn( OrderLineSnapshot $line ): ?int => $line->exempt_vat_bps, $order->lines_by_item() ), static fn( ?int $bps ): bool => null !== $bps ) );
+						// ADR-106 pkt. 7: the creator pays the line's Twitch subscriber discount.
+						$planned = $planned->with_sub_discounts( array_filter( array_map( static fn( OrderLineSnapshot $line ): ?int => $line->sub_discount, $order->lines_by_item() ), static fn( ?int $units ): bool => null !== $units ) );
 
 						if ( null !== $observe ) {
 							$observe( $planned );

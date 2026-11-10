@@ -64,7 +64,7 @@ final class LedgerCreatorProfits implements CreatorProfits {
 	 * When a row's profit is known (RealizedProfit::for_entry()).
 	 */
 	public const KNOWN = "( p.share_bps IS NOT NULL AND p.share_bps <= 10000
-		AND ( p.share_source IN ( 'creator', 'product' ) OR ( p.share_source = 'designer' AND t.designer_profit IS NOT NULL ) )
+		AND ( ( p.share_source IN ( 'creator', 'product' ) AND ( t.sub_discount IS NULL OR t.designer_profit IS NOT NULL ) ) OR ( p.share_source = 'designer' AND t.designer_profit IS NOT NULL ) )
 		AND p.price_decimals IS NOT NULL AND p.price_decimals <= 4
 		AND p.order_id = r.order_id AND p.creator_id = r.creator_id AND p.currency = r.currency
 		AND p.product_id = r.product_id AND p.variation_id = r.variation_id
@@ -72,9 +72,10 @@ final class LedgerCreatorProfits implements CreatorProfits {
 
 	/**
 	 * A row's profit (ADR-049), rounded to the snapshot's store precision;
-	 * the stored profit of a designer product's row (ADR-080 pkt. 8).
+	 * the stored profit of a designer product's row (ADR-080 pkt. 8) and of
+	 * every row with a Twitch subscriber discount (ADR-106 pkt. 7).
 	 */
-	public const PROFIT = "CASE WHEN p.share_source = 'designer' THEN t.designer_profit ELSE CASE p.price_decimals
+	public const PROFIT = "CASE WHEN p.share_source = 'designer' OR t.sub_discount IS NOT NULL THEN t.designer_profit ELSE CASE p.price_decimals
 		WHEN 0 THEN ROUND( ( r.net_amount + t.tax_amount ) * p.share_bps * 0.0001, 0 )
 		WHEN 1 THEN ROUND( ( r.net_amount + t.tax_amount ) * p.share_bps * 0.0001, 1 )
 		WHEN 2 THEN ROUND( ( r.net_amount + t.tax_amount ) * p.share_bps * 0.0001, 2 )

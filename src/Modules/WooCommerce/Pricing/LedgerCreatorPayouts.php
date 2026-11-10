@@ -83,7 +83,7 @@ final class LedgerCreatorPayouts {
 	/**
 	 * When a row's payout is known (RealizedPayout::for_entry()).
 	 */
-	public const KNOWN = '( ' . LedgerCreatorProfits::KNOWN . " AND p.vat_registered IN ( 0, 1 ) AND ( p.share_source <> 'designer' OR t.designer_payout IS NOT NULL ) )";
+	public const KNOWN = '( ' . LedgerCreatorProfits::KNOWN . " AND p.vat_registered IN ( 0, 1 ) AND ( ( p.share_source <> 'designer' AND t.sub_discount IS NULL ) OR t.designer_payout IS NOT NULL ) )";
 
 	/**
 	 * A row's payout as calculated now (ADR-064, CreatorShare::payout()): its
@@ -91,9 +91,10 @@ final class LedgerCreatorPayouts {
 	 * share of the row's amount excluding VAT, each rounded once to the
 	 * snapshot's store precision. Like PROFIT, a multiplication only, so no
 	 * session setting can shorten the scale. A designer product's row has its
-	 * payout stored with its tax (ADR-080 pkt. 8).
+	 * payout stored with its tax (ADR-080 pkt. 8), and so has every row with a
+	 * Twitch subscriber discount (ADR-106 pkt. 7).
 	 */
-	public const PAYOUT = "CASE WHEN p.share_source = 'designer' THEN t.designer_payout WHEN p.vat_registered = 1 THEN " . LedgerCreatorProfits::PROFIT . ' ELSE ' . self::NET_SHARE . ' END';
+	public const PAYOUT = "CASE WHEN p.share_source = 'designer' OR t.sub_discount IS NOT NULL THEN t.designer_payout WHEN p.vat_registered = 1 THEN " . LedgerCreatorProfits::PROFIT . ' ELSE ' . self::NET_SHARE . ' END';
 
 	/**
 	 * The share of a row's amount excluding VAT, rounded to the snapshot's

@@ -36,16 +36,18 @@ final class SalesTaxRepository {
 	 * is the company's campaign that covers a designer product's row (ADR-080
 	 * pkt. 9), null for none. `designer_profit` and `designer_payout` are the
 	 * amounts stored with a designer product's row (null: none or unknown),
-	 * which RealizedProfit and RealizedPayout return as they are.
+	 * which RealizedProfit and RealizedPayout return as they are. They are
+	 * also stored for every row of a line with a Twitch subscriber discount,
+	 * whose `sub_discount` is then set (ADR-106 pkt. 7; null: none).
 	 *
 	 * @param string $event_key The row's event key.
-	 * @return array{tax: int, currency: string, campaign_id?: int|null, designer_profit?: int|null, designer_payout?: int|null}|null Signed tax in 1/10000 units and its currency.
+	 * @return array{tax: int, currency: string, campaign_id?: int|null, designer_profit?: int|null, designer_payout?: int|null, sub_discount?: int|null}|null Signed tax in 1/10000 units and its currency.
 	 * @throws DatabaseException When the query fails or the stored amount is invalid.
 	 * @phpstan-impure Reads the database.
 	 */
 	public function find( string $event_key ): ?array {
 		$wpdb = $this->wpdb;
-		$row  = $wpdb->get_row( $wpdb->prepare( 'SELECT tax_amount, currency, campaign_id, designer_profit, designer_payout FROM %i WHERE event_key = %s', Tables::name( $wpdb, Tables::SALES_TAX ), $event_key ), ARRAY_A );
+		$row  = $wpdb->get_row( $wpdb->prepare( 'SELECT tax_amount, currency, campaign_id, designer_profit, designer_payout, sub_discount FROM %i WHERE event_key = %s', Tables::name( $wpdb, Tables::SALES_TAX ), $event_key ), ARRAY_A );
 
 		if ( ! is_array( $row ) ) {
 			if ( '' !== $wpdb->last_error ) {
@@ -69,6 +71,7 @@ final class SalesTaxRepository {
 			'campaign_id'     => is_numeric( $row['campaign_id'] ?? null ) ? (int) $row['campaign_id'] : null,
 			'designer_profit' => $stored( $row['designer_profit'] ?? null ),
 			'designer_payout' => $stored( $row['designer_payout'] ?? null ),
+			'sub_discount'    => $stored( $row['sub_discount'] ?? null ),
 		);
 	}
 }

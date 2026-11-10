@@ -43,6 +43,11 @@ defined( 'ABSPATH' ) || exit;
  * The amount is computed once when the row is written and stored with its
  * tax (`designer_profit`); that stored amount is returned here when the tax
  * row carries it, so PHP and the SQL sums always agree.
+ *
+ * A row of a line with a Twitch subscriber discount (`sub_discount` stored
+ * with its tax, ADR-106 pkt. 7) always returns its stored profit: the
+ * creator pays the discount, which the share of the paid amount cannot
+ * show. Without a stored profit it is unknown.
  */
 final class RealizedProfit {
 
@@ -53,9 +58,9 @@ final class RealizedProfit {
 	 * rows carry the original order line, so they match its snapshot. The
 	 * row's amount is the line amount, so the quantity is never multiplied.
 	 *
-	 * @param SalesEntry                                                                                                             $entry    Ledger row.
-	 * @param SalesLinePricing|null                                                                                                  $snapshot The row's order line snapshot, null when there is none.
-	 * @param array{tax: int, currency: string, campaign_id?: int|null, designer_profit?: int|null, designer_payout?: int|null}|null $tax      The row's stored actual tax, null when none.
+	 * @param SalesEntry                                                                                                                                      $entry    Ledger row.
+	 * @param SalesLinePricing|null                                                                                                                           $snapshot The row's order line snapshot, null when there is none.
+	 * @param array{tax: int, currency: string, campaign_id?: int|null, designer_profit?: int|null, designer_payout?: int|null, sub_discount?: int|null}|null $tax      The row's stored actual tax, null when none.
 	 */
 	public static function for_entry( SalesEntry $entry, ?SalesLinePricing $snapshot, ?array $tax ): ?int {
 		$sale = self::sale_units( $entry, $tax );
@@ -70,6 +75,11 @@ final class RealizedProfit {
 			|| $snapshot->product_id !== $entry->product_id
 			|| $snapshot->variation_id !== $entry->variation_id ) {
 			return null;
+		}
+
+		// ADR-106 pkt. 7: the profit stored with a subscriber-discounted row, never a share of the paid amount.
+		if ( null !== $tax && null !== ( $tax['sub_discount'] ?? null ) ) {
+			return $tax['designer_profit'] ?? null;
 		}
 
 		if ( $snapshot->is_designer() ) {
@@ -88,8 +98,8 @@ final class RealizedProfit {
 	 * The row's sale price incl. VAT in units (net + actual tax), signed;
 	 * null when the row has no stored tax in its currency.
 	 *
-	 * @param SalesEntry                                                                                                             $entry Ledger row.
-	 * @param array{tax: int, currency: string, campaign_id?: int|null, designer_profit?: int|null, designer_payout?: int|null}|null $tax   The row's stored actual tax.
+	 * @param SalesEntry                                                                                                                                      $entry Ledger row.
+	 * @param array{tax: int, currency: string, campaign_id?: int|null, designer_profit?: int|null, designer_payout?: int|null, sub_discount?: int|null}|null $tax   The row's stored actual tax.
 	 */
 	public static function sale_units( SalesEntry $entry, ?array $tax ): ?int {
 		if ( null === $tax || $tax['currency'] !== $entry->currency ) {

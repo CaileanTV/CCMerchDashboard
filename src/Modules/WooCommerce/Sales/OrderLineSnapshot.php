@@ -33,6 +33,9 @@ defined( 'ABSPATH' ) || exit;
  *   when the line was sold without VAT although the shop's prices include
  *   it (a VAT-exempt customer, an export), else null. Only a designer
  *   product's row reads it (review 30.15).
+ * - `sub_discount` is the line's Twitch subscriber discount in the paid
+ *   basis (incl. VAT, like net + tax) in 1/10000 units, or null when the
+ *   line has none (ADR-106 pkt. 7).
  */
 final readonly class OrderLineSnapshot {
 
@@ -49,7 +52,8 @@ final readonly class OrderLineSnapshot {
 	 * @param int|null $tax          Actual line tax in 1/10000 units, or null when unknown.
 	 * @param int|null $subtotal     Line subtotal before coupons incl. tax in 1/10000 units, or null when unknown.
 	 * @param int|null $exempt_vat_bps The VAT rate the line was sold without (basis points), or null.
-	 * @throws InvalidArgumentException When an id or the rate is invalid.
+	 * @param int|null $sub_discount   The line's Twitch subscriber discount (units, incl. VAT), or null.
+	 * @throws InvalidArgumentException When an id, the rate or the discount is invalid.
 	 */
 	public function __construct(
 		public int $item_id,
@@ -61,9 +65,10 @@ final readonly class OrderLineSnapshot {
 		public ?int $creator_id,
 		public ?int $tax = null,
 		public ?int $subtotal = null,
-		public ?int $exempt_vat_bps = null
+		public ?int $exempt_vat_bps = null,
+		public ?int $sub_discount = null
 	) {
-		if ( $item_id < 1 || $product_id < 0 || $variation_id < 0 || ( null !== $creator_id && ( $creator_id < 1 || $product_id < 1 ) ) || ( null !== $exempt_vat_bps && ( $exempt_vat_bps < 1 || $exempt_vat_bps > 100000 ) ) ) {
+		if ( ( null !== $sub_discount && $sub_discount < 1 ) || $item_id < 1 || $product_id < 0 || $variation_id < 0 || ( null !== $creator_id && ( $creator_id < 1 || $product_id < 1 ) ) || ( null !== $exempt_vat_bps && ( $exempt_vat_bps < 1 || $exempt_vat_bps > 100000 ) ) ) {
 			throw new InvalidArgumentException( 'Invalid order line snapshot.' );
 		}
 	}

@@ -18,7 +18,9 @@ use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\WooCommerce\Payouts\G1\G1AssessmentRow;
 use MerchBoard\Modules\WooCommerce\Payouts\G1\G1StateRow;
+use MerchBoard\Modules\WooCommerce\Pricing\CreatorShare;
 use MerchBoard\Modules\WooCommerce\Pricing\DesignerRowAmounts;
+use MerchBoard\Modules\WooCommerce\Pricing\SubDiscountAmounts;
 use MerchBoard\Modules\WooCommerce\Pricing\SalesLinePricingRepository;
 use Throwable;
 use wpdb;
@@ -299,7 +301,7 @@ final class SalesRepository {
 
 						// The row's actual tax (ADR-048), only for a row written now.
 						if ( isset( $write->taxes[ $entry->event_key ] ) ) {
-							$this->insert_tax( $entry, $write->taxes[ $entry->event_key ], $write->campaigns, $write->vat_exempt );
+							$this->insert_tax( $entry, $write->taxes[ $entry->event_key ], $write->campaigns, $write->vat_exempt, $write->sub_discounts );
 						}
 					} else {
 						$skipped_entries[] = $entry->event_key;
@@ -490,19 +492,21 @@ final class SalesRepository {
 	 * @param SalesEntry      $entry     The row just inserted.
 	 * @param int             $tax       Its signed tax in 1/10000 units.
 	 * @param array<int, int> $campaigns  Campaign id by order item of the order's covered designer lines.
-	 * @param array<int, int> $vat_exempt VAT rate by order item of lines sold without VAT.
+	 * @param array<int, int> $vat_exempt    VAT rate by order item of lines sold without VAT.
+	 * @param array<int, int> $sub_discounts Twitch subscriber discount (units, incl. VAT) by order item (ADR-106).
 	 * @throws DatabaseException When the lock is not held or the tax cannot be stored.
 	 */
-	private function insert_tax( SalesEntry $entry, int $tax, array $campaigns, array $vat_exempt = array() ): void {
+	private function insert_tax( SalesEntry $entry, int $tax, array $campaigns, array $vat_exempt = array(), array $sub_discounts = array() ): void {
 		$this->assert_locked( $entry->order_id );
 
 		$wpdb    = $this->wpdb;
 		$table   = $this->table( Tables::SALES_TAX );
-		$amounts = $this->designer_amounts( $entry, $tax, $campaigns, $vat_exempt );
-		// A designer product's row (ADR-080 pkt. 8–9) stores the creator's profit, payout and campaign with its tax; '' and 0 are stored as NULL.
+		$sub     = $this->carried_sub_discount( $entry, $tax, $sub_discounts );
+		$amounts = $this->designer_amounts( $entry, $tax, $campaigns, $vat_exempt, $sub ) ?? ( null === $sub ? null : $this->share_amounts( $entry, $tax, $sub ) );
+		// A designer product's row (ADR-080 pkt. 8–9) and every row of a line with a subscriber discount (ADR-106) store the creator's profit and payout with the tax; '' and 0 are stored as NULL.
 		$inserted = $this->guarded_insert(
 			$wpdb->prepare(
-				"INSERT INTO %i (event_key, order_id, order_item_id, tax_amount, currency, created_at, designer_profit, designer_payout, campaign_id) SELECT %s, %d, %d, %s, %s, %s, NULLIF( %s, '' ), NULLIF( %s, '' ), NULLIF( %d, 0 ) FROM DUAL WHERE CONNECTION_ID() = %d",
+				"INSERT INTO %i (event_key, order_id, order_item_id, tax_amount, currency, created_at, designer_profit, designer_payout, campaign_id, sub_discount) SELECT %s, %d, %d, %s, %s, %s, NULLIF( %s, '' ), NULLIF( %s, '' ), NULLIF( %d, 0 ), NULLIF( %s, '' ) FROM DUAL WHERE CONNECTION_ID() = %d",
 				$table,
 				$entry->event_key,
 				$entry->order_id,
@@ -513,6 +517,7 @@ final class SalesRepository {
 				$amounts[0] ?? '',
 				$amounts[1] ?? '',
 				$amounts[2] ?? 0,
+				null === $sub ? '' : SalesAmount::format( $sub ),
 				$this->lock_connection
 			),
 			$entry->order_id
@@ -540,14 +545,20 @@ final class SalesRepository {
 	 * rows, review 30.15), and a sale of a line sold without VAT compares
 	 * with the base price and profit without VAT.
 	 *
+	 * With a Twitch subscriber discount (ADR-106 pkt. 7) a sale gets the
+	 * profit of what was paid plus the discount, less the discount (the
+	 * creator pays it, also in a campaign), and a refund always takes back
+	 * the line's profit in proportion.
+	 *
 	 * @param SalesEntry      $entry      Row written now.
 	 * @param int             $tax        The row's actual tax in units.
 	 * @param array<int, int> $campaigns  Campaign id by order item, for a line's first row.
 	 * @param array<int, int> $vat_exempt VAT rate by order item of lines sold without VAT.
+	 * @param int|null        $sub        The subscriber discount the row carries (carried_sub_discount()), null for a line without one.
 	 * @return array{0: string, 1: string|null, 2: int|null}|null Profit and payout as decimals, and the campaign.
 	 * @throws DatabaseException When the snapshot or the line's earlier rows cannot be read.
 	 */
-	private function designer_amounts( SalesEntry $entry, int $tax, array $campaigns, array $vat_exempt = array() ): ?array {
+	private function designer_amounts( SalesEntry $entry, int $tax, array $campaigns, array $vat_exempt = array(), ?int $sub = null ): ?array {
 		$snapshot = ( new SalesLinePricingRepository( $this->wpdb ) )->find( $entry->order_item_id );
 
 		if ( null === $snapshot
@@ -576,7 +587,7 @@ final class SalesRepository {
 		$per_unit = $snapshot->profit_units;
 		$rate     = $vat_exempt[ $entry->order_item_id ] ?? null;
 
-		if ( null === $campaign && $paid < 0 ) {
+		if ( $paid < 0 && ( null === $campaign || null !== $sub ) ) {
 			$line   = $this->designer_line( $entry );
 			$profit = DesignerRowAmounts::refund( $paid, $line['sold'], $line['sold_profit'], $line['returned'], $line['returned_profit'], $snapshot->price_decimals );
 		} else {
@@ -585,12 +596,93 @@ final class SalesRepository {
 				$per_unit = DesignerRowAmounts::without_vat( $per_unit, $rate, false, $snapshot->price_decimals );
 			}
 
-			$profit = SalesAmount::add( $base, $per_unit ) < 1 ? 0 : DesignerRowAmounts::profit( $entry->quantity, $paid, $base, $per_unit, null !== $campaign, $snapshot->price_decimals );
+			$decimals  = $snapshot->price_decimals;
+			$profit_of = static fn( int $units ): int => SalesAmount::add( $base, $per_unit ) < 1 ? 0 : DesignerRowAmounts::profit( $entry->quantity, $units, $base, $per_unit, null !== $campaign, $decimals );
+			$profit    = null === $sub ? $profit_of( $paid ) : SubDiscountAmounts::sale( $paid, $sub, $profit_of );
 		}
 
 		$payout = null === $snapshot->vat_registered ? null : DesignerRowAmounts::payout( $profit, $net, $paid, $snapshot->vat_registered, $snapshot->price_decimals );
 
 		return array( SalesAmount::format( $profit ), null === $payout ? null : SalesAmount::format( $payout ), $campaign );
+	}
+
+	/**
+	 * The Twitch subscriber discount a row carries (ADR-106 pkt. 7), or null
+	 * when its line has none: the line's discount on its first positive row,
+	 * 0 on every other row. A line counts as discounted when the order has
+	 * the discount now or an earlier row of the line carried one, so a later
+	 * refund stays in the same calculation.
+	 *
+	 * @param SalesEntry      $entry         Row written now.
+	 * @param int             $tax           The row's actual tax in units.
+	 * @param array<int, int> $sub_discounts Discount by order item.
+	 * @throws DatabaseException When the line's earlier rows cannot be read.
+	 */
+	private function carried_sub_discount( SalesEntry $entry, int $tax, array $sub_discounts ): ?int {
+		$wpdb    = $this->wpdb;
+		$earlier = $wpdb->get_col( $wpdb->prepare( 'SELECT sub_discount FROM %i WHERE order_id = %d AND order_item_id = %d AND event_key <> %s AND sub_discount IS NOT NULL', $this->table( Tables::SALES_TAX ), $entry->order_id, $entry->order_item_id, $entry->event_key ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The ledger's own table, under the order's lock.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the subscriber discount of the order line.', array( 'order_id' => $entry->order_id ) );
+		}
+
+		$line = $sub_discounts[ $entry->order_item_id ] ?? null;
+
+		if ( null === $line && array() === $earlier ) {
+			return null;
+		}
+
+		$given = 0;
+
+		foreach ( $earlier as $value ) {
+			$given = SalesAmount::add( $given, SalesAmount::parse( (string) $value ) );
+		}
+
+		return SubDiscountAmounts::carried( SalesAmount::add( SalesAmount::parse( $entry->net_amount ), $tax ), $line ?? $given, $given );
+	}
+
+	/**
+	 * The creator's profit and payout of a share product's row on a line with
+	 * a Twitch subscriber discount (ADR-106 pkt. 7): a sale gets the share of
+	 * what was paid plus the discount, less the discount, never below 0; a
+	 * refund takes back the line's profit in proportion. Null when the line's
+	 * snapshot has no share (the row's profit stays unknown).
+	 *
+	 * @param SalesEntry $entry Row written now.
+	 * @param int        $tax   The row's actual tax in units.
+	 * @param int        $sub   The subscriber discount the row carries.
+	 * @return array{0: string, 1: string|null, 2: null}|null Profit and payout as decimals.
+	 * @throws DatabaseException When the snapshot or the line's earlier rows cannot be read.
+	 */
+	private function share_amounts( SalesEntry $entry, int $tax, int $sub ): ?array {
+		$snapshot = ( new SalesLinePricingRepository( $this->wpdb ) )->find( $entry->order_item_id );
+
+		if ( null === $snapshot
+			|| $snapshot->is_designer()
+			|| ! $snapshot->has_share()
+			|| $snapshot->order_id !== $entry->order_id
+			|| $snapshot->creator_id !== $entry->creator_id
+			|| $snapshot->currency !== $entry->currency
+			|| $snapshot->product_id !== $entry->product_id
+			|| $snapshot->variation_id !== $entry->variation_id ) {
+			return null;
+		}
+
+		$net      = SalesAmount::parse( $entry->net_amount );
+		$paid     = SalesAmount::add( $net, $tax );
+		$bps      = $snapshot->share_bps;
+		$decimals = $snapshot->price_decimals;
+
+		if ( $paid < 0 ) {
+			$line   = $this->designer_line( $entry );
+			$profit = DesignerRowAmounts::refund( $paid, $line['sold'], $line['sold_profit'], $line['returned'], $line['returned_profit'], $decimals );
+		} else {
+			$profit = SubDiscountAmounts::sale( $paid, $sub, static fn( int $units ): int => CreatorShare::profit( $units, $bps, $decimals ) );
+		}
+
+		$payout = null === $snapshot->vat_registered ? null : DesignerRowAmounts::payout( $profit, $net, $paid, $snapshot->vat_registered, $decimals );
+
+		return array( SalesAmount::format( $profit ), null === $payout ? null : SalesAmount::format( $payout ), null );
 	}
 
 	/**

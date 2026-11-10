@@ -3624,7 +3624,7 @@ ADR-004, ADR-007, ADR-016, ADR-017, ADR-018, ADR-025, ADR-033, ADR-066, ADR-067.
 2026-10-18
 
 ## Status
-Accepteret af projektejeren 2026-10-18. Godkender Twitch som ekstern service efter ADR-016. **Statusnote 2026-10-20 (projektejerens beslutninger før trin 25.8; erstatter pkt. 1–4 hvor de afviger):**
+Accepteret af projektejeren 2026-10-18. Godkender Twitch som ekstern service efter ADR-016. **Statusnote 2026-11-10:** ADR-106 udvider brugen med kundens eget Twitch-login (scope `user:read:subscriptions`) og `GET helix/subscriptions/user`, kun til rabat til Twitch-subscribers. **Statusnote 2026-10-20 (projektejerens beslutninger før trin 25.8; erstatter pkt. 1–4 hvor de afviger):**
 - **Chatbot-badge og chat identity:** botten skal opfylde Twitchs krav ([Chatbot Badge and Chat Identity](https://dev.twitch.tv/docs/chat/#chatbot-badge-and-chat-identity)). Beskeder sendes derfor med Send Chat Message og et **app access token** (client credentials), ikke bottens bruger-token som i MerchAlert. Botten lytter til chatten med EventSub `channel.chat.message` over **webhook** med app access token, så den står under "Chat Bots". Det er også den model, Twitch kræver for verificerede bots, som projektejeren vil søge (højere rate limit).
 - **Bot-kontoen** forbindes af en administrator med OAuth (authorization code) og scopes `user:read:chat user:write:chat user:bot`. Bottens bruger-token bruges kun til at slå konto-id'et op og gemmes ikke: godkendelsen hos Twitch er det, app-tokenet bruger.
 - **Kanal-autorisation pr. creator (ændrer pkt. 2 og "Alternatives considered"):** creatoren tilføjer selv botten til sin kanal fra dashboardet ved at godkende `channel:bot` (OAuth). Kun kanalens id og navn gemmes, ikke creatorens token. Botten kan ikke være kanalens egen konto. Administratoren sætter ikke længere kanalen.
@@ -6155,3 +6155,96 @@ Ingen schemaændring. Cache og tællere ligger i transients, der udløber af sig
 
 ## Related
 ADR-062, ADR-104
+
+# ADR-106: Twitch-login for kunder og rabat til Twitch-subscribers
+
+## Date
+2026-11-10
+
+## Status
+Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" pkt. 3 og planen for fase 43). Udvider ADR-066 (Twitch som ekstern service) med kunde-login og subscription-opslag og udvider ADR-080 pkt. 8 (rabat af creatorens fortjeneste) til alle produkttyper for denne rabat.
+
+## Context
+Projektejeren vil, inspireret af Fourthwall, give creatorens Twitch-subscribers en automatisk rabat på creatorens produkter. Det kræver to ting: kunden skal bevise sin Twitch-konto, og abonnementet på creatorens kanal skal tjekkes.
+
+Twitch tilbyder `GET https://api.twitch.tv/helix/subscriptions/user` (`broadcaster_id`, `user_id`). Kaldet bruger kundens eget user access token med scope `user:read:subscriptions`. Svaret er:
+- 200 med `tier` (`1000`, `2000` eller `3000`; Prime giver `1000`) og `is_gift`;
+- 404, når kunden ikke subscriber.
+
+Creatorens kanal-id kendes kun, når creatoren har forbundet Twitch (`channel:bot`, ADR-066).
+
+I dag deles en rabat på et almindeligt andelsprodukt mellem virksomhed og creator, fordi fortjenesten er en andel af det betalte (ADR-049). Kun designerprodukter tager rabatten af creatorens fortjeneste først (ADR-080 pkt. 8).
+
+## Decision
+1. **Twitch-brugen udvides (ADR-016, ADR-066):**
+   - Nyt endpoint `GET helix/subscriptions/user` og nyt scope `user:read:subscriptions`, kun med kundens eget token.
+   - Samme Twitch-app (Client ID og Secret) og samme callback-URL (`merchboard/v1/alerts/twitch/callback`), så appens redirect-URI ikke skal ændres.
+2. **Kundens login (OAuth authorization code):**
+   - Login starter fra `GET merchboard/v1/shop/twitch/login` med en nonce og et fast mål (`cart` eller `checkout`). Returadressen er altid butikkens kurv eller checkout.
+   - `state` er tilfældig, kan kun bruges én gang og er gyldig i 10 minutter. Den bindes til WooCommerce-sessionens kunde-id og desuden til WordPress-brugeren, når kunden er logget ind. Bot- og kanal-flowet binder i stedet til et WordPress-login.
+   - Kundens access token holdes kun i WooCommerce-sessionen, krypteret (`ChatCipher` med eget domæne), og bruges kun til subscription-opslag. Refresh-tokens gemmes aldrig. Er tokenet udløbet, skal kunden logge ind igen.
+   - Er kunden logget ind i butikken, kan kontoen huskes i user meta `merchboard_twitch_customer`, med kun Twitch-id og -login. Ved et nyt besøg kræver tjekket ét klik ("Tjek min subscription"), og der gemmes ingen langtidsnøgle.
+   - "Log ud fra Twitch" sletter sessionens Twitch-data og den huskede konto.
+3. **Creatorens indstillinger** gemmes i creator-meta `twitch_sub_discount`:
+   - om rabatten er slået til;
+   - procent pr. tier (1, 2 og 3; 0–100 %);
+   - om gifted subs tæller;
+   - om rabatten gælder alle creatorens produkter eller udvalgte (højst 500, kun egne produkter).
+
+   Rabatten kan kun slås til, når creatorens Twitch-kanal er forbundet. Chatbeskederne kan stadig være slået fra.
+4. **Rabatten i kurven** er en virtuel kupon af egen type (`merchboard_twitch_sub`) med den reserverede kode `merchboard-twitch-sub`. Pluginet tilføjer og fjerner den selv.
+   - Den gælder kun linjer, som creatoren ejer, inden for creatorens valg af produkter, og kun når kunden har en gyldig tier på creatorens kanal. Gifted subs tæller efter creatorens valg. Andre creatores linjer får ingen rabat.
+   - Rabatten pr. enhed er procenten af linjeprisen før kuponer (også når prisen er en tilbudspris), men højst creatorens fortjeneste pr. enhed (`CreatorProfitDiscount::per_unit()`).
+   - **Bedste rabat vinder pr. linje:** kuponen beregnes sidst. Har andre kuponer givet mindre end subscriber-rabatten på linjen, fylder den op til subscriber-rabatten. Har de givet mere, giver den intet.
+   - Bruger kunden creatorens egen kode (ADR-068), får creatorens linjer ingen subscriber-rabat, fordi linjerne er udelukket fra regnskabet.
+   - Den reserverede kode kan ikke bruges som creatorkode eller kampagnekode.
+5. **Gentjek:** lige før ordren oprettes, spørges Twitch igen.
+   - Har en tier ændret sig, eller er tokenet udløbet, genberegnes kurven, og kunden ser den nye pris, før der betales.
+   - Svarer Twitch ikke, fjernes subscriber-rabatten, og kunden får besked.
+6. **Ordren gemmer:**
+   - Pr. linje: subscriber-rabatten i betalt grundlag, altså inkl. moms ligesom linjens `net + tax` (`_merchboard_sub_discount`), samt tier og procent.
+   - Pr. ordre: kundens Twitch-id og login, tidspunktet for tjekket og tier pr. creator (`_merchboard_twitch_sub`).
+   - Genberegner en administrator ordren, bevares kupontypen og det frosne beløb.
+7. **Regnskab: creatoren betaler hele subscriber-rabatten (S) på alle produkttyper.**
+   - **Lagring:** `merchboard_sales_tax` får kolonnen `sub_discount` (migration 49). Alle rækker af en linje med subscriber-rabat får den sat: S på linjens første positive række og 0 på de øvrige. Rækkernes fortjeneste og udbetaling gemmes i `designer_profit` og `designer_payout`, som designerrækker allerede gør. De to kolonner betyder fremover "rækkens gemte fortjeneste og udbetaling".
+   - **Salg:** fortjeneste = `max( 0, f( betalt + S ) − S )`. f er linjens normale regel uden subscriber-rabat: andelen (ADR-049) eller designerreglen i eller uden for kampagne (ADR-080). Virksomhedens del ændres derfor ikke af subscriber-rabatten, og creatorens fortjeneste bliver aldrig negativ.
+   - **Refundering:** linjens fortjeneste tages tilbage i forhold til den refunderede andel af det betalte (`DesignerRowAmounts::refund()`), så en helt refunderet linje ender på 0.
+   - **Udbetaling (ADR-064):** fortjenesten, når creatoren var momsregistreret. Ellers fortjenesten uden salgets moms (fortjeneste × net ÷ betalt), som for designerrækker.
+   - Rækker uden subscriber-rabat beregnes uændret. Ældre rækker har `sub_discount` NULL.
+8. **Visning:**
+   - Kunden ser et kort med "Log ind med Twitch" i kurv og checkout, både klassisk og med blokke.
+   - Ordrehistorikken og afregningsbilaget viser subscriber-rabatten.
+   - Kunder ser aldrig navne på produktionspartnere.
+9. **Audit:** handlingen `twitch_sub_discount_changed` registrerer feltnavnene. Der kommer ingen nye notifikationer. Ændringer blokeres under "Se som creator".
+
+## Alternatives considered
+- **Negativt gebyr (fee):** linjebeløbene ændres ikke, så virksomheden ville betale hele rabatten. Fravalgt.
+- **Prisændring i kurven:** ville ændre logikken for tilbudspriser (kampagner) og creatorkoden. Fravalgt.
+- **Gemme kundens refresh-token** for automatisk tjek: det ville give varig adgang til kundens Twitch. Fravalgt af projektejeren.
+- **Creatorens kanal fra det godkendte Twitch-link:** det beviser ikke, at kanalen er creatorens. Fravalgt af projektejeren.
+
+## Reason
+En automatisk rabat, der kun kan bruges af rigtige subscribers, uden at virksomhedens del eller andre creatores fortjeneste påvirkes.
+
+## Security
+- Kundens token forlader aldrig serveren. Det krypteres i sessionen, logges aldrig og gemmes aldrig varigt.
+- `state` kan kun bruges én gang og er bundet til kundens session. Returadressen er fast.
+- Twitch-id, login og tier er persondata. De gemmes på ordren og på den huskede konto, eksporteres og slettes med WordPress' privacy-værktøjer og slettes ved opt-in-afinstallation. Projektejeren skal nævne Twitch-login i privatlivspolitikken (det er ikke juridisk vurderet).
+- Kun kundens Twitch-id og creatorens kanal-id sendes til Twitch.
+
+## Migration/data implications
+Migration 49 tilføjer `sub_discount decimal(19,4) NULL` på `merchboard_sales_tax`. Nye data:
+- creator-meta `twitch_sub_discount`;
+- user meta `merchboard_twitch_customer`;
+- ordre-meta `_merchboard_twitch_sub`;
+- linje-meta `_merchboard_sub_*`.
+
+Eksisterende rækker beregnes uændret.
+
+## Consequences
+- Twitch-appen skal have scope `user:read:subscriptions` tilladt. Det er standard for alle apps.
+- Et rigtigt login kan kun testes på et site med HTTPS (stg).
+- Fase 44 (Twitch-gifting) genbruger kundens login.
+
+## Related
+ADR-016, ADR-049, ADR-064, ADR-066, ADR-068, ADR-078, ADR-080

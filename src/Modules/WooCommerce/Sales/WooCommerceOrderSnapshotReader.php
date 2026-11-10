@@ -14,6 +14,7 @@ use DateTimeZone;
 use InvalidArgumentException;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CouponCode;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
+use MerchBoard\Modules\WooCommerce\SubDiscount\SubDiscountMeta;
 use OverflowException;
 use WC_DateTime;
 use WC_Order;
@@ -81,11 +82,14 @@ final class WooCommerceOrderSnapshotReader implements OrderSnapshotReader {
 			return null;
 		}
 
-		$lines = array();
+		$lines   = array();
+		$coupons = self::coupon_codes( $order );
+		// ADR-106 pkt. 7: a line's subscriber discount counts only while the order has the coupon.
+		$sub = in_array( SubDiscountMeta::COUPON_CODE, $coupons, true );
 
 		foreach ( $order->get_items( 'line_item' ) as $item ) {
 			if ( $item instanceof WC_Order_Item_Product ) {
-				$lines[] = $this->line( $item );
+				$lines[] = $this->line( $item, $sub );
 			}
 		}
 
@@ -102,7 +106,7 @@ final class WooCommerceOrderSnapshotReader implements OrderSnapshotReader {
 			$lines,
 			array_map( array( $this, 'refund' ), $this->refunds( $order_id ) ),
 			null !== $deleted_refund_id && $deleted_refund_id > 0 ? $deleted_refund_id : null,
-			self::coupon_codes( $order )
+			$coupons
 		);
 	}
 
@@ -152,9 +156,10 @@ final class WooCommerceOrderSnapshotReader implements OrderSnapshotReader {
 	 * An order line.
 	 *
 	 * @param WC_Order_Item_Product $item Line.
-	 * @throws InvalidArgumentException When the quantity or amount is not supported.
+	 * @param bool                  $sub  Whether the order has the Twitch subscriber discount's coupon.
+	 * @throws InvalidArgumentException When the quantity, an amount or the stored subscriber discount is not supported.
 	 */
-	private function line( WC_Order_Item_Product $item ): OrderLineSnapshot {
+	private function line( WC_Order_Item_Product $item, bool $sub = false ): OrderLineSnapshot {
 		$product_id = (int) $item->get_product_id( 'edit' );
 
 		return new OrderLineSnapshot(
@@ -167,7 +172,8 @@ final class WooCommerceOrderSnapshotReader implements OrderSnapshotReader {
 			$product_id > 0 ? $this->links->creator_id( $product_id ) : null,
 			self::tax( $item ),
 			self::subtotal( $item ),
-			self::exempt_vat( $item )
+			self::exempt_vat( $item ),
+			$sub ? SubDiscountMeta::line_units( $item ) : null
 		);
 	}
 
