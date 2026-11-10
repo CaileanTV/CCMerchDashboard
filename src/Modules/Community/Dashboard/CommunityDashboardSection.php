@@ -16,8 +16,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * Adds the group "Community Features" (ROADMAP "Community Features") with
- * its first page, the Twitch subscriber discount (phase 43), right before
- * the profile.
+ * its pages, the Twitch subscriber discount (phase 43) and Twitch gifting
+ * (phase 44), right before the profile.
  */
 final class CommunityDashboardSection {
 
@@ -44,6 +44,14 @@ final class CommunityDashboardSection {
 				'id'          => 'community-twitch-discount',
 				'label'       => __( 'Twitch subscriber discount', 'merchboard' ),
 				'path'        => 'community/twitch-discount',
+				'capability'  => Capabilities::ACCESS_DASHBOARD,
+				'group'       => 'community',
+				'group_label' => __( 'Community Features', 'merchboard' ),
+			),
+			array(
+				'id'          => 'community-twitch-gifting',
+				'label'       => __( 'Twitch gifting', 'merchboard' ),
+				'path'        => 'community/twitch-gifting',
 				'capability'  => Capabilities::ACCESS_DASHBOARD,
 				'group'       => 'community',
 				'group_label' => __( 'Community Features', 'merchboard' ),

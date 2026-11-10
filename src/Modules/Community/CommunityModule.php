@@ -34,6 +34,7 @@ use MerchBoard\Modules\Community\Gifting\GiftDraws;
 use MerchBoard\Modules\Community\Gifting\GiftingSettingsRepository;
 use MerchBoard\Modules\Community\Gifting\GiftPurchase;
 use MerchBoard\Modules\Community\Gifting\GiftRepository;
+use MerchBoard\Modules\Community\Rest\MeTwitchGiftingController;
 use MerchBoard\Modules\Community\Rest\MeTwitchSubDiscountController;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCheckout;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCoupon;
@@ -155,6 +156,7 @@ final class CommunityModule implements Module {
 			'rest_api_init',
 			static function () use ( $container ): void {
 				$container->get( MeTwitchSubDiscountController::class )->register_routes();
+				$container->get( MeTwitchGiftingController::class )->register_routes();
 			}
 		);
 	}
@@ -185,11 +187,7 @@ final class CommunityModule implements Module {
 				static fn( int $creator_id, string $message ): bool => self::send( $c, $creator_id, $message ),
 				static fn( int $creator_id ): bool => true === self::live( $c, $creator_id ),
 				static fn( string $token ): string => ShopTwitchController::target_url( 'claim:' . $token ),
-				static function ( int $product_id ): string {
-					$product = wc_get_product( $product_id );
-
-					return $product instanceof WC_Product ? (string) $product->get_name() : '';
-				},
+				self::product_name( ... ),
 				static fn( string $hook, array $args, int $delay ): bool => $c->get( JobQueue::class )->enqueue( $hook, $args, $delay ),
 				self::notify( ... ),
 				$c->get( Logger::class )
@@ -205,6 +203,28 @@ final class CommunityModule implements Module {
 				static function ( Gift $gift ) use ( $c ): void {
 					$c->get( GiftDraws::class )->paid( $gift );
 				},
+				$c->get( Logger::class )
+			)
+		);
+		$container->set(
+			MeTwitchGiftingController::class,
+			static fn( Container $c ): MeTwitchGiftingController => new MeTwitchGiftingController(
+				$c->get( CreatorContext::class ),
+				$c->get( GiftingSettingsRepository::class ),
+				$c->get( GiftRepository::class ),
+				$c->get( GiftDraws::class ),
+				static function ( int $creator_id ) use ( $c ): ?string {
+					try {
+						$channel = $c->get( ChatbotChannelRepository::class )->find( $creator_id, ChatPlatform::Twitch );
+					} catch ( DatabaseException ) {
+						return null;
+					}
+
+					return $channel->connected() ? $channel->broadcaster_login : null;
+				},
+				static fn(): bool => $c->get( TwitchAccount::class )->ready(),
+				static fn( int $creator_id ): ?bool => self::live( $c, $creator_id ),
+				self::product_name( ... ),
 				$c->get( Logger::class )
 			)
 		);
@@ -236,6 +256,17 @@ final class CommunityModule implements Module {
 	private static function notify( string $event, Gift $gift, array $data ): void {
 		// GiftDraws::EVENT_HOOK.
 		do_action( 'merchboard_gift_event', $event, $gift, $data );
+	}
+
+	/**
+	 * A product's name ('' when it is gone).
+	 *
+	 * @param int $product_id Product.
+	 */
+	private static function product_name( int $product_id ): string {
+		$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+
+		return $product instanceof WC_Product ? (string) $product->get_name() : '';
 	}
 
 	/**
