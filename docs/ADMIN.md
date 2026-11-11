@@ -354,6 +354,8 @@ Afinstallation med eksplicit opt-in ("Delete Merch Dashboard data when the plugi
 
 **Creatorens redigeringsside, afsnittet "Alert sound limits"** (✅ fase 25, trin 25.9.2, projektejerens ønske 2026-10-22; kræver `merchboard_manage_alerts`, vises via `merchboard_creators_edit_sections`): administratoren kan give én creator andre grænser for de lyde, creatoren uploader, fx ved særlige behov. "Største fil" og "Længste lyd" indtastes som i Settings → Alerts og er hver for sig valgfri: et tomt felt betyder standardgrænsen, som afsnittet viser. Samme intervaller som standarden, så en creator kan få både højere og lavere grænser. Sitets upload-grænse gælder stadig, og lydbiblioteket bruger altid standardgrænserne. Gemmes via `admin-post.php` (`merchboard_save_creator_sound_limits`, nonce bundet til creator-ID, Post/Redirect/Get til `#merchboard-creator-sound-limits`) og auditeres pr. ændret grænse (`alert_creator_sound_limits_changed` med tidligere og ny værdi; tom = standardgrænsen).
 
+**Creatorens redigeringsside, afsnittet "Twitch gifting test mode"** (fase 44, ADR-107 statusnote 2026-11-11; kræver `merchboard_manage_creators`, Community-modulet, `merchboard_creators_edit_sections` med prioritet 14): én afkrydsning, der lader creatoren regnes som live på Twitch, så gaver kan købes og trækkes uden en stream (kun med forbundet Twitch-kanal). Afsnittet viser, om kanalen er forbundet, og om gifting er slået til, og advarer, mens testtilstanden er slået til. Gemmes via `admin-post.php` (`merchboard_save_gifting_test_mode`, nonce bundet til creator-ID, Post/Redirect/Get til `#merchboard-gifting-test-mode`) og auditeres som `twitch_gifting_changed` med feltet `test_mode`.
+
 **Planlagte settings** (når de får indhold):
 
 | Tab | Indstillinger |

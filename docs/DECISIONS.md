@@ -6266,6 +6266,8 @@ ADR-016, ADR-049, ADR-064, ADR-066, ADR-068, ADR-078, ADR-080
 ## Status
 Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" pkt. 2 og under "Fase 44"). Udvider ADR-066 med `GET helix/streams` (om creatoren er live) og bruger chatbottens eksisterende chat-webhook (EventSub `channel.chat.message`) til `!enter` og `!gift`-kommandoer. Bygger på kundens Twitch-login fra ADR-106.
 
+**Statusnote 2026-11-11 (projektejerens valg før testen på stg):** en **testtilstand pr. creator**, som kun en administrator med `merchboard_manage_creators` slår til og fra på creatorens redigeringsside. I testtilstanden regnes creatoren som live, når Twitch-kanalen er forbundet: gaveknappen vises, og gaver startes og trækkes i chatten uden en stream (Twitch-chatten virker også offline). Feltet `test_mode` gemmes i creator-meta `twitch_gifting`; creatorens egen formular og en pause fra chatten bevarer det. Ændringen auditeres som `twitch_gifting_changed` med feltet `test_mode` og administratoren som aktør. Siden advarer, mens testtilstanden er slået til, og creatorens dashboard viser den. Risiko: står den slået til i produktion, kan kunder købe gaver, mens creatoren er offline, og gaverne trækkes i en tom chat.
+
 ## Context
 Hos Fourthwall kan en seer købe et produkt som gave, mens creatoren streamer. Botten trækker en vinder blandt dem, der skriver `!enter`, og vinderen henter gaven ved at logge ind med Twitch. Projektejeren vil have det samme gennem CCMerch-chatbotten, med en til/fra-knap og en pause pr. creator.
 
@@ -6316,7 +6318,7 @@ Seere kan give merch til fællesskabet live, creatoren får fortjeneste af købe
 
 ## Migration/data implications
 - Migration 50: tabellen `merchboard_gifts`.
-- Creator-meta `twitch_gifting`.
+- Creator-meta `twitch_gifting` (fra statusnoten 2026-11-11 også `test_mode`).
 - Ordre-meta `_merchboard_gift` på gave-ordren og kupon-meta `_merchboard_gift_id` på koden.
 
 ## Consequences

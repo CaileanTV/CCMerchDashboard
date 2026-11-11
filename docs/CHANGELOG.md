@@ -15,6 +15,7 @@ Fase 43 og 44, de første Community Features: rabat til creatorens Twitch-subscr
 - **Rabatten i kurven:** bedste rabat vinder pr. linje (sub-rabatten fylder kun op til sin egen størrelse ud over andre koder). Abonnementet tjekkes igen før ordren. Ordresiden i admin viser Twitch-konto, tier og procent.
 - **Twitch-gaver (ADR-107):** mens creatoren er live, kan seere købe et produkt som gave til chatten (fast gave-fragt 50 kr., navn i annonceringen eller anonym). Botten annoncerer gaven, trækker en vinder blandt dem, der skriver `!enter`, og vinderen henter gaven med Twitch-login og en engangskode (produktet plus op til 50 kr. af fragten). 24 timers frist, højst 3 lodtrækninger, derefter går koden til køberen. Creator og moderatorer styrer med `!gift start`, `!gift pause` og `!gift resume`.
 - **Siden Twitch gifting** i MitCCMerch: til/fra, vinduets længde, dansk eller engelsk i chatten, pause, "Start ventende gaver" og listen over gaver.
+- **Testtilstand for Twitch-gifting:** en administrator kan på creatorens redigeringsside lade creatoren regnes som live, så gaver kan testes uden en stream. Siden advarer, mens den er slået til.
 - **Notifikationer:** creatoren i klokken, når en gave er købt og hentet; administratoren på e-mail, når en gave går tilbage til køberen. Køberen får e-mails i WooCommerces design.
 
 ### Changed

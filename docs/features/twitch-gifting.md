@@ -37,6 +37,7 @@ I gang (fase 44, testes sammen med fase 43 på stg og udgives som 2.0.0). 44.1�
 - Ordresiden for en gave-ordre viser gavens status, vinder og antal lodtrækninger. Når der er trukket en vinder, advarer den mod refundering: en refundering ændrer ikke gaven.
 - Ordrenoter for hvert trin (aldrig koden).
 - E-mail "Twitch-gave givet tilbage til køberen" (Notifikationer → Til administratoren).
+- **Testtilstand** på creatorens redigeringsside (Creators → Rediger, kræver `merchboard_manage_creators`): creatoren regnes som live, så gaver kan købes og trækkes uden en stream, fx på stg. Siden advarer, mens den er slået til, og creatorens dashboard viser "Testtilstand: du regnes som live." Ændringen auditeres.
 
 ## Technical implementation
 - `GiftPurchase`: knappen, gave-kurven (`merchboard_gift` på kurv-linjen, kun gaven, ét stk.), fragten (`woocommerce_package_rates` → én sats `merchboard_gift`), linje-meta `_merchboard_gift` (creatoren) og gaven oprettet ved `processing`/`completed` (én pr. ordre, `INSERT IGNORE`). `cancelled`/`refunded` annullerer kun en gave uden vinder.
@@ -44,12 +45,13 @@ I gang (fase 44, testes sammen med fase 43 på stg og udgives som 2.0.0). 44.1�
 - `GiftCodes`: kupontypen `merchboard_twitch_gift` (kupon-meta `_merchboard_gift_id`), rabat pr. linje og et negativt gebyr for fragten. Koden gælder kun, mens gaven er `claimed` eller `returned` med samme kupon.
 - `GiftClaim`: `?merchboard_gift_claim=<token>` (`template_redirect`), Twitch-login via `ShopTwitchController::link( 'login', 'claim:<token>' )`.
 - `GiftNotices`: lytter på `merchboard_gift_event` (`bought`, `won`, `claimed`, `returned`) og sender notifikationer, køber-mails og ordrenoter.
-- `TwitchLiveStatus` (Alerts): `GET helix/streams`, svaret gemmes i 60 sekunder.
+- `TwitchLiveStatus` (Alerts): `GET helix/streams`, svaret gemmes i 60 sekunder. `CommunityModule::live()` svarer "live" uden at spørge Twitch, når creatorens testtilstand er slået til (kun med forbundet kanal).
+- `Admin/GiftingTestModeSection`: testtilstanden på creatorens redigeringsside (`merchboard_creators_edit_sections`, admin-post `merchboard_save_gifting_test_mode`, nonce pr. creator).
 - Chatbeskeder sendes med `ChatSender::send_now()`, også når creatorens ordrebeskeder er slået fra.
 
 ## Relevant files
 - `src/Modules/Community/Gifting/` (`Gift`, `GiftRepository`, `GiftingSettings`, `GiftingSettingsRepository`, `GiftPurchase`, `GiftDraws`, `GiftTexts`, `GiftCodes`, `GiftClaim`, `GiftNotices`, `GiftOrderInfo`, `GiftPrivacy`, `GiftCreatorCleanup`)
-- `src/Modules/Community/Rest/MeTwitchGiftingController.php`, `src/Modules/Community/CommunityModule.php`
+- `src/Modules/Community/Rest/MeTwitchGiftingController.php`, `src/Modules/Community/Admin/GiftingTestModeSection.php`, `src/Modules/Community/CommunityModule.php`
 - `src/Modules/Alerts/Chatbot/TwitchLiveStatus.php`, `TwitchCustomerLogin.php`, `src/Modules/Alerts/Rest/ShopTwitchController.php`, `TwitchController.php` (chat-action)
 - `src/Core/Database/Migrations/CreateGiftsTable.php`
 - `assets/src/dashboard/api/gifting.ts`, `sections/community/TwitchGiftingSection.tsx`
@@ -57,7 +59,7 @@ I gang (fase 44, testes sammen med fase 43 på stg og udgives som 2.0.0). 44.1�
 
 ## Database/data used
 - Tabellen `merchboard_gifts` (schema-version 50), se [DATABASE.md](../DATABASE.md#twitch-gaver-schema-version-50-adr-107).
-- Creator-meta `twitch_gifting` (`enabled`, `paused`, `window`, `language`).
+- Creator-meta `twitch_gifting` (`enabled`, `paused`, `window`, `language`, `test_mode`).
 - Linje-meta `_merchboard_gift` på gave-ordren, kupon-meta `_merchboard_gift_id` på koden.
 - Transienter `merchboard_twitch_live_<md5>` (60 sekunder), `merchboard_gift_run_<creator>` og `merchboard_gift_tried_<creator>` (6 timer).
 
@@ -80,9 +82,9 @@ I gang (fase 44, testes sammen med fase 43 på stg og udgives som 2.0.0). 44.1�
 WooCommerce, Alerts-modulet (Twitch-app, chatbot og webhook) og kundens Twitch-login (fase 43). Action Scheduler (WooCommerce) til jobs.
 
 ## Tests
-- Integration: indstillinger og audit, én gave pr. ordre, annoncering og lodtrækning, ingen deltagere uden spam, gaver betalt offline og `!gift start`, pause, ikke hentet, refundering kun uden vinder, privacy og creator-sletning.
+- Integration: indstillinger og audit, testtilstanden (admin-formularen, audit, creatorens formular bevarer den), én gave pr. ordre, annoncering og lodtrækning, ingen deltagere uden spam, gaver betalt offline og `!gift start`, pause, ikke hentet, refundering kun uden vinder, privacy og creator-sletning.
 - Unit: indstillinger, tekster og gave-rækken.
-- Jest: parseren og siden (gem, pause, start, feltfejl).
+- Jest: parseren og siden (gem, pause, start, feltfejl, testtilstand).
 - Impersonation: skrivningerne er blokeret.
 - Kupon, kurv og claim-flow testes runtime på stg (WooCommerce er ikke indlæst i testmiljøet).
 
