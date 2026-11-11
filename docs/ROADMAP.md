@@ -1209,9 +1209,10 @@ Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele al
 - **46.1 Model og overlay:** ✅ (c167a68) nye `layout_mode`-værdier, billedets placering, og de gamle layouts vises uændret.
 - **46.2 Editor:** ✅ (c167a68) scenen er boksen, minikort og layoutvælger.
 - **46.3 Gamle designs:** ✅ (c167a68) omregnes i editoren ved åbning.
-- **46.4 Tekster, tests og docs.** ✅ (c167a68; docs i commit efter). Runtime-test 2026-11-11 i den lokale Playground (Local kørte ikke): fanen Community, community-siderne med Twitch-kortet, og et design med det gamle layout "ved siden af" blev omregnet til "billede til venstre" uden at blive gemt. Fund rettet i c167a68: editoren blev stående på "Gemmer…".
+- **46.4 Tekster, tests og docs.** ✅ (c167a68; docs i commit efter).
+- **46.5 Lærredet tilbage til hele skærmen:** projektejerens svar 2026-11-11 ("Lærredet skal altid være 1920x1080 og fylde mindre på skærmen"): lærredet viser igen hele skærmen med boksen og er højst 800 px bredt; minikortet er fjernet (ADR-109 statusnote). Layoutet for billedet og omregningen af gamle layouts bliver. Runtime-test 2026-11-11 i den lokale Playground (Local kørte ikke): fanen Community, community-siderne med Twitch-kortet, og et design med det gamle layout "ved siden af" blev omregnet til "billede til venstre" uden at blive gemt. Fund rettet i c167a68: editoren blev stående på "Gemmer…".
 
-- **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
+- **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Testpakke på stg ✅ 2026-11-11 (bygget fra c94e8a6, ZIP SHA-256 `5c51d411…`). Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
 
 ## Senere (uprioriteret)
 

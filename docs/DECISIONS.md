@@ -6405,6 +6405,8 @@ ADR-066, ADR-106, ADR-107
 ## Status
 Accepteret af projektejeren 2026-11-11 (fase 46). Afløser ADR-088 pkt. 1, hvor de afviger.
 
+**Statusnote 2026-11-11 (projektejerens test på stg, "Nu er det blevet helt rodet"):** pkt. 1 er trukket tilbage. Lærredet viser altid hele skærmen (1920 × 1080) med alertboksen på, som før fase 46, og det fylder mindre på siden: højst 800 px bredt og lavt nok til, at værktøjslinjen kan ses. Boksen trækkes og ændres igen på lærredet, og minikortet er fjernet. Pkt. 2–4 gælder fortsat: layoutet placerer kun billedet i boksen, teksterne flyttes frit, og gamle layouts laves om i editoren.
+
 ## Context
 I alertdesigneren (ADR-088) er lærredet hele OBS-skærmen (1920 × 1080). Alertboksen er en firkant på den, og layoutet (`above`, `side`, `overlay`, `free`) placerer både billede og tekster i boksen. Projektejeren vil have, at lærredet er selve alertboksen, og at layoutet kun bestemmer, hvor billedet sidder.
 

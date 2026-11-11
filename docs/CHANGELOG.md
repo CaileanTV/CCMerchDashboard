@@ -25,7 +25,7 @@ Fase 43 og 44, de første Community Features: rabat til creatorens Twitch-subscr
 
 ### Changed
 
-- **Alertdesigneren (ADR-109):** lærredet er nu selve alertboksen, og layoutet bestemmer kun, hvor billedet sidder (øverst, til venstre, til højre, som baggrund eller frit). Teksterne kan altid flyttes frit i boksen. Boksen placeres på skærmen med et minikort under "Position, størrelse og stil". Gamle designs vises som før og laves om, når de åbnes i designeren.
+- **Alertdesigneren (ADR-109):** layoutet bestemmer kun, hvor billedet sidder i alertboksen (øverst, til venstre, til højre, som baggrund eller frit), og teksterne kan altid flyttes frit i boksen. Lærredet viser fortsat hele skærmen (1920 × 1080), men fylder mindre på siden. Gamle designs vises som før og laves om, når de åbnes i designeren.
 - **Regnskab (ADR-106 pkt. 7):** Twitch-subscriber-rabatten betales fuldt af creatorens fortjeneste på alle produkttyper. Gamle ordrer er uændrede.
 - Ordresiden for en gave-ordre advarer mod refundering, når gaven er trukket. En refundering annullerer kun en gave uden vinder.
 
