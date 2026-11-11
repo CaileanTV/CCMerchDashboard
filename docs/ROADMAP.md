@@ -1217,6 +1217,12 @@ Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele al
 
 - **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Testpakke på stg ✅ 2026-11-11 (bygget fra 6b7e207, ZIP SHA-256 `290b5731…`). Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
 
+## Næste version: 2.0.1 eller 2.1.0 🔄 (forberedes 2026-11-11)
+
+Versionsnummeret vælges, når indholdet er kendt: 2.0.1 for rettelser, 2.1.0 hvis der kommer nye funktioner med.
+
+- **Gaveknappen:** ✅ (7c28f57) projektejerens ønske 2026-11-11: "Giv som gave på streamen" i stedet for "Giv som gave i streamen".
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |
