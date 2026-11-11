@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-11T20:51:37+00:00\n"
+"PO-Revision-Date: 2026-11-11T20:54:21+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -777,11 +777,11 @@ msgstr "\"Vises på forsiden\" ændret"
 
 #: src/Modules/Admin/AuditLogFormatter.php:209
 msgid "Twitch subscriber discount changed"
-msgstr "Twitch-subscriber-rabat ændret"
+msgstr "Twitch subscriber rabat ændret"
 
 #: src/Modules/Admin/AuditLogFormatter.php:210
 msgid "Twitch gifting changed"
-msgstr "Twitch-gifting ændret"
+msgstr "Twitch gifting ændret"
 
 #: src/Modules/Admin/AuditLogFormatter.php:211
 msgid "Creator started a designer product"
@@ -3866,7 +3866,7 @@ msgstr "Der opstod en teknisk fejl. Community-indstillingerne blev ikke ændret.
 #: src/Modules/Community/TwitchSubs/TwitchSubOrderInfo.php:83
 #: build/dashboard.js:69
 msgid "Twitch subscriber discount"
-msgstr "Twitch-subscriber-rabat"
+msgstr "Twitch subscriber rabat"
 
 #: src/Modules/Community/Admin/CommunitySettingsSection.php:108
 msgid "Creators can give their Twitch subscribers a discount"
@@ -3880,7 +3880,7 @@ msgstr "Slået fra som standard. Kunderne logger ind med Twitch i kurven og chec
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:57
 #: build/dashboard.js:62
 msgid "Twitch gifting"
-msgstr "Twitch-gifting"
+msgstr "Twitch gifting"
 
 #: src/Modules/Community/Admin/CommunitySettingsSection.php:114
 msgid "Viewers can buy gifts that are drawn in the creator's Twitch chat"
@@ -3935,7 +3935,7 @@ msgstr "Der opstod en teknisk fejl. Testtilstanden blev ikke ændret."
 
 #: src/Modules/Community/Admin/GiftingTestModeSection.php:109
 msgid "Twitch gifting test mode"
-msgstr "Testtilstand for Twitch-gifting"
+msgstr "Testtilstand for Twitch gifting"
 
 #: src/Modules/Community/Admin/GiftingTestModeSection.php:116
 msgid "The test mode is on. Customers can buy gifts from this creator while the creator is offline."
@@ -3943,7 +3943,7 @@ msgstr "Testtilstanden er slået til. Kunder kan købe gaver hos denne creator, 
 
 #: src/Modules/Community/Admin/GiftingTestModeSection.php:122
 msgid "Twitch gifting is switched off for the shop, so no gifts can be bought or drawn, also in the test mode."
-msgstr "Twitch-gifting er slået fra for butikken, så der kan ikke købes eller trækkes lod om gaver, heller ikke i testtilstanden."
+msgstr "Twitch gifting er slået fra for butikken, så der kan ikke købes eller trækkes lod om gaver, heller ikke i testtilstanden."
 
 #: src/Modules/Community/Admin/GiftingTestModeSection.php:124
 msgid "Switch it on under Settings → Community"
@@ -4219,20 +4219,20 @@ msgstr "Gave-fragt"
 
 #: src/Modules/Community/Rest/MeTwitchGiftingController.php:173
 msgid "Twitch gifting is not available."
-msgstr "Twitch-gifting er ikke tilgængelig."
+msgstr "Twitch gifting er ikke tilgængelig."
 
 #: src/Modules/Community/Rest/MeTwitchGiftingController.php:227
 #: src/Modules/Community/Rest/MeTwitchGiftingController.php:259
 msgid "Some fields of Twitch gifting are missing or invalid."
-msgstr "Nogle felter i Twitch-gifting mangler eller er ugyldige."
+msgstr "Nogle felter i Twitch gifting mangler eller er ugyldige."
 
 #: src/Modules/Community/Rest/MeTwitchGiftingController.php:263
 msgid "Twitch gifting is turned off."
-msgstr "Twitch-gifting er slået fra."
+msgstr "Twitch gifting er slået fra."
 
 #: src/Modules/Community/Rest/MeTwitchGiftingController.php:291
 msgid "Twitch gifting is turned off or paused."
-msgstr "Twitch-gifting er slået fra eller sat på pause."
+msgstr "Twitch gifting er slået fra eller sat på pause."
 
 #: src/Modules/Community/Rest/MeTwitchSubDiscountController.php:109
 msgid "The Twitch subscriber discount is not available."
@@ -4240,15 +4240,15 @@ msgstr "Rabatten til Twitch-subscribers er ikke tilgængelig."
 
 #: src/Modules/Community/Rest/MeTwitchSubDiscountController.php:166
 msgid "Some fields of the Twitch subscriber discount are missing or invalid."
-msgstr "Nogle felter i Twitch-subscriber-rabatten mangler eller er ugyldige."
+msgstr "Nogle felter i Twitch subscriber rabatten mangler eller er ugyldige."
 
 #: src/Modules/Community/TwitchSubs/TwitchSubCheckout.php:79
 msgid "Your Twitch subscriber discount has changed. Please check the new total and place the order again."
-msgstr "Din Twitch-subscriber-rabat har ændret sig. Tjek venligst den nye total, og afgiv ordren igen."
+msgstr "Din Twitch subscriber rabat har ændret sig. Tjek venligst den nye total, og afgiv ordren igen."
 
 #: src/Modules/Community/TwitchSubs/TwitchSubCoupon.php:166
 msgid "Merch Dashboard: Twitch subscriber discount"
-msgstr "Merch Dashboard: Twitch-subscriber-rabat"
+msgstr "Merch Dashboard: Twitch subscriber rabat"
 
 #. translators: 1: creator, 2: Twitch tier, 3: percent.
 #: src/Modules/Community/TwitchSubs/TwitchSubOrderInfo.php:76
@@ -4301,7 +4301,7 @@ msgstr "Du er logget ind med Twitch som %s."
 
 #: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:140
 msgid "Your subscriber discount is taken off the eligible products."
-msgstr "Din subscriber-rabat er trukket fra på de produkter, den gælder for."
+msgstr "Din subscriber rabat er trukket fra på de produkter, den gælder for."
 
 #: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:141
 msgid "Your Twitch account has no subscription that gives a discount on these products."
@@ -7450,7 +7450,7 @@ msgstr "En seer har købt et af dine produkter som gave til din chat. Botten tr�
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1090
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1127
 msgid "Open Twitch gifting"
-msgstr "Åbn Twitch-gifting"
+msgstr "Åbn Twitch gifting"
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1104
 msgid "Gift claimed by the winner"
@@ -9009,7 +9009,7 @@ msgstr "En creators egen rabatkode kan ikke være kampagnekode: så kunne creato
 
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:93
 msgid "The code merchboard-twitch-sub is reserved for the Twitch subscriber discount."
-msgstr "Koden merchboard-twitch-sub er reserveret til Twitch-subscriber-rabatten."
+msgstr "Koden merchboard-twitch-sub er reserveret til Twitch subscriber rabatten."
 
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:94
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:131
@@ -11946,7 +11946,7 @@ msgstr "Ukendt"
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:504
 #, php-format
 msgid "Twitch subscriber discount %s, paid from the profit"
-msgstr "Twitch-subscriber-rabat %s, betalt af fortjenesten"
+msgstr "Twitch subscriber rabat %s, betalt af fortjenesten"
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:534
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:549
@@ -17054,7 +17054,7 @@ msgstr "På YouTube skriver botten kun under dine livestreams. Er du ikke live, 
 
 #: build/dashboard.js:16
 msgid "You do not have to use our bot for everything: the purchase messages in your chat can stay off. But Twitch gifting and the Twitch subscriber discount need our bot connected to your channel, so if you remove the bot, they stop too."
-msgstr "Du behøver ikke bruge vores bot til det hele: købsbeskederne i din chat kan sagtens være slået fra. Men Twitch-gifting og Twitch-subscriber-rabatten kræver, at vores bot er forbundet til din kanal, så fjerner du botten, stopper de også."
+msgstr "Du behøver ikke bruge vores bot til det hele: købsbeskederne i din chat kan sagtens være slået fra. Men Twitch gifting og Twitch subscriber rabatten kræver, at vores bot er forbundet til din kanal, så fjerner du botten, stopper de også."
 
 #. translators: 1: bot login.
 #: build/dashboard.js:17
@@ -17086,7 +17086,7 @@ msgstr "Chatbotten er ikke sat op endnu. Når en administrator har forbundet den
 
 #: build/dashboard.js:18
 msgid "Remove the bot from your Twitch channel? It no longer writes in your chat, and your Twitch subscriber discount and Twitch gifting stop too."
-msgstr "Vil du fjerne botten fra din Twitch-kanal? Den skriver ikke længere i din chat, og din Twitch-subscriber-rabat og Twitch-gifting stopper også."
+msgstr "Vil du fjerne botten fra din Twitch-kanal? Den skriver ikke længere i din chat, og din Twitch subscriber rabat og Twitch gifting stopper også."
 
 #: build/dashboard.js:18
 msgid "Remove the bot from your channel? It no longer writes in your chat."
@@ -17628,11 +17628,11 @@ msgstr "En administrator har slået testtilstanden til: du regnes som live på T
 
 #: build/dashboard.js:63
 msgid "Twitch gifting saved."
-msgstr "Twitch-gifting er gemt."
+msgstr "Twitch gifting er gemt."
 
 #: build/dashboard.js:63
 msgid "Twitch gifting on"
-msgstr "Twitch-gifting slået til"
+msgstr "Twitch gifting slået til"
 
 #: build/dashboard.js:63
 msgid "When you switch gifting off, gifts that have not been won yet go back to their buyers with a gift code."
@@ -17825,11 +17825,11 @@ msgstr "Dine Twitch-subscribers får rabat på dine produkter i butikken. De log
 
 #: build/dashboard.js:69
 msgid "Twitch subscriber discount saved."
-msgstr "Twitch-subscriber-rabat gemt."
+msgstr "Twitch subscriber rabat gemt."
 
 #: build/dashboard.js:69
 msgid "Twitch subscriber discount on"
-msgstr "Twitch-subscriber-rabat slået til"
+msgstr "Twitch subscriber rabat slået til"
 
 #: build/dashboard.js:69
 msgid "While the discount is off, none of your campaigns gives a discount. Your campaigns are kept."
