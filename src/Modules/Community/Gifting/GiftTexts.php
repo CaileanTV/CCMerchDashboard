@@ -35,6 +35,7 @@ final class GiftTexts {
 			'closed'    => '⏳ Tilmeldingen er lukket! Vinderen af %1$s findes om %2$d sekunder …',
 			'again'     => 'Allerede med: %s',
 			'more'      => '%1$s og %2$d flere',
+			'reminder'  => '⏰ %1$d sekunder tilbage! Skriv !enter for at være med i lodtrækningen om %2$s.',
 		),
 		'en' => array(
 			'announce'  => '🎁 %1$s gifted %2$s! Type !enter within %3$d seconds to join the draw.',
@@ -48,6 +49,7 @@ final class GiftTexts {
 			'closed'    => '⏳ Entries are closed! The winner of %1$s is revealed in %2$d seconds …',
 			'again'     => 'Already in: %s',
 			'more'      => '%1$s and %2$d more',
+			'reminder'  => '⏰ %1$d seconds left! Type !enter to join the draw for %2$s.',
 		),
 	);
 
@@ -73,6 +75,17 @@ final class GiftTexts {
 	 */
 	public static function winner( string $language, string $login, string $product, string $url ): string {
 		return sprintf( self::text( $language, 'winner' ), $login, $product, $url );
+	}
+
+	/**
+	 * A reminder of the seconds left to type `!enter`.
+	 *
+	 * @param string $language `da` or `en`.
+	 * @param int    $seconds  Seconds left.
+	 * @param string $product  Product name.
+	 */
+	public static function reminder( string $language, int $seconds, string $product ): string {
+		return sprintf( self::text( $language, 'reminder' ), $seconds, $product );
 	}
 
 	/**

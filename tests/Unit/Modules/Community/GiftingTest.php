@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Tests\Unit\Modules\Community;
 
 use MerchBoard\Modules\Community\Gifting\Gift;
+use MerchBoard\Modules\Community\Gifting\GiftDraws;
 use MerchBoard\Modules\Community\Gifting\GiftingSettings;
 use MerchBoard\Modules\Community\Gifting\GiftTexts;
 use MerchBoard\Tests\Unit\TestCase;
@@ -18,6 +19,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass( GiftingSettings::class )]
 #[CoversClass( GiftTexts::class )]
 #[CoversClass( Gift::class )]
+#[CoversClass( GiftDraws::class )]
 final class GiftingTest extends TestCase {
 
 	public function test_nothing_saved_is_off_for_60_seconds_in_danish(): void {
@@ -87,6 +89,16 @@ final class GiftingTest extends TestCase {
 		self::assertFalse( $off->confirm );
 		self::assertFalse( $off->with_paused( true )->confirm );
 		self::assertFalse( $off->with_test_mode( true )->confirm );
+	}
+
+	public function test_the_chat_is_reminded_at_half_a_quarter_and_ten_seconds_left(): void {
+		self::assertSame( array( 30, 15, 10 ), GiftDraws::reminders( 60 ) );
+		self::assertSame( array( 90, 45, 10 ), GiftDraws::reminders( 180 ) );
+		self::assertSame( array( 15, 10 ), GiftDraws::reminders( 30 ), 'No reminders 2 seconds apart.' );
+		self::assertSame( array( 25, 10 ), GiftDraws::reminders( 50 ) );
+		self::assertSame( array( 10, 5 ), GiftDraws::reminders( 20 ) );
+		self::assertSame( '⏰ 15 seconds left! Type !enter to join the draw for Hoodie.', GiftTexts::reminder( 'en', 15, 'Hoodie' ) );
+		self::assertSame( '⏰ 10 sekunder tilbage! Skriv !enter for at være med i lodtrækningen om Hoodie.', GiftTexts::reminder( 'da', 10, 'Hoodie' ) );
 	}
 
 	public function test_the_confirmation_fits_in_one_chat_message(): void {

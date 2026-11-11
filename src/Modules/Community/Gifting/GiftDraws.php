@@ -75,6 +75,16 @@ final class GiftDraws {
 	public const REVEAL_SECONDS = 10;
 
 	/**
+	 * Job: reminds the chat of the seconds left to type `!enter`.
+	 */
+	public const REMIND_HOOK = 'merchboard_gift_remind';
+
+	/**
+	 * The last reminder: seconds before the entries close.
+	 */
+	public const LAST_REMINDER = 10;
+
+	/**
 	 * Action fired with a gift's events (event, Gift, data): `bought`,
 	 * `won`, `claimed` (data `code`) and `returned` (data `code`).
 	 */
@@ -181,6 +191,7 @@ final class GiftDraws {
 		add_action( self::DRAW_HOOK, array( $this, 'draw' ) );
 		add_action( self::EXPIRE_HOOK, array( $this, 'expire' ) );
 		add_action( self::CONFIRM_HOOK, array( $this, 'confirm_job' ) );
+		add_action( self::REMIND_HOOK, array( $this, 'remind_job' ) );
 	}
 
 	/**
@@ -253,6 +264,13 @@ final class GiftDraws {
 		try {
 			$this->catch_up();
 
+			// A reminder that is due goes out with any chat message too (a job can be late).
+			$window = $this->gifts->for_creator( $creator_id, array( Gift::ENTERING ), 1 );
+
+			if ( array() !== $window ) {
+				$this->remind( $window[0] );
+			}
+
 			if ( '!enter' === $command ) {
 				$open = $this->gifts->for_creator( $creator_id, array( Gift::ENTERING ), 1 );
 
@@ -316,6 +334,100 @@ final class GiftDraws {
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'Gift entrants could not be confirmed.', $e->context() );
 		}
+	}
+
+	/**
+	 * Job: reminds the chat of the seconds left in a window.
+	 *
+	 * @param mixed $gift_id Gift.
+	 */
+	public function remind_job( mixed $gift_id ): void {
+		try {
+			$gift = is_numeric( $gift_id ) ? $this->gifts->find( (int) $gift_id ) : null;
+
+			if ( null !== $gift ) {
+				$this->remind( $gift );
+			}
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'A gift reminder could not be sent.', $e->context() );
+		}
+	}
+
+	/**
+	 * The reminders of a window, in seconds left: at half the time, at a
+	 * quarter and LAST_REMINDER seconds before the entries close. A share
+	 * within 3 seconds of another reminder is left out, so a short window
+	 * gets no reminders seconds apart.
+	 *
+	 * @param int $window The window in seconds.
+	 * @return list<int> Seconds left, the first first.
+	 */
+	public static function reminders( int $window ): array {
+		$marks = array( self::LAST_REMINDER );
+
+		foreach ( array( intdiv( $window + 1, 2 ), intdiv( $window + 2, 4 ) ) as $mark ) {
+			$near = array_filter( $marks, static fn( int $other ): bool => abs( $other - $mark ) <= 3 );
+
+			if ( $mark > 0 && $mark < $window && array() === $near ) {
+				$marks[] = $mark;
+			}
+		}
+
+		$marks = array_values( array_filter( $marks, static fn( int $mark ): bool => $mark < $window ) );
+		rsort( $marks );
+
+		return $marks;
+	}
+
+	/**
+	 * Sends the reminder that is due in an open window: one message with the
+	 * seconds left, however many reminders were missed. Under the gift's
+	 * named lock, so two requests never send the same reminder.
+	 *
+	 * @param Gift $gift A gift.
+	 * @throws DatabaseException When the gift cannot be read.
+	 */
+	private function remind( Gift $gift ): void {
+		$ends = null === $gift->window_ends ? false : strtotime( $gift->window_ends . ' UTC' );
+		$left = false === $ends ? 0 : $ends - time();
+
+		if ( Gift::ENTERING !== $gift->status || $left <= 0 ) {
+			return;
+		}
+
+		$pending = get_transient( self::remind_key( $gift->id ) );
+		$pending = is_array( $pending ) ? array_values( array_filter( $pending, 'is_int' ) ) : array();
+		$due     = array_filter( $pending, static fn( int $mark ): bool => $left <= $mark );
+
+		if ( array() === $due || ! $this->gifts->lock( $gift->id, 2 ) ) {
+			return;
+		}
+
+		try {
+			// Read again under the lock: another request may have sent it.
+			$pending = get_transient( self::remind_key( $gift->id ) );
+			$pending = is_array( $pending ) ? array_values( array_filter( $pending, 'is_int' ) ) : array();
+			$rest    = array_values( array_filter( $pending, static fn( int $mark ): bool => $left > $mark ) );
+
+			if ( count( $rest ) === count( $pending ) ) {
+				return;
+			}
+
+			set_transient( self::remind_key( $gift->id ), $rest, HOUR_IN_SECONDS );
+			$language = $this->settings->find( $gift->creator_id )->language;
+			( $this->send )( $gift->creator_id, GiftTexts::reminder( $language, $left, ( $this->product_name )( $gift->product_id ) ) );
+		} finally {
+			$this->gifts->unlock( $gift->id );
+		}
+	}
+
+	/**
+	 * The transient of a window's reminders still to send.
+	 *
+	 * @param int $gift_id Gift.
+	 */
+	private static function remind_key( int $gift_id ): string {
+		return 'merchboard_gift_remind_' . $gift_id;
 	}
 
 	/**
@@ -386,9 +498,15 @@ final class GiftDraws {
 			set_transient( self::tried_key( $creator_id ), $tried, self::RUN_HOURS * HOUR_IN_SECONDS );
 			delete_transient( self::confirm_key( $gift->id ) );
 			delete_transient( self::reveal_key( $gift->id ) );
+			$reminders = self::reminders( $settings->window );
+			set_transient( self::remind_key( $gift->id ), $reminders, HOUR_IN_SECONDS );
 
 			( $this->send )( $creator_id, GiftTexts::announce( $settings->language, $gift->buyer_name, ( $this->product_name )( $gift->product_id ), $settings->window ) );
 			( $this->enqueue )( self::DRAW_HOOK, array( $gift->id ), $settings->window + 1 );
+
+			foreach ( $reminders as $left ) {
+				( $this->enqueue )( self::REMIND_HOOK, array( $gift->id ), $settings->window - $left );
+			}
 
 			return true;
 		}
@@ -426,6 +544,7 @@ final class GiftDraws {
 		$this->confirm( $gift, null, true );
 		delete_transient( self::confirm_key( $gift->id ) );
 		delete_transient( self::reveal_key( $gift->id ) );
+		delete_transient( self::remind_key( $gift->id ) );
 
 		$language = $this->settings->find( $gift->creator_id )->language;
 		$ids      = array_keys( $gift->entrants );

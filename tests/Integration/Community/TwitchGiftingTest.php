@@ -58,6 +58,13 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 	private array $jobs = array();
 
 	/**
+	 * Reminder jobs queued, as [args, delay].
+	 *
+	 * @var list<array{0: array<mixed>, 1: int}>
+	 */
+	private array $reminders = array();
+
+	/**
 	 * Events, as [event, gift id, data].
 	 *
 	 * @var list<array{0: string, 1: int, 2: array<string, string>}>
@@ -110,7 +117,11 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 			static fn( string $token ): string => 'https://shop.test/?merchboard_gift_claim=' . $token,
 			static fn(): string => 'Stream tee',
 			function ( string $hook, array $args, int $delay ): bool {
-				$this->jobs[] = array( $hook, $args, $delay );
+				if ( GiftDraws::REMIND_HOOK === $hook ) {
+					$this->reminders[] = array( $args, $delay );
+				} else {
+					$this->jobs[] = array( $hook, $args, $delay );
+				}
 
 				return true;
 			},
@@ -127,10 +138,12 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		delete_transient( 'merchboard_gift_tried_' . $this->nova );
 		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s', $this->wpdb->options, '%merchboard_gift_confirm_%' );
 		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s', $this->wpdb->options, '%merchboard_gift_reveal_%' );
+		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s', $this->wpdb->options, '%merchboard_gift_remind_%' );
 		remove_all_actions( 'merchboard_twitch_chat_message' );
 		remove_all_actions( GiftDraws::DRAW_HOOK );
 		remove_all_actions( GiftDraws::EXPIRE_HOOK );
 		remove_all_actions( GiftDraws::CONFIRM_HOOK );
+		remove_all_actions( GiftDraws::REMIND_HOOK );
 		delete_option( Settings::OPTION );
 		parent::tearDown();
 	}
@@ -396,6 +409,45 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		self::assertSame( array( array( 'id' => 'profile' ) ), CommunityDashboardSection::add_section( array( array( 'id' => 'profile' ) ) ), 'No group without features.' );
 	}
 
+	public function test_the_chat_is_reminded_at_half_a_quarter_and_ten_seconds_before_the_entries_close(): void {
+		$this->settings->save( $this->nova, $this->values( true ) );
+		$gift = $this->gift( null );
+		$this->draws->paid( $gift );
+
+		// A window of 60 seconds: reminders with 30, 15 and 10 seconds left.
+		self::assertSame(
+			array(
+				array( array( $gift->id ), 30 ),
+				array( array( $gift->id ), 45 ),
+				array( array( $gift->id ), 50 ),
+			),
+			$this->reminders
+		);
+		$sent = count( $this->sent );
+
+		$this->draws->remind_job( $gift->id );
+		self::assertCount( $sent, $this->sent, 'Not before it is time.' );
+
+		// A late job: one message with the seconds really left, for both reminders missed.
+		$this->window_left( $gift->id, 12 );
+		$this->chat( '333', 'viewer3', 'hej' );
+		self::assertCount( $sent + 1, $this->sent );
+		self::assertMatchesRegularExpression( '/^⏰ 1[12] sekunder tilbage! Skriv !enter for at være med i lodtrækningen om Stream tee\.$/u', $this->sent[ $sent ][1] ?? '' );
+		$this->draws->remind_job( $gift->id );
+		self::assertCount( $sent + 1, $this->sent, 'Each reminder once.' );
+
+		$this->window_left( $gift->id, 9 );
+		$this->draws->remind_job( $gift->id );
+		self::assertCount( $sent + 2, $this->sent );
+		self::assertStringStartsWith( '⏰ ', $this->sent[ $sent + 1 ][1] ?? '' );
+		$this->chat( '333', 'viewer3', 'hej' );
+		self::assertCount( $sent + 2, $this->sent, 'The last reminder was sent.' );
+
+		$this->end_window( $gift->id );
+		$this->draws->remind_job( $gift->id );
+		self::assertCount( $sent + 2, $this->sent, 'No reminder after the window.' );
+	}
+
 	public function test_the_creator_can_switch_the_confirmations_off(): void {
 		$this->settings->save( $this->nova, array( 'confirm' => false ) + $this->values( true ) );
 		self::assertFalse( $this->settings->find( $this->nova )->confirm );
@@ -652,6 +704,16 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		$reveal = get_transient( 'merchboard_gift_reveal_' . $id );
 		self::assertIsInt( $reveal );
 		set_transient( 'merchboard_gift_reveal_' . $id, (string) $reveal, HOUR_IN_SECONDS );
+	}
+
+	/**
+	 * Lets a gift's window end in a number of seconds.
+	 *
+	 * @param int $id      Gift.
+	 * @param int $seconds Seconds left.
+	 */
+	private function window_left( int $id, int $seconds ): void {
+		$this->execute( 'UPDATE %i SET window_ends = %s WHERE id = %d', $this->table( Tables::GIFTS ), gmdate( 'Y-m-d H:i:s', time() + $seconds ), $id );
 	}
 
 	/**

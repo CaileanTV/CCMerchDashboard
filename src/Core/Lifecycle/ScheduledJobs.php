@@ -66,7 +66,7 @@ final class ScheduledJobs {
 	 * ::EXPIRE_HOOK; a test keeps them equal, ADR-107). Cancelled on
 	 * uninstall with the opt-in.
 	 */
-	public const COMMUNITY_HOOKS = array( 'merchboard_gift_draw', 'merchboard_gift_expire', 'merchboard_gift_confirm' );
+	public const COMMUNITY_HOOKS = array( 'merchboard_gift_draw', 'merchboard_gift_expire', 'merchboard_gift_confirm', 'merchboard_gift_remind' );
 
 	/**
 	 * Cancels the pending backfill pages; never throws.

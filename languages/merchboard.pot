@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-11T19:18:51+00:00\n"
+"POT-Creation-Date: 2026-11-11T19:28:45+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -17619,6 +17619,10 @@ msgid "While you are live on Twitch, viewers can buy one of your products as a g
 msgstr ""
 
 #: build/dashboard.js:63
+msgid "The bot sends the winner a link in the chat. If your channel removes links from the chat (Twitch's \"Block hyperlinks\" setting or another moderation bot), make our bot a moderator or add it to the exceptions; otherwise the link is removed and the winner cannot claim the gift."
+msgstr ""
+
+#: build/dashboard.js:63
 msgid "An administrator has turned on the test mode: you count as live on Twitch, so viewers can buy gifts and gifts are drawn in your chat even when you are not streaming."
 msgstr ""
 
@@ -17636,6 +17640,10 @@ msgstr ""
 
 #: build/dashboard.js:63
 msgid "Seconds the chat can type !enter"
+msgstr ""
+
+#: build/dashboard.js:63
+msgid "The bot reminds the chat when half the time is left, when a quarter is left and 10 seconds before the entries close."
 msgstr ""
 
 #: build/dashboard.js:63

@@ -274,6 +274,12 @@ export function TwitchGiftingSection() {
 						'merchboard'
 					) }
 				</p>
+				<Alert tone="info">
+					{ __(
+						'The bot sends the winner a link in the chat. If your channel removes links from the chat (Twitch\'s "Block hyperlinks" setting or another moderation bot), make our bot a moderator or add it to the exceptions; otherwise the link is removed and the winner cannot claim the gift.',
+						'merchboard'
+					) }
+				</Alert>
 				{ current.test && (
 					<Alert tone="warning">
 						{ __(
@@ -357,6 +363,12 @@ export function TwitchGiftingSection() {
 								} )
 							}
 						/>
+						<p className="merchboard-field__help">
+							{ __(
+								'The bot reminds the chat when half the time is left, when a quarter is left and 10 seconds before the entries close.',
+								'merchboard'
+							) }
+						</p>
 						{ errors.window !== undefined && (
 							<p className="merchboard-field__error">
 								{ fieldError( errors.window ) }

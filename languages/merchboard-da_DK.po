@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-11T19:18:58+00:00\n"
+"PO-Revision-Date: 2026-11-11T19:28:51+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -17619,6 +17619,10 @@ msgid "While you are live on Twitch, viewers can buy one of your products as a g
 msgstr "Mens du er live på Twitch, kan seerne købe et af dine produkter som gave til chatten. Botten annoncerer gaven, alle der skriver !enter er med, og en tilfældig seer vinder. Vinderen logger ind med Twitch i butikken, vælger størrelse og farve og får produktet med op til 50 kr. af fragten betalt. Gaven tæller som et normalt salg for dig."
 
 #: build/dashboard.js:63
+msgid "The bot sends the winner a link in the chat. If your channel removes links from the chat (Twitch's \"Block hyperlinks\" setting or another moderation bot), make our bot a moderator or add it to the exceptions; otherwise the link is removed and the winner cannot claim the gift."
+msgstr "Botten sender vinderen et link i chatten. Fjerner din kanal links fra chatten (Twitch' indstilling \"Block hyperlinks\" eller en anden moderationsbot), så gør vores bot til moderator eller føj den til undtagelserne. Ellers bliver linket fjernet, og vinderen kan ikke hente gaven."
+
+#: build/dashboard.js:63
 msgid "An administrator has turned on the test mode: you count as live on Twitch, so viewers can buy gifts and gifts are drawn in your chat even when you are not streaming."
 msgstr "En administrator har slået testtilstanden til: du regnes som live på Twitch, så seere kan købe gaver, og der trækkes lod om gaver i din chat, selvom du ikke streamer."
 
@@ -17637,6 +17641,10 @@ msgstr "Slår du gifting fra, går gaver, der ikke er vundet endnu, tilbage til 
 #: build/dashboard.js:63
 msgid "Seconds the chat can type !enter"
 msgstr "Sekunder chatten kan skrive !enter"
+
+#: build/dashboard.js:63
+msgid "The bot reminds the chat when half the time is left, when a quarter is left and 10 seconds before the entries close."
+msgstr "Botten minder chatten om det, når halvdelen af tiden er tilbage, når en fjerdedel er tilbage, og 10 sekunder før tilmeldingen lukker."
 
 #: build/dashboard.js:63
 msgid "Language of the bot's texts"
