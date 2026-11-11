@@ -760,7 +760,7 @@ Migration 35 (`CreateProductDesignerTables`, trin 30.2) opretter seks tabeller. 
 
 **Prodigi (ADR-084, ingen migration):** `provider_ref` er katalogproduktets id, `variants` holder SKU pr. farve og størrelse, og opgavens `result` holder fase, filer, det gemte produkt og mockups, så de kan slettes igen. Optionen `merchboard_designer_prodigi_key` er krypteret og uden autoload.
 
-**Kill switches** i `merchboard_settings`: `designer_enabled`, `printful_enabled`, `gelato_enabled` og `prodigi_enabled` (alle fra som standard).
+**Kill switches** i `merchboard_settings`: `designer_enabled`, `printful_enabled`, `gelato_enabled` og `prodigi_enabled` (alle fra som standard). Fase 45 (ADR-108) tilføjer `community_twitch_sub_discount_enabled` og `community_twitch_gifting_enabled` (fra som standard), og creator-meta `twitch_sub_discount` får `enabled` (slået til, når den mangler).
 
 ### Sletteanmodninger ✅ (schema-version 40, ADR-083)
 

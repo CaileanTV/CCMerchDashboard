@@ -1182,7 +1182,7 @@ Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR. **Testes samme
 
 - **Efter fase 44** kører jeg automatisk videre: review, rettelser, grøn CI, testpakke for fase 43 og 44 og upload til stg. Projektejeren tester, og tag og release sker først efter projektejerens OK. **Versionen bliver 2.0.0.**
 
-## Fase 45 – Globale community-knapper og fælles Twitch-kort 🔄 (plan godkendt 2026-11-11; ADR-108)
+## Fase 45 – Globale community-knapper og fælles Twitch-kort ✅ (plan godkendt 2026-11-11; ADR-108)
 
 Projektejerens ønske efter testen af 2.0.0 på stg: en global til/fra-knap pr. community feature under Indstillinger, og på hver feature-side kan creatoren slå featuren til og fra og forbinde Twitch. Siden skal sige, at forbindelsen deles af alle community features og af alert-chatbotten.
 
@@ -1191,11 +1191,11 @@ Projektejerens ønske efter testen af 2.0.0 på stg: en global til/fra-knap pr. 
 - Gifting slået fra globalt er en pause: ventende gaver bliver liggende, og vindere kan stadig hente gaven.
 - Twitch-forbindelsen fjernes kun på Alerts → Chatbot.
 
-- **45.1 Docs:** ADR-108 og ROADMAP.
-- **45.2 Indstillinger:** de to nøgler, service med audit og fanen Community.
-- **45.3 Gating:** siderne, REST, kurv og checkout, gaveknappen og nye vinduer.
-- **45.4 Creator:** subrabattens samlede til/fra, det fælles Twitch-kort, tilbage til siden efter forbindelsen og noten på chatbottens Twitch-kort.
-- **45.5 Tekster, tests og docs.**
+- **45.1 Docs:** ✅ (ea2c080) ADR-108 og ROADMAP.
+- **45.2 Indstillinger:** ✅ (6585dd1) de to nøgler, service med audit og fanen Community.
+- **45.3 Gating:** ✅ (6585dd1) siderne, REST, kurv og checkout, gaveknappen og nye vinduer.
+- **45.4 Creator:** ✅ (6585dd1) subrabattens samlede til/fra, det fælles Twitch-kort, tilbage til siden efter forbindelsen og noten på chatbottens Twitch-kort.
+- **45.5 Tekster, tests og docs.** ✅ (6585dd1; docs i commit efter)
 
 ## Fase 46 – Alertlærredet er boksen 🔄 (plan godkendt 2026-11-11; ADR-109)
 

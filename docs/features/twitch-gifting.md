@@ -38,6 +38,7 @@ I gang (fase 44, testes sammen med fase 43 på stg og udgives som 2.0.0). 44.1�
 - Ordresiden for en gave-ordre viser gavens status, vinder og antal lodtrækninger. Når der er trukket en vinder, advarer den mod refundering: en refundering ændrer ikke gaven.
 - Ordrenoter for hvert trin (aldrig koden).
 - E-mail "Twitch-gave givet tilbage til køberen" (Notifikationer → Til administratoren).
+- **Global knap** under Indstillinger → Community (fase 45, ADR-108), slået fra som standard. Slået fra er en pause: siden, REST-ruterne og gaveknappen forsvinder, og der åbnes ingen nye vinduer (heller ikke med `!gift start`). Et åbent vindue trækkes færdigt, vindere kan hente gaven, og ventende gaver venter.
 - **Testtilstand** på creatorens redigeringsside (Creators → Rediger, kræver `merchboard_manage_creators`): creatoren regnes som live, så gaver kan købes og trækkes uden en stream, fx på stg. Siden advarer, mens den er slået til, og creatorens dashboard viser "Testtilstand: du regnes som live." Ændringen auditeres.
 
 ## Technical implementation
@@ -71,7 +72,7 @@ I gang (fase 44, testes sammen med fase 43 på stg og udgives som 2.0.0). 44.1�
 - Indløsning: claim-tokenet (32 hex, `random_bytes`) plus Twitch-login med state og cookie (ADR-106). Kun vinderens Twitch-id får koden.
 
 ## API endpoints
-- `GET`/`POST /merchboard/v1/me/community/twitch-gifting`
+- `GET`/`POST /merchboard/v1/me/community/twitch-gifting` (alle ruterne svarer 404 `merchboard_community_disabled`, når gifting er slået fra for butikken)
 - `POST /merchboard/v1/me/community/twitch-gifting/pause` (`{paused}`)
 - `POST /merchboard/v1/me/community/twitch-gifting/start`
 - `GET /merchboard/v1/shop/twitch/login?target=claim:<token>` (kundens login, fase 43)

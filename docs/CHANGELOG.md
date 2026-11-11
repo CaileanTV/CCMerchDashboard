@@ -19,6 +19,8 @@ Fase 43 og 44, de første Community Features: rabat til creatorens Twitch-subscr
 - **Spænding før vinderen:** når vinduet lukker, skriver botten "Tilmeldingen er lukket!" og offentliggør vinderen 10 sekunder senere.
 - **Gavesiden:** vinderens link åbner en side med præmien og knappen "Log ind med Twitch"; gaven hentes lige efter login.
 - **Testtilstand for Twitch-gifting:** en administrator kan på creatorens redigeringsside lade creatoren regnes som live, så gaver kan testes uden en stream. Siden advarer, mens den er slået til.
+- **Globale knapper (ADR-108):** fanen Indstillinger → Community slår rabatten til Twitch-subscribers og Twitch-gifting til og fra for hele butikken. Begge er slået fra som standard. Gifting slået fra er en pause: åbne lodtrækninger trækkes færdigt, og ventende gaver venter.
+- **Fælles Twitch-forbindelse:** begge community-sider har en til/fra-knap og et kort med Twitch-forbindelsen, der siger, at den samme forbindelse bruges af alle Community Features og af alert-chatbotten. Efter forbindelsen kommer creatoren tilbage til siden. Rabatten til Twitch-subscribers har fået en samlet til/fra-knap over kampagnerne.
 - **Notifikationer:** creatoren i klokken, når en gave er købt og hentet; administratoren på e-mail, når en gave går tilbage til køberen. Køberen får e-mails i WooCommerces design.
 
 ### Changed

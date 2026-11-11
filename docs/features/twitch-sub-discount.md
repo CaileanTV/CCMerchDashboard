@@ -7,8 +7,9 @@ Creatorens Twitch-subscribers får automatisk rabat på creatorens produkter i b
 I gang (fase 43, ADR-106). Udgives i næste version efter review og runtime-test.
 
 ## User-facing functionality
-**Creatoren** (MitCCMerch → Community Features → Twitch subscriber discount):
-- forbinder sin Twitch-kanal (samme forbindelse som chatbotten; chatbeskederne kan stadig være slået fra);
+**Creatoren** (MitCCMerch → Community Features → Twitch subscriber discount; siden findes kun, når en administrator har slået rabatten til under Indstillinger → Community, ADR-108):
+- slår hele rabatten til og fra (`enabled`; slået til, hvis den aldrig er gemt). Slået fra giver ingen kampagne rabat, men kampagnerne bevares;
+- forbinder sin Twitch-kanal i kortet "Twitch-forbindelse" ved siden af knappen. Kortet siger, at forbindelsen bruges af alle Community Features og af alert-chatbotten, og at den fjernes under Alerts → Chatbot. Efter forbindelsen sender Twitch creatoren tilbage til siden. Chatbeskederne kan stadig være slået fra;
 - vælger, om abonnementer, nogen har givet i gave, tæller (gælder alle kampagner);
 - opretter op til 20 kampagner. Hver har et navn, til/fra, procent pr. tier med op til to decimaler (1, 2, 3; Prime = tier 1), alle egne produkter eller udvalgte (produktvælger med søgning) og en valgfri periode;
 - ser "Højst X %", som er den laveste fortjeneste-% blandt kampagnens produkter, med decimaler, når den ikke er hel (fx "Højst 16,67 %"). Serveren afviser højere procenter.
@@ -26,6 +27,7 @@ Regler for kampagner, der er slået til, og hvis perioder mødes:
 - Lige før ordren oprettes, tjekkes abonnementet igen. Er noget ændret, stopper checkout med en besked, og kurven viser den nye pris.
 
 ## Admin functionality
+- **Global knap** under Indstillinger → Community (fase 45, ADR-108), slået fra som standard. Slået fra: siden og REST-ruten forsvinder (404), ingen kurv får rabatten, og kortet i kurven vises ikke.
 - Ordresiden viser kundens Twitch-konto og tier og procent pr. creator.
 - Ordrehistorikken (Merch Dashboard → ordrehistorik) viser "Twitch subscriber discount X, paid from the profit" på rækken.
 - Audit-loggen viser "Twitch subscriber discount changed" med feltnavne.
@@ -52,7 +54,8 @@ Se DATABASE.md: creator-meta `twitch_sub_discount`, kolonnen `merchboard_sales_t
 - Rabatten beregnes kun på serveren ud fra Twitchs svar.
 
 ## API endpoints
-- `GET`/`POST /merchboard/v1/me/community/twitch-sub-discount` (creator)
+- `GET`/`POST /merchboard/v1/me/community/twitch-sub-discount` (creator; `enabled` er valgfri ved gem og bevares, når den mangler; 404 `merchboard_community_disabled`, når rabatten er slået fra for butikken)
+- `POST /merchboard/v1/me/alerts/chatbot/twitch/connect` med `{ "return": "community/twitch-discount" }` (kortet "Twitch-forbindelse")
 - `GET /merchboard/v1/shop/twitch/login` og `/logout` (kunden, nonce)
 - Callback: `GET /merchboard/v1/alerts/twitch/callback` (fælles med chatbotten)
 
