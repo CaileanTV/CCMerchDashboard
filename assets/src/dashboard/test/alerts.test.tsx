@@ -712,6 +712,40 @@ describe( 'AlertsSection', () => {
 		).not.toBeNull();
 	} );
 
+	it( 'keeps the layout Free while the main text runs around the image', async () => {
+		const framed = {
+			...body( URL_A ),
+			overlay: {
+				...( body( URL_A ).overlay as Record< string, unknown > ),
+				settings: {
+					...SETTINGS,
+					text_frame: { ...DEFAULT_FRAME, enabled: true },
+				},
+			},
+		};
+		mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, framed ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, framed ),
+		} );
+
+		await show();
+		click( button( 'Layout' ) );
+
+		expect(
+			rendered?.container.querySelector< HTMLButtonElement >(
+				'[aria-label="Image on the left"]'
+			)?.disabled
+		).toBe( true );
+		expect(
+			rendered?.container.querySelector< HTMLButtonElement >(
+				'[aria-label="Free"]'
+			)?.disabled
+		).toBe( false );
+		expect( rendered?.container.textContent ).toContain(
+			'The main text runs around the image, so the layout is Free.'
+		);
+	} );
+
 	it( 'highlights the inserted values on the canvas', async () => {
 		mockApi( {
 			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),

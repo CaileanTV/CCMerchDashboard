@@ -326,6 +326,8 @@ export function MerchAlertPanel( {
 					choices={ LAYOUT_MODES.map( ( mode ) => ( {
 						value: mode,
 						title: layoutLabel( mode ),
+						// Text around the image needs the image's own box (ADR-109).
+						disabled: values.text_frame.enabled && mode !== 'free',
 						label: (
 							<span
 								className={ `merchboard-alert-layout-icon is-${ mode }` }
@@ -338,6 +340,14 @@ export function MerchAlertPanel( {
 					} ) ) }
 					onChange={ ( mode ) => set( { layout_mode: mode } ) }
 				/>
+				{ values.text_frame.enabled && (
+					<p className="merchboard-field__help">
+						{ __(
+							'The main text runs around the image, so the layout is Free. Choose "In its text box" under Animation to use another layout.',
+							'merchboard'
+						) }
+					</p>
+				) }
 				<p className="merchboard-field__help">
 					{ values.layout_mode === 'free'
 						? __(

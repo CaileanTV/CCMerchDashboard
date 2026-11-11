@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-11T18:43:41+00:00\n"
+"PO-Revision-Date: 2026-11-11T19:01:42+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -15588,6 +15588,12 @@ msgstr "Lydstyrke"
 #: build/dashboard.js:44
 msgid "Show the alert as long as its sound plays"
 msgstr "Vis alerten så længe lyden spiller"
+
+#: build/alerts-global-admin.js:16
+#: build/alerts-presets-admin.js:16
+#: build/dashboard.js:44
+msgid "The main text runs around the image, so the layout is Free. Choose \"In its text box\" under Animation to use another layout."
+msgstr "Hovedteksten løber rundt om billedet, så layoutet er Frit. Vælg \"I tekstboksen\" under Animation for at bruge et andet layout."
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16

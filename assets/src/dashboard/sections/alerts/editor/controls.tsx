@@ -179,6 +179,8 @@ export function Segmented< T extends string >( {
 		readonly value: T;
 		readonly label: ReactNode;
 		readonly title?: string;
+		/** Not available now (shown, but cannot be chosen). */
+		readonly disabled?: boolean;
 	} >;
 	readonly onChange: ( value: T ) => void;
 } ) {
@@ -202,6 +204,7 @@ export function Segmented< T extends string >( {
 						aria-checked={ choice.value === value }
 						title={ choice.title }
 						aria-label={ choice.title }
+						disabled={ choice.disabled === true }
 						onClick={ () => onChange( choice.value ) }
 					>
 						{ choice.label }

@@ -416,12 +416,26 @@ export function AlertCanvas( {
 		}
 
 		if ( settings.layout_mode !== 'free' ) {
-			lastFlow.current = {
+			const flow = {
 				key: lookKey,
 				image: measure( parts.image, parts.alert ),
 				main: measure( parts.text, parts.alert ),
 				secondary: measure( parts.secondary, parts.alert ),
 			};
+
+			// Text around the image needs the image's own box: with it switched on
+			// the layout becomes "free", with the elements where they are now.
+			if (
+				look.frame !== null &&
+				! readOnly &&
+				onConvert !== undefined
+			) {
+				onConvert( toFree( settings, layout, flow, look.margin ) );
+
+				return;
+			}
+
+			lastFlow.current = flow;
 
 			return;
 		}
@@ -716,11 +730,21 @@ export function AlertCanvas( {
 										elementLabels
 									) as LayoutElement[]
 								 )
-									.filter( ( element ) =>
-										element === 'secondary_text'
-											? settings.show_secondary
-											: layout.elements[ element ].visible
-									)
+									.filter( ( element ) => {
+										if ( element === 'secondary_text' ) {
+											return settings.show_secondary;
+										}
+
+										// Around the image, the main text follows the image's box.
+										return (
+											layout.elements[ element ]
+												.visible &&
+											! (
+												element === 'main_text' &&
+												look.frame !== null
+											)
+										);
+									} )
 									.map( ( element ) => (
 										<div
 											key={ element }

@@ -3109,6 +3109,11 @@ input:disabled + .merchboard-sounds__upload {
 			background: var(--merchboard-selected-bg);
 		}
 
+		&:disabled {
+			cursor: not-allowed;
+			opacity: 0.4;
+		}
+
 		&:focus-visible {
 			outline: 2px solid var(--merchboard-focus);
 			outline-offset: -2px;
