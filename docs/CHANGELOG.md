@@ -4,6 +4,12 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+Næste version (2.0.1 eller 2.1.0, afhængigt af hvad der kommer med).
+
+### Changed
+
+- Gaveknappen på produktsiden hedder på dansk "Giv som gave på streamen" (før "Giv som gave i streamen").
+
 ## [2.0.0] - 2026-11-11
 
 Fase 43 og 44, de første Community Features: rabat til creatorens Twitch-subscribers og Twitch-gaver i creatorens stream. Kunder kan nu logge ind med Twitch i butikken. Schemaændring 48 → 50 (`merchboard_sales_tax.sub_discount` og tabellen `merchboard_gifts`). Opdateringen står i DEVELOPMENT.md ("Release 2.0.0").

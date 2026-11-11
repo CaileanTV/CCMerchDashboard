@@ -8,7 +8,7 @@ I gang (fase 44, testes sammen med fase 43 på stg og udgives som 2.0.0). 44.1�
 
 ## User-facing functionality
 **Seeren (køberen):**
-- Produktsiden viser "Giv som gave i streamen", når creatoren har gifting slået til, ikke har sat på pause, har forbundet Twitch-kanal og er live.
+- Produktsiden viser "Giv som gave på streamen" (fra 2.0.1/2.1.0; i 2.0.0 "Giv som gave i streamen"), når creatoren har gifting slået til, ikke har sat på pause, har forbundet Twitch-kanal og er live.
 - Knappen lægger produktet i en tom kurv til den billigste variant (antal 1) og går til checkout. Kurven skal være tom; en gave købes alene.
 - Fragten er fast 50 kr. inkl. moms.
 - Navnet i annonceringen er alerts' valgfrie brugernavn-felt. Uden navn er gaven anonym ("En anonym seer").
