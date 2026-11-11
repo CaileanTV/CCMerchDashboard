@@ -29,7 +29,7 @@ class CommunitySettings {
 	/**
 	 * The switches, in the order shown.
 	 */
-	public const SWITCHES = array( Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED, Settings::COMMUNITY_TWITCH_GIFTING_ENABLED );
+	public const SWITCHES = array( Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED, Settings::COMMUNITY_TWITCH_GIFTING_ENABLED, Settings::COMMUNITY_GIVEAWAYS_ENABLED );
 
 	/**
 	 * Constructor.

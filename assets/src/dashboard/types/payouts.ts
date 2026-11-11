@@ -50,6 +50,8 @@ export interface PayoutCurrencyBalance {
 	readonly earned: string | null;
 	readonly completed: string;
 	readonly reserved: string;
+	/** Set aside for open giveaways (ADR-110). */
+	readonly held: string;
 	readonly available: string | null;
 	readonly outstanding: string | null;
 	readonly unknownRows: number;

@@ -45,14 +45,21 @@ final class WooCommercePaidOrderReader implements PaidOrderReader {
 	public const LEGACY_USERNAME_META = '_ccmerch_username';
 
 	/**
-	 * The order, or null when it is not a `shop_order`.
+	 * Order meta of a creator's own giveaway paid in the shop (ADR-110;
+	 * SubDiscountMeta::ORDER_CREATOR_PAID).
+	 */
+	private const GIVEAWAY_META = '_merchboard_giveaway';
+
+	/**
+	 * The order, or null when it is not a `shop_order` or is a creator's own
+	 * giveaway (ADR-110 pkt. 10: never an alert as if a viewer bought it).
 	 *
 	 * @param int $order_id Order id.
 	 */
 	public function read( int $order_id ): ?PaidOrder {
 		$order = $order_id > 0 ? wc_get_order( $order_id ) : false;
 
-		if ( ! $order instanceof WC_Order || 'shop_order' !== $order->get_type() ) {
+		if ( ! $order instanceof WC_Order || 'shop_order' !== $order->get_type() || '' !== (string) $order->get_meta( self::GIVEAWAY_META, true, 'edit' ) ) {
 			return null;
 		}
 

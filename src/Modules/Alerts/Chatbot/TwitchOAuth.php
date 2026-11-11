@@ -87,7 +87,7 @@ final class TwitchOAuth {
 	 * The dashboard pages a creator can connect Twitch from and come back to
 	 * (ADR-108): the chatbot and the community features sharing the channel.
 	 */
-	public const RETURN_PAGES = array( 'alerts/chatbot', 'community/twitch-discount', 'community/twitch-gifting' );
+	public const RETURN_PAGES = array( 'alerts/chatbot', 'community/twitch-discount', 'community/twitch-gifting', 'community/giveaways' );
 
 	/**
 	 * The URL that asks a creator to add the bot to the own channel.

@@ -81,6 +81,14 @@ function CurrencyBalance( {
 		},
 	];
 
+	if ( entry.held !== '0.0000' ) {
+		figures.push( {
+			id: 'held',
+			label: __( 'Reserved for giveaways', 'merchboard' ),
+			value: money( entry.held ),
+		} );
+	}
+
 	if ( entry.outstanding !== null && entry.outstanding !== '0.0000' ) {
 		figures.push( {
 			id: 'outstanding',

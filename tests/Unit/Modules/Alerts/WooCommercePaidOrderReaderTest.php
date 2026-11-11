@@ -131,4 +131,11 @@ final class WooCommercePaidOrderReaderTest extends TestCase {
 		self::assertNull( $reader->read( 0 ) );
 		self::assertNotNull( $reader->read( 7 ) );
 	}
+
+	public function test_a_creators_own_giveaway_is_never_an_alert(): void {
+		WcOrderStorage::add_order( 7, 'processing' );
+		WcOrderStorage::$meta[7] = array( '_merchboard_giveaway' => '12' );
+
+		self::assertNull( ( new WooCommercePaidOrderReader() )->read( 7 ), 'ADR-110 pkt. 10: not a purchase by a viewer.' );
+	}
 }

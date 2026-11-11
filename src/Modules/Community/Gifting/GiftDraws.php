@@ -543,36 +543,19 @@ final class GiftDraws {
 		$fresh = gmdate( 'Y-m-d H:i:s', time() - self::FRESH_MINUTES * MINUTE_IN_SECONDS );
 		$tried = self::tried( $creator_id );
 
-		foreach ( $this->gifts->for_creator( $creator_id, array( Gift::WAITING ), 50 ) as $gift ) {
+		// The gifts of giveaways start only when their creator starts them (ADR-110).
+		foreach ( $this->gifts->for_creator( $creator_id, array( Gift::WAITING ), 50, false ) as $gift ) {
 			if ( in_array( $gift->id, $tried, true ) || ( ! $run && ( 0 !== $gift->draws || $gift->created_at < $fresh ) ) ) {
 				continue;
 			}
 
-			$ends = gmdate( 'Y-m-d H:i:s', time() + $settings->window );
-
-			if ( ! $this->gifts->open_window( $gift->id, $ends ) ) {
+			if ( ! $this->open( $gift, $settings->window, GiftTexts::announce( $settings->language, $gift->buyer_name, ( $this->product_name )( $gift->product_id ), $settings->window ) ) ) {
 				// Another request opened a window just now: one at a time.
 				return false;
 			}
 
 			$tried[] = $gift->id;
 			set_transient( self::tried_key( $creator_id ), $tried, self::RUN_HOURS * HOUR_IN_SECONDS );
-			delete_transient( self::confirm_key( $gift->id ) );
-			delete_transient( self::reveal_key( $gift->id ) );
-			$reminders = self::reminders( $settings->window );
-			set_transient( self::remind_key( $gift->id ), $reminders, HOUR_IN_SECONDS );
-
-			( $this->send )( $creator_id, GiftTexts::announce( $settings->language, $gift->buyer_name, ( $this->product_name )( $gift->product_id ), $settings->window ) );
-			( $this->enqueue )( self::DRAW_HOOK, array( $gift->id ), $settings->window + 1 );
-
-			foreach ( $reminders as $left ) {
-				( $this->enqueue )( self::REMIND_HOOK, array( $gift->id ), $settings->window - $left );
-			}
-
-			// The jobs run once a minute at most; the clock keeps the reminders and the draw on time.
-			if ( null !== $this->tick ) {
-				( $this->tick )( $gift->id );
-			}
 
 			return true;
 		}
@@ -582,6 +565,68 @@ final class GiftDraws {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Opens the `!enter` window of a waiting gift: the announcement, the draw
+	 * and reminder jobs and the clock.
+	 *
+	 * @param Gift   $gift         A waiting gift.
+	 * @param int    $window       The window in seconds.
+	 * @param string $announcement The announcement in the chat.
+	 * @return bool Whether this request opened it.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	private function open( Gift $gift, int $window, string $announcement ): bool {
+		if ( ! $this->gifts->open_window( $gift->id, gmdate( 'Y-m-d H:i:s', time() + $window ) ) ) {
+			return false;
+		}
+
+		delete_transient( self::confirm_key( $gift->id ) );
+		delete_transient( self::reveal_key( $gift->id ) );
+		$reminders = self::reminders( $window );
+		set_transient( self::remind_key( $gift->id ), $reminders, HOUR_IN_SECONDS );
+
+		( $this->send )( $gift->creator_id, $announcement );
+		( $this->enqueue )( self::DRAW_HOOK, array( $gift->id ), $window + 1 );
+
+		foreach ( $reminders as $left ) {
+			( $this->enqueue )( self::REMIND_HOOK, array( $gift->id ), $window - $left );
+		}
+
+		// The jobs run once a minute at most; the clock keeps the reminders and the draw on time.
+		if ( null !== $this->tick ) {
+			( $this->tick )( $gift->id );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Starts the draw of a giveaway's gift in the chat (ADR-110; the creator
+	 * pressed "Start in the chat"): only while the creator is live and no
+	 * other window is open.
+	 *
+	 * @param Gift   $gift         The giveaway's waiting gift.
+	 * @param int    $window       The window in seconds.
+	 * @param string $announcement The announcement in the chat.
+	 * @return string `started`, `not_live`, `busy` (another window is open) or `not_waiting`.
+	 * @throws DatabaseException When it cannot be read or stored.
+	 */
+	public function start_giveaway( Gift $gift, int $window, string $announcement ): string {
+		if ( ! $gift->giveaway() || Gift::WAITING !== $gift->status ) {
+			return 'not_waiting';
+		}
+
+		if ( true !== ( $this->live )( $gift->creator_id ) ) {
+			return 'not_live';
+		}
+
+		if ( array() !== $this->gifts->for_creator( $gift->creator_id, array( Gift::ENTERING ), 1 ) ) {
+			return 'busy';
+		}
+
+		return $this->open( $gift, $window, $announcement ) ? 'started' : 'busy';
 	}
 
 	/**
@@ -676,6 +721,12 @@ final class GiftDraws {
 			return;
 		}
 
+		if ( $gift->giveaway() ) {
+			$this->lapse_giveaway( $gift );
+
+			return;
+		}
+
 		if ( $gift->draws < Gift::MAX_DRAWS && $this->settings->find( $gift->creator_id )->enabled ) {
 			$this->gifts->wait_again( $gift->id, Gift::WON );
 
@@ -683,6 +734,37 @@ final class GiftDraws {
 		}
 
 		$this->give_back( $gift );
+	}
+
+	/**
+	 * A giveaway's gift whose time ran out (ADR-110): an open link expired
+	 * (the giveaway ends unused), or a winner did not claim it, so it is drawn
+	 * again, and after the last draw the creator gets an open link to pass on.
+	 *
+	 * @param Gift $gift A giveaway's gift past its claim deadline.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	private function lapse_giveaway( Gift $gift ): void {
+		if ( $gift->open_link() ) {
+			if ( $this->gifts->expire_link( $gift->id ) ) {
+				( $this->notify )( 'giveaway_expired', $gift, array() );
+			}
+
+			return;
+		}
+
+		if ( $gift->draws < Gift::MAX_DRAWS ) {
+			$this->gifts->wait_again( $gift->id, Gift::WON );
+
+			return;
+		}
+
+		$deadline = gmdate( 'Y-m-d H:i:s', time() + GiftCodes::GIVEAWAY_DAYS * DAY_IN_SECONDS );
+
+		if ( $this->gifts->open_link( $gift->id, Gift::WON, $deadline ) ) {
+			( $this->enqueue )( self::EXPIRE_HOOK, array( $gift->id ), GiftCodes::GIVEAWAY_DAYS * DAY_IN_SECONDS + 5 );
+			( $this->notify )( 'giveaway_link', $gift, array() );
+		}
 	}
 
 	/**
@@ -720,7 +802,8 @@ final class GiftDraws {
 	public function give_back_open( int $creator_id, bool $won ): int {
 		$given = 0;
 
-		foreach ( $this->gifts->for_creator( $creator_id, $won ? array( Gift::WAITING, Gift::ENTERING, Gift::WON ) : array( Gift::WAITING, Gift::ENTERING ), 500 ) as $gift ) {
+		// A giveaway's gift has no buyer; its giveaway handles it (ADR-110).
+		foreach ( $this->gifts->for_creator( $creator_id, $won ? array( Gift::WAITING, Gift::ENTERING, Gift::WON ) : array( Gift::WAITING, Gift::ENTERING ), 500, false ) as $gift ) {
 			$given += $this->give_back( $gift ) ? 1 : 0;
 		}
 

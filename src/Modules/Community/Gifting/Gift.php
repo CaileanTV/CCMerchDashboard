@@ -19,6 +19,7 @@ defined( 'ABSPATH' ) || exit;
  * - `won`: a winner was drawn and has 24 hours to claim;
  * - `claimed`: the winner got the gift code;
  * - `returned`: nobody claimed it after 3 draws, the buyer got the code;
+ *   for a giveaway (ADR-110) the creator got a link to pass on instead;
  * - `cancelled`: the gift order was cancelled or refunded before a draw.
  */
 final readonly class Gift {
@@ -45,7 +46,7 @@ final readonly class Gift {
 	 *
 	 * @param int                  $id               Id.
 	 * @param int                  $creator_id       Creator.
-	 * @param int                  $order_id         The gift order.
+	 * @param int                  $order_id         The gift order (0 for a giveaway's gift).
 	 * @param int                  $product_id       Parent product.
 	 * @param string               $unit_price       Paid unit price incl. VAT (decimal).
 	 * @param string               $shipping_credit  Shipping the gift covers (decimal).
@@ -61,6 +62,7 @@ final readonly class Gift {
 	 * @param string|null          $claim_token      The claim link's token while won.
 	 * @param int|null             $coupon_id        The gift code's coupon.
 	 * @param string               $created_at       UTC.
+	 * @param int|null             $giveaway_id      The giveaway the gift belongs to (ADR-110); null for a bought gift.
 	 */
 	public function __construct(
 		public int $id,
@@ -80,8 +82,24 @@ final readonly class Gift {
 		public ?string $claim_deadline,
 		public ?string $claim_token,
 		public ?int $coupon_id,
-		public string $created_at
+		public string $created_at,
+		public ?int $giveaway_id = null
 	) {
+	}
+
+	/**
+	 * Whether the gift is a creator's giveaway (ADR-110), not bought by a viewer.
+	 */
+	public function giveaway(): bool {
+		return null !== $this->giveaway_id;
+	}
+
+	/**
+	 * Whether whoever has the claim link may claim it without a Twitch login
+	 * (a giveaway's link; ADR-110).
+	 */
+	public function open_link(): bool {
+		return $this->giveaway() && self::WON === $this->status && null === $this->winner_twitch_id;
 	}
 
 	/**
@@ -119,7 +137,8 @@ final readonly class Gift {
 			$text( $row['claim_deadline'] ?? null ),
 			$text( $row['claim_token'] ?? null ),
 			is_numeric( $row['coupon_id'] ?? null ) ? (int) $row['coupon_id'] : null,
-			(string) ( $row['created_at'] ?? '' )
+			(string) ( $row['created_at'] ?? '' ),
+			is_numeric( $row['giveaway_id'] ?? null ) ? (int) $row['giveaway_id'] : null
 		);
 	}
 }

@@ -454,7 +454,7 @@ final class PayoutsPage {
 
 				echo '</td>';
 
-				foreach ( array( $balance->reserved_units, $balance->completed_units, $balance->balance_units(), $balance->available_units(), $balance->outstanding_units() ) as $units ) {
+				foreach ( array( $balance->reserved_units + $balance->held_units, $balance->completed_units, $balance->balance_units(), $balance->available_units(), $balance->outstanding_units() ) as $units ) {
 					echo '<td>' . self::balance_cell( $units, $balance->currency ) . '</td>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in balance_cell().
 				}
 

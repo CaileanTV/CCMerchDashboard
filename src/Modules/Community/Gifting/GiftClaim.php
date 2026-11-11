@@ -170,7 +170,6 @@ final class GiftClaim {
 			return array( 'state' => 'invalid' ) + $base;
 		}
 
-		$account = $this->session->account();
 		$product = ( $this->product )( $gift->product_id );
 		$view    = array(
 			'product'  => $product['name'],
@@ -180,6 +179,13 @@ final class GiftClaim {
 			'deadline' => null === $gift->claim_deadline ? '' : (string) wp_date( (string) get_option( 'date_format' ) . ' ' . (string) get_option( 'time_format' ), (int) strtotime( $gift->claim_deadline . ' UTC' ) ),
 			'redeem'   => ShopTwitchController::target_url( 'redeem:' . $token ),
 		) + $base;
+
+		// A giveaway's link (ADR-110): whoever has it redeems it, without Twitch.
+		if ( self::link( $gift ) ) {
+			return array( 'state' => 'link' ) + $view;
+		}
+
+		$account = $this->session->account();
 
 		if ( null === $account || null === $this->session->token() ) {
 			return array( 'state' => 'login' ) + $view;
@@ -231,16 +237,19 @@ final class GiftClaim {
 			return $page;
 		}
 
-		$account = $this->session->account();
+		// A giveaway's link (ADR-110) needs no Twitch login.
+		if ( ! self::link( $gift ) ) {
+			$account = $this->session->account();
 
-		if ( null === $account || null === $this->session->token() ) {
-			// Twitch login first; it comes back to this button.
-			return ShopTwitchController::link( 'login', 'redeem:' . $token );
-		}
+			if ( null === $account || null === $this->session->token() ) {
+				// Twitch login first; it comes back to this button.
+				return ShopTwitchController::link( 'login', 'redeem:' . $token );
+			}
 
-		if ( $account['id'] !== $gift->winner_twitch_id ) {
-			// The page tells who is logged in and offers to log out.
-			return $page;
+			if ( $account['id'] !== $gift->winner_twitch_id ) {
+				// The page tells who is logged in and offers to log out.
+				return $page;
+			}
 		}
 
 		if ( self::claimed( $gift ) ) {
@@ -309,6 +318,16 @@ final class GiftClaim {
 	 */
 	private static function open( Gift $gift ): bool {
 		return Gift::WON === $gift->status && ( null === $gift->claim_deadline || $gift->claim_deadline >= GiftRepository::now() );
+	}
+
+	/**
+	 * Whether the gift is a giveaway's link (ADR-110), redeemed by whoever has
+	 * it: a giveaway's gift without a Twitch winner.
+	 *
+	 * @param Gift $gift Gift.
+	 */
+	private static function link( Gift $gift ): bool {
+		return $gift->giveaway() && null === $gift->winner_twitch_id;
 	}
 
 	/**

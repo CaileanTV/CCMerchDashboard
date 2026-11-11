@@ -74,6 +74,89 @@ final class GiftRepository {
 	}
 
 	/**
+	 * The gift of a giveaway (ADR-110): waiting for a draw (`bot`) or with an
+	 * open link (`manual`, won without a Twitch winner until the deadline).
+	 * Once per giveaway.
+	 *
+	 * @param int         $creator_id      Creator.
+	 * @param int         $giveaway_id     Giveaway.
+	 * @param int         $product_id      Parent product.
+	 * @param string      $unit_price      The price the code covers, incl. VAT.
+	 * @param string      $shipping_credit Shipping covered.
+	 * @param string      $currency        Currency.
+	 * @param string|null $link_deadline   UTC end of an open link; null to wait for a draw.
+	 * @return Gift The giveaway's gift (also when it existed already).
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function create_for_giveaway( int $creator_id, int $giveaway_id, int $product_id, string $unit_price, string $shipping_credit, string $currency, ?string $link_deadline ): Gift {
+		$now  = self::now();
+		$link = null !== $link_deadline;
+		$sql  = $this->wpdb->prepare(
+			"INSERT IGNORE INTO %i (creator_id, order_id, giveaway_id, product_id, unit_price, shipping_credit, currency, buyer_name, status, draws, claim_deadline, claim_token, created_at, updated_at) VALUES (%d, NULL, %d, %d, %s, %s, %s, NULL, %s, 0, NULLIF(%s, ''), NULLIF(%s, ''), %s, %s)",
+			$this->table(),
+			$creator_id,
+			$giveaway_id,
+			$product_id,
+			$unit_price,
+			$shipping_credit,
+			$currency,
+			$link ? Gift::WON : Gift::WAITING,
+			$link_deadline ?? '',
+			$link ? bin2hex( random_bytes( 16 ) ) : '',
+			$now,
+			$now
+		);
+
+		if ( false === $this->wpdb->query( (string) $sql ) ) { // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Prepared above; own table.
+			throw new DatabaseException( 'Could not store the giveaway\'s gift.', array( 'giveaway_id' => $giveaway_id ) );
+		}
+
+		$gift = $this->find_by( 'giveaway_id', $giveaway_id );
+
+		if ( null === $gift ) {
+			throw new DatabaseException( 'Could not read the giveaway\'s gift.', array( 'giveaway_id' => $giveaway_id ) );
+		}
+
+		return $gift;
+	}
+
+	/**
+	 * Gives a giveaway's gift to the creator as an open link (ADR-110): won
+	 * without a Twitch winner, so whoever has the link can claim it until the
+	 * deadline (after the last draw).
+	 *
+	 * @param int    $id       Gift.
+	 * @param string $from     `won` or `waiting`.
+	 * @param string $deadline UTC end of the link.
+	 * @return bool Whether this request did it.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function open_link( int $id, string $from, string $deadline ): bool {
+		return $this->change( $id, $from, 'status = %s, entrants = NULL, window_ends = NULL, winner_twitch_id = NULL, winner_login = NULL, claim_deadline = %s, claim_token = %s', array( Gift::WON, $deadline, bin2hex( random_bytes( 16 ) ) ) );
+	}
+
+	/**
+	 * Ends a giveaway's open link that nobody claimed in time.
+	 *
+	 * @param int $id Gift.
+	 * @return bool Whether this request ended it.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function expire_link( int $id ): bool {
+		return $this->change( $id, Gift::WON, 'status = %s, claim_token = NULL', array( Gift::CANCELLED ) );
+	}
+
+	/**
+	 * The gift of a giveaway.
+	 *
+	 * @param int $giveaway_id Giveaway.
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	public function find_by_giveaway( int $giveaway_id ): ?Gift {
+		return $this->find_by( 'giveaway_id', $giveaway_id );
+	}
+
+	/**
 	 * A gift by id.
 	 *
 	 * @param int $id Gift.
@@ -108,22 +191,25 @@ final class GiftRepository {
 	 *
 	 * @phpstan-param list<string> $statuses
 	 *
-	 * @param int      $creator_id Creator.
-	 * @param string[] $statuses   Statuses.
-	 * @param int      $limit      Most rows.
+	 * @param int       $creator_id Creator.
+	 * @param string[]  $statuses   Statuses.
+	 * @param int       $limit      Most rows.
+	 * @param bool|null $giveaways  Only giveaways' gifts (true), only bought gifts (false) or both (null).
 	 * @return list<Gift>
 	 * @throws DatabaseException When they cannot be read.
 	 */
-	public function for_creator( int $creator_id, array $statuses, int $limit = 100 ): array {
+	public function for_creator( int $creator_id, array $statuses, int $limit = 100, ?bool $giveaways = null ): array {
 		$wpdb  = $this->wpdb;
 		$marks = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
-		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i WHERE creator_id = %d AND status IN ({$marks}) ORDER BY id ASC LIMIT %d", $this->table(), $creator_id, ...array_merge( $statuses, array( $limit ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Placeholders only; own table.
+		$kind  = null === $giveaways ? '' : ( $giveaways ? ' AND giveaway_id IS NOT NULL' : ' AND giveaway_id IS NULL' );
+		$rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i WHERE creator_id = %d AND status IN ({$marks}){$kind} ORDER BY id ASC LIMIT %d", $this->table(), $creator_id, ...array_merge( $statuses, array( $limit ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Placeholders and a constant clause only; own table.
 
 		return $this->gifts( $rows );
 	}
 
 	/**
-	 * A creator's latest gifts (any status), newest first.
+	 * A creator's latest bought gifts (any status), newest first; the gifts
+	 * of giveaways are not among them.
 	 *
 	 * @param int $creator_id Creator.
 	 * @param int $limit      Most rows.
@@ -132,7 +218,7 @@ final class GiftRepository {
 	 */
 	public function latest( int $creator_id, int $limit = 50 ): array {
 		$wpdb = $this->wpdb;
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE creator_id = %d ORDER BY id DESC LIMIT %d', $this->table(), $creator_id, $limit ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Own table.
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE creator_id = %d AND giveaway_id IS NULL ORDER BY id DESC LIMIT %d', $this->table(), $creator_id, $limit ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Own table.
 
 		return $this->gifts( $rows );
 	}
@@ -301,10 +387,19 @@ final class GiftRepository {
 	 *
 	 * @param int $id       Gift.
 	 * @param int $order_id The winner's order.
+	 * @return bool Whether this request recorded it (the first use).
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function used_in( int $id, int $order_id ): void {
-		$this->change( $id, Gift::CLAIMED, 'claimed_order_id = %d', array( $order_id ) );
+	public function used_in( int $id, int $order_id ): bool {
+		$wpdb    = $this->wpdb;
+		$sql     = $wpdb->prepare( 'UPDATE %i SET claimed_order_id = %d, updated_at = %s WHERE id = %d AND status IN (%s, %s) AND claimed_order_id IS NULL', $this->table(), $order_id, self::now(), $id, Gift::CLAIMED, Gift::RETURNED );
+		$changed = $wpdb->query( (string) $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Prepared above; own table.
+
+		if ( false === $changed ) {
+			throw new DatabaseException( 'Could not record the use of a gift code.', array( 'gift_id' => $id ) );
+		}
+
+		return 1 === (int) $changed;
 	}
 
 	/**
@@ -383,7 +478,7 @@ final class GiftRepository {
 	/**
 	 * A gift by a unique column.
 	 *
-	 * @param string     $column `id`, `order_id` or `claim_token`.
+	 * @param string     $column `id`, `order_id`, `giveaway_id` or `claim_token`.
 	 * @param int|string $value  Value.
 	 * @throws DatabaseException When it cannot be read.
 	 */

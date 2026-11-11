@@ -36,6 +36,7 @@ final class GiftTexts {
 			'again'     => 'Allerede med: %s',
 			'more'      => '%1$s og %2$d flere',
 			'reminder'  => '⏰ %1$d sekunder tilbage! Skriv !enter for at være med i lodtrækningen om %2$s.',
+			'giveaway'  => '🎁 %1$s giver %2$s væk! Skriv !enter inden for %3$d sekunder for at være med i lodtrækningen.',
 		),
 		'en' => array(
 			'announce'  => '🎁 %1$s gifted %2$s! Type !enter within %3$d seconds to join the draw.',
@@ -50,6 +51,7 @@ final class GiftTexts {
 			'again'     => 'Already in: %s',
 			'more'      => '%1$s and %2$d more',
 			'reminder'  => '⏰ %1$d seconds left! Type !enter to join the draw for %2$s.',
+			'giveaway'  => '🎁 %1$s is giving away %2$s! Type !enter within %3$d seconds to join the draw.',
 		),
 	);
 
@@ -63,6 +65,18 @@ final class GiftTexts {
 	 */
 	public static function announce( string $language, ?string $buyer, string $product, int $seconds ): string {
 		return sprintf( self::text( $language, 'announce' ), $buyer ?? self::text( $language, 'anonymous' ), $product, $seconds );
+	}
+
+	/**
+	 * The announcement of a creator's giveaway (ADR-110).
+	 *
+	 * @param string $language `da` or `en`.
+	 * @param string $creator  The creator's name.
+	 * @param string $product  Product name.
+	 * @param int    $seconds  Window.
+	 */
+	public static function giveaway( string $language, string $creator, string $product, int $seconds ): string {
+		return sprintf( self::text( $language, 'giveaway' ), $creator, $product, $seconds );
 	}
 
 	/**

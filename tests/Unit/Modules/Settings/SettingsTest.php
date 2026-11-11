@@ -148,6 +148,7 @@ final class SettingsTest extends TestCase {
 				Settings::DESIGNER_DIGITIZATION_FEE        => '0.0000',
 				Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => false,
 				Settings::COMMUNITY_TWITCH_GIFTING_ENABLED => false,
+				Settings::COMMUNITY_GIVEAWAYS_ENABLED      => false,
 			),
 			Settings::all()
 		);
@@ -158,16 +159,17 @@ final class SettingsTest extends TestCase {
 	 * switches them on (ADR-108).
 	 */
 	public function test_community_features_are_off_by_default(): void {
-		$on = static fn( array $values ): array => array_intersect_key( Settings::sanitize( $values ), array_flip( array( Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED, Settings::COMMUNITY_TWITCH_GIFTING_ENABLED ) ) );
+		$on = static fn( array $values ): array => array_intersect_key( Settings::sanitize( $values ), array_flip( array( Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED, Settings::COMMUNITY_TWITCH_GIFTING_ENABLED, Settings::COMMUNITY_GIVEAWAYS_ENABLED ) ) );
 
-		self::assertSame( array( false, false ), array_values( $on( array() ) ) );
+		self::assertSame( array( false, false, false ), array_values( $on( array() ) ) );
 		self::assertSame(
-			array( false, false ),
+			array( false, false, false ),
 			array_values(
 				$on(
 					array(
 						Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => 1,
 						Settings::COMMUNITY_TWITCH_GIFTING_ENABLED => '1',
+						Settings::COMMUNITY_GIVEAWAYS_ENABLED => 'yes',
 					)
 				)
 			)
@@ -176,9 +178,11 @@ final class SettingsTest extends TestCase {
 		$this->options->options[ Settings::OPTION ] = array(
 			Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => true,
 			Settings::COMMUNITY_TWITCH_GIFTING_ENABLED => true,
+			Settings::COMMUNITY_GIVEAWAYS_ENABLED      => true,
 		);
 		self::assertTrue( Settings::twitch_sub_discount_enabled() );
 		self::assertTrue( Settings::twitch_gifting_enabled() );
+		self::assertTrue( Settings::giveaways_enabled() );
 	}
 
 	/**

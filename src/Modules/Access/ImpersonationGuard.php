@@ -65,6 +65,8 @@ final class ImpersonationGuard {
 		array( 'POST', '#^/merchboard/v1/me/community/twitch-sub-discount$#i' ),
 		// Twitch gifting speaks in the creator's chat (ADR-107).
 		array( 'POST', '#^/merchboard/v1/me/community/twitch-gifting(/(pause|start))?$#i' ),
+		// Giveaways are paid by the creator and speak in the creator's chat (ADR-110).
+		array( 'POST', '#^/merchboard/v1/me/community/giveaways(/\d+/(start|cancel))?$#i' ),
 	);
 
 	/**

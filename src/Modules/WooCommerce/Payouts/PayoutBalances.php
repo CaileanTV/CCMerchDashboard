@@ -56,9 +56,10 @@ final class PayoutBalances {
 		$earned = $this->earned->earned( $creator_id, $start, ( $this->clock )(), Settings::payout_holding_days() );
 		$totals = $this->payouts->totals( $creator_id );
 		$adjust = null === $this->adjustments ? array() : $this->adjustments->totals( $creator_id );
+		$held   = self::held( $creator_id );
 		$result = array();
 
-		foreach ( array_unique( array_merge( array_keys( $earned ), array_keys( $totals ), array_keys( $adjust ) ) ) as $currency ) {
+		foreach ( array_unique( array_merge( array_keys( $earned ), array_keys( $totals ), array_keys( $adjust ), array_keys( $held ) ) ) as $currency ) {
 			$currency = (string) $currency;
 			$summary  = $earned[ $currency ] ?? null;
 			// No row in the window is a known 0; any unknown row makes it unknown.
@@ -70,11 +71,38 @@ final class PayoutBalances {
 				$units,
 				null === $summary ? 0 : $summary->unknown_rows,
 				$totals[ $currency ]['completed'] ?? 0,
-				$totals[ $currency ]['reserved'] ?? 0
+				$totals[ $currency ]['reserved'] ?? 0,
+				$held[ $currency ] ?? 0
 			);
 		}
 
 		ksort( $result );
+
+		return $result;
+	}
+
+	/**
+	 * What other modules set aside from a creator's balance until it is
+	 * charged or released, per currency in units (open giveaways, ADR-110).
+	 *
+	 * @param int $creator_id Creator.
+	 * @return array<string, int>
+	 */
+	private static function held( int $creator_id ): array {
+		/**
+		 * Filters what is set aside from a creator's balance, per currency in units.
+		 *
+		 * @param mixed $held       Units per currency (array<string, int>).
+		 * @param int   $creator_id Creator.
+		 */
+		$held   = apply_filters( 'merchboard_payout_held', array(), $creator_id );
+		$result = array();
+
+		foreach ( is_array( $held ) ? $held : array() as $currency => $units ) {
+			if ( is_string( $currency ) && is_int( $units ) && $units > 0 ) {
+				$result[ $currency ] = $units;
+			}
+		}
 
 		return $result;
 	}

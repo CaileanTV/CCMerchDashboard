@@ -328,6 +328,12 @@ final class Tables {
 	public const GIFTS = 'merchboard_gifts';
 
 	/**
+	 * Products creators give away (phase 47, ADR-110): how each is paid and
+	 * where it stands; the draw or the link is a gift of GIFTS.
+	 */
+	public const GIVEAWAYS = 'merchboard_giveaways';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -384,6 +390,7 @@ final class Tables {
 		self::CREATOR_SIGNUPS,
 		self::GO_LIVE_REQUESTS,
 		self::GIFTS,
+		self::GIVEAWAYS,
 	);
 
 	/**

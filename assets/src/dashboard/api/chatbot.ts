@@ -315,7 +315,10 @@ export function updateChatbot( changes: {
  * it (ADR-108): the chatbot and the community features sharing the channel.
  */
 export type ConnectPage =
-	'alerts/chatbot' | 'community/twitch-discount' | 'community/twitch-gifting';
+	| 'alerts/chatbot'
+	| 'community/twitch-discount'
+	| 'community/twitch-gifting'
+	| 'community/giveaways';
 
 /**
  * The platform's page where the creator adds the bot to the own channel.

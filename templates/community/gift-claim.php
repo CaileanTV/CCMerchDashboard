@@ -23,7 +23,7 @@ $merchboard_image    = $merchboard_text( 'image' );
 $merchboard_winner   = $merchboard_text( 'winner' );
 $merchboard_deadline = $merchboard_text( 'deadline' );
 $merchboard_claimed  = true === ( $merchboard_view['claimed'] ?? false );
-$merchboard_title    = in_array( $merchboard_state, array( 'login', 'redeem', 'other' ), true ) ? __( 'You won a gift!', 'merchboard' ) : __( 'Twitch gift', 'merchboard' );
+$merchboard_title    = in_array( $merchboard_state, array( 'login', 'redeem', 'other', 'link' ), true ) ? __( 'You won a gift!', 'merchboard' ) : __( 'Twitch gift', 'merchboard' );
 ?>
 <!DOCTYPE html>
 <html <?php language_attributes(); ?>>
@@ -62,12 +62,14 @@ h1{font-size:1.5rem;line-height:1.3;margin:0 0 .5rem;text-wrap:balance}
 			<img class="merchboard-gift__image" src="<?php echo esc_url( $merchboard_image ); ?>" alt="<?php echo esc_attr( $merchboard_product ); ?>">
 		<?php endif; ?>
 		<p class="merchboard-gift__product"><?php echo esc_html( $merchboard_product ); ?></p>
-		<p class="merchboard-gift__meta">
-			<?php
-			/* translators: %s: the winner's Twitch login. */
-			echo esc_html( sprintf( __( 'Won by @%s in the Twitch chat.', 'merchboard' ), $merchboard_winner ) );
-			?>
-		</p>
+		<?php if ( 'link' !== $merchboard_state ) : ?>
+			<p class="merchboard-gift__meta">
+				<?php
+				/* translators: %s: the winner's Twitch login. */
+				echo esc_html( sprintf( __( 'Won by @%s in the Twitch chat.', 'merchboard' ), $merchboard_winner ) );
+				?>
+			</p>
+		<?php endif; ?>
 		<?php if ( ! $merchboard_claimed && '' !== $merchboard_deadline ) : ?>
 			<p class="merchboard-gift__meta">
 				<?php
@@ -84,6 +86,9 @@ h1{font-size:1.5rem;line-height:1.3;margin:0 0 .5rem;text-wrap:balance}
 				?>
 			</p>
 			<a class="merchboard-gift__button" href="<?php echo esc_url( $merchboard_text( 'logout' ) ); ?>"><?php esc_html_e( 'Log out of Twitch', 'merchboard' ); ?></a>
+		<?php elseif ( 'link' === $merchboard_state ) : ?>
+			<p><?php echo esc_html( $merchboard_claimed ? __( 'The gift has been redeemed. Open it again to see the gift code.', 'merchboard' ) : __( 'Redeem the gift, then choose size and colour. The gift code is used in the cart.', 'merchboard' ) ); ?></p>
+			<a class="merchboard-gift__button" href="<?php echo esc_url( $merchboard_text( 'redeem' ) ); ?>"><?php echo esc_html( $merchboard_claimed ? __( 'Show the gift code', 'merchboard' ) : __( 'Redeem', 'merchboard' ) ); ?></a>
 		<?php elseif ( 'redeem' === $merchboard_state ) : ?>
 			<p><?php echo esc_html( $merchboard_claimed ? __( 'You have claimed the gift. Open it again to see your gift code.', 'merchboard' ) : __( 'You are logged in as the winner. Get the gift and choose size and colour.', 'merchboard' ) ); ?></p>
 			<a class="merchboard-gift__button" href="<?php echo esc_url( $merchboard_text( 'redeem' ) ); ?>"><?php echo esc_html( $merchboard_claimed ? __( 'Show my gift code', 'merchboard' ) : __( 'Get the gift', 'merchboard' ) ); ?></a>

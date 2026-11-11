@@ -123,6 +123,7 @@ function parseCurrencyBalance( body: unknown ): PayoutCurrencyBalance | null {
 		earned,
 		completed,
 		reserved,
+		held = '0.0000',
 		available,
 		outstanding,
 		unknown_rows: unknownRows,
@@ -135,6 +136,7 @@ function parseCurrencyBalance( body: unknown ): PayoutCurrencyBalance | null {
 		( status !== 'complete' && status !== 'unknown' ) ||
 		! isAmount( completed ) ||
 		! isAmount( reserved ) ||
+		! isAmount( held ) ||
 		typeof unknownRows !== 'number' ||
 		! Number.isInteger( unknownRows ) ||
 		unknownRows < 0
@@ -156,6 +158,7 @@ function parseCurrencyBalance( body: unknown ): PayoutCurrencyBalance | null {
 		earned: earned as string | null,
 		completed,
 		reserved,
+		held,
 		available: available as string | null,
 		outstanding: outstanding as string | null,
 		unknownRows,

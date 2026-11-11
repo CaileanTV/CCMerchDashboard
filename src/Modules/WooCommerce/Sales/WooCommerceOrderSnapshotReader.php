@@ -84,8 +84,9 @@ final class WooCommerceOrderSnapshotReader implements OrderSnapshotReader {
 
 		$lines   = array();
 		$coupons = self::coupon_codes( $order );
-		// ADR-106 pkt. 7: a line's subscriber discount counts only while the order has the coupon.
-		$sub = in_array( SubDiscountMeta::COUPON_CODE, $coupons, true );
+		// ADR-106 pkt. 7: a line's subscriber discount counts only while the order has the coupon;
+		// a giveaway bought at the base price carries it without one (ADR-110).
+		$sub = in_array( SubDiscountMeta::COUPON_CODE, $coupons, true ) || '' !== (string) $order->get_meta( SubDiscountMeta::ORDER_CREATOR_PAID, true, 'edit' );
 
 		foreach ( $order->get_items( 'line_item' ) as $item ) {
 			if ( $item instanceof WC_Order_Item_Product ) {

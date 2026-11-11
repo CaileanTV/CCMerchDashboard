@@ -174,6 +174,11 @@ final class Settings {
 	public const COMMUNITY_TWITCH_GIFTING_ENABLED = 'community_twitch_gifting_enabled';
 
 	/**
+	 * Whether creators can give products away with giveaway links (ADR-110).
+	 */
+	public const COMMUNITY_GIVEAWAYS_ENABLED = 'community_giveaways_enabled';
+
+	/**
 	 * Whether customers get an optional "username" field in the checkout
 	 * (ADR-065 pkt. 9, step 25.9.1). Off by default; shown only while alerts
 	 * are on; enabled only by exactly boolean true.
@@ -271,7 +276,7 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool}
 	 */
 	public static function defaults(): array {
 		return array(
@@ -298,6 +303,7 @@ final class Settings {
 			self::DESIGNER_DIGITIZATION_FEE             => '0.0000',
 			self::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => false,
 			self::COMMUNITY_TWITCH_GIFTING_ENABLED      => false,
+			self::COMMUNITY_GIVEAWAYS_ENABLED           => false,
 		);
 	}
 
@@ -308,7 +314,7 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool}
 	 */
 	public static function sanitize( array $values ): array {
 		$slug  = $values[ self::DASHBOARD_SLUG ] ?? null;
@@ -347,6 +353,7 @@ final class Settings {
 			self::DESIGNER_DIGITIZATION_FEE             => is_string( $values[ self::DESIGNER_DIGITIZATION_FEE ] ?? null ) && 1 === preg_match( '/^\d{1,7}\.\d{4}$/', $values[ self::DESIGNER_DIGITIZATION_FEE ] ) ? $values[ self::DESIGNER_DIGITIZATION_FEE ] : '0.0000',
 			self::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => true === ( $values[ self::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED ] ?? false ),
 			self::COMMUNITY_TWITCH_GIFTING_ENABLED      => true === ( $values[ self::COMMUNITY_TWITCH_GIFTING_ENABLED ] ?? false ),
+			self::COMMUNITY_GIVEAWAYS_ENABLED           => true === ( $values[ self::COMMUNITY_GIVEAWAYS_ENABLED ] ?? false ),
 		);
 	}
 
@@ -470,7 +477,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );
@@ -614,6 +621,13 @@ final class Settings {
 	 */
 	public static function twitch_gifting_enabled(): bool {
 		return self::all()[ self::COMMUNITY_TWITCH_GIFTING_ENABLED ];
+	}
+
+	/**
+	 * Whether creators can use giveaway links (ADR-110).
+	 */
+	public static function giveaways_enabled(): bool {
+		return self::all()[ self::COMMUNITY_GIVEAWAYS_ENABLED ];
 	}
 
 	/**

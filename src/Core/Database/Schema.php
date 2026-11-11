@@ -31,6 +31,7 @@ use MerchBoard\Core\Database\Migrations\AddPayoutGiftCards;
 use MerchBoard\Core\Database\Migrations\AddSalesDesignerAmounts;
 use MerchBoard\Core\Database\Migrations\AddSalesSubDiscount;
 use MerchBoard\Core\Database\Migrations\CreateGiftsTable;
+use MerchBoard\Core\Database\Migrations\CreateGiveawaysTable;
 use MerchBoard\Core\Database\Migrations\CreateAlertApiKeysTable;
 use MerchBoard\Core\Database\Migrations\CreateAlertWebhookTables;
 use MerchBoard\Core\Database\Migrations\CreateAuditLogTable;
@@ -127,6 +128,7 @@ final class Schema {
 			48 => new AddDesignerBaseTags(),
 			49 => new AddSalesSubDiscount(),
 			50 => new CreateGiftsTable(),
+			51 => new CreateGiveawaysTable(),
 		);
 	}
 }

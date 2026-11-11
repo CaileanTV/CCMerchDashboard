@@ -48,6 +48,20 @@ final class PayoutAdjustmentRepository {
 	}
 
 	/**
+	 * The rule of a giveaway's charge (ADR-110).
+	 */
+	public const GIVEAWAY_RULE = 'adr110-giveaway';
+
+	/**
+	 * The reference of a giveaway's charge on a settlement document.
+	 *
+	 * @param int $giveaway_id Giveaway.
+	 */
+	public static function giveaway_reference( int $giveaway_id ): string {
+		return sprintf( 'GIV-%06d', $giveaway_id );
+	}
+
+	/**
 	 * Constructor.
 	 *
 	 * @param wpdb $wpdb Database.
@@ -89,12 +103,12 @@ final class PayoutAdjustmentRepository {
 	 *
 	 * @param int    $creator_id Creator.
 	 * @param string $currency   Currency.
-	 * @return list<array{id: int, amount_units: int, recalculation_id: int, fee_id: int}>
+	 * @return list<array{id: int, amount_units: int, recalculation_id: int, fee_id: int, giveaway_id: int}>
 	 * @throws DatabaseException When the read fails.
 	 */
 	public function unsettled_for_update( int $creator_id, string $currency ): array {
 		$wpdb = $this->wpdb;
-		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, amount, recalculation_id, designer_fee_id FROM %i WHERE creator_id = %d AND currency = %s AND settled_document_id IS NULL ORDER BY id FOR UPDATE', $this->table( Tables::PAYOUT_ADJUSTMENTS ), $creator_id, $currency ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A locking read inside the caller's transaction.
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, amount, recalculation_id, designer_fee_id, giveaway_id FROM %i WHERE creator_id = %d AND currency = %s AND settled_document_id IS NULL ORDER BY id FOR UPDATE', $this->table( Tables::PAYOUT_ADJUSTMENTS ), $creator_id, $currency ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- A locking read inside the caller's transaction.
 
 		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
 			throw new DatabaseException( 'Could not read the unsettled payout adjustments.' );
@@ -107,6 +121,7 @@ final class PayoutAdjustmentRepository {
 					'amount_units'     => SalesAmount::parse( (string) $row['amount'] ),
 					'recalculation_id' => (int) $row['recalculation_id'],
 					'fee_id'           => (int) $row['designer_fee_id'],
+					'giveaway_id'      => (int) $row['giveaway_id'],
 				),
 				$rows
 			);
@@ -197,6 +212,43 @@ final class PayoutAdjustmentRepository {
 				self::FEE_RULE,
 				$fee_id,
 				$created_by ?? 0,
+				$now->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' ),
+				$connection
+			)
+		);
+		$id = (int) $wpdb->insert_id;
+
+		if ( $id < 1 ) {
+			throw new DatabaseException( 'Could not store the payout adjustment.' );
+		}
+
+		return $id;
+	}
+
+	/**
+	 * Stores the charge of a giveaway whose code was used (ADR-110), on the
+	 * lock's connection. `UNIQUE(giveaway_id)` charges a giveaway at most once.
+	 *
+	 * @param int               $creator_id   Creator.
+	 * @param string            $currency     Currency.
+	 * @param int               $amount_units Amount (negative).
+	 * @param int               $giveaway_id  The giveaway.
+	 * @param DateTimeImmutable $now          The time.
+	 * @param int               $connection   The lock's connection.
+	 * @return int Adjustment id.
+	 * @throws DatabaseException When the insert fails.
+	 */
+	public function insert_giveaway( int $creator_id, string $currency, int $amount_units, int $giveaway_id, DateTimeImmutable $now, int $connection ): int {
+		$wpdb = $this->wpdb;
+		$this->write(
+			$wpdb->prepare(
+				'INSERT INTO %i (creator_id, currency, amount, rule, giveaway_id, created_at) SELECT %d, %s, %s, %s, %d, %s FROM DUAL WHERE CONNECTION_ID() = %d',
+				$this->table( Tables::PAYOUT_ADJUSTMENTS ),
+				$creator_id,
+				$currency,
+				SalesAmount::format( $amount_units ),
+				self::GIVEAWAY_RULE,
+				$giveaway_id,
 				$now->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' ),
 				$connection
 			)

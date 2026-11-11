@@ -778,6 +778,7 @@ final class MePayoutsController extends RestController {
 			'earned'       => $amount( $balance->earned_units ),
 			'completed'    => SalesAmount::format( $balance->completed_units ),
 			'reserved'     => SalesAmount::format( $balance->reserved_units ),
+			'held'         => SalesAmount::format( $balance->held_units ),
 			'available'    => $amount( $balance->available_units() ),
 			'outstanding'  => $amount( $balance->outstanding_units() ),
 			'unknown_rows' => $balance->unknown_rows,

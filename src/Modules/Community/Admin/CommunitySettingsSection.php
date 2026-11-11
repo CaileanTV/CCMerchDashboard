@@ -115,6 +115,12 @@ final class CommunitySettingsSection {
 				__( 'Off by default. Off pauses gifting: the page disappears from the creators\' dashboards, the gift button disappears and no new draws start. A draw already open ends as usual, winners can still claim their gift, and waiting gifts wait until gifting is switched on again.', 'merchboard' ),
 				Settings::twitch_gifting_enabled(),
 			),
+			Settings::COMMUNITY_GIVEAWAYS_ENABLED      => array(
+				__( 'Giveaways', 'merchboard' ),
+				__( 'Creators can give their own products away to their viewers', 'merchboard' ),
+				__( 'Off by default. The creator pays the base price and 50 kr. shipping: from the balance when the code is used, or in the shop. The bot draws the winner in the Twitch chat, or the creator passes a link on from their own giveaway. Off: the page disappears from the creators\' dashboards and no new giveaway starts; links and codes already given out still work.', 'merchboard' ),
+				Settings::giveaways_enabled(),
+			),
 		);
 
 		echo '<h2 id="merchboard-community">' . esc_html__( 'Community Features', 'merchboard' ) . '</h2>';
@@ -128,7 +134,7 @@ final class CommunitySettingsSection {
 		if ( ! ( $this->twitch )() ) {
 			printf(
 				'<div class="notice notice-warning inline"><p>%1$s <a href="%2$s">%3$s</a></p></div>',
-				esc_html__( 'Twitch is not set up yet: both features need the Twitch app and the bot account.', 'merchboard' ),
+				esc_html__( 'Twitch is not set up yet: the Twitch features and giveaways in the chat need the Twitch app and the bot account.', 'merchboard' ),
 				esc_url( AlertsAdminPage::url( 'chatbot' ) ),
 				esc_html__( 'Set up Twitch under Alerts → Chatbot', 'merchboard' )
 			);

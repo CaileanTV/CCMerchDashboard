@@ -69,6 +69,9 @@ final class CreatorTypes {
 			self::api_key_changed(),
 			self::gift_bought(),
 			self::gift_claimed(),
+			self::giveaway_link(),
+			self::giveaway_used(),
+			self::giveaway_expired(),
 		);
 	}
 
@@ -1125,6 +1128,109 @@ final class CreatorTypes {
 				null,
 				null,
 				__( 'Open Twitch gifting', 'merchboard' ),
+				'',
+				self::closing()
+			)
+		);
+	}
+
+
+	/**
+	 * Nobody claimed a giveaway after three draws; the creator has the link (ADR-110).
+	 */
+	private static function giveaway_link(): NotificationType {
+		return self::type(
+			'giveaway_link',
+			'community',
+			static fn(): string => __( 'Giveaway link ready', 'merchboard' ),
+			static fn(): string => __( 'When nobody claimed the creator\'s giveaway after three draws in the chat, so the creator gets the link to pass on.', 'merchboard' ),
+			true,
+			true,
+			false,
+			'community/giveaways',
+			array(
+				'product' => 'Stream tee',
+				'amount'  => '149.0000',
+			),
+			/* translators: %s: product name. */
+			static fn( NotificationData $d ): string => sprintf( __( 'Nobody claimed your giveaway %s after three draws. The link is ready on the Giveaways page.', 'merchboard' ), $d->text( 'product' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: product name. */
+				sprintf( __( 'Your giveaway %s has a link for you', 'merchboard' ), $d->text( 'product' ) ),
+				__( 'Your giveaway link is ready', 'merchboard' ),
+				array( __( 'Nobody in the chat claimed your giveaway after three draws. Pass the link on to a winner yourself; it can be redeemed for 30 days.', 'merchboard' ) ),
+				array( array( __( 'Product', 'merchboard' ), $d->text( 'product' ) ) ),
+				null,
+				null,
+				__( 'Open Giveaways', 'merchboard' ),
+				'',
+				self::closing()
+			)
+		);
+	}
+
+	/**
+	 * A giveaway's code was used (ADR-110).
+	 */
+	private static function giveaway_used(): NotificationType {
+		return self::type(
+			'giveaway_used',
+			'community',
+			static fn(): string => __( 'Giveaway code used', 'merchboard' ),
+			static fn(): string => __( 'When the winner of the creator\'s giveaway uses the code; a giveaway from the balance is charged then.', 'merchboard' ),
+			false,
+			true,
+			false,
+			'community/giveaways',
+			array(
+				'product' => 'Stream tee',
+				'amount'  => '149.0000',
+			),
+			/* translators: %s: product name. */
+			static fn( NotificationData $d ): string => sprintf( __( 'The code of your giveaway %s was used.', 'merchboard' ), $d->text( 'product' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: product name. */
+				sprintf( __( 'The code of your giveaway %s was used', 'merchboard' ), $d->text( 'product' ) ),
+				__( 'Your giveaway was used', 'merchboard' ),
+				array( __( 'The winner has used the code of your giveaway. If you paid it from your balance, it is charged now.', 'merchboard' ) ),
+				array( array( __( 'Product', 'merchboard' ), $d->text( 'product' ) ) ),
+				null,
+				null,
+				__( 'Open Giveaways', 'merchboard' ),
+				'',
+				self::closing()
+			)
+		);
+	}
+
+	/**
+	 * A giveaway ran out unused (ADR-110).
+	 */
+	private static function giveaway_expired(): NotificationType {
+		return self::type(
+			'giveaway_expired',
+			'community',
+			static fn(): string => __( 'Giveaway expired', 'merchboard' ),
+			static fn(): string => __( 'When the creator\'s giveaway runs out without being used; nothing is charged.', 'merchboard' ),
+			true,
+			true,
+			false,
+			'community/giveaways',
+			array(
+				'product' => 'Stream tee',
+				'amount'  => '149.0000',
+			),
+			/* translators: %s: product name. */
+			static fn( NotificationData $d ): string => sprintf( __( 'Your giveaway %s ran out without being used.', 'merchboard' ), $d->text( 'product' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: product name. */
+				sprintf( __( 'Your giveaway %s ran out', 'merchboard' ), $d->text( 'product' ) ),
+				__( 'Your giveaway ran out', 'merchboard' ),
+				array( __( 'Nobody used your giveaway within 30 days. Nothing is charged from your balance, and the money is no longer set aside.', 'merchboard' ) ),
+				array( array( __( 'Product', 'merchboard' ), $d->text( 'product' ) ) ),
+				null,
+				null,
+				__( 'Open Giveaways', 'merchboard' ),
 				'',
 				self::closing()
 			)

@@ -87,7 +87,8 @@ final class GiftNotices {
 	 * @param mixed $data  Event data.
 	 */
 	public function event( mixed $event, mixed $gift, mixed $data = array() ): void {
-		if ( ! is_string( $event ) || ! $gift instanceof Gift ) {
+		// A giveaway's gift has no buyer or order; Giveaways tells its creator (ADR-110).
+		if ( ! is_string( $event ) || ! $gift instanceof Gift || $gift->giveaway() ) {
 			return;
 		}
 

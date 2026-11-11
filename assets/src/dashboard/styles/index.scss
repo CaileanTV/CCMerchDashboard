@@ -1826,6 +1826,19 @@ input:disabled + .merchboard-sounds__upload {
 	gap: var(--merchboard-space-2);
 }
 
+/* A giveaway's link to pass on, with its copy button (ADR-110). */
+.merchboard-giveaway__link {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-2);
+	margin-top: var(--merchboard-space-2);
+
+	.merchboard-input {
+		flex: 1 1 16rem;
+		min-width: 0;
+	}
+}
+
 .merchboard-product-picker {
 	display: grid;
 	gap: var(--merchboard-space-2);

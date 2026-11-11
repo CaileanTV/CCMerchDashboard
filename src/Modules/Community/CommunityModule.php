@@ -41,6 +41,13 @@ use MerchBoard\Modules\Community\Gifting\GiftPrivacy;
 use MerchBoard\Modules\Community\Gifting\GiftPurchase;
 use MerchBoard\Modules\Community\Gifting\GiftRepository;
 use MerchBoard\Modules\Community\Gifting\GiftTicker;
+use MerchBoard\Modules\Community\Giveaways\GiveawayCheckout;
+use MerchBoard\Modules\Community\Giveaways\GiveawayCost;
+use MerchBoard\Modules\Community\Giveaways\GiveawayCreatorCleanup;
+use MerchBoard\Modules\Community\Giveaways\GiveawayOrderInfo;
+use MerchBoard\Modules\Community\Giveaways\GiveawayRepository;
+use MerchBoard\Modules\Community\Giveaways\Giveaways;
+use MerchBoard\Modules\Community\Rest\MeGiveawaysController;
 use MerchBoard\Modules\Community\Rest\MeTwitchGiftingController;
 use MerchBoard\Modules\Community\Rest\MeTwitchSubDiscountController;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCheckout;
@@ -58,7 +65,12 @@ use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeRepository;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorProfitDiscount;
 use MerchBoard\Modules\WooCommerce\JobQueue;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
+use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
+use MerchBoard\Modules\WooCommerce\Payouts\Recalculation\PayoutAdjustmentRepository;
+use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
+use DateTimeImmutable;
 use WC_Cart;
 use WC_Product;
 use wpdb;
@@ -121,6 +133,7 @@ final class CommunityModule implements Module {
 		$container->set( TwitchSubCheckout::class, static fn( Container $c ): TwitchSubCheckout => new TwitchSubCheckout( $c->get( TwitchSubDiscount::class ) ) );
 
 		self::register_gifting( $container );
+		self::register_giveaways( $container );
 
 		$container->set( CommunitySettings::class, static fn( Container $c ): CommunitySettings => new CommunitySettings( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 
@@ -153,6 +166,9 @@ final class CommunityModule implements Module {
 				$container->get( GiftDraws::class )->register();
 				$container->get( GiftCodes::class )->register();
 				$container->get( GiftClaim::class )->register();
+				// Giveaway links (ADR-110): the balance, the charge and the jobs, and paying in the shop.
+				$container->get( Giveaways::class )->register();
+				$container->get( GiveawayCheckout::class )->register();
 			},
 			5
 		);
@@ -165,10 +181,18 @@ final class CommunityModule implements Module {
 			$container->get( Logger::class )
 		) )->register();
 		( new GiftOrderInfo( $container->get( GiftRepository::class ) ) )->register();
+		( new GiveawayOrderInfo( $container->get( GiveawayRepository::class ) ) )->register();
 		( new GiftPrivacy( $container->get( GiftRepository::class ) ) )->register();
 		add_filter(
 			'merchboard_creator_data_cleaners',
-			static fn( mixed $cleaners ): array => array_merge( is_array( $cleaners ) ? $cleaners : array(), array( new GiftCreatorCleanup( $container->get( GiftRepository::class ), $container->get( GiftDraws::class ) ) ) ),
+			// The giveaways first: the gifts' cleanup then removes their cancelled gifts.
+			static fn( mixed $cleaners ): array => array_merge(
+				is_array( $cleaners ) ? $cleaners : array(),
+				array(
+					new GiveawayCreatorCleanup( $container->get( GiveawayRepository::class ), $container->get( Giveaways::class ) ),
+					new GiftCreatorCleanup( $container->get( GiftRepository::class ), $container->get( GiftDraws::class ) ),
+				)
+			),
 			30
 		);
 		// The customer's Twitch account and tiers on the administrator's order page.
@@ -189,6 +213,7 @@ final class CommunityModule implements Module {
 			static function () use ( $container ): void {
 				$container->get( MeTwitchSubDiscountController::class )->register_routes();
 				$container->get( MeTwitchGiftingController::class )->register_routes();
+				$container->get( MeGiveawaysController::class )->register_routes();
 				$container->get( GiftTicker::class )->register_routes();
 			}
 		);
@@ -298,6 +323,106 @@ final class CommunityModule implements Module {
 				$c->get( Logger::class )
 			)
 		);
+	}
+
+	/**
+	 * Registers the giveaway links (ADR-110).
+	 *
+	 * @param Container $container Shared service container.
+	 */
+	private static function register_giveaways( Container $container ): void {
+		$container->set( GiveawayRepository::class, static fn( Container $c ): GiveawayRepository => new GiveawayRepository( $c->get( wpdb::class ) ) );
+		$container->set( GiveawayCost::class, static fn( Container $c ): GiveawayCost => new GiveawayCost( $c->get( CreatorProfitDiscount::class ) ) );
+		$container->set(
+			Giveaways::class,
+			static fn( Container $c ): Giveaways => new Giveaways(
+				$c->get( GiveawayRepository::class ),
+				$c->get( GiftRepository::class ),
+				$c->get( GiftDraws::class ),
+				static fn( int $product_id, int $creator_id ): ?array => $c->get( GiveawayCost::class )->quote( $product_id, $creator_id ),
+				$c->get( PayoutBalances::class ),
+				$c->get( PayoutRepository::class ),
+				$c->get( PayoutAdjustmentRepository::class ),
+				$c->get( Transaction::class ),
+				$c->get( AuditTrail::class ),
+				static fn( string $hook, array $args, int $delay ): bool => $c->get( JobQueue::class )->enqueue( $hook, $args, $delay ),
+				static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', wp_timezone() ),
+				static fn( int $creator_id ): string => $c->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '',
+				self::product_name( ... ),
+				static fn( int $creator_id ): string => $c->get( GiftingSettingsRepository::class )->find( $creator_id )->language,
+				$c->get( Logger::class )
+			)
+		);
+		$container->set(
+			GiveawayCheckout::class,
+			static fn( Container $c ): GiveawayCheckout => new GiveawayCheckout(
+				$c->get( GiveawayRepository::class ),
+				$c->get( Giveaways::class ),
+				static fn(): ?int => $c->get( CreatorContext::class )->current()?->id,
+				$c->get( Logger::class )
+			)
+		);
+		$container->set(
+			MeGiveawaysController::class,
+			static fn( Container $c ): MeGiveawaysController => new MeGiveawaysController(
+				$c->get( CreatorContext::class ),
+				$c->get( Giveaways::class ),
+				static fn( int $creator_id ): array => self::giveaway_products( $c, $creator_id ),
+				static function ( int $creator_id ) use ( $c ): ?string {
+					$units = $c->get( PayoutBalances::class )->in_currency( $creator_id, get_woocommerce_currency() )->available_units();
+
+					return null === $units ? null : SalesAmount::format( $units );
+				},
+				static function ( int $creator_id ) use ( $c ): ?string {
+					try {
+						$channel = $c->get( ChatbotChannelRepository::class )->find( $creator_id, ChatPlatform::Twitch );
+					} catch ( DatabaseException ) {
+						return null;
+					}
+
+					return $channel->connected() ? $channel->broadcaster_login : null;
+				},
+				static fn(): bool => $c->get( TwitchAccount::class )->ready(),
+				static fn( int $creator_id ): ?bool => self::live( $c, $creator_id ),
+				self::product_name( ... ),
+				static fn( string $token ): string => ShopTwitchController::target_url( 'claim:' . $token ),
+				$c->get( Logger::class )
+			)
+		);
+	}
+
+	/**
+	 * The creator's products that can be given away, with their price
+	 * (ADR-110), at most the first 200.
+	 *
+	 * @param Container $c          Container.
+	 * @param int       $creator_id Creator.
+	 * @return list<array{id: int, name: string, image: string, cost: string, currency: string}>
+	 * @throws DatabaseException When the pricing data cannot be read.
+	 */
+	private static function giveaway_products( Container $c, int $creator_id ): array {
+		$products = array();
+		$ids      = array();
+
+		for ( $page = 1; $page <= 2; $page++ ) {
+			array_push( $ids, ...$c->get( CreatorProducts::class )->ids( $creator_id, new Pagination( $page, Pagination::MAX_PER_PAGE ) ) );
+		}
+
+		foreach ( array_unique( $ids ) as $product_id ) {
+			$quote = $c->get( GiveawayCost::class )->quote( $product_id, $creator_id );
+
+			if ( null !== $quote ) {
+				$products[] = array(
+					'id'       => $product_id,
+					'name'     => self::product_name( $product_id ),
+					'image'    => (string) get_the_post_thumbnail_url( $product_id, 'thumbnail' ),
+					'cost'     => $quote['cost'],
+					'currency' => $quote['currency'],
+				);
+			}
+		}
+
+		return $products;
 	}
 
 	/**

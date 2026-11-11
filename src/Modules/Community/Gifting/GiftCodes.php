@@ -45,6 +45,16 @@ class GiftCodes {
 	public const GIFT_META = '_merchboard_gift_id';
 
 	/**
+	 * Action: a gift code was used for the first time in a paid order.
+	 */
+	public const USED_HOOK = 'merchboard_gift_code_used';
+
+	/**
+	 * Days a giveaway's code is valid (ADR-110).
+	 */
+	public const GIVEAWAY_DAYS = 30;
+
+	/**
 	 * Gifts read in this request, by coupon id.
 	 *
 	 * @var array<int, Gift|null>
@@ -95,6 +105,14 @@ class GiftCodes {
 			/* translators: %d: gift id. */
 			$coupon->set_description( sprintf( __( 'Merch Dashboard: the code of Twitch gift #%d. Valid once, only for the gifted product; managed by Merch Dashboard.', 'merchboard' ), $gift->id ) );
 			$coupon->update_meta_data( self::GIFT_META, (string) $gift->id );
+
+			// A giveaway's code is valid for GIVEAWAY_DAYS (ADR-110).
+			if ( $gift->giveaway() ) {
+				$coupon->set_date_expires( time() + self::GIVEAWAY_DAYS * DAY_IN_SECONDS );
+				/* translators: %d: giveaway id. */
+				$coupon->set_description( sprintf( __( 'Merch Dashboard: the code of giveaway #%d. Valid once, only for the product given away; managed by Merch Dashboard.', 'merchboard' ), (int) $gift->giveaway_id ) );
+			}
+
 			$id = (int) $coupon->save();
 		} catch ( Throwable ) {
 			throw new DatabaseException( 'Could not create the gift code.', array( 'gift_id' => $gift->id ) );
@@ -248,8 +266,15 @@ class GiftCodes {
 			$gift = $this->gift( $coupon );
 
 			try {
-				if ( null !== $gift ) {
-					$this->gifts->used_in( $gift->id, (int) $order->get_id() );
+				if ( null !== $gift && $this->gifts->used_in( $gift->id, (int) $order->get_id() ) ) {
+					/**
+					 * A gift code was used for the first time in a paid order (a
+					 * giveaway is charged then; ADR-110).
+					 *
+					 * @param Gift $gift     The gift.
+					 * @param int  $order_id The order.
+					 */
+					do_action( self::USED_HOOK, $gift, (int) $order->get_id() ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- merchboard_gift_code_used.
 				}
 			} catch ( DatabaseException $e ) {
 				$this->logger->error( 'The use of a gift code could not be recorded.', $e->context() );

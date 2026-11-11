@@ -12,7 +12,8 @@ namespace MerchBoard\Modules\WooCommerce\Payouts;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Balance = earned − completed − reserved (ADR-054 pkt. 5), in units. When
+ * Balance = earned − completed − reserved − held (ADR-054 pkt. 5; held:
+ * amounts set aside for open giveaways, ADR-110), in units. When
  * the earned payout is unknown (a ledger row in the window cannot be
  * calculated), the balance and the available amount are unknown (null),
  * never 0, and nothing can be requested. A negative balance is outstanding
@@ -32,13 +33,15 @@ final readonly class PayoutBalance {
 	 * @param int      $unknown_rows    Ledger rows in the window whose payout is unknown.
 	 * @param int      $completed_units Completed payouts.
 	 * @param int      $reserved_units  Pending payouts.
+	 * @param int      $held_units      Set aside until charged or released (open giveaways, ADR-110).
 	 */
 	public function __construct(
 		public string $currency,
 		public ?int $earned_units,
 		public int $unknown_rows,
 		public int $completed_units,
-		public int $reserved_units
+		public int $reserved_units,
+		public int $held_units = 0
 	) {
 	}
 
@@ -50,10 +53,10 @@ final readonly class PayoutBalance {
 	}
 
 	/**
-	 * Earned − completed − reserved, or null when unknown.
+	 * Earned − completed − reserved − held, or null when unknown.
 	 */
 	public function balance_units(): ?int {
-		return null === $this->earned_units ? null : $this->earned_units - $this->completed_units - $this->reserved_units;
+		return null === $this->earned_units ? null : $this->earned_units - $this->completed_units - $this->reserved_units - $this->held_units;
 	}
 
 	/**

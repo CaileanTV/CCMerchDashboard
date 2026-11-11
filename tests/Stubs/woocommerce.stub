@@ -180,6 +180,12 @@ class WC_Coupon extends WC_Data {
 	public function set_description( $description ) {}
 
 	/**
+	 * @param string|int|null $date Expiry (a timestamp or a date); null for none.
+	 * @return void
+	 */
+	public function set_date_expires( $date ) {}
+
+	/**
 	 * @param int|null $usage_limit Usage limit.
 	 * @return void
 	 */
@@ -1026,6 +1032,15 @@ function wc_tax_enabled() {}
  * @return bool
  */
 function wc_prices_include_tax() {}
+
+/**
+ * A product's price including tax (wc-product-functions.php).
+ *
+ * @param WC_Product           $product Product.
+ * @param array<string, mixed> $args    `qty`, `price`.
+ * @return float|string
+ */
+function wc_get_price_including_tax( $product, $args = array() ) {}
 
 /**
  * @param string|float|int $number     Number.

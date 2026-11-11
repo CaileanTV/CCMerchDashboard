@@ -61,6 +61,14 @@ final class SubDiscountMeta {
 	public const ORDER = '_merchboard_twitch_sub';
 
 	/**
+	 * Order meta: the creator pays its lines' discount (`LINE_DISCOUNT`)
+	 * without the coupon: a giveaway the creator bought in the shop at the base
+	 * price (ADR-110), so the sale gives the creator no profit. The value is
+	 * the giveaway's id.
+	 */
+	public const ORDER_CREATOR_PAID = '_merchboard_giveaway';
+
+	/**
 	 * The line's discount in units (1/10 000) in the paid basis, or null
 	 * when the line has none.
 	 *

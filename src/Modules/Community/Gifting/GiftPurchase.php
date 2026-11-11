@@ -354,12 +354,24 @@ final class GiftPurchase {
 			return $rates;
 		}
 
+		return array( 'merchboard_gift' => self::rate( 'merchboard_gift', __( 'Gift shipping', 'merchboard' ) ) );
+	}
+
+	/**
+	 * A shipping rate of 50 incl. VAT: a viewer's gift, or (with its own id and
+	 * name, never mistaken for a gift) a creator's giveaway paid in the shop
+	 * (ADR-110).
+	 *
+	 * @param string $id    Rate id.
+	 * @param string $label Name shown in the checkout and on the order.
+	 */
+	public static function rate( string $id, string $label ): WC_Shipping_Rate {
 		$gross     = (float) self::SHIPPING;
 		$tax_rates = wc_tax_enabled() ? WC_Tax::get_shipping_tax_rates() : array();
 		$net       = array() === $tax_rates ? $gross : $gross / ( 1 + array_sum( array_map( static fn( array $rate ): float => is_numeric( $rate['rate'] ?? null ) ? (float) $rate['rate'] / 100 : 0.0, $tax_rates ) ) );
 		$taxes     = array() === $tax_rates ? array() : WC_Tax::calc_shipping_tax( $net, $tax_rates );
 
-		return array( 'merchboard_gift' => new WC_Shipping_Rate( 'merchboard_gift', __( 'Gift shipping', 'merchboard' ), round( $net, 4 ), $taxes, 'merchboard_gift' ) );
+		return new WC_Shipping_Rate( $id, $label, round( $net, 4 ), $taxes, $id );
 	}
 
 	/**
@@ -509,7 +521,7 @@ final class GiftPurchase {
 	 * @param WC_Product $product Product.
 	 * @return array{0: int, 1: array<string, string>}
 	 */
-	private static function cheapest( WC_Product $product ): array {
+	public static function cheapest( WC_Product $product ): array {
 		if ( ! $product instanceof WC_Product_Variable ) {
 			return array( 0, array() );
 		}

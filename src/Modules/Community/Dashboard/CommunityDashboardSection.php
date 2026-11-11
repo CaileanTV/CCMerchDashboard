@@ -60,6 +60,14 @@ final class CommunityDashboardSection {
 						'group'       => 'community',
 						'group_label' => __( 'Community Features', 'merchboard' ),
 					) : null,
+					Settings::giveaways_enabled() ? array(
+						'id'          => 'community-giveaways',
+						'label'       => __( 'Giveaways', 'merchboard' ),
+						'path'        => 'community/giveaways',
+						'capability'  => Capabilities::ACCESS_DASHBOARD,
+						'group'       => 'community',
+						'group_label' => __( 'Community Features', 'merchboard' ),
+					) : null,
 				)
 			)
 		);

@@ -907,4 +907,24 @@ enum AuditAction: string {
 	 * Context: changed_fields.
 	 */
 	case TwitchGiftingChanged = 'twitch_gifting_changed';
+
+	/**
+	 * A creator created a giveaway (ADR-110). Context: giveaway_id,
+	 * product_id, mode, funding, cost, currency.
+	 */
+	case GiveawayCreated = 'giveaway_created';
+
+	/**
+	 * A giveaway's code was used and its cost charged from the creator's
+	 * balance (ADR-110). System action. Context: giveaway_id, adjustment_id,
+	 * order_id, amount, currency.
+	 */
+	case GiveawayCharged = 'giveaway_charged';
+
+	/**
+	 * A giveaway was cancelled before its code was used (ADR-110): by the
+	 * creator, or by its shop order being cancelled or refunded. Context:
+	 * giveaway_id, reason.
+	 */
+	case GiveawayCancelled = 'giveaway_cancelled';
 }
