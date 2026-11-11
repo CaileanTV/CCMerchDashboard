@@ -14,17 +14,21 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerSession;
 use MerchBoard\Modules\Alerts\Rest\ShopTwitchController;
+use Throwable;
 use WC_Cart;
 use WC_Session;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
- * ADR-107 pkt. 6: the bot's link (`?merchboard_gift_claim=<token>`) asks
- * for the winner's Twitch login (ADR-106) and only gives the gift code to
- * the Twitch account that won. The code is created then; the winner is sent
- * to the product, and the code is applied as soon as the product is in the
- * cart. A winner who comes back sees the code again.
+ * ADR-107 pkt. 6 (with the status note of 2026-11-11): the bot's link
+ * (`?merchboard_gift_claim=<token>`) opens a page with the prize, the winner
+ * and the deadline, and a button "Log in with Twitch". The button
+ * (`&merchboard_gift_redeem=1`) asks for the winner's Twitch login (ADR-106),
+ * comes back to itself and only gives the gift code to the Twitch account
+ * that won. The code is created then; the winner is sent to the product, and
+ * the code is applied as soon as the product is in the cart. A winner who
+ * comes back sees the code again.
  */
 final class GiftClaim {
 
@@ -34,11 +38,11 @@ final class GiftClaim {
 	private const SESSION_KEY = 'merchboard_gift_code';
 
 	/**
-	 * A product's page.
+	 * A product's name, page and image.
 	 *
-	 * @var Closure(int): string
+	 * @var Closure(int): array{name: string, url: string, image: string}
 	 */
-	private Closure $product_url;
+	private Closure $product;
 
 	/**
 	 * Tells about a gift.
@@ -50,19 +54,19 @@ final class GiftClaim {
 	/**
 	 * Constructor.
 	 *
-	 * @phpstan-param Closure(int): string $product_url
+	 * @phpstan-param Closure(int): array{name: string, url: string, image: string} $product
 	 * @phpstan-param Closure(string, Gift, array<string, string>): void $notify
 	 *
-	 * @param GiftRepository        $gifts       Gifts.
-	 * @param GiftCodes             $codes       Gift codes.
-	 * @param TwitchCustomerSession $session     The customer's Twitch login.
-	 * @param Closure               $product_url A product's page.
-	 * @param Closure               $notify      Tells the creator and the buyer.
-	 * @param Logger                $logger      Technical log.
+	 * @param GiftRepository        $gifts   Gifts.
+	 * @param GiftCodes             $codes   Gift codes.
+	 * @param TwitchCustomerSession $session The customer's Twitch login.
+	 * @param Closure               $product A product's name, page and image.
+	 * @param Closure               $notify  Tells the creator and the buyer.
+	 * @param Logger                $logger  Technical log.
 	 */
-	public function __construct( private GiftRepository $gifts, private GiftCodes $codes, private TwitchCustomerSession $session, Closure $product_url, Closure $notify, private Logger $logger ) {
-		$this->product_url = $product_url;
-		$this->notify      = $notify;
+	public function __construct( private GiftRepository $gifts, private GiftCodes $codes, private TwitchCustomerSession $session, Closure $product, Closure $notify, private Logger $logger ) {
+		$this->product = $product;
+		$this->notify  = $notify;
 	}
 
 	/**
@@ -74,24 +78,45 @@ final class GiftClaim {
 	}
 
 	/**
-	 * `template_redirect`: handles the claim link.
+	 * `template_redirect`: the claim page, or the button behind it.
 	 */
 	public function claim(): void {
-		$token = isset( $_GET[ ShopTwitchController::CLAIM_QUERY ] ) ? sanitize_key( wp_unslash( $_GET[ ShopTwitchController::CLAIM_QUERY ] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The token is the secret; Twitch login proves the winner.
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- The token is the secret; Twitch login proves the winner.
+		$token  = isset( $_GET[ ShopTwitchController::CLAIM_QUERY ] ) ? sanitize_key( wp_unslash( $_GET[ ShopTwitchController::CLAIM_QUERY ] ) ) : '';
+		$redeem = isset( $_GET[ ShopTwitchController::REDEEM_QUERY ] );
+		// phpcs:enable
 
 		if ( '' === $token ) {
 			return;
 		}
 
-		try {
-			$location = $this->handle( $token );
-		} catch ( DatabaseException $e ) {
-			$this->logger->error( 'A gift could not be claimed.', $e->context() );
-			wc_add_notice( __( 'The gift could not be claimed right now. Please try again in a moment.', 'merchboard' ), 'error' );
-			$location = home_url( '/' );
+		if ( $redeem ) {
+			try {
+				$location = $this->redeem( $token );
+			} catch ( DatabaseException $e ) {
+				$this->logger->error( 'A gift could not be claimed.', $e->context() );
+				$location = ShopTwitchController::target_url( 'claim:' . $token );
+			}
+
+			wp_safe_redirect( $location );
+			exit;
 		}
 
-		wp_safe_redirect( $location );
+		try {
+			$html = $this->render( $this->view( $token ) );
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'A gift page could not be shown.', $e->context() );
+			$html = $this->render( array( 'state' => 'error' ) + $this->view_base() );
+		}
+
+		foreach ( self::headers() as $name => $value ) {
+			header( $name . ': ' . $value );
+		}
+
+		nocache_headers();
+		status_header( 200 );
+		header( 'Content-Type: text/html; charset=utf-8' );
+		echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- The template escapes every value.
 		exit;
 	}
 
@@ -114,69 +139,124 @@ final class GiftClaim {
 	}
 
 	/**
-	 * The customer's WooCommerce session, or null.
+	 * The headers of the claim page: no caching, no index and no referrer
+	 * (the token is in the address).
+	 *
+	 * @return array<string, string>
 	 */
-	private static function session(): ?WC_Session {
-		$session = function_exists( 'WC' ) ? WC()->session : null;
-
-		return $session instanceof WC_Session ? $session : null;
+	public static function headers(): array {
+		return array(
+			'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' https: data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+			'Referrer-Policy'         => 'no-referrer',
+			'X-Content-Type-Options'  => 'nosniff',
+			'X-Robots-Tag'            => 'noindex, nofollow',
+		);
 	}
 
 	/**
-	 * Where the claim link leads.
+	 * What the claim page shows. States: `invalid` (unknown, too late, given
+	 * back), `login` (log in with Twitch), `redeem` (logged in as the winner),
+	 * `other` (logged in with another Twitch account) and `error`.
+	 *
+	 * @param string $token Claim token.
+	 * @return array<string, mixed>
+	 * @throws DatabaseException When the gift cannot be read.
+	 */
+	public function view( string $token ): array {
+		$base = $this->view_base();
+		$gift = $this->gifts->find_by_token( $token );
+
+		if ( null === $gift || ( ! self::claimed( $gift ) && ! self::open( $gift ) ) ) {
+			return array( 'state' => 'invalid' ) + $base;
+		}
+
+		$account = $this->session->account();
+		$product = ( $this->product )( $gift->product_id );
+		$view    = array(
+			'product'  => $product['name'],
+			'image'    => $product['image'],
+			'winner'   => (string) $gift->winner_login,
+			'claimed'  => self::claimed( $gift ),
+			'deadline' => null === $gift->claim_deadline ? '' : (string) wp_date( (string) get_option( 'date_format' ) . ' ' . (string) get_option( 'time_format' ), (int) strtotime( $gift->claim_deadline . ' UTC' ) ),
+			'redeem'   => ShopTwitchController::target_url( 'redeem:' . $token ),
+		) + $base;
+
+		if ( null === $account || null === $this->session->token() ) {
+			return array( 'state' => 'login' ) + $view;
+		}
+
+		if ( $account['id'] !== $gift->winner_twitch_id ) {
+			return array(
+				'state'   => 'other',
+				'account' => $account['login'],
+				'logout'  => ShopTwitchController::link( 'logout', 'claim:' . $token ),
+			) + $view;
+		}
+
+		return array( 'state' => 'redeem' ) + $view;
+	}
+
+	/**
+	 * The claim page.
+	 *
+	 * @param array<string, mixed> $merchboard_view View data.
+	 * @throws Throwable When the template fails (after its output is discarded).
+	 */
+	public function render( array $merchboard_view ): string { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Read by the template.
+		ob_start();
+
+		try {
+			require dirname( __DIR__, 4 ) . '/templates/community/gift-claim.php';
+
+			return (string) ob_get_clean();
+		} catch ( Throwable $e ) {
+			ob_end_clean();
+
+			throw $e;
+		}
+	}
+
+	/**
+	 * Where the button leads: Twitch login (back here), the claim page when
+	 * something is wrong, or the product with the code.
 	 *
 	 * @param string $token Claim token.
 	 * @throws DatabaseException When the gift cannot be read or stored.
 	 */
-	private function handle( string $token ): string {
-		$gift    = $this->gifts->find_by_token( $token );
-		$claimed = null !== $gift && Gift::CLAIMED === $gift->status && null !== $gift->coupon_id;
-		$open    = null !== $gift && Gift::WON === $gift->status && ( null === $gift->claim_deadline || $gift->claim_deadline >= GiftRepository::now() );
+	public function redeem( string $token ): string {
+		$page = ShopTwitchController::target_url( 'claim:' . $token );
+		$gift = $this->gifts->find_by_token( $token );
 
-		if ( null === $gift || ( ! $claimed && ! $open ) ) {
-			wc_add_notice( __( 'This gift link is no longer valid.', 'merchboard' ), 'error' );
-
-			return home_url( '/' );
+		if ( null === $gift || ( ! self::claimed( $gift ) && ! self::open( $gift ) ) ) {
+			return $page;
 		}
 
 		$account = $this->session->account();
 
 		if ( null === $account || null === $this->session->token() ) {
-			// Twitch login first; it comes back to this link.
-			return ShopTwitchController::link( 'login', 'claim:' . $token );
+			// Twitch login first; it comes back to this button.
+			return ShopTwitchController::link( 'login', 'redeem:' . $token );
 		}
 
 		if ( $account['id'] !== $gift->winner_twitch_id ) {
-			wc_add_notice(
-				sprintf(
-					/* translators: 1: the customer's Twitch login, 2: the winner's Twitch login. */
-					__( 'You are logged in with Twitch as %1$s, but the gift was won by %2$s. Log out of Twitch and log in as the winner.', 'merchboard' ),
-					$account['login'],
-					(string) $gift->winner_login
-				),
-				'error'
-			);
-
-			return ShopTwitchController::link( 'logout', 'claim:' . $token );
+			// The page tells who is logged in and offers to log out.
+			return $page;
 		}
 
-		if ( $claimed ) {
+		if ( self::claimed( $gift ) ) {
 			// The winner came back: the same code again.
 			$code = $this->codes->code( (int) $gift->coupon_id );
 
 			if ( '' === $code ) {
-				wc_add_notice( __( 'This gift link is no longer valid.', 'merchboard' ), 'error' );
-
-				return home_url( '/' );
+				return $page;
 			}
 		} else {
 			$coupon = $this->codes->create( $gift );
 
 			if ( ! $this->gifts->claim( $gift->id, $coupon['id'] ) ) {
 				wp_delete_post( $coupon['id'], true );
-				wc_add_notice( __( 'This gift link is no longer valid.', 'merchboard' ), 'error' );
 
-				return home_url( '/' );
+				return $page;
 			}
 
 			$code = $coupon['code'];
@@ -185,15 +265,58 @@ final class GiftClaim {
 
 		self::session()?->set( self::SESSION_KEY, $code );
 
-		wc_add_notice(
-			sprintf(
-				/* translators: %s: the gift code. */
-				__( 'Congratulations! Choose size and colour and add the product to the cart; your gift code %s is used there. You pay only if you choose a dearer variant or shipping.', 'merchboard' ),
-				$code
-			),
-			'success'
-		);
+		if ( function_exists( 'wc_add_notice' ) ) {
+			wc_add_notice(
+				sprintf(
+					/* translators: %s: the gift code. */
+					__( 'Congratulations! Choose size and colour and add the product to the cart; your gift code %s is used there. You pay only if you choose a dearer variant or shipping.', 'merchboard' ),
+					$code
+				),
+				'success'
+			);
+		}
 
-		return ( $this->product_url )( $gift->product_id );
+		return ( $this->product )( $gift->product_id )['url'];
+	}
+
+	/**
+	 * The page's fixed parts: the site and the shop.
+	 *
+	 * @return array{site: string, shop: string}
+	 */
+	private function view_base(): array {
+		$shop = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : '';
+
+		return array(
+			'site' => (string) get_bloginfo( 'name' ),
+			'shop' => '' === $shop ? home_url( '/' ) : $shop,
+		);
+	}
+
+	/**
+	 * Whether the gift was claimed and has its code.
+	 *
+	 * @param Gift $gift Gift.
+	 */
+	private static function claimed( Gift $gift ): bool {
+		return Gift::CLAIMED === $gift->status && null !== $gift->coupon_id;
+	}
+
+	/**
+	 * Whether the gift was won and can still be claimed.
+	 *
+	 * @param Gift $gift Gift.
+	 */
+	private static function open( Gift $gift ): bool {
+		return Gift::WON === $gift->status && ( null === $gift->claim_deadline || $gift->claim_deadline >= GiftRepository::now() );
+	}
+
+	/**
+	 * The customer's WooCommerce session, or null.
+	 */
+	private static function session(): ?WC_Session {
+		$session = function_exists( 'WC' ) ? WC()->session : null;
+
+		return $session instanceof WC_Session ? $session : null;
 	}
 }

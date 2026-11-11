@@ -48,6 +48,7 @@ final class GiftingTest extends TestCase {
 				'window'    => 90,
 				'language'  => 'en',
 				'test_mode' => false,
+				'confirm'   => true,
 			),
 			$settings->to_stored()
 		);
@@ -76,6 +77,28 @@ final class GiftingTest extends TestCase {
 		self::assertTrue( $test->to_stored()['test_mode'] );
 		self::assertFalse( $test->with_test_mode( false )->test_mode );
 		self::assertTrue( $test->with_test_mode( false )->open(), 'The test mode does not change whether gifting is open.' );
+	}
+
+	public function test_the_confirmations_are_on_unless_switched_off(): void {
+		self::assertTrue( GiftingSettings::defaults()->confirm );
+		self::assertTrue( GiftingSettings::from_stored( array( 'enabled' => true ) )->confirm, 'Settings saved before the field: on.' );
+
+		$off = GiftingSettings::from_stored( array( 'confirm' => false ) );
+		self::assertFalse( $off->confirm );
+		self::assertFalse( $off->with_paused( true )->confirm );
+		self::assertFalse( $off->with_test_mode( true )->confirm );
+	}
+
+	public function test_the_confirmation_fits_in_one_chat_message(): void {
+		self::assertSame( '✅ Med i lodtrækningen om Hoodie: @anna @bo', GiftTexts::entered( 'da', 'Hoodie', array( 'anna', 'bo' ), array() ) );
+		self::assertSame( 'Already in: @carl', GiftTexts::entered( 'en', 'Hoodie', array(), array( 'carl' ) ) );
+		self::assertSame( '', GiftTexts::entered( 'da', 'Hoodie', array(), array() ) );
+		self::assertSame( '⏳ Entries are closed! The winner of Hoodie is revealed in 10 seconds …', GiftTexts::closed( 'en', 'Hoodie', 10 ) );
+
+		$many    = array_map( static fn( int $i ): string => sprintf( 'viewer_with_long_name%02d', $i ), range( 1, 40 ) );
+		$message = GiftTexts::entered( 'da', 'Hoodie', $many, $many );
+		self::assertLessThanOrEqual( 500, mb_strlen( $message ), 'Twitch allows 500 characters.' );
+		self::assertMatchesRegularExpression( '/og \d+ flere · Allerede med: @viewer_with_long_name01 .* og \d+ flere$/', $message );
 	}
 
 	public function test_a_paused_gifting_is_not_open(): void {

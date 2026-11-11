@@ -44,7 +44,7 @@ final class TwitchCustomerLogin {
 
 	/**
 	 * Where the customer goes back to: the cart, the checkout, or a gift's
-	 * claim link (`claim:<token>`, ADR-107).
+	 * claim page (`claim:<token>`) or its button (`redeem:<token>`, ADR-107).
 	 */
 	public const TARGETS = array( 'cart', 'checkout' );
 
@@ -54,7 +54,7 @@ final class TwitchCustomerLogin {
 	 * @param mixed $target Target.
 	 */
 	public static function valid_target( mixed $target ): bool {
-		return in_array( $target, self::TARGETS, true ) || ( is_string( $target ) && 1 === preg_match( '/^claim:[0-9a-f]{32}$/', $target ) );
+		return in_array( $target, self::TARGETS, true ) || ( is_string( $target ) && 1 === preg_match( '/^(claim|redeem):[0-9a-f]{32}$/', $target ) );
 	}
 
 	/**

@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-11T05:50:54+00:00\n"
+"PO-Revision-Date: 2026-11-11T06:46:25+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -3912,24 +3912,8 @@ msgstr "Community Features"
 msgid "Twitch gifting"
 msgstr "Twitch-gifting"
 
-#: src/Modules/Community/Gifting/GiftClaim.php:90
-msgid "The gift could not be claimed right now. Please try again in a moment."
-msgstr "Gaven kunne ikke hentes lige nu. Prøv igen om lidt."
-
-#: src/Modules/Community/Gifting/GiftClaim.php:137
-#: src/Modules/Community/Gifting/GiftClaim.php:168
-#: src/Modules/Community/Gifting/GiftClaim.php:177
-msgid "This gift link is no longer valid."
-msgstr "Linket til gaven gælder ikke længere."
-
-#. translators: 1: the customer's Twitch login, 2: the winner's Twitch login.
-#: src/Modules/Community/Gifting/GiftClaim.php:153
-#, php-format
-msgid "You are logged in with Twitch as %1$s, but the gift was won by %2$s. Log out of Twitch and log in as the winner."
-msgstr "Du er logget ind med Twitch som %1$s, men gaven blev vundet af %2$s. Log ud af Twitch, og log ind som vinderen."
-
 #. translators: %s: the gift code.
-#: src/Modules/Community/Gifting/GiftClaim.php:191
+#: src/Modules/Community/Gifting/GiftClaim.php:272
 #, php-format
 msgid "Congratulations! Choose size and colour and add the product to the cart; your gift code %s is used there. You pay only if you choose a dearer variant or shipping."
 msgstr "Tillykke! Vælg størrelse og farve, og læg produktet i kurven. Din gavekode %s bruges der. Du betaler kun, hvis du vælger en dyrere variant eller fragt."
@@ -4027,6 +4011,7 @@ msgid "Go to the product"
 msgstr "Gå til produktet"
 
 #: src/Modules/Community/Gifting/GiftOrderInfo.php:56
+#: templates/community/gift-claim.php:26
 msgid "Twitch gift"
 msgstr "Twitch-gave"
 
@@ -4167,16 +4152,16 @@ msgstr "En seer i streamen vinder den og vælger størrelse og farve."
 msgid "Gift shipping"
 msgstr "Gave-fragt"
 
-#: src/Modules/Community/Rest/MeTwitchGiftingController.php:217
-#: src/Modules/Community/Rest/MeTwitchGiftingController.php:249
+#: src/Modules/Community/Rest/MeTwitchGiftingController.php:221
+#: src/Modules/Community/Rest/MeTwitchGiftingController.php:253
 msgid "Some fields of Twitch gifting are missing or invalid."
 msgstr "Nogle felter i Twitch-gifting mangler eller er ugyldige."
 
-#: src/Modules/Community/Rest/MeTwitchGiftingController.php:253
+#: src/Modules/Community/Rest/MeTwitchGiftingController.php:257
 msgid "Twitch gifting is turned off."
 msgstr "Twitch-gifting er slået fra."
 
-#: src/Modules/Community/Rest/MeTwitchGiftingController.php:281
+#: src/Modules/Community/Rest/MeTwitchGiftingController.php:285
 msgid "Twitch gifting is turned off or paused."
 msgstr "Twitch-gifting er slået fra eller sat på pause."
 
@@ -4250,6 +4235,7 @@ msgid "Your Twitch account has no subscription that gives a discount on these pr
 msgstr "Din Twitch-konto har intet abonnement, der giver rabat på disse produkter."
 
 #: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:143
+#: templates/community/gift-claim.php:86
 msgid "Log out of Twitch"
 msgstr "Log ud fra Twitch"
 
@@ -4260,6 +4246,7 @@ msgid "Do you subscribe on Twitch? Log in with Twitch and get up to %s %% off as
 msgstr "Er du subscriber på Twitch? Log ind med Twitch, og få op til %s %% rabat som subscriber."
 
 #: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:155
+#: templates/community/gift-claim.php:92
 msgid "Log in with Twitch"
 msgstr "Log ind med Twitch"
 
@@ -14075,6 +14062,60 @@ msgstr "Googles privatlivspolitik"
 msgid "Version %1$d, published %2$s"
 msgstr "Version %1$d, offentliggjort %2$s"
 
+#: templates/community/gift-claim.php:26
+msgid "You won a gift!"
+msgstr "Du har vundet en gave!"
+
+#: templates/community/gift-claim.php:56
+msgid "This gift link is no longer valid. The gift was not claimed in time, or it has been given back."
+msgstr "Dette gavelink gælder ikke længere. Gaven blev ikke hentet i tide, eller den er givet tilbage."
+
+#: templates/community/gift-claim.php:57
+msgid "Go to the shop"
+msgstr "Gå til butikken"
+
+#: templates/community/gift-claim.php:59
+msgid "The gift could not be shown right now. Please try again in a moment."
+msgstr "Gaven kan ikke vises lige nu. Prøv igen om lidt."
+
+#. translators: %s: the winner's Twitch login.
+#: templates/community/gift-claim.php:68
+#, php-format
+msgid "Won by @%s in the Twitch chat."
+msgstr "Vundet af @%s i Twitch-chatten."
+
+#. translators: %s: date and time.
+#: templates/community/gift-claim.php:75
+#, php-format
+msgid "Claim the gift before %s."
+msgstr "Hent gaven inden %s."
+
+#. translators: 1: the visitor's Twitch login, 2: the winner's Twitch login.
+#: templates/community/gift-claim.php:83
+#, php-format
+msgid "You are logged in with Twitch as %1$s, but the gift was won by %2$s. Log out of Twitch and log in as the winner."
+msgstr "Du er logget ind med Twitch som %1$s, men gaven blev vundet af %2$s. Log ud af Twitch, og log ind som vinderen."
+
+#: templates/community/gift-claim.php:88
+msgid "You have claimed the gift. Open it again to see your gift code."
+msgstr "Du har hentet gaven. Åbn den igen for at se din gavekode."
+
+#: templates/community/gift-claim.php:88
+msgid "You are logged in as the winner. Get the gift and choose size and colour."
+msgstr "Du er logget ind som vinderen. Hent gaven, og vælg størrelse og farve."
+
+#: templates/community/gift-claim.php:89
+msgid "Show my gift code"
+msgstr "Vis min gavekode"
+
+#: templates/community/gift-claim.php:89
+msgid "Get the gift"
+msgstr "Hent gaven"
+
+#: templates/community/gift-claim.php:91
+msgid "Log in with the Twitch account that won. Then you choose size and colour, and the gift code is used in the cart."
+msgstr "Log ind med den Twitch-konto, der vandt. Derefter vælger du størrelse og farve, og gavekoden bruges i kurven."
+
 #: templates/dashboard/no-access.php:31
 msgid "Access not active"
 msgstr "Adgang ikke aktiv"
@@ -17492,6 +17533,14 @@ msgstr "Sprog i bottens tekster"
 #: build/dashboard.js:63
 msgid "English"
 msgstr "Engelsk"
+
+#: build/dashboard.js:63
+msgid "Confirm entrants in the chat"
+msgstr "Bekræft deltagere i chatten"
+
+#: build/dashboard.js:63
+msgid "The bot confirms who is in the draw, also those who type !enter again, in one message at most every 10 seconds."
+msgstr "Botten bekræfter, hvem der er med i lodtrækningen, også dem der skriver !enter igen, i én besked højst hvert 10. sekund."
 
 #: build/dashboard.js:63
 msgid "In the stream"

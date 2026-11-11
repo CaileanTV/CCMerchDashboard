@@ -31,6 +31,10 @@ final class GiftTexts {
 			'paused'    => 'Gaver er sat på pause.',
 			'resumed'   => 'Gaver er i gang igen.',
 			'none'      => 'Der er ingen gaver, der venter.',
+			'entered'   => '✅ Med i lodtrækningen om %1$s: %2$s',
+			'closed'    => '⏳ Tilmeldingen er lukket! Vinderen af %1$s findes om %2$d sekunder …',
+			'again'     => 'Allerede med: %s',
+			'more'      => '%1$s og %2$d flere',
 		),
 		'en' => array(
 			'announce'  => '🎁 %1$s gifted %2$s! Type !enter within %3$d seconds to join the draw.',
@@ -40,6 +44,10 @@ final class GiftTexts {
 			'paused'    => 'Gifts are paused.',
 			'resumed'   => 'Gifts are back on.',
 			'none'      => 'There are no gifts waiting.',
+			'entered'   => '✅ In the draw for %1$s: %2$s',
+			'closed'    => '⏳ Entries are closed! The winner of %1$s is revealed in %2$d seconds …',
+			'again'     => 'Already in: %s',
+			'more'      => '%1$s and %2$d more',
 		),
 	);
 
@@ -65,6 +73,74 @@ final class GiftTexts {
 	 */
 	public static function winner( string $language, string $login, string $product, string $url ): string {
 		return sprintf( self::text( $language, 'winner' ), $login, $product, $url );
+	}
+
+	/**
+	 * The entries are closed; the winner follows.
+	 *
+	 * @param string $language `da` or `en`.
+	 * @param string $product  Product name.
+	 * @param int    $seconds  Seconds until the winner.
+	 */
+	public static function closed( string $language, string $product, int $seconds ): string {
+		return sprintf( self::text( $language, 'closed' ), $product, $seconds );
+	}
+
+	/**
+	 * The confirmation of new entrants and of those who typed `!enter`
+	 * again, as one message within Twitch's 500 characters; names that do not
+	 * fit are counted ("and 3 more"). '' when there is nobody to confirm.
+	 *
+	 * @phpstan-param list<string> $entered
+	 * @phpstan-param list<string> $again
+	 *
+	 * @param string   $language `da` or `en`.
+	 * @param string   $product  Product name.
+	 * @param string[] $entered  New entrants' logins.
+	 * @param string[] $again    Logins of those already in.
+	 */
+	public static function entered( string $language, string $product, array $entered, array $again ): string {
+		$parts = array();
+
+		if ( array() !== $entered ) {
+			$parts[] = sprintf( self::text( $language, 'entered' ), $product, self::names( $language, $entered, 300 ) );
+		}
+
+		if ( array() !== $again ) {
+			$parts[] = sprintf( self::text( $language, 'again' ), self::names( $language, $again, 120 ) );
+		}
+
+		return implode( ' · ', $parts );
+	}
+
+	/**
+	 * `@login` names up to about `$budget` characters, then "and N more".
+	 *
+	 * @phpstan-param list<string> $logins
+	 *
+	 * @param string   $language `da` or `en`.
+	 * @param string[] $logins   Logins.
+	 * @param int      $budget   Characters.
+	 */
+	private static function names( string $language, array $logins, int $budget ): string {
+		$shown = array();
+		$used  = 0;
+
+		foreach ( $logins as $login ) {
+			$name = '@' . $login;
+
+			if ( array() !== $shown && $used + strlen( $name ) + 1 > $budget ) {
+				break;
+			}
+
+			$shown[] = $name;
+			$used   += strlen( $name ) + 1;
+		}
+
+		$list = implode( ' ', $shown );
+		$rest = count( $logins ) - count( $shown );
+
+		return $rest > 0 ? sprintf( self::text( $language, 'more' ), $list, $rest ) : $list;
 	}
 
 	/**

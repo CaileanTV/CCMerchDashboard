@@ -42,6 +42,8 @@ export interface GiftingValues {
 	/** `!enter` window in seconds. */
 	readonly window: number;
 	readonly language: GiftLanguage;
+	/** Whether the bot confirms the entrants in the chat. */
+	readonly confirm: boolean;
 }
 
 export interface GiftingState extends GiftingValues {
@@ -143,8 +145,17 @@ export function parseGifting( body: unknown ): GiftingState | null {
 		return null;
 	}
 
-	const { enabled, paused, language, channel, twitch, live, test, started } =
-		body;
+	const {
+		enabled,
+		paused,
+		language,
+		confirm,
+		channel,
+		twitch,
+		live,
+		test,
+		started,
+	} = body;
 	const window = whole( body.window );
 	const windowMin = whole( body.limits.window_min );
 	const windowMax = whole( body.limits.window_max );
@@ -155,6 +166,7 @@ export function parseGifting( body: unknown ): GiftingState | null {
 		typeof paused !== 'boolean' ||
 		typeof twitch !== 'boolean' ||
 		typeof test !== 'boolean' ||
+		typeof confirm !== 'boolean' ||
 		( live !== null && typeof live !== 'boolean' ) ||
 		( started !== undefined && typeof started !== 'boolean' ) ||
 		( language !== 'da' && language !== 'en' ) ||
@@ -175,6 +187,7 @@ export function parseGifting( body: unknown ): GiftingState | null {
 		paused,
 		window,
 		language,
+		confirm,
 		windowMin,
 		windowMax,
 		channel:
@@ -219,6 +232,7 @@ export function saveGifting(
 				enabled: values.enabled,
 				window: values.window,
 				language: values.language,
+				confirm: values.confirm,
 			},
 		},
 		parseGifting

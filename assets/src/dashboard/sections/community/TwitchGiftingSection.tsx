@@ -440,6 +440,29 @@ export function TwitchGiftingSection() {
 							</p>
 						) }
 					</fieldset>
+					<label
+						className="merchboard-payouts__check"
+						htmlFor="merchboard-gifting-confirm"
+					>
+						<input
+							id="merchboard-gifting-confirm"
+							type="checkbox"
+							checked={ values.confirm }
+							onChange={ ( event ) =>
+								setValues( {
+									...values,
+									confirm: event.target.checked,
+								} )
+							}
+						/>{ ' ' }
+						{ __( 'Confirm entrants in the chat', 'merchboard' ) }
+					</label>
+					<p className="merchboard-field__help">
+						{ __(
+							'The bot confirms who is in the draw, also those who type !enter again, in one message at most every 10 seconds.',
+							'merchboard'
+						) }
+					</p>
 					<div className="merchboard-community-form__actions">
 						<Button type="submit" isBusy={ busy === 'save' }>
 							{ __( 'Save', 'merchboard' ) }

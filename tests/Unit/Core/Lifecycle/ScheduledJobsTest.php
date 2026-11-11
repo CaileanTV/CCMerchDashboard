@@ -43,7 +43,7 @@ final class ScheduledJobsTest extends TestCase {
 	public function test_core_names_the_same_hook_as_the_module(): void {
 		self::assertSame( SalesBackfillScheduler::HOOK, ScheduledJobs::SALES_BACKFILL_HOOK );
 		self::assertSame( array( DesignerFees::HOOK, DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerTagSync::HOOK, DesignerNameSeparator::HOOK, MetaCatalogExclusion::HOOK, DesignerRetirement::HOOK, PrintfulMockups::HOOK, GelatoMockups::HOOK, ProdigiMockups::HOOK, ProdigiMockups::PREVIEW_HOOK, CatalogImport::HOOK, PrintifyCatalog::HOOK ), ScheduledJobs::DESIGNER_HOOKS );
-		self::assertSame( array( GiftDraws::DRAW_HOOK, GiftDraws::EXPIRE_HOOK ), ScheduledJobs::COMMUNITY_HOOKS );
+		self::assertSame( array( GiftDraws::DRAW_HOOK, GiftDraws::EXPIRE_HOOK, GiftDraws::CONFIRM_HOOK ), ScheduledJobs::COMMUNITY_HOOKS );
 	}
 
 	public function test_only_the_backfill_hook_is_cancelled(): void {

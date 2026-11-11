@@ -13,7 +13,12 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
+use MerchBoard\Modules\Alerts\Chatbot\ChatCipher;
 use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
+use MerchBoard\Modules\Alerts\Chatbot\CustomerSessionStore;
+use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerSession;
+use MerchBoard\Modules\Alerts\Rest\ShopTwitchController;
+use MerchBoard\Modules\Community\Gifting\GiftClaim;
 use MerchBoard\Modules\Community\Admin\GiftingTestModeSection;
 use MerchBoard\Modules\Community\Gifting\Gift;
 use MerchBoard\Modules\Community\Gifting\GiftCodes;
@@ -114,9 +119,12 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 	protected function tearDown(): void {
 		delete_transient( 'merchboard_gift_run_' . $this->nova );
 		delete_transient( 'merchboard_gift_tried_' . $this->nova );
+		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s', $this->wpdb->options, '%merchboard_gift_confirm_%' );
+		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s', $this->wpdb->options, '%merchboard_gift_reveal_%' );
 		remove_all_actions( 'merchboard_twitch_chat_message' );
 		remove_all_actions( GiftDraws::DRAW_HOOK );
 		remove_all_actions( GiftDraws::EXPIRE_HOOK );
+		remove_all_actions( GiftDraws::CONFIRM_HOOK );
 		parent::tearDown();
 	}
 
@@ -194,6 +202,94 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		wp_set_current_user( 1 );
 	}
 
+	public function test_the_claim_link_opens_a_page_whose_button_logs_in_and_gives_the_code(): void {
+		$this->settings->save( $this->nova, array( 'confirm' => false ) + $this->values( true ) );
+		$gift = $this->gift( null );
+		$this->draws->paid( $gift );
+		$this->chat( '111', 'viewer1', '!enter' );
+		$this->close_window( $gift->id );
+		$token = (string) $this->gifts->find( $gift->id )?->claim_token;
+
+		$store   = new class() implements CustomerSessionStore {
+			/**
+			 * Stored values.
+			 *
+			 * @var array<string, mixed>
+			 */
+			public array $values = array();
+
+			/**
+			 * A stored value.
+			 *
+			 * @param string $key Key.
+			 */
+			public function get( string $key ): mixed {
+				return $this->values[ $key ] ?? null;
+			}
+
+			/**
+			 * Stores a value.
+			 *
+			 * @param string $key   Key.
+			 * @param mixed  $value Value.
+			 */
+			public function set( string $key, mixed $value ): void {
+				$this->values[ $key ] = $value;
+			}
+		};
+		$session = new TwitchCustomerSession( $store, new ChatCipher( 'shop-twitch-customer' ) );
+		$codes   = new FakeGiftCodes( $this->gifts );
+		$claimed = array();
+		$claim   = new GiftClaim(
+			$this->gifts,
+			$codes,
+			$session,
+			static fn( int $product_id ): array => array(
+				'name'  => 'Stream tee',
+				'url'   => 'https://shop.test/product/' . $product_id . '/',
+				'image' => '',
+			),
+			function ( string $event, Gift $gift, array $data ) use ( &$claimed ): void {
+				$claimed[] = array( $event, $gift->id, $data );
+			},
+			new RecordingLogger()
+		);
+		$page    = ShopTwitchController::target_url( 'claim:' . $token );
+		$button  = ShopTwitchController::target_url( 'redeem:' . $token );
+
+		$view = $claim->view( $token );
+		self::assertSame( 'login', $view['state'], 'The link opens the page; nothing happens before the click.' );
+		self::assertSame( 'viewer1', $view['winner'] );
+		self::assertSame( $button, $view['redeem'] );
+		self::assertStringContainsString( ShopTwitchController::REDEEM_QUERY . '=1', $button );
+		$html = $claim->render( $view );
+		self::assertStringContainsString( 'Stream tee', $html );
+		self::assertStringContainsString( '@viewer1', $html );
+		self::assertStringContainsString( 'href="' . esc_url( $button ) . '"', $html );
+		self::assertSame( 'invalid', $claim->view( str_repeat( 'a', 32 ) )['state'] );
+		self::assertStringContainsString( 'no longer valid', $claim->render( $claim->view( str_repeat( 'a', 32 ) ) ) );
+
+		$login = $claim->redeem( $token );
+		self::assertStringContainsString( '/shop/twitch/login', urldecode( $login ), 'The button asks for the Twitch login first.' );
+		self::assertStringContainsString( 'target=redeem:' . $token, urldecode( $login ), 'The login comes back to the button.' );
+		self::assertSame( 0, $codes->created );
+
+		$session->store( '999', 'someone', 'token-other', 3600, 0 );
+		self::assertSame( 'other', $claim->view( $token )['state'] );
+		self::assertSame( $page, $claim->redeem( $token ), 'Another account goes back to the page, which offers to log out.' );
+		self::assertSame( 0, $codes->created );
+
+		$session->store( '111', 'viewer1', 'token-winner', 3600, 0 );
+		self::assertSame( 'redeem', $claim->view( $token )['state'] );
+		self::assertSame( 'https://shop.test/product/501/', $claim->redeem( $token ) );
+		self::assertSame( Gift::CLAIMED, $this->gifts->find( $gift->id )?->status );
+		self::assertSame( array( array( 'claimed', $gift->id, array( 'code' => 'gave-test' . $gift->id ) ) ), $claimed );
+
+		self::assertTrue( $claim->view( $token )['claimed'] );
+		self::assertSame( 'https://shop.test/product/501/', $claim->redeem( $token ), 'The winner can come back for the code.' );
+		self::assertSame( 1, $codes->created, 'The code is made once.' );
+	}
+
 	public function test_a_gift_is_recorded_once_per_order(): void {
 		$first  = $this->gifts->create( $this->nova, 1042, 501, '249.0000', '50.0000', 'DKK', 'Mads' );
 		$second = $this->gifts->create( $this->nova, 1042, 501, '249.0000', '50.0000', 'DKK', null );
@@ -217,15 +313,32 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		self::assertSame( Gift::ENTERING, $this->gifts->find( $gift->id )?->status );
 
 		$this->chat( '111', 'viewer1', '!enter' );
+		self::assertSame( '✅ Med i lodtrækningen om Stream tee: @viewer1', $this->sent[1][1] ?? null, 'The first entrant is confirmed at once.' );
 		$this->chat( '222', 'viewer2', ' !ENTER ' );
 		$this->chat( '111', 'viewer1', '!enter' );
 		$this->chat( '333', 'viewer3', 'hej' );
 		self::assertSame( array( 111, 222 ), array_keys( (array) $this->gifts->find( $gift->id )?->entrants ), 'Each account once.' );
+		self::assertCount( 2, $this->sent, 'Within 10 seconds the next entrants wait.' );
+		self::assertSame( array( GiftDraws::CONFIRM_HOOK, array( $gift->id ) ), array_slice( $this->jobs[1] ?? array(), 0, 2 ), 'A job confirms them.' );
+		self::assertCount( 2, $this->jobs, 'One job for the waiting entrants.' );
+		$this->draws->confirm_job( $gift->id );
+		self::assertCount( 2, $this->sent, 'The job does not confirm before it is time.' );
 
 		$this->draws->draw( $gift->id );
 		self::assertSame( Gift::ENTERING, $this->gifts->find( $gift->id )?->status, 'Not before the window closes.' );
 
 		$this->end_window( $gift->id );
+		$this->draws->draw( $gift->id );
+		self::assertSame( '✅ Med i lodtrækningen om Stream tee: @viewer2 · Allerede med: @viewer1', $this->sent[2][1] ?? null, 'The rest are confirmed when the entries close.' );
+		self::assertSame( '⏳ Tilmeldingen er lukket! Vinderen af Stream tee findes om 10 sekunder …', $this->sent[3][1] ?? null );
+		self::assertSame( Gift::ENTERING, $this->gifts->find( $gift->id )?->status, 'No winner yet.' );
+		self::assertSame( array( GiftDraws::DRAW_HOOK, array( $gift->id ), 11 ), $this->jobs[2] ?? null, 'A job reveals the winner.' );
+		$this->chat( '444', 'viewer4', '!enter' );
+		$this->draws->draw( $gift->id );
+		self::assertCount( 4, $this->sent, 'Late entries and an early job change nothing.' );
+		self::assertArrayNotHasKey( 444, (array) $this->gifts->find( $gift->id )?->entrants );
+
+		$this->reveal_now( $gift->id );
 		$this->draws->draw( $gift->id );
 
 		$won = $this->gifts->find( $gift->id );
@@ -235,13 +348,37 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		self::assertSame( array(), $won->entrants, 'The entrants are forgotten at the draw.' );
 		self::assertSame( 1, $won->draws );
 		self::assertMatchesRegularExpression( '/^[0-9a-f]{32}$/', (string) $won->claim_token );
-		self::assertStringContainsString( 'https://shop.test/?merchboard_gift_claim=' . $won->claim_token, $this->sent[1][1] ?? '' );
-		self::assertSame( GiftDraws::EXPIRE_HOOK, $this->jobs[1][0] ?? null );
+		self::assertStringContainsString( 'https://shop.test/?merchboard_gift_claim=' . $won->claim_token, $this->sent[4][1] ?? '' );
+		self::assertSame( GiftDraws::EXPIRE_HOOK, $this->jobs[3][0] ?? null );
 		self::assertSame( array( 'won', $gift->id, array( 'winner' => (string) $won->winner_login ) ), $this->events[1] ?? null );
 		self::assertSame( $won->id, $this->gifts->find_by_token( (string) $won->claim_token )?->id );
 
 		$this->draws->draw( $gift->id );
-		self::assertCount( 2, $this->sent, 'A second job draws nothing.' );
+		self::assertCount( 5, $this->sent, 'A second job draws nothing.' );
+	}
+
+	public function test_the_creator_can_switch_the_confirmations_off(): void {
+		$this->settings->save( $this->nova, array( 'confirm' => false ) + $this->values( true ) );
+		self::assertFalse( $this->settings->find( $this->nova )->confirm );
+		$gift = $this->gift( null );
+		$this->draws->paid( $gift );
+
+		$this->chat( '111', 'viewer1', '!enter' );
+		$this->close_window( $gift->id );
+
+		self::assertCount( 3, $this->sent, 'Only the announcement, the closing and the winner.' );
+		self::assertStringContainsString( 'Tilmeldingen er lukket', $this->sent[1][1] ?? '' );
+		self::assertStringContainsString( '@viewer1 vandt', $this->sent[2][1] ?? '' );
+
+		try {
+			$this->settings->save( $this->nova, array( 'confirm' => 'yes' ) + $this->values( true ) );
+			self::fail( 'Expected TwitchSubDiscountInvalid.' );
+		} catch ( TwitchSubDiscountInvalid $e ) {
+			self::assertSame( array( 'confirm' => 'required' ), $e->fields() );
+		}
+
+		$this->settings->save( $this->nova, $this->values( true ) );
+		self::assertFalse( $this->settings->find( $this->nova )->confirm, 'A form without the field keeps it.' );
 	}
 
 	public function test_nobody_entering_lets_the_gift_wait_without_flooding_the_chat(): void {
@@ -282,8 +419,7 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		self::assertSame( Gift::WAITING, $this->gifts->find( $second->id )?->status, 'One window at a time.' );
 
 		$this->chat( '111', 'viewer1', '!enter' );
-		$this->end_window( $first->id );
-		$this->draws->draw( $first->id );
+		$this->close_window( $first->id );
 
 		self::assertSame( Gift::WON, $this->gifts->find( $first->id )?->status );
 		self::assertSame( Gift::ENTERING, $this->gifts->find( $second->id )?->status, 'The run starts the next gift.' );
@@ -309,8 +445,7 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		$gift = $this->gift( null );
 		$this->draws->paid( $gift );
 		$this->chat( '111', 'viewer1', '!enter' );
-		$this->end_window( $gift->id );
-		$this->draws->draw( $gift->id );
+		$this->close_window( $gift->id );
 
 		$this->draws->expire( $gift->id );
 		self::assertSame( Gift::WON, $this->gifts->find( $gift->id )?->status, 'Not before the deadline.' );
@@ -445,6 +580,27 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 	 */
 	private function chat( string $chatter, string $login, string $text, array $badges = array() ): void {
 		do_action( 'merchboard_twitch_chat_message', $this->nova, $chatter, $login, $text, $badges );
+	}
+
+	/**
+	 * Ends a gift's window, closes the entries and reveals the winner.
+	 *
+	 * @param int $id Gift.
+	 */
+	private function close_window( int $id ): void {
+		$this->end_window( $id );
+		$this->draws->draw( $id );
+		$this->reveal_now( $id );
+		$this->draws->draw( $id );
+	}
+
+	/**
+	 * Lets the 10 seconds before a winner run out.
+	 *
+	 * @param int $id Gift.
+	 */
+	private function reveal_now( int $id ): void {
+		set_transient( 'merchboard_gift_reveal_' . $id, time() - 1, HOUR_IN_SECONDS );
 	}
 
 	/**

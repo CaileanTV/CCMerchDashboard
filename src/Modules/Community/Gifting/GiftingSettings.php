@@ -14,7 +14,8 @@ defined( 'ABSPATH' ) || exit;
 /**
  * ADR-107 pkt. 2: gifting on or off, paused (by the creator, a moderator or
  * the dashboard), the `!enter` window in seconds (20–180, 60 by default) and
- * the language of the chat texts (Danish or English). The test mode is set
+ * the language of the chat texts (Danish or English), whether the bot
+ * confirms the entrants in the chat (on by default). The test mode is set
  * by an administrator only: the creator then counts as live, so gifts can be
  * bought and drawn without streaming (testing on a staging site).
  */
@@ -33,12 +34,13 @@ final readonly class GiftingSettings {
 	 * @param int    $window   `!enter` window in seconds.
 	 * @param string $language  `da` or `en`.
 	 * @param bool   $test_mode Whether the creator counts as live (set by an administrator).
+	 * @param bool   $confirm   Whether the bot confirms the entrants in the chat.
 	 */
-	public function __construct( public bool $enabled, public bool $paused, public int $window, public string $language, public bool $test_mode = false ) {
+	public function __construct( public bool $enabled, public bool $paused, public int $window, public string $language, public bool $test_mode = false, public bool $confirm = true ) {
 	}
 
 	/**
-	 * Nothing saved: off, not paused, 60 seconds, Danish.
+	 * Nothing saved: off, not paused, 60 seconds, Danish, entrants confirmed.
 	 */
 	public static function defaults(): self {
 		return new self( false, false, self::DEFAULT_WINDOW, 'da' );
@@ -61,14 +63,15 @@ final readonly class GiftingSettings {
 			true === ( $stored['paused'] ?? false ),
 			is_int( $window ) && $window >= self::MIN_WINDOW && $window <= self::MAX_WINDOW ? $window : self::DEFAULT_WINDOW,
 			in_array( $stored['language'] ?? null, self::LANGUAGES, true ) ? (string) $stored['language'] : 'da',
-			true === ( $stored['test_mode'] ?? false )
+			true === ( $stored['test_mode'] ?? false ),
+			false !== ( $stored['confirm'] ?? true )
 		);
 	}
 
 	/**
 	 * The value to store.
 	 *
-	 * @return array{enabled: bool, paused: bool, window: int, language: string, test_mode: bool}
+	 * @return array{enabled: bool, paused: bool, window: int, language: string, test_mode: bool, confirm: bool}
 	 */
 	public function to_stored(): array {
 		return array(
@@ -77,6 +80,7 @@ final readonly class GiftingSettings {
 			'window'    => $this->window,
 			'language'  => $this->language,
 			'test_mode' => $this->test_mode,
+			'confirm'   => $this->confirm,
 		);
 	}
 
@@ -93,7 +97,7 @@ final readonly class GiftingSettings {
 	 * @param bool $paused Paused.
 	 */
 	public function with_paused( bool $paused ): self {
-		return new self( $this->enabled, $paused, $this->window, $this->language, $this->test_mode );
+		return new self( $this->enabled, $paused, $this->window, $this->language, $this->test_mode, $this->confirm );
 	}
 
 	/**
@@ -102,6 +106,6 @@ final readonly class GiftingSettings {
 	 * @param bool $test_mode Test mode.
 	 */
 	public function with_test_mode( bool $test_mode ): self {
-		return new self( $this->enabled, $this->paused, $this->window, $this->language, $test_mode );
+		return new self( $this->enabled, $this->paused, $this->window, $this->language, $test_mode, $this->confirm );
 	}
 }

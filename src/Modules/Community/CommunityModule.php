@@ -260,7 +260,11 @@ final class CommunityModule implements Module {
 				$c->get( GiftRepository::class ),
 				$c->get( GiftCodes::class ),
 				$c->get( TwitchCustomerSession::class ),
-				self::product_url( ... ),
+				static fn( int $product_id ): array => array(
+					'name'  => self::product_name( $product_id ),
+					'url'   => self::product_url( $product_id ),
+					'image' => (string) get_the_post_thumbnail_url( $product_id, 'medium' ),
+				),
 				self::notify( ... ),
 				$c->get( Logger::class )
 			)

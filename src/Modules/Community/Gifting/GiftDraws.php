@@ -28,7 +28,13 @@ defined( 'ABSPATH' ) || exit;
  *   again by itself (the next `!gift start` tries it again), so the chat is
  *   never flooded with the same gift.
  * - `!gift pause` / `!gift resume` (creator or moderator) pause and resume.
- * - When the window closes, a random entrant (`random_int`, each Twitch
+ * - The bot confirms the entrants (the creator can switch it off): the
+ *   first at once, then the new ones and those who typed `!enter` again in
+ *   one message at most every 10 seconds, and the rest before the winner.
+ * - When the window closes, the bot says that the entries are closed and
+ *   reveals the winner REVEAL_SECONDS later (always after that message,
+ *   also when a job runs late).
+ * - At the reveal, a random entrant (`random_int`, each Twitch
  *   account once, the buyer too) wins and gets the claim link; nobody: the
  *   gift waits again.
  * - A win not claimed within 24 hours waits for the next draw; after the
@@ -51,6 +57,21 @@ final class GiftDraws {
 	 * Job: a claim deadline ran out.
 	 */
 	public const EXPIRE_HOOK = 'merchboard_gift_expire';
+
+	/**
+	 * Job: confirm the entrants waiting for a confirmation.
+	 */
+	public const CONFIRM_HOOK = 'merchboard_gift_confirm';
+
+	/**
+	 * Seconds between two confirmations in the chat.
+	 */
+	public const CONFIRM_SECONDS = 10;
+
+	/**
+	 * Seconds between "entries are closed" and the winner.
+	 */
+	public const REVEAL_SECONDS = 10;
 
 	/**
 	 * Action fired with a gift's events (event, Gift, data): `bought`,
@@ -158,6 +179,7 @@ final class GiftDraws {
 		add_action( 'merchboard_twitch_chat_message', array( $this, 'chat' ), 10, 5 );
 		add_action( self::DRAW_HOOK, array( $this, 'draw' ) );
 		add_action( self::EXPIRE_HOOK, array( $this, 'expire' ) );
+		add_action( self::CONFIRM_HOOK, array( $this, 'confirm_job' ) );
 	}
 
 	/**
@@ -234,7 +256,11 @@ final class GiftDraws {
 				$open = $this->gifts->for_creator( $creator_id, array( Gift::ENTERING ), 1 );
 
 				if ( array() !== $open ) {
-					$this->gifts->add_entrant( $open[0]->id, $chatter_id, $login );
+					$again = isset( $open[0]->entrants[ $chatter_id ] );
+
+					if ( $again || $this->gifts->add_entrant( $open[0]->id, $chatter_id, $login ) ) {
+						$this->confirm( $open[0], $again ? $login : null, false );
+					}
 				}
 
 				return;
@@ -270,6 +296,23 @@ final class GiftDraws {
 			$this->close( $gift );
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'A gift could not be drawn.', $e->context() );
+		}
+	}
+
+	/**
+	 * Job: confirms the entrants waiting for a confirmation.
+	 *
+	 * @param mixed $gift_id Gift.
+	 */
+	public function confirm_job( mixed $gift_id ): void {
+		try {
+			$gift = is_numeric( $gift_id ) ? $this->gifts->find( (int) $gift_id ) : null;
+
+			if ( null !== $gift && Gift::ENTERING === $gift->status ) {
+				$this->confirm( $gift, null, false );
+			}
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'Gift entrants could not be confirmed.', $e->context() );
 		}
 	}
 
@@ -339,6 +382,8 @@ final class GiftDraws {
 
 			$tried[] = $gift->id;
 			set_transient( self::tried_key( $creator_id ), $tried, self::RUN_HOURS * HOUR_IN_SECONDS );
+			delete_transient( self::confirm_key( $gift->id ) );
+			delete_transient( self::reveal_key( $gift->id ) );
 
 			( $this->send )( $creator_id, GiftTexts::announce( $settings->language, $gift->buyer_name, ( $this->product_name )( $gift->product_id ), $settings->window ) );
 			( $this->enqueue )( self::DRAW_HOOK, array( $gift->id ), $settings->window + 1 );
@@ -361,6 +406,25 @@ final class GiftDraws {
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	private function close( Gift $gift ): void {
+		if ( array() !== $gift->entrants ) {
+			$reveal = get_transient( self::reveal_key( $gift->id ) );
+
+			if ( ! is_int( $reveal ) ) {
+				$this->closing( $gift );
+
+				return;
+			}
+
+			if ( time() < $reveal ) {
+				return;
+			}
+		}
+
+		// The entrants still waiting for a confirmation hear it before the winner.
+		$this->confirm( $gift, null, true );
+		delete_transient( self::confirm_key( $gift->id ) );
+		delete_transient( self::reveal_key( $gift->id ) );
+
 		$language = $this->settings->find( $gift->creator_id )->language;
 		$ids      = array_keys( $gift->entrants );
 
@@ -382,6 +446,35 @@ final class GiftDraws {
 		}
 
 		$this->next( $gift->creator_id );
+	}
+
+	/**
+	 * The window ran out: the entrants waiting for a confirmation hear it,
+	 * the bot says that the entries are closed, and a job reveals the winner
+	 * REVEAL_SECONDS later. Once per window (under the gift's named lock).
+	 *
+	 * @param Gift $gift A gift whose window ran out, with entrants.
+	 * @throws DatabaseException When the gift cannot be read.
+	 */
+	private function closing( Gift $gift ): void {
+		$this->confirm( $gift, null, true );
+
+		if ( ! $this->gifts->lock( $gift->id, 2 ) ) {
+			return;
+		}
+
+		try {
+			if ( is_int( get_transient( self::reveal_key( $gift->id ) ) ) ) {
+				return;
+			}
+
+			set_transient( self::reveal_key( $gift->id ), time() + self::REVEAL_SECONDS, HOUR_IN_SECONDS );
+			$settings = $this->settings->find( $gift->creator_id );
+			( $this->send )( $gift->creator_id, GiftTexts::closed( $settings->language, ( $this->product_name )( $gift->product_id ), self::REVEAL_SECONDS ) );
+			( $this->enqueue )( self::DRAW_HOOK, array( $gift->id ), self::REVEAL_SECONDS + 1 );
+		} finally {
+			$this->gifts->unlock( $gift->id );
+		}
 	}
 
 	/**
@@ -445,6 +538,106 @@ final class GiftDraws {
 		}
 
 		return $given;
+	}
+
+	/**
+	 * Confirms a window's entrants in the chat when the creator wants it: the
+	 * entrants after those confirmed already, and those who typed `!enter`
+	 * again, in one message at most every CONFIRM_SECONDS (`$now`: at once,
+	 * before the draw). Otherwise a job confirms them when it is time. Under
+	 * the gift's named lock; a request that cannot get it in time leaves the
+	 * confirmation to the next one (the entrant is in anyway).
+	 *
+	 * @param Gift        $gift  A gift in its window (as read just now).
+	 * @param string|null $again The login of a viewer who typed `!enter` again.
+	 * @param bool        $now   Confirm now.
+	 * @throws DatabaseException When the gift cannot be read.
+	 */
+	private function confirm( Gift $gift, ?string $again, bool $now ): void {
+		$settings = $this->settings->find( $gift->creator_id );
+
+		if ( ! $settings->confirm || ! $this->gifts->lock( $gift->id, 2 ) ) {
+			return;
+		}
+
+		try {
+			$fresh = $this->gifts->find( $gift->id );
+			$state = self::confirm_state( $gift->id );
+
+			// After the window only the closing confirms (`!enter` is refused then).
+			if ( null === $fresh || ( ! $now && ( Gift::ENTERING !== $fresh->status || ( null !== $fresh->window_ends && $fresh->window_ends < GiftRepository::now() ) ) ) ) {
+				return;
+			}
+
+			// At the draw the gift is still as read before it was closed.
+			$entrants = $now ? $gift->entrants : $fresh->entrants;
+
+			if ( null !== $again && ! in_array( $again, $state['again'], true ) ) {
+				$state['again'][] = $again;
+			}
+
+			$new   = array_values( array_map( 'strval', array_slice( $entrants, $state['done'] ) ) );
+			$later = array_values( array_diff( $state['again'], $new ) );
+
+			if ( array() === $new && array() === $later ) {
+				return;
+			}
+
+			if ( $now || time() >= $state['next'] ) {
+				( $this->send )( $gift->creator_id, GiftTexts::entered( $settings->language, ( $this->product_name )( $gift->product_id ), $new, $later ) );
+				$state = array(
+					'done'  => count( $entrants ),
+					'again' => array(),
+					'next'  => time() + self::CONFIRM_SECONDS,
+					'job'   => 0,
+				);
+			} elseif ( $state['job'] !== $state['next'] ) {
+				( $this->enqueue )( self::CONFIRM_HOOK, array( $gift->id ), max( 1, $state['next'] - time() ) );
+				$state['job'] = $state['next'];
+			}
+
+			set_transient( self::confirm_key( $gift->id ), $state, HOUR_IN_SECONDS );
+		} finally {
+			$this->gifts->unlock( $gift->id );
+		}
+	}
+
+	/**
+	 * A window's confirmations so far: entrants confirmed, logins that typed
+	 * `!enter` again, when the next message may go out and the job queued.
+	 *
+	 * @param int $gift_id Gift.
+	 * @return array{done: int, again: list<string>, next: int, job: int}
+	 */
+	private static function confirm_state( int $gift_id ): array {
+		$state = get_transient( self::confirm_key( $gift_id ) );
+		$state = is_array( $state ) ? $state : array();
+		$again = is_array( $state['again'] ?? null ) ? $state['again'] : array();
+
+		return array(
+			'done'  => is_int( $state['done'] ?? null ) ? $state['done'] : 0,
+			'again' => array_values( array_filter( $again, 'is_string' ) ),
+			'next'  => is_int( $state['next'] ?? null ) ? $state['next'] : 0,
+			'job'   => is_int( $state['job'] ?? null ) ? $state['job'] : 0,
+		);
+	}
+
+	/**
+	 * The transient of a closed window's reveal time.
+	 *
+	 * @param int $gift_id Gift.
+	 */
+	private static function reveal_key( int $gift_id ): string {
+		return 'merchboard_gift_reveal_' . $gift_id;
+	}
+
+	/**
+	 * The transient of a window's confirmations.
+	 *
+	 * @param int $gift_id Gift.
+	 */
+	private static function confirm_key( int $gift_id ): string {
+		return 'merchboard_gift_confirm_' . $gift_id;
 	}
 
 	/**

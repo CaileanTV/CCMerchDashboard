@@ -211,6 +211,10 @@ final class MeTwitchGiftingController extends RestController {
 					$values[ $field ] = $body[ $field ] ?? null;
 				}
 
+				if ( array_key_exists( 'confirm', $body ) ) {
+					$values['confirm'] = $body['confirm'];
+				}
+
 				try {
 					$saved = $this->settings->save( $creator->id, $values );
 				} catch ( TwitchSubDiscountInvalid $e ) {
@@ -307,6 +311,7 @@ final class MeTwitchGiftingController extends RestController {
 				'paused'   => $settings->paused,
 				'window'   => $settings->window,
 				'language' => $settings->language,
+				'confirm'  => $settings->confirm,
 				'limits'   => array(
 					'window_min' => GiftingSettings::MIN_WINDOW,
 					'window_max' => GiftingSettings::MAX_WINDOW,

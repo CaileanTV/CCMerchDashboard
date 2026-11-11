@@ -44,6 +44,11 @@ final class ShopTwitchController extends RestController {
 	public const CLAIM_QUERY = 'merchboard_gift_claim';
 
 	/**
+	 * Query argument of the claim page's button (ADR-107).
+	 */
+	public const REDEEM_QUERY = 'merchboard_gift_redeem';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param TwitchCustomerLogin   $login   The customer's Twitch login.
@@ -85,7 +90,7 @@ final class ShopTwitchController extends RestController {
 	 * The shop URL of a login or logout link.
 	 *
 	 * @param string $action `login` or `logout`.
-	 * @param string $target `cart`, `checkout` or `claim:<token>`.
+	 * @param string $target `cart`, `checkout`, `claim:<token>` or `redeem:<token>`.
 	 */
 	public static function link( string $action, string $target ): string {
 		$args = array(
@@ -138,12 +143,22 @@ final class ShopTwitchController extends RestController {
 	/**
 	 * The shop page of a target.
 	 *
-	 * @param string $target `cart`, `checkout` or `claim:<token>`.
+	 * @param string $target `cart`, `checkout`, `claim:<token>` or `redeem:<token>`.
 	 */
 	public static function target_url( string $target ): string {
-		// A gift's claim link (ADR-107).
+		// A gift's claim page and its button (ADR-107).
 		if ( str_starts_with( $target, 'claim:' ) ) {
 			return add_query_arg( self::CLAIM_QUERY, substr( $target, 6 ), home_url( '/' ) );
+		}
+
+		if ( str_starts_with( $target, 'redeem:' ) ) {
+			return add_query_arg(
+				array(
+					self::CLAIM_QUERY  => substr( $target, 7 ),
+					self::REDEEM_QUERY => '1',
+				),
+				home_url( '/' )
+			);
 		}
 
 		if ( ! function_exists( 'wc_get_cart_url' ) ) {

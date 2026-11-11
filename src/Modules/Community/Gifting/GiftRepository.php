@@ -166,6 +166,31 @@ final class GiftRepository {
 	}
 
 	/**
+	 * Takes the database's named lock of a gift's chat confirmations, so two
+	 * webhook deliveries never confirm the same entrants twice. Released with
+	 * unlock(), or when the connection ends.
+	 *
+	 * @param int $id      Gift.
+	 * @param int $timeout Seconds to wait.
+	 * @return bool Whether this request holds the lock.
+	 */
+	public function lock( int $id, int $timeout ): bool {
+		$wpdb = $this->wpdb;
+
+		return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $this->lock_name( $id ), $timeout ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Named lock.
+	}
+
+	/**
+	 * Releases the lock of lock().
+	 *
+	 * @param int $id Gift.
+	 */
+	public function unlock( int $id ): void {
+		$wpdb = $this->wpdb;
+		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $this->lock_name( $id ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Named lock.
+	}
+
+	/**
 	 * Adds a viewer to an open window (once per Twitch account).
 	 *
 	 * @param int    $id        Gift.
@@ -394,6 +419,15 @@ final class GiftRepository {
 	 */
 	public static function now(): string {
 		return gmdate( 'Y-m-d H:i:s' );
+	}
+
+	/**
+	 * The name of a gift's confirmation lock.
+	 *
+	 * @param int $id Gift.
+	 */
+	private function lock_name( int $id ): string {
+		return $this->table() . '_confirm_' . $id;
 	}
 
 	/**

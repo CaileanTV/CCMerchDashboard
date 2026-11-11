@@ -49,4 +49,13 @@ final class FakeGiftCodes extends GiftCodes {
 			'code' => 'gave-test' . $gift->id,
 		);
 	}
+
+	/**
+	 * The fake code of a fake coupon.
+	 *
+	 * @param int $coupon_id Coupon.
+	 */
+	public function code( int $coupon_id ): string {
+		return $coupon_id > 70000 ? 'gave-test' . ( $coupon_id - 70000 ) : '';
+	}
 }

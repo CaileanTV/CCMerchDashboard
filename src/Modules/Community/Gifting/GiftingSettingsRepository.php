@@ -83,7 +83,7 @@ final class GiftingSettingsRepository {
 	 * Validates and saves the creator's settings.
 	 *
 	 * @param int          $creator_id Creator.
-	 * @param array<mixed> $values     `enabled`, `paused`, `window`, `language`.
+	 * @param array<mixed> $values     `enabled`, `paused`, `window`, `language` and `confirm` (kept when missing).
 	 * @throws TwitchSubDiscountInvalid With a code per invalid field (a failed write throws DatabaseException).
 	 */
 	public function save( int $creator_id, array $values ): GiftingSettings {
@@ -92,6 +92,7 @@ final class GiftingSettingsRepository {
 		$paused   = $values['paused'] ?? null;
 		$window   = $values['window'] ?? null;
 		$language = $values['language'] ?? null;
+		$confirm  = $values['confirm'] ?? $this->find( $creator_id )->confirm;
 
 		if ( ! is_bool( $enabled ) ) {
 			$errors['enabled'] = 'required';
@@ -111,11 +112,15 @@ final class GiftingSettingsRepository {
 			$errors['language'] = 'required';
 		}
 
+		if ( ! is_bool( $confirm ) ) {
+			$errors['confirm'] = 'required';
+		}
+
 		if ( array() !== $errors ) {
 			throw new TwitchSubDiscountInvalid( $errors );
 		}
 
-		return $this->store( $creator_id, new GiftingSettings( true === $enabled, true === $paused, (int) $window, (string) $language, $this->find( $creator_id )->test_mode ), true );
+		return $this->store( $creator_id, new GiftingSettings( true === $enabled, true === $paused, (int) $window, (string) $language, $this->find( $creator_id )->test_mode, true === $confirm ), true );
 	}
 
 	/**

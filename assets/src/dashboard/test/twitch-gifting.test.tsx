@@ -33,6 +33,7 @@ const STATE = {
 	paused: false,
 	window: 60,
 	language: 'da',
+	confirm: true,
 	limits: { window_min: 20, window_max: 180 },
 	channel: { login: 'nova' },
 	twitch: true,
@@ -90,6 +91,7 @@ describe( 'parseGifting', () => {
 			paused: false,
 			window: 60,
 			language: 'da',
+			confirm: true,
 			windowMin: 20,
 			windowMax: 180,
 			channel: 'nova',
@@ -168,6 +170,7 @@ describe( 'Twitch gifting (ADR-107)', () => {
 			enabled: true,
 			window: 60,
 			language: 'da',
+			confirm: true,
 		} );
 		expect( container.textContent ).toContain( 'Twitch gifting saved.' );
 	} );

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-11T05:50:48+00:00\n"
+"POT-Creation-Date: 2026-11-11T06:46:20+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -3912,24 +3912,8 @@ msgstr ""
 msgid "Twitch gifting"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftClaim.php:90
-msgid "The gift could not be claimed right now. Please try again in a moment."
-msgstr ""
-
-#: src/Modules/Community/Gifting/GiftClaim.php:137
-#: src/Modules/Community/Gifting/GiftClaim.php:168
-#: src/Modules/Community/Gifting/GiftClaim.php:177
-msgid "This gift link is no longer valid."
-msgstr ""
-
-#. translators: 1: the customer's Twitch login, 2: the winner's Twitch login.
-#: src/Modules/Community/Gifting/GiftClaim.php:153
-#, php-format
-msgid "You are logged in with Twitch as %1$s, but the gift was won by %2$s. Log out of Twitch and log in as the winner."
-msgstr ""
-
 #. translators: %s: the gift code.
-#: src/Modules/Community/Gifting/GiftClaim.php:191
+#: src/Modules/Community/Gifting/GiftClaim.php:272
 #, php-format
 msgid "Congratulations! Choose size and colour and add the product to the cart; your gift code %s is used there. You pay only if you choose a dearer variant or shipping."
 msgstr ""
@@ -4027,6 +4011,7 @@ msgid "Go to the product"
 msgstr ""
 
 #: src/Modules/Community/Gifting/GiftOrderInfo.php:56
+#: templates/community/gift-claim.php:26
 msgid "Twitch gift"
 msgstr ""
 
@@ -4167,16 +4152,16 @@ msgstr ""
 msgid "Gift shipping"
 msgstr ""
 
-#: src/Modules/Community/Rest/MeTwitchGiftingController.php:217
-#: src/Modules/Community/Rest/MeTwitchGiftingController.php:249
+#: src/Modules/Community/Rest/MeTwitchGiftingController.php:221
+#: src/Modules/Community/Rest/MeTwitchGiftingController.php:253
 msgid "Some fields of Twitch gifting are missing or invalid."
 msgstr ""
 
-#: src/Modules/Community/Rest/MeTwitchGiftingController.php:253
+#: src/Modules/Community/Rest/MeTwitchGiftingController.php:257
 msgid "Twitch gifting is turned off."
 msgstr ""
 
-#: src/Modules/Community/Rest/MeTwitchGiftingController.php:281
+#: src/Modules/Community/Rest/MeTwitchGiftingController.php:285
 msgid "Twitch gifting is turned off or paused."
 msgstr ""
 
@@ -4250,6 +4235,7 @@ msgid "Your Twitch account has no subscription that gives a discount on these pr
 msgstr ""
 
 #: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:143
+#: templates/community/gift-claim.php:86
 msgid "Log out of Twitch"
 msgstr ""
 
@@ -4260,6 +4246,7 @@ msgid "Do you subscribe on Twitch? Log in with Twitch and get up to %s %% off as
 msgstr ""
 
 #: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:155
+#: templates/community/gift-claim.php:92
 msgid "Log in with Twitch"
 msgstr ""
 
@@ -14075,6 +14062,60 @@ msgstr ""
 msgid "Version %1$d, published %2$s"
 msgstr ""
 
+#: templates/community/gift-claim.php:26
+msgid "You won a gift!"
+msgstr ""
+
+#: templates/community/gift-claim.php:56
+msgid "This gift link is no longer valid. The gift was not claimed in time, or it has been given back."
+msgstr ""
+
+#: templates/community/gift-claim.php:57
+msgid "Go to the shop"
+msgstr ""
+
+#: templates/community/gift-claim.php:59
+msgid "The gift could not be shown right now. Please try again in a moment."
+msgstr ""
+
+#. translators: %s: the winner's Twitch login.
+#: templates/community/gift-claim.php:68
+#, php-format
+msgid "Won by @%s in the Twitch chat."
+msgstr ""
+
+#. translators: %s: date and time.
+#: templates/community/gift-claim.php:75
+#, php-format
+msgid "Claim the gift before %s."
+msgstr ""
+
+#. translators: 1: the visitor's Twitch login, 2: the winner's Twitch login.
+#: templates/community/gift-claim.php:83
+#, php-format
+msgid "You are logged in with Twitch as %1$s, but the gift was won by %2$s. Log out of Twitch and log in as the winner."
+msgstr ""
+
+#: templates/community/gift-claim.php:88
+msgid "You have claimed the gift. Open it again to see your gift code."
+msgstr ""
+
+#: templates/community/gift-claim.php:88
+msgid "You are logged in as the winner. Get the gift and choose size and colour."
+msgstr ""
+
+#: templates/community/gift-claim.php:89
+msgid "Show my gift code"
+msgstr ""
+
+#: templates/community/gift-claim.php:89
+msgid "Get the gift"
+msgstr ""
+
+#: templates/community/gift-claim.php:91
+msgid "Log in with the Twitch account that won. Then you choose size and colour, and the gift code is used in the cart."
+msgstr ""
+
 #: templates/dashboard/no-access.php:31
 msgid "Access not active"
 msgstr ""
@@ -17491,6 +17532,14 @@ msgstr ""
 
 #: build/dashboard.js:63
 msgid "English"
+msgstr ""
+
+#: build/dashboard.js:63
+msgid "Confirm entrants in the chat"
+msgstr ""
+
+#: build/dashboard.js:63
+msgid "The bot confirms who is in the draw, also those who type !enter again, in one message at most every 10 seconds."
 msgstr ""
 
 #: build/dashboard.js:63
