@@ -237,6 +237,7 @@ final class MePayoutsEndpointTest extends IntegrationTestCase {
 				'earned'       => '60.0000',
 				'completed'    => '0.0000',
 				'reserved'     => '25.5000',
+				'held'         => '0.0000',
 				'available'    => '34.5000',
 				'outstanding'  => '0.0000',
 				'unknown_rows' => 0,

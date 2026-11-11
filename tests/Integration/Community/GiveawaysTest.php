@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\Community;
 
+use Closure;
 use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Audit\AuditTrail;
@@ -68,6 +69,13 @@ final class GiveawaysTest extends IntegrationTestCase {
 	private array $notified = array();
 
 	private string $cost = '199.0000';
+
+	/**
+	 * This test's notification listener.
+	 *
+	 * @var Closure(string, int): void
+	 */
+	private Closure $listener;
 
 	private int $nova;
 
@@ -158,25 +166,22 @@ final class GiveawaysTest extends IntegrationTestCase {
 			new RecordingLogger()
 		);
 		$this->giveaways->register();
-		add_action(
-			'merchboard_notify',
-			function ( string $type, int $creator_id ): void {
-				$this->notified[] = array( $type, $creator_id );
-			},
-			10,
-			2
-		);
+		$this->listener = function ( string $type, int $creator_id ): void {
+			$this->notified[] = array( $type, $creator_id );
+		};
+		add_action( 'merchboard_notify', $this->listener, 10, 2 );
 
 		$this->credit( $this->nova, '500' );
 	}
 
 	protected function tearDown(): void {
-		remove_all_filters( 'merchboard_payout_held' );
-		remove_all_actions( GiftCodes::USED_HOOK );
-		remove_all_actions( GiftDraws::EVENT_HOOK );
-		remove_all_actions( Giveaways::CHARGE_HOOK );
-		remove_all_actions( Giveaways::EXPIRE_HOOK );
-		remove_all_actions( 'merchboard_notify' );
+		// Only this test's own callbacks: the plugin's listeners stay for the next tests.
+		remove_filter( 'merchboard_payout_held', array( $this->giveaways, 'held' ) );
+		remove_action( GiftCodes::USED_HOOK, array( $this->giveaways, 'used' ) );
+		remove_action( GiftDraws::EVENT_HOOK, array( $this->giveaways, 'gift_event' ) );
+		remove_action( Giveaways::CHARGE_HOOK, array( $this->giveaways, 'charge' ) );
+		remove_action( Giveaways::EXPIRE_HOOK, array( $this->giveaways, 'expire' ) );
+		remove_action( 'merchboard_notify', $this->listener );
 		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s', $this->wpdb->options, '%merchboard_gift_%' );
 		delete_option( Settings::OPTION );
 		parent::tearDown();
