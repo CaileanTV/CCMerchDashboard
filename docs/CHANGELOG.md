@@ -4,7 +4,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
-Næste version (2.0.1 eller 2.1.0, afhængigt af hvad der kommer med).
+Næste version: 2.1.0 med giveaway-links (fase 47).
 
 ### Changed
 

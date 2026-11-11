@@ -5036,6 +5036,8 @@ ADR-080, ADR-082, ADR-084
 ## Status
 Accepteret af projektejeren 2026-10-31. Eksperimentel: dækket af automatiske tests, men ikke kørt igennem en rigtig ordre, udbetaling eller et afregningsbilag.
 
+**Statusnote 2026-11-11 (ADR-110):** giveaway-links trækker også fra saldoen som en negativ payout-adjustment (`adr110-giveaway`, reference `GIV-…`), på samme måde som digitaliseringsgebyret.
+
 ## Context
 Partneren tager et gebyr for at digitalisere hver helt ny broderifil. Det går ud over virksomhedens indtjening, så creatoren skal betale det. Gebyret skal fremgå af designeren.
 
@@ -6289,6 +6291,8 @@ Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" p
 - **Links i chatten:** gifting-siden fortæller creatoren, at botten sender vinderens link i chatten. Fjerner kanalen links (Twitch' "Block hyperlinks" eller en moderationsbot), skal botten være moderator eller undtaget, ellers forsvinder linket.
 - **Bot-forbindelsen:** chatbot-siden og community-siderne siger, at gifting og subscriber-rabatten kræver vores bot forbundet til kanalen, men at købsbeskederne i chatten kan være slået fra.
 
+**Statusnote 2026-11-11 (ADR-110):** giveaway-links genbruger lodtrækningen, gavesiden og koden. En gave-række kan derfor være uden ordre (`order_id` NULL) og høre til en giveaway (`giveaway_id`).
+
 ## Context
 Hos Fourthwall kan en seer købe et produkt som gave, mens creatoren streamer. Botten trækker en vinder blandt dem, der skriver `!enter`, og vinderen henter gaven ved at logge ind med Twitch. Projektejeren vil have det samme gennem CCMerch-chatbotten, med en til/fra-knap og en pause pr. creator.
 
@@ -6466,3 +6470,67 @@ Der er ingen migration. Gamle værdier bevares, til creatoren gemmer designet ig
 
 ## Related
 ADR-065, ADR-088
+
+# ADR-110: Giveaway-links (creatoren giver merch væk)
+
+## Date
+2026-11-11
+
+## Status
+Accepteret af projektejeren 2026-11-11 (valgene i fase 47; Community Features pkt. 1). Bygger på ADR-107 (Twitch-gifting) og ADR-086 (træk fra saldoen).
+
+## Context
+Creatoren vil kunne give sin egen merch væk til seere. Det skal ske enten med CCMerch-botten i Twitch-chatten (som Twitch-gifting) eller med creatorens eget giveaway-system, hvor creatoren selv sender en kode til vinderen. Creatoren betaler for giveawayen, men skal ikke betale sin egen andel af prisen.
+
+## Decision
+1. **Gevinsten er et bestemt produkt.** Creatoren vælger et af sine egne udgivne produkter, og vinderen vælger selv størrelse og farve.
+   - Koden dækker produktets billigste variant og op til 50 kr. fragt, som en Twitch-gave. Ved en dyrere variant eller fragt betaler vinderen forskellen.
+   - Gavekort med et beløb er fravalgt.
+2. **Pris for creatoren:** virksomhedens del af produktet (grundprisen) plus 50 kr. fragt. Prisen fastlåses ved oprettelsen.
+   - Designerprodukter: grundprisen for den billigste variant.
+   - Andelsprodukter: prisen minus creatorens andel.
+3. **Betaling fra saldoen, når den dækker:**
+   - Den tilgængelige saldo skal dække prisen ved oprettelsen. Prisen reserveres, så den ikke kan udbetales.
+   - Når koden bruges i en betalt ordre, trækkes prisen som en negativ payout-adjustment (`adr110-giveaway`, reference `GIV-000123`) under creatorens payout-lås, og reservationen frigives. Trækket vises på afregningsbilaget som digitaliseringsgebyret.
+   - En kode, der udløber eller annulleres, koster intet.
+4. **Ellers betaling i webshoppen:**
+   - MitCCMerch sender creatoren til en checkout med netop produktet til grundprisen og 50 kr. i gave-fragt, uden andre varer eller koder.
+   - Ordren giver ingen fortjeneste til creatoren (udelukket som creatorkode-ordrer, ADR-068).
+   - Når ordren er betalt, er giveawayen klar. Annulleres eller refunderes den, før koden er brugt, annulleres giveawayen.
+5. **Kode:**
+   - Kuponen er af samme type som Twitch-gavernes, men har sin egen kilde.
+   - Den kan bruges én gang og gælder i 30 dage.
+   - På vinderens ordre giver kun det, vinderen selv betaler, fortjeneste (ADR-107 pkt. 8).
+6. **Manuel tilstand:** når giveawayen er betalt, vises koden i MitCCMerch med kopiknap og link til produktet, og creatoren sender den selv til vinderen.
+7. **Bot-tilstand:**
+   - Creatoren starter giveawayen med "Start i chatten" i MitCCMerch. Det kræver, at creatoren er live (eller i testtilstand), og at botten er forbundet.
+   - Botten bruger gifting-forløbet: annoncering, `!enter`-vindue med bekræftelser og påmindelser, "Tilmeldingen er lukket" og vinderen 10 sekunder senere.
+   - Vinderen henter koden med Twitch-login på gavesiden.
+   - Uden deltagere venter giveawayen og kan startes igen. Hentes den ikke inden 24 timer, trækkes der om, højst 3 gange. Derefter får creatoren koden i MitCCMerch.
+   - Lodtrækningen bruger en gave-række uden ordre (`giveaway_id`).
+8. **Global knap:** "Giveaway-links" under Indstillinger → Community, slået fra som standard (ADR-108). Slået fra lukker siden og REST, og der kan ikke startes nye vinduer. Udstedte koder virker videre.
+9. **Grænser:** højst 20 åbne giveaways pr. creator. Audit `giveaway_created`, `giveaway_charged` og `giveaway_cancelled`.
+
+## Alternatives considered
+- **Gavekort med beløb:** prisen for creatoren afhænger af, hvad vinderen vælger. Fravalgt af projektejeren.
+- **Creatoren betaler fuld pris og får sin fortjeneste igen:** samme nettopris, men creatoren lægger mere ud. Projektejeren valgte grundprisen direkte.
+- **Saldoen må gå i minus:** virksomheden ville bære risikoen. Fravalgt.
+
+## Reason
+Creatoren kan give merch væk i sin egen stream eller sit eget system og betaler kun, hvad varen og fragten koster virksomheden.
+
+## Security
+- Kun creatorens egne produkter, og kun creatorens egen bruger kan betale i shoppen (nonce og ejerskab).
+- Koden kan bruges én gang. I bot-tilstand kan kun den vindende Twitch-konto hente den (ADR-107).
+- Træk og reservation sker under creatorens payout-lås, så de ikke kan kollidere med en udbetaling.
+
+## Migration/data implications
+- Migration 51: tabellen `merchboard_giveaways`.
+- Migration 52: `merchboard_gifts.order_id` bliver NULL-bar og får `giveaway_id`.
+- Payout-adjustments får reglen `adr110-giveaway`.
+
+## Consequences
+- Saldoen i MitCCMerch og i admin trækker reserverede giveaways fra.
+
+## Related
+ADR-063, ADR-068, ADR-086, ADR-107, ADR-108

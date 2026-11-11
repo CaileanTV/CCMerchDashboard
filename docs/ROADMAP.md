@@ -1217,9 +1217,30 @@ Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele al
 
 - **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Testpakke på stg ✅ 2026-11-11 (bygget fra 6b7e207, ZIP SHA-256 `290b5731…`). Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
 
-## Næste version: 2.0.1 eller 2.1.0 🔄 (forberedes 2026-11-11)
+## Fase 47 – Giveaway-links 🔄 (plan godkendt 2026-11-11; ADR-110; Community Features punkt 1; udgives i 2.1.0)
 
-Versionsnummeret vælges, når indholdet er kendt: 2.0.1 for rettelser, 2.1.0 hvis der kommer nye funktioner med.
+Projektejerens ønske 2026-11-11: creatoren skal selv kunne give merch væk til seere, enten med vores bot i chatten eller med sit eget giveaway-system, hvor creatoren selv sender en kode til vinderen.
+
+**Projektejerens valg 2026-11-11:**
+- Gevinsten er et bestemt produkt; vinderen vælger størrelse og farve. Gavekort med beløb er fravalgt.
+- Creatoren betaler virksomhedens del (grundprisen) plus 50 kr. fragt.
+- Betalingen trækkes fra saldoen, når den dækker: beløbet reserveres ved oprettelsen og trækkes, når koden bruges. Ellers betaler creatoren i webshoppen via et redirect fra MitCCMerch, med grundprisen + 50 kr. automatisk.
+- Koden gælder i 30 dage.
+- Bot-tilstanden startes af creatoren i MitCCMerch.
+
+- **47.1 Docs:** ADR-110 og ROADMAP.
+- **47.2 Data:** migration 51 (`merchboard_giveaways`) og 52 (gaver uden ordre).
+- **47.3 Pris og saldo:** grundpris + fragt, reservation og træk ved brug.
+- **47.4 Webshop:** redirect, kurv til grundprisen og ordre uden fortjeneste.
+- **47.5 Koder:** fælles kode for gaver og giveaways, udløb efter 30 dage.
+- **47.6 Bot-tilstand:** "Start i chatten", lodtrækning og kode til creatoren efter 3 forsøg.
+- **47.7 MitCCMerch:** siden Community Features → Giveaways.
+- **47.8 Admin og resten:** global knap, ordreside, afregningsbilag, klokken, privacy og tekster.
+- **47.9 Test og levering:** tests, runtime-test og testpakke 2.1.0 på stg.
+
+## Næste version: 2.1.0 🔄 (forberedes 2026-11-11)
+
+Bliver 2.1.0, fordi fase 47 (giveaway-links) kommer med.
 
 - **Gaveknappen:** ✅ (7c28f57) projektejerens ønske 2026-11-11: "Giv som gave på streamen" i stedet for "Giv som gave i streamen".
 - **Navnene uden bindestreger:** ✅ (886ea7d) projektejerens ønske 2026-11-11: "Twitch subscriber rabat" og "Twitch gifting" i de danske tekster (før "Twitch-subscriber-rabat" og "Twitch-gifting").
@@ -1251,7 +1272,7 @@ Projektejerens ønske 2026-11-09. En ny menu "Community Features" i creator-dash
   - Det kan ikke bruges med en creators separate chatbot.
   - Det virker også, selvom almindelige alert-beskeder i chatten er slået fra.
 
-**1. Giveaway-links**
+**1. Giveaway-links** 🔄 bygges i fase 47 (ADR-110; projektejerens valg 2026-11-11 afløser afklaringspunkterne nedenfor)
 - **Hos Fourthwall:** creatoren vælger ét produkt og et antal unikke links til engangsbrug. Vinderen vælger størrelse og farve, indtaster adresse og får varen gratis. Creatoren betaler produktets grundpris plus den billigste fragt til vinderens adresse, trukket fra saldoen. Links kan ikke ændres eller annulleres.
 - **Hos os (projektejerens model):** creatoren vælger produkterne og køber et gavekort, der sendes til vinderen.
   - Creatoren betaler kun grundbeløbet.
