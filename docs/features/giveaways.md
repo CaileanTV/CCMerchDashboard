@@ -6,7 +6,11 @@ Creatoren kan give et af sine egne produkter væk til en seer. Vinderen findes e
 En giveaway er creatorens egen gave. Den må aldrig forveksles med Twitch gifting ([twitch-gifting.md](twitch-gifting.md)), hvor seerne køber gaver til chatten.
 
 ## Current status
-Bygget i fase 47 (47.2–47.8, `fa199ba`) og testet automatisk. Mangler: CI med integrationstests, runtime-test og testpakke 2.1.0 på stg (47.9). Udgives i 2.1.0.
+Bygget i fase 47 (47.2–47.8, `fa199ba`) og testet automatisk. Udgives i 2.1.0.
+
+**Runtime-test 2026-11-11 (Playground med WooCommerce):** siden, prisen (249 kr. med 20 % andel giver 199,20 kr. + 50 kr.), listen med link og kopiknap, "Indløs" uden login (gaven indløses, og vinderen sendes til produktet) og kassen (199,20 kr. + "Giveaway shipping" 50 kr. i stedet for butikkens fragt = 249,20 kr.) virker. Rettet undervejs: knapperne stod i en kolonne uden for tabellens bredde, og et nyt tryk på "Betal i shoppen" med giveawayen i kurven gav "tøm kurven først". Oprettelse fra saldoen og trækket kan ikke køres i Playground, fordi SQLite ikke har payout-låsen (`GET_LOCK`); de dækkes af integrationstestene på MySQL i CI og testes på stg. Fragt kræver mindst én forsendelsesmetode i butikken (WooCommerce regner ellers ingen fragt), som på stg og live.
+
+Mangler: CI med integrationstests og testpakke 2.1.0 på stg (47.9).
 
 ## User-facing functionality
 **Creatoren (MitCCMerch → Community Features → Giveaways):**
