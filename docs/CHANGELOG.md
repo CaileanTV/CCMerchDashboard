@@ -6,6 +6,12 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 Næste version: 2.1.0 med giveaway-links (fase 47).
 
+### Added
+
+- **Giveaways** (fase 47, ADR-110): creatoren giver et af sine egne produkter væk, trukket af botten i Twitch-chatten eller som et link fra creatorens eget giveaway-system med en "Indløs"-knap uden Twitch-login. Creatoren betaler grundprisen og 50 kr. i fragt: fra saldoen, når koden bruges (reserveret indtil da), eller i shoppen. Global knap under Indstillinger → Community (fra som standard). Holdes adskilt fra Twitch gifting.
+- **Database:** migration 51 opretter `merchboard_giveaways`, lader en gave høre til en giveaway i stedet for en ordre (`merchboard_gifts.giveaway_id`) og tilføjer `giveaway_id` på `merchboard_payout_adjustments`.
+- **Saldo:** `GET /me/payouts/balance` har feltet `held` (reserveret til giveaways), som trækkes fra den tilgængelige saldo.
+
 ### Changed
 
 - Gaveknappen på produktsiden hedder på dansk "Giv som gave på streamen" (før "Giv som gave i streamen").

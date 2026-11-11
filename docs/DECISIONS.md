@@ -6479,6 +6479,8 @@ ADR-065, ADR-088
 ## Status
 Accepteret af projektejeren 2026-11-11 (valgene i fase 47; Community Features pkt. 1). Bygger på ADR-107 (Twitch-gifting) og ADR-086 (træk fra saldoen).
 
+**Statusnote 2026-11-11:** bygget i fase 47. Projektejeren præciserede, at creatorens eget system får et link med en "Indløs"-knap uden Twitch-login (pkt. 6), og at en creators giveaway aldrig må forveksles med et køb fra community'et via Twitch-gifting (pkt. 10). Pkt. 4, 6, 7 og 8 og migrationen er skrevet om efter det byggede.
+
 ## Context
 Creatoren vil kunne give sin egen merch væk til seere. Det skal ske enten med CCMerch-botten i Twitch-chatten (som Twitch-gifting) eller med creatorens eget giveaway-system, hvor creatoren selv sender en kode til vinderen. Creatoren betaler for giveawayen, men skal ikke betale sin egen andel af prisen.
 
@@ -6495,21 +6497,29 @@ Creatoren vil kunne give sin egen merch væk til seere. Det skal ske enten med C
    - En kode, der udløber eller annulleres, koster intet.
 4. **Ellers betaling i webshoppen:**
    - MitCCMerch sender creatoren til en checkout med netop produktet til grundprisen og 50 kr. i gave-fragt, uden andre varer eller koder.
-   - Ordren giver ingen fortjeneste til creatoren (udelukket som creatorkode-ordrer, ADR-068).
+   - Ordren giver ingen fortjeneste til creatoren. Linjen bærer creatorens fortjeneste som en rabat, creatoren selv betaler (linje-meta `_merchboard_sub_discount` og ordre-meta `_merchboard_giveaway`), og ledgeren regner den som Twitch-abonnentrabatten (ADR-106 pkt. 7): fortjeneste = max(0, f(betalt + rabat) − rabat) = 0. Prisen sættes kun på kurvlinjens produktobjekt; intet produkt får en ny pris (designer-vagten, ADR-080).
    - Når ordren er betalt, er giveawayen klar. Annulleres eller refunderes den, før koden er brugt, annulleres giveawayen.
 5. **Kode:**
    - Kuponen er af samme type som Twitch-gavernes, men har sin egen kilde.
    - Den kan bruges én gang og gælder i 30 dage.
    - På vinderens ordre giver kun det, vinderen selv betaler, fortjeneste (ADR-107 pkt. 8).
-6. **Manuel tilstand:** når giveawayen er betalt, vises koden i MitCCMerch med kopiknap og link til produktet, og creatoren sender den selv til vinderen.
+6. **Manuel tilstand (eget giveaway-system):** når giveawayen er betalt eller reserveret, får creatoren et link i MitCCMerch med kopiknap. Creatoren giver linket videre til sin vinder.
+   - Linket åbner gavesiden med en "Indløs"-knap uden Twitch-login. Den, der har linket, indløser gaven og får gavekoden.
+   - Linket kan indløses i 30 dage. Den indløste kode gælder i 30 dage fra indløsningen.
+   - Et link, ingen har indløst, udløber og koster intet.
 7. **Bot-tilstand:**
    - Creatoren starter giveawayen med "Start i chatten" i MitCCMerch. Det kræver, at creatoren er live (eller i testtilstand), og at botten er forbundet.
    - Botten bruger gifting-forløbet: annoncering, `!enter`-vindue med bekræftelser og påmindelser, "Tilmeldingen er lukket" og vinderen 10 sekunder senere.
    - Vinderen henter koden med Twitch-login på gavesiden.
-   - Uden deltagere venter giveawayen og kan startes igen. Hentes den ikke inden 24 timer, trækkes der om, højst 3 gange. Derefter får creatoren koden i MitCCMerch.
+   - Uden deltagere venter giveawayen og kan startes igen. Hentes den ikke inden 24 timer, venter den på en ny lodtrækning, højst 3 gange. Derefter får creatoren et link (som i pkt. 6) i MitCCMerch og en besked i klokken.
    - Lodtrækningen bruger en gave-række uden ordre (`giveaway_id`).
-8. **Global knap:** "Giveaway-links" under Indstillinger → Community, slået fra som standard (ADR-108). Slået fra lukker siden og REST, og der kan ikke startes nye vinduer. Udstedte koder virker videre.
-9. **Grænser:** højst 20 åbne giveaways pr. creator. Audit `giveaway_created`, `giveaway_charged` og `giveaway_cancelled`.
+8. **Global knap:** "Giveaways" under Indstillinger → Community, slået fra som standard (ADR-108). Slået fra lukker siden og REST, og der kan ikke oprettes eller startes giveaways. Udstedte links og koder virker videre.
+9. **Grænser:** højst 20 åbne giveaways pr. creator. Audit `giveaway_created`, `giveaway_charged` og `giveaway_cancelled`. Klokken: `giveaway_link`, `giveaway_used` og `giveaway_expired`.
+10. **Adskilt fra Twitch-gifting:** en giveaway er creatorens egen gave, ikke et køb fra community'et.
+   - Giveaway-gaverne har ingen ordre og ingen køber. Twitch-gifting-listen, `!gift start` og den automatiske start af gaver tager dem aldrig med.
+   - Gavernes e-mails og ordrenoter (ADR-107 pkt. 10) springer dem over; creatoren får giveawayens egne beskeder.
+   - Butiksordren har sin egen fragtrate ("Fragt til giveaway") og sin egen boks på ordresiden i admin ("Creator-giveaway"). Den udløser ingen ordre-alert, chatbesked eller webhook i streamen, som om en seer havde købt.
+   - Under impersonation (ADR-075) kan en administrator hverken oprette, starte, annullere eller betale en giveaway.
 
 ## Alternatives considered
 - **Gavekort med beløb:** prisen for creatoren afhænger af, hvad vinderen vælger. Fravalgt af projektejeren.
@@ -6525,12 +6535,15 @@ Creatoren kan give merch væk i sin egen stream eller sit eget system og betaler
 - Træk og reservation sker under creatorens payout-lås, så de ikke kan kollidere med en udbetaling.
 
 ## Migration/data implications
-- Migration 51: tabellen `merchboard_giveaways`.
-- Migration 52: `merchboard_gifts.order_id` bliver NULL-bar og får `giveaway_id`.
+- Migration 51:
+  - opretter tabellen `merchboard_giveaways`;
+  - gør `merchboard_gifts.order_id` NULL-bar og tilføjer `giveaway_id` (unik);
+  - tilføjer `giveaway_id` (unik) på `merchboard_payout_adjustments`, så en giveaway højst trækkes én gang.
 - Payout-adjustments får reglen `adr110-giveaway`.
 
 ## Consequences
-- Saldoen i MitCCMerch og i admin trækker reserverede giveaways fra.
+- Saldoen i MitCCMerch og i admin trækker reserverede giveaways fra (`held`; filteret `merchboard_payout_held`). Admin viser dem i kolonnen for reserveret.
+- En kode, der bruges i en ordre, som først betales efter udløbet, trækkes alligevel; saldoen kan da gå i minus og modregnes som andre udestående beløb.
 
 ## Related
 ADR-063, ADR-068, ADR-086, ADR-107, ADR-108

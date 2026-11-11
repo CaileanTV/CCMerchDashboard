@@ -1217,7 +1217,7 @@ Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele al
 
 - **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Testpakke på stg ✅ 2026-11-11 (bygget fra 6b7e207, ZIP SHA-256 `290b5731…`). Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
 
-## Fase 47 – Giveaway-links 🔄 (plan godkendt 2026-11-11; ADR-110; Community Features punkt 1; udgives i 2.1.0)
+## Fase 47 – Giveaway-links 🔄 (plan godkendt 2026-11-11; ADR-110; Community Features punkt 1; udgives i 2.1.0; se [features/giveaways.md](features/giveaways.md))
 
 Projektejerens ønske 2026-11-11: creatoren skal selv kunne give merch væk til seere, enten med vores bot i chatten eller med sit eget giveaway-system, hvor creatoren selv sender en kode til vinderen.
 
@@ -1227,16 +1227,18 @@ Projektejerens ønske 2026-11-11: creatoren skal selv kunne give merch væk til 
 - Betalingen trækkes fra saldoen, når den dækker: beløbet reserveres ved oprettelsen og trækkes, når koden bruges. Ellers betaler creatoren i webshoppen via et redirect fra MitCCMerch, med grundprisen + 50 kr. automatisk.
 - Koden gælder i 30 dage.
 - Bot-tilstanden startes af creatoren i MitCCMerch.
+- Eget giveaway-system: et link med en "Indløs"-knap uden Twitch-login (projektejerens præcisering 2026-11-11).
+- En creators giveaway må aldrig forveksles med et køb fra community'et via Twitch gifting (projektejerens krav 2026-11-11, ADR-110 pkt. 10).
 
-- **47.1 Docs:** ADR-110 og ROADMAP.
-- **47.2 Data:** migration 51 (`merchboard_giveaways`) og 52 (gaver uden ordre).
-- **47.3 Pris og saldo:** grundpris + fragt, reservation og træk ved brug.
-- **47.4 Webshop:** redirect, kurv til grundprisen og ordre uden fortjeneste.
-- **47.5 Koder:** fælles kode for gaver og giveaways, udløb efter 30 dage.
-- **47.6 Bot-tilstand:** "Start i chatten", lodtrækning og kode til creatoren efter 3 forsøg.
-- **47.7 MitCCMerch:** siden Community Features → Giveaways.
-- **47.8 Admin og resten:** global knap, ordreside, afregningsbilag, klokken, privacy og tekster.
-- **47.9 Test og levering:** tests, runtime-test og testpakke 2.1.0 på stg.
+- **47.1 Docs:** ✅ (d8991f2) ADR-110 og ROADMAP.
+- **47.2 Data:** ✅ (fa199ba) migration 51: `merchboard_giveaways`, gaver uden ordre (`giveaway_id`) og `giveaway_id` på payout-adjustments.
+- **47.3 Pris og saldo:** ✅ (fa199ba) grundpris + 50 kr. fragt, reservation (`held`) og træk ved brug (`GIV-…`).
+- **47.4 Webshop:** ✅ (fa199ba) redirect, kurv til grundprisen med egen fragtrate, ingen fortjeneste (creator-betalt rabat) og ingen alert.
+- **47.5 Koder:** ✅ (fa199ba) gave-kuponen med 30 dages udløb; brug udløser trækket.
+- **47.6 Bot-tilstand:** ✅ (fa199ba) "Start i chatten", lodtrækning og link til creatoren efter 3 forsøg.
+- **47.7 MitCCMerch:** ✅ (fa199ba) siden Community Features → Giveaways og "Reserveret til giveaways" under Udbetalinger.
+- **47.8 Admin og resten:** ✅ (fa199ba) global knap, ordreside, afregningsbilag, klokken, impersonation, oprydning og danske tekster.
+- **47.9 Test og levering:** unit, integration og Jest er skrevet (fa199ba); mangler CI, runtime-test og testpakke 2.1.0 på stg.
 
 ## Næste version: 2.1.0 🔄 (forberedes 2026-11-11)
 
