@@ -6407,6 +6407,12 @@ Accepteret af projektejeren 2026-11-11 (fase 46). Afløser ADR-088 pkt. 1, hvor 
 
 **Statusnote 2026-11-11 (projektejerens test på stg, "Nu er det blevet helt rodet"):** pkt. 1 er trukket tilbage. Lærredet viser altid hele skærmen (1920 × 1080) med alertboksen på, som før fase 46, og det fylder mindre på siden: højst 800 px bredt og lavt nok til, at værktøjslinjen kan ses. Boksen trækkes og ændres igen på lærredet, og minikortet er fjernet. Pkt. 2–4 gælder fortsat: layoutet placerer kun billedet i boksen, teksterne flyttes frit, og gamle layouts laves om i editoren.
 
+**Statusnote 2026-11-11, senere samme dag (projektejerens test på stg: rammen om alerten er forstyrrende, "billede+tekst sammen udgør 1 boks på de første fire layouts og 2 individuelle bokse på Fri layout"; afløser pkt. 2–4):**
+- **Fire layouts med én boks:** `top` (billedet over teksterne), `left` og `right` (billedet ved siden af) og `background` (teksterne på billedet). Billede og tekster er én boks, som trækkes og ændres på lærredet; teksterne fylder resten af boksen, som i ADR-088's layouts. Der er ingen rammer om de enkelte elementer.
+- **`free`:** billedet og teksterne er hver deres boks og trækkes hver for sig. Der vises ingen ramme om dem; alertboksen er usynlig og følger elementerne (omkredsen af de viste elementer), fordi animationer, gennemsigtighed og rotation virker på den.
+- **Skift til `free`:** elementerne får de bokse, de lige blev tegnet i, så intet flytter sig.
+- **Gamle navne:** `above`, `side` og `overlay` læses som `top`, `left` og `background` (de ser ens ud), i PHP og i overlayet. Der er ingen migration og ingen omregning i editoren.
+
 ## Context
 I alertdesigneren (ADR-088) er lærredet hele OBS-skærmen (1920 × 1080). Alertboksen er en firkant på den, og layoutet (`above`, `side`, `overlay`, `free`) placerer både billede og tekster i boksen. Projektejeren vil have, at lærredet er selve alertboksen, og at layoutet kun bestemmer, hvor billedet sidder.
 
