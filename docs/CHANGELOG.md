@@ -16,7 +16,7 @@ Fase 43 og 44, de første Community Features: rabat til creatorens Twitch-subscr
 - **Twitch-gaver (ADR-107):** mens creatoren er live, kan seere købe et produkt som gave til chatten (fast gave-fragt 50 kr., navn i annonceringen eller anonym). Botten annoncerer gaven, trækker en vinder blandt dem, der skriver `!enter`, og vinderen henter gaven med Twitch-login og en engangskode (produktet plus op til 50 kr. af fragten). 24 timers frist, højst 3 lodtrækninger, derefter går koden til køberen. Creator og moderatorer styrer med `!gift start`, `!gift pause` og `!gift resume`.
 - **Siden Twitch gifting** i MitCCMerch: til/fra, vinduets længde, dansk eller engelsk i chatten, pause, "Start ventende gaver" og listen over gaver.
 - **Bekræftelse i chatten:** botten bekræfter dem, der skriver `!enter`, i én samlet besked højst hvert 10. sekund (også "Allerede med"). Creatoren kan slå det fra.
-- **Påmindelser:** botten minder chatten om `!enter`, når halvdelen og en fjerdedel af tiden er tilbage, og 10 sekunder før tilmeldingen lukker.
+- **Påmindelser:** botten minder chatten om `!enter`, når halvdelen og en fjerdedel af tiden er tilbage, og 10 sekunder før tilmeldingen lukker; over 75 sekunder også ved tre fjerdedele. Påmindelser, lukning og vinder kommer til tiden, også når ingen skriver i chatten.
 - **Spænding før vinderen:** når vinduet lukker, skriver botten "Tilmeldingen er lukket!" og offentliggør vinderen 10 sekunder senere.
 - **Gavesiden:** vinderens link åbner en side med præmien og knappen "Log ind med Twitch"; gaven hentes lige efter login.
 - **Testtilstand for Twitch-gifting:** en administrator kan på creatorens redigeringsside lade creatoren regnes som live, så gaver kan testes uden en stream. Siden advarer, mens den er slået til.

@@ -6281,7 +6281,9 @@ Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" p
 
 **Statusnote 2026-11-11 (projektejerens ønsker, påmindelser og links):**
 - **Påmindelser:** botten minder chatten om `!enter`, når halvdelen af vinduet er tilbage, når en fjerdedel er tilbage, og 10 sekunder før tilmeldingen lukker ("⏰ 15 sekunder tilbage! …"). En påmindelse, der ville komme højst 3 sekunder fra en anden, udelades, så korte vinduer ikke får beskeder tæt efter hinanden.
+  - Er vinduet over 75 sekunder, kommer der også en påmindelse, når tre fjerdedele er tilbage.
   - Påmindelserne sendes af et job pr. påmindelse (`merchboard_gift_remind`) og af enhver chatbesked, hvis et job er forsinket.
+  - **Uret (efter testen på stg):** Action Scheduler kører højst én gang i minuttet og kun med trafik, så i en stille chat kom påmindelserne først efter vinduet. Mens et vindue er åbent, kalder sitet derfor sig selv (`POST /merchboard/v1/gifts/{id}/tick`, uden at vente på svaret, som WordPress' egen cron). Hvert kald venter til det næste, der skal ske (påmindelse, lukning eller vinder), dog højst 20 sekunder, gør det og kalder igen, til gaven har forladt vinduet. Ruten er offentlig, men kræver HMAC-tokenet for gavens aktuelle kæde (403 ellers). Et nyt vindue starter en ny kæde, så den gamle stopper. Jobbene og chatbeskederne gør det samme, hvis et kald går tabt.
   - Er flere påmindelser forsinket, sendes kun én besked med de sekunder, der faktisk er tilbage.
   - Under gavens navngivne lås sendes hver påmindelse kun én gang.
 - **Links i chatten:** gifting-siden fortæller creatoren, at botten sender vinderens link i chatten. Fjerner kanalen links (Twitch' "Block hyperlinks" eller en moderationsbot), skal botten være moderator eller undtaget, ellers forsvinder linket.
