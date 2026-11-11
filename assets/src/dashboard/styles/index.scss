@@ -1826,6 +1826,11 @@ input:disabled + .merchboard-sounds__upload {
 	gap: var(--merchboard-space-2);
 }
 
+/* A giveaway's actions under its status (ADR-110). */
+.merchboard-giveaway__actions {
+	margin-top: var(--merchboard-space-2);
+}
+
 /* A giveaway's link to pass on, with its copy button (ADR-110). */
 .merchboard-giveaway__link {
 	display: flex;

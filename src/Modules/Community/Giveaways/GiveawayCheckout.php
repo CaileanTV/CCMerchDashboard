@@ -144,6 +144,14 @@ final class GiveawayCheckout {
 			exit;
 		}
 
+		// Already in the cart (the creator pressed the button again): on to the checkout.
+		$item = self::item( WC()->cart );
+
+		if ( null !== $item && $giveaway->id === $item[ self::ITEM_KEY ] && 1 === count( WC()->cart->get_cart() ) ) {
+			wp_safe_redirect( wc_get_checkout_url() );
+			exit;
+		}
+
 		if ( ! WC()->cart->is_empty() ) {
 			wc_add_notice( __( 'A giveaway is paid on its own. Please finish or empty your cart first, and then pay the giveaway.', 'merchboard' ), 'notice' );
 			wp_safe_redirect( wc_get_cart_url() );

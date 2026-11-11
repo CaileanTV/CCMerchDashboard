@@ -376,50 +376,53 @@ export function GiveawaysSection() {
 							</Button>
 						</div>
 					) }
+					{ actions( row ) }
 				</>
 			),
 		},
-		{
-			key: 'actions',
-			header: __( 'Actions', 'merchboard' ),
-			render: ( row: GiveawayRow ) => (
-				<div className="merchboard-community-form__actions">
-					{ row.payUrl !== null && (
-						<Button
-							type="button"
-							onClick={ () =>
-								window.location.assign( row.payUrl ?? '' )
-							}
-						>
-							{ __( 'Pay in the shop', 'merchboard' ) }
-						</Button>
-					) }
-					{ row.status === 'ready' &&
-						row.mode === 'bot' &&
-						row.gift?.status === 'waiting' && (
-							<Button
-								type="button"
-								isBusy={ busy === `start-${ row.id }` }
-								disabled={ current.channel === null }
-								onClick={ () => void act( row, 'start' ) }
-							>
-								{ __( 'Start in the chat', 'merchboard' ) }
-							</Button>
-						) }
-					{ cancellable( row ) && (
-						<Button
-							type="button"
-							variant="secondary"
-							isBusy={ busy === `cancel-${ row.id }` }
-							onClick={ () => void act( row, 'cancel' ) }
-						>
-							{ __( 'Cancel', 'merchboard' ) }
-						</Button>
-					) }
-				</div>
-			),
-		},
 	];
+
+	const channel = current.channel;
+
+	// The actions sit under the status, so the table stays narrow.
+	function actions( row: GiveawayRow ) {
+		return (
+			<div className="merchboard-community-form__actions merchboard-giveaway__actions">
+				{ row.payUrl !== null && (
+					<Button
+						type="button"
+						onClick={ () =>
+							window.location.assign( row.payUrl ?? '' )
+						}
+					>
+						{ __( 'Pay in the shop', 'merchboard' ) }
+					</Button>
+				) }
+				{ row.status === 'ready' &&
+					row.mode === 'bot' &&
+					row.gift?.status === 'waiting' && (
+						<Button
+							type="button"
+							isBusy={ busy === `start-${ row.id }` }
+							disabled={ channel === null }
+							onClick={ () => void act( row, 'start' ) }
+						>
+							{ __( 'Start in the chat', 'merchboard' ) }
+						</Button>
+					) }
+				{ cancellable( row ) && (
+					<Button
+						type="button"
+						variant="secondary"
+						isBusy={ busy === `cancel-${ row.id }` }
+						onClick={ () => void act( row, 'cancel' ) }
+					>
+						{ __( 'Cancel', 'merchboard' ) }
+					</Button>
+				) }
+			</div>
+		);
+	}
 
 	return (
 		<>
