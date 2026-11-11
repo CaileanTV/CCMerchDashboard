@@ -16,19 +16,20 @@ I gang (fase 44, testes sammen med fase 43 på stg og udgives som 2.0.0). 44.1�
 
 **Chatten:**
 - Når gave-ordren er betalt, og creatoren er live, annoncerer botten gaven og åbner `!enter`-vinduet (20–180 sekunder, standard 60). Kun én gave ad gangen; den næste venter.
-- Når vinduet lukker, vinder en tilfældig deltager (`random_int`, hver Twitch-konto én gang, køberen kan også vinde). Botten skriver vinderen og linket til at hente gaven.
+- Botten bekræfter deltagerne: den første med det samme, derefter nye deltagere og dem, der skriver `!enter` igen ("Allerede med"), i én besked højst hvert 10. sekund. Creatoren kan slå det fra.
+- Når vinduet lukker, skriver botten "Tilmeldingen er lukket! Vinderen af … findes om 10 sekunder …". 10 sekunder senere vinder en tilfældig deltager (`random_int`, hver Twitch-konto én gang, køberen kan også vinde). Botten skriver vinderen og linket til at hente gaven.
 - Ingen deltagere: gaven venter. Den åbnes ikke igen af sig selv, men ved næste `!gift start`.
 - Creatoren og moderatorer kan skrive `!gift start` (start ventende gaver), `!gift pause` og `!gift resume`. Under pause kan der ikke købes gaver, og der startes ingen lodtrækning.
 - Teksterne er faste, på dansk eller engelsk efter creatorens valg.
 
 **Vinderen:**
-- Linket kræver Twitch-login (kundens login fra fase 43). Kun den vindende Twitch-konto får koden.
+- Linket åbner en gaveside med præmien, vinderen, fristen og knappen "Log ind med Twitch". Knappen kræver Twitch-login (kundens login fra fase 43) og henter gaven lige efter login. Kun den vindende Twitch-konto får koden; er man logget ind med en anden konto, tilbyder siden at logge ud.
 - Koden er en engangskupon, der gælder gave-produktet (alle varianter): ét stk. op til den betalte pris plus op til 50 kr. af fragten. En dyrere variant eller fragt betaler vinderen selv.
 - Koden lægges automatisk på, når produktet kommer i kurven. Åbner vinderen linket igen, vises samme kode.
 - Fristen er 24 timer. Derefter venter gaven på en ny lodtrækning (højst 3). Efter tredje gang går koden til køberen på e-mail.
 
 **Creatoren** (Community Features → Twitch gifting):
-- slå gifting til og fra (kræver forbundet Twitch-kanal), vinduets længde og sproget;
+- slå gifting til og fra (kræver forbundet Twitch-kanal), vinduets længde, sproget og "Bekræft deltagere i chatten";
 - se om man er live, sæt på pause eller genoptag (chatten får besked), "Start ventende gaver";
 - listen over de seneste 50 gaver: købt, produkt, fra (navn eller anonym), status, vinder og antal lodtrækninger;
 - klokken: en gave er købt, en gave er hentet.
@@ -43,7 +44,8 @@ I gang (fase 44, testes sammen med fase 43 på stg og udgives som 2.0.0). 44.1�
 - `GiftPurchase`: knappen, gave-kurven (`merchboard_gift` på kurv-linjen, kun gaven, ét stk.), fragten (`woocommerce_package_rates` → én sats `merchboard_gift`), linje-meta `_merchboard_gift` (creatoren) og gaven oprettet ved `processing`/`completed` (én pr. ordre, `INSERT IGNORE`). `cancelled`/`refunded` annullerer kun en gave uden vinder.
 - `GiftDraws`: lodtrækningerne. Chatbeskeder kommer fra webhooken som action `merchboard_twitch_chat_message`. Jobs via Action Scheduler (`merchboard_gift_draw`, `merchboard_gift_expire`) og som fallback ved hver chatbesked. Hver statusændring er en betinget `UPDATE` i `GiftRepository`, så job, webhook og klik aldrig flytter en gave to gange. Deltagere tilføjes under rækkelås.
 - `GiftCodes`: kupontypen `merchboard_twitch_gift` (kupon-meta `_merchboard_gift_id`), rabat pr. linje og et negativt gebyr for fragten. Koden gælder kun, mens gaven er `claimed` eller `returned` med samme kupon.
-- `GiftClaim`: `?merchboard_gift_claim=<token>` (`template_redirect`), Twitch-login via `ShopTwitchController::link( 'login', 'claim:<token>' )`.
+- `GiftClaim`: gavesiden `?merchboard_gift_claim=<token>` (`template_redirect`, skabelon `templates/community/gift-claim.php`) og knappen `&merchboard_gift_redeem=1`, Twitch-login via `ShopTwitchController::link( 'login', 'redeem:<token>' )`.
+- Bekræftelser og ventetid: `GiftDraws::confirm()` under `GiftRepository::lock()` (`GET_LOCK`), job `merchboard_gift_confirm`; `GiftDraws::closing()` sender "Tilmeldingen er lukket" og planlægger vinderen 10 sekunder senere.
 - `GiftNotices`: lytter på `merchboard_gift_event` (`bought`, `won`, `claimed`, `returned`) og sender notifikationer, køber-mails og ordrenoter.
 - `TwitchLiveStatus` (Alerts): `GET helix/streams`, svaret gemmes i 60 sekunder. `CommunityModule::live()` svarer "live" uden at spørge Twitch, når creatorens testtilstand er slået til (kun med forbundet kanal).
 - `Admin/GiftingTestModeSection`: testtilstanden på creatorens redigeringsside (`merchboard_creators_edit_sections`, admin-post `merchboard_save_gifting_test_mode`, nonce pr. creator).
@@ -59,9 +61,9 @@ I gang (fase 44, testes sammen med fase 43 på stg og udgives som 2.0.0). 44.1�
 
 ## Database/data used
 - Tabellen `merchboard_gifts` (schema-version 50), se [DATABASE.md](../DATABASE.md#twitch-gaver-schema-version-50-adr-107).
-- Creator-meta `twitch_gifting` (`enabled`, `paused`, `window`, `language`, `test_mode`).
+- Creator-meta `twitch_gifting` (`enabled`, `paused`, `window`, `language`, `test_mode`, `confirm`).
 - Linje-meta `_merchboard_gift` på gave-ordren, kupon-meta `_merchboard_gift_id` på koden.
-- Transienter `merchboard_twitch_live_<md5>` (60 sekunder), `merchboard_gift_run_<creator>` og `merchboard_gift_tried_<creator>` (6 timer).
+- Transienter `merchboard_twitch_live_<md5>` (60 sekunder), `merchboard_gift_run_<creator>` og `merchboard_gift_tried_<creator>` (6 timer), `merchboard_gift_confirm_<gave>` og `merchboard_gift_reveal_<gave>` (1 time).
 
 ## Permissions
 - Dashboardet: creator med dashboard-adgang via `CreatorContext` (ADR-007). Skrivninger er blokeret under "Se som creator" (`ImpersonationGuard`), fordi de taler i creatorens chat.
@@ -82,7 +84,7 @@ I gang (fase 44, testes sammen med fase 43 på stg og udgives som 2.0.0). 44.1�
 WooCommerce, Alerts-modulet (Twitch-app, chatbot og webhook) og kundens Twitch-login (fase 43). Action Scheduler (WooCommerce) til jobs.
 
 ## Tests
-- Integration: indstillinger og audit, testtilstanden (admin-formularen, audit, creatorens formular bevarer den), én gave pr. ordre, annoncering og lodtrækning, ingen deltagere uden spam, gaver betalt offline og `!gift start`, pause, ikke hentet, refundering kun uden vinder, privacy og creator-sletning.
+- Integration: indstillinger og audit, bekræftelser i chatten og ventetiden før vinderen, gavesiden og knappen (login, anden konto, vinderen, igen), testtilstanden (admin-formularen, audit, creatorens formular bevarer den), én gave pr. ordre, annoncering og lodtrækning, ingen deltagere uden spam, gaver betalt offline og `!gift start`, pause, ikke hentet, refundering kun uden vinder, privacy og creator-sletning.
 - Unit: indstillinger, tekster og gave-rækken.
 - Jest: parseren og siden (gem, pause, start, feltfejl, testtilstand).
 - Impersonation: skrivningerne er blokeret.

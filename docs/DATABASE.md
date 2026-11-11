@@ -25,7 +25,7 @@
 | `claimed_order_id` | bigint unsigned NULL | Vinderens ordre med koden |
 | `created_at`, `updated_at` | datetime | UTC |
 
-Indeks: `creator_status` og `status_deadline`. Statusændringer er betingede `UPDATE`s (kun fra den forventede status). Deltagere tilføjes under rækkelås. Creator-meta `twitch_gifting` (`enabled`, `paused`, `window`, `language` og `test_mode`, som kun en administrator sætter); linje-meta `_merchboard_gift` (creatoren) på gave-ordren; kupon-meta `_merchboard_gift_id` på koden. Navnene slettes med privacy-værktøjerne (efter køberens e-mail), rækkerne med creatoren og tabellen ved opt-in-afinstallation. Kuponerne og ordrerne bevares (butikkens data).
+Indeks: `creator_status` og `status_deadline`. Statusændringer er betingede `UPDATE`s (kun fra den forventede status). Deltagere tilføjes under rækkelås. Creator-meta `twitch_gifting` (`enabled`, `paused`, `window`, `language`, `confirm` og `test_mode`, som kun en administrator sætter); linje-meta `_merchboard_gift` (creatoren) på gave-ordren; kupon-meta `_merchboard_gift_id` på koden. Navnene slettes med privacy-værktøjerne (efter køberens e-mail), rækkerne med creatoren og tabellen ved opt-in-afinstallation. Kuponerne og ordrerne bevares (butikkens data).
 
 ## Produkttags på grundprodukter (schema-version 48, ADR-100)
 - `merchboard_designer_bases.tag_ids` (`longtext`, JSON-liste af `product_tag`-term-id'er, NULL uden tags; migration 48, `AddDesignerBaseTags`). Eksisterende grundprodukter har ingen tags.
