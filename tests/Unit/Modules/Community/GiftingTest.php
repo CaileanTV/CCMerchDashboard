@@ -40,24 +40,42 @@ final class GiftingTest extends TestCase {
 		self::assertTrue( $settings->open() );
 		self::assertSame( 90, $settings->window );
 		self::assertSame( 'en', $settings->language );
+		self::assertFalse( $settings->test_mode );
 		self::assertSame(
 			array(
-				'enabled'  => true,
-				'paused'   => false,
-				'window'   => 90,
-				'language' => 'en',
+				'enabled'   => true,
+				'paused'    => false,
+				'window'    => 90,
+				'language'  => 'en',
+				'test_mode' => false,
 			),
 			$settings->to_stored()
 		);
 
 		$odd = GiftingSettings::from_stored(
 			array(
-				'enabled'  => 'yes',
-				'window'   => 500,
-				'language' => 'de',
+				'enabled'   => 'yes',
+				'window'    => 500,
+				'language'  => 'de',
+				'test_mode' => 1,
 			)
 		);
-		self::assertSame( array( false, 60, 'da' ), array( $odd->enabled, $odd->window, $odd->language ) );
+		self::assertSame( array( false, 60, 'da', false ), array( $odd->enabled, $odd->window, $odd->language, $odd->test_mode ) );
+	}
+
+	public function test_the_test_mode_is_kept_by_a_pause_and_stored(): void {
+		$test = GiftingSettings::from_stored(
+			array(
+				'enabled'   => true,
+				'test_mode' => true,
+			)
+		);
+
+		self::assertTrue( $test->test_mode );
+		self::assertTrue( $test->with_paused( true )->test_mode, 'A pause from the chat keeps the test mode.' );
+		self::assertTrue( $test->to_stored()['test_mode'] );
+		self::assertFalse( $test->with_test_mode( false )->test_mode );
+		self::assertTrue( $test->with_test_mode( false )->open(), 'The test mode does not change whether gifting is open.' );
 	}
 
 	public function test_a_paused_gifting_is_not_open(): void {

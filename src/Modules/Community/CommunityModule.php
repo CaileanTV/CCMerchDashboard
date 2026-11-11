@@ -26,6 +26,7 @@ use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerLogin;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchLiveStatus;
 use MerchBoard\Modules\Alerts\Rest\ShopTwitchController;
+use MerchBoard\Modules\Community\Admin\GiftingTestModeSection;
 use MerchBoard\Modules\Community\Dashboard\CommunityDashboardSection;
 use MerchBoard\Modules\Community\Gifting\Gift;
 use MerchBoard\Modules\Community\Gifting\GiftClaim;
@@ -169,6 +170,13 @@ final class CommunityModule implements Module {
 		// The customer's Twitch account and tiers on the administrator's order page.
 		( new TwitchSubOrderInfo( static fn( int $creator_id ): string => $container->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '' ) )->register();
 		( new CommunityDashboardSection() )->register();
+		// The test mode of a creator's gifting, on the creator's edit page (administrators).
+		add_action(
+			'admin_init',
+			static function () use ( $container ): void {
+				( new GiftingTestModeSection( $container->get( GiftingSettingsRepository::class ), $container->get( CreatorRepository::class ), $container->get( Logger::class ) ) )->register();
+			}
+		);
 
 		add_action(
 			'rest_api_init',
@@ -312,6 +320,7 @@ final class CommunityModule implements Module {
 
 	/**
 	 * Whether a creator is live on Twitch; null without a connected channel.
+	 * In the test mode (set by an administrator) the creator counts as live.
 	 *
 	 * @param Container $c          Container.
 	 * @param int       $creator_id Creator.
@@ -319,7 +328,11 @@ final class CommunityModule implements Module {
 	private static function live( Container $c, int $creator_id ): ?bool {
 		$broadcaster = self::broadcaster( $c, $creator_id );
 
-		return null === $broadcaster ? null : $c->get( TwitchLiveStatus::class )->live( $broadcaster );
+		if ( null === $broadcaster ) {
+			return null;
+		}
+
+		return $c->get( GiftingSettingsRepository::class )->find( $creator_id )->test_mode || $c->get( TwitchLiveStatus::class )->live( $broadcaster );
 	}
 
 	/**

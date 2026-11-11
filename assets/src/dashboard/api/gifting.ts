@@ -54,6 +54,8 @@ export interface GiftingState extends GiftingValues {
 	readonly twitch: boolean;
 	/** Whether the creator is live; null without a channel. */
 	readonly live: boolean | null;
+	/** Whether an administrator set the test mode (the creator counts as live). */
+	readonly test: boolean;
 	readonly gifts: readonly GiftRow[];
 	/** After "start": whether a gift started. */
 	readonly started?: boolean;
@@ -141,7 +143,8 @@ export function parseGifting( body: unknown ): GiftingState | null {
 		return null;
 	}
 
-	const { enabled, paused, language, channel, twitch, live, started } = body;
+	const { enabled, paused, language, channel, twitch, live, test, started } =
+		body;
 	const window = whole( body.window );
 	const windowMin = whole( body.limits.window_min );
 	const windowMax = whole( body.limits.window_max );
@@ -151,6 +154,7 @@ export function parseGifting( body: unknown ): GiftingState | null {
 		typeof enabled !== 'boolean' ||
 		typeof paused !== 'boolean' ||
 		typeof twitch !== 'boolean' ||
+		typeof test !== 'boolean' ||
 		( live !== null && typeof live !== 'boolean' ) ||
 		( started !== undefined && typeof started !== 'boolean' ) ||
 		( language !== 'da' && language !== 'en' ) ||
@@ -179,6 +183,7 @@ export function parseGifting( body: unknown ): GiftingState | null {
 				: null,
 		twitch,
 		live,
+		test,
 		gifts: gifts as GiftRow[],
 		...( started === undefined ? {} : { started } ),
 	};

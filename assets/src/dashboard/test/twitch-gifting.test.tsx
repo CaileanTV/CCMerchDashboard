@@ -37,6 +37,7 @@ const STATE = {
 	channel: { login: 'nova' },
 	twitch: true,
 	live: true,
+	test: false,
 	gifts: [
 		GIFT,
 		{
@@ -94,6 +95,7 @@ describe( 'parseGifting', () => {
 			channel: 'nova',
 			twitch: true,
 			live: true,
+			test: false,
 			started: true,
 			gifts: [
 				{
@@ -147,6 +149,7 @@ describe( 'Twitch gifting (ADR-107)', () => {
 
 		expect( container.textContent ).toContain( 'Twitch channel: nova' );
 		expect( container.textContent ).toContain( 'You are live now.' );
+		expect( container.textContent ).not.toContain( 'test mode' );
 		expect( container.textContent ).toContain( 'Gifts waiting: 1' );
 		expect( container.textContent ).toContain( 'Anonymous' );
 		expect( container.textContent ).toContain( 'viewer1' );
@@ -195,6 +198,21 @@ describe( 'Twitch gifting (ADR-107)', () => {
 		expect( paused?.data ).toEqual( { paused: true } );
 		expect( container.textContent ).toContain( 'Gifting is paused' );
 		expect( button( container, 'Resume gifting' ) ).not.toBeNull();
+	} );
+
+	it( 'tells the creator when the test mode is on', async () => {
+		const { container } = await show( {
+			[ `GET ${ PATH }` ]: () =>
+				response( 200, { ...STATE, live: true, test: true } ),
+		} );
+
+		expect( container.textContent ).toContain(
+			'Test mode: you count as live.'
+		);
+		expect( container.textContent ).toContain(
+			'An administrator has turned on the test mode'
+		);
+		expect( container.textContent ).not.toContain( 'You are live now.' );
 	} );
 
 	it( 'shows the field errors and asks to connect Twitch', async () => {

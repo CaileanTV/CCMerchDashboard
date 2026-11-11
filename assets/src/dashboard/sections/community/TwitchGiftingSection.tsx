@@ -85,6 +85,21 @@ function timeText( utc: string, locale: string ): string {
 }
 
 /**
+ * Whether the creator is live, or counts as live in the test mode.
+ *
+ * @param state Gifting state.
+ */
+function liveText( state: GiftingState ): string {
+	if ( state.test ) {
+		return __( 'Test mode: you count as live.', 'merchboard' );
+	}
+
+	return state.live === true
+		? __( 'You are live now.', 'merchboard' )
+		: __( 'You are not live.', 'merchboard' );
+}
+
+/**
  * Community Features → Twitch gifting (phase 44, ADR-107): viewers buy a
  * gift on the creator's product page while the creator is live; the bot
  * draws a winner among those who type `!enter` in the chat, and the winner
@@ -306,10 +321,16 @@ export function TwitchGiftingSection() {
 							current.channel
 						) }
 						{ ' · ' }
-						{ current.live === true
-							? __( 'You are live now.', 'merchboard' )
-							: __( 'You are not live.', 'merchboard' ) }
+						{ liveText( current ) }
 					</p>
+				) }
+				{ current.test && (
+					<Alert tone="warning">
+						{ __(
+							'An administrator has turned on the test mode: you count as live on Twitch, so viewers can buy gifts and gifts are drawn in your chat even when you are not streaming.',
+							'merchboard'
+						) }
+					</Alert>
 				) }
 				{ error !== null && Object.keys( errors ).length === 0 && (
 					<ApiErrorState error={ error } />

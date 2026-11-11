@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-10T23:51:34+00:00\n"
+"PO-Revision-Date: 2026-11-11T05:50:54+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -116,6 +116,7 @@ msgid "Stop viewing as the creator"
 msgstr "Stop med at se som creatoren"
 
 #: src/Modules/Access/ImpersonationActions.php:141
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:156
 #: src/Modules/Creators/Admin/CategoryProposalActions.php:93
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:97
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:124
@@ -144,6 +145,7 @@ msgstr "Du har desværre ikke adgang til at administrere creators."
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:418
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:151
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsActions.php:92
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:163
 #: src/Modules/Creators/Admin/CategoryProposalActions.php:101
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
 #: src/Modules/Creators/Admin/CreatorDeletionActions.php:104
@@ -3266,6 +3268,7 @@ msgid "The longest sound must be empty or a whole number between 1 second and 60
 msgstr "Længste lyd skal være tom eller et helt tal mellem 1 sekund og 60 minutter. Intet blev gemt."
 
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:56
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:86
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:208
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:218
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:86
@@ -3838,6 +3841,58 @@ msgstr "Godkend først privatlivspolitikken og vilkårene for YouTube-chatbotten
 #: src/Modules/Alerts/Rest/MeChatbotController.php:316
 msgid "The chatbot settings are invalid."
 msgstr "Chatbot-indstillingerne er ugyldige."
+
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:83
+msgid "The test mode is on: the creator counts as live on Twitch."
+msgstr "Testtilstanden er slået til: creatoren regnes som live på Twitch."
+
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:84
+msgid "The test mode is off: gifts need the creator to be live on Twitch again."
+msgstr "Testtilstanden er slået fra: gaver kræver igen, at creatoren er live på Twitch."
+
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:85
+msgid "No changes were made to the test mode."
+msgstr "Testtilstanden blev ikke ændret."
+
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:87
+msgid "A technical error occurred. The test mode was not changed."
+msgstr "Der opstod en teknisk fejl. Testtilstanden blev ikke ændret."
+
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:107
+msgid "Twitch gifting test mode"
+msgstr "Testtilstand for Twitch-gifting"
+
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:114
+msgid "The test mode is on. Customers can buy gifts from this creator while the creator is offline."
+msgstr "Testtilstanden er slået til. Kunder kan købe gaver hos denne creator, mens creatoren er offline."
+
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:117
+msgid "In the test mode the creator counts as live on Twitch: the gift button shows on the creator's products, and gifts are drawn in the chat without a stream. Use it only for tests, e.g. on a staging site, and turn it off afterwards. The creator's Twitch channel must be connected and gifting turned on in the creator's dashboard."
+msgstr "I testtilstanden regnes creatoren som live på Twitch: gaveknappen vises på creatorens produkter, og der trækkes lod om gaver i chatten uden en stream. Brug den kun til test, fx på et staging-site, og slå den fra bagefter. Creatorens Twitch-kanal skal være forbundet, og gifting skal være slået til i creatorens dashboard."
+
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:120
+msgid "Twitch channel connected."
+msgstr "Twitch-kanal forbundet."
+
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:120
+msgid "No Twitch channel connected."
+msgstr "Ingen Twitch-kanal forbundet."
+
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:121
+msgid "Gifting is on."
+msgstr "Gifting er slået til."
+
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:121
+msgid "Gifting is off or paused."
+msgstr "Gifting er slået fra eller sat på pause."
+
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:133
+msgid "Treat the creator as live on Twitch (test mode)"
+msgstr "Regn creatoren som live på Twitch (testtilstand)"
+
+#: src/Modules/Community/Admin/GiftingTestModeSection.php:135
+msgid "Save test mode"
+msgstr "Gem testtilstand"
 
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:45
 #: src/Modules/Community/TwitchSubs/TwitchSubCoupon.php:357
@@ -17356,6 +17411,18 @@ msgid "Given back to the buyer"
 msgstr "Givet tilbage til køberen"
 
 #: build/dashboard.js:61
+msgid "Test mode: you count as live."
+msgstr "Testtilstand: du regnes som live."
+
+#: build/dashboard.js:61
+msgid "You are live now."
+msgstr "Du er live nu."
+
+#: build/dashboard.js:61
+msgid "You are not live."
+msgstr "Du er ikke live."
+
+#: build/dashboard.js:61
 msgid "Loading gifting…"
 msgstr "Henter gifting …"
 
@@ -17399,12 +17466,8 @@ msgid "Twitch channel: %s"
 msgstr "Twitch-kanal: %s"
 
 #: build/dashboard.js:63
-msgid "You are live now."
-msgstr "Du er live nu."
-
-#: build/dashboard.js:63
-msgid "You are not live."
-msgstr "Du er ikke live."
+msgid "An administrator has turned on the test mode: you count as live on Twitch, so viewers can buy gifts and gifts are drawn in your chat even when you are not streaming."
+msgstr "En administrator har slået testtilstanden til: du regnes som live på Twitch, så seere kan købe gaver, og der trækkes lod om gaver i din chat, selvom du ikke streamer."
 
 #: build/dashboard.js:63
 msgid "Twitch gifting saved."

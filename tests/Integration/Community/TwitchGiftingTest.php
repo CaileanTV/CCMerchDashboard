@@ -14,6 +14,7 @@ use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
+use MerchBoard\Modules\Community\Admin\GiftingTestModeSection;
 use MerchBoard\Modules\Community\Gifting\Gift;
 use MerchBoard\Modules\Community\Gifting\GiftCodes;
 use MerchBoard\Modules\Community\Gifting\GiftDraws;
@@ -146,6 +147,51 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		self::assertFalse( $paused->open() );
 		self::assertTrue( $this->settings->find( $this->nova )->paused );
 		self::assertSame( $before, (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT COUNT(*) FROM %i', $this->table( Tables::AUDIT_LOG ) ) ), 'A pause from the chat is not audited as the creator\'s change.' );
+	}
+
+	public function test_an_administrator_sets_the_test_mode_which_the_creators_form_keeps(): void {
+		require_once ABSPATH . 'wp-admin/includes/template.php';
+		$this->settings->save( $this->nova, $this->values( true ) );
+		$creators = new CreatorRepository( $this->wpdb );
+		$section  = new GiftingTestModeSection( $this->settings, $creators, new RecordingLogger() );
+		$form     = fn( int $creator_id, bool $on ): array => array(
+			'creator_id' => (string) $creator_id,
+			'_wpnonce'   => wp_create_nonce( GiftingTestModeSection::nonce_action( $creator_id ) ),
+		) + ( $on ? array( GiftingTestModeSection::FIELD => '1' ) : array() );
+
+		$url = $section->handle( $form( $this->nova, true ) );
+		self::assertStringContainsString( GiftingTestModeSection::RESULT_ARG . '=on', $url );
+		self::assertStringEndsWith( '#merchboard-gifting-test-mode', $url );
+		self::assertTrue( $this->settings->find( $this->nova )->test_mode );
+		$audit = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT action, actor_user_id, context FROM %i ORDER BY id DESC LIMIT 1', $this->table( Tables::AUDIT_LOG ) ), ARRAY_A );
+		self::assertSame( 'twitch_gifting_changed', $audit['action'] ?? null );
+		self::assertSame( '1', (string) ( $audit['actor_user_id'] ?? '' ), 'The administrator is the actor.' );
+		self::assertSame( array( 'changed_fields' => array( 'test_mode' ) ), json_decode( (string) ( $audit['context'] ?? '' ), true ) );
+		self::assertStringContainsString( '=no_changes', $section->handle( $form( $this->nova, true ) ) );
+
+		$this->settings->save( $this->nova, array( 'window' => 90 ) + $this->values( true ) );
+		$this->settings->set_paused( $this->nova, true );
+		self::assertTrue( $this->settings->find( $this->nova )->test_mode, 'The creator\'s own form and a pause keep the test mode.' );
+
+		$creator = $creators->find( $this->nova );
+		self::assertNotNull( $creator );
+		ob_start();
+		$section->render( $creator );
+		$html = (string) ob_get_clean();
+		self::assertStringContainsString( 'id="merchboard-gifting-test-mode"', $html );
+		self::assertStringContainsString( 'notice-warning', $html, 'The page warns while the test mode is on.' );
+		self::assertMatchesRegularExpression( '/name="' . GiftingTestModeSection::FIELD . '" value="1"\s+checked/', $html );
+
+		self::assertStringContainsString( '=off', $section->handle( $form( $this->nova, false ) ) );
+		self::assertFalse( $this->settings->find( $this->nova )->test_mode );
+		self::assertStringContainsString( '=not_found', $section->handle( $form( 999999, true ) ) );
+		self::assertNull( GiftingTestModeSection::result_message( '<script>' ) );
+
+		wp_set_current_user( $this->create_user( 'gifting-test-subscriber' ) );
+		ob_start();
+		$section->render( $creator );
+		self::assertSame( '', (string) ob_get_clean(), 'Only for users who manage creators.' );
+		wp_set_current_user( 1 );
 	}
 
 	public function test_a_gift_is_recorded_once_per_order(): void {

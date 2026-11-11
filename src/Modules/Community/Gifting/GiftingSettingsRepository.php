@@ -23,8 +23,9 @@ defined( 'ABSPATH' ) || exit;
  * Reads and saves a creator's gifting settings (ADR-107 pkt. 2) in creator
  * meta `twitch_gifting`. The creator saves them through `/me`; switching on
  * needs a connected Twitch channel. Pausing and resuming also come from the
- * chat (`!gift pause`/`!gift resume` by the creator or a moderator). The
- * audit lists changed field names only.
+ * chat (`!gift pause`/`!gift resume` by the creator or a moderator). An
+ * administrator sets the test mode on the creator's edit page; the creator's
+ * own form keeps it. The audit lists changed field names only.
  */
 final class GiftingSettingsRepository {
 
@@ -114,7 +115,7 @@ final class GiftingSettingsRepository {
 			throw new TwitchSubDiscountInvalid( $errors );
 		}
 
-		return $this->store( $creator_id, new GiftingSettings( true === $enabled, true === $paused, (int) $window, (string) $language ), true );
+		return $this->store( $creator_id, new GiftingSettings( true === $enabled, true === $paused, (int) $window, (string) $language, $this->find( $creator_id )->test_mode ), true );
 	}
 
 	/**
@@ -126,6 +127,25 @@ final class GiftingSettingsRepository {
 	 */
 	public function set_paused( int $creator_id, bool $paused ): GiftingSettings {
 		return $this->store( $creator_id, $this->find( $creator_id )->with_paused( $paused ), false );
+	}
+
+	/**
+	 * Turns the test mode on or off (an administrator on the creator's edit
+	 * page; audited).
+	 *
+	 * @param int  $creator_id Creator.
+	 * @param bool $test_mode  Test mode.
+	 * @return bool Whether it changed.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_test_mode( int $creator_id, bool $test_mode ): bool {
+		if ( $this->find( $creator_id )->test_mode === $test_mode ) {
+			return false;
+		}
+
+		$this->store( $creator_id, $this->find( $creator_id )->with_test_mode( $test_mode ), true );
+
+		return true;
 	}
 
 	/**

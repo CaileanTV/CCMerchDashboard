@@ -314,6 +314,7 @@ final class MeTwitchGiftingController extends RestController {
 				'channel'  => null === $login ? null : array( 'login' => $login ),
 				'twitch'   => ( $this->ready )(),
 				'live'     => null === $login ? null : ( $this->live )( $creator_id ),
+				'test'     => $settings->test_mode,
 				'gifts'    => array_map(
 					function ( Gift $gift ) use ( &$names ): array {
 						$names[ $gift->product_id ] ??= ( $this->product_name )( $gift->product_id );

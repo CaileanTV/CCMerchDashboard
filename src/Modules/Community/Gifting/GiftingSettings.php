@@ -14,7 +14,9 @@ defined( 'ABSPATH' ) || exit;
 /**
  * ADR-107 pkt. 2: gifting on or off, paused (by the creator, a moderator or
  * the dashboard), the `!enter` window in seconds (20–180, 60 by default) and
- * the language of the chat texts (Danish or English).
+ * the language of the chat texts (Danish or English). The test mode is set
+ * by an administrator only: the creator then counts as live, so gifts can be
+ * bought and drawn without streaming (testing on a staging site).
  */
 final readonly class GiftingSettings {
 
@@ -29,9 +31,10 @@ final readonly class GiftingSettings {
 	 * @param bool   $enabled  Whether gifting is on.
 	 * @param bool   $paused   Whether it is paused.
 	 * @param int    $window   `!enter` window in seconds.
-	 * @param string $language `da` or `en`.
+	 * @param string $language  `da` or `en`.
+	 * @param bool   $test_mode Whether the creator counts as live (set by an administrator).
 	 */
-	public function __construct( public bool $enabled, public bool $paused, public int $window, public string $language ) {
+	public function __construct( public bool $enabled, public bool $paused, public int $window, public string $language, public bool $test_mode = false ) {
 	}
 
 	/**
@@ -57,21 +60,23 @@ final readonly class GiftingSettings {
 			true === ( $stored['enabled'] ?? false ),
 			true === ( $stored['paused'] ?? false ),
 			is_int( $window ) && $window >= self::MIN_WINDOW && $window <= self::MAX_WINDOW ? $window : self::DEFAULT_WINDOW,
-			in_array( $stored['language'] ?? null, self::LANGUAGES, true ) ? (string) $stored['language'] : 'da'
+			in_array( $stored['language'] ?? null, self::LANGUAGES, true ) ? (string) $stored['language'] : 'da',
+			true === ( $stored['test_mode'] ?? false )
 		);
 	}
 
 	/**
 	 * The value to store.
 	 *
-	 * @return array{enabled: bool, paused: bool, window: int, language: string}
+	 * @return array{enabled: bool, paused: bool, window: int, language: string, test_mode: bool}
 	 */
 	public function to_stored(): array {
 		return array(
-			'enabled'  => $this->enabled,
-			'paused'   => $this->paused,
-			'window'   => $this->window,
-			'language' => $this->language,
+			'enabled'   => $this->enabled,
+			'paused'    => $this->paused,
+			'window'    => $this->window,
+			'language'  => $this->language,
+			'test_mode' => $this->test_mode,
 		);
 	}
 
@@ -88,6 +93,15 @@ final readonly class GiftingSettings {
 	 * @param bool $paused Paused.
 	 */
 	public function with_paused( bool $paused ): self {
-		return new self( $this->enabled, $paused, $this->window, $this->language );
+		return new self( $this->enabled, $paused, $this->window, $this->language, $this->test_mode );
+	}
+
+	/**
+	 * The same settings with the test mode on or off.
+	 *
+	 * @param bool $test_mode Test mode.
+	 */
+	public function with_test_mode( bool $test_mode ): self {
+		return new self( $this->enabled, $this->paused, $this->window, $this->language, $test_mode );
 	}
 }
