@@ -6412,6 +6412,7 @@ Accepteret af projektejeren 2026-11-11 (fase 46). Afløser ADR-088 pkt. 1, hvor 
 - **`free`:** billedet og teksterne er hver deres boks og trækkes hver for sig. Der vises ingen ramme om dem; alertboksen er usynlig og følger elementerne (omkredsen af de viste elementer), fordi animationer, gennemsigtighed og rotation virker på den.
 - **Skift til `free`:** elementerne får de bokse, de lige blev tegnet i, så intet flytter sig.
 - **Gamle navne:** `above`, `side` og `overlay` læses som `top`, `left` og `background` (de ser ens ud), i PHP og i overlayet. Der er ingen migration og ingen omregning i editoren.
+- **Tekst rundt om billedet** (projektejerens ønske samme dag) kræver billedets egen boks: vælges "Rundt om billedet", skifter layoutet automatisk til `free` med elementerne, hvor de stod, og de fire andre layouts kan ikke vælges, mens den er slået til. Layoutpanelet siger hvorfor. Et gemt design med en anden kombination laves om til `free`, når det åbnes i designeren.
 
 ## Context
 I alertdesigneren (ADR-088) er lærredet hele OBS-skærmen (1920 × 1080). Alertboksen er en firkant på den, og layoutet (`above`, `side`, `overlay`, `free`) placerer både billede og tekster i boksen. Projektejeren vil have, at lærredet er selve alertboksen, og at layoutet kun bestemmer, hvor billedet sidder.
