@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-11T19:01:36+00:00\n"
+"POT-Creation-Date: 2026-11-11T19:18:51+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -17053,7 +17053,7 @@ msgid "On YouTube the bot writes only during your livestreams. If you are not li
 msgstr ""
 
 #: build/dashboard.js:16
-msgid "The Community Features (Twitch subscriber discount and Twitch gifting) use the same Twitch connection. If you remove the bot, they stop too."
+msgid "You do not have to use our bot for everything: the purchase messages in your chat can stay off. But Twitch gifting and the Twitch subscriber discount need our bot connected to your channel, so if you remove the bot, they stop too."
 msgstr ""
 
 #. translators: 1: bot login.
@@ -17544,7 +17544,7 @@ msgid "Connect Twitch"
 msgstr ""
 
 #: build/dashboard.js:62
-msgid "The same Twitch connection is used by all Community Features and by the alert chatbot, so you only connect once."
+msgid "This feature needs our bot connected to your Twitch channel. It is the same connection as the alert chatbot, so you only connect once, and you do not have to use the bot for anything else: the purchase messages in your chat can stay off."
 msgstr ""
 
 #: build/dashboard.js:62

@@ -438,7 +438,7 @@ function PlatformCard( {
 					{ platform.platform === 'twitch' && (
 						<p className="merchboard-field__help">
 							{ __(
-								'The Community Features (Twitch subscriber discount and Twitch gifting) use the same Twitch connection. If you remove the bot, they stop too.',
+								'You do not have to use our bot for everything: the purchase messages in your chat can stay off. But Twitch gifting and the Twitch subscriber discount need our bot connected to your channel, so if you remove the bot, they stop too.',
 								'merchboard'
 							) }
 						</p>

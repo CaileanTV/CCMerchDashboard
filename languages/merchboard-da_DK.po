@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-11T19:01:42+00:00\n"
+"PO-Revision-Date: 2026-11-11T19:18:58+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -17053,8 +17053,8 @@ msgid "On YouTube the bot writes only during your livestreams. If you are not li
 msgstr "På YouTube skriver botten kun under dine livestreams. Er du ikke live, når nogen køber, tjekker den én gang til efter 5 minutter; ellers bliver købet ikke annonceret i chatten. Tip: gør botten til moderator på din kanal, så YouTube ikke holder dens beskeder tilbage."
 
 #: build/dashboard.js:16
-msgid "The Community Features (Twitch subscriber discount and Twitch gifting) use the same Twitch connection. If you remove the bot, they stop too."
-msgstr "Community Features (Twitch-subscriber-rabat og Twitch-gifting) bruger den samme Twitch-forbindelse. Fjerner du botten, stopper de også."
+msgid "You do not have to use our bot for everything: the purchase messages in your chat can stay off. But Twitch gifting and the Twitch subscriber discount need our bot connected to your channel, so if you remove the bot, they stop too."
+msgstr "Du behøver ikke bruge vores bot til det hele: købsbeskederne i din chat kan sagtens være slået fra. Men Twitch-gifting og Twitch-subscriber-rabatten kræver, at vores bot er forbundet til din kanal, så fjerner du botten, stopper de også."
 
 #. translators: 1: bot login.
 #: build/dashboard.js:17
@@ -17544,8 +17544,8 @@ msgid "Connect Twitch"
 msgstr "Forbind Twitch"
 
 #: build/dashboard.js:62
-msgid "The same Twitch connection is used by all Community Features and by the alert chatbot, so you only connect once."
-msgstr "Den samme Twitch-forbindelse bruges af alle Community Features og af alert-chatbotten, så du forbinder kun én gang."
+msgid "This feature needs our bot connected to your Twitch channel. It is the same connection as the alert chatbot, so you only connect once, and you do not have to use the bot for anything else: the purchase messages in your chat can stay off."
+msgstr "Denne funktion kræver, at vores bot er forbundet til din Twitch-kanal. Det er den samme forbindelse som alert-chatbotten, så du forbinder kun én gang, og du behøver ikke bruge botten til andet: købsbeskederne i din chat kan sagtens være slået fra."
 
 #: build/dashboard.js:62
 msgid "You can remove it under Alerts → Chatbot."

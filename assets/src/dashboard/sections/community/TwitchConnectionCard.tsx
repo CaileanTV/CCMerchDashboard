@@ -134,7 +134,7 @@ export function TwitchConnectionCard( {
 			{ error !== null && <ApiErrorState error={ error } /> }
 			<p className="merchboard-field__help">
 				{ __(
-					'The same Twitch connection is used by all Community Features and by the alert chatbot, so you only connect once.',
+					'This feature needs our bot connected to your Twitch channel. It is the same connection as the alert chatbot, so you only connect once, and you do not have to use the bot for anything else: the purchase messages in your chat can stay off.',
 					'merchboard'
 				) }
 				{ channel !== null && (

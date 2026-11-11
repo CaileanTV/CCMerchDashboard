@@ -172,7 +172,7 @@ describe( 'Twitch subscriber discount campaigns (ADR-106)', () => {
 
 		expect( container.textContent ).toContain( 'Connected as nova' );
 		expect( container.textContent ).toContain(
-			'The same Twitch connection is used by all Community Features and by the alert chatbot'
+			'This feature needs our bot connected to your Twitch channel.'
 		);
 		expect( container.textContent ).toContain( 'At most 16,67 %' );
 
