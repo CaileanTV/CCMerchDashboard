@@ -407,9 +407,9 @@ final class GiftDraws {
 	 */
 	private function close( Gift $gift ): void {
 		if ( array() !== $gift->entrants ) {
-			$reveal = get_transient( self::reveal_key( $gift->id ) );
+			$reveal = self::reveal_at( $gift->id );
 
-			if ( ! is_int( $reveal ) ) {
+			if ( null === $reveal ) {
 				$this->closing( $gift );
 
 				return;
@@ -464,7 +464,7 @@ final class GiftDraws {
 		}
 
 		try {
-			if ( is_int( get_transient( self::reveal_key( $gift->id ) ) ) ) {
+			if ( null !== self::reveal_at( $gift->id ) ) {
 				return;
 			}
 
@@ -620,6 +620,19 @@ final class GiftDraws {
 			'next'  => is_int( $state['next'] ?? null ) ? $state['next'] : 0,
 			'job'   => is_int( $state['job'] ?? null ) ? $state['job'] : 0,
 		);
+	}
+
+	/**
+	 * When a closed window's winner is revealed, or null before the closing.
+	 * Without an object cache the transient comes back from the options
+	 * table as a string in a later request.
+	 *
+	 * @param int $gift_id Gift.
+	 */
+	private static function reveal_at( int $gift_id ): ?int {
+		$reveal = get_transient( self::reveal_key( $gift_id ) );
+
+		return is_int( $reveal ) || ( is_string( $reveal ) && ctype_digit( $reveal ) ) ? (int) $reveal : null;
 	}
 
 	/**

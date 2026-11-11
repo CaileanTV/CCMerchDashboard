@@ -333,9 +333,11 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		self::assertSame( '⏳ Tilmeldingen er lukket! Vinderen af Stream tee findes om 10 sekunder …', $this->sent[3][1] ?? null );
 		self::assertSame( Gift::ENTERING, $this->gifts->find( $gift->id )?->status, 'No winner yet.' );
 		self::assertSame( array( GiftDraws::DRAW_HOOK, array( $gift->id ), 11 ), $this->jobs[2] ?? null, 'A job reveals the winner.' );
+		$this->as_stored( $gift->id );
 		$this->chat( '444', 'viewer4', '!enter' );
 		$this->draws->draw( $gift->id );
-		self::assertCount( 4, $this->sent, 'Late entries and an early job change nothing.' );
+		self::assertCount( 4, $this->sent, 'Late entries and an early job change nothing, also in a later request.' );
+		self::assertCount( 3, $this->jobs, 'The entries are closed once.' );
 		self::assertArrayNotHasKey( 444, (array) $this->gifts->find( $gift->id )?->entrants );
 
 		$this->reveal_now( $gift->id );
@@ -600,7 +602,19 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 	 * @param int $id Gift.
 	 */
 	private function reveal_now( int $id ): void {
-		set_transient( 'merchboard_gift_reveal_' . $id, time() - 1, HOUR_IN_SECONDS );
+		set_transient( 'merchboard_gift_reveal_' . $id, (string) ( time() - 1 ), HOUR_IN_SECONDS );
+	}
+
+	/**
+	 * The reveal time as a later request reads it without an object cache:
+	 * the options table gives it back as a string.
+	 *
+	 * @param int $id Gift.
+	 */
+	private function as_stored( int $id ): void {
+		$reveal = get_transient( 'merchboard_gift_reveal_' . $id );
+		self::assertIsInt( $reveal );
+		set_transient( 'merchboard_gift_reveal_' . $id, (string) $reveal, HOUR_IN_SECONDS );
 	}
 
 	/**
