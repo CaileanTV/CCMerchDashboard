@@ -1214,7 +1214,7 @@ Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele al
 - **46.6 Én boks eller frit:** projektejerens ønske 2026-11-11 (rammen om alerten er forstyrrende): de fire første layouts gør billede og tekst til én boks uden rammer om elementerne, og Frit viser kun elementernes egne bokse; alertboksen følger dem. Gamle layoutnavne læses som de nye (ADR-109 statusnote).
 - **46.7 Tekst rundt om billedet:** projektejerens ønske 2026-11-11: "Rundt om billedet" skifter automatisk til Frit, og de andre layouts er utilgængelige med en besked, mens den er slået til. Runtime-test 2026-11-11 i den lokale Playground (Local kørte ikke): fanen Community, community-siderne med Twitch-kortet, og et design med det gamle layout "ved siden af" blev omregnet til "billede til venstre" uden at blive gemt. Fund rettet i c167a68: editoren blev stående på "Gemmer…".
 
-- **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Testpakke på stg ✅ 2026-11-11 (bygget fra c4e5e2d, ZIP SHA-256 `7160bb81…`). Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
+- **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Testpakke på stg ✅ 2026-11-11 (bygget fra b6d0dfa, ZIP SHA-256 `b2df6310…`). Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
 
 ## Senere (uprioriteret)
 
