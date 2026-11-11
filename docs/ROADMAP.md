@@ -1215,7 +1215,7 @@ Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele al
 - **46.6 Én boks eller frit:** ✅ (62b9d36) projektejerens ønske 2026-11-11 (rammen om alerten er forstyrrende): de fire første layouts gør billede og tekst til én boks uden rammer om elementerne, og Frit viser kun elementernes egne bokse; alertboksen følger dem. Gamle layoutnavne læses som de nye (ADR-109 statusnote). Runtime-testet i Playground: et gammelt "ved siden af"-design vises som én boks til venstre, og skift til Frit og tilbage beholder elementernes plads.
 - **46.7 Tekst rundt om billedet:** ✅ (ae1d12e) projektejerens ønske 2026-11-11: "Rundt om billedet" skifter automatisk til Frit, og de andre layouts er utilgængelige med en besked, mens den er slået til. Runtime-testet i Playground.
 
-- **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Testpakke på stg ✅ 2026-11-11 (bygget fra b64d5ca, ZIP SHA-256 `8484b782…`). Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
+- **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Testpakke på stg ✅ 2026-11-11 (bygget fra 6b7e207, ZIP SHA-256 `290b5731…`). Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
 
 ## Senere (uprioriteret)
 
