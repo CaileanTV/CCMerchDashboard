@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\Community\TwitchSubs;
 use Closure;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerLogin;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchException;
 
@@ -93,13 +94,18 @@ final class TwitchSubDiscount {
 
 	/**
 	 * The creator and the campaign offered on a parent product today
-	 * (whatever the customer's subscription), or null.
+	 * (whatever the customer's subscription), or null; always null while an
+	 * administrator has the discount switched off (ADR-108).
 	 *
 	 * @param int $product_id Parent product.
 	 * @return array{creator_id: int, campaign: TwitchSubCampaign}|null
 	 * @throws DatabaseException When the settings cannot be read.
 	 */
 	public function offer( int $product_id ): ?array {
+		if ( ! Settings::twitch_sub_discount_enabled() ) {
+			return null;
+		}
+
 		$creator_id = ( $this->creator_of )( $product_id );
 
 		if ( null === $creator_id || null === ( $this->broadcaster_of )( $creator_id ) ) {

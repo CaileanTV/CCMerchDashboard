@@ -34,6 +34,8 @@ export interface TwitchSubCampaign {
 }
 
 export interface TwitchSubDiscountValues {
+	/** Whether the creator has the discount switched on (ADR-108). */
+	readonly enabled: boolean;
 	/** Whether gifted subscriptions count (all campaigns). */
 	readonly gifted: boolean;
 	readonly campaigns: readonly TwitchSubCampaign[];
@@ -179,10 +181,11 @@ export function parseTwitchSubDiscount(
 		profitPercents[ product ] = share;
 	}
 
-	const { gifted, twitch, channel } = body;
+	const { enabled, gifted, twitch, channel } = body;
 	const campaigns = body.campaigns.map( parseCampaign );
 
 	if (
+		typeof enabled !== 'boolean' ||
 		typeof gifted !== 'boolean' ||
 		typeof twitch !== 'boolean' ||
 		campaigns.some( ( campaign ) => campaign === null ) ||
@@ -195,6 +198,7 @@ export function parseTwitchSubDiscount(
 	}
 
 	return {
+		enabled,
 		gifted,
 		campaigns: campaigns as TwitchSubCampaign[],
 		profitPercents,
@@ -256,6 +260,7 @@ export function saveTwitchSubDiscount(
 			path: PATH,
 			method: 'POST',
 			data: {
+				enabled: values.enabled,
 				gifted: values.gifted,
 				campaigns: values.campaigns.map( ( campaign ) => ( {
 					id: campaign.id,

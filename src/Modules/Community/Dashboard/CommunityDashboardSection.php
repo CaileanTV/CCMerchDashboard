@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Community\Dashboard;
 
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Dashboard\DashboardSections;
 
 defined( 'ABSPATH' ) || exit;
@@ -29,7 +30,8 @@ final class CommunityDashboardSection {
 	}
 
 	/**
-	 * Adds the group before the profile (at the end when there is none).
+	 * Adds the group before the profile (at the end when there is none),
+	 * with the features an administrator has switched on (ADR-108).
 	 *
 	 * @param mixed $sections Sections.
 	 * @return mixed
@@ -39,24 +41,32 @@ final class CommunityDashboardSection {
 			return $sections;
 		}
 
-		$group = array(
-			array(
-				'id'          => 'community-twitch-discount',
-				'label'       => __( 'Twitch subscriber discount', 'merchboard' ),
-				'path'        => 'community/twitch-discount',
-				'capability'  => Capabilities::ACCESS_DASHBOARD,
-				'group'       => 'community',
-				'group_label' => __( 'Community Features', 'merchboard' ),
-			),
-			array(
-				'id'          => 'community-twitch-gifting',
-				'label'       => __( 'Twitch gifting', 'merchboard' ),
-				'path'        => 'community/twitch-gifting',
-				'capability'  => Capabilities::ACCESS_DASHBOARD,
-				'group'       => 'community',
-				'group_label' => __( 'Community Features', 'merchboard' ),
-			),
+		$group = array_values(
+			array_filter(
+				array(
+					Settings::twitch_sub_discount_enabled() ? array(
+						'id'          => 'community-twitch-discount',
+						'label'       => __( 'Twitch subscriber discount', 'merchboard' ),
+						'path'        => 'community/twitch-discount',
+						'capability'  => Capabilities::ACCESS_DASHBOARD,
+						'group'       => 'community',
+						'group_label' => __( 'Community Features', 'merchboard' ),
+					) : null,
+					Settings::twitch_gifting_enabled() ? array(
+						'id'          => 'community-twitch-gifting',
+						'label'       => __( 'Twitch gifting', 'merchboard' ),
+						'path'        => 'community/twitch-gifting',
+						'capability'  => Capabilities::ACCESS_DASHBOARD,
+						'group'       => 'community',
+						'group_label' => __( 'Community Features', 'merchboard' ),
+					) : null,
+				)
+			)
 		);
+
+		if ( array() === $group ) {
+			return $sections;
+		}
 
 		$result = array();
 		$added  = false;

@@ -13,6 +13,7 @@ use Closure;
 use Exception;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\WooCommercePaidOrderReader;
 use WC_Cart;
 use WC_Discounts;
@@ -129,11 +130,16 @@ final class GiftPurchase {
 	}
 
 	/**
-	 * The creator whose gifts can be bought on a parent product now, or null.
+	 * The creator whose gifts can be bought on a parent product now, or null
+	 * (also while an administrator has gifting switched off; ADR-108).
 	 *
 	 * @param int $product_id Parent product.
 	 */
 	public function giftable( int $product_id ): ?int {
+		if ( ! Settings::twitch_gifting_enabled() ) {
+			return null;
+		}
+
 		$creator_id = ( $this->creator_of )( $product_id );
 
 		if ( null === $creator_id || ! $this->settings->find( $creator_id )->open() ) {
@@ -239,7 +245,7 @@ final class GiftPurchase {
 		$product    = $gift['data'] ?? null;
 		$creator_id = $product instanceof WC_Product ? ( $this->creator_of )( self::parent_of( $product ) ) : null;
 
-		if ( null === $creator_id || ! $this->settings->find( $creator_id )->open() ) {
+		if ( null === $creator_id || ! Settings::twitch_gifting_enabled() || ! $this->settings->find( $creator_id )->open() ) {
 			wc_add_notice( __( 'Gifts cannot be bought for this stream right now. Please remove the gift from the cart.', 'merchboard' ), 'error' );
 		}
 	}

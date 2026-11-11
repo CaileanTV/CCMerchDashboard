@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\Community\Rest;
 use Closure;
 use MerchBoard\Core\Http\RestController;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCampaign;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscountInvalid;
@@ -27,7 +28,8 @@ defined( 'ABSPATH' ) || exit;
 /**
  * `/me`-scoped (ADR-007; the creator only through CreatorContext):
  *
- * - `GET /me/community/twitch-sub-discount`: whether gifted subscriptions
+ * - `GET /me/community/twitch-sub-discount`: whether the discount is on,
+ *   whether gifted subscriptions
  *   count, the campaigns (percents with up to 2 decimals), the creator's profit
  *   percent per product (the most a campaign may give is the lowest among
  *   its products), the connected Twitch channel and whether Twitch is set
@@ -99,9 +101,14 @@ final class MeTwitchSubDiscountController extends RestController {
 	}
 
 	/**
-	 * Only creators with dashboard access.
+	 * Only creators with dashboard access, while an administrator has the discount
+	 * switched on (ADR-108; 404 otherwise).
 	 */
 	public function permission(): bool|WP_Error {
+		if ( ! Settings::twitch_sub_discount_enabled() ) {
+			return self::error( 'merchboard_community_disabled', __( 'The Twitch subscriber discount is not available.', 'merchboard' ), 404 );
+		}
+
 		$creator = $this->require_creator( $this->context );
 
 		return $creator instanceof WP_Error ? $creator : true;
@@ -149,6 +156,10 @@ final class MeTwitchSubDiscountController extends RestController {
 					$values[ $field ] = $body[ $field ] ?? null;
 				}
 
+				if ( array_key_exists( 'enabled', $body ) ) {
+					$values['enabled'] = $body['enabled'];
+				}
+
 				try {
 					$saved = $this->settings->save( $creator->id, $values );
 				} catch ( TwitchSubDiscountInvalid $e ) {
@@ -170,6 +181,7 @@ final class MeTwitchSubDiscountController extends RestController {
 		$login    = ( $this->channel )( $creator_id );
 		$response = new WP_REST_Response(
 			array(
+				'enabled'         => $settings->enabled,
 				'gifted'          => $settings->gifted,
 				'campaigns'       => array_map(
 					static fn( TwitchSubCampaign $campaign ): array => array(

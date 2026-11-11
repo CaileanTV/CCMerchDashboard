@@ -162,6 +162,18 @@ final class Settings {
 	public const PRINTIFY_ENABLED = 'printify_enabled';
 
 	/**
+	 * Whether creators can use the Twitch subscriber discount (ADR-108). Off
+	 * by default; enabled only by exactly boolean true.
+	 */
+	public const COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED = 'community_twitch_sub_discount_enabled';
+
+	/**
+	 * Whether creators can use Twitch gifting (ADR-108); off pauses it for
+	 * the whole shop. Off by default; enabled only by exactly boolean true.
+	 */
+	public const COMMUNITY_TWITCH_GIFTING_ENABLED = 'community_twitch_gifting_enabled';
+
+	/**
 	 * Whether customers get an optional "username" field in the checkout
 	 * (ADR-065 pkt. 9, step 25.9.1). Off by default; shown only while alerts
 	 * are on; enabled only by exactly boolean true.
@@ -259,31 +271,33 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool}
 	 */
 	public static function defaults(): array {
 		return array(
-			self::DELETE_DATA_ON_UNINSTALL  => false,
-			self::DASHBOARD_SLUG            => self::DEFAULT_DASHBOARD_SLUG,
-			self::COUNTED_ORDER_STATUSES    => self::DEFAULT_COUNTED_ORDER_STATUSES,
-			self::LOGO_ATTACHMENT_ID        => 0,
-			self::PAYOUT_HOLDING_DAYS       => self::DEFAULT_PAYOUT_HOLDING_DAYS,
-			self::PAYOUT_GIFT_CARD_PROVIDER => '',
-			self::COMPANY_CVR               => '',
-			self::COMPANY_NAME              => '',
-			self::COMPANY_EMAIL             => '',
-			self::ALERTS_ENABLED            => false,
-			self::CHECKOUT_USERNAME_ENABLED => false,
-			self::CHECKOUT_USERNAME_LABEL   => '',
-			self::CHECKOUT_USERNAME_HELP    => '',
-			self::SOUND_MAX_BYTES           => self::DEFAULT_SOUND_MAX_BYTES,
-			self::SOUND_MAX_SECONDS         => self::DEFAULT_SOUND_MAX_SECONDS,
-			self::DESIGNER_ENABLED          => false,
-			self::PRINTFUL_ENABLED          => false,
-			self::GELATO_ENABLED            => false,
-			self::PRODIGI_ENABLED           => false,
-			self::PRINTIFY_ENABLED          => false,
-			self::DESIGNER_DIGITIZATION_FEE => '0.0000',
+			self::DELETE_DATA_ON_UNINSTALL              => false,
+			self::DASHBOARD_SLUG                        => self::DEFAULT_DASHBOARD_SLUG,
+			self::COUNTED_ORDER_STATUSES                => self::DEFAULT_COUNTED_ORDER_STATUSES,
+			self::LOGO_ATTACHMENT_ID                    => 0,
+			self::PAYOUT_HOLDING_DAYS                   => self::DEFAULT_PAYOUT_HOLDING_DAYS,
+			self::PAYOUT_GIFT_CARD_PROVIDER             => '',
+			self::COMPANY_CVR                           => '',
+			self::COMPANY_NAME                          => '',
+			self::COMPANY_EMAIL                         => '',
+			self::ALERTS_ENABLED                        => false,
+			self::CHECKOUT_USERNAME_ENABLED             => false,
+			self::CHECKOUT_USERNAME_LABEL               => '',
+			self::CHECKOUT_USERNAME_HELP                => '',
+			self::SOUND_MAX_BYTES                       => self::DEFAULT_SOUND_MAX_BYTES,
+			self::SOUND_MAX_SECONDS                     => self::DEFAULT_SOUND_MAX_SECONDS,
+			self::DESIGNER_ENABLED                      => false,
+			self::PRINTFUL_ENABLED                      => false,
+			self::GELATO_ENABLED                        => false,
+			self::PRODIGI_ENABLED                       => false,
+			self::PRINTIFY_ENABLED                      => false,
+			self::DESIGNER_DIGITIZATION_FEE             => '0.0000',
+			self::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => false,
+			self::COMMUNITY_TWITCH_GIFTING_ENABLED      => false,
 		);
 	}
 
@@ -294,7 +308,7 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool}
 	 */
 	public static function sanitize( array $values ): array {
 		$slug  = $values[ self::DASHBOARD_SLUG ] ?? null;
@@ -310,27 +324,29 @@ final class Settings {
 		$secs  = $values[ self::SOUND_MAX_SECONDS ] ?? null;
 
 		return array(
-			self::DELETE_DATA_ON_UNINSTALL  => true === ( $values[ self::DELETE_DATA_ON_UNINSTALL ] ?? false ),
-			self::DASHBOARD_SLUG            => is_string( $slug ) && self::valid_slug( $slug ) ? $slug : self::DEFAULT_DASHBOARD_SLUG,
-			self::COUNTED_ORDER_STATUSES    => self::status_list( $values[ self::COUNTED_ORDER_STATUSES ] ?? null ),
-			self::LOGO_ATTACHMENT_ID        => is_int( $logo ) && $logo > 0 ? $logo : 0,
-			self::PAYOUT_HOLDING_DAYS       => is_int( $days ) && self::valid_holding_days( $days ) ? $days : self::DEFAULT_PAYOUT_HOLDING_DAYS,
-			self::PAYOUT_GIFT_CARD_PROVIDER => is_string( $card ) && self::valid_provider_id( $card ) ? $card : '',
-			self::COMPANY_CVR               => is_string( $cvr ) && self::valid_cvr( $cvr ) ? $cvr : '',
-			self::COMPANY_NAME              => is_string( $name ) && self::valid_company_name( $name ) ? $name : '',
-			self::COMPANY_EMAIL             => is_string( $mail ) && self::valid_company_email( $mail ) ? $mail : '',
-			self::ALERTS_ENABLED            => true === ( $values[ self::ALERTS_ENABLED ] ?? false ),
-			self::CHECKOUT_USERNAME_ENABLED => true === ( $values[ self::CHECKOUT_USERNAME_ENABLED ] ?? false ),
-			self::CHECKOUT_USERNAME_LABEL   => is_string( $label ) && self::valid_line( $label, self::CHECKOUT_USERNAME_LABEL_MAX_LENGTH ) ? $label : '',
-			self::CHECKOUT_USERNAME_HELP    => is_string( $help ) && self::valid_line( $help, self::CHECKOUT_USERNAME_HELP_MAX_LENGTH ) ? $help : '',
-			self::SOUND_MAX_BYTES           => is_int( $bytes ) && self::valid_sound_max_bytes( $bytes ) ? $bytes : self::DEFAULT_SOUND_MAX_BYTES,
-			self::SOUND_MAX_SECONDS         => is_int( $secs ) && self::valid_sound_max_seconds( $secs ) ? $secs : self::DEFAULT_SOUND_MAX_SECONDS,
-			self::DESIGNER_ENABLED          => true === ( $values[ self::DESIGNER_ENABLED ] ?? false ),
-			self::PRINTFUL_ENABLED          => true === ( $values[ self::PRINTFUL_ENABLED ] ?? false ),
-			self::GELATO_ENABLED            => true === ( $values[ self::GELATO_ENABLED ] ?? false ),
-			self::PRODIGI_ENABLED           => true === ( $values[ self::PRODIGI_ENABLED ] ?? false ),
-			self::PRINTIFY_ENABLED          => true === ( $values[ self::PRINTIFY_ENABLED ] ?? false ),
-			self::DESIGNER_DIGITIZATION_FEE => is_string( $values[ self::DESIGNER_DIGITIZATION_FEE ] ?? null ) && 1 === preg_match( '/^\d{1,7}\.\d{4}$/', $values[ self::DESIGNER_DIGITIZATION_FEE ] ) ? $values[ self::DESIGNER_DIGITIZATION_FEE ] : '0.0000',
+			self::DELETE_DATA_ON_UNINSTALL              => true === ( $values[ self::DELETE_DATA_ON_UNINSTALL ] ?? false ),
+			self::DASHBOARD_SLUG                        => is_string( $slug ) && self::valid_slug( $slug ) ? $slug : self::DEFAULT_DASHBOARD_SLUG,
+			self::COUNTED_ORDER_STATUSES                => self::status_list( $values[ self::COUNTED_ORDER_STATUSES ] ?? null ),
+			self::LOGO_ATTACHMENT_ID                    => is_int( $logo ) && $logo > 0 ? $logo : 0,
+			self::PAYOUT_HOLDING_DAYS                   => is_int( $days ) && self::valid_holding_days( $days ) ? $days : self::DEFAULT_PAYOUT_HOLDING_DAYS,
+			self::PAYOUT_GIFT_CARD_PROVIDER             => is_string( $card ) && self::valid_provider_id( $card ) ? $card : '',
+			self::COMPANY_CVR                           => is_string( $cvr ) && self::valid_cvr( $cvr ) ? $cvr : '',
+			self::COMPANY_NAME                          => is_string( $name ) && self::valid_company_name( $name ) ? $name : '',
+			self::COMPANY_EMAIL                         => is_string( $mail ) && self::valid_company_email( $mail ) ? $mail : '',
+			self::ALERTS_ENABLED                        => true === ( $values[ self::ALERTS_ENABLED ] ?? false ),
+			self::CHECKOUT_USERNAME_ENABLED             => true === ( $values[ self::CHECKOUT_USERNAME_ENABLED ] ?? false ),
+			self::CHECKOUT_USERNAME_LABEL               => is_string( $label ) && self::valid_line( $label, self::CHECKOUT_USERNAME_LABEL_MAX_LENGTH ) ? $label : '',
+			self::CHECKOUT_USERNAME_HELP                => is_string( $help ) && self::valid_line( $help, self::CHECKOUT_USERNAME_HELP_MAX_LENGTH ) ? $help : '',
+			self::SOUND_MAX_BYTES                       => is_int( $bytes ) && self::valid_sound_max_bytes( $bytes ) ? $bytes : self::DEFAULT_SOUND_MAX_BYTES,
+			self::SOUND_MAX_SECONDS                     => is_int( $secs ) && self::valid_sound_max_seconds( $secs ) ? $secs : self::DEFAULT_SOUND_MAX_SECONDS,
+			self::DESIGNER_ENABLED                      => true === ( $values[ self::DESIGNER_ENABLED ] ?? false ),
+			self::PRINTFUL_ENABLED                      => true === ( $values[ self::PRINTFUL_ENABLED ] ?? false ),
+			self::GELATO_ENABLED                        => true === ( $values[ self::GELATO_ENABLED ] ?? false ),
+			self::PRODIGI_ENABLED                       => true === ( $values[ self::PRODIGI_ENABLED ] ?? false ),
+			self::PRINTIFY_ENABLED                      => true === ( $values[ self::PRINTIFY_ENABLED ] ?? false ),
+			self::DESIGNER_DIGITIZATION_FEE             => is_string( $values[ self::DESIGNER_DIGITIZATION_FEE ] ?? null ) && 1 === preg_match( '/^\d{1,7}\.\d{4}$/', $values[ self::DESIGNER_DIGITIZATION_FEE ] ) ? $values[ self::DESIGNER_DIGITIZATION_FEE ] : '0.0000',
+			self::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => true === ( $values[ self::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED ] ?? false ),
+			self::COMMUNITY_TWITCH_GIFTING_ENABLED      => true === ( $values[ self::COMMUNITY_TWITCH_GIFTING_ENABLED ] ?? false ),
 		);
 	}
 
@@ -454,7 +470,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );
@@ -584,6 +600,20 @@ final class Settings {
 	 */
 	public static function designer_enabled(): bool {
 		return self::all()[ self::DESIGNER_ENABLED ];
+	}
+
+	/**
+	 * Whether creators can use the Twitch subscriber discount (ADR-108).
+	 */
+	public static function twitch_sub_discount_enabled(): bool {
+		return self::all()[ self::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED ];
+	}
+
+	/**
+	 * Whether Twitch gifting runs for the shop (ADR-108; off: paused).
+	 */
+	public static function twitch_gifting_enabled(): bool {
+		return self::all()[ self::COMMUNITY_TWITCH_GIFTING_ENABLED ];
 	}
 
 	/**

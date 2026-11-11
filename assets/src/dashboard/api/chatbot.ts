@@ -311,23 +311,63 @@ export function updateChatbot( changes: {
 }
 
 /**
+ * The dashboard pages that connect Twitch and get the creator back after
+ * it (ADR-108): the chatbot and the community features sharing the channel.
+ */
+export type ConnectPage =
+	'alerts/chatbot' | 'community/twitch-discount' | 'community/twitch-gifting';
+
+/**
  * The platform's page where the creator adds the bot to the own channel.
  *
  * @param platform    Platform.
  * @param acceptTerms Whether the creator accepted the privacy policy and terms (YouTube requires it).
+ * @param from        The dashboard page Twitch sends the creator back to.
  */
 export function connectChatbot(
 	platform: ChatPlatform,
-	acceptTerms = false
+	acceptTerms = false,
+	from: ConnectPage = 'alerts/chatbot'
 ): Promise< ApiResult< string > > {
+	const data = {
+		...( acceptTerms ? { accept_terms: true } : {} ),
+		...( from !== 'alerts/chatbot' ? { return: from } : {} ),
+	};
+
 	return request(
 		{
 			path: `${ PATH }/${ platform }/connect`,
 			method: 'POST',
-			...( acceptTerms ? { data: { accept_terms: true } } : {} ),
+			...( Object.keys( data ).length > 0 ? { data } : {} ),
 		},
 		parseUrl( platform )
 	);
+}
+
+/**
+ * The result the platform's redirect brought (`?chatbot=&platform=`),
+ * removed from the address bar.
+ */
+export function takeConnectResult(): {
+	readonly code: string;
+	readonly platform: ChatPlatform;
+} {
+	const url = new URL( window.location.href );
+	const code = url.searchParams.get( 'chatbot' ) ?? '';
+	const platform = url.searchParams.get( 'platform' ) ?? '';
+
+	if ( code === '' ) {
+		return { code: '', platform: 'twitch' };
+	}
+
+	url.searchParams.delete( 'chatbot' );
+	url.searchParams.delete( 'platform' );
+	window.history.replaceState( window.history.state, '', url.href );
+
+	return {
+		code: /^[a-z_]{1,40}$/.test( code ) ? code : 'error',
+		platform: PLATFORMS.find( ( item ) => item === platform ) ?? 'twitch',
+	};
 }
 
 /**

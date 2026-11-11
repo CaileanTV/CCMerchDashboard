@@ -446,6 +446,17 @@ final class ChatbotTest extends IntegrationTestCase {
 		$this->logged_in();
 		self::assertStringContainsString( 'chatbot=denied&platform=twitch', $this->oauth->finish( $denied['state'] ?? '', '', 'access_denied' ) );
 
+		// Started from a community feature, Twitch sends the creator back there (ADR-108); only listed pages.
+		wp_set_current_user( $this->user_of( $nova ) );
+		$gifting = $this->query( $this->oauth->start_channel( $nova, 'community/twitch-gifting' ) );
+		$this->logged_in();
+		self::assertStringContainsString( '/creator-dashboard/community/twitch-gifting/?chatbot=denied', $this->oauth->finish( $gifting['state'] ?? '', '', 'access_denied' ) );
+		wp_set_current_user( $this->user_of( $nova ) );
+		$elsewhere = $this->query( $this->oauth->start_channel( $nova, 'https://evil.test/' ) );
+		$this->logged_in();
+		self::assertStringContainsString( '/creator-dashboard/alerts/chatbot/?chatbot=denied', $this->oauth->finish( $elsewhere['state'] ?? '', '', 'access_denied' ) );
+		self::assertSame( 'alerts/chatbot', TwitchOAuth::return_page( array( 'community/twitch-gifting' ) ) );
+
 		// Nova's link finished in another login (e.g. sent to another streamer) connects nothing (25.13 review).
 		$sent = $this->query( $this->oauth->start_channel( $nova ) );
 		wp_set_current_user( $this->create_user( 'other_streamer' ) );

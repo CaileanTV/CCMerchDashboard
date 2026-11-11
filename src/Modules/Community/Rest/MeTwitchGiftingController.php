@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\Community\Rest;
 use Closure;
 use MerchBoard\Core\Http\RestController;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Community\Gifting\Gift;
 use MerchBoard\Modules\Community\Gifting\GiftDraws;
@@ -164,9 +165,14 @@ final class MeTwitchGiftingController extends RestController {
 	}
 
 	/**
-	 * Only creators with dashboard access.
+	 * Only creators with dashboard access, while an administrator has gifting
+	 * switched on (ADR-108; 404 otherwise).
 	 */
 	public function permission(): bool|WP_Error {
+		if ( ! Settings::twitch_gifting_enabled() ) {
+			return self::error( 'merchboard_community_disabled', __( 'Twitch gifting is not available.', 'merchboard' ), 404 );
+		}
+
 		$creator = $this->require_creator( $this->context );
 
 		return $creator instanceof WP_Error ? $creator : true;

@@ -136,7 +136,7 @@ final class TwitchSubDiscountRepository {
 	 * Validates and saves a creator's settings.
 	 *
 	 * @param int          $creator_id Creator.
-	 * @param array<mixed> $values     `gifted` and `campaigns` (each: `id`, `name`, `enabled`, `tiers` 1–3 => percent, `scope`, `product_ids`, `starts`, `ends`).
+	 * @param array<mixed> $values     `enabled` (optional: kept when missing), `gifted` and `campaigns` (each: `id`, `name`, `enabled`, `tiers` 1–3 => percent, `scope`, `product_ids`, `starts`, `ends`).
 	 * @return TwitchSubDiscountSettings The saved settings.
 	 * @throws TwitchSubDiscountInvalid With a code per invalid field.
 	 * @throws DatabaseException When it cannot be stored.
@@ -179,9 +179,17 @@ final class TwitchSubDiscountRepository {
 	 * @throws TwitchSubDiscountInvalid With a code per invalid field.
 	 */
 	private function validate( int $creator_id, array $values, TwitchSubDiscountSettings $previous ): TwitchSubDiscountSettings {
-		$errors = array();
-		$gifted = $values['gifted'] ?? null;
-		$input  = $values['campaigns'] ?? null;
+		$errors  = array();
+		$enabled = array_key_exists( 'enabled', $values ) ? $values['enabled'] : $previous->enabled;
+		$gifted  = $values['gifted'] ?? null;
+		$input   = $values['campaigns'] ?? null;
+
+		if ( ! is_bool( $enabled ) ) {
+			$errors['enabled'] = 'required';
+		} elseif ( $enabled && ! $previous->enabled && ! $this->connected( $creator_id ) ) {
+			// Switching on needs the channel (as gifting); kept on, the campaigns check it.
+			$errors['enabled'] = 'not_connected';
+		}
 
 		if ( ! is_bool( $gifted ) ) {
 			$errors['gifted'] = 'required';
@@ -213,7 +221,7 @@ final class TwitchSubDiscountRepository {
 			throw new TwitchSubDiscountInvalid( $errors );
 		}
 
-		return new TwitchSubDiscountSettings( true === $gifted, array_values( $campaigns ) );
+		return new TwitchSubDiscountSettings( true === $gifted, array_values( $campaigns ), true === $enabled );
 	}
 
 	/**

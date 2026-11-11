@@ -16,7 +16,9 @@ defined( 'ABSPATH' ) || exit;
  * count (for all the creator's campaigns) and up to MAX_CAMPAIGNS
  * campaigns. On a product, an active campaign of selected products goes
  * before an active campaign of all products; a product is in at most one
- * active campaign of each kind (the repository checks it when saving).
+ * active campaign of each kind (the repository checks it when saving). The
+ * creator switches the discount as a whole on and off (ADR-108; `enabled`,
+ * on when it was never saved, so campaigns saved before stay active).
  */
 final readonly class TwitchSubDiscountSettings {
 
@@ -32,12 +34,13 @@ final readonly class TwitchSubDiscountSettings {
 	 *
 	 * @param bool                $gifted    Whether gifted subscriptions count.
 	 * @param TwitchSubCampaign[] $campaigns Campaigns.
+	 * @param bool                $enabled   Whether the creator has the discount switched on.
 	 */
-	public function __construct( public bool $gifted, public array $campaigns ) {
+	public function __construct( public bool $gifted, public array $campaigns, public bool $enabled = true ) {
 	}
 
 	/**
-	 * Nothing set: gifted subscriptions count, no campaigns.
+	 * Nothing set: switched on, gifted subscriptions count, no campaigns.
 	 */
 	public static function defaults(): self {
 		return new self( true, array() );
@@ -63,16 +66,17 @@ final readonly class TwitchSubDiscountSettings {
 			}
 		}
 
-		return new self( true === ( $stored['gifted'] ?? true ), array_slice( $campaigns, 0, self::MAX_CAMPAIGNS ) );
+		return new self( true === ( $stored['gifted'] ?? true ), array_slice( $campaigns, 0, self::MAX_CAMPAIGNS ), false !== ( $stored['enabled'] ?? true ) );
 	}
 
 	/**
 	 * The value to store.
 	 *
-	 * @return array{gifted: bool, campaigns: list<array<string, mixed>>}
+	 * @return array{enabled: bool, gifted: bool, campaigns: list<array<string, mixed>>}
 	 */
 	public function to_stored(): array {
 		return array(
+			'enabled'   => $this->enabled,
 			'gifted'    => $this->gifted,
 			'campaigns' => array_map( static fn( TwitchSubCampaign $campaign ): array => $campaign->to_stored(), $this->campaigns ),
 		);
@@ -81,13 +85,17 @@ final readonly class TwitchSubDiscountSettings {
 	/**
 	 * The campaign that applies to a parent product on a day: an active
 	 * campaign of selected products before one of all products; null for
-	 * none.
+	 * none, and always null while the creator has the discount switched off.
 	 *
 	 * @param int    $product_id Parent product.
 	 * @param string $today      The day (Y-m-d, site time zone).
 	 */
 	public function campaign_for( int $product_id, string $today ): ?TwitchSubCampaign {
 		$all = null;
+
+		if ( ! $this->enabled ) {
+			return null;
+		}
 
 		foreach ( $this->campaigns as $campaign ) {
 			if ( ! $campaign->active( $today ) || ! $campaign->covers( $product_id ) ) {

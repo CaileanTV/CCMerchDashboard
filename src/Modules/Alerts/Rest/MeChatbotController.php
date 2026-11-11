@@ -178,7 +178,8 @@ final class MeChatbotController extends RestController {
 
 				try {
 					$url = match ( $platform ) {
-						ChatPlatform::Twitch  => $this->twitch->start_channel( $creator_id ),
+						// Twitch: back to the page it was started from (ADR-108; a fixed list).
+						ChatPlatform::Twitch  => $this->twitch->start_channel( $creator_id, TwitchOAuth::return_page( $request->get_param( 'return' ) ) ),
 						ChatPlatform::Kick    => $this->kick->start_channel( $creator_id ),
 						ChatPlatform::YouTube => $this->youtube->start_channel( $creator_id ),
 					};

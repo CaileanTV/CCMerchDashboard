@@ -84,17 +84,33 @@ final class TwitchOAuth {
 	}
 
 	/**
+	 * The dashboard pages a creator can connect Twitch from and come back to
+	 * (ADR-108): the chatbot and the community features sharing the channel.
+	 */
+	public const RETURN_PAGES = array( 'alerts/chatbot', 'community/twitch-discount', 'community/twitch-gifting' );
+
+	/**
 	 * The URL that asks a creator to add the bot to the own channel.
 	 *
-	 * @param int $creator_id Creator (from CreatorContext).
+	 * @param int    $creator_id Creator (from CreatorContext).
+	 * @param string $page       The dashboard page to come back to (one of RETURN_PAGES; others: the chatbot).
 	 * @throws TwitchException When the bot is not set up.
 	 */
-	public function start_channel( int $creator_id ): string {
+	public function start_channel( int $creator_id, string $page = 'alerts/chatbot' ): string {
 		if ( ! $this->account->ready() ) {
 			throw new TwitchException( TwitchException::NOT_CONFIGURED );
 		}
 
-		return $this->start( 'channel', $creator_id, TwitchAccount::CHANNEL_SCOPES, false );
+		return $this->start( 'channel', $creator_id, TwitchAccount::CHANNEL_SCOPES, false, self::return_page( $page ) );
+	}
+
+	/**
+	 * A page to come back to: one of RETURN_PAGES, otherwise the chatbot.
+	 *
+	 * @param mixed $page Requested page.
+	 */
+	public static function return_page( mixed $page ): string {
+		return is_string( $page ) && in_array( $page, self::RETURN_PAGES, true ) ? $page : 'alerts/chatbot';
 	}
 
 	/**
@@ -140,7 +156,7 @@ final class TwitchOAuth {
 
 		return $bot
 			? AlertsAdminPage::url( 'chatbot', 'bot_' . $result )
-			: self::dashboard_result( ( $this->dashboard_url )( 'alerts/chatbot' ), ChatPlatform::Twitch, $result );
+			: self::dashboard_result( ( $this->dashboard_url )( self::return_page( $data['return'] ?? null ) ), ChatPlatform::Twitch, $result );
 	}
 
 	/**
@@ -240,9 +256,10 @@ final class TwitchOAuth {
 	 * @param int    $creator_id   Creator (channel), 0 for the bot.
 	 * @param string $scopes       Scopes.
 	 * @param bool   $force_verify Whether Twitch always asks.
+	 * @param string $page         The dashboard page to come back to (channel).
 	 * @throws TwitchException When the app is not set up.
 	 */
-	private function start( string $purpose, int $creator_id, string $scopes, bool $force_verify ): string {
+	private function start( string $purpose, int $creator_id, string $scopes, bool $force_verify, string $page = 'alerts/chatbot' ): string {
 		if ( ! $this->account->has_app() ) {
 			throw new TwitchException( TwitchException::NOT_CONFIGURED );
 		}
@@ -254,6 +271,7 @@ final class TwitchOAuth {
 				'purpose' => $purpose,
 				'user'    => get_current_user_id(),
 				'creator' => $creator_id,
+				'return'  => $page,
 			),
 			self::STATE_TTL
 		);

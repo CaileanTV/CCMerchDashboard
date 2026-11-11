@@ -12,6 +12,8 @@ namespace MerchBoard\Modules\Community\Admin;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Settings\Admin\SettingsPage;
 use MerchBoard\Modules\Community\Gifting\GiftingSettingsRepository;
 use MerchBoard\Modules\Creators\Admin\CreatorsAdminPage;
 use MerchBoard\Modules\Creators\Creator;
@@ -112,6 +114,15 @@ final class GiftingTestModeSection {
 
 		if ( $settings->test_mode ) {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The test mode is on. Customers can buy gifts from this creator while the creator is offline.', 'merchboard' ) . '</p></div>';
+		}
+
+		if ( ! Settings::twitch_gifting_enabled() ) {
+			printf(
+				'<div class="notice notice-info inline"><p>%1$s <a href="%2$s">%3$s</a></p></div>',
+				esc_html__( 'Twitch gifting is switched off for the shop, so no gifts can be bought or drawn, also in the test mode.', 'merchboard' ),
+				esc_url( SettingsPage::url( '', 'community' ) ),
+				esc_html__( 'Switch it on under Settings → Community', 'merchboard' )
+			);
 		}
 
 		echo '<p class="description">' . esc_html__( 'In the test mode the creator counts as live on Twitch: the gift button shows on the creator\'s products, and gifts are drawn in the chat without a stream. Use it only for tests, e.g. on a staging site, and turn it off afterwards. The creator\'s Twitch channel must be connected and gifting turned on in the creator\'s dashboard.', 'merchboard' ) . '</p>';

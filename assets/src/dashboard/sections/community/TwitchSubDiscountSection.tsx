@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import type { FormEvent } from 'react';
 
-import { connectChatbot } from '../../api/chatbot';
 import type { ApiError } from '../../api/client';
 import { MAX_PER_PAGE } from '../../api/client';
 import {
@@ -26,6 +25,7 @@ import { Skeleton } from '../../components/Skeleton';
 import { Toast } from '../../components/Toast';
 import { useConfig } from '../../app/config-context';
 import { useApi } from '../../hooks/useApi';
+import { TwitchConnectionCard } from './TwitchConnectionCard';
 
 /** Most product pages read for the picker (100 each; a selection has at most 500). */
 const MAX_PRODUCT_PAGES = 5;
@@ -49,7 +49,7 @@ function fieldError( code: string ): string {
 	switch ( code ) {
 		case 'not_connected':
 			return __(
-				'Connect your Twitch channel before you switch a campaign on.',
+				'Connect your Twitch channel before you switch the discount or a campaign on.',
 				'merchboard'
 			);
 		case 'required':
@@ -483,7 +483,6 @@ export function TwitchSubDiscountSection() {
 	);
 	const [ productsFailed, setProductsFailed ] = useState( false );
 	const [ busy, setBusy ] = useState( false );
-	const [ connecting, setConnecting ] = useState( false );
 	const [ error, setError ] = useState< ApiError | null >( null );
 	const [ toast, setToast ] = useState< string | null >( null );
 	const dismissToast = useCallback( () => setToast( null ), [] );
@@ -545,20 +544,6 @@ export function TwitchSubDiscountSection() {
 
 	const errors = error?.fields ?? {};
 
-	const connect = async () => {
-		setConnecting( true );
-		setError( null );
-		const answer = await connectChatbot( 'twitch' );
-
-		if ( answer.ok ) {
-			window.location.assign( answer.data );
-			return;
-		}
-
-		setConnecting( false );
-		setError( answer.error );
-	};
-
 	const submit = async ( event: FormEvent ) => {
 		event.preventDefault();
 		setBusy( true );
@@ -594,39 +579,6 @@ export function TwitchSubDiscountSection() {
 					'merchboard'
 				) }
 			</p>
-			{ current.channel === null ? (
-				<Alert tone="warning">
-					{ current.twitch
-						? __(
-								'Connect your Twitch channel, so we can check who subscribes to it. The chat messages of the chatbot can stay off.',
-								'merchboard'
-							)
-						: __(
-								'Twitch is not set up in the shop yet. Please contact us.',
-								'merchboard'
-							) }
-					{ current.twitch && (
-						<p>
-							<Button
-								type="button"
-								variant="secondary"
-								isBusy={ connecting }
-								onClick={ () => void connect() }
-							>
-								{ __( 'Connect Twitch', 'merchboard' ) }
-							</Button>
-						</p>
-					) }
-				</Alert>
-			) : (
-				<p className="merchboard-field__help">
-					{ sprintf(
-						/* translators: %s: the creator's Twitch channel. */
-						__( 'Twitch channel: %s', 'merchboard' ),
-						current.channel
-					) }
-				</p>
-			) }
 			{ error !== null && Object.keys( errors ).length === 0 && (
 				<ApiErrorState error={ error } />
 			) }
@@ -635,6 +587,48 @@ export function TwitchSubDiscountSection() {
 				noValidate
 				onSubmit={ ( event ) => void submit( event ) }
 			>
+				<div className="merchboard-community-top">
+					<div className="merchboard-community-top__switch">
+						<label
+							className="merchboard-payouts__check"
+							htmlFor="merchboard-twitch-sub-enabled"
+						>
+							<input
+								id="merchboard-twitch-sub-enabled"
+								type="checkbox"
+								checked={ values.enabled }
+								onChange={ ( event ) =>
+									setValues( {
+										...values,
+										enabled: event.target.checked,
+									} )
+								}
+							/>{ ' ' }
+							{ __(
+								'Twitch subscriber discount on',
+								'merchboard'
+							) }
+						</label>
+						{ ! values.enabled && (
+							<p className="merchboard-field__help">
+								{ __(
+									'While the discount is off, none of your campaigns gives a discount. Your campaigns are kept.',
+									'merchboard'
+								) }
+							</p>
+						) }
+						{ errors.enabled !== undefined && (
+							<p className="merchboard-field__error">
+								{ fieldError( errors.enabled ) }
+							</p>
+						) }
+					</div>
+					<TwitchConnectionCard
+						channel={ current.channel }
+						twitch={ current.twitch }
+						from="community/twitch-discount"
+					/>
+				</div>
 				<label
 					className="merchboard-payouts__check"
 					htmlFor="merchboard-twitch-sub-gifted"

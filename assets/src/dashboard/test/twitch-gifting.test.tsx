@@ -149,7 +149,7 @@ describe( 'Twitch gifting (ADR-107)', () => {
 			[ `POST ${ PATH }` ]: () => response( 200, STATE ),
 		} );
 
-		expect( container.textContent ).toContain( 'Twitch channel: nova' );
+		expect( container.textContent ).toContain( 'Connected as nova' );
 		expect( container.textContent ).toContain( 'You are live now.' );
 		expect( container.textContent ).not.toContain( 'test mode' );
 		expect( container.textContent ).toContain( 'Gifts waiting: 1' );

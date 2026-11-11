@@ -9,6 +9,10 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\Community;
 
+use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Community\Rest\MeTwitchGiftingController;
+use MerchBoard\Modules\Community\Dashboard\CommunityDashboardSection;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
@@ -77,6 +81,8 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->install();
+		// Both community features are off by default (ADR-108).
+		Settings::save( array_merge( Settings::all(), array( Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => true, Settings::COMMUNITY_TWITCH_GIFTING_ENABLED => true ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
 
 		$creators    = new CreatorRepository( $this->wpdb );
 		$this->nova  = $creators->create( 'Nova', CreatorStatus::Active )->id;
@@ -125,6 +131,7 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		remove_all_actions( GiftDraws::DRAW_HOOK );
 		remove_all_actions( GiftDraws::EXPIRE_HOOK );
 		remove_all_actions( GiftDraws::CONFIRM_HOOK );
+		delete_option( Settings::OPTION );
 		parent::tearDown();
 	}
 
@@ -357,6 +364,36 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 
 		$this->draws->draw( $gift->id );
 		self::assertCount( 5, $this->sent, 'A second job draws nothing.' );
+	}
+
+	public function test_gifting_switched_off_for_the_shop_is_a_pause(): void {
+		$this->settings->save( $this->nova, $this->values( true ) );
+		$open = $this->gift( 'Mads' );
+		$this->draws->paid( $open );
+		$this->chat( '111', 'viewer1', '!enter' );
+		self::assertSame( Gift::ENTERING, $this->gifts->find( $open->id )?->status );
+
+		Settings::save( array_merge( Settings::all(), array( Settings::COMMUNITY_TWITCH_GIFTING_ENABLED => false ) ) );
+		$sent  = count( $this->sent );
+		$later = $this->gift( null );
+		$this->draws->paid( $later );
+		$this->chat( '1', 'nova', '!gift start', array( 'broadcaster' ) );
+		self::assertSame( Gift::WAITING, $this->gifts->find( $later->id )?->status, 'No new window.' );
+		self::assertCount( $sent, $this->sent, 'Nothing new in the chat, also not for !gift start.' );
+
+		$this->chat( '222', 'viewer2', '!enter' );
+		self::assertArrayHasKey( 222, (array) $this->gifts->find( $open->id )?->entrants, 'The open window goes on.' );
+		$this->close_window( $open->id );
+		$won = $this->gifts->find( $open->id );
+		self::assertSame( Gift::WON, $won?->status, 'The open window is drawn.' );
+		self::assertSame( Gift::WAITING, $this->gifts->find( $later->id )?->status, 'The next gift waits for gifting to be switched on.' );
+
+		self::assertSame( 404, $this->error_status( ( new MeTwitchGiftingController( $this->service( CreatorContext::class ), $this->settings, $this->gifts, $this->draws, static fn(): ?string => null, static fn(): bool => true, static fn(): ?bool => null, static fn(): string => '', new RecordingLogger() ) )->permission() ) );
+		$sections = CommunityDashboardSection::add_section( array( array( 'id' => 'profile' ) ) );
+		self::assertSame( array( 'community-twitch-discount', 'profile' ), array_column( (array) $sections, 'id' ), 'Only the switched-on feature is in the menu.' );
+
+		Settings::save( array_merge( Settings::all(), array( Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => false ) ) );
+		self::assertSame( array( array( 'id' => 'profile' ) ), CommunityDashboardSection::add_section( array( array( 'id' => 'profile' ) ) ), 'No group without features.' );
 	}
 
 	public function test_the_creator_can_switch_the_confirmations_off(): void {
@@ -624,5 +661,16 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 	 */
 	private function end_window( int $id ): void {
 		$this->execute( 'UPDATE %i SET window_ends = %s WHERE id = %d', $this->table( Tables::GIFTS ), gmdate( 'Y-m-d H:i:s', time() - 1 ), $id );
+	}
+
+	/**
+	 * The HTTP status of a refused permission check (0 when it was allowed).
+	 *
+	 * @param mixed $result A permission callback's result.
+	 */
+	private function error_status( mixed $result ): int {
+		$data = $result instanceof \WP_Error ? $result->get_error_data() : null;
+
+		return is_array( $data ) && is_int( $data['status'] ?? null ) ? $data['status'] : 0;
 	}
 }

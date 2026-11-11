@@ -9,6 +9,9 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\Community;
 
+use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\Community\Rest\MeTwitchSubDiscountController;
 use Closure;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
@@ -82,6 +85,8 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 		$this->install();
+		// Both community features are off by default (ADR-108).
+		Settings::save( array_merge( Settings::all(), array( Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => true, Settings::COMMUNITY_TWITCH_GIFTING_ENABLED => true ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
 
 		$creators    = new CreatorRepository( $this->wpdb );
 		$this->nova  = $creators->create( 'Nova', CreatorStatus::Active )->id;
@@ -169,6 +174,7 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 
 	protected function tearDown(): void {
 		delete_option( TwitchAccount::OPTION );
+		delete_option( Settings::OPTION );
 		parent::tearDown();
 	}
 
@@ -276,6 +282,36 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 		$this->coded    = array( $this->nova );
 		$this->discount = $this->discount();
 		self::assertNull( $this->discount->rate( 501 ), 'The creator\'s own code is in the cart (ADR-068).' );
+	}
+
+	public function test_the_creator_and_the_administrator_switch_the_discount_off(): void {
+		$this->settings->save( $this->nova, $this->input( array( self::campaign() ) ) );
+		self::assertTrue( $this->settings->find( $this->nova )->enabled, 'On unless switched off.' );
+		$this->log_in();
+		$this->answer( self::SUB_URL, 200, array( 'data' => array( array( 'tier' => '1000', 'is_gift' => false ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		self::assertSame( 1000, $this->discount->rate( 501 )['bps'] ?? null );
+
+		$off = $this->settings->save( $this->nova, array( 'enabled' => false ) + $this->input( array( self::campaign( array( 'id' => $this->settings->find( $this->nova )->campaigns[0]->id ) ) ) ) );
+		self::assertFalse( $off->enabled );
+		self::assertCount( 1, $off->campaigns, 'The campaigns are kept.' );
+		$this->discount = $this->discount();
+		self::assertNull( $this->discount->offer( 501 ), 'The creator switched it off.' );
+		self::assertNull( $this->discount->rate( 501 ) );
+		self::assertFalse( $this->settings->save( $this->nova, $this->input( array( self::campaign() ) ) )->enabled, 'Kept when the form leaves it out.' );
+
+		$this->refused( array( 'enabled' => 'required' ), $this->nova, array(), array( 'enabled' => 'yes' ) );
+		$this->settings->save( $this->orion, array( 'enabled' => false ) + $this->input( array() ) );
+		$this->refused( array( 'enabled' => 'not_connected' ), $this->orion, array(), array( 'enabled' => true ) );
+
+		$this->settings->save( $this->nova, array( 'enabled' => true ) + $this->input( array( self::campaign() ) ) );
+		$this->discount = $this->discount();
+		self::assertNotNull( $this->discount->offer( 501 ) );
+
+		Settings::save( array_merge( Settings::all(), array( Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => false ) ) );
+		self::assertNull( $this->discount->offer( 501 ), 'An administrator switched it off for the shop.' );
+		self::assertNull( $this->discount->rate( 501 ) );
+		self::assertSame( 0, $this->discount->highest_offer( array( 501, 502 ) ), 'The shop card offers nothing.' );
+		self::assertSame( 404, $this->error_status( ( new MeTwitchSubDiscountController( $this->service( CreatorContext::class ), $this->settings, static fn(): ?string => null, static fn(): bool => true, new RecordingLogger() ) )->permission() ) );
 	}
 
 	public function test_a_campaign_outside_its_period_gives_nothing(): void {
@@ -427,16 +463,28 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 	 * @param array<string, string>      $fields     Expected codes.
 	 * @param int                        $creator_id Creator.
 	 * @param list<array<string, mixed>> $campaigns  Campaigns.
+	 * @param array<string, mixed>       $extra      Other fields of the form.
 	 */
-	private function refused( array $fields, int $creator_id, array $campaigns ): void {
+	private function refused( array $fields, int $creator_id, array $campaigns, array $extra = array() ): void {
 		try {
-			$this->settings->save( $creator_id, $this->input( $campaigns ) );
+			$this->settings->save( $creator_id, $extra + $this->input( $campaigns ) );
 			self::fail( 'Refused expected.' );
 		} catch ( TwitchSubDiscountInvalid $e ) {
 			self::assertSame( $fields, $e->fields() );
 		}
 	}
 
+
+	/**
+	 * The HTTP status of a refused permission check (0 when it was allowed).
+	 *
+	 * @param mixed $result A permission callback's result.
+	 */
+	private function error_status( mixed $result ): int {
+		$data = $result instanceof \WP_Error ? $result->get_error_data() : null;
+
+		return is_array( $data ) && is_int( $data['status'] ?? null ) ? $data['status'] : 0;
+	}
 
 	/**
 	 * The recording transport.

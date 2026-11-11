@@ -94,7 +94,7 @@ final class SettingsPage {
 	/**
 	 * The tabs' order; other tabs follow in the order they were added.
 	 */
-	private const ORDER = array( self::GENERAL, 'branding', 'sales', 'alerts', 'designer' );
+	private const ORDER = array( self::GENERAL, 'branding', 'sales', 'alerts', 'community', 'designer' );
 
 	/**
 	 * Adds a tab for a module's sections.

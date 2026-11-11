@@ -12,6 +12,7 @@ import {
 	disconnectChatbot,
 	getChatbot,
 	PLATFORMS,
+	takeConnectResult,
 	testChatbot,
 	updateChatbot,
 } from '../../api/chatbot';
@@ -158,31 +159,6 @@ export function connectMessage(
 				),
 			};
 	}
-}
-
-/**
- * The result the platform's redirect brought, removed from the address bar.
- */
-function takeConnectResult(): {
-	readonly code: string;
-	readonly platform: ChatPlatform;
-} {
-	const url = new URL( window.location.href );
-	const code = url.searchParams.get( 'chatbot' ) ?? '';
-	const platform = url.searchParams.get( 'platform' ) ?? '';
-
-	if ( code === '' ) {
-		return { code: '', platform: 'twitch' };
-	}
-
-	url.searchParams.delete( 'chatbot' );
-	url.searchParams.delete( 'platform' );
-	window.history.replaceState( window.history.state, '', url.href );
-
-	return {
-		code: /^[a-z_]{1,40}$/.test( code ) ? code : 'error',
-		platform: PLATFORMS.find( ( item ) => item === platform ) ?? 'twitch',
-	};
 }
 
 /**
@@ -459,6 +435,14 @@ function PlatformCard( {
 							) }
 						</p>
 					) }
+					{ platform.platform === 'twitch' && (
+						<p className="merchboard-field__help">
+							{ __(
+								'The Community Features (Twitch subscriber discount and Twitch gifting) use the same Twitch connection. If you remove the bot, they stop too.',
+								'merchboard'
+							) }
+						</p>
+					) }
 					{ platform.platform === 'twitch' && botLogin !== '' && (
 						<p className="merchboard-field__help">
 							{ sprintf(
@@ -580,10 +564,15 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 		if (
 			// eslint-disable-next-line no-alert -- Removing the bot needs an explicit confirmation.
 			! window.confirm(
-				__(
-					'Remove the bot from your channel? It no longer writes in your chat.',
-					'merchboard'
-				)
+				platform === 'twitch'
+					? __(
+							'Remove the bot from your Twitch channel? It no longer writes in your chat, and your Twitch subscriber discount and Twitch gifting stop too.',
+							'merchboard'
+						)
+					: __(
+							'Remove the bot from your channel? It no longer writes in your chat.',
+							'merchboard'
+						)
 			)
 		) {
 			return;

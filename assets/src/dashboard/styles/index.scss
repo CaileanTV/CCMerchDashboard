@@ -1784,6 +1784,42 @@ input:disabled + .merchboard-sounds__upload {
 	gap: var(--merchboard-space-1);
 }
 
+// The feature's switch beside the shared Twitch connection (ADR-108).
+.merchboard-community-top {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+	gap: var(--merchboard-space-4);
+	align-items: start;
+}
+
+.merchboard-community-top__switch {
+	display: grid;
+	gap: var(--merchboard-space-2);
+	min-width: 0;
+}
+
+.merchboard-twitch-connection {
+	display: grid;
+	gap: var(--merchboard-space-2);
+	min-width: 0;
+	padding: var(--merchboard-space-3) var(--merchboard-space-4);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius);
+
+	p {
+		margin: 0;
+	}
+}
+
+.merchboard-twitch-connection__title {
+	margin: 0;
+	font-size: 1em;
+}
+
+.merchboard-twitch-connection__status {
+	font-weight: 600;
+}
+
 .merchboard-community-form__actions {
 	display: flex;
 	flex-wrap: wrap;

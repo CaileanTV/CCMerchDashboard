@@ -125,30 +125,60 @@ final class SettingsTest extends TestCase {
 		);
 		self::assertSame(
 			array(
-				Settings::DELETE_DATA_ON_UNINSTALL  => true,
-				Settings::DASHBOARD_SLUG            => Settings::DEFAULT_DASHBOARD_SLUG,
-				Settings::COUNTED_ORDER_STATUSES    => array( 'processing', 'completed' ),
-				Settings::LOGO_ATTACHMENT_ID        => 0,
-				Settings::PAYOUT_HOLDING_DAYS       => 14,
-				Settings::PAYOUT_GIFT_CARD_PROVIDER => '',
-				Settings::COMPANY_CVR               => '',
-				Settings::COMPANY_NAME              => '',
-				Settings::COMPANY_EMAIL             => '',
-				Settings::ALERTS_ENABLED            => false,
-				Settings::CHECKOUT_USERNAME_ENABLED => false,
-				Settings::CHECKOUT_USERNAME_LABEL   => '',
-				Settings::CHECKOUT_USERNAME_HELP    => '',
-				Settings::SOUND_MAX_BYTES           => 10485760,
-				Settings::SOUND_MAX_SECONDS         => 30,
-				Settings::DESIGNER_ENABLED          => false,
-				Settings::PRINTFUL_ENABLED          => false,
-				Settings::GELATO_ENABLED            => false,
-				Settings::PRODIGI_ENABLED           => false,
-				Settings::PRINTIFY_ENABLED          => false,
-				Settings::DESIGNER_DIGITIZATION_FEE => '0.0000',
+				Settings::DELETE_DATA_ON_UNINSTALL         => true,
+				Settings::DASHBOARD_SLUG                   => Settings::DEFAULT_DASHBOARD_SLUG,
+				Settings::COUNTED_ORDER_STATUSES           => array( 'processing', 'completed' ),
+				Settings::LOGO_ATTACHMENT_ID               => 0,
+				Settings::PAYOUT_HOLDING_DAYS              => 14,
+				Settings::PAYOUT_GIFT_CARD_PROVIDER        => '',
+				Settings::COMPANY_CVR                      => '',
+				Settings::COMPANY_NAME                     => '',
+				Settings::COMPANY_EMAIL                    => '',
+				Settings::ALERTS_ENABLED                   => false,
+				Settings::CHECKOUT_USERNAME_ENABLED        => false,
+				Settings::CHECKOUT_USERNAME_LABEL          => '',
+				Settings::CHECKOUT_USERNAME_HELP           => '',
+				Settings::SOUND_MAX_BYTES                  => 10485760,
+				Settings::SOUND_MAX_SECONDS                => 30,
+				Settings::DESIGNER_ENABLED                 => false,
+				Settings::PRINTFUL_ENABLED                 => false,
+				Settings::GELATO_ENABLED                   => false,
+				Settings::PRODIGI_ENABLED                  => false,
+				Settings::PRINTIFY_ENABLED                 => false,
+				Settings::DESIGNER_DIGITIZATION_FEE        => '0.0000',
+				Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => false,
+				Settings::COMMUNITY_TWITCH_GIFTING_ENABLED => false,
 			),
 			Settings::all()
 		);
+	}
+
+	/**
+	 * The community features are off by default and only exactly true
+	 * switches them on (ADR-108).
+	 */
+	public function test_community_features_are_off_by_default(): void {
+		$on = static fn( array $values ): array => array_intersect_key( Settings::sanitize( $values ), array_flip( array( Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED, Settings::COMMUNITY_TWITCH_GIFTING_ENABLED ) ) );
+
+		self::assertSame( array( false, false ), array_values( $on( array() ) ) );
+		self::assertSame(
+			array( false, false ),
+			array_values(
+				$on(
+					array(
+						Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => 1,
+						Settings::COMMUNITY_TWITCH_GIFTING_ENABLED => '1',
+					)
+				)
+			)
+		);
+
+		$this->options->options[ Settings::OPTION ] = array(
+			Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => true,
+			Settings::COMMUNITY_TWITCH_GIFTING_ENABLED => true,
+		);
+		self::assertTrue( Settings::twitch_sub_discount_enabled() );
+		self::assertTrue( Settings::twitch_gifting_enabled() );
 	}
 
 	/**

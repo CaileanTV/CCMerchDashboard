@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\Community\Gifting;
 use Closure;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Settings\Settings;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -266,7 +267,8 @@ final class GiftDraws {
 				return;
 			}
 
-			if ( ! $staff ) {
+			// While an administrator has gifting switched off (ADR-108), only an open window goes on.
+			if ( ! $staff || ! Settings::twitch_gifting_enabled() ) {
 				return;
 			}
 
@@ -349,8 +351,8 @@ final class GiftDraws {
 	}
 
 	/**
-	 * Starts the creator's next gift when the creator is live, gifting is
-	 * open and no window is open: a fresh gift (paid in the last half hour,
+	 * Starts the creator's next gift when gifting is switched on for the shop
+	 * (ADR-108), the creator is live, gifting is open and no window is open: a fresh gift (paid in the last half hour,
 	 * never drawn), or any waiting gift during a started run.
 	 *
 	 * @param int $creator_id Creator.
@@ -360,7 +362,7 @@ final class GiftDraws {
 	private function next( int $creator_id ): bool {
 		$settings = $this->settings->find( $creator_id );
 
-		if ( ! $settings->open() || array() !== $this->gifts->for_creator( $creator_id, array( Gift::ENTERING ), 1 ) || ! ( $this->live )( $creator_id ) ) {
+		if ( ! Settings::twitch_gifting_enabled() || ! $settings->open() || array() !== $this->gifts->for_creator( $creator_id, array( Gift::ENTERING ), 1 ) || ! ( $this->live )( $creator_id ) ) {
 			return false;
 		}
 

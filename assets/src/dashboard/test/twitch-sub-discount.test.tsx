@@ -30,6 +30,7 @@ const ALL = {
 };
 
 const SAVED = {
+	enabled: true,
 	gifted: true,
 	campaigns: [ ALL ],
 	profit_percents: { 7: 25, 8: 16.67 },
@@ -94,6 +95,7 @@ function button( container: HTMLElement, text: string ): Element | null {
 describe( 'parseTwitchSubDiscount', () => {
 	it( 'reads the documented fields', () => {
 		expect( parseTwitchSubDiscount( SAVED ) ).toEqual( {
+			enabled: true,
 			gifted: true,
 			campaigns: [
 				{
@@ -136,6 +138,9 @@ describe( 'parseTwitchSubDiscount', () => {
 			parseTwitchSubDiscount( { ...SAVED, profit_percents: { x: 5 } } )
 		).toBeNull();
 		expect(
+			parseTwitchSubDiscount( { ...SAVED, enabled: undefined } )
+		).toBeNull();
+		expect(
 			parseTwitchSubDiscount( {
 				...SAVED,
 				channel: { login: '<b>' },
@@ -165,13 +170,17 @@ describe( 'Twitch subscriber discount campaigns (ADR-106)', () => {
 			[ `POST ${ PATH }` ]: () => response( 200, SAVED ),
 		} );
 
-		expect( container.textContent ).toContain( 'Twitch channel: nova' );
+		expect( container.textContent ).toContain( 'Connected as nova' );
+		expect( container.textContent ).toContain(
+			'The same Twitch connection is used by all Community Features and by the alert chatbot'
+		);
 		expect( container.textContent ).toContain( 'At most 16,67 %' );
 
 		await submit( container );
 
 		const saved = requests.find( ( request ) => request.method === 'POST' );
 		expect( saved?.data ).toEqual( {
+			enabled: true,
 			gifted: true,
 			campaigns: [
 				{
@@ -198,12 +207,55 @@ describe( 'Twitch subscriber discount campaigns (ADR-106)', () => {
 		} );
 
 		expect( container.textContent ).toContain(
-			'Connect your Twitch channel'
+			'Your Twitch channel is not connected yet.'
 		);
 		expect( button( container, 'Connect Twitch' ) ).not.toBeNull();
 		expect( container.textContent ).toContain(
 			'You have no campaigns yet.'
 		);
+	} );
+
+	it( 'connects Twitch from this page and comes back to it', async () => {
+		const { container, requests } = await show( {
+			[ `GET ${ PATH }` ]: () =>
+				response( 200, { ...SAVED, campaigns: [], channel: null } ),
+			// Refused here, so the test stays on the page (no navigation).
+			'POST /merchboard/v1/me/alerts/chatbot/twitch/connect': () =>
+				response( 409, {
+					code: 'merchboard_chatbot_unavailable',
+					message: 'The chatbot is not set up yet.',
+					data: { status: 409 },
+				} ),
+		} );
+
+		click( button( container, 'Connect Twitch' ) );
+		await flush();
+		await flush();
+
+		const connect = requests.find( ( request ) =>
+			request.path.endsWith( '/twitch/connect' )
+		);
+		expect( connect?.data ).toEqual( {
+			return: 'community/twitch-discount',
+		} );
+		expect( container.textContent ).toContain( 'Something went wrong.' );
+	} );
+
+	it( 'switches the whole discount off', async () => {
+		const { container, requests } = await show( {
+			[ `GET ${ PATH }` ]: () => response( 200, SAVED ),
+			[ `POST ${ PATH }` ]: () =>
+				response( 200, { ...SAVED, enabled: false } ),
+		} );
+
+		click( container.querySelector( '#merchboard-twitch-sub-enabled' ) );
+		expect( container.textContent ).toContain(
+			'none of your campaigns gives a discount'
+		);
+		await submit( container );
+
+		const saved = requests.find( ( request ) => request.method === 'POST' );
+		expect( saved?.data ).toMatchObject( { enabled: false } );
 	} );
 
 	it( 'adds a campaign of chosen products and shows its field errors', async () => {

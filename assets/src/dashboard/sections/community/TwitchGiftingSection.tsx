@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 import type { FormEvent } from 'react';
 
-import { connectChatbot } from '../../api/chatbot';
 import type { ApiError } from '../../api/client';
 import {
 	getGifting,
@@ -25,6 +24,7 @@ import { Table } from '../../components/Table';
 import { Toast } from '../../components/Toast';
 import { useConfig } from '../../app/config-context';
 import { useApi } from '../../hooks/useApi';
+import { TwitchConnectionCard } from './TwitchConnectionCard';
 
 /**
  * The text of a field error code.
@@ -115,7 +115,6 @@ export function TwitchGiftingSection() {
 	const [ busy, setBusy ] = useState< 'save' | 'pause' | 'start' | null >(
 		null
 	);
-	const [ connecting, setConnecting ] = useState( false );
 	const [ error, setError ] = useState< ApiError | null >( null );
 	const [ toast, setToast ] = useState< string | null >( null );
 	const dismissToast = useCallback( () => setToast( null ), [] );
@@ -157,20 +156,6 @@ export function TwitchGiftingSection() {
 	const waiting = current.gifts.filter(
 		( gift ) => gift.status === 'waiting'
 	).length;
-
-	const connect = async () => {
-		setConnecting( true );
-		setError( null );
-		const answer = await connectChatbot( 'twitch' );
-
-		if ( answer.ok ) {
-			window.location.assign( answer.data );
-			return;
-		}
-
-		setConnecting( false );
-		setError( answer.error );
-	};
 
 	const submit = async ( event: FormEvent ) => {
 		event.preventDefault();
@@ -289,41 +274,6 @@ export function TwitchGiftingSection() {
 						'merchboard'
 					) }
 				</p>
-				{ current.channel === null ? (
-					<Alert tone="warning">
-						{ current.twitch
-							? __(
-									'Connect your Twitch channel, so the bot can run the gifts in your chat.',
-									'merchboard'
-								)
-							: __(
-									'Twitch is not set up in the shop yet. Please contact us.',
-									'merchboard'
-								) }
-						{ current.twitch && (
-							<p>
-								<Button
-									type="button"
-									variant="secondary"
-									isBusy={ connecting }
-									onClick={ () => void connect() }
-								>
-									{ __( 'Connect Twitch', 'merchboard' ) }
-								</Button>
-							</p>
-						) }
-					</Alert>
-				) : (
-					<p className="merchboard-field__help">
-						{ sprintf(
-							/* translators: %s: the creator's Twitch channel. */
-							__( 'Twitch channel: %s', 'merchboard' ),
-							current.channel
-						) }
-						{ ' · ' }
-						{ liveText( current ) }
-					</p>
-				) }
 				{ current.test && (
 					<Alert tone="warning">
 						{ __(
@@ -340,36 +290,46 @@ export function TwitchGiftingSection() {
 					noValidate
 					onSubmit={ ( event ) => void submit( event ) }
 				>
-					<label
-						className="merchboard-payouts__check"
-						htmlFor="merchboard-gifting-enabled"
-					>
-						<input
-							id="merchboard-gifting-enabled"
-							type="checkbox"
-							checked={ values.enabled }
-							onChange={ ( event ) =>
-								setValues( {
-									...values,
-									enabled: event.target.checked,
-								} )
-							}
-						/>{ ' ' }
-						{ __( 'Twitch gifting on', 'merchboard' ) }
-					</label>
-					{ current.enabled && ! values.enabled && (
-						<p className="merchboard-field__help">
-							{ __(
-								'When you switch gifting off, gifts that have not been won yet go back to their buyers with a gift code.',
-								'merchboard'
+					<div className="merchboard-community-top">
+						<div className="merchboard-community-top__switch">
+							<label
+								className="merchboard-payouts__check"
+								htmlFor="merchboard-gifting-enabled"
+							>
+								<input
+									id="merchboard-gifting-enabled"
+									type="checkbox"
+									checked={ values.enabled }
+									onChange={ ( event ) =>
+										setValues( {
+											...values,
+											enabled: event.target.checked,
+										} )
+									}
+								/>{ ' ' }
+								{ __( 'Twitch gifting on', 'merchboard' ) }
+							</label>
+							{ current.enabled && ! values.enabled && (
+								<p className="merchboard-field__help">
+									{ __(
+										'When you switch gifting off, gifts that have not been won yet go back to their buyers with a gift code.',
+										'merchboard'
+									) }
+								</p>
 							) }
-						</p>
-					) }
-					{ errors.enabled !== undefined && (
-						<p className="merchboard-field__error">
-							{ fieldError( errors.enabled ) }
-						</p>
-					) }
+							{ errors.enabled !== undefined && (
+								<p className="merchboard-field__error">
+									{ fieldError( errors.enabled ) }
+								</p>
+							) }
+						</div>
+						<TwitchConnectionCard
+							channel={ current.channel }
+							twitch={ current.twitch }
+							from="community/twitch-gifting"
+							status={ liveText( current ) }
+						/>
+					</div>
 					<div className="merchboard-field">
 						<label
 							className="merchboard-field__label"
