@@ -1128,7 +1128,7 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 
 **Efter fase 42:** samlet review og release af fase 41 og 42 (det tidligere 41.8): uafhængigt review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK. **Status 2026-11-09:** review ✅, bump til 1.8.0 ✅, testpakke på stg ✅, ingen bekræftelse og CPR i stamdata ✅ (`9d50bc0`), tagget `v1.8.0` på `9d50bc0` efter projektejerens OK; draft-release byte-identisk med testpakken (DEVELOPMENT.md "Release 1.8.0").
 
-## Fase 43 – Twitch-login for kunder og rabat til Twitch-subscribers 🔄 (plan godkendt 2026-11-10; ADR-106; Community Features punkt 3)
+## Fase 43 – Twitch-login for kunder og rabat til Twitch-subscribers ✅ (plan godkendt 2026-11-10; ADR-106; Community Features punkt 3; udgives i 2.0.0 efter projektejerens test på stg)
 
 **Projektejerens valg (2026-11-10):** se "Community Features (MitCCMerch)", punkt 3, nedenfor. Tilføjet efter undersøgelsen:
 - Creatoren betaler hele rabatten af sin fortjeneste på alle produkttyper, også almindelige andelsprodukter (en ny regnskabsregel).
@@ -1145,9 +1145,9 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 - **43.6 Butiksvisning:** ✅ (lokalt; testes i 43.9) kortet vises i klassisk kurv og checkout og foran kurv- og checkout-blokkene. **Det vises kun, når kurven har creator-merchandise, hvor creatoren har en aktiv kampagne for produktet og forbundet Twitch** (projektejerens krav 2026-11-10). Ikke logget ind: "Log ind med Twitch" og den højeste procent, der tilbydes (for en husket konto "Tjek min subscription som …"). Logget ind: Twitch-navnet, om rabatten gælder, og "Log ud fra Twitch". Resultatet af et login vises én gang. WooCommerces egne notice-klasser bruges, så temaet styler kortet. Oprindelig plan: et kort i kurv og checkout, både klassisk og med blokke.
 - **43.7 Visning i admin:** ✅ ordrehistorikken viser "Twitch subscriber discount X, paid from the profit" på rækken. Ordresiden viser kundens Twitch-konto og tier og procent pr. creator. Afregningsbilaget kræver ingen ændring: det lægger de gemte fortjenester og udbetalinger sammen, og de indeholder allerede rabatten. Oprindelig plan: ordrehistorik, afregningsbilag og ordresiden.
 - **43.8 Tekster og faste lister:** ✅ alle nye tekster er oversat til dansk (`npm run i18n`). Faste lister er opdateret: audit, afinstallation (user meta og ordre-meta), "Se som creator", schema-version 49, `SchemaTest` og `PluginTest`. Dokumentation: DATABASE.md, MODULES.md og `docs/features/twitch-sub-discount.md`. CI-fejl rettet: modulet opretter først Twitch-tjenesterne på `init`, testene bruger gyldige Twitch-nøgler, og et subscription-svar gemt under kanal-id'et blev forkastet, fordi PHP gør tal-nøgler til heltal. De berørte integrationstests er grønne lokalt (47 tests).
-- **43.9 Runtime-test:** ⏸ udskudt efter projektejerens beslutning 2026-11-10. Fase 43 testes sammen med fase 44 i én testpakke på stg: rigtigt Twitch-login, subscription-tjek, rabat i kurven og ordre. Der bygges ingen testpakke til fase 43 alene.
+- **43.9 Runtime-test:** projektejerens test på stg sammen med fase 44–46 (testpakken nederst under fase 46): rigtigt Twitch-login, subscription-tjek, rabat i kurven og ordre. Der bygges ingen testpakke til fase 43 alene.
 
-## Fase 44 – Twitch-gifting 🔄 (valg 2026-11-10; ADR-107; Community Features punkt 2)
+## Fase 44 – Twitch-gifting ✅ (valg 2026-11-10; ADR-107; Community Features punkt 2; udgives i 2.0.0 efter projektejerens test på stg)
 
 Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR. **Testes sammen med fase 43** i én testpakke på stg (projektejerens beslutning 2026-11-10); derefter samlet review, CI og release.
 
@@ -1178,9 +1178,9 @@ Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR. **Testes samme
 - **44.8 Admin, beskeder, privacy, tekster og tests:** ✅ (296a01e, c030ade, ab770f1) ordresiden, advarsel ved refundering, notifikationer, privacy, afinstallation, danske tekster og faste lister.
 - **44.8a Testtilstand for gifting:** ✅ (a0cf2bc, docs 58df824) projektejerens ønske 2026-11-11: en administrator kan pr. creator lade creatoren regnes som live, så gaver kan testes uden en stream (ADR-107 statusnote).
 - **44.8b Chat og gaveside:** ✅ (2cb4915, docs 192bad0) projektejerens ønsker 2026-11-11: botten bekræfter `!enter` (samlet besked højst hvert 10. sekund, også "Allerede med", kan slås fra), "Tilmeldingen er lukket" og vinderen 10 sekunder senere, og vinderens link åbner en gaveside med "Log ind med Twitch" (ADR-107 statusnote).
-- **44.9 Review, CI og testpakke 2.0.0** for fase 43 og 44 på stg. 🔄 Review ✅ (fund rettet i 43a0fc7, c71c745, 76ac116), bump til 2.0.0 ✅ (a3d498b), testpakke på stg ✅ 2026-11-11 (ZIP SHA-256 `db7bc7d1…`, schema-version 50, ingen PHP-fejl); ny testpakke med testtilstanden, bekræftelserne og gavesiden på stg ✅ 2026-11-11 (bygget fra 192bad0, ZIP SHA-256 `19a92340…`); rettelse: "Tilmeldingen er lukket" gentog sig uden objektcache (28a464c), ny testpakke på stg ✅ 2026-11-11 (ZIP SHA-256 `3b7d8c31…`); tag efter projektejerens test.
+- **44.9 Review, CI og testpakke 2.0.0** for fase 43 og 44 på stg. ✅ Review ✅ (fund rettet i 43a0fc7, c71c745, 76ac116), bump til 2.0.0 ✅ (a3d498b), testpakke på stg ✅ 2026-11-11 (ZIP SHA-256 `db7bc7d1…`, schema-version 50, ingen PHP-fejl); ny testpakke med testtilstanden, bekræftelserne og gavesiden på stg ✅ 2026-11-11 (bygget fra 192bad0, ZIP SHA-256 `19a92340…`); rettelse: "Tilmeldingen er lukket" gentog sig uden objektcache (28a464c), ny testpakke på stg ✅ 2026-11-11 (ZIP SHA-256 `3b7d8c31…`). Den aktuelle testpakke med fase 45 og 46 står under fase 46.
 
-- **Efter fase 44** kører jeg automatisk videre: review, rettelser, grøn CI, testpakke for fase 43 og 44 og upload til stg. Projektejeren tester, og tag og release sker først efter projektejerens OK. **Versionen bliver 2.0.0.**
+- **Efter fase 44** ✅ review, rettelser, grøn CI, testpakke for fase 43 og 44 og upload til stg. Projektejeren tester, og tag og release sker først efter projektejerens OK. **Versionen bliver 2.0.0.**
 
 ## Fase 45 – Globale community-knapper og fælles Twitch-kort ✅ (plan godkendt 2026-11-11; ADR-108)
 
@@ -1197,22 +1197,22 @@ Projektejerens ønske efter testen af 2.0.0 på stg: en global til/fra-knap pr. 
 - **45.4 Creator:** ✅ (6585dd1) subrabattens samlede til/fra, det fælles Twitch-kort, tilbage til siden efter forbindelsen og noten på chatbottens Twitch-kort.
 - **45.5 Tekster, tests og docs.** ✅ (6585dd1; docs i commit efter)
 
-## Fase 46 – Alertlærredet er boksen ✅ (plan godkendt 2026-11-11; ADR-109)
+## Fase 46 – Alertdesignerens layouts: én boks eller frit ✅ (plan godkendt 2026-11-11; ADR-109 med statusnoter)
 
-Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele alertboksen, og layoutet skal kun bestemme, hvor billedet sidder.
+Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele alertboksen, og layoutet skal kun bestemme, hvor billedet sidder. Efter testen på stg blev det samme dag til (46.5–46.7):
+- **Lærredet** viser altid hele skærmen (1920 × 1080) og er højst 800 px bredt.
+- **Fem layouts:** billedet øverst, til venstre, til højre eller som baggrund, hvor billede og tekst er én boks uden ekstra rammer, og Frit, hvor de er hver deres boks uden ramme udenom.
+- **Tekst rundt om billedet** kræver Frit.
 
-**Projektejerens valg 2026-11-11:**
-- Editoren viser kun boksen.
-- Layoutet placerer billedet (top, venstre, højre, baggrund eller frit), og teksterne kan altid flyttes frit.
-- Placeringen på skærmen sættes med X/Y og et minikort, så OBS-kilden fortsat er 1920 × 1080.
+**Den første plan (afløst af 46.5–46.6):** editoren viste kun boksen, layoutet placerede kun billedet, teksterne kunne altid flyttes frit, og et minikort placerede boksen på skærmen.
 
 - **46.1 Model og overlay:** ✅ (c167a68) nye `layout_mode`-værdier, billedets placering, og de gamle layouts vises uændret.
 - **46.2 Editor:** ✅ (c167a68) scenen er boksen, minikort og layoutvælger.
 - **46.3 Gamle designs:** ✅ (c167a68) omregnes i editoren ved åbning.
-- **46.4 Tekster, tests og docs.** ✅ (c167a68; docs i commit efter).
-- **46.5 Lærredet tilbage til hele skærmen:** projektejerens svar 2026-11-11 ("Lærredet skal altid være 1920x1080 og fylde mindre på skærmen"): lærredet viser igen hele skærmen med boksen og er højst 800 px bredt; minikortet er fjernet (ADR-109 statusnote). Layoutet for billedet og omregningen af gamle layouts bliver.
-- **46.6 Én boks eller frit:** projektejerens ønske 2026-11-11 (rammen om alerten er forstyrrende): de fire første layouts gør billede og tekst til én boks uden rammer om elementerne, og Frit viser kun elementernes egne bokse; alertboksen følger dem. Gamle layoutnavne læses som de nye (ADR-109 statusnote).
-- **46.7 Tekst rundt om billedet:** projektejerens ønske 2026-11-11: "Rundt om billedet" skifter automatisk til Frit, og de andre layouts er utilgængelige med en besked, mens den er slået til. Runtime-test 2026-11-11 i den lokale Playground (Local kørte ikke): fanen Community, community-siderne med Twitch-kortet, og et design med det gamle layout "ved siden af" blev omregnet til "billede til venstre" uden at blive gemt. Fund rettet i c167a68: editoren blev stående på "Gemmer…".
+- **46.4 Tekster, tests og docs.** ✅ (c167a68; docs i commit efter). Runtime-test 2026-11-11 i den lokale Playground (Local kørte ikke): fanen Community og community-siderne med Twitch-kortet. Fund rettet i c167a68: editoren blev stående på "Gemmer…", når der intet var at gemme.
+- **46.5 Lærredet tilbage til hele skærmen:** ✅ (c94e8a6) projektejerens svar 2026-11-11 ("Lærredet skal altid være 1920x1080 og fylde mindre på skærmen"): lærredet viser igen hele skærmen med boksen og er højst 800 px bredt; minikortet er fjernet (ADR-109 statusnote). Layoutet for billedet og omregningen af gamle layouts bliver.
+- **46.6 Én boks eller frit:** ✅ (62b9d36) projektejerens ønske 2026-11-11 (rammen om alerten er forstyrrende): de fire første layouts gør billede og tekst til én boks uden rammer om elementerne, og Frit viser kun elementernes egne bokse; alertboksen følger dem. Gamle layoutnavne læses som de nye (ADR-109 statusnote). Runtime-testet i Playground: et gammelt "ved siden af"-design vises som én boks til venstre, og skift til Frit og tilbage beholder elementernes plads.
+- **46.7 Tekst rundt om billedet:** ✅ (ae1d12e) projektejerens ønske 2026-11-11: "Rundt om billedet" skifter automatisk til Frit, og de andre layouts er utilgængelige med en besked, mens den er slået til. Runtime-testet i Playground.
 
 - **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Testpakke på stg ✅ 2026-11-11 (bygget fra b6d0dfa, ZIP SHA-256 `b2df6310…`). Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
 
@@ -1229,14 +1229,13 @@ Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele al
 | Security hardening | Rate limiting på `/me`-endpoints, GDPR exporter/eraser, styles uden `unsafe-inline` i dashboardets CSP og et samlet security-review. Dashboardets CSP med nonces til scripts findes allerede. |
 | Testing | Playwright E2E mod Playground i CI |
 | Teams | Flere brugere pr. creator |
-| Branding: egen login-skærm | **Flyttet til fase 41 (ADR-103).** Projektejerens ønske 2026-11-09: en helt egen login-oplevelse, der ikke ligner WordPress' standard-login, men stadig bruger WordPress' login-formular og flow, så adgangskoder, cookies, 2FA/CAPTCHA-plugins, glemt adgangskode og redirects virker som i dag. Fase 21 (ADR-042) gav kun logo og farver på `wp-login.php` og kun i Merch Dashboard-kontekst. Kræver en ny ADR, der afløser ADR-042's afgrænsning: om siden ligger på `wp-login.php` eller på en egen side med `wp_login_form()`, hvad der kan tilpasses (layout, baggrund, tekster, logo), og hvordan login-sikkerheden bevares. |
 | Branding: brand-font | Self-hosted brand-font. Logo og temaer findes (fase 21). |
-| Community Features (MitCCMerch) | Projektejerens ønske 2026-11-09: en ny menu "Community Features" i creator-dashboardet (MitCCMerch) med giveaway-links, Twitch-gifting, rabat til Twitch-subscribers (og evt. YouTube-medlemmer) og platform-integrationer som YouTube Product Shelf, inspireret af Fourthwall. Se afsnittet "Community Features (MitCCMerch)" nedenfor. |
+| Community Features (MitCCMerch) | Projektejerens ønske 2026-11-09, inspireret af Fourthwall. Menuen "Community Features", rabat til Twitch-subscribers og Twitch-gifting er bygget (fase 43–45). Tilbage: giveaway-links, evt. rabat til YouTube-medlemmer og platform-integrationer som YouTube Product Shelf. Se afsnittet "Community Features (MitCCMerch)" nedenfor. |
 | Alerts: creatorens eget format | Projektejerens ønske 2026-10-23, ikke prioriteret: creatoren vælger selv, om chatbotten skriver én besked pr. ordrelinje eller én pr. ordre (i dag administratorens valg for alle), og kan gøre det samme med selve alerten i overlayet: én alert pr. ordre, fx "$UserName har købt merch", der skifter (cycler) mellem billederne af de købte varer. Kræver design af skabelon, varighed og billedskift, når det prioriteres |
 
 ### Community Features (MitCCMerch)
 
-Projektejerens ønske 2026-11-09, ikke prioriteret. En ny menu "Community Features" i creator-dashboardet (MitCCMerch) med funktioner, som Fourthwall tilbyder sine creators (Fourthwalls hjælpesider læst 2026-11-09). Hver funktion planlægges som sin egen fase med ADR, når den prioriteres.
+Projektejerens ønske 2026-11-09. En ny menu "Community Features" i creator-dashboardet (MitCCMerch) med funktioner, som Fourthwall tilbyder sine creators (Fourthwalls hjælpesider læst 2026-11-09). Hver funktion planlægges som sin egen fase med ADR, når den prioriteres. **Status 2026-11-11:** punkt 2 og 3 er bygget (fase 43–45, udgives i 2.0.0); punkt 1, 4 og 5 er ikke prioriteret.
 
 **Fælles regler (projektejerens):**
 - **Gavekort tæller ikke som fortjeneste:** en gavekortkode, som en giveaway eller et gift udløser, fratrækkes creatorens fortjeneste, så den ikke tælles to gange.
@@ -1258,7 +1257,7 @@ Projektejerens ønske 2026-11-09, ikke prioriteret. En ny menu "Community Featur
   - Hvordan gavekortet hænger sammen med payout-gavekortene (G1, fase 23–24).
   - Hvordan vinderen får koden uden at dele adresse i chatten.
 
-**2. Twitch-gifting**
+**2. Twitch-gifting** ✅ bygget i fase 44 (ADR-107)
 - **Hos Fourthwall:** mens creatoren er live, kan en seer købe et produkt som gave. Botten annoncerer gaven og åbner et indtrædelsesvindue (`!enter`, 20–180 sekunder). Botten trækker en tilfældig vinder, og vinderen henter gaven ved at logge ind med Twitch. Bliver gaven ikke hentet, kan den trækkes om. Køberen betaler en gennemsnitlig fragt; forskellen dækkes efter creatorens valg.
 - **Hos os (projektejerens model):** creatoren får fortjeneste af købet, men den gavekortkode, vinderen får, fratrækkes fortjenesten. Giveawayen kører gennem CCMerch-chatbotten.
 - **Projektejerens valg 2026-11-10** (afløser de tidligere afklaringspunkter; bygges i fasen efter punkt 3 og genbruger dens Twitch-login):
@@ -1274,7 +1273,7 @@ Projektejerens ønske 2026-11-09, ikke prioriteret. En ny menu "Community Featur
   - **Vinderen beviser sig med Twitch-login ved indløsning:** botten skriver et link i chatten, og kun den Twitch-konto, der vandt, kan hente gaven. Koden vises aldrig i chatten.
   - **Ikke hentet:** vinderen har en frist (fx 24 timer). Derefter kan gaven trækkes om, fx ved næste stream.
 
-**3. Rabat til Twitch-subscribers**
+**3. Rabat til Twitch-subscribers** ✅ bygget i fase 43 (ADR-106)
 - **Hos Fourthwall:** en automatisk rabat (procent, fast beløb eller gratis fragt) på hele ordren eller udvalgte produkter, valgt pr. subscriber-tier og eventuelt land. Subscriberen logger ind med Twitch ved checkout, og abonnementet tjekkes. Gratis produkter som rabat understøttes ikke.
 - **Hos os:**
   - Kræver, at kunden logger ind med Twitch i checkout (Twitch-OAuth for kunder). Det er en ny brug af Twitch ud over alerts, så det kræver en ADR.
