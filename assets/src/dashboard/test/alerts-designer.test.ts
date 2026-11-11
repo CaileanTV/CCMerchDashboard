@@ -4,13 +4,14 @@ import {
 	DEFAULT_LAYOUT,
 	alignBoxes,
 	background,
-	convertLegacy,
+	fitWidget,
 	growsUp,
 	moveBox,
 	moveBoxes,
 	resizeBox,
 	sampleText,
 	snap,
+	toFree,
 } from '../sections/alerts/designer';
 import type { OverlaySettings } from '../types/alerts';
 
@@ -138,23 +139,17 @@ describe( 'several boxes', () => {
 	} );
 } );
 
-describe( 'layouts before ADR-109', () => {
-	it( 'become the image layout that looks the same, from the drawn alert', () => {
-		const settings = {
-			widget: {
-				x: 100,
-				y: 800,
-				w: 600,
-				h: 200,
-				opacity: 100,
-				rotation: 0,
-			},
-			layout_mode: 'side',
-		} as unknown as OverlaySettings;
-		const converted = convertLegacy(
+describe( 'the layout "free" (ADR-109)', () => {
+	const settings = {
+		widget: { x: 100, y: 800, w: 600, h: 200, opacity: 100, rotation: 0 },
+		layout_mode: 'left',
+		show_secondary: false,
+	} as unknown as OverlaySettings;
+
+	it( 'starts with the elements where the layout with one box drew them', () => {
+		const free = toFree(
 			settings,
 			DEFAULT_LAYOUT,
-			'side',
 			{
 				image: { x: 0, y: 0, w: 200, h: 200 },
 				main: { x: 216, y: 60, w: 384, h: 50 },
@@ -163,47 +158,46 @@ describe( 'layouts before ADR-109', () => {
 			{ top: 4, left: 6 }
 		);
 
-		expect( converted.settings.layout_mode ).toBe( 'left' );
-		expect( converted.layout.elements.product_image ).toMatchObject( {
+		expect( free.settings.layout_mode ).toBe( 'free' );
+		expect( free.layout.elements.product_image ).toMatchObject( {
 			x: 100,
 			y: 800,
 			w: 200,
 			h: 200,
 		} );
-		expect( converted.layout.elements.main_text ).toMatchObject( {
+		expect( free.layout.elements.main_text ).toMatchObject( {
 			x: 310,
 			y: 856,
 			w: 384,
 			h: 50,
 		} );
-		expect( converted.layout.elements.secondary_text ).toEqual(
+		expect( free.layout.elements.secondary_text ).toEqual(
 			DEFAULT_LAYOUT.elements.secondary_text
 		);
+	} );
+
+	it( 'makes the alert box the box around the elements shown', () => {
+		const fitted = fitWidget(
+			settings,
+			DEFAULT_LAYOUT,
+			DEFAULT_LAYOUT.elements.main_text
+		);
+
+		// The default image (40, 880, 120 × 120) and main text (176, 895, 700 × 80).
+		expect( fitted?.widget ).toEqual( {
+			x: 40,
+			y: 880,
+			w: 836,
+			h: 120,
+			opacity: 100,
+			rotation: 0,
+		} );
 		expect(
-			convertLegacy(
-				settings,
+			fitWidget(
+				fitted as OverlaySettings,
 				DEFAULT_LAYOUT,
-				'above',
-				{
-					image: null,
-					main: null,
-					secondary: null,
-				},
-				{ top: 0, left: 0 }
-			).settings.layout_mode
-		).toBe( 'top' );
-		expect(
-			convertLegacy(
-				settings,
-				DEFAULT_LAYOUT,
-				'overlay',
-				{
-					image: null,
-					main: null,
-					secondary: null,
-				},
-				{ top: 0, left: 0 }
-			).settings.layout_mode
-		).toBe( 'background' );
+				DEFAULT_LAYOUT.elements.main_text
+			)
+		).toBeNull();
 	} );
 } );

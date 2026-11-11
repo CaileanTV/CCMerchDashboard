@@ -671,7 +671,7 @@ describe( 'AlertsSection', () => {
 		).toBe( 542 );
 	} );
 
-	it( 'shows the whole 1920 × 1080 screen and lets the texts move in every image layout (ADR-109)', async () => {
+	it( 'shows the whole 1920 × 1080 screen, one box for image and texts, and boxes of their own in "free" (ADR-109)', async () => {
 		mockApi( {
 			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
 			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
@@ -687,13 +687,29 @@ describe( 'AlertsSection', () => {
 		expect( width ).toBeGreaterThan( 0 );
 		expect( width / height ).toBeCloseTo( 1920 / 1080, 3 );
 
+		// The fixture is "free": the image and the main text, no box around them.
+		expect(
+			rendered?.container.querySelectorAll(
+				'.merchboard-alert-canvas__element'
+			).length
+		).toBe( 2 );
+		expect(
+			rendered?.container.querySelector(
+				'.merchboard-alert-canvas__frame'
+			)
+		).toBeNull();
+
 		click( button( 'Image on the left' ) );
-		const frames = rendered?.container.querySelectorAll(
-			'.merchboard-alert-canvas__element'
-		);
-		expect( frames?.length ).toBe( 2 );
-		expect( frames?.[ 0 ]?.classList.contains( 'is-fixed' ) ).toBe( true );
-		expect( frames?.[ 1 ]?.classList.contains( 'is-fixed' ) ).toBe( false );
+		expect(
+			rendered?.container.querySelectorAll(
+				'.merchboard-alert-canvas__element'
+			).length
+		).toBe( 0 );
+		expect(
+			rendered?.container.querySelector(
+				'.merchboard-alert-canvas__frame'
+			)
+		).not.toBeNull();
 	} );
 
 	it( 'highlights the inserted values on the canvas', async () => {

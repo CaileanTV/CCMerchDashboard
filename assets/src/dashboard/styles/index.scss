@@ -3316,11 +3316,6 @@ html:has(.merchboard-alert-editor) {
 
 .merchboard-alert-canvas__element {
 	outline-color: var(--merchboard-text-subtle);
-
-	// Placed by the layout: only its size changes.
-	&.is-fixed {
-		cursor: default;
-	}
 }
 
 .merchboard-alert-canvas__size {

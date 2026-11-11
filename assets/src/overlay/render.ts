@@ -6,13 +6,11 @@
  *
  * - **Box:** placed on the 1920 × 1080 canvas, with its opacity and
  *   rotation (around its middle).
- * - **Layouts (ADR-109):** the image's place in the box: `top` (centred at
- *   the top), `left` and `right` (centred at the edge), `background` (the
- *   whole box) or `free` (its own box), with its own size. The texts always
- *   keep their own boxes. The boxes are in canvas coordinates.
- * - **Layouts before ADR-109:** `above` (image over the texts), `side`
- *   (image left of the texts) and `overlay` (texts on the image) are still
- *   drawn as before; the designer turns them into image layouts.
+ * - **Layouts (ADR-109):** the image and the texts form one box: `top`
+ *   (image over the texts), `left` and `right` (image beside the texts) and
+ *   `background` (texts on the image); or `free` (each element's own box, in
+ *   canvas coordinates). The names before ADR-109 (`above`, `side`,
+ *   `overlay`) are read as `top`, `left` and `background`.
  * - **Texts:** font, colour with opacity, shadow, alignment, line height,
  *   spacing, direction, italic, underline, case, stroke and margin; the box
  *   style (background, corners, padding) is on the text boxes.
@@ -26,15 +24,14 @@ import type { TextFit } from './fit';
 import { frameBox, parseTextFrame } from './frame';
 import type { TextFrame } from './frame';
 import {
-	LAYOUT_MODES,
 	TEXT_ALIGNS,
-	isLegacyLayout,
 	TEXT_CASES,
 	TEXT_DIRECTIONS,
 	hexColor,
 	intIn,
 	oneOf,
 	parseAlertAnimation,
+	parseLayoutMode,
 	parseHighlight,
 	parseMargin,
 	parseTextTiming,
@@ -236,7 +233,7 @@ export function parseLook( value: unknown, origin: string ): AlertLook {
 			data.widget,
 			around( parsed, fontSize, isRecord( data.frame ) )
 		),
-		layout_mode: oneOf( data.layout_mode, LAYOUT_MODES, 'free' ),
+		layout_mode: parseLayoutMode( data.layout_mode ),
 		elements: parsed,
 		show_secondary: data.show_secondary === true,
 		font_family:
@@ -399,43 +396,8 @@ export function arrange( elements: AlertElements, look: AlertLook ): void {
 		clearPlace( element );
 	}
 
-	if ( ! isLegacyLayout( look.layout_mode ) ) {
+	if ( look.layout_mode === 'free' ) {
 		placeFree( elements, look );
-	}
-}
-
-/**
- * The image's box on the canvas (ADR-109): its own size, at most the alert
- * box's, placed by the layout; in `free` (and the layouts before ADR-109)
- * its own box.
- *
- * @param look Look.
- */
-export function imageBox(
-	look: Pick< AlertLook, 'widget' | 'layout_mode' | 'elements' >
-): { x: number; y: number; w: number; h: number } {
-	const { widget } = look;
-	const image = look.elements.product_image;
-	const w = Math.min( image.w, widget.w );
-	const h = Math.min( image.h, widget.h );
-	const middle = widget.y + Math.round( ( widget.h - h ) / 2 );
-
-	switch ( look.layout_mode ) {
-		case 'top':
-			return {
-				x: widget.x + Math.round( ( widget.w - w ) / 2 ),
-				y: widget.y,
-				w,
-				h,
-			};
-		case 'left':
-			return { x: widget.x, y: middle, w, h };
-		case 'right':
-			return { x: widget.x + widget.w - w, y: middle, w, h };
-		case 'background':
-			return { x: widget.x, y: widget.y, w: widget.w, h: widget.h };
-		default:
-			return { x: image.x, y: image.y, w: image.w, h: image.h };
 	}
 }
 
@@ -486,9 +448,8 @@ export function styleText( element: HTMLElement, look: AlertLook ): void {
 }
 
 /**
- * Places the elements in their own boxes (every layout but those before
- * ADR-109; the image by imageBox()): canvas coordinates made relative to
- * the alert box. Around the image the main
+ * Places the elements in their own boxes (layout `free`): canvas
+ * coordinates made relative to the alert box. Around the image the main
  * text takes the image's box with its margin; a growing text box keeps its
  * height as the least and, near the bottom of the canvas, grows up.
  *
@@ -526,13 +487,12 @@ function placeFree( elements: AlertElements, look: AlertLook ): void {
 		} );
 	};
 	const grows = look.text_fit === 'grow';
-	const image = imageBox( look );
 
-	place( elements.image, image, false );
+	place( elements.image, look.elements.product_image, false );
 	place(
 		elements.text,
 		look.frame
-			? frameBox( image, look.font_size )
+			? frameBox( look.elements.product_image, look.font_size )
 			: look.elements.main_text,
 		grows && look.frame === null
 	);

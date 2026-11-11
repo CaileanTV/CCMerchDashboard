@@ -28,7 +28,8 @@ defined( 'ABSPATH' ) || exit;
  *
  * Alert designer 2.0 (ADR-088): the alert is one box (`widget`) with a
  * layout (`layout_mode`); the elements keep their own boxes, which stay in
- * canvas coordinates. ADR-109: the layout places only the image. Settings stored before have no box: it
+ * canvas coordinates. ADR-109: four layouts make the image and the texts
+ * one box; `free` keeps the elements' own boxes. Settings stored before have no box: it
  * becomes the box around their visible elements and the layout `free`, so
  * they look as before. The top-level look is the default; `variations`
  * hold other looks (LOOK_KEYS), chosen by choose().
@@ -103,13 +104,22 @@ final class OverlaySettings {
 	public const ELEMENTS = array( 'product_image', 'main_text', 'secondary_text' );
 
 	/**
-	 * Layouts of the alert box. ADR-109: the image's place in the box (top,
-	 * left, right, background, or free in its own box); the texts always keep
-	 * their own boxes. ADR-088 before it, still drawn as before but no longer
-	 * offered in the designer: image above the text, image left of the text,
-	 * text on the image.
+	 * Layouts of the alert box (ADR-109 with its status note of 2026-11-11):
+	 * the image and the texts form one box, with the image at the top, on
+	 * the left, on the right or as the background; or free (each element's
+	 * own box).
 	 */
-	public const LAYOUT_MODES = array( 'top', 'left', 'right', 'background', 'free', 'above', 'side', 'overlay' );
+	public const LAYOUT_MODES = array( 'top', 'left', 'right', 'background', 'free' );
+
+	/**
+	 * The names of the layouts before ADR-109 (ADR-088), read as the layout
+	 * that looks the same.
+	 */
+	public const LEGACY_LAYOUTS = array(
+		'above'   => 'top',
+		'side'    => 'left',
+		'overlay' => 'background',
+	);
 
 	/**
 	 * Text styles of alert designer 2.0, as in assets/src/overlay/render.ts.
@@ -220,7 +230,7 @@ final class OverlaySettings {
 			'audio_category_map'  => self::category_map( $input['audio_category_map'] ?? null ),
 			// Settings without a box (stored before 2.0) get the box around their elements.
 			'widget'              => self::widget( $input['widget'] ?? null, self::around( $layout, $frame['enabled'], $font_size, '' !== $secondary ) ),
-			'layout_mode'         => self::choice( $input['layout_mode'] ?? null, self::LAYOUT_MODES, 'free' ),
+			'layout_mode'         => self::layout_mode( $input['layout_mode'] ?? null ),
 			'layout'              => $layout,
 			'animations'          => self::clean_animations( $input['animations'] ?? null, $anim ),
 			'text_fills'          => self::clean_fills( $input['text_fills'] ?? null ),
@@ -998,6 +1008,20 @@ final class OverlaySettings {
 		$color  = '(?:#[0-9a-f]{3}|#[0-9a-f]{6}|#[0-9a-f]{8}|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(?:,\s*(?:0|1|0?\.\d{1,3}|1\.0{1,3})\s*)?\))';
 
 		return 1 === preg_match( '/^' . $length . ' ' . $length . '(?: ' . $length . ')? ' . $color . '$/', $value ) ? $value : '';
+	}
+
+	/**
+	 * A layout: a name from before ADR-109 is read as the layout that looks
+	 * the same, anything unknown as `free`.
+	 *
+	 * @param mixed $value Raw value.
+	 */
+	private static function layout_mode( mixed $value ): string {
+		if ( is_string( $value ) && isset( self::LEGACY_LAYOUTS[ $value ] ) ) {
+			return self::LEGACY_LAYOUTS[ $value ];
+		}
+
+		return self::choice( $value, self::LAYOUT_MODES, 'free' );
 	}
 
 	/**

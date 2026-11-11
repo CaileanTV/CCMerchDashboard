@@ -251,7 +251,7 @@ describe( 'AlertPlayer', () => {
 
 		player.enqueue( [ alert( 1, { look: 'big001' } ) ] );
 
-		expect( box.dataset.layout ).toBe( 'side' );
+		expect( box.dataset.layout ).toBe( 'left' ); // 'side' before ADR-109.
 		expect( box.dataset.in ).toBe( 'zoom' );
 		expect( box.style.left ).toBe( '100px' );
 		expect(

@@ -15,14 +15,13 @@ import { FontPicker } from '../../../components/FontPicker';
 import {
 	ALERT_ANIMATIONS,
 	HIGHLIGHT_EFFECTS,
-	IMAGE_LAYOUTS,
+	LAYOUT_MODES,
 	NUMBER_FORMATS,
 	TTS_VOICES,
 } from '../../../../overlay/look';
 import type {
 	AlertAnimationName,
 	HighlightEffect,
-	ImageLayout,
 	LayoutMode,
 	NumberFormat,
 	TextCase,
@@ -64,11 +63,11 @@ export interface EditorFields {
 }
 
 /**
- * The name of an image layout (ADR-109).
+ * The name of a layout (ADR-109).
  *
  * @param mode Layout.
  */
-function layoutLabel( mode: ImageLayout ): string {
+function layoutLabel( mode: LayoutMode ): string {
 	switch ( mode ) {
 		case 'top':
 			return __( 'Image at the top', 'merchboard' );
@@ -79,7 +78,7 @@ function layoutLabel( mode: ImageLayout ): string {
 		case 'background':
 			return __( 'Image as the background', 'merchboard' );
 		default:
-			return __( 'Image placed freely', 'merchboard' );
+			return __( 'Free', 'merchboard' );
 	}
 }
 
@@ -322,9 +321,9 @@ export function MerchAlertPanel( {
 
 			<Panel level="group" title={ __( 'Layout', 'merchboard' ) }>
 				<Segmented< LayoutMode >
-					label={ __( 'Image', 'merchboard' ) }
+					label={ __( 'Layout', 'merchboard' ) }
 					value={ values.layout_mode }
-					choices={ IMAGE_LAYOUTS.map( ( mode ) => ( {
+					choices={ LAYOUT_MODES.map( ( mode ) => ( {
 						value: mode,
 						title: layoutLabel( mode ),
 						label: (
@@ -342,11 +341,11 @@ export function MerchAlertPanel( {
 				<p className="merchboard-field__help">
 					{ values.layout_mode === 'free'
 						? __(
-								'Drag the image and the texts wherever you want them in the alert box on the canvas, and their corners to size them.',
+								'Free: the image and the texts are boxes of their own. Drag them on the canvas, and their corners to size them.',
 								'merchboard'
 							)
 						: __(
-								'The layout places the image in the alert box. Drag the texts wherever you want them in the box on the canvas, and the corners to size the image and the texts.',
+								'The image and the texts form one box. Drag it on the canvas to place it, and its corners to size it.',
 								'merchboard'
 							) }
 				</p>

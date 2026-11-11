@@ -107,12 +107,21 @@ final class OverlaySettingsV2Test extends TestCase {
 			),
 			$values['widget']
 		);
-		self::assertSame( 'above', $values['layout_mode'] );
+		self::assertSame( 'top', $values['layout_mode'], '"above" before ADR-109.' );
 		self::assertSame( 'free', OverlaySettings::from_array( array( 'layout_mode' => 'grid' ) )->to_array()['layout_mode'] );
 
-		// ADR-109: the image layouts; the layouts before it are kept as they are.
-		foreach ( array( 'top', 'left', 'right', 'background', 'free', 'side', 'overlay' ) as $mode ) {
-			self::assertSame( $mode, OverlaySettings::from_array( array( 'layout_mode' => $mode ) )->to_array()['layout_mode'] );
+		// ADR-109: the five layouts; the names before it are read as the layout that looks the same.
+		foreach ( array(
+			'top'        => 'top',
+			'left'       => 'left',
+			'right'      => 'right',
+			'background' => 'background',
+			'free'       => 'free',
+			'above'      => 'top',
+			'side'       => 'left',
+			'overlay'    => 'background',
+		) as $mode => $read ) {
+			self::assertSame( $read, OverlaySettings::from_array( array( 'layout_mode' => $mode ) )->to_array()['layout_mode'] );
 		}
 	}
 

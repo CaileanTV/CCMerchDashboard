@@ -40,61 +40,64 @@
 	display: none;
 }
 
-/* ------------------------ The image layouts and free (ADR-109). */
+/* ------------------------------------------------------------ Free. */
 
-/* Every element in its own box; the image (first) lies under the texts. */
-.merchboard-alert:is([data-layout="free"], [data-layout="top"], [data-layout="left"], [data-layout="right"], [data-layout="background"]) .merchboard-alert__texts {
+.merchboard-alert[data-layout="free"] .merchboard-alert__texts {
 	display: contents;
 }
 
-.merchboard-alert:is([data-layout="free"], [data-layout="top"], [data-layout="left"], [data-layout="right"], [data-layout="background"]) :is(.merchboard-alert__image, .merchboard-alert__text) {
+.merchboard-alert[data-layout="free"] :is(.merchboard-alert__image, .merchboard-alert__text) {
 	position: absolute;
 }
 
-/* ------------------------------------------------- Image above text. */
+/* ---------------------------------------- Image at the top (ADR-109). */
 
-.merchboard-alert[data-layout="above"] {
+.merchboard-alert[data-layout="top"] {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	gap: 8px;
 }
 
-.merchboard-alert[data-layout="above"] .merchboard-alert__image {
+.merchboard-alert[data-layout="top"] .merchboard-alert__image {
 	flex: 1 1 0;
 	min-height: 0;
 	aspect-ratio: 1;
 	max-width: 100%;
 }
 
-.merchboard-alert[data-layout="above"] .merchboard-alert__image > img {
+.merchboard-alert[data-layout="top"] .merchboard-alert__image > img {
 	object-fit: contain;
 }
 
-.merchboard-alert[data-layout="above"] .merchboard-alert__texts {
+.merchboard-alert[data-layout="top"] .merchboard-alert__texts {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
 	width: 100%;
 }
 
-/* ----------------------------------------------- Image beside text. */
+/* ------------------------------- Image on the left or on the right. */
 
-.merchboard-alert[data-layout="side"] {
+.merchboard-alert:is([data-layout="left"], [data-layout="right"]) {
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	gap: 16px;
 }
 
-.merchboard-alert[data-layout="side"] .merchboard-alert__image {
+.merchboard-alert[data-layout="right"] {
+	flex-direction: row-reverse;
+}
+
+.merchboard-alert:is([data-layout="left"], [data-layout="right"]) .merchboard-alert__image {
 	flex: none;
 	height: 100%;
 	aspect-ratio: 1;
 	max-width: 45%;
 }
 
-.merchboard-alert[data-layout="side"] .merchboard-alert__texts {
+.merchboard-alert:is([data-layout="left"], [data-layout="right"]) .merchboard-alert__texts {
 	display: flex;
 	flex: 1 1 0;
 	flex-direction: column;
@@ -103,14 +106,14 @@
 	min-width: 0;
 }
 
-/* --------------------------------------------------- Text on image. */
+/* -------------------------------------------- Image as the background. */
 
-.merchboard-alert[data-layout="overlay"] .merchboard-alert__image {
+.merchboard-alert[data-layout="background"] .merchboard-alert__image {
 	position: absolute;
 	inset: 0;
 }
 
-.merchboard-alert[data-layout="overlay"] .merchboard-alert__texts {
+.merchboard-alert[data-layout="background"] .merchboard-alert__texts {
 	position: absolute;
 	inset: 0;
 	display: flex;
@@ -119,8 +122,8 @@
 	gap: 4px;
 }
 
-/* Layouts before ADR-109: texts positioned for their letters. */
-.merchboard-alert:is([data-layout="above"], [data-layout="side"], [data-layout="overlay"]) .merchboard-alert__text {
+/* In one box, texts are positioned for their letters (fills, frames). */
+.merchboard-alert:not([data-layout="free"]) .merchboard-alert__text {
 	position: relative;
 }
 

@@ -470,7 +470,7 @@ export function AlertEditor( {
 							<div className="merchboard-alert-editor__help">
 								<p>
 									{ __(
-										'Design the alert on the right: drag the box to place it and its corners to size it, and drag the texts (and the image, where its layout lets you) inside it. Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look.',
+										'Design the alert on the right: drag it to place it and its corners to size it; in the layout Free, drag the image and the texts one by one. Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look.',
 										'merchboard'
 									) }
 								</p>
@@ -594,14 +594,15 @@ export function AlertEditor( {
 							onTest={ () => void test() }
 							testing={ testing }
 							playRequest={ playRequest }
+							lookKey={ editingId }
 							onConvert={ ( next ) => {
 								const converted = apply(
 									next.settings,
 									next.layout
 								);
 
-								// It looks the same (ADR-109 pkt. 3): no undo step, and it is
-								// saved with the creator's next change.
+								// It follows the drawing (ADR-109): part of the current step, and
+								// on its own it is saved with the creator's next change.
 								if (
 									JSON.stringify( doc.value ) ===
 									saved.current

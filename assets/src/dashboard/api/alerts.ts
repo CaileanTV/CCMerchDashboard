@@ -16,6 +16,7 @@ import {
 	oneOf,
 	parseAlertAnimation,
 	parseHighlight,
+	parseLayoutMode,
 	parseMargin,
 	parseTextTiming,
 	parseTts,
@@ -507,11 +508,7 @@ export function parseOverlaySettings(
 		number_format: oneOf( value.number_format, NUMBER_FORMATS, 'shop' ),
 		audio_enabled: value.audio_enabled === true,
 		widget: parseWidget( value.widget, widgetAround( layout ) ),
-		layout_mode: oneOf(
-			value.layout_mode,
-			[ 'above', 'side', 'overlay', 'free' ] as const,
-			'free'
-		),
+		layout_mode: parseLayoutMode( value.layout_mode ),
 		text_timing: parseTextTiming( value.text_timing ),
 		tts: parseTts( value.tts ),
 		variations: parseVariations( value.variations ),

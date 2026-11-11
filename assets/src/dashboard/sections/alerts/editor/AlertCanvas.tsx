@@ -1,10 +1,11 @@
 /**
  * The designer's canvas (alert designer 2.0, ADR-088; ADR-109): the 1920 ×
  * 1080 overlay with the alert drawn by the overlay's own renderer, so the
- * preview is what OBS shows. The alert box is moved and sized by dragging
- * (or the arrow keys); the texts are dragged and sized inside it, the image
- * where its layout lets it. A layout before ADR-109 is turned into the image
- * layout that looks the same (onConvert).
+ * preview is what OBS shows. In the layouts with one box (image and texts
+ * together) that box is moved and sized by dragging (or the arrow keys); in
+ * "free" the image and the texts are, each in its own box, and the alert box
+ * follows them (onConvert). Switching to "free" keeps the elements where
+ * they were drawn.
  * The toolbar below sends a test alert, undoes and redoes, zooms, switches
  * the grid and the preview's sound, and plays the alert as the overlay
  * does. Read-only, it is the preview of saved designs.
@@ -24,15 +25,14 @@ import '../../../../overlay/textfill.css';
 import '../../../../overlay/frame.css';
 import '../../../../overlay/render.css';
 
-import { arrange, highlight, imageBox } from '../../../../overlay/render';
+import { arrange, highlight } from '../../../../overlay/render';
 import type { AlertElements, AlertLook } from '../../../../overlay/render';
 import { AlertPlayer } from '../../../../overlay/player';
 import { applyFill, clearFill, layoutFill } from '../../../../overlay/textfill';
-import { applyFrame, clearFrame } from '../../../../overlay/frame';
+import { applyFrame, clearFrame, frameBox } from '../../../../overlay/frame';
 import { fitText, followText } from '../../../../overlay/fit';
 import { resetText } from '../../../../overlay/animations';
 import { playSound } from '../../../../overlay/sound';
-import { isLegacyLayout } from '../../../../overlay/look';
 import type { TextPart } from '../../../../overlay/look';
 import { CANVAS } from '../../../types/alerts';
 import type {
@@ -41,7 +41,14 @@ import type {
 	OverlayLayout,
 	OverlaySettings,
 } from '../../../types/alerts';
-import { convertLegacy, moveBox, resizeBox, snap, withBox } from '../designer';
+import {
+	fitWidget,
+	moveBox,
+	resizeBox,
+	snap,
+	toFree,
+	withBox,
+} from '../designer';
 import type { MeasuredBox } from '../designer';
 
 /** The sample alert: its texts in pieces. */
@@ -271,11 +278,13 @@ interface Props {
 	readonly testing?: boolean;
 	/** Changes when the preview should play (the animation section's button). */
 	readonly playRequest?: number;
-	/** A layout before ADR-109 was turned into an image layout (not an undo step). */
+	/** The alert box followed the elements of "free", or "free" got the elements' drawn boxes (part of the current step). */
 	readonly onConvert?: ( next: {
 		settings: OverlaySettings;
 		layout: OverlayLayout;
 	} ) => void;
+	/** Which look is edited (the default or a variation's id). */
+	readonly lookKey?: string;
 }
 
 /**
@@ -299,7 +308,8 @@ interface Props {
  * @param props.onTest      Sends a test alert.
  * @param props.testing     Whether a test alert is being sent.
  * @param props.playRequest Changes when the preview should play.
- * @param props.onConvert   A layout before ADR-109 was converted.
+ * @param props.onConvert   The alert box or the free boxes followed the drawing.
+ * @param props.lookKey     Which look is edited.
  */
 export function AlertCanvas( {
 	settings,
@@ -320,6 +330,7 @@ export function AlertCanvas( {
 	testing = false,
 	playRequest = 0,
 	onConvert,
+	lookKey = '',
 }: Props ) {
 	const wrap = useRef< HTMLDivElement | null >( null );
 	const alertRef = useRef< HTMLDivElement | null >( null );
@@ -388,36 +399,68 @@ export function AlertCanvas( {
 		}
 	}, [ elements, look, sample, playing ] );
 
-	// A layout before ADR-109 becomes the image layout that looks the same,
-	// measured in the alert just drawn (ADR-109 pkt. 3).
+	// The elements as last drawn in a layout with one box: switching to "free"
+	// keeps them where they were (ADR-109 status note).
+	const lastFlow = useRef< {
+		key: string;
+		image: MeasuredBox | null;
+		main: MeasuredBox | null;
+		secondary: MeasuredBox | null;
+	} | null >( null );
+
 	useLayoutEffect( () => {
 		const parts = elements();
 
-		if (
-			parts === null ||
-			readOnly ||
-			playing ||
-			onConvert === undefined ||
-			! isLegacyLayout( settings.layout_mode ) ||
-			parts.alert.offsetWidth === 0
-		) {
+		if ( parts === null || playing || parts.alert.offsetWidth === 0 ) {
 			return;
 		}
 
-		onConvert(
-			convertLegacy(
-				settings,
-				layout,
-				settings.layout_mode,
-				{
-					image: measure( parts.image, parts.alert ),
-					main: measure( parts.text, parts.alert ),
-					secondary: measure( parts.secondary, parts.alert ),
-				},
-				look.margin
-			)
+		if ( settings.layout_mode !== 'free' ) {
+			lastFlow.current = {
+				key: lookKey,
+				image: measure( parts.image, parts.alert ),
+				main: measure( parts.text, parts.alert ),
+				secondary: measure( parts.secondary, parts.alert ),
+			};
+
+			return;
+		}
+
+		const flow = lastFlow.current;
+		lastFlow.current = null;
+
+		if ( readOnly || onConvert === undefined ) {
+			return;
+		}
+
+		if ( flow !== null && flow.key === lookKey ) {
+			onConvert( toFree( settings, layout, flow, look.margin ) );
+
+			return;
+		}
+
+		// In "free" the alert box is the box around the elements.
+		const fitted = fitWidget(
+			settings,
+			layout,
+			look.frame
+				? frameBox( layout.elements.product_image, look.font_size )
+				: layout.elements.main_text
 		);
-	}, [ elements, settings, layout, look, readOnly, playing, onConvert ] );
+
+		if ( fitted !== null ) {
+			onConvert( { settings: fitted, layout } );
+		}
+	}, [
+		elements,
+		settings,
+		layout,
+		look,
+		readOnly,
+		playing,
+		onConvert,
+		lookKey,
+	] );
 
 	const play = useCallback( () => {
 		const parts = elements();
@@ -582,25 +625,8 @@ export function AlertCanvas( {
 		main_text: __( 'Main text', 'merchboard' ),
 		secondary_text: __( 'Secondary text', 'merchboard' ),
 	};
-	const mode = settings.layout_mode;
-	const image = imageBox( look );
-	// What can be done with an element: the texts move and resize freely; the
-	// image only in "free", and only resizes where the layout places it.
-	const handlesOf = ( element: LayoutElement ): 'all' | 'size' | null => {
-		if ( isLegacyLayout( mode ) ) {
-			return null;
-		}
-
-		if ( element !== 'product_image' ) {
-			return 'all';
-		}
-
-		if ( mode === 'background' ) {
-			return null;
-		}
-
-		return mode === 'free' ? 'all' : 'size';
-	};
+	// "free": the elements' own boxes; otherwise the one box of image and texts.
+	const free = settings.layout_mode === 'free';
 
 	const zoomIndex = ZOOMS.indexOf( zoom );
 
@@ -654,70 +680,57 @@ export function AlertCanvas( {
 					</div>
 					{ ! readOnly && ! playing && (
 						<>
-							{ /* The alert box: drag it, or move it with the arrow keys (Shift: 10 px). */ }
-							<div
-								className="merchboard-alert-canvas__frame"
-								style={ frame( widget ) }
-								role="button"
-								tabIndex={ 0 }
-								aria-label={ __(
-									'Alert box: drag to move, or use the arrow keys',
-									'merchboard'
-								) }
-								onPointerDown={ ( event ) =>
-									drag( event, 'alert', 'move' )
-								}
-								onKeyDown={ nudge }
-							>
-								<span className="merchboard-alert-canvas__size">
-									{ `${ widget.w } × ${ widget.h }` }
-								</span>
-								{ HANDLES.map( ( handle ) => (
-									<span
-										key={ handle }
-										className={ `merchboard-alert-canvas__handle is-${ handle }` }
-										onPointerDown={ ( event ) =>
-											drag( event, 'alert', handle )
-										}
-									/>
-								) ) }
-							</div>
-							{ (
-								Object.keys( elementLabels ) as LayoutElement[]
-							 )
-								.filter(
-									( element ) =>
-										handlesOf( element ) !== null &&
-										( element === 'secondary_text'
+							{ /* The box of image and texts: drag it, or move it with the arrow keys (Shift: 10 px). */ }
+							{ ! free && (
+								<div
+									className="merchboard-alert-canvas__frame"
+									style={ frame( widget ) }
+									role="button"
+									tabIndex={ 0 }
+									aria-label={ __(
+										'Alert box: drag to move, or use the arrow keys',
+										'merchboard'
+									) }
+									onPointerDown={ ( event ) =>
+										drag( event, 'alert', 'move' )
+									}
+									onKeyDown={ nudge }
+								>
+									<span className="merchboard-alert-canvas__size">
+										{ `${ widget.w } × ${ widget.h }` }
+									</span>
+									{ HANDLES.map( ( handle ) => (
+										<span
+											key={ handle }
+											className={ `merchboard-alert-canvas__handle is-${ handle }` }
+											onPointerDown={ ( event ) =>
+												drag( event, 'alert', handle )
+											}
+										/>
+									) ) }
+								</div>
+							) }
+							{ free &&
+								(
+									Object.keys(
+										elementLabels
+									) as LayoutElement[]
+								 )
+									.filter( ( element ) =>
+										element === 'secondary_text'
 											? settings.show_secondary
-											: layout.elements[ element ]
-													.visible )
-								)
-								.map( ( element ) => {
-									const handles = handlesOf( element );
-
-									return (
+											: layout.elements[ element ].visible
+									)
+									.map( ( element ) => (
 										<div
 											key={ element }
-											className={ `merchboard-alert-canvas__element${
-												handles === 'all'
-													? ''
-													: ' is-fixed'
-											}` }
+											className="merchboard-alert-canvas__element"
 											style={ frame(
-												element === 'product_image'
-													? image
-													: layout.elements[ element ]
+												layout.elements[ element ]
 											) }
 											title={ elementLabels[ element ] }
 											onPointerDown={ ( event ) =>
-												handles === 'all'
-													? drag(
-															event,
-															element,
-															'move'
-														)
-													: undefined
+												drag( event, element, 'move' )
 											}
 										>
 											<span
@@ -727,8 +740,7 @@ export function AlertCanvas( {
 												}
 											/>
 										</div>
-									);
-								} ) }
+									) ) }
 						</>
 					) }
 				</div>

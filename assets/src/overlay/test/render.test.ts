@@ -2,7 +2,7 @@
  * Tests for the alert renderer (ADR-088).
  */
 import { describe, expect, it } from '@jest/globals';
-import { arrange, imageBox, parseLook, rgba, styleText } from '../render';
+import { arrange, parseLook, rgba, styleText } from '../render';
 import type { AlertElements } from '../render';
 
 function elements(): AlertElements {
@@ -77,7 +77,7 @@ describe( 'arrange', () => {
 			side,
 			parseLook( { layout_mode: 'side' }, window.location.origin )
 		);
-		expect( side.alert.dataset.layout ).toBe( 'side' );
+		expect( side.alert.dataset.layout ).toBe( 'left' );
 		expect( side.text.style.left ).toBe( '' );
 
 		const grow = elements();
@@ -92,84 +92,36 @@ describe( 'arrange', () => {
 	} );
 } );
 
-describe( 'image layouts (ADR-109)', () => {
-	const look = ( mode: string, image = { w: 120, h: 100 } ) =>
-		parseLook(
-			{
-				widget: { x: 100, y: 800, w: 600, h: 200 },
-				layout_mode: mode,
-				elements: {
-					product_image: { x: 5, y: 5, ...image },
-					main_text: { x: 300, y: 820, w: 380, h: 60 },
+describe( 'layouts (ADR-109)', () => {
+	it( 'reads the names before ADR-109 as the layout that looks the same', () => {
+		const mode = ( value: string ) =>
+			parseLook( { layout_mode: value }, window.location.origin )
+				.layout_mode;
+
+		expect( mode( 'above' ) ).toBe( 'top' );
+		expect( mode( 'side' ) ).toBe( 'left' );
+		expect( mode( 'overlay' ) ).toBe( 'background' );
+		expect( mode( 'right' ) ).toBe( 'right' );
+		expect( mode( 'grid' ) ).toBe( 'free' );
+	} );
+
+	it( 'draws image and texts as one box, and only "free" as boxes of their own', () => {
+		const right = elements();
+
+		arrange(
+			right,
+			parseLook(
+				{
+					widget: { x: 100, y: 800, w: 600, h: 200 },
+					layout_mode: 'right',
 				},
-			},
-			window.location.origin
+				window.location.origin
+			)
 		);
-
-	it( 'places the image by the layout with its own size', () => {
-		expect( imageBox( look( 'top' ) ) ).toEqual( {
-			x: 340,
-			y: 800,
-			w: 120,
-			h: 100,
-		} );
-		expect( imageBox( look( 'left' ) ) ).toEqual( {
-			x: 100,
-			y: 850,
-			w: 120,
-			h: 100,
-		} );
-		expect( imageBox( look( 'right' ) ) ).toEqual( {
-			x: 580,
-			y: 850,
-			w: 120,
-			h: 100,
-		} );
-		expect( imageBox( look( 'background' ) ) ).toEqual( {
-			x: 100,
-			y: 800,
-			w: 600,
-			h: 200,
-		} );
-		expect( imageBox( look( 'free' ) ) ).toEqual( {
-			x: 5,
-			y: 5,
-			w: 120,
-			h: 100,
-		} );
-	} );
-
-	it( 'keeps the image inside the box', () => {
-		expect( imageBox( look( 'left', { w: 900, h: 500 } ) ) ).toEqual( {
-			x: 100,
-			y: 800,
-			w: 600,
-			h: 200,
-		} );
-	} );
-
-	it( 'places the image by the layout and the texts in their own boxes', () => {
-		const parts = elements();
-
-		arrange( parts, look( 'right' ) );
-
-		expect( parts.alert.dataset.layout ).toBe( 'right' );
-		expect( parts.image.style.left ).toBe( '480px' );
-		expect( parts.image.style.top ).toBe( '50px' );
-		expect( parts.image.style.width ).toBe( '120px' );
-		expect( parts.text.style.left ).toBe( '200px' );
-		expect( parts.text.style.top ).toBe( '20px' );
-		expect( parts.text.style.width ).toBe( '380px' );
-	} );
-
-	it( 'still draws the layouts before ADR-109 in a flow', () => {
-		const parts = elements();
-
-		arrange( parts, look( 'overlay' ) );
-
-		expect( parts.alert.dataset.layout ).toBe( 'overlay' );
-		expect( parts.image.style.left ).toBe( '' );
-		expect( parts.text.style.left ).toBe( '' );
+		expect( right.alert.dataset.layout ).toBe( 'right' );
+		expect( right.alert.style.width ).toBe( '600px' );
+		expect( right.image.style.left ).toBe( '' );
+		expect( right.text.style.left ).toBe( '' );
 	} );
 } );
 

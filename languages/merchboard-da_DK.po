@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-11T18:15:53+00:00\n"
+"PO-Revision-Date: 2026-11-11T18:43:41+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -15423,8 +15423,8 @@ msgstr "Billede som baggrund"
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "Image placed freely"
-msgstr "Billede placeret frit"
+msgid "Free"
+msgstr "Frit"
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
@@ -15592,14 +15592,14 @@ msgstr "Vis alerten så længe lyden spiller"
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "Drag the image and the texts wherever you want them in the alert box on the canvas, and their corners to size them."
-msgstr "Træk billedet og teksterne derhen, hvor du vil have dem i alertboksen på lærredet, og i deres hjørner for at ændre størrelsen."
+msgid "Free: the image and the texts are boxes of their own. Drag them on the canvas, and their corners to size them."
+msgstr "Frit: billedet og teksterne er hver deres boks. Træk dem på lærredet, og i deres hjørner for at ændre størrelsen."
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "The layout places the image in the alert box. Drag the texts wherever you want them in the box on the canvas, and the corners to size the image and the texts."
-msgstr "Layoutet placerer billedet i alertboksen. Træk teksterne derhen, hvor du vil have dem i boksen på lærredet, og i hjørnerne for at ændre størrelsen på billedet og teksterne."
+msgid "The image and the texts form one box. Drag it on the canvas to place it, and its corners to size it."
+msgstr "Billedet og teksterne er én boks. Træk den på lærredet for at placere den, og i hjørnerne for at ændre størrelsen."
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
@@ -16283,8 +16283,8 @@ msgstr "Browser source"
 #: build/alerts-global-admin.js:24
 #: build/alerts-presets-admin.js:24
 #: build/dashboard.js:52
-msgid "Design the alert on the right: drag the box to place it and its corners to size it, and drag the texts (and the image, where its layout lets you) inside it. Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look."
-msgstr "Design alerten til højre: træk boksen for at placere den og i hjørnerne for at ændre størrelsen, og træk teksterne (og billedet, hvor layoutet tillader det) rundt i den. Vælg i panelet til venstre, hvad den viser, og hvordan. Alt gemmes automatisk, og dit åbne overlay genindlæses med det nye udseende."
+msgid "Design the alert on the right: drag it to place it and its corners to size it; in the layout Free, drag the image and the texts one by one. Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look."
+msgstr "Design alerten til højre: træk den for at placere den og i hjørnerne for at ændre størrelsen; i layoutet Frit trækker du billedet og teksterne hver for sig. Vælg i panelet til venstre, hvad den viser, og hvordan. Alt gemmes automatisk, og dit åbne overlay genindlæses med det nye udseende."
 
 #: build/alerts-global-admin.js:24
 #: build/alerts-presets-admin.js:24

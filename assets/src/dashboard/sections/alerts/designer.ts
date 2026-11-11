@@ -4,8 +4,6 @@
  * server's bounds, moving several boxes together and aligning them (step
  * 25.6.6), the default layout, and the sample text of the preview.
  */
-import { LEGACY_LAYOUTS } from '../../../overlay/look';
-import type { LegacyLayout } from '../../../overlay/look';
 import { BOX_LIMITS, CANVAS } from '../../types/alerts';
 import type {
 	LayoutBox,
@@ -149,16 +147,13 @@ export interface MeasuredBox {
 }
 
 /**
- * A look with a layout before ADR-109 (`above`, `side`, `overlay`) as an
- * image layout that looks the same (ADR-109 pkt. 3): the image keeps the
- * size it was drawn with, the layout becomes `top`, `left` or
- * `background`, and the texts get the boxes they were drawn in (an
- * element that was not drawn keeps its box). The measurements are relative
- * to the alert box, without its rotation.
+ * The layout "free" as the alert looked in one of the other layouts (the
+ * creator switched to it, ADR-109): each element gets the box it was drawn
+ * in (an element that was not drawn keeps its box). The measurements are
+ * relative to the alert box, without its rotation.
  *
  * @param settings           Settings (the look being edited).
  * @param layout             Layout.
- * @param mode               The layout before ADR-109.
  * @param measured           The drawn elements, null when not drawn.
  * @param measured.image     The image.
  * @param measured.main      The main text.
@@ -167,10 +162,9 @@ export interface MeasuredBox {
  * @param margin.top         Top margin.
  * @param margin.left        Left margin.
  */
-export function convertLegacy(
+export function toFree(
 	settings: OverlaySettings,
 	layout: OverlayLayout,
-	mode: LegacyLayout,
 	measured: {
 		readonly image: MeasuredBox | null;
 		readonly main: MeasuredBox | null;
@@ -202,10 +196,56 @@ export function convertLegacy(
 	place( 'main_text', measured.main, margin );
 	place( 'secondary_text', measured.secondary, margin );
 
-	return {
-		settings: { ...settings, layout_mode: LEGACY_LAYOUTS[ mode ] },
-		layout: next,
+	return { settings: { ...settings, layout_mode: 'free' }, layout: next };
+}
+
+/**
+ * In the layout "free" the alert box is the box around the elements shown
+ * (ADR-109 status note): it is not edited itself, but the animations,
+ * opacity and rotation work on it. Null when it already fits.
+ *
+ * @param settings Settings.
+ * @param layout   Layout.
+ * @param main     The main text's box as drawn (the frame around the image, when it has one).
+ */
+export function fitWidget(
+	settings: OverlaySettings,
+	layout: OverlayLayout,
+	main: MeasuredBox
+): OverlaySettings | null {
+	const { elements } = layout;
+	const boxes = [
+		elements.product_image.visible ? elements.product_image : null,
+		elements.main_text.visible ? main : null,
+		settings.show_secondary ? elements.secondary_text : null,
+	].filter( ( box ) => box !== null );
+
+	if ( boxes.length === 0 ) {
+		return null;
+	}
+
+	const left = Math.min( ...boxes.map( ( box ) => box.x ) );
+	const top = Math.min( ...boxes.map( ( box ) => box.y ) );
+	const fitted = {
+		x: clamp( left, BOX_LIMITS.x ),
+		y: clamp( top, BOX_LIMITS.y ),
+		w: clamp(
+			Math.max( ...boxes.map( ( box ) => box.x + box.w ) ) - left,
+			BOX_LIMITS.w
+		),
+		h: clamp(
+			Math.max( ...boxes.map( ( box ) => box.y + box.h ) ) - top,
+			BOX_LIMITS.h
+		),
 	};
+	const { widget } = settings;
+
+	return fitted.x === widget.x &&
+		fitted.y === widget.y &&
+		fitted.w === widget.w &&
+		fitted.h === widget.h
+		? null
+		: { ...settings, widget: { ...widget, ...fitted } };
 }
 
 /**

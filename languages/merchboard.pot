@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-11T18:15:47+00:00\n"
+"POT-Creation-Date: 2026-11-11T18:43:34+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -15423,7 +15423,7 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "Image placed freely"
+msgid "Free"
 msgstr ""
 
 #: build/alerts-global-admin.js:16
@@ -15592,13 +15592,13 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "Drag the image and the texts wherever you want them in the alert box on the canvas, and their corners to size them."
+msgid "Free: the image and the texts are boxes of their own. Drag them on the canvas, and their corners to size them."
 msgstr ""
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "The layout places the image in the alert box. Drag the texts wherever you want them in the box on the canvas, and the corners to size the image and the texts."
+msgid "The image and the texts form one box. Drag it on the canvas to place it, and its corners to size it."
 msgstr ""
 
 #: build/alerts-global-admin.js:16
@@ -16283,7 +16283,7 @@ msgstr ""
 #: build/alerts-global-admin.js:24
 #: build/alerts-presets-admin.js:24
 #: build/dashboard.js:52
-msgid "Design the alert on the right: drag the box to place it and its corners to size it, and drag the texts (and the image, where its layout lets you) inside it. Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look."
+msgid "Design the alert on the right: drag it to place it and its corners to size it; in the layout Free, drag the image and the texts one by one. Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look."
 msgstr ""
 
 #: build/alerts-global-admin.js:24

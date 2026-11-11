@@ -7,10 +7,10 @@
  */
 
 /**
- * Every layout an overlay can have: the image's place in the box (ADR-109:
- * `top`, `left`, `right`, `background` and `free`; the texts are always
- * free) and the layouts of 2.0 before it (`above`, `side`, `overlay`), which
- * are still drawn as before but no longer offered in the designer.
+ * The layouts (ADR-109 with its status note of 2026-11-11): the image and
+ * the texts form one box, with the image at the top, on the left, on the
+ * right or as the background; or `free`, where each element has its own
+ * box.
  */
 export const LAYOUT_MODES = [
 	'top',
@@ -18,21 +18,9 @@ export const LAYOUT_MODES = [
 	'right',
 	'background',
 	'free',
-	'above',
-	'side',
-	'overlay',
 ] as const;
 
-/** The layouts the designer offers (ADR-109): where the image is. */
-export const IMAGE_LAYOUTS = [
-	'top',
-	'left',
-	'right',
-	'background',
-	'free',
-] as const;
-
-/** The layouts of 2.0 before ADR-109, and the image layout each becomes. */
+/** The names of the layouts before ADR-109; they look the same. */
 export const LEGACY_LAYOUTS = {
 	above: 'top',
 	side: 'left',
@@ -86,16 +74,22 @@ export const MAX_VARIATIONS = 10;
 export const VARIATION_NAME_LENGTH = 60;
 
 export type LayoutMode = ( typeof LAYOUT_MODES )[ number ];
-export type ImageLayout = ( typeof IMAGE_LAYOUTS )[ number ];
-export type LegacyLayout = keyof typeof LEGACY_LAYOUTS;
 
 /**
- * Whether a layout is one of 2.0 before ADR-109 (image and texts in a flow).
+ * A layout from untrusted data: a name from before ADR-109 is read as the
+ * layout that looks the same, anything else unknown as `free`.
  *
- * @param mode Layout.
+ * @param value Candidate.
  */
-export function isLegacyLayout( mode: LayoutMode ): mode is LegacyLayout {
-	return Object.prototype.hasOwnProperty.call( LEGACY_LAYOUTS, mode );
+export function parseLayoutMode( value: unknown ): LayoutMode {
+	if (
+		typeof value === 'string' &&
+		Object.prototype.hasOwnProperty.call( LEGACY_LAYOUTS, value )
+	) {
+		return LEGACY_LAYOUTS[ value as keyof typeof LEGACY_LAYOUTS ];
+	}
+
+	return oneOf( value, LAYOUT_MODES, 'free' );
 }
 export type TextAlign = ( typeof TEXT_ALIGNS )[ number ];
 export type TextDirection = ( typeof TEXT_DIRECTIONS )[ number ];
