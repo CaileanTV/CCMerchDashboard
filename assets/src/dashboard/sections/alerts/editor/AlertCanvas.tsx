@@ -1,9 +1,8 @@
 /**
- * The designer's canvas (alert designer 2.0, ADR-088; ADR-109): the alert
- * box itself, enlarged, with the alert drawn by the overlay's own renderer,
- * so the preview is what OBS shows. The box is sized from its edges and
- * moved on the screen with the arrow keys (or the screen map of "Position,
- * size and style"). The texts are dragged and sized inside it; the image
+ * The designer's canvas (alert designer 2.0, ADR-088; ADR-109): the 1920 ×
+ * 1080 overlay with the alert drawn by the overlay's own renderer, so the
+ * preview is what OBS shows. The alert box is moved and sized by dragging
+ * (or the arrow keys); the texts are dragged and sized inside it, the image
  * where its layout lets it. A layout before ADR-109 is turned into the image
  * layout that looks the same (onConvert).
  * The toolbar below sends a test alert, undoes and redoes, zooms, switches
@@ -35,6 +34,7 @@ import { resetText } from '../../../../overlay/animations';
 import { playSound } from '../../../../overlay/sound';
 import { isLegacyLayout } from '../../../../overlay/look';
 import type { TextPart } from '../../../../overlay/look';
+import { CANVAS } from '../../../types/alerts';
 import type {
 	LayoutBox,
 	LayoutElement,
@@ -149,16 +149,6 @@ export function resizeFrom(
 		w: Math.round( w ),
 		h: Math.round( h ),
 	};
-}
-
-/**
- * The tallest the stage may be: the screen's height without the editor's
- * bars, so a tall box fits without scrolling.
- */
-function maxStageHeight(): number {
-	return typeof window === 'undefined'
-		? 600
-		: Math.max( 240, window.innerHeight - 240 );
 }
 
 /**
@@ -341,16 +331,8 @@ export function AlertCanvas( {
 	const [ zoom, setZoom ] = useState< ( typeof ZOOMS )[ number ] >( 1 );
 	const [ muted, setMuted ] = useState( true );
 	const [ playing, setPlaying ] = useState( false );
-	// While the box is resized, the scale of the drag's start (the stage refits after it).
-	const [ frozen, setFrozen ] = useState< number | null >( null );
 	const widget: Widget = settings.widget;
-	// The stage is the alert box (ADR-109): it fits the width and a tall box the screen's height.
-	const fit = Math.min(
-		// Room for the handles on the edges.
-		Math.max( 40, width - 16 ) / Math.max( 10, widget.w ),
-		maxStageHeight() / Math.max( 10, widget.h )
-	);
-	const scale = frozen ?? fit * zoom;
+	const scale = ( width / CANVAS.width ) * zoom;
 
 	const elements = useCallback( (): AlertElements | null => {
 		const [ alert, image, texts, text, secondary ] = [
@@ -484,11 +466,6 @@ export function AlertCanvas( {
 		}
 	}, [ playRequest, play ] );
 
-	// Snapping inside the box: the grid starts at the box's corner.
-	const inBox = { ...layout, canvas: { ...layout.canvas, snap_grid: false } };
-	const snapIn = ( value: number, origin: number ) =>
-		origin + snap( value - origin, layout );
-
 	const drag = (
 		event: PointerEvent< HTMLElement >,
 		target: 'alert' | LayoutElement,
@@ -508,33 +485,35 @@ export function AlertCanvas( {
 
 		onBegin?.();
 
-		if ( target === 'alert' ) {
-			setFrozen( scale );
-		}
-
 		const moveTo = ( clientX: number, clientY: number ) => {
 			const dx = ( clientX - start.x ) / scale;
 			const dy = ( clientY - start.y ) / scale;
 
 			if ( target === 'alert' ) {
 				if ( handle === 'move' ) {
-					return;
-				}
-
-				const sized = resizeFrom( widget, handle, dx, dy );
-				onLive?.(
-					{
-						...settings,
-						widget: {
-							...widget,
-							x: sized.x,
-							y: sized.y,
-							w: Math.max( 10, snap( sized.w, layout ) ),
-							h: Math.max( 10, snap( sized.h, layout ) ),
+					const next = moveWidget(
+						settings,
+						layout,
+						snap( widget.x + dx, layout ),
+						snap( widget.y + dy, layout )
+					);
+					onLive?.( next.settings, next.layout );
+				} else {
+					const sized = resizeFrom( widget, handle, dx, dy );
+					onLive?.(
+						{
+							...settings,
+							widget: {
+								...widget,
+								x: snap( sized.x, layout ),
+								y: snap( sized.y, layout ),
+								w: Math.max( 10, snap( sized.w, layout ) ),
+								h: Math.max( 10, snap( sized.h, layout ) ),
+							},
 						},
-					},
-					layout
-				);
+						layout
+					);
+				}
 
 				return;
 			}
@@ -545,12 +524,7 @@ export function AlertCanvas( {
 
 			const next =
 				handle === 'move'
-					? moveBox(
-							box,
-							snapIn( box.x + dx, widget.x ),
-							snapIn( box.y + dy, widget.y ),
-							inBox
-						)
+					? moveBox( box, box.x + dx, box.y + dy, layout )
 					: resizeBox( box, box.w + dx, box.h + dy, layout );
 
 			onLive?.( settings, withBox( layout, target, next ) );
@@ -560,7 +534,6 @@ export function AlertCanvas( {
 			node.removeEventListener( 'pointermove', move );
 			node.removeEventListener( 'pointerup', up );
 			node.removeEventListener( 'pointercancel', up );
-			setFrozen( null );
 			onEnd?.();
 		};
 		const move = ( moved: globalThis.PointerEvent ) =>
@@ -596,10 +569,10 @@ export function AlertCanvas( {
 		onChange?.( next.settings, next.layout );
 	};
 
-	// A box on the canvas, drawn in the stage (the alert box's corner is 0,0).
+	// A box on the canvas, drawn in the stage.
 	const frame = ( box: { x: number; y: number; w: number; h: number } ) => ( {
-		left: `${ ( box.x - widget.x ) * scale }px`,
-		top: `${ ( box.y - widget.y ) * scale }px`,
+		left: `${ box.x * scale }px`,
+		top: `${ box.y * scale }px`,
 		width: `${ box.w * scale }px`,
 		height: `${ box.h * scale }px`,
 	} );
@@ -634,12 +607,12 @@ export function AlertCanvas( {
 	return (
 		<div className="merchboard-alert-canvas">
 			<div className="merchboard-alert-canvas__viewport" ref={ wrap }>
-				{ /* The stage clips the screen to the box; the handles lie on top of it, unclipped. */ }
+				{ /* The 1920 × 1080 screen; the handles lie on top of it. */ }
 				<div
 					className="merchboard-alert-canvas__box"
 					style={ {
-						width: `${ widget.w * scale }px`,
-						height: `${ widget.h * scale }px`,
+						width: `${ CANVAS.width * scale }px`,
+						height: `${ CANVAS.height * scale }px`,
 					} }
 				>
 					<div
@@ -654,12 +627,8 @@ export function AlertCanvas( {
 						} }
 					>
 						<div
-							className={ `merchboard-alert-canvas__screen${
-								playing ? '' : ' is-still'
-							}` }
-							style={ {
-								transform: `scale(${ scale }) translate(${ -widget.x }px, ${ -widget.y }px)`,
-							} }
+							className="merchboard-alert-canvas__screen"
+							style={ { transform: `scale(${ scale })` } }
 							aria-hidden="true"
 						>
 							<div ref={ alertRef } className="merchboard-alert">
@@ -685,15 +654,19 @@ export function AlertCanvas( {
 					</div>
 					{ ! readOnly && ! playing && (
 						<>
-							{ /* The alert box is the stage: resize it from its edges; the arrow keys move it on the screen (Shift: 10 px). */ }
+							{ /* The alert box: drag it, or move it with the arrow keys (Shift: 10 px). */ }
 							<div
 								className="merchboard-alert-canvas__frame"
+								style={ frame( widget ) }
 								role="button"
 								tabIndex={ 0 }
 								aria-label={ __(
-									'Alert box: drag the edges to resize it, or move it on the screen with the arrow keys',
+									'Alert box: drag to move, or use the arrow keys',
 									'merchboard'
 								) }
+								onPointerDown={ ( event ) =>
+									drag( event, 'alert', 'move' )
+								}
 								onKeyDown={ nudge }
 							>
 								<span className="merchboard-alert-canvas__size">

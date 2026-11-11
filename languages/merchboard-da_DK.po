@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-11T17:44:18+00:00\n"
+"PO-Revision-Date: 2026-11-11T18:15:53+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -14667,8 +14667,8 @@ msgstr "Sekundær tekst"
 #: build/alerts-global-admin.js:8
 #: build/alerts-presets-admin.js:8
 #: build/dashboard.js:36
-msgid "Alert box: drag the edges to resize it, or move it on the screen with the arrow keys"
-msgstr "Alertboks: træk i kanterne for at ændre størrelsen, eller flyt den på skærmen med piletasterne"
+msgid "Alert box: drag to move, or use the arrow keys"
+msgstr "Alertboks: træk for at flytte, eller brug piletasterne"
 
 #: build/alerts-global-admin.js:8
 #: build/alerts-global-admin.js:18
@@ -15399,12 +15399,6 @@ msgstr "Hvad betyder variablerne?"
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "Placement on the screen (1920 × 1080)"
-msgstr "Placering på skærmen (1920 × 1080)"
-
-#: build/alerts-global-admin.js:16
-#: build/alerts-presets-admin.js:16
-#: build/dashboard.js:44
 msgid "Image at the top"
 msgstr "Billede øverst"
 
@@ -15598,14 +15592,14 @@ msgstr "Vis alerten så længe lyden spiller"
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "The canvas is your alert box. Drag the image and the texts wherever you want them in it, and their corners to size them."
-msgstr "Lærredet er din alertboks. Træk billedet og teksterne derhen, hvor du vil have dem, og i deres hjørner for at ændre størrelsen."
+msgid "Drag the image and the texts wherever you want them in the alert box on the canvas, and their corners to size them."
+msgstr "Træk billedet og teksterne derhen, hvor du vil have dem i alertboksen på lærredet, og i deres hjørner for at ændre størrelsen."
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "The canvas is your alert box. The layout places the image; drag the texts wherever you want them, and the corners to size the image and the texts."
-msgstr "Lærredet er din alertboks. Layoutet placerer billedet; træk teksterne derhen, hvor du vil have dem, og i hjørnerne for at ændre størrelsen på billedet og teksterne."
+msgid "The layout places the image in the alert box. Drag the texts wherever you want them in the box on the canvas, and the corners to size the image and the texts."
+msgstr "Layoutet placerer billedet i alertboksen. Træk teksterne derhen, hvor du vil have dem i boksen på lærredet, og i hjørnerne for at ændre størrelsen på billedet og teksterne."
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
@@ -16289,8 +16283,8 @@ msgstr "Browser source"
 #: build/alerts-global-admin.js:24
 #: build/alerts-presets-admin.js:24
 #: build/dashboard.js:52
-msgid "The canvas on the right is your alert box: drag its edges to size it, and drag the texts (and the image, where its layout lets you) inside it. Place the box on the screen under \"Position, size and style\". Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look."
-msgstr "Lærredet til højre er din alertboks: træk i kanterne for at ændre størrelsen, og træk teksterne (og billedet, hvor layoutet tillader det) rundt i den. Placér boksen på skærmen under \"Position, størrelse og stil\". Vælg i panelet til venstre, hvad den viser, og hvordan. Alt gemmes automatisk, og dit åbne overlay genindlæses med det nye udseende."
+msgid "Design the alert on the right: drag the box to place it and its corners to size it, and drag the texts (and the image, where its layout lets you) inside it. Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look."
+msgstr "Design alerten til højre: træk boksen for at placere den og i hjørnerne for at ændre størrelsen, og træk teksterne (og billedet, hvor layoutet tillader det) rundt i den. Vælg i panelet til venstre, hvad den viser, og hvordan. Alt gemmes automatisk, og dit åbne overlay genindlæses med det nye udseende."
 
 #: build/alerts-global-admin.js:24
 #: build/alerts-presets-admin.js:24

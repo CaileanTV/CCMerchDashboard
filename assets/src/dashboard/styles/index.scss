@@ -3242,52 +3242,20 @@ input:disabled + .merchboard-sounds__upload {
 	min-width: 0;
 }
 
-// The stage is the alert box (ADR-109); it fits the width and the screen's
-// height (AlertCanvas), and a smaller box is centred.
+// The 1920 × 1080 screen, kept small: at most 800 px wide and low enough
+// that the toolbar stays on the screen (the project owner's wish
+// 2026-11-11). A scroll bar that comes and goes would change the width and
+// the canvas with it, so the height sets the width.
 .merchboard-alert-canvas__viewport {
-	display: grid;
-	justify-items: center;
+	width: 100%;
+	max-width: min(800px, calc((100vh - 22rem) * 16 / 9));
 	min-width: 0;
-	padding: var(--merchboard-space-6) var(--merchboard-space-2) var(--merchboard-space-3);
+	margin-inline: auto;
 	overflow: auto;
 	border-radius: var(--merchboard-radius);
 }
 
-// The screen map (ADR-109): the OBS screen, small, with the alert box on it.
-.merchboard-alert-screen {
-	display: grid;
-	gap: var(--merchboard-space-1);
-	margin-bottom: var(--merchboard-space-3);
-}
-
-.merchboard-alert-screen__label {
-	font-size: var(--merchboard-text-xs);
-	color: var(--merchboard-text-subtle);
-}
-
-.merchboard-alert-screen__map {
-	position: relative;
-	aspect-ratio: 16 / 9;
-	max-width: 100%;
-	overflow: hidden;
-	cursor: crosshair;
-	touch-action: none;
-	background: var(--merchboard-surface-muted);
-	border: 1px solid var(--merchboard-border);
-	border-radius: var(--merchboard-radius-sm);
-}
-
-.merchboard-alert-screen__box {
-	position: absolute;
-	min-width: 4px;
-	min-height: 4px;
-	cursor: move;
-	background: var(--merchboard-selected-bg);
-	border: 1px solid var(--merchboard-primary);
-	transform-origin: center;
-}
-
-// The box's place on the page: the stage inside it, the handles on top.
+// The screen's place on the page: the stage inside it, the handles on top.
 .merchboard-alert-canvas__box {
 	position: relative;
 }
@@ -3324,11 +3292,6 @@ html:has(.merchboard-alert-editor) {
 	height: 1080px;
 	transform-origin: top left;
 	pointer-events: none;
-
-	// Edited without its rotation; the screen map and Play show it.
-	&.is-still .merchboard-alert {
-		--merchboard-alert-rotation: 0deg !important;
-	}
 }
 
 // Without a real product: a calm placeholder in the image's place.
@@ -3347,12 +3310,8 @@ html:has(.merchboard-alert-editor) {
 	}
 }
 
-// The whole stage: only its edges and corners resize the box.
 .merchboard-alert-canvas__frame {
-	inset: 0;
-	cursor: default;
 	outline-style: solid;
-	outline-offset: -1px;
 }
 
 .merchboard-alert-canvas__element {

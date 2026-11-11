@@ -51,7 +51,6 @@ import { withBox } from '../designer';
 import { moveWidget } from './AlertCanvas';
 import { ColorControl, NumberControl, Segmented, Switch } from './controls';
 import { Panel, Tabs } from './Panel';
-import { ScreenMap } from './ScreenMap';
 
 /** What every panel edits. */
 export interface EditorFields {
@@ -343,11 +342,11 @@ export function MerchAlertPanel( {
 				<p className="merchboard-field__help">
 					{ values.layout_mode === 'free'
 						? __(
-								'The canvas is your alert box. Drag the image and the texts wherever you want them in it, and their corners to size them.',
+								'Drag the image and the texts wherever you want them in the alert box on the canvas, and their corners to size them.',
 								'merchboard'
 							)
 						: __(
-								'The canvas is your alert box. The layout places the image; drag the texts wherever you want them, and the corners to size the image and the texts.',
+								'The layout places the image in the alert box. Drag the texts wherever you want them in the box on the canvas, and the corners to size the image and the texts.',
 								'merchboard'
 							) }
 				</p>
@@ -1060,7 +1059,6 @@ export function PositionPanel( { fields }: { readonly fields: EditorFields } ) {
 				title={ __( 'Position and size', 'merchboard' ) }
 				defaultOpen
 			>
-				<ScreenMap widget={ widget } onMove={ place } />
 				<div className="merchboard-alert-grid">
 					<NumberControl
 						label="X"

@@ -671,7 +671,7 @@ describe( 'AlertsSection', () => {
 		).toBe( 542 );
 	} );
 
-	it( 'shows the alert box as the canvas and the screen in the position panel (ADR-109)', async () => {
+	it( 'shows the whole 1920 × 1080 screen and lets the texts move in every image layout (ADR-109)', async () => {
 		mockApi( {
 			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
 			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
@@ -685,13 +685,7 @@ describe( 'AlertsSection', () => {
 		const width = Number.parseFloat( box?.style.width ?? '' );
 		const height = Number.parseFloat( box?.style.height ?? '' );
 		expect( width ).toBeGreaterThan( 0 );
-		// The box of the fixture: 836 × 120.
-		expect( width / height ).toBeCloseTo( 836 / 120, 3 );
-		expect(
-			rendered?.container.querySelector< HTMLElement >(
-				'.merchboard-alert-canvas__screen'
-			)?.style.transform
-		).toContain( 'translate(-40px' );
+		expect( width / height ).toBeCloseTo( 1920 / 1080, 3 );
 
 		click( button( 'Image on the left' ) );
 		const frames = rendered?.container.querySelectorAll(
@@ -700,11 +694,6 @@ describe( 'AlertsSection', () => {
 		expect( frames?.length ).toBe( 2 );
 		expect( frames?.[ 0 ]?.classList.contains( 'is-fixed' ) ).toBe( true );
 		expect( frames?.[ 1 ]?.classList.contains( 'is-fixed' ) ).toBe( false );
-
-		click( button( 'Position, size and style' ) );
-		expect( rendered?.container.textContent ).toContain(
-			'Placement on the screen (1920 × 1080)'
-		);
 	} );
 
 	it( 'highlights the inserted values on the canvas', async () => {

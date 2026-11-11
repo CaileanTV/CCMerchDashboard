@@ -470,7 +470,7 @@ export function AlertEditor( {
 							<div className="merchboard-alert-editor__help">
 								<p>
 									{ __(
-										'The canvas on the right is your alert box: drag its edges to size it, and drag the texts (and the image, where its layout lets you) inside it. Place the box on the screen under "Position, size and style". Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look.',
+										'Design the alert on the right: drag the box to place it and its corners to size it, and drag the texts (and the image, where its layout lets you) inside it. Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look.',
 										'merchboard'
 									) }
 								</p>
