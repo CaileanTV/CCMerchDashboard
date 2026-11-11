@@ -1222,6 +1222,7 @@ Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele al
 Versionsnummeret vælges, når indholdet er kendt: 2.0.1 for rettelser, 2.1.0 hvis der kommer nye funktioner med.
 
 - **Gaveknappen:** ✅ (7c28f57) projektejerens ønske 2026-11-11: "Giv som gave på streamen" i stedet for "Giv som gave i streamen".
+- **Navnene uden bindestreger:** ✅ projektejerens ønske 2026-11-11: "Twitch subscriber rabat" og "Twitch gifting" i de danske tekster (før "Twitch-subscriber-rabat" og "Twitch-gifting").
 
 ## Senere (uprioriteret)
 

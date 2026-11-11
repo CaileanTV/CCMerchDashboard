@@ -9,6 +9,7 @@ Næste version (2.0.1 eller 2.1.0, afhængigt af hvad der kommer med).
 ### Changed
 
 - Gaveknappen på produktsiden hedder på dansk "Giv som gave på streamen" (før "Giv som gave i streamen").
+- De danske tekster skriver "Twitch subscriber rabat" og "Twitch gifting" uden bindestreger (før "Twitch-subscriber-rabat" og "Twitch-gifting").
 
 ## [2.0.0] - 2026-11-11
 
