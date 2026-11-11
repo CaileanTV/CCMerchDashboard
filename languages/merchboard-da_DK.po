@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-11T19:46:03+00:00\n"
+"PO-Revision-Date: 2026-11-11T20:51:37+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -4174,7 +4174,7 @@ msgstr "Navnene på Twitch-gaverne kunne ikke slettes. Prøv igen."
 
 #: src/Modules/Community/Gifting/GiftPurchase.php:170
 msgid "Give as a gift in the stream"
-msgstr "Giv som gave i streamen"
+msgstr "Giv som gave på streamen"
 
 #: src/Modules/Community/Gifting/GiftPurchase.php:170
 msgid "A viewer in the chat wins it and chooses size and colour. Shipping of the gift: 50 kr."
