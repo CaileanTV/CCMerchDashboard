@@ -6279,6 +6279,14 @@ Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" p
 
 **Statusnote 2026-11-11 (ADR-108):** en global knap under Indstillinger → Community (slået fra som standard) sætter gifting på pause for hele butikken: ingen nye køb eller vinduer, men åbne vinduer trækkes, og vindere kan hente gaven.
 
+**Statusnote 2026-11-11 (projektejerens ønsker, påmindelser og links):**
+- **Påmindelser:** botten minder chatten om `!enter`, når halvdelen af vinduet er tilbage, når en fjerdedel er tilbage, og 10 sekunder før tilmeldingen lukker ("⏰ 15 sekunder tilbage! …"). En påmindelse, der ville komme højst 3 sekunder fra en anden, udelades, så korte vinduer ikke får beskeder tæt efter hinanden.
+  - Påmindelserne sendes af et job pr. påmindelse (`merchboard_gift_remind`) og af enhver chatbesked, hvis et job er forsinket.
+  - Er flere påmindelser forsinket, sendes kun én besked med de sekunder, der faktisk er tilbage.
+  - Under gavens navngivne lås sendes hver påmindelse kun én gang.
+- **Links i chatten:** gifting-siden fortæller creatoren, at botten sender vinderens link i chatten. Fjerner kanalen links (Twitch' "Block hyperlinks" eller en moderationsbot), skal botten være moderator eller undtaget, ellers forsvinder linket.
+- **Bot-forbindelsen:** chatbot-siden og community-siderne siger, at gifting og subscriber-rabatten kræver vores bot forbundet til kanalen, men at købsbeskederne i chatten kan være slået fra.
+
 ## Context
 Hos Fourthwall kan en seer købe et produkt som gave, mens creatoren streamer. Botten trækker en vinder blandt dem, der skriver `!enter`, og vinderen henter gaven ved at logge ind med Twitch. Projektejeren vil have det samme gennem CCMerch-chatbotten, med en til/fra-knap og en pause pr. creator.
 
