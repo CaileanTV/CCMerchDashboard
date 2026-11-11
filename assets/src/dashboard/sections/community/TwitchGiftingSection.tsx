@@ -364,9 +364,14 @@ export function TwitchGiftingSection() {
 							}
 						/>
 						<p className="merchboard-field__help">
-							{ __(
-								'The bot reminds the chat when half the time is left, when a quarter is left and 10 seconds before the entries close.',
-								'merchboard'
+							{ sprintf(
+								/* translators: 1: fewest seconds, 2: most seconds. */
+								__(
+									'Choose between %1$d and %2$d seconds. The bot reminds the chat when half the time is left, when a quarter is left and 10 seconds before the entries close; with more than 75 seconds also when three quarters are left.',
+									'merchboard'
+								),
+								current.windowMin,
+								current.windowMax
 							) }
 						</p>
 						{ errors.window !== undefined && (

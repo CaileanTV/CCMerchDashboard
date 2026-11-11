@@ -29,6 +29,7 @@ use MerchBoard\Modules\Community\Gifting\GiftCodes;
 use MerchBoard\Modules\Community\Gifting\GiftDraws;
 use MerchBoard\Modules\Community\Gifting\GiftingSettingsRepository;
 use MerchBoard\Modules\Community\Gifting\GiftRepository;
+use MerchBoard\Modules\Community\Gifting\GiftTicker;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscountInvalid;
 use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
@@ -139,6 +140,7 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s', $this->wpdb->options, '%merchboard_gift_confirm_%' );
 		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s', $this->wpdb->options, '%merchboard_gift_reveal_%' );
 		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s', $this->wpdb->options, '%merchboard_gift_remind_%' );
+		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s', $this->wpdb->options, '%merchboard_gift_tick_%' );
 		remove_all_actions( 'merchboard_twitch_chat_message' );
 		remove_all_actions( GiftDraws::DRAW_HOOK );
 		remove_all_actions( GiftDraws::EXPIRE_HOOK );
@@ -446,6 +448,64 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		$this->end_window( $gift->id );
 		$this->draws->remind_job( $gift->id );
 		self::assertCount( $sent + 2, $this->sent, 'No reminder after the window.' );
+	}
+
+	public function test_the_clock_keeps_reminders_and_the_closing_on_time_in_a_quiet_chat(): void {
+		$posts  = array();
+		$sleeps = array();
+		$ticker = new GiftTicker(
+			$this->draws,
+			function ( string $url, array $body ) use ( &$posts ): void {
+				$posts[] = array( $url, $body );
+			},
+			new RecordingLogger(),
+			function ( int $seconds ) use ( &$sleeps ): void {
+				$sleeps[] = $seconds;
+			}
+		);
+		$this->settings->save( $this->nova, $this->values( true ) );
+		$gift = $this->gift( null );
+		$this->draws->paid( $gift );
+		$sent = count( $this->sent );
+
+		$ticker->start( $gift->id );
+		self::assertCount( 1, $posts );
+		self::assertStringContainsString( '/merchboard/v1/gifts/' . $gift->id . '/tick', $posts[0][0] );
+		$chain = $posts[0][1]['chain'];
+		self::assertSame( GiftTicker::token( $gift->id, $chain ), $posts[0][1]['token'] );
+
+		// Only the current chain's token is accepted.
+		$request = new \WP_REST_Request( 'POST', '/merchboard/v1/gifts/' . $gift->id . '/tick' );
+		$request->set_url_params( array( 'id' => (string) $gift->id ) );
+		$request->set_param( 'chain', $chain );
+		$request->set_param( 'token', str_repeat( 'a', 64 ) );
+		self::assertSame( 403, $ticker->handle( $request )->get_status() );
+
+		// 30 seconds until the first reminder: it waits 20 and calls itself again.
+		$ticker->step( $gift->id, $chain );
+		self::assertSame( array( GiftTicker::MAX_WAIT ), $sleeps );
+		self::assertCount( 2, $posts );
+		self::assertCount( $sent, $this->sent );
+
+		// 12 seconds left: the reminders of 30 and 15 seconds are due, one message.
+		$this->window_left( $gift->id, 12 );
+		$ticker->step( $gift->id, $chain );
+		self::assertCount( $sent + 1, $this->sent );
+		self::assertStringStartsWith( '⏰ ', $this->sent[ $sent ][1] ?? '' );
+		self::assertCount( 3, $posts );
+
+		// Nobody entered: when the window ends, the chat hears it at once and the clock stops.
+		$this->end_window( $gift->id );
+		$ticker->step( $gift->id, $chain );
+		self::assertStringContainsString( 'Ingen skrev !enter', $this->sent[ count( $this->sent ) - 1 ][1] ?? '' );
+		self::assertSame( Gift::WAITING, $this->gifts->find( $gift->id )?->status );
+		self::assertCount( 3, $posts, 'The window is over: no next call.' );
+		self::assertNull( $this->draws->due_at( $gift->id ) );
+
+		// A new chain ends the old one.
+		$ticker->start( $gift->id );
+		$request->set_param( 'token', GiftTicker::token( $gift->id, $chain ) );
+		self::assertSame( 403, $ticker->handle( $request )->get_status() );
 	}
 
 	public function test_the_creator_can_switch_the_confirmations_off(): void {

@@ -93,7 +93,10 @@ final class GiftingTest extends TestCase {
 
 	public function test_the_chat_is_reminded_at_half_a_quarter_and_ten_seconds_left(): void {
 		self::assertSame( array( 30, 15, 10 ), GiftDraws::reminders( 60 ) );
-		self::assertSame( array( 90, 45, 10 ), GiftDraws::reminders( 180 ) );
+		self::assertSame( array( 135, 90, 45, 10 ), GiftDraws::reminders( 180 ), 'Over 75 seconds also at three quarters left.' );
+		self::assertSame( array( 90, 60, 30, 10 ), GiftDraws::reminders( 120 ) );
+		self::assertSame( array( 38, 19, 10 ), GiftDraws::reminders( 75 ) );
+		self::assertSame( array( 57, 38, 19, 10 ), GiftDraws::reminders( 76 ) );
 		self::assertSame( array( 15, 10 ), GiftDraws::reminders( 30 ), 'No reminders 2 seconds apart.' );
 		self::assertSame( array( 25, 10 ), GiftDraws::reminders( 50 ) );
 		self::assertSame( array( 10, 5 ), GiftDraws::reminders( 20 ) );

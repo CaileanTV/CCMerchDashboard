@@ -85,6 +85,11 @@ final class GiftDraws {
 	public const LAST_REMINDER = 10;
 
 	/**
+	 * A window longer than this gets a reminder at three quarters left too.
+	 */
+	public const LONG_WINDOW = 75;
+
+	/**
 	 * Action fired with a gift's events (event, Gift, data): `bought`,
 	 * `won`, `claimed` (data `code`) and `returned` (data `code`).
 	 */
@@ -143,6 +148,13 @@ final class GiftDraws {
 	private Closure $notify;
 
 	/**
+	 * Starts the clock of a window that just opened (GiftTicker), or null.
+	 *
+	 * @var (Closure(int): void)|null
+	 */
+	private ?Closure $tick;
+
+	/**
 	 * Constructor.
 	 *
 	 * @phpstan-param Closure(int, string): bool $send
@@ -151,6 +163,7 @@ final class GiftDraws {
 	 * @phpstan-param Closure(int): string $product_name
 	 * @phpstan-param Closure(string, array<mixed>, int): bool $enqueue
 	 * @phpstan-param Closure(string, Gift, array<string, string>): void $notify
+	 * @phpstan-param (Closure(int): void)|null $tick
 	 *
 	 * @param GiftRepository            $gifts        Gifts.
 	 * @param GiftingSettingsRepository $settings     The creators' gifting settings.
@@ -162,6 +175,7 @@ final class GiftDraws {
 	 * @param Closure                   $enqueue      Queues a job.
 	 * @param Closure                   $notify       Tells the creator, the buyer or the administrator.
 	 * @param Logger                    $logger       Technical log.
+	 * @param Closure|null              $tick         Starts the clock of a window that just opened.
 	 */
 	public function __construct(
 		private GiftRepository $gifts,
@@ -173,7 +187,8 @@ final class GiftDraws {
 		Closure $product_name,
 		Closure $enqueue,
 		Closure $notify,
-		private Logger $logger
+		private Logger $logger,
+		?Closure $tick = null
 	) {
 		$this->send         = $send;
 		$this->live         = $live;
@@ -181,6 +196,45 @@ final class GiftDraws {
 		$this->product_name = $product_name;
 		$this->enqueue      = $enqueue;
 		$this->notify       = $notify;
+		$this->tick         = $tick;
+	}
+
+	/**
+	 * When something is due next in a gift's window (a reminder, the closing
+	 * or the winner), as a Unix time that may have passed already; null when
+	 * the gift is not in a window (GiftTicker stops then).
+	 *
+	 * @param int $gift_id Gift.
+	 * @throws DatabaseException When the gift cannot be read.
+	 */
+	public function due_at( int $gift_id ): ?int {
+		$gift = $this->gifts->find( $gift_id );
+		$ends = null === $gift || null === $gift->window_ends ? false : strtotime( $gift->window_ends . ' UTC' );
+
+		if ( null === $gift || Gift::ENTERING !== $gift->status || false === $ends ) {
+			return null;
+		}
+
+		if ( time() < $ends ) {
+			$pending = get_transient( self::remind_key( $gift->id ) );
+			$times   = array_map( static fn( int $mark ): int => $ends - $mark, is_array( $pending ) ? array_values( array_filter( $pending, 'is_int' ) ) : array() );
+
+			return min( array_merge( array( $ends ), $times ) );
+		}
+
+		// The entries are closed, or close now; then the winner is revealed.
+		return self::reveal_at( $gift->id ) ?? time();
+	}
+
+	/**
+	 * Does what is due in a gift's window now: the reminder, the closing or
+	 * the winner (each only when it is time; GiftTicker).
+	 *
+	 * @param int $gift_id Gift.
+	 */
+	public function advance( int $gift_id ): void {
+		$this->remind_job( $gift_id );
+		$this->draw( $gift_id );
 	}
 
 	/**
@@ -355,9 +409,10 @@ final class GiftDraws {
 
 	/**
 	 * The reminders of a window, in seconds left: at half the time, at a
-	 * quarter and LAST_REMINDER seconds before the entries close. A share
-	 * within 3 seconds of another reminder is left out, so a short window
-	 * gets no reminders seconds apart.
+	 * quarter and LAST_REMINDER seconds before the entries close, and in a
+	 * window over LONG_WINDOW seconds also at three quarters. A share within
+	 * 3 seconds of another reminder is left out, so a short window gets no
+	 * reminders seconds apart.
 	 *
 	 * @param int $window The window in seconds.
 	 * @return list<int> Seconds left, the first first.
@@ -365,7 +420,13 @@ final class GiftDraws {
 	public static function reminders( int $window ): array {
 		$marks = array( self::LAST_REMINDER );
 
-		foreach ( array( intdiv( $window + 1, 2 ), intdiv( $window + 2, 4 ) ) as $mark ) {
+		$shares = array( intdiv( $window + 1, 2 ), intdiv( $window + 2, 4 ) );
+
+		if ( $window > self::LONG_WINDOW ) {
+			$shares[] = intdiv( 3 * $window + 2, 4 );
+		}
+
+		foreach ( $shares as $mark ) {
 			$near = array_filter( $marks, static fn( int $other ): bool => abs( $other - $mark ) <= 3 );
 
 			if ( $mark > 0 && $mark < $window && array() === $near ) {
@@ -506,6 +567,11 @@ final class GiftDraws {
 
 			foreach ( $reminders as $left ) {
 				( $this->enqueue )( self::REMIND_HOOK, array( $gift->id ), $settings->window - $left );
+			}
+
+			// The jobs run once a minute at most; the clock keeps the reminders and the draw on time.
+			if ( null !== $this->tick ) {
+				( $this->tick )( $gift->id );
 			}
 
 			return true;

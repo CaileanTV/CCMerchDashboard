@@ -40,6 +40,7 @@ use MerchBoard\Modules\Community\Gifting\GiftOrderInfo;
 use MerchBoard\Modules\Community\Gifting\GiftPrivacy;
 use MerchBoard\Modules\Community\Gifting\GiftPurchase;
 use MerchBoard\Modules\Community\Gifting\GiftRepository;
+use MerchBoard\Modules\Community\Gifting\GiftTicker;
 use MerchBoard\Modules\Community\Rest\MeTwitchGiftingController;
 use MerchBoard\Modules\Community\Rest\MeTwitchSubDiscountController;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCheckout;
@@ -188,6 +189,7 @@ final class CommunityModule implements Module {
 			static function () use ( $container ): void {
 				$container->get( MeTwitchSubDiscountController::class )->register_routes();
 				$container->get( MeTwitchGiftingController::class )->register_routes();
+				$container->get( GiftTicker::class )->register_routes();
 			}
 		);
 	}
@@ -221,6 +223,28 @@ final class CommunityModule implements Module {
 				self::product_name( ... ),
 				static fn( string $hook, array $args, int $delay ): bool => $c->get( JobQueue::class )->enqueue( $hook, $args, $delay ),
 				self::notify( ... ),
+				$c->get( Logger::class ),
+				static function ( int $gift_id ) use ( $c ): void {
+					$c->get( GiftTicker::class )->start( $gift_id );
+				}
+			)
+		);
+		$container->set(
+			GiftTicker::class,
+			static fn( Container $c ): GiftTicker => new GiftTicker(
+				$c->get( GiftDraws::class ),
+				// Without waiting, as WordPress starts its own cron.
+				static function ( string $url, array $body ): void {
+					wp_remote_post(
+						$url,
+						array(
+							'blocking'  => false,
+							'timeout'   => 0.5,
+							'body'      => $body,
+							'sslverify' => (bool) apply_filters( 'https_local_ssl_verify', false ), // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress' own filter for loopback requests.
+						)
+					);
+				},
 				$c->get( Logger::class )
 			)
 		);
