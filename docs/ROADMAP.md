@@ -1197,7 +1197,7 @@ Projektejerens ønske efter testen af 2.0.0 på stg: en global til/fra-knap pr. 
 - **45.4 Creator:** ✅ (6585dd1) subrabattens samlede til/fra, det fælles Twitch-kort, tilbage til siden efter forbindelsen og noten på chatbottens Twitch-kort.
 - **45.5 Tekster, tests og docs.** ✅ (6585dd1; docs i commit efter)
 
-## Fase 46 – Alertlærredet er boksen 🔄 (plan godkendt 2026-11-11; ADR-109)
+## Fase 46 – Alertlærredet er boksen ✅ (plan godkendt 2026-11-11; ADR-109)
 
 Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele alertboksen, og layoutet skal kun bestemme, hvor billedet sidder.
 
@@ -1206,10 +1206,10 @@ Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele al
 - Layoutet placerer billedet (top, venstre, højre, baggrund eller frit), og teksterne kan altid flyttes frit.
 - Placeringen på skærmen sættes med X/Y og et minikort, så OBS-kilden fortsat er 1920 × 1080.
 
-- **46.1 Model og overlay:** nye `layout_mode`-værdier, billedets placering, og de gamle layouts vises uændret.
-- **46.2 Editor:** scenen er boksen, minikort og layoutvælger.
-- **46.3 Gamle designs:** omregnes i editoren ved åbning.
-- **46.4 Tekster, tests og docs.**
+- **46.1 Model og overlay:** ✅ (c167a68) nye `layout_mode`-værdier, billedets placering, og de gamle layouts vises uændret.
+- **46.2 Editor:** ✅ (c167a68) scenen er boksen, minikort og layoutvælger.
+- **46.3 Gamle designs:** ✅ (c167a68) omregnes i editoren ved åbning.
+- **46.4 Tekster, tests og docs.** ✅ (c167a68; docs i commit efter). Runtime-test 2026-11-11 i den lokale Playground (Local kørte ikke): fanen Community, community-siderne med Twitch-kortet, og et design med det gamle layout "ved siden af" blev omregnet til "billede til venstre" uden at blive gemt. Fund rettet i c167a68: editoren blev stående på "Gemmer…".
 
 - **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
 
