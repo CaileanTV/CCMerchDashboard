@@ -15,12 +15,14 @@ import { FontPicker } from '../../../components/FontPicker';
 import {
 	ALERT_ANIMATIONS,
 	HIGHLIGHT_EFFECTS,
+	IMAGE_LAYOUTS,
 	NUMBER_FORMATS,
 	TTS_VOICES,
 } from '../../../../overlay/look';
 import type {
 	AlertAnimationName,
 	HighlightEffect,
+	ImageLayout,
 	LayoutMode,
 	NumberFormat,
 	TextCase,
@@ -49,6 +51,7 @@ import { withBox } from '../designer';
 import { moveWidget } from './AlertCanvas';
 import { ColorControl, NumberControl, Segmented, Switch } from './controls';
 import { Panel, Tabs } from './Panel';
+import { ScreenMap } from './ScreenMap';
 
 /** What every panel edits. */
 export interface EditorFields {
@@ -61,16 +64,23 @@ export interface EditorFields {
 	) => void;
 }
 
-function layoutLabel( mode: LayoutMode ): string {
+/**
+ * The name of an image layout (ADR-109).
+ *
+ * @param mode Layout.
+ */
+function layoutLabel( mode: ImageLayout ): string {
 	switch ( mode ) {
-		case 'above':
-			return __( 'Image above text', 'merchboard' );
-		case 'side':
-			return __( 'Image beside text', 'merchboard' );
-		case 'overlay':
-			return __( 'Text on image', 'merchboard' );
+		case 'top':
+			return __( 'Image at the top', 'merchboard' );
+		case 'left':
+			return __( 'Image on the left', 'merchboard' );
+		case 'right':
+			return __( 'Image on the right', 'merchboard' );
+		case 'background':
+			return __( 'Image as the background', 'merchboard' );
 		default:
-			return __( 'Free', 'merchboard' );
+			return __( 'Image placed freely', 'merchboard' );
 	}
 }
 
@@ -313,11 +323,9 @@ export function MerchAlertPanel( {
 
 			<Panel level="group" title={ __( 'Layout', 'merchboard' ) }>
 				<Segmented< LayoutMode >
-					label={ __( 'Layout', 'merchboard' ) }
+					label={ __( 'Image', 'merchboard' ) }
 					value={ values.layout_mode }
-					choices={ (
-						[ 'above', 'side', 'overlay', 'free' ] as const
-					 ).map( ( mode ) => ( {
+					choices={ IMAGE_LAYOUTS.map( ( mode ) => ( {
 						value: mode,
 						title: layoutLabel( mode ),
 						label: (
@@ -332,14 +340,17 @@ export function MerchAlertPanel( {
 					} ) ) }
 					onChange={ ( mode ) => set( { layout_mode: mode } ) }
 				/>
-				{ values.layout_mode === 'free' && (
-					<p className="merchboard-field__help">
-						{ __(
-							'Free: drag the image and the texts inside the alert box on the canvas.',
-							'merchboard'
-						) }
-					</p>
-				) }
+				<p className="merchboard-field__help">
+					{ values.layout_mode === 'free'
+						? __(
+								'The canvas is your alert box. Drag the image and the texts wherever you want them in it, and their corners to size them.',
+								'merchboard'
+							)
+						: __(
+								'The canvas is your alert box. The layout places the image; drag the texts wherever you want them, and the corners to size the image and the texts.',
+								'merchboard'
+							) }
+				</p>
 			</Panel>
 
 			<Panel
@@ -1049,6 +1060,7 @@ export function PositionPanel( { fields }: { readonly fields: EditorFields } ) {
 				title={ __( 'Position and size', 'merchboard' ) }
 				defaultOpen
 			>
+				<ScreenMap widget={ widget } onMove={ place } />
 				<div className="merchboard-alert-grid">
 					<NumberControl
 						label="X"

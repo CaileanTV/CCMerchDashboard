@@ -109,6 +109,11 @@ final class OverlaySettingsV2Test extends TestCase {
 		);
 		self::assertSame( 'above', $values['layout_mode'] );
 		self::assertSame( 'free', OverlaySettings::from_array( array( 'layout_mode' => 'grid' ) )->to_array()['layout_mode'] );
+
+		// ADR-109: the image layouts; the layouts before it are kept as they are.
+		foreach ( array( 'top', 'left', 'right', 'background', 'free', 'side', 'overlay' ) as $mode ) {
+			self::assertSame( $mode, OverlaySettings::from_array( array( 'layout_mode' => $mode ) )->to_array()['layout_mode'] );
+		}
 	}
 
 	public function test_new_text_styles_have_defaults_and_bounds(): void {

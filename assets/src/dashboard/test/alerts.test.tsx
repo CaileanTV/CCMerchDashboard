@@ -620,16 +620,16 @@ describe( 'AlertsSection', () => {
 			'Hoodie was purchased by TestFan!'
 		);
 
-		click( button( 'Image beside text' ) );
+		click( button( 'Image on the left' ) );
 		click( field( 'Show an extra line of text' ) );
-		expect( alert?.dataset.layout ).toBe( 'side' );
+		expect( alert?.dataset.layout ).toBe( 'left' );
 		await waitForAutosave();
 
 		const data = patches( requests )[ 0 ]?.data as Record<
 			string,
 			unknown
 		>;
-		expect( data.layout_mode ).toBe( 'side' );
+		expect( data.layout_mode ).toBe( 'left' );
 		expect( data.show_secondary ).toBe( true );
 		expect(
 			( data.layout as typeof LAYOUT ).elements.secondary_text.visible
@@ -669,6 +669,42 @@ describe( 'AlertsSection', () => {
 		expect(
 			( data.layout as typeof LAYOUT ).elements.product_image.x
 		).toBe( 542 );
+	} );
+
+	it( 'shows the alert box as the canvas and the screen in the position panel (ADR-109)', async () => {
+		mockApi( {
+			[ `GET ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+			[ `PATCH ${ PATH }` ]: () => response( 200, body( URL_A ) ),
+		} );
+
+		await show();
+
+		const box = rendered?.container.querySelector< HTMLElement >(
+			'.merchboard-alert-canvas__box'
+		);
+		const width = Number.parseFloat( box?.style.width ?? '' );
+		const height = Number.parseFloat( box?.style.height ?? '' );
+		expect( width ).toBeGreaterThan( 0 );
+		// The box of the fixture: 836 × 120.
+		expect( width / height ).toBeCloseTo( 836 / 120, 3 );
+		expect(
+			rendered?.container.querySelector< HTMLElement >(
+				'.merchboard-alert-canvas__screen'
+			)?.style.transform
+		).toContain( 'translate(-40px' );
+
+		click( button( 'Image on the left' ) );
+		const frames = rendered?.container.querySelectorAll(
+			'.merchboard-alert-canvas__element'
+		);
+		expect( frames?.length ).toBe( 2 );
+		expect( frames?.[ 0 ]?.classList.contains( 'is-fixed' ) ).toBe( true );
+		expect( frames?.[ 1 ]?.classList.contains( 'is-fixed' ) ).toBe( false );
+
+		click( button( 'Position, size and style' ) );
+		expect( rendered?.container.textContent ).toContain(
+			'Placement on the screen (1920 × 1080)'
+		);
 	} );
 
 	it( 'highlights the inserted values on the canvas', async () => {

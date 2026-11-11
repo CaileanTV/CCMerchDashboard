@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-11T17:03:14+00:00\n"
+"POT-Creation-Date: 2026-11-11T17:44:13+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -14667,7 +14667,7 @@ msgstr ""
 #: build/alerts-global-admin.js:8
 #: build/alerts-presets-admin.js:8
 #: build/dashboard.js:36
-msgid "Alert box: drag to move, or use the arrow keys"
+msgid "Alert box: drag the edges to resize it, or move it on the screen with the arrow keys"
 msgstr ""
 
 #: build/alerts-global-admin.js:8
@@ -15399,25 +15399,37 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "Image above text"
+msgid "Placement on the screen (1920 × 1080)"
 msgstr ""
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "Image beside text"
+msgid "Image at the top"
 msgstr ""
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "Text on image"
+msgid "Image on the left"
 msgstr ""
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "Free"
+msgid "Image on the right"
+msgstr ""
+
+#: build/alerts-global-admin.js:16
+#: build/alerts-presets-admin.js:16
+#: build/dashboard.js:44
+msgid "Image as the background"
+msgstr ""
+
+#: build/alerts-global-admin.js:16
+#: build/alerts-presets-admin.js:16
+#: build/dashboard.js:44
+msgid "Image placed freely"
 msgstr ""
 
 #: build/alerts-global-admin.js:16
@@ -15586,7 +15598,13 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:44
-msgid "Free: drag the image and the texts inside the alert box on the canvas."
+msgid "The canvas is your alert box. Drag the image and the texts wherever you want them in it, and their corners to size them."
+msgstr ""
+
+#: build/alerts-global-admin.js:16
+#: build/alerts-presets-admin.js:16
+#: build/dashboard.js:44
+msgid "The canvas is your alert box. The layout places the image; drag the texts wherever you want them, and the corners to size the image and the texts."
 msgstr ""
 
 #: build/alerts-global-admin.js:16
@@ -16271,7 +16289,7 @@ msgstr ""
 #: build/alerts-global-admin.js:24
 #: build/alerts-presets-admin.js:24
 #: build/dashboard.js:52
-msgid "Design the alert on the right: drag the box to place it and its corners to size it. Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look."
+msgid "The canvas on the right is your alert box: drag its edges to size it, and drag the texts (and the image, where its layout lets you) inside it. Place the box on the screen under \"Position, size and style\". Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look."
 msgstr ""
 
 #: build/alerts-global-admin.js:24

@@ -4,6 +4,7 @@ import {
 	DEFAULT_LAYOUT,
 	alignBoxes,
 	background,
+	convertLegacy,
 	growsUp,
 	moveBox,
 	moveBoxes,
@@ -11,6 +12,7 @@ import {
 	sampleText,
 	snap,
 } from '../sections/alerts/designer';
+import type { OverlaySettings } from '../types/alerts';
 
 const SNAP = {
 	...DEFAULT_LAYOUT,
@@ -133,5 +135,75 @@ describe( 'several boxes', () => {
 		// The outline runs from 40 to 876: its centre is 458.
 		expect( center.elements.product_image.x ).toBe( 458 - image.w / 2 );
 		expect( center.elements.main_text.x ).toBe( 458 - main.w / 2 );
+	} );
+} );
+
+describe( 'layouts before ADR-109', () => {
+	it( 'become the image layout that looks the same, from the drawn alert', () => {
+		const settings = {
+			widget: {
+				x: 100,
+				y: 800,
+				w: 600,
+				h: 200,
+				opacity: 100,
+				rotation: 0,
+			},
+			layout_mode: 'side',
+		} as unknown as OverlaySettings;
+		const converted = convertLegacy(
+			settings,
+			DEFAULT_LAYOUT,
+			'side',
+			{
+				image: { x: 0, y: 0, w: 200, h: 200 },
+				main: { x: 216, y: 60, w: 384, h: 50 },
+				secondary: null,
+			},
+			{ top: 4, left: 6 }
+		);
+
+		expect( converted.settings.layout_mode ).toBe( 'left' );
+		expect( converted.layout.elements.product_image ).toMatchObject( {
+			x: 100,
+			y: 800,
+			w: 200,
+			h: 200,
+		} );
+		expect( converted.layout.elements.main_text ).toMatchObject( {
+			x: 310,
+			y: 856,
+			w: 384,
+			h: 50,
+		} );
+		expect( converted.layout.elements.secondary_text ).toEqual(
+			DEFAULT_LAYOUT.elements.secondary_text
+		);
+		expect(
+			convertLegacy(
+				settings,
+				DEFAULT_LAYOUT,
+				'above',
+				{
+					image: null,
+					main: null,
+					secondary: null,
+				},
+				{ top: 0, left: 0 }
+			).settings.layout_mode
+		).toBe( 'top' );
+		expect(
+			convertLegacy(
+				settings,
+				DEFAULT_LAYOUT,
+				'overlay',
+				{
+					image: null,
+					main: null,
+					secondary: null,
+				},
+				{ top: 0, left: 0 }
+			).settings.layout_mode
+		).toBe( 'background' );
 	} );
 } );

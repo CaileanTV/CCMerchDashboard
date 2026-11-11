@@ -27,8 +27,8 @@ defined( 'ABSPATH' ) || exit;
  * 1920 × 1080 canvas (OBS' default browser source size).
  *
  * Alert designer 2.0 (ADR-088): the alert is one box (`widget`) with a
- * layout (`layout_mode`); with `free` the elements keep their own boxes,
- * which stay in canvas coordinates. Settings stored before have no box: it
+ * layout (`layout_mode`); the elements keep their own boxes, which stay in
+ * canvas coordinates. ADR-109: the layout places only the image. Settings stored before have no box: it
  * becomes the box around their visible elements and the layout `free`, so
  * they look as before. The top-level look is the default; `variations`
  * hold other looks (LOOK_KEYS), chosen by choose().
@@ -103,10 +103,13 @@ final class OverlaySettings {
 	public const ELEMENTS = array( 'product_image', 'main_text', 'secondary_text' );
 
 	/**
-	 * Layouts of the alert box (ADR-088): image above the text, image left of
-	 * the text, text on the image, and free (the elements' own boxes).
+	 * Layouts of the alert box. ADR-109: the image's place in the box (top,
+	 * left, right, background, or free in its own box); the texts always keep
+	 * their own boxes. ADR-088 before it, still drawn as before but no longer
+	 * offered in the designer: image above the text, image left of the text,
+	 * text on the image.
 	 */
-	public const LAYOUT_MODES = array( 'above', 'side', 'overlay', 'free' );
+	public const LAYOUT_MODES = array( 'top', 'left', 'right', 'background', 'free', 'above', 'side', 'overlay' );
 
 	/**
 	 * Text styles of alert designer 2.0, as in assets/src/overlay/render.ts.

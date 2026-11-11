@@ -279,6 +279,8 @@ export function AlertEditor( {
 		const key = JSON.stringify( current );
 
 		if ( key === saved.current ) {
+			// Nothing to save after all (e.g. a layout converted on opening, ADR-109).
+			setStatus( ( shown ) => ( shown === 'pending' ? 'idle' : shown ) );
 			return;
 		}
 
@@ -468,7 +470,7 @@ export function AlertEditor( {
 							<div className="merchboard-alert-editor__help">
 								<p>
 									{ __(
-										'Design the alert on the right: drag the box to place it and its corners to size it. Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look.',
+										'The canvas on the right is your alert box: drag its edges to size it, and drag the texts (and the image, where its layout lets you) inside it. Place the box on the screen under "Position, size and style". Change what it shows and how in the panel on the left. Everything is saved automatically, and your open overlay reloads with the new look.',
 										'merchboard'
 									) }
 								</p>
@@ -592,6 +594,23 @@ export function AlertEditor( {
 							onTest={ () => void test() }
 							testing={ testing }
 							playRequest={ playRequest }
+							onConvert={ ( next ) => {
+								const converted = apply(
+									next.settings,
+									next.layout
+								);
+
+								// It looks the same (ADR-109 pkt. 3): no undo step, and it is
+								// saved with the creator's next change.
+								if (
+									JSON.stringify( doc.value ) ===
+									saved.current
+								) {
+									saved.current = JSON.stringify( converted );
+								}
+
+								doc.live( converted );
+							} }
 						/>
 					</section>
 				</div>

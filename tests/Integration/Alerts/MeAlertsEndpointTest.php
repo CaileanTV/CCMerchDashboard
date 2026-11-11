@@ -302,7 +302,7 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 				'PATCH',
 				self::ROUTE,
 				array(
-					'layout_mode'    => 'side',
+					'layout_mode'    => 'left',
 					'widget'         => array(
 						'x'        => 500,
 						'y'        => 300,
@@ -332,7 +332,7 @@ final class MeAlertsEndpointTest extends IntegrationTestCase {
 			)
 		)['overlay']['settings'];
 
-		self::assertSame( 'side', $saved['layout_mode'] );
+		self::assertSame( 'left', $saved['layout_mode'] );
 		self::assertSame( 180, $saved['widget']['rotation'] );
 		self::assertSame( 4, $saved['letter_spacing'] );
 		self::assertTrue( $saved['italic'] );

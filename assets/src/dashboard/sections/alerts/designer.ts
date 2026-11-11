@@ -4,11 +4,14 @@
  * server's bounds, moving several boxes together and aligning them (step
  * 25.6.6), the default layout, and the sample text of the preview.
  */
+import { LEGACY_LAYOUTS } from '../../../overlay/look';
+import type { LegacyLayout } from '../../../overlay/look';
 import { BOX_LIMITS, CANVAS } from '../../types/alerts';
 import type {
 	LayoutBox,
 	LayoutElement,
 	OverlayLayout,
+	OverlaySettings,
 } from '../../types/alerts';
 
 /** MerchAlert's default layout (OverlaySettings::default_layout()). */
@@ -135,6 +138,74 @@ export function withBox(
 	box: LayoutBox
 ): OverlayLayout {
 	return { ...layout, elements: { ...layout.elements, [ element ]: box } };
+}
+
+/** An element measured in the drawn alert: its border box in the box. */
+export interface MeasuredBox {
+	readonly x: number;
+	readonly y: number;
+	readonly w: number;
+	readonly h: number;
+}
+
+/**
+ * A look with a layout before ADR-109 (`above`, `side`, `overlay`) as an
+ * image layout that looks the same (ADR-109 pkt. 3): the image keeps the
+ * size it was drawn with, the layout becomes `top`, `left` or
+ * `background`, and the texts get the boxes they were drawn in (an
+ * element that was not drawn keeps its box). The measurements are relative
+ * to the alert box, without its rotation.
+ *
+ * @param settings           Settings (the look being edited).
+ * @param layout             Layout.
+ * @param mode               The layout before ADR-109.
+ * @param measured           The drawn elements, null when not drawn.
+ * @param measured.image     The image.
+ * @param measured.main      The main text.
+ * @param measured.secondary The secondary text.
+ * @param margin             The texts' margin (outside their boxes).
+ * @param margin.top         Top margin.
+ * @param margin.left        Left margin.
+ */
+export function convertLegacy(
+	settings: OverlaySettings,
+	layout: OverlayLayout,
+	mode: LegacyLayout,
+	measured: {
+		readonly image: MeasuredBox | null;
+		readonly main: MeasuredBox | null;
+		readonly secondary: MeasuredBox | null;
+	},
+	margin: { readonly top: number; readonly left: number }
+): { settings: OverlaySettings; layout: OverlayLayout } {
+	const { widget } = settings;
+	let next = layout;
+	const place = (
+		element: LayoutElement,
+		box: MeasuredBox | null,
+		offset: { readonly top: number; readonly left: number }
+	) => {
+		if ( box === null ) {
+			return;
+		}
+
+		next = withBox( next, element, {
+			...layout.elements[ element ],
+			x: clamp( widget.x + box.x - offset.left, BOX_LIMITS.x ),
+			y: clamp( widget.y + box.y - offset.top, BOX_LIMITS.y ),
+			w: clamp( box.w, BOX_LIMITS.w ),
+			h: clamp( box.h, BOX_LIMITS.h ),
+		} );
+	};
+
+	place( 'product_image', measured.image, { top: 0, left: 0 } );
+	place( 'main_text', measured.main, margin );
+	place( 'secondary_text', measured.secondary, margin );
+
+	return {
+		settings: { ...settings, layout_mode: LEGACY_LAYOUTS[ mode ] },
+		layout: next,
+	};
 }
 
 /**

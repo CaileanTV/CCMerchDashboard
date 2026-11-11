@@ -3162,7 +3162,8 @@ input:disabled + .merchboard-sounds__upload {
 		background: currentcolor;
 	}
 
-	&.is-above {
+	&.is-above,
+	&.is-top {
 		flex-direction: column;
 		align-items: center;
 
@@ -3177,7 +3178,9 @@ input:disabled + .merchboard-sounds__upload {
 		}
 	}
 
-	&.is-side {
+	&.is-side,
+	&.is-left,
+	&.is-right {
 		align-items: center;
 
 		span:first-child {
@@ -3191,7 +3194,12 @@ input:disabled + .merchboard-sounds__upload {
 		}
 	}
 
-	&.is-overlay {
+	&.is-right {
+		flex-direction: row-reverse;
+	}
+
+	&.is-overlay,
+	&.is-background {
 
 		span:first-child {
 			position: absolute;
@@ -3234,18 +3242,54 @@ input:disabled + .merchboard-sounds__upload {
 	min-width: 0;
 }
 
+// The stage is the alert box (ADR-109); it fits the width and the screen's
+// height (AlertCanvas), and a smaller box is centred.
 .merchboard-alert-canvas__viewport {
+	display: grid;
+	justify-items: center;
 	min-width: 0;
+	padding: var(--merchboard-space-6) var(--merchboard-space-2) var(--merchboard-space-3);
 	overflow: auto;
 	border-radius: var(--merchboard-radius);
+}
 
-	// On a wide screen the canvas fits the screen's height too, so the page
-	// does not scroll because of it (a scroll bar that comes and goes would
-	// change the width and the canvas with it).
-	@media (min-width: $merchboard-lg) {
-		max-width: calc((100vh - 15rem) * 16 / 9);
-		margin-inline: auto;
-	}
+// The screen map (ADR-109): the OBS screen, small, with the alert box on it.
+.merchboard-alert-screen {
+	display: grid;
+	gap: var(--merchboard-space-1);
+	margin-bottom: var(--merchboard-space-3);
+}
+
+.merchboard-alert-screen__label {
+	font-size: var(--merchboard-text-xs);
+	color: var(--merchboard-text-subtle);
+}
+
+.merchboard-alert-screen__map {
+	position: relative;
+	aspect-ratio: 16 / 9;
+	max-width: 100%;
+	overflow: hidden;
+	cursor: crosshair;
+	touch-action: none;
+	background: var(--merchboard-surface-muted);
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius-sm);
+}
+
+.merchboard-alert-screen__box {
+	position: absolute;
+	min-width: 4px;
+	min-height: 4px;
+	cursor: move;
+	background: var(--merchboard-selected-bg);
+	border: 1px solid var(--merchboard-primary);
+	transform-origin: center;
+}
+
+// The box's place on the page: the stage inside it, the handles on top.
+.merchboard-alert-canvas__box {
+	position: relative;
 }
 
 // The scroll bar's room is kept, so the page's width never jumps.
@@ -3254,7 +3298,8 @@ html:has(.merchboard-alert-editor) {
 }
 
 .merchboard-alert-canvas__stage {
-	position: relative;
+	position: absolute;
+	inset: 0;
 	overflow: hidden;
 	touch-action: none;
 
@@ -3279,6 +3324,11 @@ html:has(.merchboard-alert-editor) {
 	height: 1080px;
 	transform-origin: top left;
 	pointer-events: none;
+
+	// Edited without its rotation; the screen map and Play show it.
+	&.is-still .merchboard-alert {
+		--merchboard-alert-rotation: 0deg !important;
+	}
 }
 
 // Without a real product: a calm placeholder in the image's place.
@@ -3297,12 +3347,21 @@ html:has(.merchboard-alert-editor) {
 	}
 }
 
+// The whole stage: only its edges and corners resize the box.
 .merchboard-alert-canvas__frame {
+	inset: 0;
+	cursor: default;
 	outline-style: solid;
+	outline-offset: -1px;
 }
 
 .merchboard-alert-canvas__element {
 	outline-color: var(--merchboard-text-subtle);
+
+	// Placed by the layout: only its size changes.
+	&.is-fixed {
+		cursor: default;
+	}
 }
 
 .merchboard-alert-canvas__size {

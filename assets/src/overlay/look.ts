@@ -6,7 +6,38 @@
  * missing or unknown gets the default, as on the server.
  */
 
-export const LAYOUT_MODES = [ 'above', 'side', 'overlay', 'free' ] as const;
+/**
+ * Every layout an overlay can have: the image's place in the box (ADR-109:
+ * `top`, `left`, `right`, `background` and `free`; the texts are always
+ * free) and the layouts of 2.0 before it (`above`, `side`, `overlay`), which
+ * are still drawn as before but no longer offered in the designer.
+ */
+export const LAYOUT_MODES = [
+	'top',
+	'left',
+	'right',
+	'background',
+	'free',
+	'above',
+	'side',
+	'overlay',
+] as const;
+
+/** The layouts the designer offers (ADR-109): where the image is. */
+export const IMAGE_LAYOUTS = [
+	'top',
+	'left',
+	'right',
+	'background',
+	'free',
+] as const;
+
+/** The layouts of 2.0 before ADR-109, and the image layout each becomes. */
+export const LEGACY_LAYOUTS = {
+	above: 'top',
+	side: 'left',
+	overlay: 'background',
+} as const;
 export const TEXT_ALIGNS = [ 'left', 'center', 'right', 'justify' ] as const;
 export const TEXT_DIRECTIONS = [ 'ltr', 'rtl' ] as const;
 export const TEXT_CASES = [ 'none', 'upper', 'lower', 'capitalize' ] as const;
@@ -55,6 +86,17 @@ export const MAX_VARIATIONS = 10;
 export const VARIATION_NAME_LENGTH = 60;
 
 export type LayoutMode = ( typeof LAYOUT_MODES )[ number ];
+export type ImageLayout = ( typeof IMAGE_LAYOUTS )[ number ];
+export type LegacyLayout = keyof typeof LEGACY_LAYOUTS;
+
+/**
+ * Whether a layout is one of 2.0 before ADR-109 (image and texts in a flow).
+ *
+ * @param mode Layout.
+ */
+export function isLegacyLayout( mode: LayoutMode ): mode is LegacyLayout {
+	return Object.prototype.hasOwnProperty.call( LEGACY_LAYOUTS, mode );
+}
 export type TextAlign = ( typeof TEXT_ALIGNS )[ number ];
 export type TextDirection = ( typeof TEXT_DIRECTIONS )[ number ];
 export type TextCase = ( typeof TEXT_CASES )[ number ];

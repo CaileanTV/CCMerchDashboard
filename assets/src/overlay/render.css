@@ -40,13 +40,14 @@
 	display: none;
 }
 
-/* ------------------------------------------------------------ Free. */
+/* ------------------------ The image layouts and free (ADR-109). */
 
-.merchboard-alert[data-layout="free"] .merchboard-alert__texts {
+/* Every element in its own box; the image (first) lies under the texts. */
+.merchboard-alert:is([data-layout="free"], [data-layout="top"], [data-layout="left"], [data-layout="right"], [data-layout="background"]) .merchboard-alert__texts {
 	display: contents;
 }
 
-.merchboard-alert[data-layout="free"] :is(.merchboard-alert__image, .merchboard-alert__text) {
+.merchboard-alert:is([data-layout="free"], [data-layout="top"], [data-layout="left"], [data-layout="right"], [data-layout="background"]) :is(.merchboard-alert__image, .merchboard-alert__text) {
 	position: absolute;
 }
 
@@ -118,8 +119,8 @@
 	gap: 4px;
 }
 
-/* In a layout, texts are positioned for their letters (fills, frames). */
-.merchboard-alert:not([data-layout="free"]) .merchboard-alert__text {
+/* Layouts before ADR-109: texts positioned for their letters. */
+.merchboard-alert:is([data-layout="above"], [data-layout="side"], [data-layout="overlay"]) .merchboard-alert__text {
 	position: relative;
 }
 
