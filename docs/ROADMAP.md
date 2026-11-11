@@ -1182,6 +1182,37 @@ Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR. **Testes samme
 
 - **Efter fase 44** kører jeg automatisk videre: review, rettelser, grøn CI, testpakke for fase 43 og 44 og upload til stg. Projektejeren tester, og tag og release sker først efter projektejerens OK. **Versionen bliver 2.0.0.**
 
+## Fase 45 – Globale community-knapper og fælles Twitch-kort 🔄 (plan godkendt 2026-11-11; ADR-108)
+
+Projektejerens ønske efter testen af 2.0.0 på stg: en global til/fra-knap pr. community feature under Indstillinger, og på hver feature-side kan creatoren slå featuren til og fra og forbinde Twitch. Siden skal sige, at forbindelsen deles af alle community features og af alert-chatbotten.
+
+**Projektejerens valg 2026-11-11:**
+- Knapperne ligger i en ny fane Indstillinger → Community og er slået fra som standard.
+- Gifting slået fra globalt er en pause: ventende gaver bliver liggende, og vindere kan stadig hente gaven.
+- Twitch-forbindelsen fjernes kun på Alerts → Chatbot.
+
+- **45.1 Docs:** ADR-108 og ROADMAP.
+- **45.2 Indstillinger:** de to nøgler, service med audit og fanen Community.
+- **45.3 Gating:** siderne, REST, kurv og checkout, gaveknappen og nye vinduer.
+- **45.4 Creator:** subrabattens samlede til/fra, det fælles Twitch-kort, tilbage til siden efter forbindelsen og noten på chatbottens Twitch-kort.
+- **45.5 Tekster, tests og docs.**
+
+## Fase 46 – Alertlærredet er boksen 🔄 (plan godkendt 2026-11-11; ADR-109)
+
+Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele alertboksen, og layoutet skal kun bestemme, hvor billedet sidder.
+
+**Projektejerens valg 2026-11-11:**
+- Editoren viser kun boksen.
+- Layoutet placerer billedet (top, venstre, højre, baggrund eller frit), og teksterne kan altid flyttes frit.
+- Placeringen på skærmen sættes med X/Y og et minikort, så OBS-kilden fortsat er 1920 × 1080.
+
+- **46.1 Model og overlay:** nye `layout_mode`-værdier, billedets placering, og de gamle layouts vises uændret.
+- **46.2 Editor:** scenen er boksen, minikort og layoutvælger.
+- **46.3 Gamle designs:** omregnes i editoren ved åbning.
+- **46.4 Tekster, tests og docs.**
+
+- **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
+
 ## Senere (uprioriteret)
 
 | Område | Indhold |

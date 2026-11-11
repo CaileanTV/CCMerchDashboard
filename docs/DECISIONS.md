@@ -5137,6 +5137,8 @@ Accepteret af projektejeren 2026-11-03 (plan for fase 31).
 
 **Statusnote 2026-11-03 (31.2–31.7):** bygget. Projektejerens feedback fra Local: editoren er én samlet boks i fuld bredde, og alle grupper af felter kan foldes; Variationer, Oplæsning, Tekst og Animation er egne paneler ved siden af Merch alert. En variations egen lyd er en lyd fra biblioteket (0: overlayets lyde); den spilles kun, når ejeren må bruge den.
 
+**Statusnote 2026-11-11 (ADR-109):** lærredet i editoren er nu selve alertboksen, og layoutet placerer kun billedet (`top`, `left`, `right`, `background`, `free`); teksterne flyttes altid frit. `above`, `side` og `overlay` vises fortsat som før, men tilbydes ikke i editoren. Elementernes bokse gemmes i skærmkoordinater (pkt. 2 rettet).
+
 ## Context
 Alert-designeren fra fase 25 er blevet for kompliceret for creators:
 - mange kort i to kolonner, som admin kan flytte rundt;
@@ -6173,6 +6175,8 @@ Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" p
 - **Max-procent:** ved gem afvises en procent over creatorens laveste fortjeneste-% blandt kampagnens produkter (alle creatorens produkter for "alle"). Fortjeneste-% er creatorens fortjeneste på en vare til 100 kr. (andelen eller designerproduktets fortjeneste ÷ listepris), rundet ned til to decimaler. Både fortjeneste-% og procenterne pr. tier har op til to decimaler og vises med decimaler, når de ikke er hele (fx "Højst 16,67 %"; projektejerens krav 2026-11-10). Loftet pr. linje (pkt. 4) gælder stadig, fx når et nyt produkt med lavere fortjeneste kommer til senere.
 - Ordrelinjen gemmer også, hvilken kampagne der gav rabatten (`_merchboard_sub_campaign`).
 
+**Statusnote 2026-11-11 (ADR-108):** en global knap under Indstillinger → Community (slået fra som standard) lukker rabatten for hele butikken, og creatoren har en samlet til/fra-knap (`enabled`) over kampagnerne.
+
 ## Context
 Projektejeren vil, inspireret af Fourthwall, give creatorens Twitch-subscribers en automatisk rabat på creatorens produkter. Det kræver to ting: kunden skal bevise sin Twitch-konto, og abonnementet på creatorens kanal skal tjekkes.
 
@@ -6273,6 +6277,8 @@ Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" p
 - **Ventetid før vinderen:** når vinduet lukker, sender botten først de sidste bekræftelser og "Tilmeldingen er lukket! Vinderen af … findes om 10 sekunder …", og vinderen offentliggøres 10 sekunder senere. Lukkebeskeden kommer altid før vinderen, også når et job kører for sent. Uden deltagere kommer beskeden om det med det samme som før.
 - **Gavesiden:** linket åbner en side for sig (uden temaet) med præmien, vinderen, fristen og knappen "Log ind med Twitch". Først knappen (`&merchboard_gift_redeem=1`) kræver Twitch-login og kommer tilbage til sig selv, så gaven hentes lige efter login. Er man logget ind med en anden Twitch-konto, siger siden det og tilbyder at logge ud. Siden sendes uden cache, `noindex` og `Referrer-Policy: no-referrer`, fordi tokenet står i adressen.
 
+**Statusnote 2026-11-11 (ADR-108):** en global knap under Indstillinger → Community (slået fra som standard) sætter gifting på pause for hele butikken: ingen nye køb eller vinduer, men åbne vinduer trækkes, og vindere kan hente gaven.
+
 ## Context
 Hos Fourthwall kan en seer købe et produkt som gave, mens creatoren streamer. Botten trækker en vinder blandt dem, der skriver `!enter`, og vinderen henter gaven ved at logge ind med Twitch. Projektejeren vil have det samme gennem CCMerch-chatbotten, med en til/fra-knap og en pause pr. creator.
 
@@ -6332,3 +6338,112 @@ Seere kan give merch til fællesskabet live, creatoren får fortjeneste af købe
 
 ## Related
 ADR-049, ADR-066, ADR-080, ADR-106
+
+# ADR-108: Globale knapper for community features og en fælles Twitch-forbindelse
+
+## Date
+2026-11-11
+
+## Status
+Accepteret af projektejeren 2026-11-11 (ønsket efter testen af 2.0.0 på stg; valgene i fase 45). Udvider ADR-106 og ADR-107.
+
+## Context
+Twitch-subscriber-rabatten (ADR-106) og Twitch-gifting (ADR-107) er altid tilgængelige for alle creators, når WooCommerce kører. Administratoren kan ikke slå en feature fra for hele butikken, fx før den er testet. Creatorens Twitch-forbindelse er chatbottens kanal fra ADR-066. Community-siderne har hver deres kopi af "Forbind Twitch", og efter forbindelsen lander creatoren altid på Alerts → Chatbot. Det står ingen steder, at forbindelsen deles.
+
+## Decision
+1. **Global knap pr. feature:**
+   - Fanen Indstillinger → Community har en afkrydsning for "Rabat til Twitch-subscribers" og en for "Twitch-gifting".
+   - Nøglerne er `community_twitch_sub_discount_enabled` og `community_twitch_gifting_enabled` i `merchboard_settings`. Begge er **slået fra som standard**, som de andre globale knapper.
+   - Kun brugere med `merchboard_manage_settings` kan ændre dem. Hver ændring auditeres som `settings_updated` med nøglen.
+2. **Subrabat slået fra:**
+   - Siden forsvinder fra creatorens menu, og `/me/community/twitch-sub-discount` svarer 404 `merchboard_community_disabled`.
+   - Ingen kurv får rabatten, og kortet i kurv og checkout vises ikke. En kurv, der allerede har rabatten, mister den ved næste beregning, og gentjekket i checkout viser den nye pris før betaling.
+   - Ordreinfo, privacy, oprydning og kundens Twitch-login (som gavesiden også bruger) kører videre.
+3. **Gifting slået fra er en pause:**
+   - Siden og REST-ruterne lukkes, og gaveknappen på produktsiden forsvinder. En gave, der allerede ligger i kurven, afvises.
+   - Der åbnes ingen nye vinduer, og `!gift start` ignoreres.
+   - Et vindue, der allerede er åbent, lukkes og trækkes normalt. Vindere kan stadig hente gaven, og fristerne løber som før.
+   - Ventende gaver bliver liggende og køres, når gifting slås til igen. De gives ikke tilbage til køberen, som når creatoren selv slår gifting fra.
+4. **Creatorens samlede til/fra:**
+   - Gifting har allerede sin knap. Subrabatten får en samlet knap (`enabled` i creator-meta `twitch_sub_discount`) over kampagnerne.
+   - Mangler feltet, regnes det som slået til, så eksisterende kampagner virker videre.
+   - Slås det til uden forbundet Twitch-kanal, giver det feltfejlen `enabled: not_connected`.
+5. **Fælles Twitch-kort:**
+   - Hver community-side viser det samme kort med kanalens status og "Forbind Twitch". Teksten siger, at forbindelsen bruges af alle Community Features og af alert-chatbotten.
+   - Forbindelsen kan kun fjernes på Alerts → Chatbot. Kortet linker dertil, og chatbottens Twitch-kort siger, at Community Features også bruger forbindelsen.
+6. **Tilbage til siden:**
+   - `POST /me/alerts/chatbot/twitch/connect` tager et valgfrit `return`, som skal være en af `alerts/chatbot`, `community/twitch-discount` og `community/twitch-gifting`. Andre værdier giver `alerts/chatbot`.
+   - Værdien gemmes i OAuth-state, og creatoren kommer tilbage til siden med resultatet (`?chatbot=…&platform=twitch`).
+
+## Alternatives considered
+- **Gaverne gives tilbage, når gifting slås fra globalt:** projektejeren valgte pause, så en midlertidig slukning ikke koster køberne deres gaver.
+- **Slået til som standard:** fravalgt for at følge de andre globale knapper.
+- **"Fjern forbindelse" på hver community-side:** fravalgt, så forbindelsen ikke fjernes ved et uheld for alle funktioner på én gang.
+
+## Reason
+Administratoren styrer, hvornår en feature er klar til creators. Creatoren kan slå hver feature til, forbinde Twitch på samme side og ved, at det er den samme forbindelse som chatbottens.
+
+## Security
+- Knapperne ændres kun af administratorer med `merchboard_manage_settings`, med nonce og audit.
+- `return` er en fast liste. Der bruges ingen fri adresse, så OAuth-returen kan ikke sende videre til en fremmed side.
+
+## Migration/data implications
+- To nye nøgler i `merchboard_settings`, slået fra som standard. Der er ingen migration.
+- Creator-meta `twitch_sub_discount` får `enabled`.
+
+## Consequences
+- Efter opdatering til 2.0.0 skal administratoren slå knapperne til, før creators ser siderne.
+
+## Related
+ADR-066, ADR-106, ADR-107
+
+# ADR-109: Alertlærredet er boksen, og layoutet placerer billedet
+
+## Date
+2026-11-11
+
+## Status
+Accepteret af projektejeren 2026-11-11 (fase 46). Afløser ADR-088 pkt. 1, hvor de afviger.
+
+## Context
+I alertdesigneren (ADR-088) er lærredet hele OBS-skærmen (1920 × 1080). Alertboksen er en firkant på den, og layoutet (`above`, `side`, `overlay`, `free`) placerer både billede og tekster i boksen. Projektejeren vil have, at lærredet er selve alertboksen, og at layoutet kun bestemmer, hvor billedet sidder.
+
+ADR-088 pkt. 2 siger, at elementernes bokse gemmes i forhold til boksen. Koden gemmer dem i skærmkoordinater og flytter dem med boksen. Det bevares.
+
+## Decision
+1. **Lærredet er boksen:**
+   - Editoren viser kun alertboksen, forstørret til den plads, der er.
+   - Boksens størrelse ændres med håndtag på kanterne eller med felter.
+   - Boksens placering på skærmen sættes i panelet "Placering på skærmen" med et minikort af skærmen (1920 × 1080), felter til X og Y og knappen "Centrér".
+   - OBS-kilden er stadig 1920 × 1080, så eksisterende opsætninger virker uændret.
+2. **Layoutet placerer kun billedet:** `layout_mode` får værdierne `top`, `left`, `right`, `background` og `free`.
+   - Billedet beholder sin størrelse, dog højst boksens.
+   - `top`: billedet centreres vandret i toppen.
+   - `left` og `right`: billedet centreres lodret ved kanten.
+   - `background`: billedet fylder hele boksen bag teksterne.
+   - `free`: billedet kan flyttes frit som i dag.
+   - Teksterne kan altid flyttes og ændres i størrelse frit i boksen.
+3. **Gamle layouts:**
+   - `above`, `side` og `overlay` accepteres stadig og vises i OBS præcis som før, men editoren tilbyder dem ikke længere.
+   - Åbner creatoren et design med et gammelt layout, måler editoren den viste alert og laver tekstboksene ud fra målingerne. Layoutet bliver `top`, `left` eller `background`.
+   - Designet ændres først, når creatoren gemmer.
+4. **Koordinater:** elementernes bokse gemmes fortsat i skærmkoordinater og flyttes med boksen. ADR-088 pkt. 2 rettes hermed.
+
+## Alternatives considered
+- **OBS-kilden har boksens størrelse** (placeringen styres i OBS): eksisterende creators skulle ændre deres OBS-kilde. Fravalgt.
+- **Layout som hurtigknapper og alt frit bagefter:** projektejeren valgte faste billedplaceringer.
+
+## Reason
+Creatoren designer den alert, der faktisk vises, i stor størrelse, uden at boksen skal findes på en hel skærm. Billedet har faste, forudsigelige placeringer, og teksterne kan sættes frit.
+
+## Security
+Ingen ændring. Værdierne valideres mod en fast liste i PHP og i overlayet.
+
+## Migration/data implications
+Der er ingen migration. Gamle værdier bevares, til creatoren gemmer designet igen.
+
+## Consequences
+- Designs, presets og variationer kan blande gamle og nye layouts. Overlayet kan vise begge.
+
+## Related
+ADR-065, ADR-088
