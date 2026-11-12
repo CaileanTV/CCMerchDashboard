@@ -6481,6 +6481,8 @@ Accepteret af projektejeren 2026-11-11 (valgene i fase 47; Community Features pk
 
 **Statusnote 2026-11-11:** bygget i fase 47. Projektejeren præciserede, at creatorens eget system får et link med en "Indløs"-knap uden Twitch-login (pkt. 6), og at en creators giveaway aldrig må forveksles med et køb fra community'et via Twitch-gifting (pkt. 10). Pkt. 4, 6, 7 og 8 og migrationen er skrevet om efter det byggede.
 
+**Statusnote 2026-11-12:** efter projektejerens ønske gennemføres en betalt giveaway-ordre (og en gave-ordre, ADR-107) automatisk (`completed`), da den kun betaler for en kode, der gives videre; vinderens ordre er den, der sendes (`PassOnOrders`). Kassen åbner i en ny fane fra MitCCMerch.
+
 ## Context
 Creatoren vil kunne give sin egen merch væk til seere. Det skal ske enten med CCMerch-botten i Twitch-chatten (som Twitch-gifting) eller med creatorens eget giveaway-system, hvor creatoren selv sender en kode til vinderen. Creatoren betaler for giveawayen, men skal ikke betale sin egen andel af prisen.
 

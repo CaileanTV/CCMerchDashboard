@@ -13,6 +13,8 @@ Fase 47: Giveaways, hvor creatoren giver sine egne produkter væk, plus to tekst
 - **Giveaways** (fase 47, ADR-110): creatoren giver et af sine egne produkter væk, trukket af botten i Twitch-chatten eller som et link fra creatorens eget giveaway-system med en "Indløs"-knap uden Twitch-login. Creatoren betaler grundprisen og 50 kr. i fragt: fra saldoen, når koden bruges (reserveret indtil da), eller i shoppen. Global knap under Indstillinger → Community (fra som standard). Holdes adskilt fra Twitch gifting.
 - **Database:** migration 51 opretter `merchboard_giveaways`, lader en gave høre til en giveaway i stedet for en ordre (`merchboard_gifts.giveaway_id`) og tilføjer `giveaway_id` på `merchboard_payout_adjustments`.
 - **Saldo:** `GET /me/payouts/balance` har feltet `held` (reserveret til giveaways), som trækkes fra den tilgængelige saldo.
+- **Gave- og giveaway-ordrer gennemføres automatisk**, når de er betalt (status "Gennemført" med en ordrenote): de betaler for en kode, der gives videre, og det er vinderens egen ordre, der sendes. Ingen manuel markering.
+- "Opret og betal i shoppen" og "Betal i shoppen" åbner kassen i en ny fane, så creatoren beholder Giveaways-siden; listen opdateres, når creatoren vender tilbage.
 
 ### Changed
 

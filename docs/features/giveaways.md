@@ -20,7 +20,7 @@ Mangler: CI med integrationstests og testpakke 2.1.0 på stg (47.9).
   - **Vores bot i Twitch-chatten:** creatoren starter giveawayen med "Start i chatten", mens creatoren er live, og vælger, hvor mange sekunder chatten kan skrive `!enter` (20–180).
 - Vælger betaling:
   - **Fra saldoen, når koden bruges:** kun når den tilgængelige saldo dækker prisen. Prisen reserveres med det samme og vises under Udbetalinger som "Reserveret til giveaways". Den trækkes først, når vinderen bruger koden; bruges koden ikke, trækkes intet.
-  - **Betal nu i shoppen:** creatoren sendes til kassen, hvor kun grundprisen og 50 kr. i fragt betales. Giveawayen er klar, når ordren er betalt.
+  - **Betal nu i shoppen:** kassen åbner i en ny fane, hvor kun grundprisen og 50 kr. i fragt betales. Giveawayen er klar, når ordren er betalt, og ordren gennemføres automatisk (der sendes intet fra den). Listen opdateres, når creatoren vender tilbage til fanen med MitCCMerch.
 - Listen over giveaways viser produkt, tilstand, pris, betaling og status, linket med kopiknap og knapperne "Betal i shoppen", "Start i chatten" og "Annullér".
 - Annullering: en giveaway, der venter på betaling, eller en fra saldoen, hvis gave venter på en lodtrækning eller hvis link ingen har indløst. Reservationen frigives. En giveaway, der er betalt i shoppen, kan kun annulleres ved at annullere ordren.
 - Klokken (og e-mail): linket er klar efter tre lodtrækninger uden afhentning, koden er brugt, og giveawayen er udløbet uden at være brugt.
