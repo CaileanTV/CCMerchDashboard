@@ -1217,7 +1217,7 @@ Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele al
 
 - **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Testpakke på stg ✅ 2026-11-11 (bygget fra 6b7e207, ZIP SHA-256 `290b5731…`). Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
 
-## Fase 47 – Giveaway-links 🔄 (plan godkendt 2026-11-11; ADR-110; Community Features punkt 1; udgives i 2.1.0; se [features/giveaways.md](features/giveaways.md))
+## Fase 47 – Giveaway-links ✅ (plan godkendt 2026-11-11; ADR-110; Community Features punkt 1; udgives i 2.1.0; se [features/giveaways.md](features/giveaways.md))
 
 Projektejerens ønske 2026-11-11: creatoren skal selv kunne give merch væk til seere, enten med vores bot i chatten eller med sit eget giveaway-system, hvor creatoren selv sender en kode til vinderen.
 
@@ -1238,9 +1238,9 @@ Projektejerens ønske 2026-11-11: creatoren skal selv kunne give merch væk til 
 - **47.6 Bot-tilstand:** ✅ (fa199ba) "Start i chatten", lodtrækning og link til creatoren efter 3 forsøg.
 - **47.7 MitCCMerch:** ✅ (fa199ba) siden Community Features → Giveaways og "Reserveret til giveaways" under Udbetalinger.
 - **47.8 Admin og resten:** ✅ (fa199ba) global knap, ordreside, afregningsbilag, klokken, impersonation, oprydning og danske tekster.
-- **47.9 Test og levering:** unit, integration og Jest er skrevet (fa199ba); runtime-test i Playground 2026-11-11 med to rettelser (a603f20); CI grøn (a48208c); bump til 2.1.0 ✅; testpakke på stg, tag efter projektejerens test.
+- **47.9 Test og levering:** unit, integration og Jest er skrevet (fa199ba); runtime-test i Playground 2026-11-11 med to rettelser (a603f20); CI grøn (a48208c); bump til 2.1.0 ✅ (6fa60ee); testpakke på stg ✅; projektejerens ønsker 2026-11-12 (kassen i ny fane, gave- og giveaway-ordrer gennemføres automatisk) ✅ (9f6ec52). Tagget `v2.1.0` på 5504fa2 2026-11-12 (draft-ZIP SHA-256 26ff1035…). ✅
 
-## Næste version: 2.1.0 🔄 (forberedes 2026-11-11)
+## Version 2.1.0 ✅ (tagget 2026-11-12 på 5504fa2)
 
 Bliver 2.1.0, fordi fase 47 (giveaway-links) kommer med.
 

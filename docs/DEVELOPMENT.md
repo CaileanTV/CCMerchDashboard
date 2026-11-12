@@ -251,7 +251,9 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 2.1.0: Giveaways (fase 47)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-12** efter projektejerens ønske ("bump og så læg på stg"). Tag først efter projektejerens OK efter testen på stg; tag og SHA-256 noteres her da.
+**Versions-bump og CHANGELOG-sektion 2026-11-12** efter projektejerens ønske ("bump og så læg på stg").
+
+**Tagget 2026-11-12** efter projektejerens OK ("Du må gerne tagge v2.1.0 så snart den er klar"): annoteret tag `v2.1.0` på `5504fa2` (med kassen i ny fane, automatisk gennemførte gave- og giveaway-ordrer og printfilernes DPI). CI grøn med hele integrationssuiten (run `43262410402`). Draft-releasens ZIP er byte-identisk med testpakken på stg: SHA-256 `26ff1035e42acecaf6848772401c03f69cc2afb9a306724a6adaf4c558325233`.
 - Testet med unit-, Jest- og integrationstests (CI grøn på `a48208c`) og en runtime-test i Playground (se [features/giveaways.md](features/giveaways.md)). Oprettelse fra saldoen og trækket bruger payout-låsen, som kun findes på MySQL: test dem på stg.
 
 **Schemaændring 50 → 51:** migration 51 opretter `merchboard_giveaways`, gør `merchboard_gifts.order_id` NULL-bar og tilføjer `giveaway_id` på `merchboard_gifts` og `merchboard_payout_adjustments`. Eksisterende gaver og adjustments er uændrede. Migrationen kører af sig selv ved første request.
