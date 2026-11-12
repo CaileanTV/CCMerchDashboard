@@ -16,6 +16,10 @@ Fase 47: Giveaways, hvor creatoren giver sine egne produkter væk, plus to tekst
 - **Gave- og giveaway-ordrer gennemføres automatisk**, når de er betalt (status "Gennemført" med en ordrenote): de betaler for en kode, der gives videre, og det er vinderens egen ordre, der sendes. Ingen manuel markering.
 - "Opret og betal i shoppen" og "Betal i shoppen" åbner kassen i en ny fane, så creatoren beholder Giveaways-siden; listen opdateres, når creatoren vender tilbage.
 
+### Fixed
+
+- **Printfilernes DPI:** produktdesignerens printfiler havde ingen opløsning i filen, så de åbnede som 72 dpi (295 mm ved 300 dpi blev vist som 1229 mm). Nye printfiler får sidens dpi skrevet ind (PNG `pHYs`, JPEG JFIF). Eksisterende printfiler får sidens dpi fra baseproduktet, når de hentes i admin eller af en printleverandør; de gemte filer, designs og baseprodukter ændres ikke, og intet skal slettes eller laves om.
+
 ### Changed
 
 - Gaveknappen på produktsiden hedder på dansk "Giv som gave på streamen" (før "Giv som gave i streamen").
