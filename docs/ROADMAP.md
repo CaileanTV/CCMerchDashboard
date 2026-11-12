@@ -1240,6 +1240,47 @@ Projektejerens ønske 2026-11-11: creatoren skal selv kunne give merch væk til 
 - **47.8 Admin og resten:** ✅ (fa199ba) global knap, ordreside, afregningsbilag, klokken, impersonation, oprydning og danske tekster.
 - **47.9 Test og levering:** unit, integration og Jest er skrevet (fa199ba); runtime-test i Playground 2026-11-11 med to rettelser (a603f20); CI grøn (a48208c); bump til 2.1.0 ✅ (6fa60ee); testpakke på stg ✅; projektejerens ønsker 2026-11-12 (kassen i ny fane, gave- og giveaway-ordrer gennemføres automatisk) ✅ (9f6ec52). Tagget `v2.1.0` på 5504fa2 2026-11-12 (draft-ZIP SHA-256 26ff1035…). ✅
 
+## Fase 48 – Community features i shoppen: ny gave-boks, flere gaver pr. køb og moderne Twitch-login 📝 (planlagt 2026-11-12; afventer projektejerens godkendelse; version 2.2.0; ADR-111)
+
+Projektejerens ønsker 2026-11-12, med Fourthwall som forbillede:
+- **Gave-boksen på produktsiden:** et kort med overskrift, Twitch-ikon med et rødt LIVE-mærke, der pulserer, "<creator> er live på Twitch" (link til kanalen), en antalsvælger og en stor knap. Valgt: **flere gaver pr. køb**.
+- **Twitch subscriber rabatten på produktsiden:** en linje under prisen med rabatten pr. tier, fx "15 % rabat for Tier 3 Twitch subs, 10 % for Tier 2 og 5 % for Tier 1", og at den trækkes automatisk i kurven efter Twitch-login.
+- **Login-delen i kurv og kasse** skal være meget mere moderne: lige over produkterne i kurven og lige over "Faktureringsoplysninger" i kassen. Udgangspunkt: live-siderne https://ccmerch.dk/kurv/ (egen Elementor-widget `ccmerch_kurv` omkring den klassiske kurv) og https://ccmerch.dk/kasse/ (klassisk kasse).
+
+**Planlagte beslutninger (ADR-111; bygger på ADR-106 og ADR-107):**
+1. **Flere gaver pr. køb:**
+   - Antal 1–10. Hver enhed er sin egen gave med lodtrækning, vinder, kode og frist, trukket én ad gangen.
+   - Fragt 50 kr. pr. gave, og prisen pr. gave er linjens beløb delt med antallet.
+   - "(gave 2 af 3)" i chatten og i køberens mails. Creatorens klokke kommer én gang pr. køb med antal.
+   - En annulleret eller refunderet ordre annullerer kun gaver uden vinder.
+2. **Gave-boksen:**
+   - Skabelonen `templates/community/gift-box.php` i Twitch-lilla.
+   - LIVE-mærket pulserer med CSS og står stille ved "reducer bevægelse". Ingen JavaScript.
+   - Vises kun, når gifting er åben, og creatoren er live (uændret).
+3. **Rabatlinjen** (`TwitchSubProductNote`) vises kun med en aktiv kampagne og nævner kun de tiers, der har rabat.
+4. **Det moderne Twitch-kort** (`templates/community/twitch-card.php`) erstatter WooCommerce-notitsen og har samme logik og links:
+   - ikke logget ind: tier-chips og en stor lilla knap med Twitch-logo;
+   - logget ind: avatar med forbogstav, "Logget ind som …", en status-pille og "Log ud".
+   - Placering:
+     - klassisk: `woocommerce_before_cart_table` og `woocommerce_checkout_before_customer_details`;
+     - blok-kurv og blok-kasse: over blokken;
+     - reserve: shortcoden `[merchboard_twitch_card]` til Elementor.
+   - Kortet passer til live-kurvens udseende (`ccm-cart`).
+5. **Data:** migration 52 fjerner `UNIQUE(order_id)` på `merchboard_gifts` og tilføjer `order_unit` med `UNIQUE(order_id, order_unit)`. Eksisterende gaver får 1 og virker uændret.
+
+**Trin (ikke startet):**
+- **48.1 Docs:** ADR-111, statusnoter på ADR-106 og ADR-107.
+- **48.2 Data:** migration 52 og gaverne pr. enhed i `GiftRepository`.
+- **48.3 Køb af flere gaver:** `GiftPurchase`: antal, grænser i kurven, fragt × antal, én gave pr. enhed og annullering.
+- **48.4 Lodtrækning, tekster og notifikationer:** "(gave n af N)", "købt" én gang med antal, ordresiden og privacy.
+- **48.5 Gave-boksen.**
+- **48.6 Rabatlinjen på produktsiden.**
+- **48.7 Det moderne Twitch-kort** og de nye placeringer.
+- **48.8 Test og levering:**
+  - tests, danske tekster og docs;
+  - runtime i Playground med skærmbilleder (lyst og mørkt tema, mobil);
+  - CI, bump til 2.2.0 og testpakke på stg. Tag efter projektejerens OK.
+
 ## Version 2.1.1 ✅ (tagget 2026-11-12 på 555ae87)
 
 - **Linknavnet i community-links:** ✅ projektejerens ønske 2026-11-12: admin vælger navnet i de offentlige links fra gifting og giveaways (og senere links af samme slags) under Indstillinger → Community. Gamle links virker fortsat (f844980). Testpakke på stg ✅; tagget `v2.1.1` på 555ae87 (draft-ZIP SHA-256 c194694f…). ✅
