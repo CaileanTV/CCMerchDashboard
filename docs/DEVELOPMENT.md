@@ -251,7 +251,9 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 2.1.1: linknavnet i community-links
 
-**Versions-bump og CHANGELOG-sektion 2026-11-12** efter projektejerens ønske (linknavnet sættes af admin; "Kun parameternavnet", version 2.1.1). Tag efter projektejerens OK efter testen på stg. Ingen schemaændring.
+**Versions-bump og CHANGELOG-sektion 2026-11-12** efter projektejerens ønske (linknavnet sættes af admin; "Kun parameternavnet", version 2.1.1). Ingen schemaændring.
+
+**Tagget 2026-11-12** efter projektejerens OK: annoteret tag `v2.1.1` på `555ae87`. CI grøn med hele integrationssuiten (run `43279865599`). Draft-releasens ZIP er byte-identisk med testpakken på stg: SHA-256 `c194694fee96ff3bb6e55d8fe6301cd07143e2624168fc9bbd09029f10370e1b`.
 
 1. **Opdatér** med ZIP'en. Overview skal vise version 2.1.1 og schema-version 51.
 2. **Uden ændring:** et gave- eller giveaway-link skal stadig se ud som før (`?merchboard_gift_claim=…`).
