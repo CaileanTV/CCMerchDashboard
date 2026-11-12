@@ -249,6 +249,24 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 2.1.0: Giveaways (fase 47)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-12** efter projektejerens ønske ("bump og så læg på stg"). Tag først efter projektejerens OK efter testen på stg; tag og SHA-256 noteres her da.
+- Testet med unit-, Jest- og integrationstests (CI grøn på `a48208c`) og en runtime-test i Playground (se [features/giveaways.md](features/giveaways.md)). Oprettelse fra saldoen og trækket bruger payout-låsen, som kun findes på MySQL: test dem på stg.
+
+**Schemaændring 50 → 51:** migration 51 opretter `merchboard_giveaways`, gør `merchboard_gifts.order_id` NULL-bar og tilføjer `giveaway_id` på `merchboard_gifts` og `merchboard_payout_adjustments`. Eksisterende gaver og adjustments er uændrede. Migrationen kører af sig selv ved første request.
+
+1. **Backup:** tag backup af filer og database via hostingen.
+2. **Opdatér** med ZIP'en. Overview skal vise version 2.1.0 og schema-version 51.
+3. **Slå til:** Indstillinger → Community → "Giveaways". Butikken skal have mindst én forsendelsesmetode (ellers regner WooCommerce ingen fragt).
+4. **Eget system fra saldoen:** som testcreator med saldo: opret en giveaway med "Mit eget giveaway-system" og "Fra min saldo". Se "Reserveret til giveaways" under Udbetalinger og i admin. Åbn linket i et privat vindue, tryk "Indløs" (uden login), vælg størrelse og farve, og gennemfør ordren med koden. Saldoen skal falde med giveawayens pris, reservationen forsvinde, og klokken sige "Giveaway-kode brugt". Afregningsbilaget viser trækket som `GIV-…`.
+5. **Betal i shoppen:** opret en giveaway med "Betal nu i shoppen". Kassen skal vise grundprisen og "Fragt til giveaway" 50 kr., ingen koder, og ordresiden boksen "Creator-giveaway". Der må ikke komme en alert, chatbesked eller webhook i streamen. Creatoren får ingen fortjeneste af ordren. Når ordren er betalt, er linket klar.
+6. **Bot i chatten:** med forbundet Twitch-kanal og live: opret en giveaway med "Trækkes af vores bot", tryk "Start i chatten", skriv `!enter` fra en anden konto, og hent gaven med vinderens Twitch-login. `!gift start` må ikke starte giveawayen, og den må ikke stå på siden Twitch gifting.
+7. **Annullér:** en giveaway fra saldoen, der ikke er indløst, skal kunne annulleres, og reservationen frigives.
+8. **Resultat:** notér version og dato i [PROJECT-STATUS.md](PROJECT-STATUS.md).
+
+**Tilbagerulning:** installér 2.0.0-ZIP'en igen. Tabellen og kolonnerne bliver liggende (2.0.0 bruger dem ikke). Reserverede beløb tæller da ikke længere med i saldoen, og koder, der allerede er givet videre, trækkes ikke fra saldoen, hvis de bruges under 2.0.0.
+
 ## Release 2.0.0: rabat til Twitch-subscribers og Twitch-gaver (fase 43 og 44)
 
 **Versions-bump og CHANGELOG-sektion 2026-11-11** efter projektejerens valg ("Til testpakke på stg", version 2.0.0). Tag efter projektejerens OK efter testen på stg; tag og SHA-256 noteres her da.

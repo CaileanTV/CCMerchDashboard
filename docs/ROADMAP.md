@@ -1238,7 +1238,7 @@ Projektejerens ønske 2026-11-11: creatoren skal selv kunne give merch væk til 
 - **47.6 Bot-tilstand:** ✅ (fa199ba) "Start i chatten", lodtrækning og link til creatoren efter 3 forsøg.
 - **47.7 MitCCMerch:** ✅ (fa199ba) siden Community Features → Giveaways og "Reserveret til giveaways" under Udbetalinger.
 - **47.8 Admin og resten:** ✅ (fa199ba) global knap, ordreside, afregningsbilag, klokken, impersonation, oprydning og danske tekster.
-- **47.9 Test og levering:** unit, integration og Jest er skrevet (fa199ba); runtime-test i Playground 2026-11-11 med to rettelser (a603f20); mangler CI og testpakke 2.1.0 på stg.
+- **47.9 Test og levering:** unit, integration og Jest er skrevet (fa199ba); runtime-test i Playground 2026-11-11 med to rettelser (a603f20); CI grøn (a48208c); bump til 2.1.0 ✅; testpakke på stg, tag efter projektejerens test.
 
 ## Næste version: 2.1.0 🔄 (forberedes 2026-11-11)
 

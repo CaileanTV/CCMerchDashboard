@@ -4,7 +4,9 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
-Næste version: 2.1.0 med giveaway-links (fase 47).
+## [2.1.0] - 2026-11-12
+
+Fase 47: Giveaways, hvor creatoren giver sine egne produkter væk, plus to tekstrettelser. Schemaændring 50 → 51 (tabellen `merchboard_giveaways` og `giveaway_id` på gaver og payout-adjustments). Opdateringen står i DEVELOPMENT.md ("Release 2.1.0").
 
 ### Added
 
