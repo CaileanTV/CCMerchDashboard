@@ -14,6 +14,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Files\PrintFileDpi;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -36,8 +37,9 @@ final class DesignerVersionFiles {
 	 *
 	 * @param DesignerProductRepository $products Designer products.
 	 * @param DesignerFiles             $files    Files.
+	 * @param PrintFileDpi|null         $dpi      The side's dpi in old print files; null to send them as they are.
 	 */
-	public function __construct( private DesignerProductRepository $products, private DesignerFiles $files ) {
+	public function __construct( private DesignerProductRepository $products, private DesignerFiles $files, private ?PrintFileDpi $dpi = null ) {
 	}
 
 	/**
@@ -199,6 +201,8 @@ final class DesignerVersionFiles {
 		$disposition = 'inline';
 
 		if ( SubmissionFiles::PRINT === $parts[0] ) {
+			// The side's dpi in a print file that has none (made before 2.1.0); the stored file stays.
+			$body        = null === $this->dpi ? $body : $this->dpi->apply( $body, (string) $file['mime'], $row, (string) $parts[1] );
 			$name        = sanitize_file_name( sanitize_title( (string) $row['title'] ) . '-v' . (int) $row['number'] . '-' . $parts[1] . ( null === $parts[2] ? '' : '-' . $parts[2] ) . ( 'image/jpeg' === $file['mime'] ? '.jpg' : '.png' ) );
 			$disposition = 'attachment; filename="' . $name . '"';
 		}

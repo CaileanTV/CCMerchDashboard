@@ -34,6 +34,7 @@ import {
 	flatJpegOf,
 	pngOf,
 } from './mockup';
+import { withDpi } from './dpi';
 import { threadCanvas, threadSide } from './threads';
 
 export interface SubmissionInput {
@@ -463,11 +464,16 @@ async function uploadPart(
 			return { ok: false, reason: 'render' };
 		}
 
-		const file = await ( view.flat ? flatJpegOf( print ) : pngOf( print ) );
+		const encoded = await ( view.flat
+			? flatJpegOf( print )
+			: pngOf( print ) );
 
-		if ( file === null ) {
+		if ( encoded === null ) {
 			return { ok: false, reason: 'render' };
 		}
+
+		// The side's dpi in the file, so it prints and opens at its real size.
+		const file = await withDpi( encoded, view.dpi );
 
 		const sent = await uploadSubmissionFile(
 			input.product,

@@ -14,6 +14,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\ColorDesigns;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Files\PrintFileDpi;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -53,8 +54,9 @@ class SignedPrintFiles {
 	 *
 	 * @param DesignerProductRepository $products Designer products.
 	 * @param DesignerFiles             $files    Files.
+	 * @param PrintFileDpi|null         $dpi      The side's dpi in old print files; null to send them as they are.
 	 */
-	public function __construct( private DesignerProductRepository $products, private DesignerFiles $files ) {
+	public function __construct( private DesignerProductRepository $products, private DesignerFiles $files, private ?PrintFileDpi $dpi = null ) {
 	}
 
 	/**
@@ -147,10 +149,13 @@ class SignedPrintFiles {
 			return $missing;
 		}
 
+		$mime = 'image/jpeg' === ( $file['mime'] ?? '' ) ? 'image/jpeg' : 'image/png';
+		// The side's dpi in a print file that has none (made before 2.1.0); the stored file stays.
+		$body     = null === $this->dpi ? $body : $this->dpi->apply( $body, $mime, $row, $key );
 		$response = new WP_REST_Response( $body, 200 );
 		$response->set_headers(
 			array(
-				'Content-Type'           => 'image/jpeg' === ( $file['mime'] ?? '' ) ? 'image/jpeg' : 'image/png',
+				'Content-Type'           => $mime,
 				'Cache-Control'          => 'private, no-store',
 				'X-Content-Type-Options' => 'nosniff',
 			)

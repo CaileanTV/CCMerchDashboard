@@ -60,6 +60,7 @@ use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Fees\DesignerFeeRepository;
 use MerchBoard\Modules\ProductDesigner\Fees\DesignerFees;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Files\PrintFileDpi;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulApi;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
@@ -135,7 +136,7 @@ final class ProductDesignerModule implements Module {
 		$container->set( PrintfulToken::class, static fn( Container $c ): PrintfulToken => new PrintfulToken( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( PrintfulApi::class, static fn( Container $c ): PrintfulApi => new PrintfulApi( $c->get( PrintfulToken::class ) ) );
 		$container->set( ProviderTaskRepository::class, static fn( Container $c ): ProviderTaskRepository => new ProviderTaskRepository( $c->get( wpdb::class ) ) );
-		$container->set( SignedPrintFiles::class, static fn( Container $c ): SignedPrintFiles => new SignedPrintFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerFiles::class ) ) );
+		$container->set( SignedPrintFiles::class, static fn( Container $c ): SignedPrintFiles => new SignedPrintFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerFiles::class ), new PrintFileDpi( $c->get( BaseProductRepository::class ) ) ) );
 		$container->set( PrintfulCatalog::class, static fn( Container $c ): PrintfulCatalog => new PrintfulCatalog( $c->get( PrintfulApi::class ) ) );
 		$container->set(
 			PrintfulMockups::class,
@@ -400,7 +401,7 @@ final class ProductDesignerModule implements Module {
 				$container->get( DesignerReview::class )->release_waiting( $creator_id );
 			}
 		);
-		$container->set( DesignerVersionFiles::class, static fn( Container $c ): DesignerVersionFiles => new DesignerVersionFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerFiles::class ) ) );
+		$container->set( DesignerVersionFiles::class, static fn( Container $c ): DesignerVersionFiles => new DesignerVersionFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerFiles::class ), new PrintFileDpi( $c->get( BaseProductRepository::class ) ) ) );
 		$container->set( DesignerOrderFiles::class, static fn( Container $c ): DesignerOrderFiles => new DesignerOrderFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerProductGuard::class ), $c->get( Logger::class ), $c->get( BaseProductRepository::class ) ) );
 		$container->set(
 			DesignerCreatorCleanup::class,
