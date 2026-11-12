@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-12T16:02:40+00:00\n"
+"PO-Revision-Date: 2026-11-12T18:23:47+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -145,7 +145,7 @@ msgstr "Du har desværre ikke adgang til at administrere creators."
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:418
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:151
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsActions.php:92
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:183
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:192
 #: src/Modules/Community/Admin/GiftingTestModeSection.php:174
 #: src/Modules/Creators/Admin/CategoryProposalActions.php:101
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
@@ -161,7 +161,7 @@ msgstr "Du har desværre ikke adgang til at administrere creators."
 #: src/Modules/ProductDesigner/Admin/DesignerReviewActions.php:79
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:103
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:163
-#: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:177
+#: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:179
 #: src/Modules/ProductDesigner/Admin/PrintifyThumbnails.php:97
 #: src/Modules/Settings/Admin/SettingsActions.php:137
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
@@ -1792,7 +1792,7 @@ msgstr "Ændringen kunne ikke gemmes. Prøv igen."
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:114
 #: src/Modules/Alerts/Admin/CompanyDetailsSection.php:50
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:57
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:86
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:87
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:54
 #: src/Modules/Settings/Admin/SettingsPage.php:273
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:64
@@ -3856,23 +3856,27 @@ msgstr "Godkend først privatlivspolitikken og vilkårene for YouTube-chatbotten
 msgid "The chatbot settings are invalid."
 msgstr "Chatbot-indstillingerne er ugyldige."
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:71
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:72
 msgid "Community"
 msgstr "Community"
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:84
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:85
 msgid "The community settings were saved."
 msgstr "Community-indstillingerne blev gemt."
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:85
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:86
 msgid "No changes were made to the community settings."
 msgstr "Der blev ikke ændret noget i community-indstillingerne."
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:87
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:88
 msgid "A technical error occurred. The community settings were not changed."
 msgstr "Der opstod en teknisk fejl. Community-indstillingerne blev ikke ændret."
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:107
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:89
+msgid "The link name must be 2–40 lowercase letters, digits, - or _, start with a letter and not be a name WordPress or the shop uses. Nothing was changed."
+msgstr "Linknavnet skal være 2–40 små bogstaver, tal, - eller _, starte med et bogstav og ikke være et navn, som WordPress eller shoppen bruger. Intet blev ændret."
+
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:109
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:49
 #: src/Modules/Community/TwitchSubs/TwitchSubCoupon.php:357
 #: src/Modules/Community/TwitchSubs/TwitchSubOrderInfo.php:83
@@ -3880,43 +3884,43 @@ msgstr "Der opstod en teknisk fejl. Community-indstillingerne blev ikke ændret.
 msgid "Twitch subscriber discount"
 msgstr "Twitch subscriber rabat"
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:108
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:110
 msgid "Creators can give their Twitch subscribers a discount"
 msgstr "Creators kan give deres Twitch-subscribers rabat"
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:109
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:111
 msgid "Off by default. Customers log in with Twitch in the cart and the checkout, and the discount is taken from the creator's profit. Off: the page disappears from the creators' dashboards and no cart gets the discount; the creators' campaigns are kept."
 msgstr "Slået fra som standard. Kunderne logger ind med Twitch i kurven og checkout, og rabatten trækkes fra creatorens fortjeneste. Slået fra: siden forsvinder fra creatorernes dashboards, og ingen kurv får rabatten. Creatorernes kampagner bevares."
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:113
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:115
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:57
 #: build/dashboard.js:69
 msgid "Twitch gifting"
 msgstr "Twitch gifting"
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:114
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:116
 msgid "Viewers can buy gifts that are drawn in the creator's Twitch chat"
 msgstr "Seere kan købe gaver, der trækkes lod om i creatorens Twitch-chat"
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:115
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:117
 msgid "Off by default. Off pauses gifting: the page disappears from the creators' dashboards, the gift button disappears and no new draws start. A draw already open ends as usual, winners can still claim their gift, and waiting gifts wait until gifting is switched on again."
 msgstr "Slået fra som standard. Slået fra sætter gifting på pause: siden forsvinder fra creatorernes dashboards, gaveknappen forsvinder, og der startes ingen nye lodtrækninger. En lodtrækning, der allerede er åben, slutter som normalt, vindere kan stadig hente deres gave, og ventende gaver venter, til gifting slås til igen."
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:119
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:121
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:65
 #: build/dashboard.js:64
 msgid "Giveaways"
 msgstr "Giveaways"
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:120
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:122
 msgid "Creators can give their own products away to their viewers"
 msgstr "Creators kan give deres egne produkter væk til deres seere"
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:121
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:123
 msgid "Off by default. The creator pays the base price and 50 kr. shipping: from the balance when the code is used, or in the shop. The bot draws the winner in the Twitch chat, or the creator passes a link on from their own giveaway. Off: the page disappears from the creators' dashboards and no new giveaway starts; links and codes already given out still work."
 msgstr "Slået fra som standard. Creatoren betaler grundprisen og 50 kr. i fragt: fra saldoen, når koden bruges, eller i shoppen. Botten trækker vinderen i Twitch-chatten, eller creatoren giver et link videre fra sin egen giveaway. Fra: siden forsvinder fra creatorernes dashboards, og ingen nye giveaways starter; links og koder, der allerede er givet videre, virker stadig."
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:126
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:128
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:53
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:61
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:69
@@ -3924,23 +3928,37 @@ msgstr "Slået fra som standard. Creatoren betaler grundprisen og 50 kr. i fragt
 msgid "Community Features"
 msgstr "Community Features"
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:132
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:134
 msgid "Choose which community features creators can use. Each creator then switches a feature on for themselves and connects their Twitch channel on the feature's page in the dashboard."
 msgstr "Vælg, hvilke community features creators kan bruge. Hver creator slår derefter selv en feature til og forbinder sin Twitch-kanal på featurens side i dashboardet."
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:137
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:139
 msgid "Twitch is not set up yet: the Twitch features and giveaways in the chat need the Twitch app and the bot account."
 msgstr "Twitch er ikke sat op endnu: Twitch-funktionerne og giveaways i chatten kræver Twitch-appen og bot-kontoen."
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:139
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:141
 msgid "Set up Twitch under Alerts → Chatbot"
 msgstr "Sæt Twitch op under Alerts → Chatbot"
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:156
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:158
+msgid "Link name"
+msgstr "Linknavn"
+
+#. translators: %s: an example link.
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:161
+#, php-format
+msgid "The name in the public links of the community features, such as the gift and giveaway links, and later links of the same kind: %s"
+msgstr "Navnet i community features' offentlige links, fx gave- og giveaway-links, og senere links af samme slags: %s"
+
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:162
+msgid "2–40 lowercase letters, digits, - or _, starting with a letter. Links already passed on keep working after a change: the earlier names are still read."
+msgstr "2–40 små bogstaver, tal, - eller _, der starter med et bogstav. Links, der allerede er givet videre, virker stadig efter en ændring: de tidligere navne læses fortsat."
+
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:165
 msgid "Save community settings"
 msgstr "Gem community-indstillinger"
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:177
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:186
 msgid "Sorry, you are not allowed to manage these settings."
 msgstr "Du har desværre ikke adgang til at ændre disse indstillinger."
 
@@ -4005,7 +4023,7 @@ msgid "Save test mode"
 msgstr "Gem testtilstand"
 
 #. translators: %s: the gift code.
-#: src/Modules/Community/Gifting/GiftClaim.php:281
+#: src/Modules/Community/Gifting/GiftClaim.php:283
 #, php-format
 msgid "Congratulations! Choose size and colour and add the product to the cart; your gift code %s is used there. You pay only if you choose a dearer variant or shipping."
 msgstr "Tillykke! Vælg størrelse og farve, og læg produktet i kurven. Din gavekode %s bruges der. Du betaler kun, hvis du vælger en dyrere variant eller fragt."
@@ -8003,7 +8021,7 @@ msgstr "Til administratoren"
 #: src/Modules/ProductDesigner/Admin/DesignerReviewActions.php:72
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:97
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:157
-#: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:167
+#: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:169
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:130
 #: src/Modules/ProductDesigner/Admin/PrintifyThumbnails.php:89
 msgid "Sorry, you are not allowed to manage the product designer."
@@ -9374,7 +9392,7 @@ msgid "Ended"
 msgstr "Afsluttet"
 
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:122
-#: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:196
+#: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:198
 msgid "The file no longer exists."
 msgstr "Filen findes ikke længere."
 

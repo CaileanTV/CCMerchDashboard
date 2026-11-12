@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\Community\Gifting;
 use Closure;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Core\Settings\CommunityLink;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerSession;
 use MerchBoard\Modules\Alerts\Rest\ShopTwitchController;
 use Throwable;
@@ -82,7 +83,8 @@ final class GiftClaim {
 	 */
 	public function claim(): void {
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- The token is the secret; Twitch login proves the winner.
-		$token  = isset( $_GET[ ShopTwitchController::CLAIM_QUERY ] ) ? sanitize_key( wp_unslash( $_GET[ ShopTwitchController::CLAIM_QUERY ] ) ) : '';
+		// Under the chosen name, an earlier one or the original one (links already passed on).
+		$token  = CommunityLink::token( wp_unslash( $_GET ) );
 		$redeem = isset( $_GET[ ShopTwitchController::REDEEM_QUERY ] );
 		// phpcs:enable
 

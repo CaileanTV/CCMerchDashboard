@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Alerts\Rest;
 
 use MerchBoard\Core\Http\RestController;
+use MerchBoard\Core\Settings\CommunityLink;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerLogin;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerSession;
 use WP_REST_Request;
@@ -41,7 +42,7 @@ final class ShopTwitchController extends RestController {
 	/**
 	 * Query argument of a gift's claim link (ADR-107).
 	 */
-	public const CLAIM_QUERY = 'merchboard_gift_claim';
+	public const CLAIM_QUERY = CommunityLink::LEGACY;
 
 	/**
 	 * Query argument of the claim page's button (ADR-107).
@@ -147,18 +148,13 @@ final class ShopTwitchController extends RestController {
 	 */
 	public static function target_url( string $target ): string {
 		// A gift's claim page and its button (ADR-107).
+		// The parameter's name is the administrator's choice (Settings → Community).
 		if ( str_starts_with( $target, 'claim:' ) ) {
-			return add_query_arg( self::CLAIM_QUERY, substr( $target, 6 ), home_url( '/' ) );
+			return CommunityLink::url( substr( $target, 6 ) );
 		}
 
 		if ( str_starts_with( $target, 'redeem:' ) ) {
-			return add_query_arg(
-				array(
-					self::CLAIM_QUERY  => substr( $target, 7 ),
-					self::REDEEM_QUERY => '1',
-				),
-				home_url( '/' )
-			);
+			return CommunityLink::url( substr( $target, 7 ), array( self::REDEEM_QUERY => '1' ) );
 		}
 
 		if ( ! function_exists( 'wc_get_cart_url' ) ) {

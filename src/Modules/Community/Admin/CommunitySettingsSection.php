@@ -13,6 +13,7 @@ use Closure;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Core\Settings\CommunityLink;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
 use MerchBoard\Modules\Community\CommunitySettings;
@@ -85,6 +86,7 @@ final class CommunitySettingsSection {
 			'no_changes'     => array( __( 'No changes were made to the community settings.', 'merchboard' ), 'info' ),
 			'not_authorized' => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
 			'error'          => array( __( 'A technical error occurred. The community settings were not changed.', 'merchboard' ), 'error' ),
+			'invalid_link'   => array( __( 'The link name must be 2–40 lowercase letters, digits, - or _, start with a letter and not be a name WordPress or the shop uses. Nothing was changed.', 'merchboard' ), 'error' ),
 			default          => null,
 		};
 	}
@@ -152,6 +154,13 @@ final class CommunitySettingsSection {
 			echo '</td></tr>';
 		}
 
+		$link = CommunityLink::name();
+		echo '<tr><th scope="row"><label for="merchboard-community-link">' . esc_html__( 'Link name', 'merchboard' ) . '</label></th><td>';
+		echo '<input type="text" class="regular-text code" id="merchboard-community-link" name="' . esc_attr( Settings::COMMUNITY_LINK_PARAM ) . '" value="' . esc_attr( $link ) . '" pattern="[a-z][a-z0-9_\-]{1,39}" maxlength="40" required>';
+		/* translators: %s: an example link. */
+		echo '<p class="description">' . esc_html( sprintf( __( 'The name in the public links of the community features, such as the gift and giveaway links, and later links of the same kind: %s', 'merchboard' ), home_url( '/' ) . '?' . $link . '=…' ) ) . '</p>';
+		echo '<p class="description">' . esc_html__( '2–40 lowercase letters, digits, - or _, starting with a letter. Links already passed on keep working after a change: the earlier names are still read.', 'merchboard' ) . '</p>';
+		echo '</td></tr>';
 		echo '</tbody></table>';
 		submit_button( __( 'Save community settings', 'merchboard' ), 'secondary' );
 		echo '</form>';
@@ -188,6 +197,14 @@ final class CommunitySettingsSection {
 		foreach ( CommunitySettings::SWITCHES as $key ) {
 			$values[ $key ] = '1' === ( is_scalar( $input[ $key ] ?? null ) ? (string) $input[ $key ] : '' );
 		}
+
+		$link = is_scalar( $input[ Settings::COMMUNITY_LINK_PARAM ] ?? null ) ? strtolower( trim( (string) $input[ Settings::COMMUNITY_LINK_PARAM ] ) ) : '';
+
+		if ( ! CommunityLink::valid( $link ) ) {
+			return self::url( 'invalid_link' );
+		}
+
+		$values[ Settings::COMMUNITY_LINK_PARAM ] = $link;
 
 		try {
 			$changed = $this->settings->save( $values );

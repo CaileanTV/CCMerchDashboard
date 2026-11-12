@@ -149,6 +149,8 @@ final class SettingsTest extends TestCase {
 				Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => false,
 				Settings::COMMUNITY_TWITCH_GIFTING_ENABLED => false,
 				Settings::COMMUNITY_GIVEAWAYS_ENABLED      => false,
+				Settings::COMMUNITY_LINK_PARAM             => 'merchboard_gift_claim',
+				Settings::COMMUNITY_LINK_PREVIOUS          => array(),
 			),
 			Settings::all()
 		);

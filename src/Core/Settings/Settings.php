@@ -179,6 +179,18 @@ final class Settings {
 	public const COMMUNITY_GIVEAWAYS_ENABLED = 'community_giveaways_enabled';
 
 	/**
+	 * The query parameter of the public community links (CommunityLink;
+	 * `?<name>=<token>`). Defaults to the name used before 2.1.1.
+	 */
+	public const COMMUNITY_LINK_PARAM = 'community_link_param';
+
+	/**
+	 * Earlier names of the community links, still read so links already
+	 * passed on keep working (CommunityLink::MAX_PREVIOUS at most).
+	 */
+	public const COMMUNITY_LINK_PREVIOUS = 'community_link_previous';
+
+	/**
 	 * Whether customers get an optional "username" field in the checkout
 	 * (ADR-065 pkt. 9, step 25.9.1). Off by default; shown only while alerts
 	 * are on; enabled only by exactly boolean true.
@@ -276,7 +288,7 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool, community_link_param: string, community_link_previous: list<string>}
 	 */
 	public static function defaults(): array {
 		return array(
@@ -304,6 +316,8 @@ final class Settings {
 			self::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => false,
 			self::COMMUNITY_TWITCH_GIFTING_ENABLED      => false,
 			self::COMMUNITY_GIVEAWAYS_ENABLED           => false,
+			self::COMMUNITY_LINK_PARAM                  => CommunityLink::LEGACY,
+			self::COMMUNITY_LINK_PREVIOUS               => array(),
 		);
 	}
 
@@ -314,20 +328,22 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool, community_link_param: string, community_link_previous: list<string>}
 	 */
 	public static function sanitize( array $values ): array {
-		$slug  = $values[ self::DASHBOARD_SLUG ] ?? null;
-		$logo  = $values[ self::LOGO_ATTACHMENT_ID ] ?? null;
-		$days  = $values[ self::PAYOUT_HOLDING_DAYS ] ?? null;
-		$card  = $values[ self::PAYOUT_GIFT_CARD_PROVIDER ] ?? null;
-		$cvr   = $values[ self::COMPANY_CVR ] ?? null;
-		$name  = $values[ self::COMPANY_NAME ] ?? null;
-		$mail  = $values[ self::COMPANY_EMAIL ] ?? null;
-		$label = $values[ self::CHECKOUT_USERNAME_LABEL ] ?? null;
-		$help  = $values[ self::CHECKOUT_USERNAME_HELP ] ?? null;
-		$bytes = $values[ self::SOUND_MAX_BYTES ] ?? null;
-		$secs  = $values[ self::SOUND_MAX_SECONDS ] ?? null;
+		$slug   = $values[ self::DASHBOARD_SLUG ] ?? null;
+		$logo   = $values[ self::LOGO_ATTACHMENT_ID ] ?? null;
+		$days   = $values[ self::PAYOUT_HOLDING_DAYS ] ?? null;
+		$card   = $values[ self::PAYOUT_GIFT_CARD_PROVIDER ] ?? null;
+		$cvr    = $values[ self::COMPANY_CVR ] ?? null;
+		$name   = $values[ self::COMPANY_NAME ] ?? null;
+		$mail   = $values[ self::COMPANY_EMAIL ] ?? null;
+		$label  = $values[ self::CHECKOUT_USERNAME_LABEL ] ?? null;
+		$help   = $values[ self::CHECKOUT_USERNAME_HELP ] ?? null;
+		$bytes  = $values[ self::SOUND_MAX_BYTES ] ?? null;
+		$secs   = $values[ self::SOUND_MAX_SECONDS ] ?? null;
+		$link   = $values[ self::COMMUNITY_LINK_PARAM ] ?? null;
+		$before = $values[ self::COMMUNITY_LINK_PREVIOUS ] ?? null;
 
 		return array(
 			self::DELETE_DATA_ON_UNINSTALL              => true === ( $values[ self::DELETE_DATA_ON_UNINSTALL ] ?? false ),
@@ -354,6 +370,8 @@ final class Settings {
 			self::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => true === ( $values[ self::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED ] ?? false ),
 			self::COMMUNITY_TWITCH_GIFTING_ENABLED      => true === ( $values[ self::COMMUNITY_TWITCH_GIFTING_ENABLED ] ?? false ),
 			self::COMMUNITY_GIVEAWAYS_ENABLED           => true === ( $values[ self::COMMUNITY_GIVEAWAYS_ENABLED ] ?? false ),
+			self::COMMUNITY_LINK_PARAM                  => is_string( $link ) && CommunityLink::valid( $link ) ? $link : CommunityLink::LEGACY,
+			self::COMMUNITY_LINK_PREVIOUS               => array_slice( array_values( array_unique( array_filter( is_array( $before ) ? $before : array(), static fn( mixed $name ): bool => is_string( $name ) && CommunityLink::valid( $name ) ) ) ), 0, CommunityLink::MAX_PREVIOUS ),
 		);
 	}
 
@@ -477,7 +495,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool, community_link_param: string, community_link_previous: list<string>}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );

@@ -14,6 +14,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Security\Capabilities;
+use MerchBoard\Core\Settings\CommunityLink;
 use MerchBoard\Core\Settings\Settings;
 
 defined( 'ABSPATH' ) || exit;
@@ -41,9 +42,11 @@ class CommunitySettings {
 	}
 
 	/**
-	 * Saves the switches.
+	 * Saves the switches and the community links' parameter name.
 	 *
-	 * @param array<string, bool> $values Switch => on, for keys of SWITCHES (others are ignored; missing ones are off).
+	 * @param array<string, bool|string> $values Switch => on, for keys of SWITCHES (others are ignored; missing ones
+	 *                                           are off), and Settings::COMMUNITY_LINK_PARAM => a name (kept when
+	 *                                           missing or not CommunityLink::valid(); the old name is still read).
 	 * @return list<string>|null The switches that changed; null when the current user may not change them.
 	 * @throws DatabaseException When the change cannot be stored (nothing is kept).
 	 */
@@ -62,6 +65,15 @@ class CommunitySettings {
 				$changed[ $key ]  = array( $settings[ $key ], $value );
 				$settings[ $key ] = $value;
 			}
+		}
+
+		$link = $values[ Settings::COMMUNITY_LINK_PARAM ] ?? null;
+
+		if ( is_string( $link ) && CommunityLink::valid( $link ) && $settings[ Settings::COMMUNITY_LINK_PARAM ] !== $link ) {
+			$old                                        = $settings[ Settings::COMMUNITY_LINK_PARAM ];
+			$changed[ Settings::COMMUNITY_LINK_PARAM ]  = array( $old, $link );
+			$settings[ Settings::COMMUNITY_LINK_PARAM ] = $link;
+			$settings[ Settings::COMMUNITY_LINK_PREVIOUS ] = CommunityLink::previous_after( $settings[ Settings::COMMUNITY_LINK_PREVIOUS ], $old, $link );
 		}
 
 		if ( array() === $changed ) {
