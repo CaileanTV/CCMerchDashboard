@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-11T22:08:46+00:00\n"
+"PO-Revision-Date: 2026-11-12T16:02:40+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -2228,7 +2228,6 @@ msgstr "Afspil"
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:205
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:401
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:187
-#: build/dashboard.js:65
 #: build/dashboard.js:111
 msgid "Actions"
 msgstr "Handlinger"
@@ -4254,39 +4253,39 @@ msgid "Gift shipping"
 msgstr "Gave-fragt"
 
 #: src/Modules/Community/Giveaways/GiveawayCheckout.php:142
-#: src/Modules/Community/Giveaways/GiveawayCheckout.php:156
+#: src/Modules/Community/Giveaways/GiveawayCheckout.php:164
 msgid "The giveaway cannot be paid right now. Open it again in your dashboard."
 msgstr "Giveawayen kan ikke betales lige nu. Åbn den igen i dit dashboard."
 
-#: src/Modules/Community/Giveaways/GiveawayCheckout.php:148
+#: src/Modules/Community/Giveaways/GiveawayCheckout.php:156
 msgid "A giveaway is paid on its own. Please finish or empty your cart first, and then pay the giveaway."
 msgstr "En giveaway betales for sig. Gør først dit køb færdigt eller tøm kurven, og betal så giveawayen."
 
-#: src/Modules/Community/Giveaways/GiveawayCheckout.php:172
+#: src/Modules/Community/Giveaways/GiveawayCheckout.php:180
 msgid "A giveaway is paid on its own. Finish the giveaway first."
 msgstr "En giveaway betales for sig. Gør giveawayen færdig først."
 
-#: src/Modules/Community/Giveaways/GiveawayCheckout.php:193
+#: src/Modules/Community/Giveaways/GiveawayCheckout.php:201
 msgid "A giveaway is paid on its own. Remove the other products from the cart to pay the giveaway."
 msgstr "En giveaway betales for sig. Fjern de andre produkter fra kurven for at betale giveawayen."
 
-#: src/Modules/Community/Giveaways/GiveawayCheckout.php:199
+#: src/Modules/Community/Giveaways/GiveawayCheckout.php:207
 msgid "This giveaway cannot be paid any more. Please remove it from the cart."
 msgstr "Denne giveaway kan ikke længere betales. Fjern den fra kurven."
 
-#: src/Modules/Community/Giveaways/GiveawayCheckout.php:218
+#: src/Modules/Community/Giveaways/GiveawayCheckout.php:226
 msgid "Codes cannot be used on a giveaway."
 msgstr "Koder kan ikke bruges på en giveaway."
 
-#: src/Modules/Community/Giveaways/GiveawayCheckout.php:285
+#: src/Modules/Community/Giveaways/GiveawayCheckout.php:293
 msgid "Giveaway"
 msgstr "Giveaway"
 
-#: src/Modules/Community/Giveaways/GiveawayCheckout.php:286
+#: src/Modules/Community/Giveaways/GiveawayCheckout.php:294
 msgid "Your own giveaway: you pay the base price and 50 kr. shipping. The winner chooses size and colour."
 msgstr "Din egen giveaway: du betaler grundprisen og 50 kr. i fragt. Vinderen vælger størrelse og farve."
 
-#: src/Modules/Community/Giveaways/GiveawayCheckout.php:336
+#: src/Modules/Community/Giveaways/GiveawayCheckout.php:344
 msgid "Giveaway shipping"
 msgstr "Fragt til giveaway"
 
@@ -4315,6 +4314,10 @@ msgstr "Vinderen har brugt koden."
 #: src/Modules/Community/Giveaways/GiveawayOrderInfo.php:81
 msgid "The code ran out unused."
 msgstr "Koden udløb ubrugt."
+
+#: src/Modules/Community/PassOnOrders.php:70
+msgid "Completed automatically: the gift is passed on as a code, and the winner's own order is the one that is shipped."
+msgstr "Gennemført automatisk: gaven gives videre som en kode, og det er vinderens egen ordre, der sendes."
 
 #: src/Modules/Community/Rest/MeGiveawaysController.php:182
 #: src/Modules/Community/Rest/MeGiveawaysController.php:402
@@ -17956,6 +17959,14 @@ msgid "You have no products in the shop that can be given away yet."
 msgstr "Du har endnu ingen produkter i shoppen, der kan gives væk."
 
 #: build/dashboard.js:65
+msgid "The checkout opened in a new tab. Come back here when you have paid: the giveaway is ready when the order is paid."
+msgstr "Kassen er åbnet i en ny fane. Kom tilbage hertil, når du har betalt: giveawayen er klar, når ordren er betalt."
+
+#: build/dashboard.js:65
+msgid "The giveaway is created. Press \"Pay in the shop\" to pay it."
+msgstr "Giveawayen er oprettet. Tryk \"Betal i shoppen\" for at betale den."
+
+#: build/dashboard.js:65
 msgid "The giveaway is ready. Copy the link and pass it on to your winner."
 msgstr "Giveawayen er klar. Kopiér linket og giv det videre til din vinder."
 
@@ -18042,8 +18053,8 @@ msgid "Pay now in the shop"
 msgstr "Betal nu i shoppen"
 
 #: build/dashboard.js:69
-msgid "You go to the checkout, where you pay only the base price and 50 kr. shipping. The giveaway is ready when the order is paid."
-msgstr "Du går til kassen, hvor du kun betaler grundprisen og 50 kr. i fragt. Giveawayen er klar, når ordren er betalt."
+msgid "The checkout opens in a new tab, where you pay only the base price and 50 kr. shipping. The giveaway is ready when the order is paid."
+msgstr "Kassen åbner i en ny fane, hvor du kun betaler grundprisen og 50 kr. i fragt. Giveawayen er klar, når ordren er betalt."
 
 #: build/dashboard.js:69
 msgid "Create giveaway"

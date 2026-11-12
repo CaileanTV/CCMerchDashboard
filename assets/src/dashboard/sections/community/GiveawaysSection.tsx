@@ -184,6 +184,29 @@ export function GiveawaysSection() {
 		}
 	}, [ state ] );
 
+	// Back from the checkout tab: the list shows what was paid meanwhile.
+	useEffect( () => {
+		let active = true;
+		const refresh = () => {
+			if ( document.visibilityState !== 'visible' ) {
+				return;
+			}
+
+			void getGiveaways().then( ( result ) => {
+				if ( active && result.ok ) {
+					setCurrent( result.data );
+				}
+			} );
+		};
+
+		document.addEventListener( 'visibilitychange', refresh );
+
+		return () => {
+			active = false;
+			document.removeEventListener( 'visibilitychange', refresh );
+		};
+	}, [] );
+
 	const title = __( 'Giveaways', 'merchboard' );
 
 	if (
@@ -225,17 +248,27 @@ export function GiveawaysSection() {
 
 	const submit = async ( event: FormEvent ) => {
 		event.preventDefault();
+		const shop = ! covers || funding === 'shop';
+		// The checkout opens in a new tab, so the creator keeps this page. The tab is
+		// opened during the click (a browser blocks one opened after the request).
+		const tab = shop ? window.open( '', '_blank' ) : null;
+
+		if ( tab ) {
+			tab.opener = null;
+		}
+
 		setBusy( 'create' );
 		setError( null );
 		const result = await createGiveaway( {
 			productId,
 			mode,
-			funding: covers ? funding : 'shop',
+			funding: shop ? 'shop' : 'balance',
 			window: seconds,
 		} );
 		setBusy( null );
 
 		if ( ! result.ok ) {
+			tab?.close();
 			setError( result.error );
 
 			return;
@@ -246,11 +279,27 @@ export function GiveawaysSection() {
 		);
 
 		if ( created?.payUrl ) {
-			// Straight on to the checkout of the base price.
-			window.location.assign( created.payUrl );
+			if ( tab ) {
+				tab.location.href = created.payUrl;
+			}
+
+			done(
+				result.data,
+				tab
+					? __(
+							'The checkout opened in a new tab. Come back here when you have paid: the giveaway is ready when the order is paid.',
+							'merchboard'
+						)
+					: __(
+							'The giveaway is created. Press "Pay in the shop" to pay it.',
+							'merchboard'
+						)
+			);
 
 			return;
 		}
+
+		tab?.close();
 
 		done(
 			result.data,
@@ -389,14 +438,15 @@ export function GiveawaysSection() {
 		return (
 			<div className="merchboard-community-form__actions merchboard-giveaway__actions">
 				{ row.payUrl !== null && (
-					<Button
-						type="button"
-						onClick={ () =>
-							window.location.assign( row.payUrl ?? '' )
-						}
+					// A new tab, so the creator keeps this page.
+					<a
+						className="merchboard-button merchboard-button--primary merchboard-button--md"
+						href={ row.payUrl }
+						target="_blank"
+						rel="noopener noreferrer"
 					>
 						{ __( 'Pay in the shop', 'merchboard' ) }
-					</Button>
+					</a>
 				) }
 				{ row.status === 'ready' &&
 					row.mode === 'bot' &&
@@ -670,7 +720,7 @@ export function GiveawaysSection() {
 							</label>
 							<p className="merchboard-field__help">
 								{ __(
-									'You go to the checkout, where you pay only the base price and 50 kr. shipping. The giveaway is ready when the order is paid.',
+									'The checkout opens in a new tab, where you pay only the base price and 50 kr. shipping. The giveaway is ready when the order is paid.',
 									'merchboard'
 								) }
 							</p>

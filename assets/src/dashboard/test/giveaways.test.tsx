@@ -226,6 +226,8 @@ describe( 'Giveaways (ADR-110)', () => {
 	} );
 
 	it( 'pays in the shop when the balance does not cover the product', async () => {
+		// A blocked tab: the creator pays with the button in the list instead.
+		const open = jest.spyOn( window, 'open' ).mockReturnValue( null );
 		const { container, requests } = await show( {
 			[ `GET ${ PATH }` ]: () => response( 200, STATE ),
 			[ `POST ${ PATH }` ]: () =>
@@ -265,6 +267,7 @@ describe( 'Giveaways (ADR-110)', () => {
 		expect( container.textContent ).toContain(
 			'You have the most open giveaways allowed.'
 		);
+		open.mockRestore();
 	} );
 
 	it( 'starts a bot giveaway in the chat and cancels one', async () => {
@@ -292,5 +295,53 @@ describe( 'Giveaways (ADR-110)', () => {
 			)
 		).toBe( true );
 		expect( container.textContent ).toContain( 'No giveaways yet.' );
+	} );
+
+	it( 'opens the checkout in a new tab and keeps this page', async () => {
+		const PAY = 'https://shop.test/?merchboard_giveaway_pay=9&_wpnonce=abc';
+		const tab = {
+			opener: {} as unknown,
+			location: { href: '' },
+			close: jest.fn(),
+		};
+		const open = jest
+			.spyOn( window, 'open' )
+			.mockReturnValue( tab as unknown as Window );
+		const { container } = await show( {
+			[ `GET ${ PATH }` ]: () => response( 200, STATE ),
+			[ `POST ${ PATH }` ]: () =>
+				response( 201, {
+					...STATE,
+					created: 9,
+					giveaways: [
+						{
+							...GIVEAWAY,
+							id: 9,
+							status: 'awaiting_payment',
+							funding: 'shop',
+							pay_url: PAY,
+							gift: null,
+						},
+					],
+				} ),
+		} );
+
+		click( container.querySelector( '#merchboard-giveaway-shop' ) );
+		await submit( container );
+
+		expect( open ).toHaveBeenCalledWith( '', '_blank' );
+		expect( tab.opener ).toBeNull();
+		expect( tab.location.href ).toBe( PAY );
+		expect( container.textContent ).toContain(
+			'The checkout opened in a new tab.'
+		);
+
+		const pay = Array.from( container.querySelectorAll( 'a' ) ).find(
+			( link ) => link.textContent === 'Pay in the shop'
+		);
+		expect( pay?.getAttribute( 'href' ) ).toBe( PAY );
+		expect( pay?.getAttribute( 'target' ) ).toBe( '_blank' );
+		expect( pay?.getAttribute( 'rel' ) ).toBe( 'noopener noreferrer' );
+		open.mockRestore();
 	} );
 } );

@@ -169,6 +169,8 @@ final class CommunityModule implements Module {
 				// Giveaway links (ADR-110): the balance, the charge and the jobs, and paying in the shop.
 				$container->get( Giveaways::class )->register();
 				$container->get( GiveawayCheckout::class )->register();
+				// Gift and giveaway orders are completed when paid (they pay for a code that is passed on).
+				( new PassOnOrders() )->register();
 			},
 			5
 		);
