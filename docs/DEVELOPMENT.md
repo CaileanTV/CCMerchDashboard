@@ -249,6 +249,17 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 2.1.1: linknavnet i community-links
+
+**Versions-bump og CHANGELOG-sektion 2026-11-12** efter projektejerens ønske (linknavnet sættes af admin; "Kun parameternavnet", version 2.1.1). Tag efter projektejerens OK efter testen på stg. Ingen schemaændring.
+
+1. **Opdatér** med ZIP'en. Overview skal vise version 2.1.1 og schema-version 51.
+2. **Uden ændring:** et gave- eller giveaway-link skal stadig se ud som før (`?merchboard_gift_claim=…`).
+3. **Skift navnet:** Indstillinger → Community → Linknavn, fx `gave`, og gem. Et nyt giveaway-link skal hedde `?gave=…`, og "Indløs" skal virke. Et link fra før ændringen skal stadig åbne gaven.
+4. **Ugyldigt navn:** prøv fx `page` eller `Gave`: der skal komme en fejl, og intet ændres.
+
+**Tilbagerulning:** installér 2.1.0-ZIP'en igen. Links med det nye navn virker ikke under 2.1.0 (kun `merchboard_gift_claim`), så skift navnet tilbage før, hvis links er givet videre.
+
 ## Release 2.1.0: Giveaways (fase 47)
 
 **Versions-bump og CHANGELOG-sektion 2026-11-12** efter projektejerens ønske ("bump og så læg på stg").

@@ -1240,6 +1240,10 @@ Projektejerens ønske 2026-11-11: creatoren skal selv kunne give merch væk til 
 - **47.8 Admin og resten:** ✅ (fa199ba) global knap, ordreside, afregningsbilag, klokken, impersonation, oprydning og danske tekster.
 - **47.9 Test og levering:** unit, integration og Jest er skrevet (fa199ba); runtime-test i Playground 2026-11-11 med to rettelser (a603f20); CI grøn (a48208c); bump til 2.1.0 ✅ (6fa60ee); testpakke på stg ✅; projektejerens ønsker 2026-11-12 (kassen i ny fane, gave- og giveaway-ordrer gennemføres automatisk) ✅ (9f6ec52). Tagget `v2.1.0` på 5504fa2 2026-11-12 (draft-ZIP SHA-256 26ff1035…). ✅
 
+## Version 2.1.1 🔄 (forberedes 2026-11-12)
+
+- **Linknavnet i community-links:** ✅ projektejerens ønske 2026-11-12: admin vælger navnet i de offentlige links fra gifting og giveaways (og senere links af samme slags) under Indstillinger → Community. Gamle links virker fortsat. Testpakke på stg; tag efter projektejerens OK.
+
 ## Version 2.1.0 ✅ (tagget 2026-11-12 på 5504fa2)
 
 Bliver 2.1.0, fordi fase 47 (giveaway-links) kommer med.

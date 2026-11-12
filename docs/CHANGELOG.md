@@ -4,6 +4,14 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-11-12
+
+Admin vælger navnet i community features' offentlige links. Ingen schemaændring.
+
+### Added
+
+- **Linknavn** under Indstillinger → Community: navnet i de offentlige links fra gifting og giveaways (og senere links af samme slags), fx `https://ccmerch.dk/?gave=…` i stedet for `?merchboard_gift_claim=…`. Standarden er det hidtidige navn, så intet ændrer sig, før admin vælger. Links, der allerede er givet videre, virker stadig: det oprindelige navn og op til 10 tidligere navne læses fortsat. Navne, som WordPress eller shoppen selv bruger, afvises. Ændringen auditeres (`settings_updated`).
+
 ## [2.1.0] - 2026-11-12
 
 Fase 47: Giveaways, hvor creatoren giver sine egne produkter væk, plus to tekstrettelser. Schemaændring 50 → 51 (tabellen `merchboard_giveaways` og `giveaway_id` på gaver og payout-adjustments). Opdateringen står i DEVELOPMENT.md ("Release 2.1.0").
