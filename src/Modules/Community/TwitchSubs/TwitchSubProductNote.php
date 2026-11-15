@@ -10,7 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Community\TwitchSubs;
 
 use MerchBoard\Core\Database\DatabaseException;
-use WC_Product;
+use WP_Block;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -19,14 +19,24 @@ defined( 'ABSPATH' ) || exit;
  * a line under the price tells the discount per tier, highest first, and
  * that it is taken off in the cart after a Twitch login (like Fourthwall).
  *
- * The line is added to the main product's price HTML, so it also shows when
- * the page is built with a page builder's price widget. Only the product of
- * the page gets it (never related products or lists), once per request.
+ * The line follows the price of the page's product: after WooCommerce's
+ * price template (classic themes, and page builders' price widgets that use
+ * it) and after the price block (block themes). The shortcode
+ * [merchboard_twitch_discount_line] places it by hand where a page builder
+ * renders the price its own way. Only the product of the page gets it
+ * (never related products or lists), once per request. It is not added to
+ * the price HTML itself: WooCommerce also puts that in the Store API data
+ * it preloads in the page.
  */
 final class TwitchSubProductNote {
 
 	/**
-	 * Whether the line was added in this request.
+	 * The shortcode.
+	 */
+	public const SHORTCODE = 'merchboard_twitch_discount_line';
+
+	/**
+	 * Whether the line was shown in this request.
 	 *
 	 * @var bool
 	 */
@@ -41,39 +51,68 @@ final class TwitchSubProductNote {
 	}
 
 	/**
-	 * Hooks the line into the price.
+	 * Hooks the line in after the price.
 	 */
 	public function register(): void {
-		add_filter( 'woocommerce_get_price_html', array( $this, 'price_html' ), 20, 2 );
+		add_action( 'woocommerce_after_template_part', array( $this, 'after_template' ), 10, 1 );
+		add_filter( 'render_block_woocommerce/product-price', array( $this, 'after_block' ), 10, 3 );
+		add_shortcode( self::SHORTCODE, array( $this, 'shortcode' ) );
 	}
 
 	/**
-	 * `woocommerce_get_price_html`.
+	 * `woocommerce_after_template_part`: after the single product's price.
 	 *
-	 * @param mixed $html    Price HTML.
-	 * @param mixed $product Product.
+	 * @param mixed $template_name Template.
+	 */
+	public function after_template( mixed $template_name ): void {
+		if ( is_string( $template_name ) && 'single-product/price.php' === ltrim( $template_name, '/' ) ) {
+			echo $this->html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in html().
+		}
+	}
+
+	/**
+	 * `render_block_woocommerce/product-price`: after the price block of the
+	 * page's product (not a product list's block).
+	 *
+	 * @param mixed $content  Block HTML.
+	 * @param mixed $block    Parsed block.
+	 * @param mixed $instance Block instance.
 	 * @return mixed
 	 */
-	public function price_html( mixed $html, mixed $product ): mixed {
-		if ( $this->shown || ! is_string( $html ) || ! $product instanceof WC_Product || ! function_exists( 'is_product' ) || ! is_product() ) {
-			return $html;
+	public function after_block( mixed $content, mixed $block = null, mixed $instance = null ): mixed {
+		$post_id = $instance instanceof WP_Block ? (int) ( $instance->context['postId'] ?? 0 ) : 0;
+
+		if ( ! is_string( $content ) || ( $post_id > 0 && (int) get_queried_object_id() !== $post_id ) ) {
+			return $content;
 		}
 
-		$parent = (int) $product->get_parent_id() > 0 ? (int) $product->get_parent_id() : (int) $product->get_id();
+		return $content . $this->html();
+	}
 
-		if ( (int) get_queried_object_id() !== $parent ) {
-			return $html;
+	/**
+	 * The shortcode.
+	 */
+	public function shortcode(): string {
+		return $this->html();
+	}
+
+	/**
+	 * The line as HTML on the page's product, once; '' otherwise.
+	 */
+	public function html(): string {
+		if ( $this->shown || ! function_exists( 'is_product' ) || ! is_product() ) {
+			return '';
 		}
 
-		$line = $this->line( $parent );
+		$line = $this->line( (int) get_queried_object_id() );
 
 		if ( '' === $line ) {
-			return $html;
+			return '';
 		}
 
 		$this->shown = true;
 
-		return $html . '<span class="merchboard-sub-note" style="display:block;margin-top:.35rem;font-size:.85em;line-height:1.45;opacity:.85">' . esc_html( $line ) . '</span>';
+		return '<p class="merchboard-sub-note" style="margin:.35rem 0 .75rem;font-size:.9em;line-height:1.45;opacity:.85">' . esc_html( $line ) . '</p>';
 	}
 
 	/**

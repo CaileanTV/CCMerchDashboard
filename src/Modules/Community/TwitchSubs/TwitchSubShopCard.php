@@ -13,6 +13,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerLogin;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerSession;
 use MerchBoard\Modules\Alerts\Rest\ShopTwitchController;
+use MerchBoard\Modules\Community\Gifting\GiftPurchase;
 use WC_Cart;
 use WC_Product;
 
@@ -213,7 +214,7 @@ final class TwitchSubShopCard {
 	}
 
 	/**
-	 * The parent products in the cart.
+	 * The parent products in the cart; none in a gift purchase.
 	 *
 	 * @return list<int>
 	 */
@@ -227,6 +228,11 @@ final class TwitchSubShopCard {
 		$products = array();
 
 		foreach ( $cart->get_cart() as $item ) {
+			// A Twitch gift is bought without discounts (ADR-107): no card.
+			if ( true === ( $item[ GiftPurchase::ITEM_KEY ] ?? false ) ) {
+				return array();
+			}
+
 			$product = $item['data'] ?? null;
 
 			if ( $product instanceof WC_Product ) {

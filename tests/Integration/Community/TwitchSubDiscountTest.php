@@ -345,6 +345,14 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 		self::assertLessThan( strpos( $line, 'Tier 1' ), strpos( $line, 'Tier 3' ), 'The highest tier first.' );
 		self::assertStringContainsString( 'Log in with Twitch in the cart', $line );
 
+		// Only on the page's own product, after its price, never inside the price HTML.
+		$note = new TwitchSubProductNote( $this->discount );
+		self::assertSame( '', $note->html(), 'Not on a product page.' );
+		self::assertSame( '<p>price</p>', $note->after_block( '<p>price</p>' ) );
+		ob_start();
+		$note->after_template( 'single-product/title.php' );
+		self::assertSame( '', ob_get_clean() );
+
 		Settings::save( array_merge( Settings::all(), array( Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => false ) ) );
 		self::assertSame( '', ( new TwitchSubProductNote( $this->discount ) )->line( 501 ), 'Switched off for the shop.' );
 	}

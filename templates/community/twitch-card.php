@@ -35,7 +35,7 @@ $merchboard_result = $merchboard_text( 'result' );
 .merchboard-twitch-card__chips{display:flex;flex-wrap:wrap;gap:.4rem;margin:.55rem 0 0;padding:0;list-style:none}
 .merchboard-twitch-card__chip{padding:.15rem .6rem;border-radius:999px;background:color-mix(in srgb,var(--mb-twitch) 14%,transparent);font-size:.82rem;font-weight:600;white-space:nowrap}
 .merchboard-twitch-card__pill{display:inline-block;margin-top:.35rem;padding:.12rem .6rem;border-radius:999px;font-size:.82rem;font-weight:600}
-.merchboard-twitch-card__pill--ok{background:color-mix(in srgb,var(--mb-ok) 15%,transparent);color:var(--mb-ok)}
+.merchboard-twitch-card__pill--ok{background:color-mix(in srgb,var(--mb-ok) 18%,transparent);color:color-mix(in srgb,var(--mb-ok) 65%,currentColor)}
 .merchboard-twitch-card__pill--none{background:color-mix(in srgb,currentColor 10%,transparent)}
 .merchboard-twitch-card__actions{flex:0 0 auto;display:flex;align-items:center;gap:.75rem}
 .merchboard-twitch-card__button{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.2rem;border-radius:999px;background:var(--mb-twitch);color:#fff!important;font-weight:700;text-decoration:none!important;white-space:nowrap}

@@ -32,9 +32,9 @@ wp_parse_str( (string) wp_parse_url( $merchboard_url, PHP_URL_QUERY ), $merchboa
 .merchboard-gift-box *{box-sizing:border-box}
 .merchboard-gift-box__head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
 .merchboard-gift-box__title{margin:0;font-size:1.2rem;font-weight:700;line-height:1.3}
-.merchboard-gift-box__badge{position:relative;flex:none;width:2.4rem;height:2.4rem;color:var(--mb-twitch)}
+.merchboard-gift-box__badge{position:relative;flex:none;width:2.4rem;height:2.4rem;margin:0 .35rem .5rem;color:var(--mb-twitch)}
 .merchboard-gift-box__badge svg{display:block;width:100%;height:100%}
-.merchboard-gift-box__live{position:absolute;top:-.55rem;left:50%;transform:translateX(-50%);padding:.05rem .4rem;border-radius:4px;background:var(--mb-live);color:#fff;font-size:.65rem;font-weight:800;letter-spacing:.06em;line-height:1.3;animation:merchboard-live 1.6s ease-in-out infinite}
+.merchboard-gift-box__live{position:absolute;bottom:-.6rem;left:50%;white-space:nowrap;transform:translateX(-50%);padding:.05rem .4rem;border-radius:4px;background:var(--mb-live);color:#fff;font-size:.65rem;font-weight:800;letter-spacing:.06em;line-height:1.3;animation:merchboard-live 1.6s ease-in-out infinite}
 @keyframes merchboard-live{0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 0 0 0 color-mix(in srgb,var(--mb-live) 55%,transparent)}50%{transform:translateX(-50%) scale(1.12);box-shadow:0 0 0 .35rem transparent}}
 .merchboard-gift-box__text{margin:.5rem 0 1rem}
 .merchboard-gift-box__text a{color:inherit;text-decoration:underline;text-underline-offset:2px}
