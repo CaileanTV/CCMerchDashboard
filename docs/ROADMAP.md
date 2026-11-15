@@ -1270,16 +1270,16 @@ Projektejerens ønsker 2026-11-12, med Fourthwall som forbillede:
 
 **Trin:**
 - **48.1 Docs:** ✅ ADR-111, statusnoter på ADR-106 og ADR-107.
-- **48.2 Data:** migration 52 og gaverne pr. enhed i `GiftRepository`.
-- **48.3 Køb af flere gaver:** `GiftPurchase`: antal, grænser i kurven, fragt × antal, én gave pr. enhed og annullering.
-- **48.4 Lodtrækning, tekster og notifikationer:** "(gave n af N)", "købt" én gang med antal, ordresiden og privacy.
-- **48.5 Gave-boksen.**
-- **48.6 Rabatlinjen på produktsiden.**
-- **48.7 Det moderne Twitch-kort** og de nye placeringer.
+- **48.2 Data:** ✅ `2e1ef86` migration 52 og gaverne pr. enhed i `GiftRepository`.
+- **48.3 Køb af flere gaver:** ✅ `2e1ef86` `GiftPurchase`: antal, grænser i kurven, fragt × antal, én gave pr. enhed og annullering.
+- **48.4 Lodtrækning, tekster og notifikationer:** ✅ `2e1ef86` "(gave n af N)", "købt" én gang med antal, ordresiden og privacy.
+- **48.5 Gave-boksen.** ✅ `2e1ef86`, LIVE-mærket rettet i `f311b44`.
+- **48.6 Rabatlinjen på produktsiden.** ✅ `2e1ef86`; i `f311b44` flyttet ud af pris-HTML'en til efter prisen (skabelon, prisblok og shortcode), fordi blok-temaet forudindlæser pris-HTML'en i Store API-data.
+- **48.7 Det moderne Twitch-kort** og de nye placeringer. ✅ `2e1ef86`; i `f311b44` intet kort i en gavekurv.
 - **48.8 Test og levering:**
-  - tests, danske tekster og docs;
-  - runtime i Playground med skærmbilleder (lyst og mørkt tema, mobil);
-  - CI, bump til 2.2.0 og testpakke på stg. Tag efter projektejerens OK.
+  - ✅ tests, danske tekster og docs;
+  - ✅ runtime i Playground (2026-11-15) med skærmbilleder: gave-boksen (desktop og mobil), 3 gaver giver fragt 150 kr., rabatlinjen, kortet i kurv og kasse ikke logget ind og logget ind (tier 3, rabat 15 % trukket), mørkt tema og mobil;
+  - CI, bump til 2.2.0 og testpakke på stg venter på fase 49 (2.2.0 rummer begge faser). Tag efter projektejerens OK.
 
 ## Fase 49 – Twitch Extension med creatorens produkter 📝 (idé 2026-11-15; afklaring først; mål 2.2.0, hvis afklaringen tillader det; ADR-112)
 
@@ -1354,7 +1354,7 @@ Bliver 2.1.0, fordi fase 47 (giveaway-links) kommer med.
 
 ### Community Features (MitCCMerch)
 
-Projektejerens ønske 2026-11-09. En ny menu "Community Features" i creator-dashboardet (MitCCMerch) med funktioner, som Fourthwall tilbyder sine creators (Fourthwalls hjælpesider læst 2026-11-09). Hver funktion planlægges som sin egen fase med ADR, når den prioriteres. **Status 2026-11-15:** punkt 1, 2 og 3 er bygget og udgivet (fase 43–45 i 2.0.0, fase 47 i 2.1.0 og linknavnet i 2.1.1). Fase 48 (gave-boksen, flere gaver pr. køb, rabatlinjen på produktsiden og et moderne Twitch-login) er planlagt og afventer godkendelse. Punkt 4 og 5 er ikke prioriteret.
+Projektejerens ønske 2026-11-09. En ny menu "Community Features" i creator-dashboardet (MitCCMerch) med funktioner, som Fourthwall tilbyder sine creators (Fourthwalls hjælpesider læst 2026-11-09). Hver funktion planlægges som sin egen fase med ADR, når den prioriteres. **Status 2026-11-15:** punkt 1, 2 og 3 er bygget og udgivet (fase 43–45 i 2.0.0, fase 47 i 2.1.0 og linknavnet i 2.1.1). Fase 48 (gave-boksen, flere gaver pr. køb, rabatlinjen på produktsiden og et moderne Twitch-login) er bygget og runtime-testet og udgives i 2.2.0 sammen med fase 49. Punkt 4 og 5 er ikke prioriteret.
 
 **Fælles regler (projektejerens):**
 - **Gavekort tæller ikke som fortjeneste:** en gavekortkode, som en giveaway eller et gift udløser, fratrækkes creatorens fortjeneste, så den ikke tælles to gange.

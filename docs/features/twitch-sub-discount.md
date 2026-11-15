@@ -4,7 +4,7 @@
 Creatorens Twitch-subscribers får automatisk rabat på creatorens produkter i butikken. Det er et af "Community Features" i MitCCMerch, inspireret af Fourthwall. Rabatten betales af creatorens fortjeneste, så virksomhedens del og andre creatores fortjeneste aldrig påvirkes.
 
 ## Current status
-Udgivet i 2.0.0 (fase 43, ADR-106, tagget på `c2f212c`): reviewet, testet automatisk og afprøvet på stg. Kendt: blok-kurven viser den interne kode `merchboard-twitch-sub` i stedet for navnet (kræver JS; live bruger den klassiske kurv). Planlagt i fase 48: rabatlinjen pr. tier på produktsiden og et moderne Twitch-kort i kurv og kasse.
+Udgivet i 2.0.0 (fase 43, ADR-106, tagget på `c2f212c`): reviewet, testet automatisk og afprøvet på stg. Kendt: blok-kurven viser den interne kode `merchboard-twitch-sub` i stedet for navnet (kræver JS; live bruger den klassiske kurv). Fase 48 (ADR-111, udgives i 2.2.0 sammen med fase 49): rabatlinjen pr. tier på produktsiden og et moderne Twitch-kort i kurv og kasse, bygget og runtime-testet i Playground.
 
 ## User-facing functionality
 **Creatoren** (MitCCMerch → Community Features → Twitch subscriber discount; siden findes kun, når en administrator har slået rabatten til under Indstillinger → Community, ADR-108):
@@ -19,10 +19,14 @@ Regler for kampagner, der er slået til, og hvis perioder mødes:
 - der kan kun være én kampagne for alle produkter;
 - på et produkt går en kampagne med udvalgte produkter forud for "alle".
 
-**Kunden** (kurv og checkout, klassisk og blokke):
-- Et kort vises **kun**, når kurven har creator-merchandise med en aktiv kampagne hos en creator, der har forbundet Twitch.
-- Ikke logget ind: "Log ind med Twitch" og den højeste procent, der tilbydes. Har kunden en husket konto, står der "Tjek mit abonnement som …".
-- Logget ind: Twitch-navnet, om rabatten gælder, og "Log ud fra Twitch".
+**Kunden på produktsiden** (fra fase 48): under prisen på et produkt med en aktiv kampagne står rabatten pr. tier, højeste først, fx "Twitch subs får rabat på dette produkt: 15 % for Tier 3, 10 % for Tier 2 og 5 % for Tier 1. Log ind med Twitch i kurven, så trækkes rabatten automatisk." Kun sidens eget produkt får linjen (aldrig relaterede produkter eller lister), én gang pr. side.
+
+**Kunden i kurv og checkout** (klassisk og blokke):
+- Et kort vises **kun**, når kurven har creator-merchandise med en aktiv kampagne hos en creator, der har forbundet Twitch. En gavekurv (Twitch gifting) får intet kort, for gaver købes uden rabat.
+- Fra fase 48 er kortet moderne og passer til den klassiske kurv: Twitch-ikon, venstrekant og knap i Twitch-lilla, ellers temaets farver (lyst og mørkt tema, mobil).
+- Placering: i den klassiske kurv lige over produkterne, i den klassiske kasse lige over "Faktureringsoplysninger", i blok-kurv og blok-kasse over blokken. Kortet vises én gang pr. side.
+- Ikke logget ind: "Twitch subscriber rabat", en kort tekst, chips med den højeste rabat pr. tier i kurven ("Tier 3 · op til 15 %") og knappen "Log ind med Twitch". Har kunden en husket konto, står der "Tjek mit abonnement som …".
+- Logget ind: en rund avatar med forbogstav, "Logget ind som …", en grøn eller grå pille (rabatten er trukket fra, eller ingen rabat på disse varer) og linket "Log ud af Twitch".
 - Rabatten vises som "Twitch-subscriber-rabat" uden fjern-link. Den lægges ikke oven i andre rabatkoder; kunden får den største pr. linje.
 - Lige før ordren oprettes, tjekkes abonnementet igen. Er noget ændret, stopper checkout med en besked, og kurven viser den nye pris.
 
@@ -64,7 +68,10 @@ WooCommerce:
 - kuponer: `woocommerce_get_shop_coupon_data`, `woocommerce_coupon_sort`, `woocommerce_coupon_get_items_to_apply`, `woocommerce_coupon_get_discount_amount`, `woocommerce_coupon_is_valid_for_product`, `woocommerce_apply_individual_use_coupon`, `woocommerce_apply_with_individual_use_coupon`;
 - kurv og ordre: `woocommerce_before_calculate_totals`, `woocommerce_checkout_create_order_line_item`, `woocommerce_order_recalculate_coupons_coupon_object`, `woocommerce_order_after_calculate_totals`;
 - checkout: `woocommerce_after_checkout_validation`, `woocommerce_store_api_checkout_update_order_from_request`;
-- visning: `woocommerce_before_cart`, `woocommerce_before_checkout_form`, `render_block`, `woocommerce_admin_order_data_after_billing_address`.
+- visning: kortet på `woocommerce_before_cart_table`, `woocommerce_checkout_before_customer_details` og `render_block` (blok-kurv og blok-kasse), skabelonen `templates/community/twitch-card.php` (`TwitchSubShopCard`); rabatlinjen efter skabelonen `single-product/price.php` (`woocommerce_after_template_part`, også page builders' pris-widgets, der bruger den) og efter prisblokken (`render_block_woocommerce/product-price`) (`TwitchSubProductNote`); `woocommerce_admin_order_data_after_billing_address`.
+- Linjen lægges ikke i selve pris-HTML'en, fordi WooCommerce også lægger den i Store API-data, som blok-temaet forudindlæser på siden.
+
+Shortcodes til page builders, der ikke kalder WooCommerces hooks (fx en egen Elementor-widget): `[merchboard_twitch_card]` (kortet) og `[merchboard_twitch_discount_line]` (linjen på produktsiden). Begge vises højst én gang pr. side.
 
 WordPress: `wp_privacy_personal_data_exporters` og `_erasers`.
 

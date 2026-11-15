@@ -4,6 +4,20 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+Fase 48 (ADR-111). Udgives som 2.2.0 sammen med fase 49 (Twitch Extension). Schemaændring 51 → 52.
+
+### Added
+
+- **Ny gave-boks på produktsiden** (Twitch gifting): et kort i Twitch-lilla med Twitch-ikonet og et rødt, pulserende LIVE-mærke, "<Creator> er live på Twitch lige nu" med link til kanalen, en antalsvælger og en stor knap.
+- **Flere gaver pr. køb (1–10):** hver gave får sin egen lodtrækning, vinder og kode og trækkes én ad gangen ("gave 2 af 3"). Fragten er 50 kr. pr. gave. Creatoren får én klokke pr. køb med antallet.
+- **Twitch-subscriber-rabatten på produktsiden:** under prisen står rabatten pr. tier, højeste først, og at den trækkes automatisk efter login med Twitch i kurven.
+- **Moderne Twitch-kort i kurv og kasse:** tier-chips, en Twitch-knap, avatar og en status-pille. Kortet står lige over produkterne i kurven og lige over "Faktureringsoplysninger" i kassen. Shortcodes `[merchboard_twitch_card]` og `[merchboard_twitch_discount_line]` til page builders.
+- **Database:** migration 52 tilføjer `merchboard_gifts.order_unit` og erstatter den unikke nøgle på `order_id` med (`order_id`, `order_unit`). Eksisterende gaver får 1 og virker uændret.
+
+### Changed
+
+- En gavekurv viser ikke længere Twitch-kortet, for gaver købes uden rabat.
+
 ## [2.1.1] - 2026-11-12
 
 Admin vælger navnet i community features' offentlige links. Ingen schemaændring.
