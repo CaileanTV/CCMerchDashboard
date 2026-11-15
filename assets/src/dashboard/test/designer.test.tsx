@@ -47,9 +47,11 @@ jest.mock( '../sections/designer/fabric-stage', () => ( {
 } ) );
 
 jest.mock( '../sections/designer/mockup', () => ( {
-	canCutOut: ( layers: Record< string, unknown > ) =>
-		layers.silhouette !== undefined || layers.color !== undefined,
-	composeMockup: () => Promise.resolve( mockBlob( 'image/jpeg' ) ),
+	// The sixth argument asks for an image without background.
+	composeMockup: ( ...args: unknown[] ) =>
+		Promise.resolve(
+			mockBlob( args[ 5 ] === true ? 'image/png' : 'image/jpeg' )
+		),
 	pngOf: () => Promise.resolve( mockBlob( 'image/png' ) ),
 } ) );
 

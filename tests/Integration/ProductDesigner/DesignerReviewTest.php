@@ -1796,7 +1796,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$this->review->approve( $this->pending_id( $product ) );
 		$this->drain();
 
-		$cutouts       = new DesignerCutouts( $this->products, $this->bases_repository(), $this->files, new DesignerMedia( $this->files ), $this->guard, $this->writer, $this->service( AuditTrail::class ) );
+		$cutouts       = new DesignerCutouts( $this->products, $this->bases_repository(), $this->files, new DesignerMedia( $this->files ), $this->guard, $this->writer, $this->service( AuditTrail::class ), new DesignerAssetRepository( $this->wpdb ) );
 		$live          = $this->products->live( $product ) ?? self::fail( 'Not live.' );
 		$version       = (int) $live['id'];
 		$wc            = (int) ( $this->products->product( $product )['wc_product_id'] ?? 0 );
@@ -1901,6 +1901,81 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertFileDoesNotExist( $waiting['path'] );
 		self::assertSame( 'todo', $row( $cutouts->overview() )['state'] );
 		self::assertSame( 0, $cutouts->waiting() );
+	}
+
+	public function test_a_template_photo_without_background_is_the_outline_by_itself(): void {
+		$side    = static fn( string $background ): array => array(
+			array(
+				'key'       => '',
+				'name'      => 'Front',
+				'x'         => '100',
+				'y'         => '100',
+				'width'     => '200',
+				'height'    => '200',
+				'width_mm'  => '30',
+				'height_mm' => '40',
+				'dpi'       => '100',
+				'remove'    => false,
+				'clear'     => array(),
+				'uploads'   => array( 'background' => AlertImagesTest::upload( $background, 'photo.png' ) ),
+			),
+		);
+		$fields  = array(
+			'name'        => 'Photo tee',
+			'description' => '',
+			'base_price'  => '149,95',
+			'category_id' => '0',
+			'colors'      => "Black #111111\nSand #d8c8a8",
+			'sizes'       => 'S, M',
+		);
+		$cutouts = new DesignerCutouts( $this->products, $this->bases_repository(), $this->files, new DesignerMedia( $this->files ), $this->guard, $this->writer, $this->service( AuditTrail::class ), new DesignerAssetRepository( $this->wpdb ) );
+
+		// The template's own photo is a PNG without background: no silhouette, no colour mask needed.
+		$clear = $this->bases->save( null, $fields, $side( self::cutout_photo( true ) ) );
+		$this->bases->set_active( $clear, true );
+		$view = $this->bases_repository()->find( $clear )?->views[0] ?? self::fail( 'No side.' );
+		self::assertSame( 'background', $cutouts->outline( $view, 'black' ) );
+
+		// A photo on an opaque ground has no outline.
+		$opaque = $this->bases->save( null, array_merge( $fields, array( 'name' => 'Studio tee' ) ), $side( self::cutout_photo( false ) ) );
+		$view   = $this->bases_repository()->find( $opaque )?->views[0] ?? self::fail( 'No side.' );
+		self::assertNull( $cutouts->outline( $view, 'black' ) );
+
+		// A product approved before on the clear photo can be made and shows the photo as its outline.
+		$product = $this->drafts->create( $this->creator, $clear );
+		$this->save( $product, '20' );
+		$this->submissions->attach( $this->creator, $product, 'print:front', AlertImagesTest::upload( AlertImagesTest::png( 118, 157 ), 'print.png' ) );
+
+		foreach ( array( 'black', 'sand' ) as $color ) {
+			$this->submissions->attach( $this->creator, $product, 'mockup:front:' . $color, AlertImagesTest::upload( self::jpeg( 400, 400 ), 'mockup.jpg' ) );
+		}
+
+		$this->submissions->submit( $this->creator, $product );
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+
+		$job = $cutouts->job( $product );
+		self::assertSame( array( 'front:black', 'front:sand' ), array_column( $job['slots'], 'key' ) );
+		self::assertSame( array( 'background' ), array_keys( $job['slots'][0]['layers'] ) );
+	}
+
+	/**
+	 * A 400 × 400 product photo as PNG: a product on a transparent or a grey ground.
+	 *
+	 * @param bool $clear Whether the ground is transparent.
+	 */
+	private static function cutout_photo( bool $clear ): string {
+		$image = imagecreatetruecolor( 400, 400 );
+
+		self::assertNotFalse( $image );
+		imagealphablending( $image, false );
+		imagesavealpha( $image, true );
+		imagefill( $image, 0, 0, (int) imagecolorallocatealpha( $image, 190, 190, 195, $clear ? 127 : 0 ) );
+		imagefilledrectangle( $image, 100, 80, 300, 360, (int) imagecolorallocatealpha( $image, 235, 235, 235, 0 ) );
+		ob_start();
+		imagepng( $image );
+
+		return (string) ob_get_clean();
 	}
 
 	/**

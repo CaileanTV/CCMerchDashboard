@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\ProductDesigner\Shop;
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Providers\ImageProbe;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -195,7 +196,8 @@ class DesignerMedia {
 		update_post_meta( $id, self::META, $version_id . ':' . $slot );
 		update_post_meta( $id, '_wp_attachment_image_alt', $title );
 
-		if ( 'png' === $extension ) {
+		// A provider's PNG can still have a background: only real transparency counts.
+		if ( 'png' === $extension && ImageProbe::transparent( $body ) ) {
 			update_post_meta( $id, self::TRANSPARENT, '1' );
 		}
 

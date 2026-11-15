@@ -18,7 +18,9 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
+use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Providers\ImageProbe;
 use MerchBoard\Modules\ProductDesigner\Rest\MeDesignerController;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
@@ -32,8 +34,9 @@ defined( 'ABSPATH' ) || exit;
  *
  * - An image can be made for a side and colour whose mockup the browser drew
  *   (a JPEG; a provider's photos stay) on a side with an outline: its
- *   silhouette, or its colour mask when the colour has no photo of its own.
- *   A PSD scene stays as it is.
+ *   silhouette, else its background in that colour when that is a PNG
+ *   without background (the template's own photo), else its colour mask
+ *   when the colour has no photo of its own. A PSD scene stays as it is.
  * - The administrator's browser draws them from the stored print files and
  *   the template's layers (job()) and sends each PNG (store()). They wait in
  *   the shop product's meta PENDING until approved or discarded.
@@ -66,6 +69,13 @@ final class DesignerCutouts {
 	public const REPLACED = 'replaced';
 
 	/**
+	 * Whether each layer asset read so far is a PNG without background.
+	 *
+	 * @var array<int, bool>
+	 */
+	private array $clear = array();
+
+	/**
 	 * Constructor.
 	 *
 	 * @param DesignerProductRepository $products Designer products.
@@ -75,6 +85,7 @@ final class DesignerCutouts {
 	 * @param DesignerProductGuard      $guard    The legacy guard.
 	 * @param WooCommerceDesignerWriter $writer   The shop products.
 	 * @param AuditTrail                $audit    Audit trail.
+	 * @param DesignerAssetRepository   $assets   The template layers' files.
 	 */
 	public function __construct(
 		private DesignerProductRepository $products,
@@ -83,7 +94,8 @@ final class DesignerCutouts {
 		private DesignerMedia $media,
 		private DesignerProductGuard $guard,
 		private WooCommerceDesignerWriter $writer,
-		private AuditTrail $audit
+		private AuditTrail $audit,
+		private DesignerAssetRepository $assets
 	) {
 	}
 
@@ -131,7 +143,7 @@ final class DesignerCutouts {
 			$pending = $pending['version'] === $row['live_version_id'] ? $pending['files'] : array();
 			$swap    = self::swap( $row['wc_product_id'] );
 			$swap    = $swap['version'] === $row['live_version_id'] ? $swap['slots'] : array();
-			$open    = self::slots( $version, $base );
+			$open    = $this->slots( $version, $base );
 			$labels  = self::labels( $base );
 			$slots   = array();
 
@@ -155,7 +167,7 @@ final class DesignerCutouts {
 					self::provider( $version )                   => 'provider',
 					array() !== $pending                         => 'pending',
 					array() !== $open                            => 'todo',
-					array() !== $swap || self::outlined( $base ) => 'done',
+					array() !== $swap || $this->outlined( $base ) => 'done',
 					default                                      => 'none',
 				},
 				'undo'          => array() !== $swap,
@@ -200,7 +212,7 @@ final class DesignerCutouts {
 		$files                    = SubmissionFiles::decode( is_string( $version['files'] ?? null ) ? $version['files'] : null );
 		$slots                    = array();
 
-		foreach ( self::slots( $version, $base ) as $key => $slot ) {
+		foreach ( $this->slots( $version, $base ) as $key => $slot ) {
 			$part  = ColorDesigns::part_of( $design, $slot['color'] );
 			$print = ColorDesigns::SHARED === $part ? SubmissionFiles::PRINT . ':' . $slot['view']->key : SubmissionFiles::PRINT . ':' . $slot['view']->key . ':' . $part;
 
@@ -238,7 +250,7 @@ final class DesignerCutouts {
 			$product,
 			function () use ( $product, $key, $upload ): void {
 				[ $row, $version, $base ] = $this->live( $product );
-				$slot                     = self::slots( $version, $base )[ $key ] ?? self::refuse( DesignerException::DESIGN_INVALID );
+				$slot                     = $this->slots( $version, $base )[ $key ] ?? self::refuse( DesignerException::DESIGN_INVALID );
 				$file                     = $this->files->store( $upload, true );
 
 				if ( $file['width'] !== $slot['view']->width || $file['height'] !== $slot['view']->height ) {
@@ -284,7 +296,7 @@ final class DesignerCutouts {
 				$version_id               = (int) $version['id'];
 				$wc_id                    = (int) $row['wc_product_id'];
 				$pending                  = self::pending( $wc_id );
-				$open                     = self::slots( $version, $base );
+				$open                     = $this->slots( $version, $base );
 
 				if ( $pending['version'] !== $version_id || array() === $pending['files'] ) {
 					self::refuse( DesignerException::DESIGN_STALE );
@@ -537,8 +549,9 @@ final class DesignerCutouts {
 	 * @param array<string, mixed> $version Live version.
 	 * @param BaseProduct          $base    Its base product.
 	 * @return array<string, array{view: BaseView, color: string, hex: string}>
+	 * @throws DatabaseException When a layer cannot be read.
 	 */
-	public static function slots( array $version, BaseProduct $base ): array {
+	public function slots( array $version, BaseProduct $base ): array {
 		if ( self::provider( $version ) ) {
 			return array();
 		}
@@ -551,7 +564,7 @@ final class DesignerCutouts {
 			foreach ( null === $view->scene ? ( $files['mockups'][ $view->key ] ?? array() ) : array() as $color => $file ) {
 				$color = (string) $color;
 
-				if ( isset( $hexes[ $color ] ) && 'image/jpeg' === ( $file['mime'] ?? '' ) && null !== self::outline( $view, $color ) ) {
+				if ( isset( $hexes[ $color ] ) && 'image/jpeg' === ( $file['mime'] ?? '' ) && null !== $this->outline( $view, $color ) ) {
 					$slots[ $view->key . ':' . $color ] = array(
 						'view'  => $view,
 						'color' => $color,
@@ -566,18 +579,44 @@ final class DesignerCutouts {
 
 	/**
 	 * The layer a side's image without background is cut to in a colour: its
-	 * silhouette, else its colour mask when the colour has no photo of its
-	 * own; null without one.
+	 * silhouette, else its background in that colour when it is a PNG without
+	 * background, else its colour mask when the colour has no photo of its
+	 * own; null without one. The browser picks the same (mockup.ts).
 	 *
 	 * @param BaseView $view  The side.
 	 * @param string   $color Colour key.
+	 * @throws DatabaseException When a layer cannot be read.
 	 */
-	public static function outline( BaseView $view, string $color ): ?string {
+	public function outline( BaseView $view, string $color ): ?string {
 		if ( isset( $view->layers[ BaseView::SILHOUETTE ] ) ) {
 			return BaseView::SILHOUETTE;
 		}
 
+		$background = self::layers( $view, $color )['background'] ?? null;
+
+		if ( null !== $background && $this->clear( $background ) ) {
+			return 'background';
+		}
+
 		return isset( $view->layers['color'] ) && ! isset( $view->layers[ BaseView::COLOR_BACKGROUND . $color ] ) ? 'color' : null;
+	}
+
+	/**
+	 * Whether a layer asset is a PNG without background.
+	 *
+	 * @param int $asset Asset.
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	private function clear( int $asset ): bool {
+		if ( ! isset( $this->clear[ $asset ] ) ) {
+			$row  = $this->assets->find( $asset );
+			$path = null === $row || 'image/png' !== $row['mime'] ? null : $this->files->path( $row['file'] );
+			$body = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A template layer in the plugin's own folder.
+
+			$this->clear[ $asset ] = false !== $body && ImageProbe::transparent( $body );
+		}
+
+		return $this->clear[ $asset ];
 	}
 
 	/**
@@ -628,14 +667,17 @@ final class DesignerCutouts {
 	}
 
 	/**
-	 * Whether any side of a base product has an outline.
+	 * Whether any side of a base product has an outline in some colour.
 	 *
 	 * @param BaseProduct $base Base product.
+	 * @throws DatabaseException When a layer cannot be read.
 	 */
-	private static function outlined( BaseProduct $base ): bool {
+	private function outlined( BaseProduct $base ): bool {
 		foreach ( $base->views as $view ) {
-			if ( null === $view->scene && ( isset( $view->layers[ BaseView::SILHOUETTE ] ) || isset( $view->layers['color'] ) ) ) {
-				return true;
+			foreach ( null === $view->scene ? $base->colors : array() as $color ) {
+				if ( null !== $this->outline( $view, $color['key'] ) ) {
+					return true;
+				}
 			}
 		}
 

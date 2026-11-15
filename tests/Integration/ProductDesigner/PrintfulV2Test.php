@@ -465,6 +465,7 @@ final class PrintfulV2Test extends IntegrationTestCase {
 		self::assertSame( array( 15710, 15711 ), $task['mockup_style_ids'] ?? null );
 		self::assertSame( array( array( 'name' => 'stitch_color', 'value' => 'white' ) ), $task['product_options'] ?? null ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		self::assertSame( 257, $task['catalog_product_id'] ?? null );
+		self::assertSame( 'png', $body['format'] ?? null, 'PNG, without background where Printful has one (ADR-114).' );
 		self::assertEqualsWithDelta( 2.008, $task['placements'][0]['layers'][0]['position']['width'] ?? 0, 0.001, 'Inches, in the print file\'s own shape.' );
 		self::assertStringContainsString( '/designer-print/' . $version . '/front-print', urldecode( (string) ( $task['placements'][0]['layers'][0]['url'] ?? '' ) ) );
 

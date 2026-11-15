@@ -124,7 +124,7 @@ export async function drawSlot( slot: CutoutSlot ): Promise< Blob | null > {
 		return null;
 	}
 
-	return composeMockup(
+	const image = await composeMockup(
 		view,
 		slot.layers as Partial< Record< LayerKind, string > >,
 		slot.color,
@@ -132,6 +132,9 @@ export async function drawSlot( slot: CutoutSlot ): Promise< Blob | null > {
 		null,
 		true
 	);
+
+	// A side the browser finds no outline on stays as it is.
+	return image?.type === 'image/png' ? image : null;
 }
 
 /**
@@ -217,6 +220,27 @@ async function makeProduct(
 }
 
 /**
+ * Puts a product's waiting images in the shop.
+ *
+ * @param button The product's button (`data-apply`).
+ * @return Whether images were put in the shop.
+ */
+async function applyProduct( button: HTMLButtonElement ): Promise< boolean > {
+	const answer = await fetch( button.dataset.apply ?? '', {
+		method: 'POST',
+		credentials: 'same-origin',
+	} )
+		.then( ( response ) => response.json() )
+		.catch( () => null );
+
+	return (
+		typeof answer === 'object' &&
+		answer !== null &&
+		( answer as { success?: unknown } ).success === true
+	);
+}
+
+/**
  * The status next to a button.
  *
  * @param element The button.
@@ -260,27 +284,44 @@ function start(): void {
 		} )
 	);
 
+	// The automatic run: make each product's images and put them in the shop at once.
 	all?.addEventListener( 'click', () => {
 		const say = statusOf( all );
-		const todo = buttons.filter(
-			( button ) => button.dataset.state === 'todo'
-		);
+		let applied = 0;
 
 		lock( true );
 
 		void ( async () => {
-			for ( const [ index, button ] of todo.entries() ) {
+			for ( const [ index, button ] of buttons.entries() ) {
 				say(
 					sprintf(
 						/* translators: 1: product number, 2: all products. */
 						__( 'Product %1$d of %2$d…', 'merchboard' ),
 						index + 1,
-						todo.length
+						buttons.length
 					)
 				);
-				await makeProduct( button, statusOf( button ) );
+
+				if ( button.dataset.state === 'todo' ) {
+					await makeProduct( button, statusOf( button ) );
+				}
+
+				if ( await applyProduct( button ) ) {
+					applied++;
+				}
 			}
 
+			say(
+				sprintf(
+					/* translators: 1: products changed, 2: all products. */
+					__(
+						'%1$d of %2$d products use images without background.',
+						'merchboard'
+					),
+					applied,
+					buttons.length
+				)
+			);
 			window.location.reload();
 		} )();
 	} );

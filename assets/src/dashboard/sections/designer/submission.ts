@@ -28,7 +28,6 @@ import {
 } from './design-model';
 import type { DesignDocument } from './design-model';
 import {
-	canCutOut,
 	closeBox,
 	composeMockup,
 	composeScene,
@@ -513,10 +512,7 @@ async function uploadPart(
 			);
 			// Without background (PNG) when the side has an outline (ADR-114); a PSD scene and
 			// sides without one stay JPEG on white.
-			const transparent =
-				sceneMockup === null &&
-				colorLayers !== null &&
-				canCutOut( colorLayers );
+			const transparent = sceneMockup === null;
 			const mockup =
 				sceneMockup ??
 				( color === undefined || colorLayers === null
@@ -538,7 +534,7 @@ async function uploadPart(
 				input.product,
 				`mockup:${ key }:${ colorKey }`,
 				mockup,
-				`mockup-${ key }.${ transparent ? 'png' : 'jpg' }`
+				`mockup-${ key }.${ mockup.type === 'image/png' ? 'png' : 'jpg' }`
 			);
 
 			if ( ! result.ok ) {

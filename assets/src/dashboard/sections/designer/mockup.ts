@@ -200,21 +200,59 @@ export function closeBox(
 }
 
 /**
- * Whether a side's images can be drawn without background (ADR-114): it has
- * a silhouette, or a colour mask to use as one.
+ * Whether an image has transparent pixels (a product photo without
+ * background), judged on a small copy.
  *
- * @param layers The side's layers in one colour.
+ * @param image The image.
  */
-export function canCutOut(
-	layers: Partial< Record< LayerKind, unknown > >
-): boolean {
-	return layers.silhouette !== undefined || layers.color !== undefined;
+export function hasClearPixels( image: HTMLImageElement ): boolean {
+	const probe = surface( 32, 32 );
+
+	if ( probe === null ) {
+		return false;
+	}
+
+	probe.context.drawImage( image, 0, 0, 32, 32 );
+	const { data } = probe.context.getImageData( 0, 0, 32, 32 );
+
+	for ( let index = 3; index < data.length; index += 4 ) {
+		if ( ( data[ index ] ?? 255 ) < 128 ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * The outline a side's image without background is cut to (ADR-114): its
+ * silhouette, else its background when that is a PNG without background
+ * (the template's own photo), else its colour mask; undefined without one.
+ *
+ * @param images The side's layers in one colour.
+ */
+function outlineOf(
+	images: Partial< Record< LayerKind, HTMLImageElement > >
+): HTMLImageElement | undefined {
+	if ( images.silhouette !== undefined ) {
+		return images.silhouette;
+	}
+
+	if (
+		images.background !== undefined &&
+		hasClearPixels( images.background )
+	) {
+		return images.background;
+	}
+
+	return images.color;
 }
 
 /**
  * A side's mockup in one colour, or null when it cannot be drawn: a JPEG on
  * white, or (`transparent`) a PNG without background, cut to the side's
- * silhouette or else its colour mask (ADR-114).
+ * outline (ADR-114). A side without an outline stays a JPEG on white; the
+ * blob's type says which it is.
  *
  * @param view        The side (template size, layers and print area).
  * @param layers      `data:` URL of each template layer the side has.
@@ -256,12 +294,14 @@ export async function composeMockup(
 	}
 
 	const { canvas, context } = target;
+	const outline = transparent ? outlineOf( images ) : undefined;
+	const clear = outline !== undefined;
 	const zoom = box === null ? 1 : CLOSE_SIZE / box.width;
 	const left = box?.x ?? 0;
 	const top = box?.y ?? 0;
 
 	// A JPEG has no transparency: white where the template has none.
-	if ( ! transparent ) {
+	if ( ! clear ) {
 		context.fillStyle = '#ffffff';
 		context.fillRect( 0, 0, canvas.width, canvas.height );
 	}
@@ -325,7 +365,7 @@ export async function composeMockup(
 			return null;
 		}
 
-		if ( ! transparent ) {
+		if ( ! clear ) {
 			front.context.fillStyle = '#ffffff';
 			front.context.fillRect( 0, 0, view.width, view.height );
 		}
@@ -362,14 +402,8 @@ export async function composeMockup(
 		context.drawImage( images.highlight, 0, 0, view.width, view.height );
 	}
 
-	if ( transparent ) {
+	if ( outline !== undefined ) {
 		// Only the product: everything outside its outline becomes transparent.
-		const outline = images.silhouette ?? images.color;
-
-		if ( outline === undefined ) {
-			return null;
-		}
-
 		context.globalCompositeOperation = 'destination-in';
 		context.drawImage( outline, 0, 0, view.width, view.height );
 	}
@@ -378,7 +412,7 @@ export async function composeMockup(
 	context.setTransform( 1, 0, 0, 1, 0, 0 );
 
 	return new Promise( ( resolve ) =>
-		transparent
+		clear
 			? canvas.toBlob( resolve, 'image/png' )
 			: canvas.toBlob( resolve, 'image/jpeg', QUALITY )
 	);

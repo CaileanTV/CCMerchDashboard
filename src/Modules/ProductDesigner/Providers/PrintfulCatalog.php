@@ -507,7 +507,8 @@ class PrintfulCatalog implements CatalogRenderer {
 			(int) ( $import['ref'] ?? 0 ),
 			array(
 				'variant_ids' => $variants,
-				'format'      => 'jpg',
+				// PNG: the imported photos keep a transparent background (ADR-114).
+				'format'      => 'png',
 				'files'       => $files,
 			)
 		);
@@ -1180,6 +1181,15 @@ class PrintfulCatalog implements CatalogRenderer {
 	}
 
 	/**
+	 * Whether a URL names a PNG.
+	 *
+	 * @param string $url URL.
+	 */
+	private static function png_url( string $url ): bool {
+		return str_ends_with( strtolower( (string) wp_parse_url( $url, PHP_URL_PATH ) ), '.png' );
+	}
+
+	/**
 	 * The sides with their flat pattern; a side without one is left out: it
 	 * has nothing to design on.
 	 *
@@ -1197,7 +1207,10 @@ class PrintfulCatalog implements CatalogRenderer {
 			$ids       = is_array( $row ) && is_array( $row['catalog_variant_ids'] ?? null ) ? array_map( 'intval', $row['catalog_variant_ids'] ) : array();
 
 			if ( '' !== $placement && 'https' === wp_parse_url( $url, PHP_URL_SCHEME ) && 'template' === ( $row['role'] ?? '' ) && in_array( $variant, $ids, true ) ) {
-				$found[ $placement ] ??= $row;
+				// A PNG goes before another format (ADR-114).
+				if ( ! isset( $found[ $placement ] ) || ( ! self::png_url( (string) $found[ $placement ]['image_url'] ) && self::png_url( $url ) ) ) {
+					$found[ $placement ] = $row;
+				}
 			}
 		}
 

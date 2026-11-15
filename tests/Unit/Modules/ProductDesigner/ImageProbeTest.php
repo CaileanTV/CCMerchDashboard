@@ -111,6 +111,32 @@ final class ImageProbeTest extends TestCase {
 		}
 	}
 
+	public function test_only_a_png_with_transparent_pixels_is_without_background(): void {
+		$png = static function ( bool $alpha, bool $clear ): string {
+			$image = imagecreatetruecolor( 40, 40 );
+
+			self::assertNotFalse( $image );
+			imagealphablending( $image, false );
+			imagesavealpha( $image, $alpha );
+			imagefill( $image, 0, 0, (int) imagecolorallocatealpha( $image, 230, 230, 230, $clear ? 127 : 0 ) );
+			imagefilledrectangle( $image, 10, 10, 29, 29, (int) imagecolorallocatealpha( $image, 20, 20, 20, 0 ) );
+			ob_start();
+			imagepng( $image );
+
+			return (string) ob_get_clean();
+		};
+
+		self::assertTrue( ImageProbe::transparent( $png( true, true ) ), 'A product on a transparent ground.' );
+		self::assertFalse( ImageProbe::transparent( $png( true, false ) ), 'An alpha channel, but every pixel opaque.' );
+		self::assertFalse( ImageProbe::transparent( $png( false, true ) ), 'No alpha channel.' );
+		$jpeg = imagecreatetruecolor( 4, 4 );
+		self::assertNotFalse( $jpeg );
+		ob_start();
+		imagejpeg( $jpeg );
+		self::assertFalse( ImageProbe::transparent( (string) ob_get_clean() ), 'A JPEG.' );
+		self::assertFalse( ImageProbe::transparent( '' ) );
+	}
+
 	public function test_a_flat_side_lies_on_a_white_sheet(): void {
 		$image = imagecreatefromstring( ImageProbe::blank( 30, 20 ) );
 

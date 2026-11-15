@@ -74,6 +74,40 @@ final class ImageProbe {
 	private const SAMPLES = 500;
 
 	/**
+	 * Whether an image is a PNG with transparent pixels: a product photo
+	 * without background (ADR-114). Judged on a grid of 32 × 32 points; a
+	 * PNG with an alpha channel counts when GD cannot measure.
+	 *
+	 * @param string $bytes Image.
+	 */
+	public static function transparent( string $bytes ): bool {
+		// PNG: colour type 4 or 6 has an alpha channel; tRNS gives a palette or colour one.
+		if ( ! str_starts_with( $bytes, "\x89PNG" ) || strlen( $bytes ) < 26 || ( ! in_array( ord( $bytes[25] ), array( 4, 6 ), true ) && ! str_contains( substr( $bytes, 0, 4096 ), 'tRNS' ) ) ) {
+			return false;
+		}
+
+		try {
+			$im = self::image( $bytes );
+		} catch ( InvalidArgumentException ) {
+			return true;
+		}
+
+		$width  = imagesx( $im );
+		$height = imagesy( $im );
+
+		for ( $i = 0; $i < 32; $i++ ) {
+			for ( $j = 0; $j < 32; $j++ ) {
+				// GD's alpha runs from 0 (opaque) to 127 (transparent).
+				if ( ( ( imagecolorat( $im, intdiv( $i * ( $width - 1 ), 31 ), intdiv( $j * ( $height - 1 ), 31 ) ) >> 24 ) & 127 ) > 63 ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Whether GD can measure.
 	 */
 	public static function available(): bool {

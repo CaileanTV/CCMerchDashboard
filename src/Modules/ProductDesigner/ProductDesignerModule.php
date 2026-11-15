@@ -302,7 +302,8 @@ final class ProductDesignerModule implements Module {
 				$c->get( DesignerMedia::class ),
 				$c->get( DesignerProductGuard::class ),
 				$c->get( WooCommerceDesignerWriter::class ),
-				$c->get( AuditTrail::class )
+				$c->get( AuditTrail::class ),
+				$c->get( DesignerAssetRepository::class )
 			)
 		);
 		$container->set( DesignerCutoutsPage::class, static fn( Container $c ): DesignerCutoutsPage => new DesignerCutoutsPage( $c->get( DesignerCutouts::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ) ) );

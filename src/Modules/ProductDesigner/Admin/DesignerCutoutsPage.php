@@ -30,6 +30,9 @@ defined( 'ABSPATH' ) || exit;
  *   (build/designer-cutouts-admin.js): it reads the job (ACTION_JOB),
  *   draws each image as the designer does and sends it (ACTION_UPLOAD).
  * - "Approve", "Discard" and "Undo" post the form ACTION.
+ * - "Use images without background on all products" (the owner's wish
+ *   2026-11-15: it runs by itself) makes each product's images and applies
+ *   them at once (ACTION_APPLY); "Undo" stays per product.
  *
  * Every handler checks `merchboard_manage_designer` first, then a nonce
  * bound to the product (and the image); files are sent `no-store` and
@@ -46,6 +49,8 @@ final class DesignerCutoutsPage {
 	public const ACTION_UPLOAD = 'merchboard_designer_cutouts_upload';
 
 	public const ACTION_FILE = 'merchboard_designer_cutouts_file';
+
+	public const ACTION_APPLY = 'merchboard_designer_cutouts_apply';
 
 	public const RESULT_ARG = 'merchboard_cutouts_result';
 
@@ -75,6 +80,7 @@ final class DesignerCutoutsPage {
 		add_action( 'admin_post_' . self::ACTION_JOB, array( $this, 'handle_job' ) );
 		add_action( 'admin_post_' . self::ACTION_UPLOAD, array( $this, 'handle_upload' ) );
 		add_action( 'admin_post_' . self::ACTION_FILE, array( $this, 'handle_file' ) );
+		add_action( 'admin_post_' . self::ACTION_APPLY, array( $this, 'handle_apply' ) );
 	}
 
 	/**
@@ -167,19 +173,20 @@ final class DesignerCutoutsPage {
 
 		$script = $this->enqueue();
 
-		echo '<p>' . esc_html__( 'The product images of designs approved before can be made without background: only the product, as PNG. They are used in the merch ad and the Twitch panel, and after your approval also in the shop, in the place of the old images. Photos from the provider stay as they are.', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html__( 'The product images of designs approved before can be made without background: only the product, as PNG, cut to the template\'s own PNG photo (or its silhouette or colour mask). They are used in the merch ad and the Twitch panel and in the shop, in the place of the old images. Photos from the provider stay as they are.', 'merchboard' ) . '</p>';
 
 		if ( ! $script ) {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The images are made in the browser, but its script is missing. Build the plugin (npm run build).', 'merchboard' ) . '</p></div>';
 		}
 
-		$todo = array_values( array_filter( $rows, static fn( array $row ): bool => 'todo' === $row['state'] ) );
+		$open = array_values( array_filter( $rows, static fn( array $row ): bool => in_array( $row['state'], array( 'todo', 'pending' ), true ) ) );
 
-		if ( $script && array() !== $todo ) {
+		if ( $script && array() !== $open ) {
 			echo '<p><button type="button" class="button button-primary merchboard-cutouts-all">' . esc_html(
 				/* translators: %d: number of products. */
-				sprintf( _n( 'Make images for %d product', 'Make images for all %d products', count( $todo ), 'merchboard' ), count( $todo ) )
+				sprintf( _n( 'Use images without background on %d product', 'Use images without background on all %d products', count( $open ), 'merchboard' ), count( $open ) )
 			) . '</button> <span class="merchboard-cutouts-all__status" aria-live="polite"></span></p>';
+			echo '<p class="description">' . esc_html__( 'Makes the images and puts them in the shop at once, product by product. Keep this page open until it is done. "Undo" puts a product\'s old images back.', 'merchboard' ) . '</p>';
 		}
 
 		if ( array() === $rows ) {
@@ -254,8 +261,16 @@ final class DesignerCutoutsPage {
 				),
 				admin_url( 'admin-post.php' )
 			);
+			$apply  = add_query_arg(
+				array(
+					'action'   => self::ACTION_APPLY,
+					'product'  => $product,
+					'_wpnonce' => $nonce,
+				),
+				admin_url( 'admin-post.php' )
+			);
 
-			echo '<p><button type="button" class="button merchboard-cutouts-make" data-state="' . esc_attr( $row['state'] ) . '" data-job="' . esc_url( $job ) . '" data-upload="' . esc_url( $upload ) . '">' . esc_html( 'pending' === $row['state'] ? __( 'Make again', 'merchboard' ) : __( 'Make images', 'merchboard' ) ) . '</button> <span class="merchboard-cutouts-make__status" aria-live="polite"></span></p>';
+			echo '<p><button type="button" class="button merchboard-cutouts-make" data-state="' . esc_attr( $row['state'] ) . '" data-job="' . esc_url( $job ) . '" data-upload="' . esc_url( $upload ) . '" data-apply="' . esc_url( $apply ) . '">' . esc_html( 'pending' === $row['state'] ? __( 'Make again', 'merchboard' ) : __( 'Make images', 'merchboard' ) ) . '</button> <span class="merchboard-cutouts-make__status" aria-live="polite"></span></p>';
 		}
 
 		if ( 'pending' === $row['state'] ) {
@@ -361,6 +376,22 @@ final class DesignerCutoutsPage {
 			wp_send_json_error( array( 'reason' => $e->reason() ), 409 );
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'The job of images without background failed.', array_merge( $e->context(), array( 'design_product_id' => $product ) ) );
+			wp_send_json_error( array( 'reason' => 'error' ), 500 );
+		}
+	}
+
+	/**
+	 * Applies a product's waiting images (the automatic run) and answers in JSON.
+	 */
+	public function handle_apply(): void {
+		$product = $this->product( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in product(); only an id is read.
+
+		try {
+			wp_send_json_success( array( 'images' => $this->cutouts->approve( $product ) ) );
+		} catch ( DesignerException $e ) {
+			wp_send_json_error( array( 'reason' => $e->reason() ), 409 );
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'Images without background could not be applied.', array_merge( $e->context(), array( 'design_product_id' => $product ) ) );
 			wp_send_json_error( array( 'reason' => 'error' ), 500 );
 		}
 	}

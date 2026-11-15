@@ -712,8 +712,9 @@ class PrintfulMockups {
 			$task['product_options'] = $provider['options'];
 		}
 
+		// PNG: a photo without background where Printful has one, the same as the designer's own images (ADR-114).
 		return array(
-			'format'   => 'jpg',
+			'format'   => 'png',
 			'products' => array( $task ),
 		);
 	}
@@ -733,7 +734,7 @@ class PrintfulMockups {
 	private function create_v1( int $product, array $variants, array $sides, array $provider ): string {
 		$body = array(
 			'variant_ids' => array_values( array_map( 'intval', $variants ) ),
-			'format'      => 'jpg',
+			'format'      => 'png',
 			'files'       => array_map(
 				static fn( array $side ): array => array(
 					'placement' => $side['placement'],
