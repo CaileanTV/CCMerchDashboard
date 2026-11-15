@@ -253,6 +253,8 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 **Versions-bump og CHANGELOG-sektion 2026-11-15** efter projektejerens beslutning (2.2.0 rummer fase 48, 49 og 50). Testpakke på stg; tag efter projektejerens OK efter testen. Schemaændring 51 → 52 (`merchboard_gifts.order_unit`).
 
+**Testpakke på stg 2026-11-15:** `dist/merchboard-mvp-2.2.0.zip` fra `c9df69b`, SHA-256 `2db65e078efe57ae80a77470286e8c34162316d1b3e2fc5e3ff1e40a38440741`. stg viser version 2.2.0 og schema-version 52 uden PHP-fejl; vilkårssiderne, kurven og shoppen svarer 200.
+
 1. **Opdatér** med ZIP'en. Overview skal vise version 2.2.0 og schema-version 52.
 2. **Fase 48:** gave-boksen med LIVE-mærket på et produkt hos en creator i testtilstand; køb 2–3 gaver (fragt 50 kr. pr. gave), og de trækkes én ad gangen ("gave 1 af 3"). Rabatlinjen står under prisen, og Twitch-kortet står over produkterne i kurven og over "Faktureringsoplysninger" i kassen.
 3. **Fase 49:** slå "Twitch Extension" til under Indstillinger → Community; MitCCMerch → Twitch Extension viser produktvalg, pille og forhåndsvisning. `/?merchboard_extension=terms` og `=privacy` viser vilkår og privatlivspolitik. Selve panelet på Twitch kræver extensionen i Twitchs udviklerkonsol (Client ID, hemmelighed, allowlists) og ZIP'en fra `npm run twitch-extension -- --site https://stg.ccmerch.dk`.
