@@ -1413,6 +1413,11 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - "Lav billeder" pr. produkt og for alle (admins browser tegner ud fra de gemte printfiler);
   - "Godkend og brug i shoppen" (erstatter produktets, galleriets og variationernes billeder på deres pladser), "Kassér" og "Fortryd".
 - **51.5 Reklamen** bruger designerens billeder uden baggrund (`_merchboard_transparent`) direkte uden ny fritlægning. ✅ `4cf006a` Twitch-panelet viser shoppens billede, så det får PNG'en, når den er godkendt; panelets ZIP hos Twitch er uændret.
+- **51.7 Projektejerens præcisering 2026-11-15:** ✅
+  - skabelonernes billeder er allerede PNG uden baggrund, så sidens eget PNG-foto er omridset automatisk;
+  - én knap, "Brug billeder uden baggrund på alle produkter", laver billederne og sætter dem i shoppen med det samme (fortryd pr. produkt);
+  - Printful bedes om PNG (katalogimport og produktbilleder), og PNG-skabeloner foretrækkes.
+  - Gelato, Prodigi og Printify har intet formatvalg i de kald, vi bruger.
 - **51.6 Test og levering:** ✅ unit-, Jest- og integrationstest (godkend, fortryd, kassér), danske tekster og docs. Runtime 2026-11-15 i Chrome med den byggede admin-bundle: opgave → tegning → upload for en side med farvemaske og en side med eget farvefoto og silhuet; baggrund, gulvskygge og halsåbning blev gennemsigtige. Godkend og fortryd kræver produktlåsen (MySQL) og testes på stg.
 
 ## Version 2.1.1 ✅ (tagget 2026-11-12 på 555ae87)

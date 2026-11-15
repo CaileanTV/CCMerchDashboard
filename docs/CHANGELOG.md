@@ -32,9 +32,13 @@ Fase 48 (ADR-111), fase 49 (ADR-112), fase 50 (ADR-113) og fase 51 (ADR-114): co
   - produktnavnene kan slås fra;
   - OBS-linkets navn vælges under Indstillinger → Community (standard `merch_ad`, auditeret); det første navn `merchboard_merch_ad` og op til 10 tidligere navne virker fortsat.
 - **Produktbilleder uden baggrund** (fase 51, ADR-114):
-  - **Silhuet:** skabelonens sider får et valgfrit lag "Silhuet" (produktets omrids). "Lav den ud fra baggrunden" laver det i browseren fra et ensfarvet baggrundsfoto.
-  - **Nye designs:** shoppens billeder er PNG uden baggrund på sider med silhuet eller farvemaske. PSD-scener og broderiets nærbilleder er JPEG som før.
-  - **Eksisterende produkter:** fanen Forslag → "Billeder uden baggrund" viser hvert godkendt produkt med shoppens billede ved siden af det nye. "Lav billeder" tegner dem i admins browser; "Godkend og brug i shoppen" sætter dem på det gamle billedes plads i produktet, galleriet og variationerne. "Fortryd" sætter de gamle tilbage, og "Kassér" dropper de nye. Det auditeres (`designer_cutouts_approved`, `designer_cutouts_reverted`). Fotos fra leverandøren forbliver, som de er.
+  - **Omridset:** er skabelonens foto en PNG uden baggrund, er det selv produktets omrids. Ellers bruges et valgfrit lag "Silhuet" (som "Lav den ud fra baggrunden" kan lave i browseren fra et ensfarvet foto) eller farvemasken.
+  - **Nye designs:** shoppens billeder er PNG uden baggrund på sider med et omrids. PSD-scener, sider uden omrids og broderiets nærbilleder er JPEG som før.
+  - **Eksisterende produkter:** fanen Forslag → "Billeder uden baggrund" viser hvert godkendt produkt med shoppens billede ved siden af det nye.
+    - "Brug billeder uden baggrund på alle produkter" laver billederne i admins browser og sætter dem i shoppen med det samme, på det gamle billedes plads i produktet, galleriet og variationerne.
+    - Det enkelte produkt kan også laves og godkendes for sig. "Fortryd" sætter de gamle billeder tilbage, og "Kassér" dropper de ventende.
+    - Det auditeres (`designer_cutouts_approved`, `designer_cutouts_reverted`). Fotos fra leverandøren forbliver, som de er.
+  - **Leverandører:** Printful bedes om PNG ved katalogimport og produktbilleder, og PNG-skabeloner foretrækkes.
   - **Merch-reklamen** bruger et sådant billede, som det er, uden ny fritlægning.
 - **`!merch` i chatbotten** (fase 50): på Alerts → Chatbot slår creatoren kommandoen til og skriver svaret med `$Link` (creatorens kategoriside, ellers shoppen). Botten svarer på Twitch og Kick med en pause pr. kanal.
 - **Twitch Extension: vilkår og privatlivspolitik:** `/?merchboard_extension=terms` og `=privacy` (engelsk og dansk), som Twitch kræver.
