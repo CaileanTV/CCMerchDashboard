@@ -1328,7 +1328,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - Skærmbilleder, gennemgangsguide og indsendelse til Twitch.
   - Pluginets del udgives i 2.2.0 (sammen med fase 48 og 50). Extensionen kan bruges af alle creators, når Twitch har godkendt den.
 
-## Fase 50 – Reklame-overlay med creatorens produkter og !merch-kommando 📝 (ønske 2026-11-15; afventer afklaring og godkendelse; version 2.2.0 sammen med fase 48 og 49; ADR-113)
+## Fase 50 – Reklame-overlay med creatorens produkter og !merch-kommando 🔄 (ønske 2026-11-15; afklaret og godkendt 2026-11-15; version 2.2.0 sammen med fase 48 og 49; ADR-113)
 
 **Projektejerens ønske 2026-11-15:**
 - **Reklame-overlay til streamen:** creatoren designer et overlay, der viser **flere af sine produkter** og eventuelt en **tekstboks eller pille** med en kommando, fx `!merch`.
@@ -1356,13 +1356,29 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **Visning på skærmen:** produkter skifter én ad gangen eller vises flere samtidig, og antallet af designs i første version.
 - **Version:** ✅ afklaret 2026-11-15: fase 50 kommer med i 2.2.0 sammen med fase 48 og 49 (projektejerens beslutning). 2.2.0 bumpes og tagges først, når fase 50 er færdig.
 
-**Trin (foreløbige):**
-- **50.1 Afklaring og ADR-113:** svar på de åbne spørgsmål og designskitser at vælge imellem.
-- **50.2 Data:** creatorens reklame-overlay (produkter, design, tekst/pille, interval, varighed og animationer) og `!merch` (til/fra, tekst med fx `$Link`, cooldown).
-- **50.3 Overlay:** visningen i OBS (genbruger overlayets animationer og feed), med billeder uden baggrund.
-- **50.4 MitCCMerch:** designeren med valg af design, produkter, tekst, hyppighed og animationer og en live-forhåndsvisning.
-- **50.5 Chatbotten:** `!merch` med creatorens tekst og link til kollektionen.
-- **50.6 Test og levering:** tests, danske tekster, docs, runtime-test i Playground og OBS-skærmbilleder.
+**Beslutninger (ADR-113, projektejeren 2026-11-15):**
+- **Billeder:** automatisk fjernelse af ensfarvet baggrund i browseren og creatorens egen upload, som går forud.
+- **OBS:** egen browser source.
+- **`!merch`:** Twitch og Kick, på chatbot-siden.
+- **Designs:** Spotlight, Hylde, Karrusel, Kort i hjørnet og "Tre i front" (de yderste produkter står på skrå, med pillen under).
+- **Hyppighed og animation:** hvert 1.–60. minut i 5–60 sekunder, og ind- og ud-animation.
+- **Kollektionslinket:** creatorens kategoriside, ellers shoppen.
+
+**Trin:**
+- **50.1 Afklaring og ADR-113:** ✅ 2026-11-15.
+- **50.2 Data og backend:**
+  - creator-meta `merch_ad` og `merch_command` med validering og audit;
+  - overlay-id og fornyelse;
+  - uploads af billeder uden baggrund;
+  - global knap `community_merch_ad_enabled`;
+  - REST `/me/community/merch-ad` og `/me/alerts/chatbot/merch-command`.
+- **50.3 Overlayet:** siden til OBS (streng CSP), opdateringskaldet, de fem designs, timing, animationer og "Vis nu" (eget build-target).
+- **50.4 MitCCMerch:** siden Community Features → Merch-reklame med design, produkter (automatisk fritlægning og upload), pille, farver, hyppighed, animationer, live-forhåndsvisning og OBS-linket.
+- **50.5 `!merch`:**
+  - Kick-chatbeskeder som action;
+  - kommandoen på Twitch og Kick med cooldown og kollektionslink;
+  - kortet på Alerts → Chatbot.
+- **50.6 Test og levering:** tests, danske tekster, docs og runtime i Playground med skærmbilleder af alle designs.
 
 ## Version 2.1.1 ✅ (tagget 2026-11-12 på 555ae87)
 

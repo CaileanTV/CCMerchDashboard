@@ -6698,3 +6698,74 @@ Ingen schemaændring. Ny creator-meta `twitch_extension`, en option til extensio
 
 ## Related
 ADR-066, ADR-106, ADR-107, ADR-108, ADR-111
+
+# ADR-113: Merch-reklame i streamen (reklame-overlay) og !merch-kommandoen
+
+## Date
+2026-11-15
+
+## Status
+Accepteret af projektejeren 2026-11-15 (afklaringen i trin 50.1). Udgives i 2.2.0 sammen med fase 48 og 49.
+
+## Context
+Projektejeren vil have to ting:
+- **Et reklame-overlay**, som creatoren designer: det viser flere af creatorens produkter med billeder uden baggrund og eventuelt en pille med en kommando som `!merch`. Creatoren vælger mellem flere moderne designs og bestemmer, hvor ofte og hvor længe overlayet vises og med hvilke animationer.
+- **En `!merch`-kommando i chatbotten**, som creatoren kan slå til, og som linker til creatorens kollektion med en tekst, creatoren selv skriver.
+
+Det, der findes i forvejen:
+- **Alert-overlayet** (fase 25) med offentligt overlay-id, side med streng CSP og long-poll.
+- **Chatbotten:** pluginet får Twitch-chatbeskeder som action `merchboard_twitch_chat_message`. Kick-beskeder modtages, men bruges kun i chat-loggen. YouTube leverer ingen chatbeskeder.
+- **Billederne:** shoppens produktbilleder har baggrund (mockups er JPEG), og designerens printfiler er private.
+- **Kollektionen:** der findes ingen side pr. creator ud over creatorens produktkategori (ADR-033).
+
+## Decision
+1. **Egen browser source.** Overlayet får sit eget link til OBS med et hemmeligt id på 32 hex-tegn, som creatoren kan forny. Creatoren placerer og skalerer det frit i OBS, uafhængigt af alerts.
+   - **Siden:** står uden for temaet og har streng CSP (kun egne billeder og scripts med nonce).
+   - **Opdatering:** siden spørger hvert 10. sekund efter ændringer (rate-limited som alert-feedet) og genindlæses, når creatoren har gemt.
+   - **"Vis nu":** knappen i dashboardet viser reklamen med det samme.
+2. **Fem designs:**
+   - **Spotlight:** ét stort fritlagt produkt ad gangen med navn og pille.
+   - **Hylde:** 3–4 produkter på række på en glasbjælke med pillen.
+   - **Karrusel:** en smal stribe, hvor produkterne glider forbi, og pillen står fast.
+   - **Kort i hjørnet:** et lille kort med produkt, navn og pille.
+   - **Tre i front:** tre produkter, hvor de to yderste står på skrå i 3D (projektejerens forslag), med pillen under. Produkterne skifter plads.
+   - **Fælles for alle:** creatoren vælger accentfarve, lyst eller mørkt kort, pillens tekst, hvor ofte (hvert 1.–60. minut, standard 10), hvor længe (5–60 sekunder, standard 15) og ind- og ud-animation (fade, glid, pop, zoom, sløring).
+3. **Produkter:** op til 12 af creatorens udgivne produkter i valgt rækkefølge, eller de nyeste. Pillen er ren tekst på højst 60 tegn uden links, med samme regel som Twitch-panelet (ADR-112), og kommandoer med `!` vises med fed.
+4. **Billeder uden baggrund:**
+   - **Automatisk:** når creatoren vælger et produkt, fjerner browseren en ensfarvet baggrund fra produktbilledet (flood fill fra kanterne med tolerance). Den beskærer til motivet og gemmer en PNG. Det kører lokalt, uden ekstern tjeneste.
+   - **Upload:** creatoren kan uploade sin egen PNG uden baggrund til et produkt, og den går forud for den automatiske.
+   - **Opbevaring:** billederne er offentlige filer (de viser udgivne produkter) i `uploads/merchboard-merch-ad/<creator>/`, kontrolleret som PNG, højst 4 MB og 2000 px.
+   - **Fejl:** kan baggrunden ikke fjernes, fordi den ikke er ensfarvet, siger siden det og foreslår upload.
+5. **`!merch` i chatbotten** (Alerts → Chatbot):
+   - **Indstillinger:** creatoren slår kommandoen til og skriver teksten, højst 200 tegn med `$Link`. Mangler `$Link`, sættes linket bagerst.
+   - **Platforme:** Twitch og Kick. Kick-beskeder udløser nu action `merchboard_kick_chat_message` som Twitchs. YouTube er ikke med, fordi det kræver løbende opslag.
+   - **Cooldown:** 30 sekunder pr. kanal som standard (10–300).
+   - **Linket:** creatorens kategoriside i shoppen (`get_term_link`), ellers shoppens forside.
+   - **Botten:** svarer med `ChatSender::send_now()`, også når creatorens ordrebeskeder er slået fra.
+6. **Global knap:** `community_merch_ad_enabled` under Indstillinger → Community, fra som standard (ADR-108). Den slår siden "Merch-reklame" i MitCCMerch og overlayet til og fra. `!merch` hører til chatbotten og har ingen global knap ud over chatbotten selv.
+7. Leverandørnavne vises aldrig.
+
+## Alternatives considered
+- **Del af alert-overlayet:** ingen ekstra browser source, men placering og pauser bliver sværere. Fravalgt.
+- **AI-fjernelse af baggrund i browseren:** en download på ca. 40 MB og langsommere. Fravalgt indtil videre; upload dækker de svære billeder.
+- **Kun motivet (printfilen):** viser ikke produktet, og printfilerne er private. Fravalgt.
+- **Kun Twitch for `!merch`:** mindre arbejde, men projektejeren valgte også Kick.
+
+## Reason
+Creatoren får en reklame, der ser moderne ud og ikke står på skærmen hele tiden. `!merch` og pillen hænger sammen med Twitch-panelet.
+
+## Security
+- **Overlay-id'et:** det eneste, der giver adgang til overlayet. Det kan fornyes, og opdateringskaldet er rate-limited.
+- **Uploads:** kun PNG, kontrolleret med `getimagesize`, størrelses- og pixelgrænse og et filnavn, serveren selv laver. Gemmes kun for creatorens egne produkter.
+- **Tekst:** pillen og `!merch`-teksten er ren tekst. Overlayet bygger alt med `textContent`.
+- **Cooldown:** forhindrer, at `!merch` bliver brugt til spam.
+
+## Migration/data implications
+Ingen schemaændring. Ny creator-meta `merch_ad` og `merch_command`, filer i `uploads/merchboard-merch-ad/`, den globale knap og transienter til cooldown og rate limit.
+
+## Consequences
+- Creatoren skal tilføje en ny browser source i OBS.
+- Kick-kommandoer kan bruges af senere funktioner.
+
+## Related
+ADR-033, ADR-065, ADR-066, ADR-108, ADR-112
