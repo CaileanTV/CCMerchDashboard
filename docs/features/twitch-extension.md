@@ -35,6 +35,15 @@ Under Indstillinger → Community:
 
 Ændringer auditeres (`settings_updated` med `twitch_extension_client_id`, `twitch_extension_install_url` og `twitch_extension_secret`, aldrig selve hemmeligheden).
 
+**Vilkår og privatlivspolitik** (Twitch kræver begge URL'er i udviklerkonsollen):
+- **URL'erne:** pluginet viser selv siderne på engelsk og dansk:
+  - `/?merchboard_extension=terms` (vilkår, EULA/terms of service);
+  - `/?merchboard_extension=privacy` (privatlivspolitik).
+  - Tilføj `&lang=da` for den danske udgave.
+- **Indhold:** firmanavn, CVR, adresse og e-mail kommer fra Indstillinger → Firmaoplysninger. Teksten siger, at panelet kun viser produkter (ingen priser, links eller køb), at kun kanalens id læses fra Twitchs token, og at der ikke gemmes noget om seerne og ikke bruges cookies eller sporing.
+- **Admin:** begge URL'er vises under Indstillinger → Community.
+- **Gennemlæsning:** teksten er ikke juridisk rådgivning; projektejeren læser den igennem, før extensionen indsendes.
+
 ## Technical implementation
 - **Kontrol af JWT** (`ExtensionJwt`): HS256 med extensionens hemmelighed (base64-dekodet). Tokenet skal have `exp` i fremtiden og et numerisk `channel_id`. Kanalen tages kun fra tokenet.
 - **Panelets indhold** (`TwitchExtensionPanel`): kanalen kobles til creatoren via den forbundne Twitch-kanal (`ChatbotChannelRepository::find_by_broadcaster()`). Svaret caches i en transient i 5 minutter pr. creator, og creatorens gem rydder cachen.
@@ -47,7 +56,7 @@ Under Indstillinger → Community:
 - **ZIP til Twitch:** `npm run twitch-extension -- --site https://<shop>` bygger panelet og laver `dist/merchboard-twitch-extension-<version>-<host>.zip` med `panel.html`, `panel.js` og `panel.css`. Sitets REST-URL står i `panel.html`. Brug `--api <url>` for sites uden `/wp-json/`. Hver site (live, stg) får sin egen ZIP, og hemmeligheden er aldrig i ZIP'en.
 
 ## Relevant files
-- `src/Modules/Community/TwitchExtension/` (`ExtensionJwt`, `TwitchExtensionApp`, `TwitchExtensionSettings`, `TwitchExtensionRepository`, `TwitchExtensionPanel`)
+- `src/Modules/Community/TwitchExtension/` (`ExtensionJwt`, `TwitchExtensionApp`, `TwitchExtensionSettings`, `TwitchExtensionRepository`, `TwitchExtensionPanel`, `TwitchExtensionLegal`), `templates/community/extension-legal.php`
 - `src/Modules/Community/Rest/TwitchExtensionController.php`, `MeTwitchExtensionController.php`
 - `src/Modules/Community/Admin/CommunitySettingsSection.php`, `CommunityModule.php` (`register_extension()`, `panel_product()`), `src/Modules/WooCommerce/Dashboard/CreatorProducts.php` (`newest()`)
 - `assets/src/twitch-extension/` (`panel.ts`, `panel.css`, `panel.html`), `bin/twitch-extension.mjs`

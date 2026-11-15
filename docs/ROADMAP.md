@@ -1312,6 +1312,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **49.2 Twitch-opsætning (projektejeren):**
   - Opret extensionen i udviklerkonsollen.
   - Sæt allowlists (`ccmerch.dk`) og en testkanal.
+  - Angiv EULA/terms of service-URL og privatlivspolitik-URL: `https://ccmerch.dk/?merchboard_extension=terms` og `…=privacy` (✅ vises af pluginet, projektejerens ønske 2026-11-15; teksterne læses igennem af projektejeren).
   - Extensionens hemmelighed lægges i `wp-config.php` eller en krypteret indstilling, aldrig i repoet.
 - **49.3 Backend i pluginet:** ✅ `5c7a799` (no-store-svar `50205c9`)
   - Et offentligt REST-endpoint med creatorens udgivne produkter for en Twitch-kanal: navn og billede (ADR-112: ingen pris og intet link).

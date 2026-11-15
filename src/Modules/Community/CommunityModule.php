@@ -54,6 +54,7 @@ use MerchBoard\Modules\Community\Rest\MeTwitchExtensionController;
 use MerchBoard\Modules\Community\Rest\MeTwitchSubDiscountController;
 use MerchBoard\Modules\Community\Rest\TwitchExtensionController;
 use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionApp;
+use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionLegal;
 use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionPanel;
 use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionRepository;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCheckout;
@@ -185,6 +186,8 @@ final class CommunityModule implements Module {
 			5
 		);
 		( new TwitchSubPrivacy() )->register();
+		// The Twitch Extension's terms and privacy policy (Twitch requires both URLs; ADR-112).
+		( new TwitchExtensionLegal() )->register();
 		// Gifts (ADR-107): who hears about them, the order page, privacy and creator deletion.
 		( new GiftNotices(
 			static fn( int $creator_id ): string => $container->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '',

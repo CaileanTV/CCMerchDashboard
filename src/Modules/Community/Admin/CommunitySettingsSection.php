@@ -18,6 +18,7 @@ use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
 use MerchBoard\Modules\Community\CommunitySettings;
 use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionApp;
+use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionLegal;
 use MerchBoard\Modules\Settings\Admin\SettingsPage;
 
 defined( 'ABSPATH' ) || exit;
@@ -222,6 +223,8 @@ final class CommunitySettingsSection {
 		echo '<p class="description">' . esc_html__( 'The extension\'s page on Twitch, where creators install it. Shown in the creators\' guide.', 'merchboard' ) . '</p>';
 		/* translators: %s: the REST URL of the panel. */
 		echo '<p class="description">' . esc_html( sprintf( __( 'Allowlist this site in the developer console (URL fetching and image domains). The panel reads: %s', 'merchboard' ), rest_url( 'merchboard/v1/twitch-extension/panel' ) ) ) . '</p>';
+		/* translators: 1: the terms URL, 2: the privacy policy URL. */
+		echo '<p class="description">' . esc_html( sprintf( __( 'For the developer console: EULA/terms of service URL %1$s and privacy policy URL %2$s (served by this plugin; the company details come from Settings → Company details).', 'merchboard' ), TwitchExtensionLegal::url( 'terms' ), TwitchExtensionLegal::url( 'privacy' ) ) ) . '</p>';
 		echo '</td></tr>';
 	}
 

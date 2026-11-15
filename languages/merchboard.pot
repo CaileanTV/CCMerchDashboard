@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-15T15:59:52+00:00\n"
+"POT-Creation-Date: 2026-11-15T17:03:38+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -145,7 +145,7 @@ msgstr ""
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:418
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:151
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsActions.php:92
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:251
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:260
 #: src/Modules/Community/Admin/GiftingTestModeSection.php:174
 #: src/Modules/Creators/Admin/CategoryProposalActions.php:101
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
@@ -800,429 +800,437 @@ msgid "Twitch Extension panel changed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:215
-msgid "Creator started a designer product"
+msgid "Merch ad overlay changed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:216
-msgid "Creator deleted a designer draft"
+msgid "!merch command changed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:217
-msgid "Creator submitted a design for approval"
+msgid "Creator started a designer product"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:218
-msgid "Creator withdrew a design from approval"
+msgid "Creator deleted a designer draft"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:219
-msgid "Design approved"
+msgid "Creator submitted a design for approval"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:220
+msgid "Creator withdrew a design from approval"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:221
+msgid "Design approved"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:222
 #: src/Modules/ProductDesigner/DesignerNotifications.php:210
 msgid "Design rejected"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:221
+#: src/Modules/Admin/AuditLogFormatter.php:223
 msgid "Design put in the shop"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:222
+#: src/Modules/Admin/AuditLogFormatter.php:224
 msgid "Design queued for the shop again"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:223
+#: src/Modules/Admin/AuditLogFormatter.php:225
 msgid "Creator discarded a change of a designer product"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:224
+#: src/Modules/Admin/AuditLogFormatter.php:226
 msgid "Creator put a designer product in the shop"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:225
+#: src/Modules/Admin/AuditLogFormatter.php:227
 msgid "Creator took a designer product out of the shop"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:226
+#: src/Modules/Admin/AuditLogFormatter.php:228
 msgid "Creator moved a designer product to the deleted designs"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:227
+#: src/Modules/Admin/AuditLogFormatter.php:229
 msgid "Creator deleted a design for good"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:228
+#: src/Modules/Admin/AuditLogFormatter.php:230
 msgid "Creator started a change of a designer product"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:229
+#: src/Modules/Admin/AuditLogFormatter.php:231
 msgid "Base product retired"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:230
+#: src/Modules/Admin/AuditLogFormatter.php:232
 msgid "Designer product repriced"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:231
+#: src/Modules/Admin/AuditLogFormatter.php:233
 #: src/Modules/ProductDesigner/DesignerNotifications.php:328
 msgid "Designer product taken out of the shop"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:322
+#: src/Modules/Admin/AuditLogFormatter.php:324
 msgid "WordPress user: none"
 msgstr ""
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:324
+#: src/Modules/Admin/AuditLogFormatter.php:326
 #, php-format
 msgid "WordPress user: %s"
 msgstr ""
 
 #. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:327
+#: src/Modules/Admin/AuditLogFormatter.php:329
 #, php-format
 msgid "Triggered by: %s"
 msgstr ""
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:330
+#: src/Modules/Admin/AuditLogFormatter.php:332
 #, php-format
 msgid "Status: %s"
 msgstr ""
 
 #. translators: %s: creator status.
-#: src/Modules/Admin/AuditLogFormatter.php:333
+#: src/Modules/Admin/AuditLogFormatter.php:335
 #, php-format
 msgid "Previous status: %s"
 msgstr ""
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:336
+#: src/Modules/Admin/AuditLogFormatter.php:338
 #, php-format
 msgid "Changed: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:339
+#: src/Modules/Admin/AuditLogFormatter.php:341
 msgid "Reason: the WordPress user was deleted"
 msgstr ""
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:341
+#: src/Modules/Admin/AuditLogFormatter.php:343
 #, php-format
 msgid "Reason: %s"
 msgstr ""
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:344
+#: src/Modules/Admin/AuditLogFormatter.php:346
 #, php-format
 msgid "Trigger: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:347
+#: src/Modules/Admin/AuditLogFormatter.php:349
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:348
+#: src/Modules/Admin/AuditLogFormatter.php:350
 msgid "Setting: creator dashboard URL slug"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:349
+#: src/Modules/Admin/AuditLogFormatter.php:351
 msgid "Setting: counted order statuses"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:350
+#: src/Modules/Admin/AuditLogFormatter.php:352
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr ""
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:352
+#: src/Modules/Admin/AuditLogFormatter.php:354
 #, php-format
 msgid "Setting: %s"
 msgstr ""
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:356
+#: src/Modules/Admin/AuditLogFormatter.php:358
 #, php-format
 msgid "Previous value: %s"
 msgstr ""
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:359
+#: src/Modules/Admin/AuditLogFormatter.php:361
 #, php-format
 msgid "New value: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:361
+#: src/Modules/Admin/AuditLogFormatter.php:363
 msgid "New value: enabled"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:361
+#: src/Modules/Admin/AuditLogFormatter.php:363
 msgid "New value: disabled"
 msgstr ""
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:364
+#: src/Modules/Admin/AuditLogFormatter.php:366
 #, php-format
 msgid "Product: %s"
 msgstr ""
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:367
+#: src/Modules/Admin/AuditLogFormatter.php:369
 #, php-format
 msgid "Product category: %s"
 msgstr ""
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:370
+#: src/Modules/Admin/AuditLogFormatter.php:372
 #, php-format
 msgid "Product categories: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:373
+#: src/Modules/Admin/AuditLogFormatter.php:375
 msgid "Previous creator: none"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:375
+#: src/Modules/Admin/AuditLogFormatter.php:377
 #, php-format
 msgid "Previous creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:378
+#: src/Modules/Admin/AuditLogFormatter.php:380
 #, php-format
 msgid "Creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:381
+#: src/Modules/Admin/AuditLogFormatter.php:383
 #, php-format
 msgid "Done by an administrator viewing as %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:384
+#: src/Modules/Admin/AuditLogFormatter.php:386
 msgid "Kept anonymized for its sales, payouts and settlement documents"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:385
+#: src/Modules/Admin/AuditLogFormatter.php:387
 msgid "Deleted completely (no sales, payouts or settlement documents)"
 msgstr ""
 
 #. translators: %s: the creator's former name.
-#: src/Modules/Admin/AuditLogFormatter.php:388
+#: src/Modules/Admin/AuditLogFormatter.php:390
 #, php-format
 msgid "Former name: %s"
 msgstr ""
 
 #. translators: %s: removal request id.
-#: src/Modules/Admin/AuditLogFormatter.php:391
+#: src/Modules/Admin/AuditLogFormatter.php:393
 #, php-format
 msgid "Removal request: #%s"
 msgstr ""
 
 #. translators: %s: proposal id.
-#: src/Modules/Admin/AuditLogFormatter.php:394
+#: src/Modules/Admin/AuditLogFormatter.php:396
 #, php-format
 msgid "Proposal: #%s"
 msgstr ""
 
 #. translators: %s: what the proposal changes, e.g. "banner".
-#: src/Modules/Admin/AuditLogFormatter.php:397
+#: src/Modules/Admin/AuditLogFormatter.php:399
 #, php-format
 msgid "Proposed change: %s"
 msgstr ""
 
 #. translators: %s: the administrator's note.
-#: src/Modules/Admin/AuditLogFormatter.php:400
+#: src/Modules/Admin/AuditLogFormatter.php:402
 #, php-format
 msgid "Note to the creator: %s"
 msgstr ""
 
 #. translators: %s: campaign id.
-#: src/Modules/Admin/AuditLogFormatter.php:403
+#: src/Modules/Admin/AuditLogFormatter.php:405
 #, php-format
 msgid "Campaign: #%s"
 msgstr ""
 
 #. translators: %s: campaign name.
-#: src/Modules/Admin/AuditLogFormatter.php:406
+#: src/Modules/Admin/AuditLogFormatter.php:408
 #, php-format
 msgid "Campaign name: %s"
 msgstr ""
 
 #. translators: %s: start and end in UTC.
-#: src/Modules/Admin/AuditLogFormatter.php:409
+#: src/Modules/Admin/AuditLogFormatter.php:411
 #, php-format
 msgid "Period (UTC): %s"
 msgstr ""
 
 #. translators: %s: comma-separated coupon codes.
-#: src/Modules/Admin/AuditLogFormatter.php:412
+#: src/Modules/Admin/AuditLogFormatter.php:414
 #, php-format
 msgid "Coupon codes: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:414
+#: src/Modules/Admin/AuditLogFormatter.php:416
 msgid "Covers sale prices: yes"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:414
+#: src/Modules/Admin/AuditLogFormatter.php:416
 msgid "Covers sale prices: no"
 msgstr ""
 
 #. translators: %d: minutes.
-#: src/Modules/Admin/AuditLogFormatter.php:417
+#: src/Modules/Admin/AuditLogFormatter.php:419
 #, php-format
 msgid "Session length: %d minutes"
 msgstr ""
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:420
+#: src/Modules/Admin/AuditLogFormatter.php:422
 #, php-format
 msgid "Origin: %s"
 msgstr ""
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:423
+#: src/Modules/Admin/AuditLogFormatter.php:425
 #, php-format
 msgid "Previous origin: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:426
+#: src/Modules/Admin/AuditLogFormatter.php:428
 msgid "Previous link: invalid"
 msgstr ""
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:428
+#: src/Modules/Admin/AuditLogFormatter.php:430
 #, php-format
 msgid "Previous link: %s"
 msgstr ""
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:431
+#: src/Modules/Admin/AuditLogFormatter.php:433
 #, php-format
 msgid "Choice: %s"
 msgstr ""
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:434
+#: src/Modules/Admin/AuditLogFormatter.php:436
 #, php-format
 msgid "Run: %s"
 msgstr ""
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:437
+#: src/Modules/Admin/AuditLogFormatter.php:439
 #, php-format
 msgid "Scope: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:439
+#: src/Modules/Admin/AuditLogFormatter.php:441
 msgid "Dry run: yes"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:439
+#: src/Modules/Admin/AuditLogFormatter.php:441
 msgid "Dry run: no"
 msgstr ""
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:442
+#: src/Modules/Admin/AuditLogFormatter.php:444
 #, php-format
 msgid "Products evaluated: %s"
 msgstr ""
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:445
+#: src/Modules/Admin/AuditLogFormatter.php:447
 #, php-format
 msgid "Order: #%s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:448
+#: src/Modules/Admin/AuditLogFormatter.php:450
 msgid "WooCommerce order: in the trash"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:449
+#: src/Modules/Admin/AuditLogFormatter.php:451
 msgid "WooCommerce order: deleted"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:452
+#: src/Modules/Admin/AuditLogFormatter.php:454
 #, php-format
 msgid "Ledger rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:455
+#: src/Modules/Admin/AuditLogFormatter.php:457
 #, php-format
 msgid "Cycle events deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:458
+#: src/Modules/Admin/AuditLogFormatter.php:460
 #, php-format
 msgid "Stored tax rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
-#: src/Modules/Admin/AuditLogFormatter.php:461
+#: src/Modules/Admin/AuditLogFormatter.php:463
 #, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr ""
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:464
+#: src/Modules/Admin/AuditLogFormatter.php:466
 #, php-format
 msgid "Creators: %s"
 msgstr ""
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:505
+#: src/Modules/Admin/AuditLogFormatter.php:507
 #, php-format
 msgid "Orders scanned: %s"
 msgstr ""
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:507
+#: src/Modules/Admin/AuditLogFormatter.php:509
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr ""
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:509
+#: src/Modules/Admin/AuditLogFormatter.php:511
 #, php-format
 msgid "Failures by code: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:522
+#: src/Modules/Admin/AuditLogFormatter.php:524
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:355
 msgid "Registered"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:523
+#: src/Modules/Admin/AuditLogFormatter.php:525
 msgid "Already in the ledger"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:524
+#: src/Modules/Admin/AuditLogFormatter.php:526
 #: build/dashboard.js:96
 msgid "Not counted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:525
+#: src/Modules/Admin/AuditLogFormatter.php:527
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:526
+#: src/Modules/Admin/AuditLogFormatter.php:528
 msgid "Not found"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:527
+#: src/Modules/Admin/AuditLogFormatter.php:529
 msgid "Busy"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:528
+#: src/Modules/Admin/AuditLogFormatter.php:530
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:262
 msgid "Failed"
 msgstr ""
@@ -1230,90 +1238,90 @@ msgstr ""
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:538
-#: src/Modules/Admin/AuditLogFormatter.php:564
-#: src/Modules/Admin/AuditLogFormatter.php:623
+#: src/Modules/Admin/AuditLogFormatter.php:540
+#: src/Modules/Admin/AuditLogFormatter.php:566
+#: src/Modules/Admin/AuditLogFormatter.php:625
 #, php-format
 msgid "%1$s: %2$d"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:551
+#: src/Modules/Admin/AuditLogFormatter.php:553
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:102
 msgid "Sale"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:552
+#: src/Modules/Admin/AuditLogFormatter.php:554
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:102
 msgid "Refund"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:553
+#: src/Modules/Admin/AuditLogFormatter.php:555
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:102
 msgid "Reversal"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:554
+#: src/Modules/Admin/AuditLogFormatter.php:556
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:494
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:102
 msgid "Correction"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:582
+#: src/Modules/Admin/AuditLogFormatter.php:584
 msgid "none"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:606
+#: src/Modules/Admin/AuditLogFormatter.php:608
 msgid "Linked"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:607
+#: src/Modules/Admin/AuditLogFormatter.php:609
 msgid "Moved"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:608
+#: src/Modules/Admin/AuditLogFormatter.php:610
 msgid "Removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:609
+#: src/Modules/Admin/AuditLogFormatter.php:611
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:110
 msgid "Unchanged"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:610
-#: src/Modules/Admin/AuditLogFormatter.php:762
+#: src/Modules/Admin/AuditLogFormatter.php:612
+#: src/Modules/Admin/AuditLogFormatter.php:764
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:241
 msgid "Manual"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:611
+#: src/Modules/Admin/AuditLogFormatter.php:613
 msgid "Ambiguous"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:612
-#: src/Modules/Admin/AuditLogFormatter.php:822
+#: src/Modules/Admin/AuditLogFormatter.php:614
+#: src/Modules/Admin/AuditLogFormatter.php:824
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
 #: build/dashboard.js:98
 msgid "Inactive"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:613
+#: src/Modules/Admin/AuditLogFormatter.php:615
 msgid "Errors"
 msgstr ""
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:642
+#: src/Modules/Admin/AuditLogFormatter.php:644
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr ""
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:657
+#: src/Modules/Admin/AuditLogFormatter.php:659
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -1322,7 +1330,7 @@ msgstr ""
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:726
+#: src/Modules/Admin/AuditLogFormatter.php:728
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:589
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:422
@@ -1331,103 +1339,103 @@ msgid "%1$s (#%2$d)"
 msgstr ""
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:726
+#: src/Modules/Admin/AuditLogFormatter.php:728
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:586
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:419
 msgid "(no name)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:736
+#: src/Modules/Admin/AuditLogFormatter.php:738
 msgid "the product was added to a mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:737
+#: src/Modules/Admin/AuditLogFormatter.php:739
 msgid "the product left its mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:738
+#: src/Modules/Admin/AuditLogFormatter.php:740
 msgid "the product moved to another creator's category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:739
+#: src/Modules/Admin/AuditLogFormatter.php:741
 msgid "product categories changed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:740
+#: src/Modules/Admin/AuditLogFormatter.php:742
 msgid "a category mapping was created"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:741
+#: src/Modules/Admin/AuditLogFormatter.php:743
 msgid "a category mapping was removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:742
+#: src/Modules/Admin/AuditLogFormatter.php:744
 msgid "the creator was activated"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:743
+#: src/Modules/Admin/AuditLogFormatter.php:745
 msgid "the product category was deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:744
+#: src/Modules/Admin/AuditLogFormatter.php:746
 msgid "categories of several creators (ambiguous)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:745
+#: src/Modules/Admin/AuditLogFormatter.php:747
 msgid "full reconciliation"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:746
+#: src/Modules/Admin/AuditLogFormatter.php:748
 msgid "an administrator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:747
+#: src/Modules/Admin/AuditLogFormatter.php:749
 msgid "the administrator stopped viewing as the creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:748
+#: src/Modules/Admin/AuditLogFormatter.php:750
 msgid "the session expired"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:749
+#: src/Modules/Admin/AuditLogFormatter.php:751
 msgid "the administrator logged out"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:750
+#: src/Modules/Admin/AuditLogFormatter.php:752
 msgid "the administrator viewed another creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:763
+#: src/Modules/Admin/AuditLogFormatter.php:765
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:128
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:312
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:244
 msgid "Product category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:775
+#: src/Modules/Admin/AuditLogFormatter.php:777
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Remove category-managed links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:776
+#: src/Modules/Admin/AuditLogFormatter.php:778
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:384
 msgid "Keep as manual links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:788
+#: src/Modules/Admin/AuditLogFormatter.php:790
 msgid "all relevant products"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:789
+#: src/Modules/Admin/AuditLogFormatter.php:791
 msgid "the products of one category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:790
+#: src/Modules/Admin/AuditLogFormatter.php:792
 msgid "the products of one mapping"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:822
+#: src/Modules/Admin/AuditLogFormatter.php:824
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
@@ -1438,15 +1446,15 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:841
+#: src/Modules/Admin/AuditLogFormatter.php:843
 msgid "display name"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:842
+#: src/Modules/Admin/AuditLogFormatter.php:844
 msgid "bio"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:843
+#: src/Modules/Admin/AuditLogFormatter.php:845
 msgid "social links"
 msgstr ""
 
@@ -1628,6 +1636,7 @@ msgstr ""
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:92
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:93
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:262
+#: templates/community/extension-legal.php:99
 msgid "Creators"
 msgstr ""
 
@@ -1796,7 +1805,7 @@ msgstr ""
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:114
 #: src/Modules/Alerts/Admin/CompanyDetailsSection.php:50
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:57
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:104
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:105
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:54
 #: src/Modules/Settings/Admin/SettingsPage.php:273
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:64
@@ -3613,12 +3622,14 @@ msgstr ""
 #: src/Modules/Alerts/Admin/YouTubeLegalTab.php:85
 #: templates/alerts/legal.php:59
 #: templates/alerts/legal.php:83
+#: templates/community/extension-legal.php:51
 msgid "Privacy policy"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/YouTubeLegalTab.php:86
 #: templates/alerts/legal.php:60
 #: templates/alerts/legal.php:84
+#: templates/community/extension-legal.php:50
 msgid "Terms of service"
 msgstr ""
 
@@ -3862,31 +3873,31 @@ msgstr ""
 msgid "The chatbot settings are invalid."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:89
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:90
 msgid "Community"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:102
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:103
 msgid "The community settings were saved."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:103
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:104
 msgid "No changes were made to the community settings."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:105
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:106
 msgid "A technical error occurred. The community settings were not changed."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:106
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:107
 msgid "The Twitch Extension's Client ID, secret or install link is invalid. Nothing was changed."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:107
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:108
 msgid "The link name must be 2–40 lowercase letters, digits, - or _, start with a letter and not be a name WordPress or the shop uses. Nothing was changed."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:127
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:128
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:49
 #: src/Modules/Community/TwitchSubs/TwitchSubCoupon.php:357
 #: src/Modules/Community/TwitchSubs/TwitchSubOrderInfo.php:83
@@ -3895,57 +3906,69 @@ msgstr ""
 msgid "Twitch subscriber discount"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:128
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:129
 msgid "Creators can give their Twitch subscribers a discount"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:129
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:130
 msgid "Off by default. Customers log in with Twitch in the cart and the checkout, and the discount is taken from the creator's profit. Off: the page disappears from the creators' dashboards and no cart gets the discount; the creators' campaigns are kept."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:133
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:134
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:57
 #: build/dashboard.js:71
 msgid "Twitch gifting"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:134
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:135
 msgid "Viewers can buy gifts that are drawn in the creator's Twitch chat"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:135
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:136
 msgid "Off by default. Off pauses gifting: the page disappears from the creators' dashboards, the gift button disappears and no new draws start. A draw already open ends as usual, winners can still claim their gift, and waiting gifts wait until gifting is switched on again."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:139
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:140
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:65
 #: build/dashboard.js:64
 msgid "Giveaways"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:140
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:141
 msgid "Creators can give their own products away to their viewers"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:141
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:142
 msgid "Off by default. The creator pays the base price and 50 kr. shipping: from the balance when the code is used, or in the shop. The bot draws the winner in the Twitch chat, or the creator passes a link on from their own giveaway. Off: the page disappears from the creators' dashboards and no new giveaway starts; links and codes already given out still work."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:145
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:146
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:73
 #: build/dashboard.js:69
 msgid "Twitch Extension"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:146
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:147
 msgid "Creators can show their products in the shop's Twitch Extension panel"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:147
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:148
 msgid "Off by default. The panel shows the creator's products with image and name only: Twitch does not allow prices, links to the shop or buying in an extension. Creators link to the shop from an ordinary Twitch panel. Off: the page disappears from the creators' dashboards and the panel shows nothing."
 msgstr ""
 
 #: src/Modules/Community/Admin/CommunitySettingsSection.php:152
+msgid "Merch ad"
+msgstr ""
+
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:153
+msgid "Creators can show an ad overlay with their products in the stream"
+msgstr ""
+
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:154
+msgid "Off by default. Creators design an ad with their products (images without background) and an optional pill, choose how often and how long it shows and add it to OBS as a browser source. Off: the page disappears from the creators' dashboards and the overlay shows nothing."
+msgstr ""
+
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:159
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:53
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:61
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:69
@@ -3954,75 +3977,81 @@ msgstr ""
 msgid "Community Features"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:158
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:165
 msgid "Choose which community features creators can use. Each creator then switches a feature on for themselves and connects their Twitch channel on the feature's page in the dashboard."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:163
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:170
 msgid "Twitch is not set up yet: the Twitch features and giveaways in the chat need the Twitch app and the bot account."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:165
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:172
 msgid "Set up Twitch under Alerts → Chatbot"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:182
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:189
 msgid "Link name"
 msgstr ""
 
 #. translators: %s: an example link.
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:185
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:192
 #, php-format
 msgid "The name in the public links of the community features, such as the gift and giveaway links, and later links of the same kind: %s"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:186
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:193
 msgid "2–40 lowercase letters, digits, - or _, starting with a letter. Links already passed on keep working after a change: the earlier names are still read."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:194
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:201
 msgid "Save community settings"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:204
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:211
 msgid "Twitch Extension: Client ID"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:206
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:213
 msgid "From the extension in the Twitch developer console (dev.twitch.tv/console/extensions). The shop owns one extension that all creators install."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:209
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:216
 msgid "Twitch Extension: secret"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:212
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:219
 msgid "Set in wp-config.php (MERCHBOARD_TWITCH_EXTENSION_SECRET)."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:215
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:222
 msgid "A secret is stored (encrypted). Leave empty to keep it."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:215
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:222
 msgid "The extension's secret under \"Extension Client Configuration\" in the developer console. It is stored encrypted and never shown again."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:220
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:227
 msgid "Twitch Extension: install link"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:222
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:229
 msgid "The extension's page on Twitch, where creators install it. Shown in the creators' guide."
 msgstr ""
 
 #. translators: %s: the REST URL of the panel.
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:224
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:231
 #, php-format
 msgid "Allowlist this site in the developer console (URL fetching and image domains). The panel reads: %s"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:245
+#. translators: 1: the terms URL, 2: the privacy policy URL.
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:233
+#, php-format
+msgid "For the developer console: EULA/terms of service URL %1$s and privacy policy URL %2$s (served by this plugin; the company details come from Settings → Company details)."
+msgstr ""
+
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:254
 msgid "Sorry, you are not allowed to manage these settings."
 msgstr ""
 
@@ -14470,6 +14499,7 @@ msgid "The YouTube chatbot of %s writes a message in a creator's YouTube live ch
 msgstr ""
 
 #: templates/alerts/legal.php:75
+#: templates/community/extension-legal.php:20
 msgid "our shop"
 msgstr ""
 
@@ -14493,6 +14523,137 @@ msgstr ""
 #: templates/alerts/legal.php:94
 #, php-format
 msgid "Version %1$d, published %2$s"
+msgstr ""
+
+#. translators: %s: CVR number.
+#: templates/community/extension-legal.php:23
+#, php-format
+msgid "CVR %s"
+msgstr ""
+
+#: templates/community/extension-legal.php:26
+msgid "Merch panel for Twitch: privacy policy"
+msgstr ""
+
+#: templates/community/extension-legal.php:26
+msgid "Merch panel for Twitch: terms of service"
+msgstr ""
+
+#: templates/community/extension-legal.php:49
+msgid "Merch panel for Twitch"
+msgstr ""
+
+#: templates/community/extension-legal.php:55
+msgid "Last updated: 15 November 2026"
+msgstr ""
+
+#: templates/community/extension-legal.php:58
+msgid "About the extension"
+msgstr ""
+
+#. translators: 1: the company with CVR and address, 2: the shop's name.
+#: templates/community/extension-legal.php:62
+#, php-format
+msgid "The merch panel for Twitch (\"the extension\") is provided by %1$s, which runs %2$s. It shows products that a creator sells at %2$s in a panel on the creator's Twitch channel."
+msgstr ""
+
+#: templates/community/extension-legal.php:65
+msgid "Use"
+msgstr ""
+
+#. translators: %s: the shop's name.
+#: templates/community/extension-legal.php:69
+#, php-format
+msgid "Creators with a creator account at %s can install the extension on their Twitch channel and choose which of their products it shows and a short note. Viewers can look at the panel."
+msgstr ""
+
+#: templates/community/extension-legal.php:72
+msgid "The extension only shows products. It has no prices, no links and no purchases, and nothing can be bought in it."
+msgstr ""
+
+#: templates/community/extension-legal.php:73
+msgid "Content"
+msgstr ""
+
+#: templates/community/extension-legal.php:74
+msgid "Creators are responsible for the note they write. We may remove products or notes that break these terms, our shop's terms or Twitch's rules, and we may switch the extension off for a channel."
+msgstr ""
+
+#: templates/community/extension-legal.php:75
+#: templates/community/extension-legal.php:101
+msgid "Twitch"
+msgstr ""
+
+#: templates/community/extension-legal.php:76
+msgid "Your use of Twitch is governed by Twitch's own terms of service. The extension is not made, endorsed or sponsored by Twitch."
+msgstr ""
+
+#: templates/community/extension-legal.php:77
+msgid "Availability and liability"
+msgstr ""
+
+#: templates/community/extension-legal.php:78
+msgid "The extension is provided as it is and free of charge, without any warranty. We may change or stop it at any time. To the extent the law allows, we are not liable for indirect losses from using or not being able to use it."
+msgstr ""
+
+#: templates/community/extension-legal.php:79
+msgid "Changes and law"
+msgstr ""
+
+#: templates/community/extension-legal.php:80
+msgid "We may update these terms; the date above shows the current version. Danish law applies."
+msgstr ""
+
+#: templates/community/extension-legal.php:82
+msgid "Who is responsible"
+msgstr ""
+
+#. translators: 1: the company with CVR and address, 2: the shop's name.
+#: templates/community/extension-legal.php:86
+#, php-format
+msgid "%1$s, which runs %2$s, is responsible for the data the merch panel for Twitch processes."
+msgstr ""
+
+#: templates/community/extension-legal.php:89
+msgid "What the extension receives"
+msgstr ""
+
+#. translators: %s: the shop's name.
+#: templates/community/extension-legal.php:93
+#, php-format
+msgid "When the panel loads, Twitch gives it a signed token with the channel's id, an anonymous viewer id and the viewer's role. The panel sends the token to %s only to find the channel's creator and the products to show."
+msgstr ""
+
+#: templates/community/extension-legal.php:96
+msgid "We read only the channel's id. We do not store the token, the anonymous viewer id or anything else about viewers, and the extension never asks viewers to share their Twitch identity."
+msgstr ""
+
+#: templates/community/extension-legal.php:97
+msgid "No tracking"
+msgstr ""
+
+#: templates/community/extension-legal.php:98
+msgid "The extension uses no cookies, analytics, tracking or advertising. Like any website, our server may briefly log the IP address and time of a request for security and operation."
+msgstr ""
+
+#: templates/community/extension-legal.php:100
+msgid "The products and the note a creator chooses for the panel are stored in the creator's account with us, as described in our shop's privacy policy."
+msgstr ""
+
+#: templates/community/extension-legal.php:102
+msgid "Twitch hosts the extension's files and shows the panel. Twitch's own privacy notice applies to your use of Twitch."
+msgstr ""
+
+#: templates/community/extension-legal.php:103
+msgid "Your rights"
+msgstr ""
+
+#: templates/community/extension-legal.php:104
+msgid "Under the GDPR you can ask for access to, correction of and deletion of data about you, and you can complain to the Danish Data Protection Agency (Datatilsynet)."
+msgstr ""
+
+#: templates/community/extension-legal.php:107
+msgid "Contact"
 msgstr ""
 
 #: templates/community/gift-box.php:52

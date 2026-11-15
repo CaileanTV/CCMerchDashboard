@@ -20,6 +20,7 @@ use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
 use MerchBoard\Modules\Community\Rest\MeTwitchExtensionController;
 use MerchBoard\Modules\Community\Rest\TwitchExtensionController;
 use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionApp;
+use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionLegal;
 use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionPanel;
 use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionRepository;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscountInvalid;
@@ -281,6 +282,29 @@ final class TwitchExtensionTest extends IntegrationTestCase {
 
 		self::assertSame( array(), $this->app->save( 'abcdefghij0123456789klmnop', '', 'https://dashboard.twitch.tv/extensions/abcdefghij0123456789klmnop-0.0.1' ), 'An empty secret keeps the stored one.' );
 		self::assertTrue( $this->app->ready() );
+	}
+
+	public function test_the_terms_and_privacy_policy_twitch_requires_are_served_in_english_and_danish(): void {
+		$settings = Settings::all();
+		Settings::save( array_merge( $settings, array( Settings::COMPANY_NAME => 'Shop ApS', Settings::COMPANY_CVR => '12345678', Settings::COMPANY_EMAIL => 'hello@shop.example' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		$legal = new TwitchExtensionLegal();
+
+		self::assertStringContainsString( 'merchboard_extension=terms', TwitchExtensionLegal::url( 'terms' ) );
+		self::assertStringContainsString( 'lang=da', TwitchExtensionLegal::url( 'privacy', 'da' ) );
+
+		$terms = $legal->render( 'terms', 'en' );
+		self::assertStringContainsString( 'terms of service', $terms );
+		self::assertStringContainsString( 'Shop ApS (CVR 12345678)', $terms );
+		self::assertStringContainsString( 'no prices, no links and no purchases', $terms );
+		self::assertStringContainsString( 'mailto:hello@shop.example', $terms );
+
+		$privacy = $legal->render( 'privacy', 'en' );
+		self::assertStringContainsString( 'We read only the channel', $privacy );
+		self::assertStringContainsString( 'no cookies', $privacy );
+		self::assertStringContainsString( 'lang="en"', $privacy );
+		self::assertStringContainsString( 'lang="da"', $legal->render( 'privacy', 'da' ) );
+
+		Settings::save( $settings );
 	}
 
 	public function test_the_creators_page_is_only_there_while_the_shop_has_it_on(): void {
