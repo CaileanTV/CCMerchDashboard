@@ -1281,6 +1281,49 @@ Projektejerens ønsker 2026-11-12, med Fourthwall som forbillede:
   - runtime i Playground med skærmbilleder (lyst og mørkt tema, mobil);
   - CI, bump til 2.2.0 og testpakke på stg. Tag efter projektejerens OK.
 
+## Fase 49 – Twitch Extension med creatorens produkter 📝 (idé 2026-11-15; afklaring først; mål 2.2.0, hvis afklaringen tillader det; ADR-112)
+
+Projektejerens ønske 2026-11-15: creatoren kan vise sine produkter på sin Twitch-kanal med en **rigtig Twitch Extension**. Den skal ligne de extensions, projektejeren pegede på:
+- `z66yiq0j4rnq7fw907vhjl7nzazcr3` ("Design By Hümans Merch Store");
+- `6742zeipjd2nnxziiagrg4iqk8tvr1`;
+- `0btmbqa5tm2pyr0f59td8vk1unwxl6`.
+
+Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statiske panel-billeder.
+
+**Fakta fra Twitchs udviklerdokumentation (læst 2026-11-15):**
+- **Oprettelse:** en extension oprettes i Twitchs udviklerkonsol (dev.twitch.tv/console/extensions) af den Twitch-konto, der skal eje den. Det skal projektejeren selv gøre; AI-agenter logger aldrig ind på Twitch.
+- **Filer:** frontend-filerne (HTML, JS, CSS) uploades som ZIP og hostes af Twitch. Hver HTML-fil indlæser Twitchs Extension Helper først.
+- **Data udefra:** billeder og data må kun hentes fra domæner på konsollens allowlists (fx `ccmerch.dk`). Alle URL'er skal opgives ved indsendelse.
+- **Godkendelse:** extensionen gennemgås manuelt af Twitch. Det kræver ikon, skærmbilleder, en testkanal, en gennemgangsguide og en ændringslog. Varigheden er ikke oplyst.
+- **⚠️ Handel:**
+  - Twitchs regler 4.6.3 og "Commerce in Extensions" forbyder links fra en extension til sider, hvis hovedformål er at sælge varer (undtagen Twitch og Amazon).
+  - Betaling eller køb inde i extensionen afvises.
+  - Merch-extensions findes alligevel, fx Design By Hümans. Hvordan de er godkendt (særaftale, partnerprogram, ældre regler eller en anden linkform), er ikke afklaret.
+
+**Trin:**
+- **49.1 Afklaring (før noget bygges):**
+  - Hvordan de tre eksisterende merch-extensions er bygget og godkendt: projektejeren kigger på dem logget ind (eller sender skærmbilleder) og eventuelt spørger Twitch.
+  - Om et link til ccmerch.dk kan godkendes, og i hvilken form (fx "se produktet" frem for "køb").
+  - Hvilke typer der ønskes: panel under streamen, komponent over videoen, mobil.
+  - Afklaringen ender i ADR-112. Viser den, at et butikslink ikke kan godkendes, besluttes alternativet sammen med projektejeren (fx panel-billeder).
+- **49.2 Twitch-opsætning (projektejeren):**
+  - Opret extensionen i udviklerkonsollen.
+  - Sæt allowlists (`ccmerch.dk`) og en testkanal.
+  - Extensionens hemmelighed lægges i `wp-config.php` eller en krypteret indstilling, aldrig i repoet.
+- **49.3 Backend i pluginet:**
+  - Et offentligt REST-endpoint med creatorens udgivne produkter for en Twitch-kanal: navn, billede, pris og link.
+  - Kanalen kobles til creatoren via chatbot-forbindelsen (`broadcaster_id`).
+  - Endpointet kræver extensionens JWT, er cachet og rate-limited, og viser aldrig leverandørnavne.
+- **49.4 Frontend:**
+  - Et lille panel (og eventuelt en video-komponent) som eget build-target i repoet.
+  - Produktgitter eller karrusel og creatorens farver.
+  - En ZIP til upload hos Twitch.
+- **49.5 MitCCMerch:** siden Community Features → Twitch Extension med en guide til at aktivere extensionen på kanalen, valg af produkter og rækkefølge, og en forhåndsvisning.
+- **49.6 Test og indsendelse:**
+  - Lokal test via Twitchs "Local Test" og "Hosted Test" på testkanalen.
+  - Skærmbilleder, gennemgangsguide og indsendelse til Twitch.
+  - Udgivelse i 2.2.0 eller en senere version, når Twitch har godkendt.
+
 ## Version 2.1.1 ✅ (tagget 2026-11-12 på 555ae87)
 
 - **Linknavnet i community-links:** ✅ projektejerens ønske 2026-11-12: admin vælger navnet i de offentlige links fra gifting og giveaways (og senere links af samme slags) under Indstillinger → Community. Gamle links virker fortsat (f844980). Testpakke på stg ✅; tagget `v2.1.1` på 555ae87 (draft-ZIP SHA-256 c194694f…). ✅
