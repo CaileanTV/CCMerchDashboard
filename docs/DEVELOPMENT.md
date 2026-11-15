@@ -249,6 +249,17 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 2.2.0: community features i shoppen, Twitch Extension og merch-reklame (fase 48–50)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-15** efter projektejerens beslutning (2.2.0 rummer fase 48, 49 og 50). Testpakke på stg; tag efter projektejerens OK efter testen. Schemaændring 51 → 52 (`merchboard_gifts.order_unit`).
+
+1. **Opdatér** med ZIP'en. Overview skal vise version 2.2.0 og schema-version 52.
+2. **Fase 48:** gave-boksen med LIVE-mærket på et produkt hos en creator i testtilstand; køb 2–3 gaver (fragt 50 kr. pr. gave), og de trækkes én ad gangen ("gave 1 af 3"). Rabatlinjen står under prisen, og Twitch-kortet står over produkterne i kurven og over "Faktureringsoplysninger" i kassen.
+3. **Fase 49:** slå "Twitch Extension" til under Indstillinger → Community; MitCCMerch → Twitch Extension viser produktvalg, pille og forhåndsvisning. `/?merchboard_extension=terms` og `=privacy` viser vilkår og privatlivspolitik. Selve panelet på Twitch kræver extensionen i Twitchs udviklerkonsol (Client ID, hemmelighed, allowlists) og ZIP'en fra `npm run twitch-extension -- --site https://stg.ccmerch.dk`.
+4. **Fase 50:** slå "Merch-reklame" til; MitCCMerch → Merch-reklame: vælg produkter og gem, så fjernes baggrundene. Læg linket i OBS som browser source og prøv "Vis nu" og de fem designs. Under Alerts → Chatbot: slå `!merch` til og skriv `!merch` i Twitch- (og Kick-)chatten.
+
+**Tilbagerulning:** installér 2.1.1-ZIP'en igen. Schema 52 bliver stående (2.1.1 læser gaverne som før; flere gaver pr. køb trækkes ikke under 2.1.1).
+
 ## Release 2.1.1: linknavnet i community-links
 
 **Versions-bump og CHANGELOG-sektion 2026-11-12** efter projektejerens ønske (linknavnet sættes af admin; "Kun parameternavnet", version 2.1.1). Ingen schemaændring.

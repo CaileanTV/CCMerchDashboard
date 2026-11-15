@@ -4,7 +4,9 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
-Fase 48 (ADR-111) og fase 49 (ADR-112); fase 50 (reklame-overlay og `!merch`, ADR-113) kommer også med. Udgives som 2.2.0. Schemaændring 51 → 52.
+## [2.2.0] - 2026-11-15
+
+Fase 48 (ADR-111), fase 49 (ADR-112) og fase 50 (ADR-113): community features i shoppen, Twitch Extension-panelet og merch-reklamen med `!merch`. Schemaændring 51 → 52. Opdateringen står i DEVELOPMENT.md ("Release 2.2.0").
 
 ### Added
 
