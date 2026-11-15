@@ -144,6 +144,10 @@ final class TwitchExtensionTest extends IntegrationTestCase {
 				),
 				array( 'product_ids' => 'invalid' ),
 			),
+			array( $this->with_note( 'Shop at ccmerch.dk' ), array( 'note' => 'no_links' ) ),
+			array( $this->with_note( 'See https://x' ), array( 'note' => 'no_links' ) ),
+			array( $this->with_note( str_repeat( 'æ', 61 ) ), array( 'note' => 'too_long' ) ),
+			array( $this->with_note( array() ), array( 'note' => 'invalid' ) ),
 		) as [ $values, $fields ] ) {
 			try {
 				$this->settings->save( $this->nova, $values );
@@ -158,18 +162,34 @@ final class TwitchExtensionTest extends IntegrationTestCase {
 			array(
 				'enabled'     => true,
 				'product_ids' => array( 502, 501 ),
+				'note'        => '  Skriv <b>!merch</b> i chatten ',
 			)
 		);
 
 		self::assertTrue( $saved->enabled );
+		self::assertSame( 'Skriv !merch i chatten', $saved->note, 'Plain text, trimmed.' );
 		self::assertSame( array( 502, 501 ), $this->settings->find( $this->nova )->product_ids );
 		$audit = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT action, context FROM %i ORDER BY id DESC LIMIT 1', $this->table( Tables::AUDIT_LOG ) ), ARRAY_A );
 		self::assertSame( 'twitch_extension_changed', $audit['action'] ?? null );
-		self::assertSame( array( 'changed_fields' => array( 'enabled', 'product_ids' ) ), json_decode( (string) ( $audit['context'] ?? '' ), true ) );
+		self::assertSame( array( 'changed_fields' => array( 'enabled', 'product_ids', 'note' ) ), json_decode( (string) ( $audit['context'] ?? '' ), true ) );
+	}
+
+	/**
+	 * Valid settings with a pill text.
+	 *
+	 * @param mixed $note The text.
+	 * @return array<string, mixed>
+	 */
+	private function with_note( mixed $note ): array {
+		return array(
+			'enabled'     => true,
+			'product_ids' => array(),
+			'note'        => $note,
+		);
 	}
 
 	public function test_a_channel_shows_its_creators_products_without_price_or_link(): void {
-		self::assertSame( array( 'enabled' => false, 'creator' => '', 'products' => array() ), $this->panel->for_channel( self::CHANNEL ), 'Not switched on by the creator.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact expectation.
+		self::assertSame( array( 'enabled' => false, 'creator' => '', 'note' => '', 'products' => array() ), $this->panel->for_channel( self::CHANNEL ), 'Not switched on by the creator.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact expectation.
 
 		$this->settings->save(
 			$this->nova,
@@ -208,6 +228,7 @@ final class TwitchExtensionTest extends IntegrationTestCase {
 			array(
 				'enabled'     => true,
 				'product_ids' => array( 501 ),
+				'note'        => 'Skriv !merch i chatten',
 			)
 		);
 
@@ -227,6 +248,7 @@ final class TwitchExtensionTest extends IntegrationTestCase {
 			array(
 				'enabled'  => true,
 				'creator'  => 'Nova',
+				'note'     => 'Skriv !merch i chatten',
 				'products' => array(
 					array(
 						'id'    => 501,

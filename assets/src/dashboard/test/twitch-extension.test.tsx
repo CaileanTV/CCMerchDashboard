@@ -22,6 +22,8 @@ const STATE = {
 	enabled: false,
 	product_ids: [],
 	max_products: 12,
+	note: 'Skriv !merch i chatten',
+	max_note: 60,
 	preview: [
 		{ id: 8, name: 'Mug', image: 'https://shop.test/8.jpg' },
 		{ id: 7, name: 'Hoodie', image: null },
@@ -110,7 +112,9 @@ describe( 'parseTwitchExtension', () => {
 		).toEqual( {
 			enabled: false,
 			productIds: [ 8, 7 ],
+			note: 'Skriv !merch i chatten',
 			maxProducts: 12,
+			maxNote: 60,
 			preview: [
 				{ id: 8, name: 'Mug', image: 'https://shop.test/8.jpg' },
 				{ id: 7, name: 'Hoodie', image: null },
@@ -166,6 +170,10 @@ describe( 'Twitch Extension (ADR-112)', () => {
 			).map( ( item ) => item.textContent )
 		).toEqual( [ 'Mug', 'Hoodie' ] );
 		expect(
+			container.querySelector( '.merchboard-twitch-panel-pill strong' )
+				?.textContent
+		).toBe( '!merch' );
+		expect(
 			container
 				.querySelector( '.merchboard-twitch-guide a' )
 				?.getAttribute( 'href' )
@@ -197,6 +205,7 @@ describe( 'Twitch Extension (ADR-112)', () => {
 		expect( saved?.data ).toEqual( {
 			enabled: true,
 			product_ids: [ 8, 7 ],
+			note: 'Skriv !merch i chatten',
 		} );
 		expect( container.textContent ).toContain( 'Twitch Extension saved.' );
 	} );
@@ -210,7 +219,10 @@ describe( 'Twitch Extension (ADR-112)', () => {
 				response( 400, {
 					code: 'merchboard_invalid_twitch_extension',
 					message: 'Invalid.',
-					data: { status: 400, fields: { product_ids: 'not_owned' } },
+					data: {
+						status: 400,
+						fields: { product_ids: 'not_owned', note: 'no_links' },
+					},
 				} ),
 		} );
 
@@ -224,6 +236,9 @@ describe( 'Twitch Extension (ADR-112)', () => {
 		await submit( container );
 		expect( container.textContent ).toContain(
 			'Choose only your own products.'
+		);
+		expect( container.textContent ).toContain(
+			'Links and web addresses are not allowed'
 		);
 	} );
 } );

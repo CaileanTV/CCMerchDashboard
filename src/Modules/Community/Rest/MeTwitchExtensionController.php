@@ -145,6 +145,7 @@ final class MeTwitchExtensionController extends RestController {
 						array(
 							'enabled'     => $body['enabled'] ?? null,
 							'product_ids' => $body['product_ids'] ?? null,
+							'note'        => $body['note'] ?? '',
 						)
 					);
 				} catch ( TwitchSubDiscountInvalid $e ) {
@@ -169,6 +170,8 @@ final class MeTwitchExtensionController extends RestController {
 				'enabled'      => $settings->enabled,
 				'product_ids'  => $settings->product_ids,
 				'max_products' => TwitchExtensionSettings::MAX_PRODUCTS,
+				'note'         => $settings->note,
+				'max_note'     => TwitchExtensionSettings::MAX_NOTE,
 				// What the panel shows: the chosen products, or the newest.
 				'preview'      => $this->panel->products( $creator_id ),
 				'channel'      => null === $login ? null : array( 'login' => $login ),

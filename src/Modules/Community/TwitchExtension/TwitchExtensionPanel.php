@@ -16,8 +16,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * The panel's content for a Twitch channel (ADR-112 pkt. 2–3): the creator's
- * name and up to 12 products with name and image, never a price, a link or a
- * supplier. Empty when the channel is not a creator's, the creator has not
+ * name, the creator's pill text and up to 12 products with name and image,
+ * never a price, a link or a supplier. Empty when the channel is not a creator's, the creator has not
  * switched the panel on, or the shop has switched it off. Cached 5 minutes
  * per creator; the creator's save clears it.
  */
@@ -83,7 +83,7 @@ final class TwitchExtensionPanel {
 	 * @phpstan-impure It reads and fills the cache.
 	 *
 	 * @param string $channel_id Twitch channel (broadcaster) id.
-	 * @return array{enabled: bool, creator: string, products: list<array{id: int, name: string, image: string|null}>}
+	 * @return array{enabled: bool, creator: string, note: string, products: list<array{id: int, name: string, image: string|null}>}
 	 * @throws \MerchBoard\Core\Database\DatabaseException When the creator's data cannot be read.
 	 */
 	public function for_channel( string $channel_id ): array {
@@ -93,17 +93,18 @@ final class TwitchExtensionPanel {
 			return array(
 				'enabled'  => false,
 				'creator'  => '',
+				'note'     => '',
 				'products' => array(),
 			);
 		}
 
 		$cached = get_transient( TwitchExtensionRepository::CACHE_PREFIX . $creator_id );
 
-		if ( is_array( $cached ) && isset( $cached['products'], $cached['creator'] ) && is_array( $cached['products'] ) && is_string( $cached['creator'] ) ) {
+		if ( is_array( $cached ) && isset( $cached['products'], $cached['creator'], $cached['note'] ) && is_array( $cached['products'] ) && is_string( $cached['creator'] ) && is_string( $cached['note'] ) ) {
 			/**
 			 * The panel as stored below.
 			 *
-			 * @var array{enabled: bool, creator: string, products: list<array{id: int, name: string, image: string|null}>} $cached
+			 * @var array{enabled: bool, creator: string, note: string, products: list<array{id: int, name: string, image: string|null}>} $cached
 			 */
 			return $cached;
 		}
@@ -111,6 +112,7 @@ final class TwitchExtensionPanel {
 		$panel = array(
 			'enabled'  => true,
 			'creator'  => ( $this->name )( $creator_id ),
+			'note'     => $this->settings->find( $creator_id )->note,
 			'products' => $this->products( $creator_id ),
 		);
 		set_transient( TwitchExtensionRepository::CACHE_PREFIX . $creator_id, $panel, self::CACHE_SECONDS );

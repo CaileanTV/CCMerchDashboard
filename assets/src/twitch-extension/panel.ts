@@ -16,6 +16,8 @@ export interface PanelProduct {
 export interface Panel {
 	readonly enabled: boolean;
 	readonly creator: string;
+	/** The creator's pill text, e.g. "Type !merch in the chat"; '' for none. */
+	readonly note: string;
 	readonly products: readonly PanelProduct[];
 }
 
@@ -71,10 +73,12 @@ export function parsePanel( body: unknown ): Panel | null {
 	}
 
 	const { enabled, creator, products } = body as Record< string, unknown >;
+	const note = ( body as Record< string, unknown > ).note ?? '';
 
 	if (
 		typeof enabled !== 'boolean' ||
 		typeof creator !== 'string' ||
+		typeof note !== 'string' ||
 		! Array.isArray( products )
 	) {
 		return null;
@@ -102,7 +106,7 @@ export function parsePanel( body: unknown ): Panel | null {
 		parsed.push( { id, name, image } );
 	}
 
-	return { enabled, creator, products: parsed };
+	return { enabled, creator, note: note.slice( 0, 60 ), products: parsed };
 }
 
 /**
@@ -122,6 +126,29 @@ function element< K extends keyof HTMLElementTagNameMap >(
 
 	if ( text !== undefined ) {
 		node.textContent = text;
+	}
+
+	return node;
+}
+
+/**
+ * The creator's pill: plain text, with chat commands (`!merch`) in bold.
+ *
+ * @param note The text.
+ */
+export function pill( note: string ): HTMLElement {
+	const node = element( 'p', 'mb-panel__pill' );
+
+	for ( const part of note.split( /(![A-Za-z0-9_]+)/ ) ) {
+		if ( part === '' ) {
+			continue;
+		}
+
+		node.append(
+			/^![A-Za-z0-9_]+$/.test( part )
+				? element( 'strong', 'mb-panel__command', part )
+				: document.createTextNode( part )
+		);
 	}
 
 	return node;
@@ -162,6 +189,11 @@ export function renderPanel(
 		panel.creator === '' ? texts.titleNoName : texts.title( panel.creator )
 	);
 	const list = element( 'ul', 'mb-panel__grid' );
+	const head: HTMLElement[] = [ title ];
+
+	if ( panel.note !== '' ) {
+		head.push( pill( panel.note ) );
+	}
 
 	for ( const product of panel.products ) {
 		const item = element( 'li', 'mb-panel__item' );
@@ -183,7 +215,7 @@ export function renderPanel(
 		list.append( item );
 	}
 
-	root.replaceChildren( title, list );
+	root.replaceChildren( ...head, list );
 }
 
 /**

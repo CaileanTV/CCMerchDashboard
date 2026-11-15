@@ -24,6 +24,7 @@ type FetchLike = (
 const PANEL: Panel = {
 	enabled: true,
 	creator: 'Nova',
+	note: 'Skriv !merch i chatten',
 	products: [
 		{ id: 1, name: 'Hoodie <b>', image: 'https://shop.test/1.jpg' },
 		{ id: 2, name: 'Mug', image: null },
@@ -94,6 +95,22 @@ describe( 'the Twitch Extension panel (ADR-112)', () => {
 			root.querySelector( '.mb-panel__image--blank' )
 		).not.toBeNull();
 		expect( root.textContent ).not.toMatch( /kr\.|DKK|\$/ );
+	} );
+
+	it( 'shows the pill with the command in bold, as text', () => {
+		renderPanel( root, PANEL, 'da' );
+
+		const pill = root.querySelector( '.mb-panel__pill' );
+		expect( pill?.textContent ).toBe( 'Skriv !merch i chatten' );
+		expect( pill?.querySelector( 'strong' )?.textContent ).toBe( '!merch' );
+
+		renderPanel( root, { ...PANEL, note: '<img src=x>' }, 'da' );
+		expect( root.querySelector( '.mb-panel__pill img' ) ).toBeNull();
+
+		renderPanel( root, { ...PANEL, note: '' }, 'da' );
+		expect( root.querySelector( '.mb-panel__pill' ) ).toBeNull();
+		expect( parsePanel( { ...PANEL, note: undefined } )?.note ).toBe( '' );
+		expect( parsePanel( { ...PANEL, note: 7 } ) ).toBeNull();
 	} );
 
 	it( 'says so when there is nothing to show', () => {

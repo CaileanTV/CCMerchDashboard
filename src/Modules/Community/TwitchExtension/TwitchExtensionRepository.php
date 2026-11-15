@@ -76,13 +76,14 @@ final class TwitchExtensionRepository {
 	 * Validates and saves the creator's settings.
 	 *
 	 * @param int          $creator_id Creator.
-	 * @param array<mixed> $values     `enabled` (bool) and `product_ids` (list of the creator's product ids).
+	 * @param array<mixed> $values     `enabled` (bool), `product_ids` (list of the creator's product ids) and `note` (the pill's text, optional).
 	 * @throws TwitchSubDiscountInvalid With a code per invalid field (a failed write throws DatabaseException).
 	 */
 	public function save( int $creator_id, array $values ): TwitchExtensionSettings {
 		$errors  = array();
 		$enabled = $values['enabled'] ?? null;
 		$ids     = $values['product_ids'] ?? null;
+		$note    = $values['note'] ?? '';
 
 		if ( ! is_bool( $enabled ) ) {
 			$errors['enabled'] = 'required';
@@ -101,11 +102,22 @@ final class TwitchExtensionRepository {
 			}
 		}
 
+		if ( ! is_string( $note ) ) {
+			$errors['note'] = 'invalid';
+		} else {
+			$note  = trim( sanitize_text_field( $note ) );
+			$error = TwitchExtensionSettings::note_error( $note );
+
+			if ( null !== $error ) {
+				$errors['note'] = $error;
+			}
+		}
+
 		if ( array() !== $errors || ! is_array( $ids ) ) {
 			throw new TwitchSubDiscountInvalid( $errors );
 		}
 
-		$settings = new TwitchExtensionSettings( true === $enabled, array_values( array_unique( array_map( 'intval', $ids ) ) ) );
+		$settings = new TwitchExtensionSettings( true === $enabled, array_values( array_unique( array_map( 'intval', $ids ) ) ), $note );
 		$before   = $this->find( $creator_id )->to_stored();
 		$stored   = $settings->to_stored();
 		$changed  = array_keys( array_filter( $stored, static fn( mixed $value, string $field ): bool => $value !== $before[ $field ], ARRAY_FILTER_USE_BOTH ) );

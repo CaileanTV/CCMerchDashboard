@@ -41,6 +41,13 @@ function fieldError( code: string ): string {
 			return __( 'Choose at most 12 products.', 'merchboard' );
 		case 'not_owned':
 			return __( 'Choose only your own products.', 'merchboard' );
+		case 'too_long':
+			return __( 'Use at most 60 characters.', 'merchboard' );
+		case 'no_links':
+			return __(
+				'Links and web addresses are not allowed: Twitch does not allow them in the panel. Write a chat command instead, e.g. !merch.',
+				'merchboard'
+			);
 		default:
 			return __( 'Check this field.', 'merchboard' );
 	}
@@ -79,15 +86,42 @@ async function loadProducts(
 }
 
 /**
- * The panel as viewers see it on Twitch: the products with image and name.
+ * The pill's text with chat commands (`!merch`) in bold, as on Twitch.
+ *
+ * @param props      Props.
+ * @param props.note The text.
+ */
+function Pill( { note }: { readonly note: string } ) {
+	return (
+		<p className="merchboard-twitch-panel-pill">
+			{ note
+				.split( /(![A-Za-z0-9_]+)/ )
+				.filter( ( part ) => part !== '' )
+				.map( ( part, index ) =>
+					/^![A-Za-z0-9_]+$/.test( part ) ? (
+						<strong key={ index }>{ part }</strong>
+					) : (
+						<span key={ index }>{ part }</span>
+					)
+				) }
+		</p>
+	);
+}
+
+/**
+ * The panel as viewers see it on Twitch: the pill and the products with
+ * image and name.
  *
  * @param props          Props.
  * @param props.products The products.
+ * @param props.note     The pill's text.
  */
 function PanelPreview( {
 	products,
+	note,
 }: {
 	readonly products: readonly PanelProduct[];
+	readonly note: string;
 } ) {
 	if ( products.length === 0 ) {
 		return (
@@ -98,21 +132,24 @@ function PanelPreview( {
 	}
 
 	return (
-		<ul
-			className="merchboard-twitch-panel-preview"
-			aria-label={ __( 'Preview of the panel', 'merchboard' ) }
-		>
-			{ products.map( ( product ) => (
-				<li key={ product.id }>
-					{ product.image !== null ? (
-						<img src={ product.image } alt="" loading="lazy" />
-					) : (
-						<span className="merchboard-twitch-panel-preview__blank" />
-					) }
-					<span>{ product.name }</span>
-				</li>
-			) ) }
-		</ul>
+		<div className="merchboard-twitch-panel-preview-wrap">
+			{ note !== '' && <Pill note={ note } /> }
+			<ul
+				className="merchboard-twitch-panel-preview"
+				aria-label={ __( 'Preview of the panel', 'merchboard' ) }
+			>
+				{ products.map( ( product ) => (
+					<li key={ product.id }>
+						{ product.image !== null ? (
+							<img src={ product.image } alt="" loading="lazy" />
+						) : (
+							<span className="merchboard-twitch-panel-preview__blank" />
+						) }
+						<span>{ product.name }</span>
+					</li>
+				) ) }
+			</ul>
+		</div>
 	);
 }
 
@@ -311,6 +348,40 @@ export function TwitchExtensionSection() {
 					/>
 				</div>
 
+				<div className="merchboard-field">
+					<label
+						className="merchboard-field__label"
+						htmlFor="merchboard-twitch-extension-note"
+					>
+						{ __( 'Text in the pill (optional)', 'merchboard' ) }
+					</label>
+					<input
+						id="merchboard-twitch-extension-note"
+						className="merchboard-input"
+						type="text"
+						value={ values.note }
+						maxLength={ current.maxNote }
+						placeholder={ __(
+							'Type !merch in the chat',
+							'merchboard'
+						) }
+						onChange={ ( event ) =>
+							setValues( { ...values, note: event.target.value } )
+						}
+					/>
+					<p className="merchboard-field__help">
+						{ __(
+							'Shown in a pill at the top of the panel, e.g. a chat command. Commands that start with ! are shown in bold. No links: Twitch does not allow them in the panel.',
+							'merchboard'
+						) }
+					</p>
+					{ errors.note !== undefined && (
+						<p className="merchboard-field__error">
+							{ fieldError( errors.note ) }
+						</p>
+					) }
+				</div>
+
 				<fieldset className="merchboard-community-campaign">
 					<legend className="merchboard-field__label">
 						{ __( 'Products in the panel', 'merchboard' ) }
@@ -469,7 +540,7 @@ export function TwitchExtensionSection() {
 					'merchboard'
 				) }
 			</p>
-			<PanelPreview products={ current.preview } />
+			<PanelPreview products={ current.preview } note={ current.note } />
 
 			<h3 className="merchboard-field__label">
 				{ __( 'Get the panel on your channel', 'merchboard' ) }

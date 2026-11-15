@@ -19,10 +19,13 @@ export interface TwitchExtensionValues {
 	readonly enabled: boolean;
 	/** Chosen products in order; empty shows the newest. */
 	readonly productIds: readonly number[];
+	/** The pill's text, e.g. "Type !merch in the chat"; '' for none. */
+	readonly note: string;
 }
 
 export interface TwitchExtensionState extends TwitchExtensionValues {
 	readonly maxProducts: number;
+	readonly maxNote: number;
 	/** What the panel shows now. */
 	readonly preview: readonly PanelProduct[];
 	/** The connected Twitch channel's login, or null. */
@@ -92,6 +95,8 @@ export function parseTwitchExtension(
 	const { enabled, ready, twitch, channel } = body;
 	const installUrl = body.install_url;
 	const maxProducts = positive( body.max_products );
+	const maxNote = positive( body.max_note );
+	const { note } = body;
 	const productIds = body.product_ids.map( positive );
 	const preview = body.preview.map( parseProduct );
 
@@ -100,6 +105,8 @@ export function parseTwitchExtension(
 		typeof ready !== 'boolean' ||
 		typeof twitch !== 'boolean' ||
 		maxProducts === null ||
+		maxNote === null ||
+		typeof note !== 'string' ||
 		productIds.some( ( id ) => id === null ) ||
 		preview.some( ( product ) => product === null ) ||
 		( installUrl !== null &&
@@ -118,7 +125,9 @@ export function parseTwitchExtension(
 	return {
 		enabled,
 		productIds: productIds as number[],
+		note,
 		maxProducts,
+		maxNote,
 		preview: preview as PanelProduct[],
 		channel:
 			channel !== null && isRecord( channel )
@@ -159,6 +168,7 @@ export function saveTwitchExtension(
 			data: {
 				enabled: values.enabled,
 				product_ids: values.productIds,
+				note: values.note,
 			},
 		},
 		parseTwitchExtension

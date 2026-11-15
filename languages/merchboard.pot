@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-15T15:46:15+00:00\n"
+"POT-Creation-Date: 2026-11-15T15:59:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -4455,7 +4455,7 @@ msgstr ""
 msgid "The Twitch Extension is not available."
 msgstr ""
 
-#: src/Modules/Community/Rest/MeTwitchExtensionController.php:151
+#: src/Modules/Community/Rest/MeTwitchExtensionController.php:152
 msgid "Some fields of the Twitch Extension panel are missing or invalid."
 msgstr ""
 
@@ -18256,6 +18256,15 @@ msgid "Choose only your own products."
 msgstr ""
 
 #: build/dashboard.js:69
+#: build/dashboard.js:74
+msgid "Use at most 60 characters."
+msgstr ""
+
+#: build/dashboard.js:69
+msgid "Links and web addresses are not allowed: Twitch does not allow them in the panel. Write a chat command instead, e.g. !merch."
+msgstr ""
+
+#: build/dashboard.js:69
 #: build/dashboard.js:71
 #: build/dashboard.js:74
 msgid "Check this field."
@@ -18287,6 +18296,18 @@ msgstr ""
 
 #: build/dashboard.js:69
 msgid "Show my products in the panel"
+msgstr ""
+
+#: build/dashboard.js:69
+msgid "Text in the pill (optional)"
+msgstr ""
+
+#: build/dashboard.js:69
+msgid "Type !merch in the chat"
+msgstr ""
+
+#: build/dashboard.js:69
+msgid "Shown in a pill at the top of the panel, e.g. a chat command. Commands that start with ! are shown in bold. No links: Twitch does not allow them in the panel."
 msgstr ""
 
 #: build/dashboard.js:69
@@ -18516,10 +18537,6 @@ msgstr ""
 
 #: build/dashboard.js:74
 msgid "Fill in this field."
-msgstr ""
-
-#: build/dashboard.js:74
-msgid "Use at most 60 characters."
 msgstr ""
 
 #: build/dashboard.js:74
