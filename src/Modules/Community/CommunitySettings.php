@@ -16,6 +16,7 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Core\Settings\CommunityLink;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Community\MerchAd\MerchAdLink;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -74,6 +75,16 @@ class CommunitySettings {
 			$changed[ Settings::COMMUNITY_LINK_PARAM ]  = array( $old, $link );
 			$settings[ Settings::COMMUNITY_LINK_PARAM ] = $link;
 			$settings[ Settings::COMMUNITY_LINK_PREVIOUS ] = CommunityLink::previous_after( $settings[ Settings::COMMUNITY_LINK_PREVIOUS ], $old, $link );
+		}
+
+		$ad = $values[ Settings::COMMUNITY_AD_LINK_PARAM ] ?? null;
+
+		if ( is_string( $ad ) && MerchAdLink::valid( $ad ) && $settings[ Settings::COMMUNITY_AD_LINK_PARAM ] !== $ad ) {
+			$old = $settings[ Settings::COMMUNITY_AD_LINK_PARAM ];
+
+			$changed[ Settings::COMMUNITY_AD_LINK_PARAM ]     = array( $old, $ad );
+			$settings[ Settings::COMMUNITY_AD_LINK_PARAM ]    = $ad;
+			$settings[ Settings::COMMUNITY_AD_LINK_PREVIOUS ] = MerchAdLink::previous_after( $settings[ Settings::COMMUNITY_AD_LINK_PREVIOUS ], $old, $ad );
 		}
 
 		if ( array() === $changed ) {

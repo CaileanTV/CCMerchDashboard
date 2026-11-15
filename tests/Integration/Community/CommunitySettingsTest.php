@@ -15,6 +15,7 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Settings\CommunityLink;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Community\CommunitySettings;
+use MerchBoard\Modules\Community\MerchAd\MerchAdLink;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 
 /**
@@ -88,5 +89,12 @@ final class CommunitySettingsTest extends IntegrationTestCase {
 			),
 			json_decode( (string) ( $audit[ count( $audit ) - 1 ]['context'] ?? '' ), true )
 		);
+
+		// The merch ad's OBS link has its own name (ADR-113).
+		self::assertSame( 'merch_ad', MerchAdLink::name() );
+		self::assertSame( array(), $service->save( array( Settings::COMMUNITY_AD_LINK_PARAM => 'gift' ) ), 'Never the name of the gift links.' );
+		self::assertSame( array( Settings::COMMUNITY_AD_LINK_PARAM ), $service->save( array( Settings::COMMUNITY_AD_LINK_PARAM => 'reklame' ) ) );
+		self::assertSame( array( 'reklame', 'merch_ad', 'merchboard_merch_ad' ), MerchAdLink::names(), 'Links already in OBS keep working.' );
+		self::assertSame( 'abc', MerchAdLink::id( array( 'merch_ad' => 'abc' ) ) );
 	}
 }

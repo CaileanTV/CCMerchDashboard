@@ -153,6 +153,8 @@ final class SettingsTest extends TestCase {
 				Settings::COMMUNITY_MERCH_AD_ENABLED       => false,
 				Settings::COMMUNITY_LINK_PARAM             => 'merchboard_gift_claim',
 				Settings::COMMUNITY_LINK_PREVIOUS          => array(),
+				Settings::COMMUNITY_AD_LINK_PARAM          => 'merch_ad',
+				Settings::COMMUNITY_AD_LINK_PREVIOUS       => array(),
 			),
 			Settings::all()
 		);

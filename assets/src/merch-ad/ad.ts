@@ -9,6 +9,10 @@ export type Design =
 
 export type Animation = 'fade' | 'slide' | 'pop' | 'zoom' | 'blur';
 
+export type PillPosition = 'below' | 'over';
+
+export type PillSize = 'small' | 'medium' | 'large';
+
 export interface AdProduct {
 	readonly name: string;
 	readonly image: string;
@@ -28,6 +32,13 @@ export interface Ad {
 	readonly leave: Animation;
 	readonly accent: string;
 	readonly theme: 'dark' | 'light';
+	/** The pill below the products, or over the product image (its lower third). */
+	readonly pillPosition: PillPosition;
+	readonly pillSize: PillSize;
+	/** Whether the products' names are shown. */
+	readonly showNames: boolean;
+	/** Stack: how far the two products behind stick out (0 close – 100 spread). */
+	readonly stackSpread: number;
 	readonly products: readonly AdProduct[];
 }
 
@@ -134,7 +145,11 @@ export function parseAd( value: unknown ): Ad | null {
 		! ANIMATIONS.includes( ad.leave as Animation ) ||
 		typeof ad.accent !== 'string' ||
 		! /^#[0-9a-f]{6}$/i.test( ad.accent ) ||
-		( ad.theme !== 'dark' && ad.theme !== 'light' )
+		( ad.theme !== 'dark' && ad.theme !== 'light' ) ||
+		( ad.pill_position !== 'below' && ad.pill_position !== 'over' ) ||
+		! [ 'small', 'medium', 'large' ].includes( ad.pill_size as string ) ||
+		typeof ad.show_names !== 'boolean' ||
+		within( ad.stack_spread, 0, 100 ) === null
 	) {
 		return null;
 	}
@@ -149,6 +164,10 @@ export function parseAd( value: unknown ): Ad | null {
 		leave: ad.leave as Animation,
 		accent: ad.accent,
 		theme: ad.theme,
+		pillPosition: ad.pill_position,
+		pillSize: ad.pill_size as PillSize,
+		showNames: ad.show_names,
+		stackSpread: within( ad.stack_spread, 0, 100 ) ?? 50,
 		products,
 	};
 }
@@ -180,6 +199,16 @@ export function parseConfig( value: unknown ): Config | null {
 		preview: config.preview,
 		ad,
 	};
+}
+
+/**
+ * How far the stack's two products behind stick out to the sides, as a CSS
+ * length of the product's width: 15 % (close) to 70 % (spread).
+ *
+ * @param spread The creator's 0–100.
+ */
+export function stackOffset( spread: number ): string {
+	return `${ Math.round( 15 + Math.min( 100, Math.max( 0, spread ) ) * 0.55 ) }%`;
 }
 
 /**

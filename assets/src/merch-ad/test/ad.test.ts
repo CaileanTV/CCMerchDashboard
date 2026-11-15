@@ -5,6 +5,7 @@ import {
 	intervalMs,
 	parseConfig,
 	pillParts,
+	stackOffset,
 	stepMs,
 	viewsOf,
 } from '../ad';
@@ -30,7 +31,20 @@ const AD: Ad = {
 	leave: 'fade',
 	accent: '#9146ff',
 	theme: 'dark',
+	pillPosition: 'below',
+	pillSize: 'medium',
+	showNames: true,
+	stackSpread: 50,
 	products: [ PRODUCT( 'A' ), PRODUCT( 'B', false ), PRODUCT( 'C' ) ],
+};
+
+/** The ad as the page embeds it (snake case). */
+const RAW = {
+	...AD,
+	pill_position: 'below',
+	pill_size: 'medium',
+	show_names: true,
+	stack_spread: 50,
 };
 
 const CONFIG: Config = {
@@ -48,15 +62,21 @@ afterEach( () => {
 
 describe( 'the merch ad overlay (ADR-113)', () => {
 	it( 'accepts only a valid configuration', () => {
-		expect( parseConfig( CONFIG ) ).toEqual( CONFIG );
+		expect( parseConfig( { ...CONFIG, ad: RAW } ) ).toEqual( CONFIG );
 		expect(
-			parseConfig( { ...CONFIG, ad: { ...AD, design: 'banner' } } )
+			parseConfig( { ...CONFIG, ad: { ...RAW, pill_position: 'top' } } )
 		).toBeNull();
 		expect(
-			parseConfig( { ...CONFIG, ad: { ...AD, every: 0 } } )
+			parseConfig( { ...CONFIG, ad: { ...RAW, stack_spread: 101 } } )
 		).toBeNull();
 		expect(
-			parseConfig( { ...CONFIG, ad: { ...AD, accent: 'red' } } )
+			parseConfig( { ...CONFIG, ad: { ...RAW, design: 'banner' } } )
+		).toBeNull();
+		expect(
+			parseConfig( { ...CONFIG, ad: { ...RAW, every: 0 } } )
+		).toBeNull();
+		expect(
+			parseConfig( { ...CONFIG, ad: { ...RAW, accent: 'red' } } )
 		).toBeNull();
 		expect(
 			parseConfig( {
@@ -156,7 +176,7 @@ describe( 'the merch ad overlay (ADR-113)', () => {
 		).toBe( 'A' );
 
 		const strip = renderView( { ...AD, design: 'carousel' }, AD.products );
-		expect( strip.querySelectorAll( '.mb-ad__item' ) ).toHaveLength( 6 );
+		expect( strip.querySelectorAll( '.mb-ad__item' ) ).toHaveLength( 24 );
 
 		const corner = renderView( { ...AD, design: 'corner' }, [
 			PRODUCT( 'A' ),
@@ -164,6 +184,43 @@ describe( 'the merch ad overlay (ADR-113)', () => {
 		expect(
 			corner.querySelector( '.mb-ad__info .mb-ad__pill' )
 		).not.toBeNull();
+	} );
+
+	it( 'puts the pill over the image, hides names and fills the carousel', () => {
+		const over = renderView(
+			{
+				...AD,
+				pillPosition: 'over',
+				pillSize: 'large',
+				showNames: false,
+			},
+			[ PRODUCT( 'A' ) ]
+		);
+		expect(
+			over.querySelector(
+				'.mb-ad__img .mb-ad__pill--over.mb-ad__pill--large'
+			)
+		).not.toBeNull();
+		expect( over.querySelector( '.mb-ad__name' ) ).toBeNull();
+
+		const stack = renderView(
+			{ ...AD, design: 'stack', pillPosition: 'over' },
+			[ PRODUCT( 'C' ), PRODUCT( 'A' ), PRODUCT( 'B' ) ]
+		);
+		expect(
+			stack.querySelector(
+				'.mb-ad__item--middle .mb-ad__img .mb-ad__pill'
+			)
+		).not.toBeNull();
+
+		const strip = renderView( { ...AD, design: 'carousel' }, AD.products );
+		// Three products fill a round of 12, twice.
+		expect( strip.querySelectorAll( '.mb-ad__item' ) ).toHaveLength( 24 );
+		expect(
+			strip.querySelector( '.mb-ad__strip > .mb-ad__pill' )
+		).toBeNull();
+		expect( stackOffset( 0 ) ).toBe( '15%' );
+		expect( stackOffset( 100 ) ).toBe( '70%' );
 	} );
 
 	it( 'shows a switched-off ad only in the preview', () => {

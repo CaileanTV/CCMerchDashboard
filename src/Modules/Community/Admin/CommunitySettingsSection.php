@@ -17,6 +17,7 @@ use MerchBoard\Core\Settings\CommunityLink;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
 use MerchBoard\Modules\Community\CommunitySettings;
+use MerchBoard\Modules\Community\MerchAd\MerchAdLink;
 use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionApp;
 use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionLegal;
 use MerchBoard\Modules\Settings\Admin\SettingsPage;
@@ -104,6 +105,7 @@ final class CommunitySettingsSection {
 			'no_changes'     => array( __( 'No changes were made to the community settings.', 'merchboard' ), 'info' ),
 			'not_authorized' => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
 			'error'          => array( __( 'A technical error occurred. The community settings were not changed.', 'merchboard' ), 'error' ),
+			'invalid_ad_link'   => array( __( 'The merch ad\'s link name must be 2–40 lowercase letters, digits, - or _, start with a letter and differ from the gift links\' name. Nothing was changed.', 'merchboard' ), 'error' ),
 			'invalid_extension' => array( __( 'The Twitch Extension\'s Client ID, secret or install link is invalid. Nothing was changed.', 'merchboard' ), 'error' ),
 			'invalid_link'   => array( __( 'The link name must be 2–40 lowercase letters, digits, - or _, start with a letter and not be a name WordPress or the shop uses. Nothing was changed.', 'merchboard' ), 'error' ),
 			default          => null,
@@ -193,6 +195,13 @@ final class CommunitySettingsSection {
 		echo '<p class="description">' . esc_html__( '2–40 lowercase letters, digits, - or _, starting with a letter. Links already passed on keep working after a change: the earlier names are still read.', 'merchboard' ) . '</p>';
 		echo '</td></tr>';
 
+		$ad = MerchAdLink::name();
+		echo '<tr><th scope="row"><label for="merchboard-community-ad-link">' . esc_html__( 'Merch ad: link name', 'merchboard' ) . '</label></th><td>';
+		echo '<input type="text" class="regular-text code" id="merchboard-community-ad-link" name="' . esc_attr( Settings::COMMUNITY_AD_LINK_PARAM ) . '" value="' . esc_attr( $ad ) . '" pattern="[a-z][a-z0-9_\-]{1,39}" maxlength="40" required>';
+		/* translators: %s: an example link. */
+		echo '<p class="description">' . esc_html( sprintf( __( 'The name in the creators\' OBS links for the merch ad: %s. Links already in OBS keep working after a change.', 'merchboard' ), home_url( '/' ) . '?' . $ad . '=…' ) ) . '</p>';
+		echo '</td></tr>';
+
 		if ( null !== $this->extension ) {
 			$this->render_extension( $this->extension );
 		}
@@ -273,6 +282,16 @@ final class CommunitySettingsSection {
 		}
 
 		$values[ Settings::COMMUNITY_LINK_PARAM ] = $link;
+
+		if ( array_key_exists( Settings::COMMUNITY_AD_LINK_PARAM, $input ) ) {
+			$ad = is_scalar( $input[ Settings::COMMUNITY_AD_LINK_PARAM ] ) ? strtolower( trim( (string) $input[ Settings::COMMUNITY_AD_LINK_PARAM ] ) ) : '';
+
+			if ( MerchAdLink::name() !== $ad && ( ! CommunityLink::valid( $ad ) || $link === $ad || ! MerchAdLink::valid( $ad ) ) ) {
+				return self::url( 'invalid_ad_link' );
+			}
+
+			$values[ Settings::COMMUNITY_AD_LINK_PARAM ] = $ad;
+		}
 
 		try {
 			$extension = null === $this->extension || ! array_key_exists( self::EXTENSION_CLIENT_ID, $input ) ? array() : $this->extension->save(

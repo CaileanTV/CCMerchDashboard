@@ -90,7 +90,7 @@ final class MerchAdView {
 	 * What the overlay draws.
 	 *
 	 * @param int $creator_id Creator.
-	 * @return array{enabled: bool, design: string, note: string, every: int, seconds: int, enter: string, leave: string, accent: string, theme: string, products: list<array{name: string, image: string, cutout: bool}>}
+	 * @return array{enabled: bool, design: string, note: string, every: int, seconds: int, enter: string, leave: string, accent: string, theme: string, pill_position: string, pill_size: string, show_names: bool, stack_spread: int, products: list<array{name: string, image: string, cutout: bool}>}
 	 * @throws \MerchBoard\Core\Database\DatabaseException When the creator's products cannot be read.
 	 */
 	public function overlay( int $creator_id ): array {
@@ -110,16 +110,20 @@ final class MerchAdView {
 		}
 
 		return array(
-			'enabled'  => $settings->enabled,
-			'design'   => $settings->design,
-			'note'     => $settings->note,
-			'every'    => $settings->every,
-			'seconds'  => $settings->seconds,
-			'enter'    => $settings->enter,
-			'leave'    => $settings->leave,
-			'accent'   => $settings->accent,
-			'theme'    => $settings->theme,
-			'products' => $products,
+			'enabled'       => $settings->enabled,
+			'design'        => $settings->design,
+			'note'          => $settings->note,
+			'every'         => $settings->every,
+			'seconds'       => $settings->seconds,
+			'enter'         => $settings->enter,
+			'leave'         => $settings->leave,
+			'accent'        => $settings->accent,
+			'theme'         => $settings->theme,
+			'pill_position' => $settings->pill_position,
+			'pill_size'     => $settings->pill_size,
+			'show_names'    => $settings->show_names,
+			'stack_spread'  => $settings->stack_spread,
+			'products'      => $products,
 		);
 	}
 

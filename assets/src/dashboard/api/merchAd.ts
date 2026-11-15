@@ -49,6 +49,13 @@ export interface MerchAdValues {
 	readonly leave: MerchAdAnimation;
 	readonly accent: string;
 	readonly theme: 'dark' | 'light';
+	/** The pill below the products, or over the product image (its lower third). */
+	readonly pillPosition: 'below' | 'over';
+	readonly pillSize: 'small' | 'medium' | 'large';
+	/** Whether the products' names are shown. */
+	readonly showNames: boolean;
+	/** The stack: how far the two products behind stick out (0–100). */
+	readonly stackSpread: number;
 }
 
 export interface MerchAdState extends MerchAdValues {
@@ -172,6 +179,10 @@ export function parseMerchAd( body: unknown ): MerchAdState | null {
 		typeof body.accent !== 'string' ||
 		! /^#[0-9a-f]{6}$/i.test( body.accent ) ||
 		( body.theme !== 'dark' && body.theme !== 'light' ) ||
+		( body.pill_position !== 'below' && body.pill_position !== 'over' ) ||
+		! [ 'small', 'medium', 'large' ].includes( body.pill_size as string ) ||
+		typeof body.show_names !== 'boolean' ||
+		typeof body.stack_spread !== 'number' ||
 		productIds.some( ( id ) => id === null ) ||
 		products.some( ( product ) => product === null ) ||
 		link === undefined ||
@@ -197,6 +208,10 @@ export function parseMerchAd( body: unknown ): MerchAdState | null {
 		leave: body.leave as MerchAdAnimation,
 		accent: body.accent,
 		theme: body.theme,
+		pillPosition: body.pill_position,
+		pillSize: body.pill_size as MerchAdValues[ 'pillSize' ],
+		showNames: body.show_names,
+		stackSpread: body.stack_spread,
 		url: link,
 		previewUrl: preview,
 		products: products as MerchAdProduct[],
@@ -248,6 +263,10 @@ export function saveMerchAd(
 				leave: values.leave,
 				accent: values.accent,
 				theme: values.theme,
+				pill_position: values.pillPosition,
+				pill_size: values.pillSize,
+				show_names: values.showNames,
+				stack_spread: values.stackSpread,
 			},
 		},
 		parseMerchAd

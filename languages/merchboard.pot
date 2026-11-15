@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-15T19:10:21+00:00\n"
+"POT-Creation-Date: 2026-11-15T19:18:28+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -145,7 +145,7 @@ msgstr ""
 #: src/Modules/Alerts/Admin/AlertsSettingsActions.php:418
 #: src/Modules/Alerts/Admin/ChatbotAdminActions.php:151
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsActions.php:92
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:260
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:269
 #: src/Modules/Community/Admin/GiftingTestModeSection.php:174
 #: src/Modules/Creators/Admin/CategoryProposalActions.php:101
 #: src/Modules/Creators/Admin/CreatorAdminActions.php:226
@@ -1805,7 +1805,7 @@ msgstr ""
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:114
 #: src/Modules/Alerts/Admin/CompanyDetailsSection.php:50
 #: src/Modules/Alerts/Admin/CreatorSoundLimitsSection.php:57
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:105
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:106
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:54
 #: src/Modules/Settings/Admin/SettingsPage.php:273
 #: src/Modules/WooCommerce/Admin/SalesLedgerSettingsSection.php:64
@@ -3876,31 +3876,35 @@ msgstr ""
 msgid "The chatbot settings are invalid."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:90
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:91
 msgid "Community"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:103
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:104
 msgid "The community settings were saved."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:104
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:105
 msgid "No changes were made to the community settings."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:106
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:107
 msgid "A technical error occurred. The community settings were not changed."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:107
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:108
+msgid "The merch ad's link name must be 2–40 lowercase letters, digits, - or _, start with a letter and differ from the gift links' name. Nothing was changed."
+msgstr ""
+
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:109
 msgid "The Twitch Extension's Client ID, secret or install link is invalid. Nothing was changed."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:108
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:110
 msgid "The link name must be 2–40 lowercase letters, digits, - or _, start with a letter and not be a name WordPress or the shop uses. Nothing was changed."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:128
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:130
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:49
 #: src/Modules/Community/TwitchSubs/TwitchSubCoupon.php:357
 #: src/Modules/Community/TwitchSubs/TwitchSubOrderInfo.php:83
@@ -3909,71 +3913,71 @@ msgstr ""
 msgid "Twitch subscriber discount"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:129
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:131
 msgid "Creators can give their Twitch subscribers a discount"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:130
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:132
 msgid "Off by default. Customers log in with Twitch in the cart and the checkout, and the discount is taken from the creator's profit. Off: the page disappears from the creators' dashboards and no cart gets the discount; the creators' campaigns are kept."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:134
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:136
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:57
 #: build/dashboard.js:75
 msgid "Twitch gifting"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:135
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:137
 msgid "Viewers can buy gifts that are drawn in the creator's Twitch chat"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:136
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:138
 msgid "Off by default. Off pauses gifting: the page disappears from the creators' dashboards, the gift button disappears and no new draws start. A draw already open ends as usual, winners can still claim their gift, and waiting gifts wait until gifting is switched on again."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:140
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:142
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:65
 #: build/dashboard.js:65
 msgid "Giveaways"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:141
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:143
 msgid "Creators can give their own products away to their viewers"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:142
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:144
 msgid "Off by default. The creator pays the base price and 50 kr. shipping: from the balance when the code is used, or in the shop. The bot draws the winner in the Twitch chat, or the creator passes a link on from their own giveaway. Off: the page disappears from the creators' dashboards and no new giveaway starts; links and codes already given out still work."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:146
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:148
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:81
 #: build/dashboard.js:73
 msgid "Twitch Extension"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:147
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:149
 msgid "Creators can show their products in the shop's Twitch Extension panel"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:148
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:150
 msgid "Off by default. The panel shows the creator's products with image and name only: Twitch does not allow prices, links to the shop or buying in an extension. Creators link to the shop from an ordinary Twitch panel. Off: the page disappears from the creators' dashboards and the panel shows nothing."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:152
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:154
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:73
 #: build/dashboard.js:70
 msgid "Merch ad"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:153
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:155
 msgid "Creators can show an ad overlay with their products in the stream"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:154
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:156
 msgid "Off by default. Creators design an ad with their products (images without background) and an optional pill, choose how often and how long it shows and add it to OBS as a browser source. Off: the page disappears from the creators' dashboards and the overlay shows nothing."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:159
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:161
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:53
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:61
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:69
@@ -3983,81 +3987,91 @@ msgstr ""
 msgid "Community Features"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:165
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:167
 msgid "Choose which community features creators can use. Each creator then switches a feature on for themselves and connects their Twitch channel on the feature's page in the dashboard."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:170
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:172
 msgid "Twitch is not set up yet: the Twitch features and giveaways in the chat need the Twitch app and the bot account."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:172
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:174
 msgid "Set up Twitch under Alerts → Chatbot"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:189
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:191
 msgid "Link name"
 msgstr ""
 
 #. translators: %s: an example link.
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:192
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:194
 #, php-format
 msgid "The name in the public links of the community features, such as the gift and giveaway links, and later links of the same kind: %s"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:193
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:195
 msgid "2–40 lowercase letters, digits, - or _, starting with a letter. Links already passed on keep working after a change: the earlier names are still read."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:201
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:199
+msgid "Merch ad: link name"
+msgstr ""
+
+#. translators: %s: an example link.
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:202
+#, php-format
+msgid "The name in the creators' OBS links for the merch ad: %s. Links already in OBS keep working after a change."
+msgstr ""
+
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:210
 msgid "Save community settings"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:211
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:220
 msgid "Twitch Extension: Client ID"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:213
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:222
 msgid "From the extension in the Twitch developer console (dev.twitch.tv/console/extensions). The shop owns one extension that all creators install."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:216
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:225
 msgid "Twitch Extension: secret"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:219
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:228
 msgid "Set in wp-config.php (MERCHBOARD_TWITCH_EXTENSION_SECRET)."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:222
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:231
 msgid "A secret is stored (encrypted). Leave empty to keep it."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:222
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:231
 msgid "The extension's secret under \"Extension Client Configuration\" in the developer console. It is stored encrypted and never shown again."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:227
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:236
 msgid "Twitch Extension: install link"
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:229
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:238
 msgid "The extension's page on Twitch, where creators install it. Shown in the creators' guide."
 msgstr ""
 
 #. translators: %s: the REST URL of the panel.
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:231
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:240
 #, php-format
 msgid "Allowlist this site in the developer console (URL fetching and image domains). The panel reads: %s"
 msgstr ""
 
 #. translators: 1: the terms URL, 2: the privacy policy URL.
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:233
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:242
 #, php-format
 msgid "For the developer console: EULA/terms of service URL %1$s and privacy policy URL %2$s (served by this plugin; the company details come from Settings → Company details)."
 msgstr ""
 
-#: src/Modules/Community/Admin/CommunitySettingsSection.php:254
+#: src/Modules/Community/Admin/CommunitySettingsSection.php:263
 msgid "Sorry, you are not allowed to manage these settings."
 msgstr ""
 
@@ -8763,10 +8777,12 @@ msgid "Design area:"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:617
+#: build/dashboard.js:70
 msgid "Large"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:618
+#: build/dashboard.js:70
 msgid "Small"
 msgstr ""
 
@@ -18562,6 +18578,10 @@ msgid "Show the ad in my stream"
 msgstr ""
 
 #: build/dashboard.js:70
+msgid "Show the products' names"
+msgstr ""
+
+#: build/dashboard.js:70
 msgid "Shelf"
 msgstr ""
 
@@ -18607,6 +18627,34 @@ msgstr ""
 
 #: build/dashboard.js:70
 msgid "One big product at a time, with its name and the pill."
+msgstr ""
+
+#: build/dashboard.js:70
+msgid "Pill"
+msgstr ""
+
+#: build/dashboard.js:70
+msgid "Below the products"
+msgstr ""
+
+#: build/dashboard.js:70
+msgid "Over the product image (lower third)"
+msgstr ""
+
+#: build/dashboard.js:70
+msgid "Pill size"
+msgstr ""
+
+#: build/dashboard.js:70
+msgid "Medium"
+msgstr ""
+
+#: build/dashboard.js:70
+msgid "Stack: spread"
+msgstr ""
+
+#: build/dashboard.js:70
+msgid "Left: the products behind are close to the one in front. Right: they are spread out."
 msgstr ""
 
 #: build/dashboard.js:70
@@ -18745,6 +18793,14 @@ msgstr ""
 
 #: build/dashboard.js:73
 msgid "In OBS"
+msgstr ""
+
+#: build/dashboard.js:73
+msgid "The ad is switched off, so OBS shows nothing. Tick \"Show the ad in my stream\" and save. \"Show now\" shows it once anyway."
+msgstr ""
+
+#: build/dashboard.js:73
+msgid "The browser source is transparent between the showings: the ad appears 15 seconds after OBS loads it and then at the times you chose."
 msgstr ""
 
 #: build/dashboard.js:73

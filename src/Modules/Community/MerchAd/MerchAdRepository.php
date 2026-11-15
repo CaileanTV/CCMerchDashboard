@@ -104,11 +104,17 @@ final class MerchAdRepository {
 			$errors['enabled'] = 'required';
 		}
 
+		if ( ! is_bool( $values['show_names'] ?? null ) ) {
+			$errors['show_names'] = 'required';
+		}
+
 		foreach ( array(
-			'design' => MerchAdSettings::DESIGNS,
-			'enter'  => MerchAdSettings::ANIMATIONS,
-			'leave'  => MerchAdSettings::ANIMATIONS,
-			'theme'  => MerchAdSettings::THEMES,
+			'design'        => MerchAdSettings::DESIGNS,
+			'enter'         => MerchAdSettings::ANIMATIONS,
+			'leave'         => MerchAdSettings::ANIMATIONS,
+			'theme'         => MerchAdSettings::THEMES,
+			'pill_position' => MerchAdSettings::PILL_POSITIONS,
+			'pill_size'     => MerchAdSettings::PILL_SIZES,
 		) as $field => $allowed ) {
 			if ( ! in_array( $values[ $field ] ?? null, $allowed, true ) ) {
 				$errors[ $field ] = 'invalid';
@@ -116,8 +122,9 @@ final class MerchAdRepository {
 		}
 
 		foreach ( array(
-			'every'   => array( MerchAdSettings::MIN_EVERY, MerchAdSettings::MAX_EVERY ),
-			'seconds' => array( MerchAdSettings::MIN_SECONDS, MerchAdSettings::MAX_SECONDS ),
+			'every'        => array( MerchAdSettings::MIN_EVERY, MerchAdSettings::MAX_EVERY ),
+			'seconds'      => array( MerchAdSettings::MIN_SECONDS, MerchAdSettings::MAX_SECONDS ),
+			'stack_spread' => array( 0, 100 ),
 		) as $field => [ $min, $max ] ) {
 			$value = $values[ $field ] ?? null;
 
@@ -174,7 +181,11 @@ final class MerchAdRepository {
 			(string) $values['theme'],
 			'' === $before->overlay_id ? self::new_id() : $before->overlay_id,
 			$before->cutouts,
-			$before->show_at
+			$before->show_at,
+			(string) $values['pill_position'],
+			(string) $values['pill_size'],
+			true === $values['show_names'],
+			(int) $values['stack_spread']
 		);
 
 		$old     = $before->to_stored();

@@ -128,6 +128,44 @@ body {
 	overflow-wrap: anywhere;
 }
 
+/* The pill's sizes. */
+.mb-ad__pill--small {
+	padding: 0.6vh 1.8vh;
+	font-size: 0.8em;
+}
+
+.mb-ad__pill--large {
+	padding: 1.4vh 3.4vh;
+	font-size: 1.35em;
+}
+
+/* Over the product image: centred in its lower third. */
+.mb-ad__pill--over {
+	position: absolute;
+	bottom: 6%;
+	left: 50%;
+	z-index: 3;
+	max-width: none;
+	white-space: nowrap;
+	transform: translateX(-50%);
+}
+
+.mb-ad__row,
+.mb-ad__strip {
+	position: relative;
+}
+
+/* Shelf and strip: room for the pill at the bottom, never over a name. */
+.mb-ad__row.has-pill,
+.mb-ad__strip.has-pill {
+	padding-bottom: 7vh;
+}
+
+.mb-ad__row.has-pill .mb-ad__pill--over,
+.mb-ad__strip.has-pill .mb-ad__pill--over {
+	bottom: 1.5vh;
+}
+
 .mb-ad__command {
 	color: color-mix(in srgb, var(--mb-accent) 55%, #fff);
 	font-weight: 900;
@@ -317,11 +355,11 @@ body {
 }
 
 .mb-ad__stack .mb-ad__item--left {
-	transform: translateX(-88%) translateY(-3vh) rotate(-14deg) scale(0.82);
+	transform: translateX(calc(-50% - var(--mb-stack-spread, 38%))) translateY(-3vh) rotate(-14deg) scale(0.82);
 }
 
 .mb-ad__stack .mb-ad__item--right {
-	transform: translateX(-12%) translateY(-3vh) rotate(14deg) scale(0.82);
+	transform: translateX(calc(-50% + var(--mb-stack-spread, 38%))) translateY(-3vh) rotate(14deg) scale(0.82);
 }
 
 /* Only the product in front shows its name. */

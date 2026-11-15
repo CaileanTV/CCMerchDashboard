@@ -11,6 +11,7 @@ import {
 	intervalMs,
 	parseConfig,
 	pillParts,
+	stackOffset,
 	stepMs,
 	viewsOf,
 } from './ad';
@@ -46,8 +47,15 @@ function el< K extends keyof HTMLElementTagNameMap >(
  *
  * @param note The text.
  */
-export function pill( note: string ): HTMLElement {
-	const node = el( 'div', 'mb-ad__pill' );
+export function pill(
+	note: string,
+	size = 'medium',
+	over = false
+): HTMLElement {
+	const node = el(
+		'div',
+		`mb-ad__pill mb-ad__pill--${ size }${ over ? ' mb-ad__pill--over' : '' }`
+	);
 
 	for ( const part of pillParts( note ) ) {
 		node.append(
@@ -87,12 +95,19 @@ function image( product: AdProduct ): HTMLElement {
  * @param product   The product.
  * @param className Extra class.
  */
-function item( product: AdProduct, className = '' ): HTMLElement {
+function item( product: AdProduct, className = '', name = true ): HTMLElement {
 	const node = el( 'div', ( 'mb-ad__item ' + className ).trim() );
-	node.append( image( product ), el( 'div', 'mb-ad__name', product.name ) );
+	node.append( image( product ) );
+
+	if ( name ) {
+		node.append( el( 'div', 'mb-ad__name', product.name ) );
+	}
 
 	return node;
 }
+
+/** How many products one round of the carousel holds at least, so the strip is always wider than the screen. */
+const CAROUSEL_ROUND = 12;
 
 /**
  * One view of a showing for a design.
@@ -102,25 +117,40 @@ function item( product: AdProduct, className = '' ): HTMLElement {
  */
 export function renderView( ad: Ad, view: readonly AdProduct[] ): HTMLElement {
 	const body = el( 'div', 'mb-ad__view' );
-	const note = ad.note === '' ? null : pill( ad.note );
+	const over = ad.pillPosition === 'over';
+	const note = ad.note === '' ? null : pill( ad.note, ad.pillSize, over );
+	const names = ad.showNames;
+	// Where the pill goes when it is over the product image.
+	let anchor: HTMLElement | null = null;
 
 	switch ( ad.design ) {
 		case 'shelf': {
 			const row = el( 'div', 'mb-ad__row' );
-			view.forEach( ( product ) => row.append( item( product ) ) );
+			view.forEach( ( product ) =>
+				row.append( item( product, '', names ) )
+			);
 			body.append( row );
+			anchor = row;
 			break;
 		}
 		case 'carousel': {
 			const track = el( 'div', 'mb-ad__track' );
-			// Twice, so the strip runs on without a gap.
-			[ ...view, ...view ].forEach( ( product ) =>
-				track.append( item( product ) )
+			// One round holds the products again and again until it is wider than the
+			// screen; two rounds run on, so the strip never shows a gap.
+			const round: AdProduct[] = [];
+
+			while ( view.length > 0 && round.length < CAROUSEL_ROUND ) {
+				round.push( ...view );
+			}
+
+			[ ...round, ...round ].forEach( ( product ) =>
+				track.append( item( product, '', names ) )
 			);
-			track.style.animationDuration = `${ Math.max( 8, view.length * 3 ) }s`;
+			track.style.animationDuration = `${ round.length * 3 }s`;
 			const strip = el( 'div', 'mb-ad__strip' );
 			strip.append( track );
 			body.append( strip );
+			anchor = strip;
 			break;
 		}
 		case 'showcase':
@@ -133,15 +163,17 @@ export function renderView( ad: Ad, view: readonly AdProduct[] ): HTMLElement {
 			const [ left, middle, right ] = view;
 
 			if ( left !== undefined && view.length > 1 ) {
-				stage.append( item( left, 'mb-ad__item--left' ) );
+				stage.append( item( left, 'mb-ad__item--left', names ) );
 			}
 
 			if ( middle !== undefined ) {
-				stage.append( item( middle, 'mb-ad__item--middle' ) );
+				const front = item( middle, 'mb-ad__item--middle', names );
+				stage.append( front );
+				anchor = front.querySelector( '.mb-ad__img' );
 			}
 
 			if ( right !== undefined && view.length > 2 ) {
-				stage.append( item( right, 'mb-ad__item--right' ) );
+				stage.append( item( right, 'mb-ad__item--right', names ) );
 			}
 
 			body.append( stage );
@@ -153,19 +185,36 @@ export function renderView( ad: Ad, view: readonly AdProduct[] ): HTMLElement {
 			if ( product !== undefined ) {
 				const card = el( 'div', 'mb-ad__card' );
 				const info = el( 'div', 'mb-ad__info' );
-				info.append( el( 'div', 'mb-ad__name', product.name ) );
+				const frame = image( product );
 
-				if ( note !== null && ad.design === 'corner' ) {
+				if ( names ) {
+					info.append( el( 'div', 'mb-ad__name', product.name ) );
+				}
+
+				if ( note !== null && ad.design === 'corner' && ! over ) {
 					info.append( note );
 				}
 
-				card.append( image( product ), info );
+				card.append( frame );
+
+				if ( info.childElementCount > 0 ) {
+					card.append( info );
+				}
+
 				body.append( card );
+				anchor = frame;
 			}
 		}
 	}
 
-	if ( note !== null && ad.design !== 'corner' ) {
+	if ( note !== null && over && anchor !== null ) {
+		// In the lower third of the product image (or the shelf, or the strip).
+		if ( ad.design === 'shelf' || ad.design === 'carousel' ) {
+			anchor.classList.add( 'has-pill' );
+		}
+
+		anchor.append( note );
+	} else if ( note !== null && ad.design !== 'corner' ) {
 		body.append( note );
 	}
 
@@ -189,14 +238,18 @@ export function start( root: HTMLElement, config: Config ): void {
 		config.preview
 	);
 	root.style.setProperty( '--mb-accent', ad.accent );
+	root.style.setProperty(
+		'--mb-stack-spread',
+		stackOffset( ad.stackSpread )
+	);
 
-	const show = (): void => {
+	// "Show now" and the preview show the ad also while it is switched off.
+	const show = ( now = false ): void => {
 		const views = viewsOf( ad );
 
-		// The preview shows the design also before the creator switches the ad on.
 		if (
 			showing ||
-			( ! ad.enabled && ! config.preview ) ||
+			( ! ad.enabled && ! config.preview && ! now ) ||
 			views.length === 0
 		) {
 			return;
@@ -234,7 +287,7 @@ export function start( root: HTMLElement, config: Config ): void {
 
 	window.setTimeout( () => {
 		show();
-		window.setInterval( show, intervalMs( config ) );
+		window.setInterval( () => show(), intervalMs( config ) );
 	}, firstDelayMs( config ) );
 
 	// Changes and "show now".
@@ -261,7 +314,7 @@ export function start( root: HTMLElement, config: Config ): void {
 					showAt > lastShowAt
 				) {
 					lastShowAt = showAt;
-					show();
+					show( true );
 				}
 			} )
 			.catch( () => undefined );

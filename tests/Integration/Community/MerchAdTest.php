@@ -17,6 +17,7 @@ use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\Community\MerchAd\MerchAdFiles;
+use MerchBoard\Modules\Community\MerchAd\MerchAdLink;
 use MerchBoard\Modules\Community\MerchAd\MerchAdPage;
 use MerchBoard\Modules\Community\MerchAd\MerchAdRepository;
 use MerchBoard\Modules\Community\MerchAd\MerchAdView;
@@ -163,6 +164,7 @@ final class MerchAdTest extends IntegrationTestCase {
 		$this->settings->set_cutout( $this->nova, 502, $file );
 
 		$overlay = $this->view->overlay( $this->nova );
+		self::assertSame( array( 'over', 'large', false, 30 ), array( $overlay['pill_position'], $overlay['pill_size'], $overlay['show_names'], $overlay['stack_spread'] ) );
 
 		self::assertSame( array( 'Mug', 'Stream Hoodie' ), array_column( $overlay['products'], 'name' ), 'In order; an unpublished product is left out.' );
 		self::assertSame( 'https://shop.example/uploads/merchboard-merch-ad/' . $this->nova . '/' . $file, $overlay['products'][0]['image'] );
@@ -197,7 +199,14 @@ final class MerchAdTest extends IntegrationTestCase {
 		$saved = $controller->save( $this->json( 'POST', $this->form( array( 'product_ids' => array( 501 ) ) ) ) );
 		self::assertInstanceOf( WP_REST_Response::class, $saved );
 		$data = (array) $saved->get_data();
-		self::assertStringContainsString( MerchAdPage::QUERY . '=', (string) $data['url'] );
+		self::assertStringContainsString( '?merch_ad=', (string) $data['url'], 'The link name (default merch_ad).' );
+		self::assertSame( 'over', $data['pill_position'] );
+		self::assertFalse( $data['show_names'] );
+		self::assertSame( 30, $data['stack_spread'] );
+		$id = $this->settings->find( $this->nova )->overlay_id;
+		self::assertSame( $id, MerchAdLink::id( array( 'merch_ad' => $id ) ) );
+		self::assertSame( $id, MerchAdLink::id( array( MerchAdPage::QUERY => $id ) ), 'The first links keep working.' );
+		self::assertFalse( MerchAdLink::valid( 'merchboard_gift_claim' ), 'Not the name of the gift links.' );
 		self::assertStringContainsString( 'preview=1', (string) $data['preview_url'] );
 		self::assertSame( array( 501 ), array_column( $data['products'], 'id' ) );
 		self::assertNull( $data['products'][0]['cutout'] );
@@ -296,16 +305,20 @@ final class MerchAdTest extends IntegrationTestCase {
 	 */
 	private function form( array $changes = array() ): array {
 		return $changes + array(
-			'enabled'     => true,
-			'design'      => 'spotlight',
-			'product_ids' => array(),
-			'note'        => 'Skriv !merch i chatten',
-			'every'       => 10,
-			'seconds'     => 15,
-			'enter'       => 'slide',
-			'leave'       => 'fade',
-			'accent'      => '#9146ff',
-			'theme'       => 'dark',
+			'enabled'       => true,
+			'design'        => 'spotlight',
+			'product_ids'   => array(),
+			'note'          => 'Skriv !merch i chatten',
+			'every'         => 10,
+			'seconds'       => 15,
+			'enter'         => 'slide',
+			'leave'         => 'fade',
+			'accent'        => '#9146ff',
+			'theme'         => 'dark',
+			'pill_position' => 'over',
+			'pill_size'     => 'large',
+			'show_names'    => false,
+			'stack_spread'  => 30,
 		);
 	}
 

@@ -17,7 +17,7 @@ use Throwable;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * `/?merchboard_merch_ad=<id>` (ADR-113 pkt. 1): the creator's own browser
+ * `/?merch_ad=<id>` (the name is MerchAdLink's; ADR-113 pkt. 1): the creator's own browser
  * source in OBS. A complete page without the theme, with its own CSP
  * (scripts only from this site with a nonce, images only from this site,
  * framed only by this site for the dashboard's preview). `&preview=1` shows
@@ -27,9 +27,9 @@ defined( 'ABSPATH' ) || exit;
 final class MerchAdPage {
 
 	/**
-	 * The query argument.
+	 * The original query argument (still read; MerchAdLink).
 	 */
-	public const QUERY = 'merchboard_merch_ad';
+	public const QUERY = MerchAdLink::LEGACY;
 
 	/**
 	 * The script and style handle.
@@ -62,7 +62,7 @@ final class MerchAdPage {
 	 * @param bool   $preview    The dashboard's preview.
 	 */
 	public static function url( string $overlay_id, bool $preview = false ): string {
-		$args = array( self::QUERY => $overlay_id );
+		$args = array( MerchAdLink::name() => $overlay_id );
 
 		if ( $preview ) {
 			$args['preview'] = '1';
@@ -75,11 +75,12 @@ final class MerchAdPage {
 	 * `template_redirect`: shows the page and stops.
 	 */
 	public function handle_request(): void {
-		if ( ! isset( $_GET[ self::QUERY ] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- A public page, the id is the credential.
+		$id = MerchAdLink::id( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- A public page, the id is the credential.
+
+		if ( '' === $id ) {
 			return;
 		}
 
-		$id      = sanitize_key( wp_unslash( $_GET[ self::QUERY ] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- See above.
 		$preview = isset( $_GET['preview'] ) && '1' === $_GET['preview']; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Display only.
 		$nonce   = base64_encode( random_bytes( 18 ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- A CSP nonce.
 		$html    = $this->render( $id, $preview, $nonce );

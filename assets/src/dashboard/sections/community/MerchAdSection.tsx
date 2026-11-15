@@ -415,6 +415,23 @@ export function MerchAdSection() {
 						/>{ ' ' }
 						{ __( 'Show the ad in my stream', 'merchboard' ) }
 					</label>
+					<label
+						className="merchboard-payouts__check"
+						htmlFor="merchboard-merch-ad-names"
+					>
+						<input
+							id="merchboard-merch-ad-names"
+							type="checkbox"
+							checked={ values.showNames }
+							onChange={ ( event ) =>
+								setValues( {
+									...values,
+									showNames: event.target.checked,
+								} )
+							}
+						/>{ ' ' }
+						{ __( "Show the products' names", 'merchboard' ) }
+					</label>
 
 					<fieldset className="merchboard-community-campaign">
 						<legend className="merchboard-field__label">
@@ -464,6 +481,99 @@ export function MerchAdSection() {
 					</fieldset>
 
 					<div className="merchboard-merch-ad-grid">
+						<div className="merchboard-field">
+							<label
+								className="merchboard-field__label"
+								htmlFor="merchboard-merch-ad-pill-position"
+							>
+								{ __( 'Pill', 'merchboard' ) }
+							</label>
+							<select
+								id="merchboard-merch-ad-pill-position"
+								className="merchboard-input"
+								value={ values.pillPosition }
+								onChange={ ( event ) =>
+									setValues( {
+										...values,
+										pillPosition:
+											event.target.value === 'over'
+												? 'over'
+												: 'below',
+									} )
+								}
+							>
+								<option value="below">
+									{ __( 'Below the products', 'merchboard' ) }
+								</option>
+								<option value="over">
+									{ __(
+										'Over the product image (lower third)',
+										'merchboard'
+									) }
+								</option>
+							</select>
+						</div>
+						<div className="merchboard-field">
+							<label
+								className="merchboard-field__label"
+								htmlFor="merchboard-merch-ad-pill-size"
+							>
+								{ __( 'Pill size', 'merchboard' ) }
+							</label>
+							<select
+								id="merchboard-merch-ad-pill-size"
+								className="merchboard-input"
+								value={ values.pillSize }
+								onChange={ ( event ) =>
+									setValues( {
+										...values,
+										pillSize: event.target
+											.value as MerchAdValues[ 'pillSize' ],
+									} )
+								}
+							>
+								<option value="small">
+									{ __( 'Small', 'merchboard' ) }
+								</option>
+								<option value="medium">
+									{ __( 'Medium', 'merchboard' ) }
+								</option>
+								<option value="large">
+									{ __( 'Large', 'merchboard' ) }
+								</option>
+							</select>
+						</div>
+						{ values.design === 'stack' && (
+							<div className="merchboard-field">
+								<label
+									className="merchboard-field__label"
+									htmlFor="merchboard-merch-ad-stack-spread"
+								>
+									{ __( 'Stack: spread', 'merchboard' ) }
+								</label>
+								<input
+									id="merchboard-merch-ad-stack-spread"
+									type="range"
+									min={ 0 }
+									max={ 100 }
+									value={ values.stackSpread }
+									onChange={ ( event ) =>
+										setValues( {
+											...values,
+											stackSpread: Number(
+												event.target.value
+											),
+										} )
+									}
+								/>
+								<p className="merchboard-field__help">
+									{ __(
+										'Left: the products behind are close to the one in front. Right: they are spread out.',
+										'merchboard'
+									) }
+								</p>
+							</div>
+						) }
 						<div className="merchboard-field">
 							<label
 								className="merchboard-field__label"
@@ -943,6 +1053,22 @@ export function MerchAdSection() {
 			</Card>
 
 			<Card title={ __( 'In OBS', 'merchboard' ) }>
+				{ current.url !== null && ! current.enabled && (
+					<Alert tone="warning">
+						{ __(
+							'The ad is switched off, so OBS shows nothing. Tick "Show the ad in my stream" and save. "Show now" shows it once anyway.',
+							'merchboard'
+						) }
+					</Alert>
+				) }
+				{ current.url !== null && current.enabled && (
+					<p className="merchboard-field__help">
+						{ __(
+							'The browser source is transparent between the showings: the ad appears 15 seconds after OBS loads it and then at the times you chose.',
+							'merchboard'
+						) }
+					</p>
+				) }
 				{ current.url === null ? (
 					<p className="merchboard-field__help">
 						{ __(

@@ -37,6 +37,17 @@ final class MerchAdSettings {
 	public const THEMES = array( 'dark', 'light' );
 
 	/**
+	 * Where the pill goes: below the products, or over the product image (its
+	 * lower third).
+	 */
+	public const PILL_POSITIONS = array( 'below', 'over' );
+
+	/**
+	 * The pill's sizes.
+	 */
+	public const PILL_SIZES = array( 'small', 'medium', 'large' );
+
+	/**
 	 * The most products.
 	 */
 	public const MAX_PRODUCTS = 12;
@@ -80,6 +91,10 @@ final class MerchAdSettings {
 	 * @param string             $overlay_id  The secret id in the OBS link ('' before the first save).
 	 * @param array<int, string> $cutouts     Background-free image file per product.
 	 * @param int                $show_at     When "show now" was pressed (Unix time; 0 never).
+	 * @param string             $pill_position One of PILL_POSITIONS.
+	 * @param string             $pill_size   One of PILL_SIZES.
+	 * @param bool               $show_names  Whether the products' names are shown.
+	 * @param int                $stack_spread The stack: how far the products behind stick out (0–100).
 	 */
 	public function __construct(
 		public bool $enabled = false,
@@ -94,7 +109,11 @@ final class MerchAdSettings {
 		public string $theme = 'dark',
 		public string $overlay_id = '',
 		public array $cutouts = array(),
-		public int $show_at = 0
+		public int $show_at = 0,
+		public string $pill_position = 'below',
+		public string $pill_size = 'medium',
+		public bool $show_names = true,
+		public int $stack_spread = 50
 	) {
 	}
 
@@ -134,7 +153,11 @@ final class MerchAdSettings {
 			$pick( 'theme', self::THEMES, $default->theme ),
 			$id,
 			$cutouts,
-			is_int( $s['show_at'] ?? null ) && $s['show_at'] > 0 ? $s['show_at'] : 0
+			is_int( $s['show_at'] ?? null ) && $s['show_at'] > 0 ? $s['show_at'] : 0,
+			$pick( 'pill_position', self::PILL_POSITIONS, $default->pill_position ),
+			$pick( 'pill_size', self::PILL_SIZES, $default->pill_size ),
+			false !== ( $s['show_names'] ?? true ),
+			$range( 'stack_spread', 0, 100, $default->stack_spread )
 		);
 	}
 
@@ -145,19 +168,23 @@ final class MerchAdSettings {
 	 */
 	public function to_stored(): array {
 		return array(
-			'enabled'     => $this->enabled,
-			'design'      => $this->design,
-			'product_ids' => $this->product_ids,
-			'note'        => $this->note,
-			'every'       => $this->every,
-			'seconds'     => $this->seconds,
-			'enter'       => $this->enter,
-			'leave'       => $this->leave,
-			'accent'      => $this->accent,
-			'theme'       => $this->theme,
-			'overlay_id'  => $this->overlay_id,
-			'cutouts'     => $this->cutouts,
-			'show_at'     => $this->show_at,
+			'enabled'       => $this->enabled,
+			'design'        => $this->design,
+			'product_ids'   => $this->product_ids,
+			'note'          => $this->note,
+			'every'         => $this->every,
+			'seconds'       => $this->seconds,
+			'enter'         => $this->enter,
+			'leave'         => $this->leave,
+			'accent'        => $this->accent,
+			'theme'         => $this->theme,
+			'overlay_id'    => $this->overlay_id,
+			'cutouts'       => $this->cutouts,
+			'show_at'       => $this->show_at,
+			'pill_position' => $this->pill_position,
+			'pill_size'     => $this->pill_size,
+			'show_names'    => $this->show_names,
+			'stack_spread'  => $this->stack_spread,
 		);
 	}
 
@@ -167,6 +194,6 @@ final class MerchAdSettings {
 	 * @return list<string>
 	 */
 	public static function form_fields(): array {
-		return array( 'enabled', 'design', 'product_ids', 'note', 'every', 'seconds', 'enter', 'leave', 'accent', 'theme' );
+		return array( 'enabled', 'design', 'product_ids', 'note', 'every', 'seconds', 'enter', 'leave', 'accent', 'theme', 'pill_position', 'pill_size', 'show_names', 'stack_spread' );
 	}
 }
