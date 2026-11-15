@@ -11,6 +11,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import { attachAreaPicker } from './area-picker';
 import { attachColorPhotos } from './color-photos';
 import { readScene } from './psd-scene';
+import { attachSilhouette } from './silhouette';
 import { LAYERS, readTemplate, TemplateError } from './psd-template';
 import type { PrintArea, PsdTemplate, Rgba } from './psd-template';
 
@@ -661,6 +662,13 @@ document
 document
 	.querySelectorAll< HTMLInputElement >( 'input[data-merchboard-scene]' )
 	.forEach( attachScene );
+
+// "Make it from the background" for the silhouette (ADR-114).
+document
+	.querySelectorAll< HTMLButtonElement >(
+		'button.merchboard-silhouette-auto'
+	)
+	.forEach( attachSilhouette );
 
 const sizePrices = document.getElementById( 'merchboard-base-size-prices' );
 const sizeTick = document.getElementById( 'merchboard-base-size-priced' );

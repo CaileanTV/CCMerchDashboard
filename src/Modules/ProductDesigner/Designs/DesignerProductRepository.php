@@ -612,6 +612,65 @@ class DesignerProductRepository {
 	}
 
 	/**
+	 * The live designer products in the shop, newest first (ADR-114: the
+	 * images without background).
+	 *
+	 * @return list<array{id: int, creator_id: int, base_id: int, wc_product_id: int, live_version_id: int}>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function live_in_shop(): array {
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT id, creator_id, base_id, wc_product_id, live_version_id FROM %i WHERE status = %s AND wc_product_id IS NOT NULL AND live_version_id IS NOT NULL ORDER BY id DESC', $this->table( Tables::DESIGNER_PRODUCTS ), self::LIVE ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table; an admin page.
+
+		if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
+			throw new DatabaseException( 'Could not read the designer products.' );
+		}
+
+		return array_map(
+			static fn( array $row ): array => array(
+				'id'              => (int) $row['id'],
+				'creator_id'      => (int) $row['creator_id'],
+				'base_id'         => (int) $row['base_id'],
+				'wc_product_id'   => (int) $row['wc_product_id'],
+				'live_version_id' => (int) $row['live_version_id'],
+			),
+			$rows
+		);
+	}
+
+	/**
+	 * Replaces the mockups of a live version (ADR-114: an approved image
+	 * without background and "Undo"). Only the mockups change.
+	 *
+	 * @param int                                                $version_id Live (approved) version.
+	 * @param array<string, array<string, array<string, mixed>>> $mockups    Mockups by side and colour.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_live_mockups( int $version_id, array $mockups ): void {
+		$version = $this->version( $version_id, true );
+
+		if ( null === $version ) {
+			throw new DatabaseException( 'The version no longer exists.', array( 'version_id' => $version_id ) );
+		}
+
+		$data            = json_decode( (string) ( $version['files'] ?? '' ), true );
+		$data            = is_array( $data ) ? $data : array();
+		$data['mockups'] = $mockups;
+		$done            = $this->wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
+			$this->table( Tables::DESIGNER_VERSIONS ),
+			array( 'files' => (string) wp_json_encode( $data ) ),
+			array(
+				'id'     => $version_id,
+				'status' => self::APPROVED,
+			)
+		);
+
+		if ( false === $done || '' !== $this->wpdb->last_error ) {
+			throw new DatabaseException( 'Could not store the images of the design.', array( 'version_id' => $version_id ) );
+		}
+	}
+
+	/**
 	 * The designer products of a base product that have a WooCommerce
 	 * product, optionally only the live ones.
 	 *
@@ -950,10 +1009,18 @@ class DesignerProductRepository {
 			throw new DatabaseException( 'Could not read the files of the design.' );
 		}
 
-		$names = SubmissionFiles::names( is_string( $json ) ? $json : null );
-		$shots = array_values( array_filter( $names, static fn( string $name ): bool => ! str_ends_with( $name, '.png' ) ) );
+		// A mockup first (since ADR-114 it may be a PNG too), else a print file.
+		$json = is_string( $json ) ? $json : null;
 
-		return $shots[0] ?? $names[0] ?? null;
+		foreach ( SubmissionFiles::decode( $json )['mockups'] as $colors ) {
+			foreach ( $colors as $file ) {
+				if ( is_string( $file['file'] ?? null ) ) {
+					return $file['file'];
+				}
+			}
+		}
+
+		return SubmissionFiles::names( $json )[0] ?? null;
 	}
 
 	/**

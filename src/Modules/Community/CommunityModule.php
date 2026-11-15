@@ -80,6 +80,7 @@ use MerchBoard\Modules\Community\TwitchSubs\TwitchSubShopCard;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerSession;
 use MerchBoard\Modules\Creators\CreatorMetaStore;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CouponCode;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeRepository;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
@@ -420,7 +421,7 @@ final class CommunityModule implements Module {
 	 *
 	 * @param int    $product_id Parent product.
 	 * @param string $size       Image size.
-	 * @return array{name: string, image: string|null}|null
+	 * @return array{name: string, image: string|null, transparent: bool}|null
 	 */
 	private static function panel_product( int $product_id, string $size = 'woocommerce_thumbnail' ): ?array {
 		$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
@@ -433,8 +434,10 @@ final class CommunityModule implements Module {
 		$image    = $image_id > 0 ? wp_get_attachment_image_url( $image_id, $size ) : false;
 
 		return array(
-			'name'  => wp_strip_all_tags( html_entity_decode( $product->get_name(), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ),
-			'image' => is_string( $image ) && '' !== $image ? $image : null,
+			'name'        => wp_strip_all_tags( html_entity_decode( $product->get_name(), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ),
+			'image'       => is_string( $image ) && '' !== $image ? $image : null,
+			// A designer image without background (ADR-114).
+			'transparent' => $image_id > 0 && '1' === get_post_meta( $image_id, DesignerMedia::TRANSPARENT, true ),
 		);
 	}
 

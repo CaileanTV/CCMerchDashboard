@@ -27,6 +27,12 @@ class DesignerMedia {
 	public const META = '_merchboard_designer_mockup';
 
 	/**
+	 * Marks a product image without background (ADR-114): a PNG mockup is
+	 * only the product, so the merch ad and the Twitch panel show it as it is.
+	 */
+	public const TRANSPARENT = '_merchboard_transparent';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param DesignerFiles $files The private files.
@@ -57,6 +63,44 @@ class DesignerMedia {
 		}
 
 		return $attachments;
+	}
+
+	/**
+	 * Copies one file into the media library as a slot's image, also when
+	 * the slot has one (ADR-114: an image without background; the caller
+	 * moves the old one to another slot first).
+	 *
+	 * @param int                  $version_id Version.
+	 * @param string               $slot       Slot.
+	 * @param array<string, mixed> $file       Stored file.
+	 * @param int                  $owner      Product the attachment belongs to.
+	 * @param string               $title      Product title.
+	 * @throws DatabaseException When it cannot be copied.
+	 */
+	public function add( int $version_id, string $slot, array $file, int $owner, string $title ): int {
+		return $this->copy( $version_id, $slot, $file, $owner, $title );
+	}
+
+	/**
+	 * The attachment of a slot, or null.
+	 *
+	 * @param int    $version_id Version.
+	 * @param string $slot       Slot.
+	 */
+	public function find( int $version_id, string $slot ): ?int {
+		return $this->existing( $version_id, $slot );
+	}
+
+	/**
+	 * Moves an attachment to another slot of its version (ADR-114: the
+	 * replaced image is kept for "Undo").
+	 *
+	 * @param int    $attachment Attachment.
+	 * @param int    $version_id Version.
+	 * @param string $slot       Slot.
+	 */
+	public function relabel( int $attachment, int $version_id, string $slot ): void {
+		update_post_meta( $attachment, self::META, $version_id . ':' . $slot );
 	}
 
 	/**
@@ -150,6 +194,10 @@ class DesignerMedia {
 
 		update_post_meta( $id, self::META, $version_id . ':' . $slot );
 		update_post_meta( $id, '_wp_attachment_image_alt', $title );
+
+		if ( 'png' === $extension ) {
+			update_post_meta( $id, self::TRANSPARENT, '1' );
+		}
 
 		if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/image.php';

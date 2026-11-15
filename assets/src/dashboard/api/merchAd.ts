@@ -36,6 +36,8 @@ export interface MerchAdProduct {
 	readonly image: string | null;
 	/** The background-free image, or null. */
 	readonly cutout: string | null;
+	/** The shop image is already without background (ADR-114). */
+	readonly transparent: boolean;
 }
 
 export interface MerchAdValues {
@@ -136,7 +138,13 @@ function parseProduct( body: unknown ): MerchAdProduct | null {
 		return null;
 	}
 
-	return { id, name: body.name, image, cutout };
+	return {
+		id,
+		name: body.name,
+		image,
+		cutout,
+		transparent: body.transparent === true,
+	};
 }
 
 /**

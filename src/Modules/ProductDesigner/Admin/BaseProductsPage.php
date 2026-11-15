@@ -553,6 +553,11 @@ final class BaseProductsPage {
 				echo '<p class="description">' . esc_html__( 'Where this PNG is opaque, the product is shown in front of the design, e.g. the strings of a hoodie (a mask.png). It has the size of the other layers. The print file is not changed, and designs waiting for approval stay valid.', 'merchboard' ) . '</p>';
 			}
 
+			if ( BaseView::SILHOUETTE === $layer ) {
+				echo '<p class="description">' . esc_html__( 'The product\'s outline: where this PNG is opaque, the product images without background keep the product; everything else becomes transparent. Without it the colour mask is used. Sides with colour photos only need it. It has the size of the other layers.', 'merchboard' ) . '</p>';
+				echo '<p><button type="button" class="button merchboard-silhouette-auto" data-index="' . esc_attr( (string) $index ) . '">' . esc_html__( 'Make it from the background', 'merchboard' ) . '</button> <span class="merchboard-silhouette-auto__status" aria-live="polite"></span></p>';
+			}
+
 			echo '</td></tr>';
 		}
 
@@ -1776,6 +1781,7 @@ final class BaseProductsPage {
 			'color'      => __( 'Colour mask', 'merchboard' ),
 			'shading'    => __( 'Shading', 'merchboard' ),
 			'cutout'     => __( 'Cutout (e.g. strings on a hoodie)', 'merchboard' ),
+			'silhouette' => __( 'Silhouette (images without background)', 'merchboard' ),
 			default      => __( 'Highlight', 'merchboard' ),
 		};
 	}

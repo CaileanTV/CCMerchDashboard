@@ -300,7 +300,11 @@ export function MerchAdSection() {
 		const missed: number[] = [];
 
 		for ( const product of list ) {
-			if ( product.cutout !== null || product.image === null ) {
+			if (
+				product.cutout !== null ||
+				product.transparent ||
+				product.image === null
+			) {
 				continue;
 			}
 
@@ -983,6 +987,13 @@ export function MerchAdSection() {
 												'merchboard'
 											) }
 										{ product.cutout === null &&
+											product.transparent &&
+											__(
+												'Without background (the shop image)',
+												'merchboard'
+											) }
+										{ product.cutout === null &&
+											! product.transparent &&
 											! failed.includes( product.id ) &&
 											__(
 												'With the shop image',
@@ -992,6 +1003,7 @@ export function MerchAdSection() {
 								</span>
 								<span className="merchboard-merch-ad-cutouts__actions">
 									{ product.cutout === null &&
+										! product.transparent &&
 										product.image !== null && (
 											<Button
 												variant="secondary"

@@ -86,6 +86,9 @@ const REQUIRED = [
 	'build/merch-ad.js',
 	'build/merch-ad.css',
 	'build/merch-ad.asset.php',
+	// The admin's images without background (ADR-114).
+	'build/designer-cutouts-admin.js',
+	'build/designer-cutouts-admin.asset.php',
 	'templates/community/merch-ad.php',
 	'languages/merchboard.pot',
 	'languages/merchboard-da_DK.po',

@@ -1097,34 +1097,41 @@ final class MeDesignerController extends RestController {
 			'colors'           => $base->colors,
 			'sizes'            => $base->sizes,
 			'version'          => $base->version,
-			'views'            => array_map(
-				static function ( BaseView $view ) use ( $base ): array {
-					[ $print_width, $print_height ] = $view->print_pixels();
+			'views'            => array_map( static fn( BaseView $view ): array => self::view_data( $base, $view ), $base->views ),
+		);
+	}
 
-					$pack = '' === $view->thread_pack ? null : ThreadPacks::find( $view->thread_pack );
+	/**
+	 * A side of a base product as the designer draws it (also the admin's
+	 * images without background, ADR-114).
+	 *
+	 * @param BaseProduct $base Base product.
+	 * @param BaseView    $view The side.
+	 * @return array<string, mixed>
+	 */
+	public static function view_data( BaseProduct $base, BaseView $view ): array {
+		[ $print_width, $print_height ] = $view->print_pixels();
 
-					return array(
-						'key'          => $view->key,
-						'name'         => $view->name,
-						'width'        => $view->width,
-						'height'       => $view->height,
-						'layers'       => (object) $view->layers,
-						'area'         => $view->area,
-						'print_width'  => $print_width,
-						'print_height' => $print_height,
-						'dpi'          => $view->dpi,
-						'flat'         => $view->flat,
-						'sizes'        => $view->sizes,
-						'small'        => $view->small,
-						'scene'        => $view->scene,
-						'embroidery'   => null === $pack ? null : array(
-							'max'      => $pack['max'],
-							'threads'  => $pack['threads'],
-							'stitched' => $base->stitched( $view ),
-						),
-					);
-				},
-				$base->views
+		$pack = '' === $view->thread_pack ? null : ThreadPacks::find( $view->thread_pack );
+
+		return array(
+			'key'          => $view->key,
+			'name'         => $view->name,
+			'width'        => $view->width,
+			'height'       => $view->height,
+			'layers'       => (object) $view->layers,
+			'area'         => $view->area,
+			'print_width'  => $print_width,
+			'print_height' => $print_height,
+			'dpi'          => $view->dpi,
+			'flat'         => $view->flat,
+			'sizes'        => $view->sizes,
+			'small'        => $view->small,
+			'scene'        => $view->scene,
+			'embroidery'   => null === $pack ? null : array(
+				'max'      => $pack['max'],
+				'threads'  => $pack['threads'],
+				'stitched' => $base->stitched( $view ),
 			),
 		);
 	}

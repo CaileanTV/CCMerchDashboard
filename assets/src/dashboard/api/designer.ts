@@ -22,6 +22,8 @@ export const LAYERS = [
 	'highlight',
 	// Where it is opaque, the product lies in front of the design (ADR-099).
 	'cutout',
+	// The product's outline for the images without background (ADR-114).
+	'silhouette',
 ] as const;
 
 export type LayerKind = ( typeof LAYERS )[ number ];
@@ -366,7 +368,7 @@ function parseScene( value: unknown, asset: unknown ): DesignerView[ 'scene' ] {
  *
  * @param value Value.
  */
-function parseView( value: unknown ): DesignerView | null {
+export function parseView( value: unknown ): DesignerView | null {
 	if (
 		! isRecord( value ) ||
 		! isString( value.key ) ||

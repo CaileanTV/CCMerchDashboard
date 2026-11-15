@@ -410,6 +410,43 @@ class WooCommerceDesignerWriter {
 	}
 
 	/**
+	 * Replaces images of a designer product where they are used: the product
+	 * image, the gallery and the variations' images, each in its place
+	 * (ADR-114: the images without background and back).
+	 *
+	 * @param GuardedProduct  $product The guard's proof.
+	 * @param array<int, int> $swap    New attachment by old attachment.
+	 * @throws DatabaseException When it cannot be saved.
+	 */
+	public function swap_images( GuardedProduct $product, array $swap ): void {
+		$parent = wc_get_product( $product->wc_product_id );
+
+		if ( ! $parent instanceof WC_Product_Variable && ! $parent instanceof WC_Product_Simple ) {
+			return;
+		}
+
+		$swapped = static fn( int $id ): int => $swap[ $id ] ?? $id;
+
+		$parent->set_image_id( $swapped( (int) $parent->get_image_id( 'edit' ) ) );
+		$parent->set_gallery_image_ids( array_map( $swapped, array_map( 'intval', $parent->get_gallery_image_ids( 'edit' ) ) ) );
+		self::save( $parent );
+
+		if ( ! $parent instanceof WC_Product_Variable ) {
+			return;
+		}
+
+		foreach ( $parent->get_children() as $child ) {
+			$variation = wc_get_product( $child );
+			$image     = $variation instanceof WC_Product_Variation ? (int) $variation->get_image_id( 'edit' ) : 0;
+
+			if ( $variation instanceof WC_Product_Variation && isset( $swap[ $image ] ) ) {
+				$variation->set_image_id( $swap[ $image ] );
+				self::save( $variation );
+			}
+		}
+	}
+
+	/**
 	 * Gives a designer product its base product's product tags (ADR-100).
 	 *
 	 * @param GuardedProduct $product The guard's proof.

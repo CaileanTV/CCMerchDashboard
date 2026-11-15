@@ -945,4 +945,17 @@ enum AuditAction: string {
 	 * changed_fields.
 	 */
 	case MerchCommandChanged = 'merch_command_changed';
+
+	/**
+	 * An administrator approved a designer product's images without
+	 * background; they replaced its shop images (ADR-114). Context:
+	 * design_product_id, version_id, images.
+	 */
+	case DesignerCutoutsApproved = 'designer_cutouts_approved';
+
+	/**
+	 * An administrator put a designer product's old shop images back
+	 * (ADR-114). Context: design_product_id, version_id, images.
+	 */
+	case DesignerCutoutsReverted = 'designer_cutouts_reverted';
 }

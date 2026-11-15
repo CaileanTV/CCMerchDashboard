@@ -24,6 +24,7 @@ export const LAYERS = [
 	'shading',
 	'highlight',
 	'cutout',
+	'silhouette',
 ] as const;
 
 export type LayerKind = ( typeof LAYERS )[ number ];

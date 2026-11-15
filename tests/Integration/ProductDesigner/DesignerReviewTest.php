@@ -36,6 +36,7 @@ use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerCutouts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerNameSeparator;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
@@ -89,6 +90,7 @@ use wpdb;
 #[CoversClass( DesignerRetirement::class )]
 #[CoversClass( DesignerPrices::class )]
 #[CoversClass( MeDesignerController::class )]
+#[CoversClass( DesignerCutouts::class )]
 final class DesignerReviewTest extends IntegrationTestCase {
 
 	private DesignerFiles $files;
@@ -1778,6 +1780,143 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		} catch ( DesignerException $e ) {
 			self::assertSame( DesignerException::DESIGN_APPLYING, $e->reason() );
 		}
+	}
+
+	public function test_images_without_background_replace_the_shop_images_after_approval_and_can_be_undone(): void {
+		// A product approved before ADR-114: the browser's mockups are JPEGs.
+		$product = $this->drafts->create( $this->creator, $this->base );
+		$this->save( $product, '20' );
+		$this->submissions->attach( $this->creator, $product, 'print:front', AlertImagesTest::upload( AlertImagesTest::png( 118, 157 ), 'print.png' ) );
+
+		foreach ( array( 'black', 'sand' ) as $color ) {
+			$this->submissions->attach( $this->creator, $product, 'mockup:front:' . $color, AlertImagesTest::upload( self::jpeg( 400, 400 ), 'mockup.jpg' ) );
+		}
+
+		$this->submissions->submit( $this->creator, $product );
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+
+		$cutouts       = new DesignerCutouts( $this->products, $this->bases_repository(), $this->files, new DesignerMedia( $this->files ), $this->guard, $this->writer, $this->service( AuditTrail::class ) );
+		$live          = $this->products->live( $product ) ?? self::fail( 'Not live.' );
+		$version       = (int) $live['id'];
+		$wc            = (int) ( $this->products->product( $product )['wc_product_id'] ?? 0 );
+		[ , $content ] = $this->writer->contents[ count( $this->writer->contents ) - 1 ];
+		$old           = array(
+			'front:black' => $content->color_images['black'],
+			'front:sand'  => $content->color_images['sand'],
+		);
+		$row           = static fn( array $rows ): array => array_values( array_filter( $rows, static fn( array $row ): bool => $row['product'] === $product ) )[0] ?? self::fail( 'Not listed.' );
+		$jpegs         = array_column( SubmissionFiles::decode( (string) $live['files'] )['mockups']['front'], 'file' );
+
+		self::assertSame( 'todo', $row( $cutouts->overview() )['state'] );
+		self::assertSame( array( 'front:black', 'front:sand' ), array_column( $row( $cutouts->overview() )['slots'], 'key' ) );
+
+		// The administrator's browser gets what to draw, through admin URLs.
+		$job = $cutouts->job( $product );
+		self::assertSame( array( 'front:black', 'front:sand' ), array_column( $job['slots'], 'key' ) );
+		self::assertSame( '#111111', $job['slots'][0]['color'] );
+		self::assertStringContainsString( 'action=' . DesignerVersionFiles::ACTION, $job['slots'][0]['print'] );
+		self::assertSame( array( 'color' ), array_keys( $job['slots'][0]['layers'] ), 'The colour mask is the outline.' );
+		self::assertSame( 400, $job['slots'][0]['view']['width'] ?? null );
+
+		foreach ( array( array( 'front:green', 400, DesignerException::DESIGN_INVALID ), array( 'front:black', 200, DesignerException::BASE_LAYER_SIZE ) ) as [ $key, $size, $reason ] ) {
+			try {
+				$cutouts->store( $product, $key, AlertImagesTest::upload( AlertImagesTest::png( $size, $size ), 'cutout.png' ) );
+				self::fail( 'Refused: ' . $key . ' ' . $size );
+			} catch ( DesignerException $e ) {
+				self::assertSame( $reason, $e->reason() );
+			}
+		}
+
+		foreach ( array_keys( $old ) as $key ) {
+			$cutouts->store( $product, $key, AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'cutout.png' ) );
+		}
+
+		self::assertSame( 'pending', $row( $cutouts->overview() )['state'] );
+		self::assertSame( 1, $cutouts->waiting() );
+		self::assertSame( array(), $this->writer->swaps, 'Nothing in the shop before the approval.' );
+		self::assertNotNull( $cutouts->waiting_file( $product, 'front:black' ) );
+
+		// Approve: the new images take the old ones' places; the version's mockups are the PNGs.
+		self::assertSame( 2, $cutouts->approve( $product ) );
+
+		$media = new DesignerMedia( $this->files );
+		$new   = array(
+			'front:black' => (int) $media->find( $version, 'mockup:front:black' ),
+			'front:sand'  => (int) $media->find( $version, 'mockup:front:sand' ),
+		);
+		self::assertSame(
+			array(
+				array(
+					$wc,
+					array(
+						$old['front:black'] => $new['front:black'],
+						$old['front:sand']  => $new['front:sand'],
+					),
+				),
+			),
+			$this->writer->swaps
+		);
+		self::assertSame( $old['front:black'], $media->find( $version, DesignerCutouts::REPLACED . ':front:black' ), 'The old image stays in the media library.' );
+		self::assertSame( '1', get_post_meta( $new['front:black'], DesignerMedia::TRANSPARENT, true ) );
+		$mockups = SubmissionFiles::decode( (string) ( $this->products->version( $version )['files'] ?? '' ) )['mockups']['front'];
+		self::assertSame( array( 'image/png', 'image/png' ), array_column( $mockups, 'mime' ) );
+		self::assertNull( $this->files->path( $jpegs[0] ), 'The old private file is gone.' );
+		self::assertSame( 0, $cutouts->waiting() );
+		self::assertSame( 'done', $row( $cutouts->overview() )['state'] );
+		self::assertTrue( $row( $cutouts->overview() )['undo'] );
+		self::assertSame( array( 'designer_cutouts_approved' ), $this->audit( 'designer_cutouts_approved' ) );
+
+		// Undo: the old images come back, the PNGs wait again.
+		self::assertSame( 2, $cutouts->revert( $product ) );
+		self::assertSame(
+			array(
+				$wc,
+				array(
+					$new['front:black'] => $old['front:black'],
+					$new['front:sand']  => $old['front:sand'],
+				),
+			),
+			$this->writer->swaps[1] ?? null
+		);
+		self::assertSame( $old['front:black'], $media->find( $version, 'mockup:front:black' ) );
+		self::assertNull( get_post( $new['front:black'] ), 'The approved image is deleted.' );
+		$mockups = SubmissionFiles::decode( (string) ( $this->products->version( $version )['files'] ?? '' ) )['mockups']['front'];
+		self::assertSame( array( 'image/jpeg', 'image/jpeg' ), array_column( $mockups, 'mime' ) );
+		self::assertNotNull( $this->files->path( (string) $mockups['black']['file'] ), 'A private copy of the old image again.' );
+		self::assertSame( 'pending', $row( $cutouts->overview() )['state'] );
+		self::assertFalse( $row( $cutouts->overview() )['undo'] );
+		self::assertSame( array( 'designer_cutouts_reverted' ), $this->audit( 'designer_cutouts_reverted' ) );
+
+		try {
+			$cutouts->revert( $product );
+			self::fail( 'Nothing to undo.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_STALE, $e->reason() );
+		}
+
+		// Discard: nothing waits; the images can be made again.
+		$waiting = $cutouts->waiting_file( $product, 'front:black' ) ?? self::fail( 'Waiting.' );
+		$cutouts->discard( $product );
+		self::assertFileDoesNotExist( $waiting['path'] );
+		self::assertSame( 'todo', $row( $cutouts->overview() )['state'] );
+		self::assertSame( 0, $cutouts->waiting() );
+	}
+
+	/**
+	 * A JPEG.
+	 *
+	 * @param int $width  Width.
+	 * @param int $height Height.
+	 */
+	private static function jpeg( int $width, int $height ): string {
+		$image = imagecreatetruecolor( max( 1, $width ), max( 1, $height ) );
+
+		self::assertNotFalse( $image );
+		ob_start();
+		imagejpeg( $image );
+
+		return (string) ob_get_clean();
 	}
 
 	/**

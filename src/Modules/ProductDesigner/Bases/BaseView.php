@@ -48,9 +48,16 @@ final readonly class BaseView {
 	 * The template layers: the background and the colour mask under the
 	 * design, the shading and the highlight over it, and the cutout (ADR-099):
 	 * where it is opaque, the product lies in front of the design (e.g. the
-	 * strings of a hoodie). The cutout alone is no template.
+	 * strings of a hoodie). The cutout alone is no template. The silhouette
+	 * (ADR-114) is the product's outline: the images without background are
+	 * cut to it (without it, to the colour mask).
 	 */
-	public const LAYERS = array( 'background', 'color', 'shading', 'highlight', 'cutout' );
+	public const LAYERS = array( 'background', 'color', 'shading', 'highlight', 'cutout', 'silhouette' );
+
+	/**
+	 * The silhouette layer (ADR-114): only the images without background.
+	 */
+	public const SILHOUETTE = 'silhouette';
 
 	/**
 	 * The cutout layer (ADR-099): not part of what a design was made on.

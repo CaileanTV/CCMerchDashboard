@@ -66,6 +66,13 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	public array $images = array();
 
 	/**
+	 * The swaps of each swap_images() (ADR-114).
+	 *
+	 * @var list<array{0: int, 1: array<int, int>}>
+	 */
+	public array $swaps = array();
+
+	/**
 	 * Product tags written (ADR-100).
 	 *
 	 * @var list<array{0: int, 1: array<int>}>
@@ -181,6 +188,16 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	 */
 	public function set_images( GuardedProduct $product, array $images ): void {
 		$this->images[] = array( $product->wc_product_id, $images );
+	}
+
+	/**
+	 * Records the swapped images.
+	 *
+	 * @param GuardedProduct  $product Proof.
+	 * @param array<int, int> $swap    New attachment by old attachment.
+	 */
+	public function swap_images( GuardedProduct $product, array $swap ): void {
+		$this->swaps[] = array( $product->wc_product_id, $swap );
 	}
 
 	/**

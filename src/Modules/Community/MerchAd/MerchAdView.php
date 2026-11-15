@@ -31,7 +31,7 @@ final class MerchAdView {
 	/**
 	 * A product's name and shop image, or null when it is not published.
 	 *
-	 * @var Closure(int): (array{name: string, image: string|null}|null)
+	 * @var Closure(int): (array{name: string, image: string|null, transparent?: bool}|null)
 	 */
 	private Closure $product;
 
@@ -39,7 +39,7 @@ final class MerchAdView {
 	 * Constructor.
 	 *
 	 * @phpstan-param Closure(int, int): list<int> $newest
-	 * @phpstan-param Closure(int): (array{name: string, image: string|null}|null) $product
+	 * @phpstan-param Closure(int): (array{name: string, image: string|null, transparent?: bool}|null) $product
 	 *
 	 * @param MerchAdRepository $settings The creators' ads.
 	 * @param MerchAdFiles      $files    The background-free images.
@@ -55,7 +55,7 @@ final class MerchAdView {
 	 * The products of a creator's ad, in order.
 	 *
 	 * @param int $creator_id Creator.
-	 * @return list<array{id: int, name: string, image: string|null, cutout: string|null}>
+	 * @return list<array{id: int, name: string, image: string|null, cutout: string|null, transparent: bool}>
 	 * @throws \MerchBoard\Core\Database\DatabaseException When the creator's products cannot be read.
 	 */
 	public function products( int $creator_id ): array {
@@ -72,10 +72,12 @@ final class MerchAdView {
 
 			$file       = $settings->cutouts[ $id ] ?? null;
 			$products[] = array(
-				'id'     => $id,
-				'name'   => $product['name'],
-				'image'  => $product['image'],
-				'cutout' => null === $file ? null : $this->files->url( $creator_id, $file ),
+				'id'          => $id,
+				'name'        => $product['name'],
+				'image'       => $product['image'],
+				'cutout'      => null === $file ? null : $this->files->url( $creator_id, $file ),
+				// The shop image is already without background (ADR-114).
+				'transparent' => $product['transparent'] ?? false,
 			);
 
 			if ( count( $products ) >= MerchAdSettings::MAX_PRODUCTS ) {
@@ -104,7 +106,7 @@ final class MerchAdView {
 				$products[] = array(
 					'name'   => $product['name'],
 					'image'  => $image,
-					'cutout' => null !== $product['cutout'],
+					'cutout' => null !== $product['cutout'] || $product['transparent'],
 				);
 			}
 		}

@@ -47,6 +47,8 @@ jest.mock( '../sections/designer/fabric-stage', () => ( {
 } ) );
 
 jest.mock( '../sections/designer/mockup', () => ( {
+	canCutOut: ( layers: Record< string, unknown > ) =>
+		layers.silhouette !== undefined || layers.color !== undefined,
 	composeMockup: () => Promise.resolve( mockBlob( 'image/jpeg' ) ),
 	pngOf: () => Promise.resolve( mockBlob( 'image/png' ) ),
 } ) );
@@ -753,6 +755,10 @@ describe( 'DesignerSection', () => {
 				( request.body as FormData ).get( 'slot' )
 			)
 		).toEqual( [ 'print:front', 'mockup:front:black' ] );
+		// A side with a colour mask gets a shop image without background (ADR-114).
+		expect(
+			( ( sent[ 1 ]?.body as FormData ).get( 'file' ) as File ).name
+		).toBe( 'mockup-front.png' );
 		expect(
 			requests.map( ( request ) => request.method + ' ' + request.path )
 		).toContain( 'POST /merchboard/v1/me/designer/products/5/submit' );

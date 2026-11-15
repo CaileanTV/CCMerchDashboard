@@ -200,20 +200,36 @@ export function closeBox(
 }
 
 /**
- * A side's mockup in one colour as a JPEG, or null when it cannot be drawn.
+ * Whether a side's images can be drawn without background (ADR-114): it has
+ * a silhouette, or a colour mask to use as one.
  *
- * @param view   The side (template size, layers and print area).
- * @param layers `data:` URL of each template layer the side has.
- * @param color  The product colour (`#rrggbb`).
- * @param print  The side's print file.
- * @param box    The part a close-up shows; null for the whole template.
+ * @param layers The side's layers in one colour.
+ */
+export function canCutOut(
+	layers: Partial< Record< LayerKind, unknown > >
+): boolean {
+	return layers.silhouette !== undefined || layers.color !== undefined;
+}
+
+/**
+ * A side's mockup in one colour, or null when it cannot be drawn: a JPEG on
+ * white, or (`transparent`) a PNG without background, cut to the side's
+ * silhouette or else its colour mask (ADR-114).
+ *
+ * @param view        The side (template size, layers and print area).
+ * @param layers      `data:` URL of each template layer the side has.
+ * @param color       The product colour (`#rrggbb`).
+ * @param print       The side's print file.
+ * @param box         The part a close-up shows; null for the whole template.
+ * @param transparent A PNG without background.
  */
 export async function composeMockup(
 	view: DesignerView,
 	layers: Partial< Record< LayerKind, string > >,
 	color: string,
 	print: HTMLCanvasElement,
-	box: SceneRect | null = null
+	box: SceneRect | null = null,
+	transparent = false
 ): Promise< Blob | null > {
 	const images: Partial< Record< LayerKind, HTMLImageElement > > = {};
 
@@ -244,9 +260,12 @@ export async function composeMockup(
 	const left = box?.x ?? 0;
 	const top = box?.y ?? 0;
 
-	// A shop image has no transparency (JPEG): white where the template has none.
-	context.fillStyle = '#ffffff';
-	context.fillRect( 0, 0, canvas.width, canvas.height );
+	// A JPEG has no transparency: white where the template has none.
+	if ( ! transparent ) {
+		context.fillStyle = '#ffffff';
+		context.fillRect( 0, 0, canvas.width, canvas.height );
+	}
+
 	context.imageSmoothingQuality = 'high';
 	context.setTransform( zoom, 0, 0, zoom, -left * zoom, -top * zoom );
 
@@ -306,8 +325,10 @@ export async function composeMockup(
 			return null;
 		}
 
-		front.context.fillStyle = '#ffffff';
-		front.context.fillRect( 0, 0, view.width, view.height );
+		if ( ! transparent ) {
+			front.context.fillStyle = '#ffffff';
+			front.context.fillRect( 0, 0, view.width, view.height );
+		}
 
 		if ( images.background !== undefined ) {
 			front.context.drawImage(
@@ -341,11 +362,25 @@ export async function composeMockup(
 		context.drawImage( images.highlight, 0, 0, view.width, view.height );
 	}
 
+	if ( transparent ) {
+		// Only the product: everything outside its outline becomes transparent.
+		const outline = images.silhouette ?? images.color;
+
+		if ( outline === undefined ) {
+			return null;
+		}
+
+		context.globalCompositeOperation = 'destination-in';
+		context.drawImage( outline, 0, 0, view.width, view.height );
+	}
+
 	context.globalCompositeOperation = 'source-over';
 	context.setTransform( 1, 0, 0, 1, 0, 0 );
 
 	return new Promise( ( resolve ) =>
-		canvas.toBlob( resolve, 'image/jpeg', QUALITY )
+		transparent
+			? canvas.toBlob( resolve, 'image/png' )
+			: canvas.toBlob( resolve, 'image/jpeg', QUALITY )
 	);
 }
 

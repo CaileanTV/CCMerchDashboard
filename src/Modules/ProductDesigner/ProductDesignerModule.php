@@ -35,6 +35,8 @@ use MerchBoard\Modules\ProductDesigner\Admin\PrintifyThumbnails;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerNotificationActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerReviewActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerVersionFiles;
+use MerchBoard\Modules\ProductDesigner\Admin\DesignerCutoutsPage;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerCutouts;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerFeesSection;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerMenu;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerSettingsActions;
@@ -290,6 +292,20 @@ final class ProductDesignerModule implements Module {
 		$container->set( DesignerNotificationActions::class, static fn( Container $c ): DesignerNotificationActions => new DesignerNotificationActions( $c->get( NotificationSettings::class ), $c->get( NotificationTypes::class ), $c->get( NotificationSender::class ), $c->get( Logger::class ) ) );
 		// Approval and the apply pipeline into WooCommerce (step 30.10).
 		$container->set( DesignerMedia::class, static fn( Container $c ): DesignerMedia => new DesignerMedia( $c->get( DesignerFiles::class ) ) );
+		// The images without background of products approved before (ADR-114).
+		$container->set(
+			DesignerCutouts::class,
+			static fn( Container $c ): DesignerCutouts => new DesignerCutouts(
+				$c->get( DesignerProductRepository::class ),
+				$c->get( BaseProductRepository::class ),
+				$c->get( DesignerFiles::class ),
+				$c->get( DesignerMedia::class ),
+				$c->get( DesignerProductGuard::class ),
+				$c->get( WooCommerceDesignerWriter::class ),
+				$c->get( AuditTrail::class )
+			)
+		);
+		$container->set( DesignerCutoutsPage::class, static fn( Container $c ): DesignerCutoutsPage => new DesignerCutoutsPage( $c->get( DesignerCutouts::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ) ) );
 		$container->set(
 			DesignerApply::class,
 			static fn( Container $c ): DesignerApply => new DesignerApply(
@@ -572,6 +588,15 @@ final class ProductDesignerModule implements Module {
 				$container->get( DesignerRetirement::class )->base_retired( $base );
 			}
 		);
+		// A deleted shop product leaves no images without background waiting (ADR-114).
+		add_action(
+			'before_delete_post',
+			static function ( mixed $post_id ) use ( $container ): void {
+				if ( is_numeric( $post_id ) && '' !== (string) get_post_meta( (int) $post_id, DesignerCutouts::PENDING, true ) ) {
+					$container->get( DesignerCutouts::class )->forget( (int) $post_id );
+				}
+			}
+		);
 		add_action(
 			'merchboard_creator_renamed',
 			static function ( mixed $id, mixed $before, mixed $after ) use ( $container ): void {
@@ -597,7 +622,7 @@ final class ProductDesignerModule implements Module {
 		add_filter(
 			ApprovalsPage::FILTER,
 			static function ( mixed $tabs ) use ( $container ): array {
-				return array_merge( is_array( $tabs ) ? $tabs : array(), array( $container->get( DesignsPage::class )->approval_tab() ) );
+				return array_merge( is_array( $tabs ) ? $tabs : array(), array( $container->get( DesignsPage::class )->approval_tab(), $container->get( DesignerCutoutsPage::class )->approval_tab() ) );
 			}
 		);
 		add_action(
@@ -612,6 +637,7 @@ final class ProductDesignerModule implements Module {
 				$container->get( DesignerNotificationActions::class )->register();
 				$container->get( DesignerReviewActions::class )->register();
 				$container->get( DesignerVersionFiles::class )->register();
+				$container->get( DesignerCutoutsPage::class )->register();
 
 				// " - " before the creator's addition in the names from before (ADR-102), once.
 				if ( DesignerNameSeparator::due() ) {

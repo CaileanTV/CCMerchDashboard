@@ -1089,12 +1089,12 @@ class BaseProductService {
 	 * @return list<array<string, mixed>>
 	 */
 	private static function templates( array $views ): array {
-		// The switch of the preview, the cutout (ADR-099: only the mockups) and the order of the sides change nothing a design was made on.
+		// The switch of the preview, the cutout (ADR-099: only the mockups), the silhouette (ADR-114: only the images without background) and the order of the sides change nothing a design was made on.
 		$templates = array_map(
 			static function ( BaseView $view ): array {
 				$template = $view->to_array();
 
-				unset( $template['scene']['preview'], $template['layers'][ BaseView::CUTOUT ] );
+				unset( $template['scene']['preview'], $template['layers'][ BaseView::CUTOUT ], $template['layers'][ BaseView::SILHOUETTE ] );
 
 				return $template;
 			},
