@@ -6769,3 +6769,65 @@ Ingen schemaændring. Ny creator-meta `merch_ad` og `merch_command`, filer i `up
 
 ## Related
 ADR-033, ADR-065, ADR-066, ADR-108, ADR-112
+
+# ADR-114: Produktbilleder uden baggrund fra produktdesigneren (PNG)
+
+## Date
+2026-11-15
+
+## Status
+Accepteret af projektejeren 2026-11-15. Udgives i 2.2.0 sammen med fase 48–50.
+
+## Context
+Merch-reklamen (ADR-113) og Twitch-panelet (ADR-112) skal vise produkterne uden baggrund. Det fungerer dårligt at fjerne baggrunden fra shoppens billeder bagefter, fordi baggrunden ofte ikke er ensfarvet.
+
+Produktdesignerens billeder tegnes i creatorens browser ud fra skabelonens lag (baggrundsfoto, farvemaske, design, skygge, lys). I dag tegnes de på hvidt og gemmes som JPEG, og der findes ingen funktion til at lave dem igen.
+
+Projektejeren vil have:
+- billeder uden baggrund (PNG) til reklamen og Twitch-panelet;
+- at de også erstatter shoppens billeder, men først efter admins godkendelse på en side, der viser gammelt og nyt billede;
+- at nye produkter fremover får PNG-billeder uden baggrund.
+
+## Decision
+1. **Silhuet pr. side:**
+   - Skabelonens sider får et valgfrit lag `silhouette`: en PNG, hvis synlige pixels er produktets omrids.
+   - Mangler laget, bruges farvemasken (`color`), som er omridset på de fleste skabeloner.
+   - Sider, der kun har farvefotos (fx katalogimport), skal have en silhuet. Admin kan lave den automatisk fra baggrundsfotoet (fjerner en ensfarvet baggrund i browseren) eller uploade den.
+2. **Tegning uden baggrund:** samme tegning som i dag, men uden det hvide underlag. Til sidst klippes billedet til silhuetten (`destination-in`), så baggrund, skygge uden for produktet og design uden for produktet forsvinder. Gemmes som PNG i skabelonens størrelse, så alle farver og sider har samme beskæring.
+3. **Nye produkter:** når creatoren indsender, er shoppens billeder (`mockup:<side>:<farve>`) PNG uden baggrund for de sider, der har en silhuet. Sider uden silhuet (og PSD-scener) får JPEG som før. Nærbilleder af broderi forbliver JPEG.
+4. **Eksisterende produkter:** en ny admin-side "Billeder uden baggrund" (Merch Dashboard → Produktdesigner) viser alle godkendte designer-produkter.
+   - **Nye billeder:** admins browser tegner dem ud fra de gemte printfiler og skabelonens lag (samme regler som pkt. 2) og gemmer dem på versionen som afventende.
+   - **Visning:** gammelt og nyt billede side om side, det nye på et ternet underlag.
+   - **Godkend:** de nye billeder kommer i mediebiblioteket og erstatter produktets og variationernes billeder i samme rækkefølge. De gamle billeder slettes ikke.
+   - **Fortryd:** sætter de gamle billeder tilbage.
+   - **Knapper:** "Lav nye" findes pr. produkt og for alle.
+5. **Reklamen og Twitch-panelet:**
+   - Et billede, der er gennemsigtigt fra designeren, er mærket med attachment-meta `_merchboard_transparent`.
+   - Reklamen bruger det som billede uden baggrund uden fritlægning.
+   - Rækkefølgen er: creatorens egen upload går forud, derefter designerens PNG, derefter den automatiske fritlægning.
+6. **Udbyderfotos:** fotos fra Printful, Gelato og Prodigi erstatter stadig browserens billeder, hvor de bruges, og har baggrund. Admin-siden viser dem som "fotos fra leverandøren (uændret)".
+
+## Alternatives considered
+- **AI-fritlægning af de færdige billeder:** usikker og tung; designeren kender allerede produktets omrids.
+- **Kun et ekstra PNG til reklamen:** projektejeren vil også have shoppens billeder uden baggrund.
+
+## Reason
+Designeren tegner selv billederne, så omridset er kendt. Billeder uden baggrund kan laves præcist uden gæt.
+
+## Security
+- **Admin-siden:** kræver `merchboard_manage_designer` (eller administrators kapabilitet til designeren). Filer hentes kun gennem admin-ruter med kontrol.
+- **Upload:** kun PNG i versionens skabelonstørrelse.
+- **Godkendelse:** nonce og audit (`designer_cutouts_approved`, `designer_cutouts_reverted`).
+
+## Migration/data implications
+- Ingen schemaændring.
+- Versionens `files` får nøglen `cutouts` (`{side:{farve:fil}}`).
+- Produktet får post-meta med de gamle billeder til "Fortryd".
+- Attachment-meta `_merchboard_transparent` markerer billeder uden baggrund.
+
+## Consequences
+- PNG-filer er større end JPEG.
+- Shoppens produktsider viser produktet på sidens egen baggrund.
+
+## Related
+ADR-080, ADR-096, ADR-099, ADR-112, ADR-113

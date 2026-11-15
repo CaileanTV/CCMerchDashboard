@@ -1388,6 +1388,27 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - Rettet undervejs: billeder, der dækkede navnet, karrusellens bredde, forhåndsvisning af en slået-fra reklame.
   - `!merch` på rigtige Twitch- og Kick-kanaler testes på stg sammen med 2.2.0-testpakken.
 
+## Fase 51 – Produktbilleder uden baggrund fra produktdesigneren (PNG) 🔄 (ønske og godkendelse 2026-11-15; version 2.2.0 sammen med fase 48–50; ADR-114)
+
+**Projektejerens ønske 2026-11-15:**
+- Alle produktbilleder fra designeren skal være PNG uden baggrund, kun produktet, fordi det ikke går at fjerne baggrunde bagefter.
+- En admin-side skal vise gammel og ny mockup på de godkendte produkter.
+- De nye billeder bruges i reklamen og Twitch-panelet og erstatter shoppens billeder, når admin har godkendt dem.
+- Nye produkter fremover får PNG uden baggrund.
+
+**Trin:**
+- **51.1 ADR-114 og plan.** ✅
+- **51.2 Silhuet-laget:**
+  - et valgfrit lag `silhouette` på skabelonens sider (admin-formular, REST, typer);
+  - "Lav silhuet automatisk" fra baggrundsfotoet.
+- **51.3 Tegning uden baggrund:** `composeMockup` uden hvidt underlag, klippet til silhuetten (eller farvemasken), som PNG. Nye indsendelser sender PNG for sider med silhuet.
+- **51.4 Admin-siden "Billeder uden baggrund":**
+  - de godkendte produkter med gammelt og nyt billede;
+  - "Lav nye" (admins browser tegner ud fra de gemte printfiler);
+  - "Godkend" (erstatter shoppens og variationernes billeder) og "Fortryd".
+- **51.5 Reklamen og Twitch-panelet** bruger designerens billeder uden baggrund (`_merchboard_transparent`).
+- **51.6 Test og levering:** tests, danske tekster, docs og runtime i Playground med et designer-produkt.
+
 ## Version 2.1.1 ✅ (tagget 2026-11-12 på 555ae87)
 
 - **Linknavnet i community-links:** ✅ projektejerens ønske 2026-11-12: admin vælger navnet i de offentlige links fra gifting og giveaways (og senere links af samme slags) under Indstillinger → Community. Gamle links virker fortsat (f844980). Testpakke på stg ✅; tagget `v2.1.1` på 555ae87 (draft-ZIP SHA-256 c194694f…). ✅
