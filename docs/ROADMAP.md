@@ -1240,7 +1240,7 @@ Projektejerens ønske 2026-11-11: creatoren skal selv kunne give merch væk til 
 - **47.8 Admin og resten:** ✅ (fa199ba) global knap, ordreside, afregningsbilag, klokken, impersonation, oprydning og danske tekster.
 - **47.9 Test og levering:** unit, integration og Jest er skrevet (fa199ba); runtime-test i Playground 2026-11-11 med to rettelser (a603f20); CI grøn (a48208c); bump til 2.1.0 ✅ (6fa60ee); testpakke på stg ✅; projektejerens ønsker 2026-11-12 (kassen i ny fane, gave- og giveaway-ordrer gennemføres automatisk) ✅ (9f6ec52). Tagget `v2.1.0` på 5504fa2 2026-11-12 (draft-ZIP SHA-256 26ff1035…). ✅
 
-## Fase 48 – Community features i shoppen: ny gave-boks, flere gaver pr. køb og moderne Twitch-login 📝 (planlagt 2026-11-12; afventer projektejerens godkendelse; version 2.2.0; ADR-111)
+## Fase 48 – Community features i shoppen: ny gave-boks, flere gaver pr. køb og moderne Twitch-login 🔄 (planlagt 2026-11-12; godkendt 2026-11-15; version 2.2.0 sammen med fase 49; ADR-111)
 
 Projektejerens ønsker 2026-11-12, med Fourthwall som forbillede:
 - **Gave-boksen på produktsiden:** et kort med overskrift, Twitch-ikon med et rødt LIVE-mærke, der pulserer, "<creator> er live på Twitch" (link til kanalen), en antalsvælger og en stor knap. Valgt: **flere gaver pr. køb**.
@@ -1268,8 +1268,8 @@ Projektejerens ønsker 2026-11-12, med Fourthwall som forbillede:
    - Kortet passer til live-kurvens udseende (`ccm-cart`).
 5. **Data:** migration 52 fjerner `UNIQUE(order_id)` på `merchboard_gifts` og tilføjer `order_unit` med `UNIQUE(order_id, order_unit)`. Eksisterende gaver får 1 og virker uændret.
 
-**Trin (ikke startet):**
-- **48.1 Docs:** ADR-111, statusnoter på ADR-106 og ADR-107.
+**Trin:**
+- **48.1 Docs:** ✅ ADR-111, statusnoter på ADR-106 og ADR-107.
 - **48.2 Data:** migration 52 og gaverne pr. enhed i `GiftRepository`.
 - **48.3 Køb af flere gaver:** `GiftPurchase`: antal, grænser i kurven, fragt × antal, én gave pr. enhed og annullering.
 - **48.4 Lodtrækning, tekster og notifikationer:** "(gave n af N)", "købt" én gang med antal, ordresiden og privacy.

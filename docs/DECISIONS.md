@@ -6168,6 +6168,8 @@ ADR-062, ADR-104
 ## Status
 Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" pkt. 3 og planen for fase 43). Udvider ADR-066 (Twitch som ekstern service) med kunde-login og subscription-opslag og udvider ADR-080 pkt. 8 (rabat af creatorens fortjeneste) til alle produkttyper for denne rabat.
 
+**Statusnote 2026-11-15 (ADR-111):** produktsiden viser rabatten pr. tier under prisen, og Twitch-kortet i kurv og kasse er et moderne kort (skabelon) i stedet for en WooCommerce-notits, placeret over produkterne i kurven og over "Faktureringsoplysninger" i kassen.
+
 **Statusnote 2026-11-11 (review i 44.9; erstatter "Lagring" i pkt. 7, hvor de afviger):** `sub_discount` gemmes med fortegn, så en linjes rækker summerer til den rabat, linjen stadig har. En refundering eller tilbageførsel bærer −S i forhold til det, den tager tilbage. Et nyt salg (en annulleret ordre, der betales igen) bærer derfor S igen, så creatoren også betaler rabatten anden gang; før betalte virksomheden den. En række efter at en administrator har fjernet rabatten fra ordren bærer −S (højst rækkens beløb), så creatorens fortjeneste ender som uden rabat. Rækkernes fortjeneste og udbetaling gemmes stadig, så SQL-summerne er uændrede.
 
 **Statusnote 2026-11-10 (projektejerens valg under trin 43.5; erstatter pkt. 3, hvor de afviger):** rabatten opsættes som **kampagner**.
@@ -6290,6 +6292,8 @@ Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" p
   - Under gavens navngivne lås sendes hver påmindelse kun én gang.
 - **Links i chatten:** gifting-siden fortæller creatoren, at botten sender vinderens link i chatten. Fjerner kanalen links (Twitch' "Block hyperlinks" eller en moderationsbot), skal botten være moderator eller undtaget, ellers forsvinder linket.
 - **Bot-forbindelsen:** chatbot-siden og community-siderne siger, at gifting og subscriber-rabatten kræver vores bot forbundet til kanalen, men at købsbeskederne i chatten kan være slået fra.
+
+**Statusnote 2026-11-15 (ADR-111):** en seer kan give 1–10 gaver i ét køb. Hver enhed er sin egen gave (`order_unit`), trukket én ad gangen, med 50 kr. gave-fragt pr. gave. Det afløser "én gave pr. køb". Gave-knappen er en boks med pulserende LIVE-mærke.
 
 **Statusnote 2026-11-11 (ADR-110):** giveaway-links genbruger lodtrækningen, gavesiden og koden. En gave-række kan derfor være uden ordre (`order_id` NULL) og høre til en giveaway (`giveaway_id`).
 
@@ -6549,3 +6553,72 @@ Creatoren kan give merch væk i sin egen stream eller sit eget system og betaler
 
 ## Related
 ADR-063, ADR-068, ADR-086, ADR-107, ADR-108
+
+# ADR-111: Community features i shoppen – gave-boks, flere gaver pr. køb og moderne Twitch-kort
+
+## Date
+2026-11-15
+
+## Status
+Accepteret af projektejeren 2026-11-15 ("vi er klar til at køre fra fase 48"; planen fra 2026-11-12 i ROADMAP fase 48). Udvider ADR-107 (Twitch-gifting) og ADR-106 (Twitch subscriber rabat). Udgives i 2.2.0 sammen med fase 49.
+
+## Context
+Projektejeren vil have community features i shoppen til at se moderne ud med Fourthwall som forbillede (skærmbilleder 2026-11-12):
+- Fourthwalls "Gift to Twitch Chat"-boks har et Twitch-ikon med et pulserende LIVE-mærke, creatorens navn med link til streamen, en antalsvælger og en stor knap.
+- Fourthwalls subscriber-rabat står som en linje under prisen med procenten pr. tier.
+- Vores Twitch-login i kurv og kasse er en almindelig WooCommerce-notits.
+
+Projektejeren valgte flere gaver pr. køb (ADR-107 pkt. "Én gave pr. køb" afløses).
+
+## Decision
+1. **Flere gaver pr. køb (1–10):**
+   - Hver enhed i et gave-køb er sin egen gave med lodtrækning, vinder, kode og frist. Gaverne trækkes én ad gangen i rækkefølge.
+   - Prisen pr. gave er linjens betalte beløb (inkl. moms) delt med antallet.
+   - Gave-fragten er 50 kr. pr. gave (raten er antal × 50). Hver kode dækker én enhed plus op til 50 kr. fragt.
+   - Annonceringen og køberens mails viser "gave n af N", når der er flere.
+   - Creatorens klokke "gave købt" kommer én gang pr. køb, med antal.
+   - En annulleret eller refunderet ordre annullerer alle ordrens gaver uden vinder. Delvis refundering ændrer ingen gaver.
+2. **Gave-boksen på produktsiden** (`templates/community/gift-box.php`):
+   - **Indhold:** overskrift, Twitch-ikon med rødt LIVE-mærke, "<creator> er live på Twitch" med link til kanalen (ny fane).
+   - **Valg:** antalsvælger 1–10, en stor knap og teksten om fragt pr. gave.
+   - **Udseende:** Twitch-lilla. LIVE-mærket pulserer med CSS og står stille ved `prefers-reduced-motion`. Ingen JavaScript.
+   - **Visning:** kun når gifting er åben, og creatoren er live (som før).
+3. **Rabatlinjen på produktsiden** (`TwitchSubProductNote`): med en aktiv kampagne vises en linje under prisen med rabatten pr. tier, højeste først, og at den trækkes i kurven efter Twitch-login. Kun tiers med rabat nævnes.
+4. **Det moderne Twitch-kort i kurv og kasse** (`templates/community/twitch-card.php`) erstatter notitsen og har samme logik og links:
+   - **Ikke logget ind:** Twitch-ikon, overskrift, tier-chips med den højeste rabat i kurven pr. tier og en stor lilla login-knap.
+   - **Logget ind:** avatar med forbogstav, "Logget ind som …", en status-pille og "Log ud".
+   - **Placering:**
+     - klassisk kurv: `woocommerce_before_cart_table`, over produkterne; live-kurven er en Elementor-widget omkring den klassiske kurv;
+     - klassisk kasse: `woocommerce_checkout_before_customer_details`, over "Faktureringsoplysninger";
+     - blok-kurv og blok-kasse: over blokken som før;
+     - shortcoden `[merchboard_twitch_card]` som reserve.
+   - Kortet vises højst én gang pr. side.
+5. **Fælles:**
+   - CSS ligger i skabelonerne og er scopet med `merchboard-`-klasser, så den virker i lyst og mørkt tema.
+   - Alt escapes i skabelonerne.
+   - Kunder ser aldrig leverandørnavne.
+6. **Data:** migration 52 fjerner `UNIQUE(order_id)` på `merchboard_gifts` og tilføjer `order_unit` (1–10, standard 1) med `UNIQUE(order_id, order_unit)`. Eksisterende gaver får 1. Giveaway-gaver (order_id NULL) er upåvirkede.
+
+## Alternatives considered
+- **Kun nyt udseende med én gave pr. køb:** mindre ændring, men projektejeren valgte flere gaver.
+- **Én gave med flere vindere:** én kode kan ikke deles mellem flere vindere og produkter. Fravalgt.
+- **Fourthwalls grønne farve:** Twitch-lilla passer til Twitch og til gavesiden.
+
+## Reason
+Seerne kan give flere gaver i ét køb, og creatorens community features ser moderne og ens ud i hele shoppen.
+
+## Security
+- Antallet begrænses i kurven og i REST (Store API), så en gave-ordre aldrig har mere end 10 gaver.
+- Gaverne laves idempotent pr. enhed, så en ordre, der markeres betalt to gange, ikke giver dobbelt så mange gaver.
+- Kortet og boksen udskriver kun escapede værdier, og creatornavnet og kanallinket kommer fra forbundne data.
+
+## Migration/data implications
+- Migration 52: `order_unit` og det nye unikke indeks på `merchboard_gifts`.
+- Notifikationen `gift_bought` får antal i sine data.
+
+## Consequences
+- Twitch-gifting-listen i MitCCMerch viser en række pr. gave, med "gave n af N".
+- Ordresiden i admin viser alle ordrens gaver.
+
+## Related
+ADR-106, ADR-107, ADR-108, ADR-110
