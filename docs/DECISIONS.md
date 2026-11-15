@@ -6622,3 +6622,78 @@ Seerne kan give flere gaver i ét køb, og creatorens community features ser mod
 
 ## Related
 ADR-106, ADR-107, ADR-108, ADR-110
+
+# ADR-112: Twitch Extension med creatorens produkter (panel uden butikslink)
+
+## Date
+2026-11-15
+
+## Status
+Accepteret af projektejeren 2026-11-15 (valgte "Udstilling uden link" og "Kun panel" efter afklaringen i trin 49.1). Udgives i 2.2.0 sammen med fase 48. Extensionen kan først bruges af alle creators, når Twitch har godkendt den.
+
+## Context
+Projektejeren vil have en rigtig Twitch Extension, der viser creatorens produkter på kanalen, som "Design By Hümans Merch Store" og to andre extensions. Afklaringen (trin 49.1) læste Twitchs regler 2026-11-15:
+- **Guidelines 4.6.3:** links fra en extension må ikke føre til sider, hvis hovedformål er at sælge varer eller tjenester, medmindre linket går til Twitch eller Amazon.
+- **Submission best practices, "Commerce in Extensions":** et link til en side, hvor man kan købe på en tredjeparts websted, får gennemgangen til at fejle. Betaling inde i extensionen (fx PayPal eller Stripe) er heller ikke tilladt.
+- **Twitch-personale på udviklerforummet:** en butiks-extension "would likely be declined" (2017). Svaret fra 2025 er, at kun en indsendt prototype kan afgøre det.
+- **Afslag:** "Rejected" er endeligt for extensionen (Client ID'et inddrages).
+- **Gennemgang:** tager 8–14 dage og kræver ikon, skærmbilleder, en testkanal, en gennemgangsguide og en ændringslog.
+
+Hvordan de eksisterende merch-extensions er godkendt, er ikke offentligt.
+
+## Decision
+1. **Én extension for hele shoppen, kun som panel.**
+   - Shoppen ejer extensionen. Projektejeren opretter den i Twitchs udviklerkonsol med shoppens Twitch-konto.
+   - Creatorene installerer den på deres kanal og aktiverer den som panel under streamen.
+   - Ingen komponent over videoen og ingen mobil-specifik visning ud over panelets eget layout.
+2. **Udstilling uden link og uden køb.**
+   - Panelet viser creatorens produkter med billede og navn.
+   - Panelet har ingen pris, intet link, ingen knap til shoppen, ingen opfordring til at købe og ingen betaling.
+   - Shoppen linkes fra et almindeligt Twitch-panel (tekst eller billede med link), som creatoren selv lægger på kanalen. Det er tilladt og uafhængigt af extensionen.
+   - Leverandørnavne vises aldrig.
+3. **Data fra pluginet** (Extension Backend Service = WordPress):
+   - **Endpoint:** det offentlige `GET /merchboard/v1/twitch-extension/panel` svarer med creatorens navn og op til 12 produkter (id, navn og billede-URL).
+   - **Godkendelse:** kaldet kræver extensionens JWT fra Twitch (`Authorization: Bearer …`). Pluginet verificerer HS256-signaturen med extensionens hemmelighed og kræver `exp` i fremtiden og `channel_id`.
+   - **Kanal → creator:** `channel_id` kobles til creatoren via den forbundne Twitch-kanal (chatbottens `broadcaster_id`, `ChatbotChannelRepository::find_by_broadcaster()`).
+   - **Tomt svar** (`products: []`), når kanalen ikke tilhører en creator, når creatoren ikke har slået panelet til, eller når funktionen er slået fra for shoppen.
+   - **Cache:** svaret caches i 5 minutter pr. creator og ryddes, når creatoren gemmer.
+4. **Creatoren** (MitCCMerch → Community Features → Twitch Extension):
+   - slår panelet til og fra (fra som standard);
+   - vælger op til 12 af sine udgivne produkter og deres rækkefølge, eller lader panelet vise de 12 nyeste;
+   - ser en forhåndsvisning;
+   - får en guide: forbind Twitch-kanalen, installer extensionen (link fra admin), aktivér den som panel og læg et almindeligt panel med link til shoppen.
+   - Gemmes i creator-meta `twitch_extension` (`enabled`, `product_ids`). Ændringer auditeres (`twitch_extension_changed`).
+5. **Admin** (Indstillinger → Community):
+   - global knap `community_twitch_extension_enabled`, fra som standard (ADR-108);
+   - extensionens Client ID, hemmelighed og installationslink.
+   - **Hemmeligheden:** gemmes krypteret (`ChatCipher`) eller i konstanten `MERCHBOARD_TWITCH_EXTENSION_SECRET` i `wp-config.php`, som så har forrang. Den vises aldrig igen, kommer aldrig i repoet eller i extension-ZIP'en og logges eller auditeres aldrig.
+6. **Frontend:**
+   - Panelet er et eget build-target (`assets/src/twitch-extension/`, vanilla TypeScript, ingen eksterne scripts ud over Twitchs Extension Helper).
+   - `npm run twitch-extension -- --site <url>` laver ZIP'en til upload hos Twitch, med sitets REST-URL i `panel.html`.
+   - Panelet følger Twitchs lyse/mørke tema og sprog (dansk eller engelsk).
+   - I udviklerkonsollen skal sitets domæne stå på allowlisterne for både data og billeder.
+
+## Alternatives considered
+- **Med butikslink ("Se i shoppen"):** som eksemplerne, men reglerne forbyder det, og et afslag er endeligt. Fravalgt af projektejeren.
+- **Først spørge Twitch:** ville udskyde fase 49 og 2.2.0 uden sikkerhed for et svar.
+- **Statiske panel-billeder:** ingen godkendelse, men ingen automatisk opdatering. Fravalgt i fase 49's idé.
+- **Komponent over videoen:** mere synligt, men mere arbejde og strengere gennemgang. Fravalgt indtil videre.
+
+## Reason
+Udstilling uden link følger Twitchs regler og har størst chance for godkendelse. Shoppen nås stadig fra kanalens almindelige paneler.
+
+## Security
+- **Kontrol af JWT:** endpointet stoler kun på JWT'er signeret med extensionens hemmelighed og ser bort fra kanal-id'er i URL'en.
+- **Data i svaret:** kun offentlige data (produktnavn og billede for udgivne produkter og creatorens navn), aldrig priser, leverandører, ordrer eller persondata.
+- **Belastning:** cachen og grænsen på 12 produkter holder den lille. En forkert JWT afvises med 401 uden databaseopslag.
+- **Hemmeligheden:** som pkt. 5.
+
+## Migration/data implications
+Ingen schemaændring. Ny creator-meta `twitch_extension`, en option til extensionens opsætning og en ny global indstilling.
+
+## Consequences
+- Pluginets del kommer i 2.2.0. Selve extensionen kan bruges på testkanaler i Twitchs "Hosted Test", før Twitch har godkendt den, og af alle creators efter godkendelsen.
+- Ved hver ny version af panelet skal ZIP'en uploades og gennemgås igen hos Twitch.
+
+## Related
+ADR-066, ADR-106, ADR-107, ADR-108, ADR-111
