@@ -2033,6 +2033,21 @@ input:disabled + .merchboard-sounds__upload {
 	transform: perspective(40px) rotateY(-30deg);
 }
 
+.merchboard-merch-ad-thumb--stack i:first-child {
+	transform: translateX(8px) rotate(-14deg);
+}
+
+.merchboard-merch-ad-thumb--stack i:nth-child(2) {
+	z-index: 1;
+	width: 1.4rem;
+	height: 2.2rem;
+	outline: 2px solid var(--merchboard-hover-bg);
+}
+
+.merchboard-merch-ad-thumb--stack i:last-child {
+	transform: translateX(-8px) rotate(14deg);
+}
+
 .merchboard-merch-ad-grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));

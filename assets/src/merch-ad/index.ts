@@ -123,8 +123,13 @@ export function renderView( ad: Ad, view: readonly AdProduct[] ): HTMLElement {
 			body.append( strip );
 			break;
 		}
-		case 'showcase': {
-			const stage = el( 'div', 'mb-ad__three' );
+		case 'showcase':
+		case 'stack': {
+			// Stack: the middle product in front, the two others right behind it, turned.
+			const stage = el(
+				'div',
+				ad.design === 'stack' ? 'mb-ad__stack' : 'mb-ad__three'
+			);
 			const [ left, middle, right ] = view;
 
 			if ( left !== undefined && view.length > 1 ) {

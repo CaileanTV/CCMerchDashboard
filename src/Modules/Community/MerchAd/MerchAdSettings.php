@@ -24,7 +24,7 @@ final class MerchAdSettings {
 	/**
 	 * The designs.
 	 */
-	public const DESIGNS = array( 'spotlight', 'shelf', 'carousel', 'corner', 'showcase' );
+	public const DESIGNS = array( 'spotlight', 'shelf', 'carousel', 'corner', 'showcase', 'stack' );
 
 	/**
 	 * The animations in and out.

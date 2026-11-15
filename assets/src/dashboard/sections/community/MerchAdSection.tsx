@@ -63,6 +63,14 @@ function designText( design: MerchAdDesign ): [ string, string ] {
 				__( 'Corner card', 'merchboard' ),
 				__( 'A small card with product, name and pill.', 'merchboard' ),
 			];
+		case 'stack':
+			return [
+				__( 'Stack', 'merchboard' ),
+				__(
+					'One product in front, the two others right behind it, turned to the sides.',
+					'merchboard'
+				),
+			];
 		case 'showcase':
 			return [
 				__( 'Three in front', 'merchboard' ),

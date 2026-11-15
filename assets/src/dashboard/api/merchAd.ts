@@ -8,7 +8,7 @@ import type { ApiResult } from './client';
 import { isRecord } from './validate';
 
 export type MerchAdDesign =
-	'spotlight' | 'shelf' | 'carousel' | 'corner' | 'showcase';
+	'spotlight' | 'shelf' | 'carousel' | 'corner' | 'showcase' | 'stack';
 
 export type MerchAdAnimation = 'fade' | 'slide' | 'pop' | 'zoom' | 'blur';
 
@@ -18,6 +18,7 @@ export const DESIGNS: readonly MerchAdDesign[] = [
 	'carousel',
 	'corner',
 	'showcase',
+	'stack',
 ];
 
 export const ANIMATIONS: readonly MerchAdAnimation[] = [

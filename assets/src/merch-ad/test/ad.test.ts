@@ -100,6 +100,24 @@ describe( 'the merch ad overlay (ADR-113)', () => {
 			[ 'A', 'B', 'C' ],
 			[ 'B', 'C', 'A' ],
 		] );
+		expect(
+			viewsOf( { ...AD, design: 'stack' } ).map( ( view ) =>
+				view.map( ( p ) => p.name )
+			)
+		).toEqual( [
+			[ 'C', 'A', 'B' ],
+			[ 'A', 'B', 'C' ],
+			[ 'B', 'C', 'A' ],
+		] );
+		expect(
+			renderView( { ...AD, design: 'stack' }, [
+				PRODUCT( 'C' ),
+				PRODUCT( 'A' ),
+				PRODUCT( 'B' ),
+			] ).querySelector(
+				'.mb-ad__stack .mb-ad__item--middle .mb-ad__name'
+			)?.textContent
+		).toBe( 'A' );
 		expect( viewsOf( { ...AD, design: 'shelf' } ) ).toHaveLength( 1 );
 		expect( viewsOf( { ...AD, design: 'carousel' } )[ 0 ] ).toHaveLength(
 			3

@@ -4,7 +4,8 @@
  * the timing. Rendering is in index.ts.
  */
 
-export type Design = 'spotlight' | 'shelf' | 'carousel' | 'corner' | 'showcase';
+export type Design =
+	'spotlight' | 'shelf' | 'carousel' | 'corner' | 'showcase' | 'stack';
 
 export type Animation = 'fade' | 'slide' | 'pop' | 'zoom' | 'blur';
 
@@ -47,6 +48,7 @@ const DESIGNS: readonly Design[] = [
 	'carousel',
 	'corner',
 	'showcase',
+	'stack',
 ];
 const ANIMATIONS: readonly Animation[] = [
 	'fade',
@@ -207,6 +209,7 @@ export function perView( design: Design ): number {
 		case 'shelf':
 			return 4;
 		case 'showcase':
+		case 'stack':
 			return 3;
 		case 'carousel':
 			return Number.POSITIVE_INFINITY;
@@ -249,8 +252,8 @@ export function viewsOf( ad: Ad ): AdProduct[][] {
 		return [ products ];
 	}
 
-	if ( ad.design === 'showcase' ) {
-		// Every product gets its turn in the middle: left, middle, right.
+	if ( ad.design === 'showcase' || ad.design === 'stack' ) {
+		// Every product gets its turn in the middle (in front): left, middle, right.
 		return products.map( ( _, index ) => [
 			products[ ( index - 1 + count ) % count ] as AdProduct,
 			products[ index ] as AdProduct,

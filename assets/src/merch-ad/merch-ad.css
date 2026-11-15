@@ -286,6 +286,54 @@ body {
 	font-size: 1.35em;
 }
 
+/* Stack: one product in front, the two others behind it, turned aside. */
+.mb-ad__stack {
+	position: relative;
+	width: 80vh;
+	height: 58vh;
+}
+
+.mb-ad__stack .mb-ad__item {
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	width: 46vh;
+}
+
+.mb-ad__stack .mb-ad__img {
+	width: 46vh;
+	height: 48vh;
+}
+
+.mb-ad__stack .mb-ad__item--middle {
+	z-index: 2;
+	transform: translateX(-50%);
+}
+
+.mb-ad__stack .mb-ad__item--left,
+.mb-ad__stack .mb-ad__item--right {
+	z-index: 1;
+	opacity: 0.92;
+}
+
+.mb-ad__stack .mb-ad__item--left {
+	transform: translateX(-88%) translateY(-3vh) rotate(-14deg) scale(0.82);
+}
+
+.mb-ad__stack .mb-ad__item--right {
+	transform: translateX(-12%) translateY(-3vh) rotate(14deg) scale(0.82);
+}
+
+/* Only the product in front shows its name. */
+.mb-ad__stack .mb-ad__item--left .mb-ad__name,
+.mb-ad__stack .mb-ad__item--right .mb-ad__name {
+	visibility: hidden;
+}
+
+.mb-ad__stack .mb-ad__item--middle .mb-ad__name {
+	font-size: 1.35em;
+}
+
 /* In and out. */
 .mb-ad__stage--in-fade {
 	animation: mb-fade-in 0.6s ease-out both;
