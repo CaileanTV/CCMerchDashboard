@@ -6560,7 +6560,7 @@ ADR-063, ADR-068, ADR-086, ADR-107, ADR-108
 2026-11-15
 
 ## Status
-Accepteret af projektejeren 2026-11-15 ("vi er klar til at køre fra fase 48"; planen fra 2026-11-12 i ROADMAP fase 48). Udvider ADR-107 (Twitch-gifting) og ADR-106 (Twitch subscriber rabat). Udgives i 2.2.0 sammen med fase 49.
+Accepteret af projektejeren 2026-11-15 ("vi er klar til at køre fra fase 48"; planen fra 2026-11-12 i ROADMAP fase 48). Udvider ADR-107 (Twitch-gifting) og ADR-106 (Twitch subscriber rabat). Udgives i 2.2.0 sammen med fase 49 og 50.
 
 ## Context
 Projektejeren vil have community features i shoppen til at se moderne ud med Fourthwall som forbillede (skærmbilleder 2026-11-12):
@@ -6629,7 +6629,7 @@ ADR-106, ADR-107, ADR-108, ADR-110
 2026-11-15
 
 ## Status
-Accepteret af projektejeren 2026-11-15 (valgte "Udstilling uden link" og "Kun panel" efter afklaringen i trin 49.1). Udgives i 2.2.0 sammen med fase 48. Extensionen kan først bruges af alle creators, når Twitch har godkendt den.
+Accepteret af projektejeren 2026-11-15 (valgte "Udstilling uden link" og "Kun panel" efter afklaringen i trin 49.1). Udgives i 2.2.0 sammen med fase 48 og 50. Extensionen kan først bruges af alle creators, når Twitch har godkendt den.
 
 ## Context
 Projektejeren vil have en rigtig Twitch Extension, der viser creatorens produkter på kanalen, som "Design By Hümans Merch Store" og to andre extensions. Afklaringen (trin 49.1) læste Twitchs regler 2026-11-15:

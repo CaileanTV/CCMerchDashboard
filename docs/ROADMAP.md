@@ -1240,7 +1240,7 @@ Projektejerens ønske 2026-11-11: creatoren skal selv kunne give merch væk til 
 - **47.8 Admin og resten:** ✅ (fa199ba) global knap, ordreside, afregningsbilag, klokken, impersonation, oprydning og danske tekster.
 - **47.9 Test og levering:** unit, integration og Jest er skrevet (fa199ba); runtime-test i Playground 2026-11-11 med to rettelser (a603f20); CI grøn (a48208c); bump til 2.1.0 ✅ (6fa60ee); testpakke på stg ✅; projektejerens ønsker 2026-11-12 (kassen i ny fane, gave- og giveaway-ordrer gennemføres automatisk) ✅ (9f6ec52). Tagget `v2.1.0` på 5504fa2 2026-11-12 (draft-ZIP SHA-256 26ff1035…). ✅
 
-## Fase 48 – Community features i shoppen: ny gave-boks, flere gaver pr. køb og moderne Twitch-login 🔄 (planlagt 2026-11-12; godkendt 2026-11-15; version 2.2.0 sammen med fase 49; ADR-111)
+## Fase 48 – Community features i shoppen: ny gave-boks, flere gaver pr. køb og moderne Twitch-login 🔄 (planlagt 2026-11-12; godkendt 2026-11-15; version 2.2.0 sammen med fase 49 og 50; ADR-111)
 
 Projektejerens ønsker 2026-11-12, med Fourthwall som forbillede:
 - **Gave-boksen på produktsiden:** et kort med overskrift, Twitch-ikon med et rødt LIVE-mærke, der pulserer, "<creator> er live på Twitch" (link til kanalen), en antalsvælger og en stor knap. Valgt: **flere gaver pr. køb**.
@@ -1279,9 +1279,9 @@ Projektejerens ønsker 2026-11-12, med Fourthwall som forbillede:
 - **48.8 Test og levering:**
   - ✅ tests, danske tekster og docs;
   - ✅ runtime i Playground (2026-11-15) med skærmbilleder: gave-boksen (desktop og mobil), 3 gaver giver fragt 150 kr., rabatlinjen, kortet i kurv og kasse ikke logget ind og logget ind (tier 3, rabat 15 % trukket), mørkt tema og mobil;
-  - CI, bump til 2.2.0 og testpakke på stg venter på fase 49 (2.2.0 rummer begge faser). Tag efter projektejerens OK.
+  - CI, bump til 2.2.0 og testpakke på stg venter på fase 49 og 50 (2.2.0 rummer fase 48, 49 og 50, projektejerens beslutning 2026-11-15). Tag efter projektejerens OK.
 
-## Fase 49 – Twitch Extension med creatorens produkter 🔄 (idé 2026-11-15; afklaret og godkendt 2026-11-15: panel uden butikslink; version 2.2.0 sammen med fase 48; ADR-112)
+## Fase 49 – Twitch Extension med creatorens produkter 🔄 (idé 2026-11-15; afklaret og godkendt 2026-11-15: panel uden butikslink; version 2.2.0 sammen med fase 48 og 50; ADR-112)
 
 Projektejerens ønske 2026-11-15: creatoren kan vise sine produkter på sin Twitch-kanal med en **rigtig Twitch Extension**. Den skal ligne de extensions, projektejeren pegede på:
 - `z66yiq0j4rnq7fw907vhjl7nzazcr3` ("Design By Hümans Merch Store");
@@ -1326,9 +1326,9 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **49.6 Test og indsendelse:** tests ✅ og runtime i Playground ✅ (2026-11-15: endpointet med gyldigt, forkert og udløbet token og CORS, panelet i lyst og mørkt tema og på dansk og engelsk med en stand-in for Twitchs helper, admin-felterne og MitCCMerch-siden). Tilbage: Twitch-delen nedenfor (kræver 49.2).
   - Lokal test via Twitchs "Local Test" og "Hosted Test" på testkanalen.
   - Skærmbilleder, gennemgangsguide og indsendelse til Twitch.
-  - Udgivelse i 2.2.0 eller en senere version, når Twitch har godkendt.
+  - Pluginets del udgives i 2.2.0 (sammen med fase 48 og 50). Extensionen kan bruges af alle creators, når Twitch har godkendt den.
 
-## Fase 50 – Reklame-overlay med creatorens produkter og !merch-kommando 📝 (ønske 2026-11-15; afventer afklaring og godkendelse; version afklares; ADR-113)
+## Fase 50 – Reklame-overlay med creatorens produkter og !merch-kommando 📝 (ønske 2026-11-15; afventer afklaring og godkendelse; version 2.2.0 sammen med fase 48 og 49; ADR-113)
 
 **Projektejerens ønske 2026-11-15:**
 - **Reklame-overlay til streamen:** creatoren designer et overlay, der viser **flere af sine produkter** og eventuelt en **tekstboks eller pille** med en kommando, fx `!merch`.
@@ -1354,7 +1354,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - Kanaler, der blokerer links i chatten, kræver, at botten er moderator (som ved gifting).
 - **Kollektionslinket:** hvilken side er "creatorens kollektion" (creatorens kategori- eller butiksside)?
 - **Visning på skærmen:** produkter skifter én ad gangen eller vises flere samtidig, og antallet af designs i første version.
-- **Version:** 2.2.0 rummer fase 48 og 49. Skal fase 50 med i 2.2.0 eller i en senere version?
+- **Version:** ✅ afklaret 2026-11-15: fase 50 kommer med i 2.2.0 sammen med fase 48 og 49 (projektejerens beslutning). 2.2.0 bumpes og tagges først, når fase 50 er færdig.
 
 **Trin (foreløbige):**
 - **50.1 Afklaring og ADR-113:** svar på de åbne spørgsmål og designskitser at vælge imellem.

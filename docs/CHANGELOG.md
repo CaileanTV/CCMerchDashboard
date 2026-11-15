@@ -4,7 +4,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
-Fase 48 (ADR-111) og fase 49 (ADR-112). Udgives som 2.2.0. Schemaændring 51 → 52.
+Fase 48 (ADR-111) og fase 49 (ADR-112); fase 50 (reklame-overlay og `!merch`, ADR-113) kommer også med. Udgives som 2.2.0. Schemaændring 51 → 52.
 
 ### Added
 
