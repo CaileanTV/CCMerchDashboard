@@ -1313,17 +1313,17 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - Opret extensionen i udviklerkonsollen.
   - Sæt allowlists (`ccmerch.dk`) og en testkanal.
   - Extensionens hemmelighed lægges i `wp-config.php` eller en krypteret indstilling, aldrig i repoet.
-- **49.3 Backend i pluginet:**
+- **49.3 Backend i pluginet:** ✅ `5c7a799` (no-store-svar `50205c9`)
   - Et offentligt REST-endpoint med creatorens udgivne produkter for en Twitch-kanal: navn og billede (ADR-112: ingen pris og intet link).
   - Admin: global knap, Client ID, hemmelighed (krypteret eller `MERCHBOARD_TWITCH_EXTENSION_SECRET`) og installationslink.
   - Kanalen kobles til creatoren via chatbot-forbindelsen (`broadcaster_id`).
   - Endpointet kræver extensionens JWT, er cachet og rate-limited, og viser aldrig leverandørnavne.
-- **49.4 Frontend:**
+- **49.4 Frontend:** ✅ `5c7a799` (helt mørkt tema `50205c9`, pillen `d26d212`)
   - Et lille panel (og eventuelt en video-komponent) som eget build-target i repoet.
   - Produktgitter, Twitchs lyse/mørke tema og dansk/engelsk.
   - En ZIP til upload hos Twitch: `npm run twitch-extension -- --site <url>`.
-- **49.5 MitCCMerch:** siden Community Features → Twitch Extension med en guide til at aktivere extensionen på kanalen og lægge et almindeligt panel med link til shoppen, valg af produkter og rækkefølge, og en forhåndsvisning.
-- **49.6 Test og indsendelse:**
+- **49.5 MitCCMerch:** ✅ `5c7a799`, pillen med creatorens tekst (fx "Skriv !merch i chatten", projektejerens ønske 2026-11-15) `d26d212`. Siden Community Features → Twitch Extension med en guide til at aktivere extensionen på kanalen og lægge et almindeligt panel med link til shoppen, valg af produkter og rækkefølge, og en forhåndsvisning.
+- **49.6 Test og indsendelse:** tests ✅ og runtime i Playground ✅ (2026-11-15: endpointet med gyldigt, forkert og udløbet token og CORS, panelet i lyst og mørkt tema og på dansk og engelsk med en stand-in for Twitchs helper, admin-felterne og MitCCMerch-siden). Tilbage: Twitch-delen nedenfor (kræver 49.2).
   - Lokal test via Twitchs "Local Test" og "Hosted Test" på testkanalen.
   - Skærmbilleder, gennemgangsguide og indsendelse til Twitch.
   - Udgivelse i 2.2.0 eller en senere version, når Twitch har godkendt.

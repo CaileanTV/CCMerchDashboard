@@ -4,7 +4,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
-Fase 48 (ADR-111). Udgives som 2.2.0 sammen med fase 49 (Twitch Extension). Schemaændring 51 → 52.
+Fase 48 (ADR-111) og fase 49 (ADR-112). Udgives som 2.2.0. Schemaændring 51 → 52.
 
 ### Added
 
@@ -12,6 +12,12 @@ Fase 48 (ADR-111). Udgives som 2.2.0 sammen med fase 49 (Twitch Extension). Sche
 - **Flere gaver pr. køb (1–10):** hver gave får sin egen lodtrækning, vinder og kode og trækkes én ad gangen ("gave 2 af 3"). Fragten er 50 kr. pr. gave. Creatoren får én klokke pr. køb med antallet.
 - **Twitch-subscriber-rabatten på produktsiden:** under prisen står rabatten pr. tier, højeste først, og at den trækkes automatisk efter login med Twitch i kurven.
 - **Moderne Twitch-kort i kurv og kasse:** tier-chips, en Twitch-knap, avatar og en status-pille. Kortet står lige over produkterne i kurven og lige over "Faktureringsoplysninger" i kassen. Shortcodes `[merchboard_twitch_card]` og `[merchboard_twitch_discount_line]` til page builders.
+- **Twitch Extension** (fase 49, ADR-112): shoppens egen Twitch Extension viser creatorens produkter i et panel under streamen. Panelet viser billede og navn og en valgfri pille med creatorens tekst, fx "Skriv !merch i chatten". Det har ingen pris, intet link og intet køb, fordi Twitch ikke tillader det.
+  - **Creatoren** vælger op til 12 produkter og deres rækkefølge under Community Features → Twitch Extension og ser en forhåndsvisning og en guide.
+  - **Admin** slår funktionen til under Indstillinger → Community (fra som standard) og indtaster extensionens Client ID, hemmelighed (krypteret, eller `MERCHBOARD_TWITCH_EXTENSION_SECRET` i `wp-config.php`) og installationslink.
+  - **Endpoint:** `GET /merchboard/v1/twitch-extension/panel` kræver extensionens JWT.
+  - **ZIP til Twitch:** `npm run twitch-extension -- --site <url>`.
+  - Extensionen skal oprettes og godkendes hos Twitch, før creators kan bruge den.
 - **Database:** migration 52 tilføjer `merchboard_gifts.order_unit` og erstatter den unikke nøgle på `order_id` med (`order_id`, `order_unit`). Eksisterende gaver får 1 og virker uændret.
 
 ### Changed

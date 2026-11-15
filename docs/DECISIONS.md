@@ -6662,7 +6662,8 @@ Hvordan de eksisterende merch-extensions er godkendt, er ikke offentligt.
    - vælger op til 12 af sine udgivne produkter og deres rækkefølge, eller lader panelet vise de 12 nyeste;
    - ser en forhåndsvisning;
    - får en guide: forbind Twitch-kanalen, installer extensionen (link fra admin), aktivér den som panel og læg et almindeligt panel med link til shoppen.
-   - Gemmes i creator-meta `twitch_extension` (`enabled`, `product_ids`). Ændringer auditeres (`twitch_extension_changed`).
+   - skriver eventuelt en kort tekst til en pille øverst i panelet, fx "Skriv !merch i chatten" (projektejerens ønske 2026-11-15). Kommandoer med `!` vises med fed. Teksten er ren tekst på højst 60 tegn, og URL'er og domæner afvises, så panelet aldrig linker.
+   - Gemmes i creator-meta `twitch_extension` (`enabled`, `product_ids`, `note`). Ændringer auditeres (`twitch_extension_changed`).
 5. **Admin** (Indstillinger → Community):
    - global knap `community_twitch_extension_enabled`, fra som standard (ADR-108);
    - extensionens Client ID, hemmelighed og installationslink.
