@@ -1423,6 +1423,10 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - **Nu:** de tegnes uden det hvide dokument, hvor PSD'ens egne billeder ikke dækker, og gemmes som PNG. Kanterne beholder deres egen farve uden hvidt.
   - **Uden gennemsigtighed:** en PSD med baggrund forbliver JPG.
   - **Hvor:** nye designs og den automatiske kørsel på Forslag → "Billeder uden baggrund".
+- **51.9 Gamle billeder på hvidt (projektejerens ønske 2026-11-15):** ✅ fx kopper fra PSD-skabeloner, hvis foto står på hvidt, viste "Ingen side har et omrids".
+  - **Nyt:** "Fjern den hvide baggrund og lav billeder" fjerner den ensfarvede baggrund fra skabelonens foto i browseren og gemmer resultatet som sidens silhuet (uden ny version af basisproduktet). Derefter laves billederne uden baggrund.
+  - **Automatisk:** "Brug billeder uden baggrund på alle produkter" gør det samme for alle.
+  - **Baggrund, der ikke er ensfarvet:** upload en PNG uden baggrund (fx eksporteret fra PSD'en) som silhuet på basisproduktet.
 - **51.6 Test og levering:** ✅ unit-, Jest- og integrationstest (godkend, fortryd, kassér), danske tekster og docs. Runtime 2026-11-15 i Chrome med den byggede admin-bundle: opgave → tegning → upload for en side med farvemaske og en side med eget farvefoto og silhuet; baggrund, gulvskygge og halsåbning blev gennemsigtige. Godkend og fortryd kræver produktlåsen (MySQL) og testes på stg.
 
 ## Fase 52 – Gelato-produkter med egne valg, printområde pr. variant og skærelinje 📋 (projektejerens ønske 2026-11-15; efter 2.2.0, version 2.3.0; ADR-115 foreslået, planen afventer godkendelse)

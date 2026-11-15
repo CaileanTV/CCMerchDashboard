@@ -224,6 +224,10 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
 - **Eksisterende produkter** (Forslag → "Billeder uden baggrund", `merchboard_manage_designer`):
   - Hvert godkendt designer-produkt i shoppen vises med shoppens billede ved siden af det nye på ternet baggrund og en status.
   - **Automatisk:** "Brug billeder uden baggrund på alle produkter" tegner i admins browser ud fra versionens gemte printfiler og skabelonens lag og sætter billederne i shoppen med det samme, produkt for produkt. Siden skal være åben, til den er færdig.
+  - **Fotos på hvidt:** et produkt, hvis skabelon ikke har et omrids, får "Fjern den hvide baggrund og lav billeder".
+    - Admins browser fjerner den ensfarvede baggrund fra sidens foto og gemmer resultatet som silhuet. Basisproduktet beholder sin version.
+    - Derefter laves billederne. Den automatiske kørsel gør det samme.
+    - Er baggrunden ikke ensfarvet, siger siden det, og en PNG uden baggrund (fx eksporteret fra PSD'en) uploades som silhuet på basisproduktet.
   - **Pr. produkt:** "Lav billeder" tegner et produkts billeder, som så venter i shop-produktets meta `_merchboard_cutouts`, til de godkendes.
   - **Godkend og brug i shoppen:** billederne kommer i mediebiblioteket og tager de gamle billeders pladser i produktbilledet, galleriet og variationerne, og versionens mockups bliver PNG'erne. Senere skift af produktbillede bruger dem. De gamle billeder bliver i mediebiblioteket.
   - **Fortryd** sætter de gamle billeder tilbage; de nye venter igen. **Kassér** sletter de ventende.
