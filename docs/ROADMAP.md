@@ -1328,6 +1328,42 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - Skærmbilleder, gennemgangsguide og indsendelse til Twitch.
   - Udgivelse i 2.2.0 eller en senere version, når Twitch har godkendt.
 
+## Fase 50 – Reklame-overlay med creatorens produkter og !merch-kommando 📝 (ønske 2026-11-15; afventer afklaring og godkendelse; version afklares; ADR-113)
+
+**Projektejerens ønske 2026-11-15:**
+- **Reklame-overlay til streamen:** creatoren designer et overlay, der viser **flere af sine produkter** og eventuelt en **tekstboks eller pille** med en kommando, fx `!merch`.
+- **Designvalg:** flere designs at vælge imellem.
+- **Hyppighed:** creatoren vælger, hvor ofte overlayet vises og hvor længe, så det ikke står på skærmen hele tiden.
+- **Animationer:** creatoren vælger, hvilke animationer der bruges.
+- **Moderne design.** Produktbillederne skal være **uden baggrund**.
+- **`!merch` i chatbotten:** creatoren kan slå kommandoen til. Botten svarer med et link til creatorens kollektion i shoppen, med en tekst creatoren selv tilpasser.
+
+**Det, der findes i forvejen (genbruges):**
+- **Alert-overlayet (fase 25):** en OBS browser source pr. creator (`OverlayPage`, `OverlayFeed`), overlay-designeren i MitCCMerch og animationerne i `assets/src/overlay`.
+- **Chatbotten (ADR-066):** Twitch, Kick og YouTube, og den forstår allerede kommandoer (`!gift`, `!enter`).
+- **Creatorens produkter:** `CreatorProducts` og produktvælgeren fra fase 43/49.
+
+**Åbne spørgsmål til afklaringen (50.1):**
+- **Billeder uden baggrund:** hvor kommer de fra?
+  - Produktdesignerens printfil (motivet alene, allerede gennemsigtig PNG)?
+  - Et særskilt billede, creatoren eller admin uploader?
+  - Automatisk fjernelse af baggrunden i browseren (kræver en model, der kører lokalt, ingen ekstern tjeneste uden ADR)?
+  - Mockups fra leverandørerne har typisk baggrund.
+- **Overlay-URL:** et eget overlay (egen browser source) eller en del af alert-overlayet? Hvordan skal reklamen og alerts dele skærmen, når begge vises?
+- **`!merch` på platformene:** gælder den Twitch, Kick og YouTube? Hvilken cooldown skal den have? Svarer den kun, når creatoren er live?
+  - Kanaler, der blokerer links i chatten, kræver, at botten er moderator (som ved gifting).
+- **Kollektionslinket:** hvilken side er "creatorens kollektion" (creatorens kategori- eller butiksside)?
+- **Visning på skærmen:** produkter skifter én ad gangen eller vises flere samtidig, og antallet af designs i første version.
+- **Version:** 2.2.0 rummer fase 48 og 49. Skal fase 50 med i 2.2.0 eller i en senere version?
+
+**Trin (foreløbige):**
+- **50.1 Afklaring og ADR-113:** svar på de åbne spørgsmål og designskitser at vælge imellem.
+- **50.2 Data:** creatorens reklame-overlay (produkter, design, tekst/pille, interval, varighed og animationer) og `!merch` (til/fra, tekst med fx `$Link`, cooldown).
+- **50.3 Overlay:** visningen i OBS (genbruger overlayets animationer og feed), med billeder uden baggrund.
+- **50.4 MitCCMerch:** designeren med valg af design, produkter, tekst, hyppighed og animationer og en live-forhåndsvisning.
+- **50.5 Chatbotten:** `!merch` med creatorens tekst og link til kollektionen.
+- **50.6 Test og levering:** tests, danske tekster, docs, runtime-test i Playground og OBS-skærmbilleder.
+
 ## Version 2.1.1 ✅ (tagget 2026-11-12 på 555ae87)
 
 - **Linknavnet i community-links:** ✅ projektejerens ønske 2026-11-12: admin vælger navnet i de offentlige links fra gifting og giveaways (og senere links af samme slags) under Indstillinger → Community. Gamle links virker fortsat (f844980). Testpakke på stg ✅; tagget `v2.1.1` på 555ae87 (draft-ZIP SHA-256 c194694f…). ✅
