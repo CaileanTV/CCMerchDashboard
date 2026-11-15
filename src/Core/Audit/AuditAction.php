@@ -933,4 +933,16 @@ enum AuditAction: string {
 	 * changed_fields.
 	 */
 	case TwitchExtensionChanged = 'twitch_extension_changed';
+
+	/**
+	 * A creator changed the merch ad overlay (ADR-113). Context:
+	 * changed_fields.
+	 */
+	case MerchAdChanged = 'merch_ad_changed';
+
+	/**
+	 * A creator changed the !merch chat command (ADR-113). Context:
+	 * changed_fields.
+	 */
+	case MerchCommandChanged = 'merch_command_changed';
 }

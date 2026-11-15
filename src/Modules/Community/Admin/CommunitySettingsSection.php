@@ -148,6 +148,12 @@ final class CommunitySettingsSection {
 				__( 'Off by default. The panel shows the creator\'s products with image and name only: Twitch does not allow prices, links to the shop or buying in an extension. Creators link to the shop from an ordinary Twitch panel. Off: the page disappears from the creators\' dashboards and the panel shows nothing.', 'merchboard' ),
 				Settings::twitch_extension_enabled(),
 			),
+			Settings::COMMUNITY_MERCH_AD_ENABLED         => array(
+				__( 'Merch ad', 'merchboard' ),
+				__( 'Creators can show an ad overlay with their products in the stream', 'merchboard' ),
+				__( 'Off by default. Creators design an ad with their products (images without background) and an optional pill, choose how often and how long it shows and add it to OBS as a browser source. Off: the page disappears from the creators\' dashboards and the overlay shows nothing.', 'merchboard' ),
+				Settings::merch_ad_enabled(),
+			),
 		);
 
 		echo '<h2 id="merchboard-community">' . esc_html__( 'Community Features', 'merchboard' ) . '</h2>';

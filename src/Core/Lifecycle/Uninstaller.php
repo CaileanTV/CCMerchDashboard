@@ -45,6 +45,8 @@ use MerchBoard\Modules\Alerts\Tts\TtsSettings;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Creators\Proposals\ProposalFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\Community\MerchAd\MerchAdFiles;
+use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionApp;
 use WC_Order;
 use WP_User;
 use wpdb;
@@ -238,6 +240,9 @@ final class Uninstaller {
 		// The product designer's private files (ADR-080 pkt. 5): template layers, cliparts and later uploads and print files.
 		DesignerFiles::remove_all();
 
+		// The merch ad's images without background (ADR-113).
+		MerchAdFiles::remove_all();
+
 		if ( ! $this->archive_creators() ) {
 			// Nothing is dropped; the opt-in survives so a later uninstall can finish.
 			return false;
@@ -254,6 +259,7 @@ final class Uninstaller {
 		delete_option( AlertFonts::KEY_OPTION );
 		delete_option( AlertFonts::APPROVED_OPTION );
 		delete_option( TwitchAccount::OPTION );
+		delete_option( TwitchExtensionApp::OPTION );
 		delete_option( ChatbotFormat::OPTION );
 		delete_option( KickAccount::OPTION );
 		delete_option( YouTubeAccount::OPTION );

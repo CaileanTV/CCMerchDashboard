@@ -50,6 +50,18 @@ use MerchBoard\Modules\Community\Giveaways\GiveawayRepository;
 use MerchBoard\Modules\Community\Giveaways\Giveaways;
 use MerchBoard\Modules\Community\Rest\MeGiveawaysController;
 use MerchBoard\Modules\Community\Rest\MeTwitchGiftingController;
+use MerchBoard\Modules\Community\MerchAd\MerchAdCreatorCleanup;
+use MerchBoard\Modules\Community\MerchAd\MerchAdFiles;
+use MerchBoard\Modules\Community\MerchAd\MerchAdPage;
+use MerchBoard\Modules\Community\MerchAd\MerchAdRepository;
+use MerchBoard\Modules\Community\MerchAd\MerchAdView;
+use MerchBoard\Modules\Community\MerchCommand\MerchCommand;
+use MerchBoard\Modules\Community\MerchCommand\MerchCommandRepository;
+use MerchBoard\Modules\Community\Rest\MeMerchAdController;
+use MerchBoard\Modules\Community\Rest\MeMerchCommandController;
+use MerchBoard\Modules\Community\Rest\MerchAdStatusController;
+use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
+use MerchBoard\Modules\WooCommerce\CreatorCategoryService;
 use MerchBoard\Modules\Community\Rest\MeTwitchExtensionController;
 use MerchBoard\Modules\Community\Rest\MeTwitchSubDiscountController;
 use MerchBoard\Modules\Community\Rest\TwitchExtensionController;
@@ -143,6 +155,7 @@ final class CommunityModule implements Module {
 		self::register_gifting( $container );
 		self::register_giveaways( $container );
 		self::register_extension( $container );
+		self::register_merch_ad( $container );
 
 		$container->set( CommunitySettings::class, static fn( Container $c ): CommunitySettings => new CommunitySettings( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 
@@ -188,6 +201,15 @@ final class CommunityModule implements Module {
 		( new TwitchSubPrivacy() )->register();
 		// The Twitch Extension's terms and privacy policy (Twitch requires both URLs; ADR-112).
 		( new TwitchExtensionLegal() )->register();
+		// The merch ad's page for OBS and the !merch command in the chat (ADR-113).
+		add_action(
+			'template_redirect',
+			static function () use ( $container ): void {
+				$container->get( MerchAdPage::class )->handle_request();
+			},
+			1
+		);
+		$container->get( MerchCommand::class )->register();
 		// Gifts (ADR-107): who hears about them, the order page, privacy and creator deletion.
 		( new GiftNotices(
 			static fn( int $creator_id ): string => $container->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '',
@@ -207,6 +229,7 @@ final class CommunityModule implements Module {
 				array(
 					new GiveawayCreatorCleanup( $container->get( GiveawayRepository::class ), $container->get( Giveaways::class ) ),
 					new GiftCreatorCleanup( $container->get( GiftRepository::class ), $container->get( GiftDraws::class ) ),
+					new MerchAdCreatorCleanup( $container->get( MerchAdFiles::class ) ),
 				)
 			),
 			30
@@ -233,8 +256,107 @@ final class CommunityModule implements Module {
 				$container->get( GiftTicker::class )->register_routes();
 				$container->get( MeTwitchExtensionController::class )->register_routes();
 				$container->get( TwitchExtensionController::class )->register_routes();
+				$container->get( MeMerchAdController::class )->register_routes();
+				$container->get( MerchAdStatusController::class )->register_routes();
+				$container->get( MeMerchCommandController::class )->register_routes();
 			}
 		);
+	}
+
+	/**
+	 * Registers the merch ad overlay and the !merch command (ADR-113).
+	 *
+	 * @param Container $container Shared service container.
+	 */
+	private static function register_merch_ad( Container $container ): void {
+		$owns = static fn( Container $c ): \Closure => static fn( int $creator_id, int $product_id ): bool => $c->get( CreatorProducts::class )->owns( $creator_id, $product_id );
+
+		$container->set( MerchAdFiles::class, static fn(): MerchAdFiles => new MerchAdFiles() );
+		$container->set(
+			MerchAdRepository::class,
+			static fn( Container $c ): MerchAdRepository => new MerchAdRepository( $c->get( CreatorMetaStore::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $owns( $c ) )
+		);
+		$container->set(
+			MerchAdView::class,
+			static fn( Container $c ): MerchAdView => new MerchAdView(
+				$c->get( MerchAdRepository::class ),
+				$c->get( MerchAdFiles::class ),
+				static fn( int $creator_id, int $limit ): array => $c->get( CreatorProducts::class )->newest( $creator_id, $limit ),
+				static fn( int $product_id ): ?array => self::panel_product( $product_id, 'woocommerce_single' )
+			)
+		);
+		$container->set(
+			MerchAdPage::class,
+			static function ( Container $c ): MerchAdPage {
+				$root = dirname( __DIR__, 3 ) . '/';
+
+				return new MerchAdPage( $c->get( MerchAdRepository::class ), $c->get( MerchAdView::class ), $root, plugin_dir_url( $root . 'merchboard.php' ), $c->get( Logger::class ) );
+			}
+		);
+		$container->set(
+			MerchAdStatusController::class,
+			static fn( Container $c ): MerchAdStatusController => new MerchAdStatusController( $c->get( MerchAdRepository::class ), $c->get( MerchAdView::class ), new OverlayRateLimiter( null, 'merchboard_merchad_rl_' ), $c->get( Logger::class ) )
+		);
+		$container->set(
+			MeMerchAdController::class,
+			static fn( Container $c ): MeMerchAdController => new MeMerchAdController( $c->get( CreatorContext::class ), $c->get( MerchAdRepository::class ), $c->get( MerchAdView::class ), $c->get( MerchAdFiles::class ), $owns( $c ), $c->get( Logger::class ) )
+		);
+
+		$container->set( MerchCommandRepository::class, static fn( Container $c ): MerchCommandRepository => new MerchCommandRepository( $c->get( CreatorMetaStore::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set(
+			MerchCommand::class,
+			static fn( Container $c ): MerchCommand => new MerchCommand(
+				$c->get( MerchCommandRepository::class ),
+				static fn( int $creator_id ): string => self::collection_url( $c, $creator_id ),
+				static fn( int $creator_id, ChatPlatform $platform, string $message ): bool => self::send( $c, $creator_id, $message, $platform ),
+				$c->get( Logger::class )
+			)
+		);
+		$container->set(
+			MeMerchCommandController::class,
+			static fn( Container $c ): MeMerchCommandController => new MeMerchCommandController(
+				$c->get( CreatorContext::class ),
+				$c->get( MerchCommandRepository::class ),
+				static fn( int $creator_id ): string => self::collection_url( $c, $creator_id ),
+				static function ( int $creator_id ) use ( $c ): array {
+					$platforms = array();
+
+					foreach ( array( ChatPlatform::Twitch, ChatPlatform::Kick ) as $platform ) {
+						if ( $c->get( ChatbotChannelRepository::class )->find( $creator_id, $platform )->connected() ) {
+							$platforms[] = $platform->value;
+						}
+					}
+
+					return $platforms;
+				},
+				$c->get( Logger::class )
+			)
+		);
+	}
+
+	/**
+	 * The link to a creator's collection: the creator's product category,
+	 * else the shop (ADR-113 pkt. 5).
+	 *
+	 * @param Container $c          Container.
+	 * @param int       $creator_id Creator.
+	 */
+	private static function collection_url( Container $c, int $creator_id ): string {
+		try {
+			foreach ( $c->get( CreatorCategoryService::class )->for_creator( $creator_id ) as $category ) {
+				$link = get_term_link( $category->term_id, 'product_cat' );
+
+				if ( is_string( $link ) ) {
+					return $link;
+				}
+			}
+		} catch ( DatabaseException $e ) {
+			$c->get( Logger::class )->error( 'The creator category could not be read; the shop is linked instead.', $e->context() );
+		}
+
+		$shop = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : '';
+
+		return '' !== $shop ? $shop : home_url( '/' );
 	}
 
 	/**
@@ -267,7 +389,7 @@ final class CommunityModule implements Module {
 				},
 				static fn( int $creator_id ): string => $c->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '',
 				static fn( int $creator_id, int $limit ): array => $c->get( CreatorProducts::class )->newest( $creator_id, $limit ),
-				self::panel_product( ... )
+				static fn( int $product_id ): ?array => self::panel_product( $product_id )
 			)
 		);
 		$container->set(
@@ -296,10 +418,11 @@ final class CommunityModule implements Module {
 	 * A product as the Twitch Extension panel shows it: name and image of a
 	 * published, visible parent product; null otherwise (ADR-112 pkt. 2).
 	 *
-	 * @param int $product_id Parent product.
+	 * @param int    $product_id Parent product.
+	 * @param string $size       Image size.
 	 * @return array{name: string, image: string|null}|null
 	 */
-	private static function panel_product( int $product_id ): ?array {
+	private static function panel_product( int $product_id, string $size = 'woocommerce_thumbnail' ): ?array {
 		$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
 
 		if ( ! $product instanceof WC_Product || 'publish' !== $product->get_status() || 'hidden' === $product->get_catalog_visibility() || (int) $product->get_parent_id() > 0 ) {
@@ -307,7 +430,7 @@ final class CommunityModule implements Module {
 		}
 
 		$image_id = (int) $product->get_image_id();
-		$image    = $image_id > 0 ? wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) : false;
+		$image    = $image_id > 0 ? wp_get_attachment_image_url( $image_id, $size ) : false;
 
 		return array(
 			'name'  => wp_strip_all_tags( html_entity_decode( $product->get_name(), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ),
@@ -607,19 +730,20 @@ final class CommunityModule implements Module {
 	 * Sends a chat message in a creator's Twitch channel now (the gift
 	 * messages go out even when the creator's order messages are off).
 	 *
-	 * @param Container $c          Container.
-	 * @param int       $creator_id Creator.
-	 * @param string    $message    Message.
+	 * @param Container    $c          Container.
+	 * @param int          $creator_id Creator.
+	 * @param string       $message    Message.
+	 * @param ChatPlatform $platform   The channel's platform.
 	 * @return bool Whether Twitch took it.
 	 */
-	private static function send( Container $c, int $creator_id, string $message ): bool {
+	private static function send( Container $c, int $creator_id, string $message, ChatPlatform $platform = ChatPlatform::Twitch ): bool {
 		try {
-			$channel = $c->get( ChatbotChannelRepository::class )->find( $creator_id, ChatPlatform::Twitch );
+			$channel = $c->get( ChatbotChannelRepository::class )->find( $creator_id, $platform );
 
 			return 'sent' === $c->get( ChatSender::class )->send_now( $channel, $message )['result'];
 		} catch ( ChatbotException | DatabaseException $e ) {
 			$c->get( Logger::class )->error(
-				'A gift message could not be sent.',
+				'A chat message could not be sent.',
 				array(
 					'creator_id' => $creator_id,
 					'reason'     => $e instanceof ChatbotException ? $e->reason() : $e->getMessage(),

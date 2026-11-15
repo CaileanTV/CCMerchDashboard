@@ -239,7 +239,7 @@ final class ShellController {
 	public static function security_headers( ?string $script_nonce = null ): array {
 		$policy = null === $script_nonce
 			? "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; manifest-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'self'"
-			: "default-src 'none'; script-src 'self' 'nonce-" . $script_nonce . "'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; media-src 'self'; connect-src 'self'; manifest-src 'self'; form-action 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'self'";
+			: "default-src 'none'; script-src 'self' 'nonce-" . $script_nonce . "'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; media-src 'self'; connect-src 'self'; frame-src 'self'; manifest-src 'self'; form-action 'self'; base-uri 'none'; object-src 'none'; frame-ancestors 'self'";
 
 		return array(
 			'X-Robots-Tag'            => 'noindex, nofollow',

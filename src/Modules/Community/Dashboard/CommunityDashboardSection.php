@@ -68,6 +68,14 @@ final class CommunityDashboardSection {
 						'group'       => 'community',
 						'group_label' => __( 'Community Features', 'merchboard' ),
 					) : null,
+					Settings::merch_ad_enabled() ? array(
+						'id'          => 'community-merch-ad',
+						'label'       => __( 'Merch ad', 'merchboard' ),
+						'path'        => 'community/merch-ad',
+						'capability'  => Capabilities::ACCESS_DASHBOARD,
+						'group'       => 'community',
+						'group_label' => __( 'Community Features', 'merchboard' ),
+					) : null,
 					Settings::twitch_extension_enabled() ? array(
 						'id'          => 'community-twitch-extension',
 						'label'       => __( 'Twitch Extension', 'merchboard' ),

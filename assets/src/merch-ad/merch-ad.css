@@ -1,0 +1,428 @@
+/* The merch ad overlay in OBS (ADR-113); a transparent page. */
+html,
+body {
+	margin: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	background: transparent;
+}
+
+/* The dashboard's preview: a stream-like background (OBS stays transparent). */
+.mb-ad-preview {
+	background: linear-gradient(135deg, #1b2735, #4a3a6a 60%, #0e1b2b);
+}
+
+.mb-ad {
+	--mb-accent: #9146ff;
+	--mb-card: rgb(14 14 20 / 82%);
+	--mb-text: #fff;
+	--mb-muted: rgb(255 255 255 / 72%);
+	--mb-edge: rgb(255 255 255 / 14%);
+
+	position: fixed;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	color: var(--mb-text);
+	font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+	font-size: clamp(12px, 2.4vh, 40px);
+	line-height: 1.25;
+	-webkit-font-smoothing: antialiased;
+}
+
+.mb-ad--light {
+	--mb-card: rgb(255 255 255 / 92%);
+	--mb-text: #111118;
+	--mb-muted: rgb(17 17 24 / 66%);
+	--mb-edge: rgb(17 17 24 / 10%);
+}
+
+.mb-ad__stage {
+	display: grid;
+	place-items: center;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+.mb-ad__view {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 2.2vh;
+	width: 100vw;
+	min-width: 0;
+	height: 100%;
+	animation: mb-view 0.55s ease-out both;
+}
+
+/* Images: background-free with a soft glow, or the shop image in a tile. */
+.mb-ad__img {
+	position: relative;
+	flex: none;
+}
+
+/* The image always fits its box, so it never covers the name. */
+.mb-ad__img img {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.mb-ad__img--cutout img {
+	filter:
+		drop-shadow(0 1.2vh 2.4vh rgb(0 0 0 / 45%))
+		drop-shadow(0 0 3vh color-mix(in srgb, var(--mb-accent) 55%, transparent));
+}
+
+.mb-ad__img--tile {
+	overflow: hidden;
+	border: 2px solid var(--mb-edge);
+	border-radius: 2vh;
+	background: var(--mb-card);
+	box-shadow: 0 1.5vh 4vh rgb(0 0 0 / 40%);
+}
+
+.mb-ad__img--tile img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.mb-ad__item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1vh;
+	min-width: 0;
+}
+
+.mb-ad__name {
+	max-width: 100%;
+	overflow: hidden;
+	font-weight: 700;
+	text-align: center;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	text-shadow: 0 0.3vh 1vh rgb(0 0 0 / 55%);
+}
+
+.mb-ad--light .mb-ad__name {
+	text-shadow: none;
+}
+
+.mb-ad__pill {
+	max-width: 90%;
+	padding: 1vh 2.6vh;
+	border: 2px solid color-mix(in srgb, var(--mb-accent) 70%, transparent);
+	border-radius: 999px;
+	background: linear-gradient(135deg, color-mix(in srgb, var(--mb-accent) 38%, var(--mb-card)), var(--mb-card));
+	box-shadow: 0 0 3vh color-mix(in srgb, var(--mb-accent) 45%, transparent);
+	font-weight: 700;
+	text-align: center;
+	overflow-wrap: anywhere;
+}
+
+.mb-ad__command {
+	color: color-mix(in srgb, var(--mb-accent) 55%, #fff);
+	font-weight: 900;
+	letter-spacing: 0.02em;
+}
+
+.mb-ad--light .mb-ad__command {
+	color: var(--mb-accent);
+}
+
+/* Spotlight: one big product, its name and the pill. */
+.mb-ad--spotlight .mb-ad__card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1.6vh;
+}
+
+.mb-ad--spotlight .mb-ad__img {
+	width: 62vh;
+	height: 58vh;
+}
+
+.mb-ad--spotlight .mb-ad__name {
+	padding: 0.8vh 2.4vh;
+	border-radius: 1.2vh;
+	background: var(--mb-card);
+	font-size: 1.5em;
+}
+
+/* Corner card: a small card with product, name and pill. */
+.mb-ad--corner .mb-ad__card {
+	display: flex;
+	align-items: center;
+	gap: 3vh;
+	max-width: 92vw;
+	padding: 2.4vh 3.6vh 2.4vh 2.4vh;
+	border: 2px solid var(--mb-edge);
+	border-left: 1vh solid var(--mb-accent);
+	border-radius: 3vh;
+	background: var(--mb-card);
+	box-shadow: 0 2vh 5vh rgb(0 0 0 / 40%);
+}
+
+.mb-ad--corner .mb-ad__img {
+	flex: none;
+	width: 34vh;
+	height: 34vh;
+}
+
+.mb-ad--corner .mb-ad__info {
+	display: grid;
+	gap: 1.6vh;
+	min-width: 0;
+}
+
+.mb-ad--corner .mb-ad__name {
+	font-size: 1.6em;
+	white-space: normal;
+}
+
+.mb-ad--corner .mb-ad__pill {
+	max-width: none;
+}
+
+/* Shelf: up to four products on a glass bar. */
+.mb-ad__row {
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	gap: 3vh;
+	max-width: 94vw;
+	padding: 3vh 4vh 2.4vh;
+	border: 2px solid var(--mb-edge);
+	border-bottom: 0.8vh solid var(--mb-accent);
+	border-radius: 3vh;
+	background: linear-gradient(180deg, transparent, var(--mb-card) 55%);
+}
+
+.mb-ad--shelf .mb-ad__item {
+	width: 30vh;
+}
+
+.mb-ad--shelf .mb-ad__img {
+	width: 30vh;
+	height: 32vh;
+}
+
+/* Carousel: a strip that runs past. */
+.mb-ad__strip {
+	width: 100vw;
+	max-width: 100vw;
+	overflow: hidden;
+	padding: 2.4vh 0;
+	border-block: 2px solid var(--mb-edge);
+	background: var(--mb-card);
+	mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.mb-ad__track {
+	display: flex;
+	gap: 4vh;
+	width: max-content;
+	animation: mb-run linear infinite;
+}
+
+.mb-ad--carousel .mb-ad__item {
+	width: 26vh;
+}
+
+.mb-ad--carousel .mb-ad__img {
+	width: 26vh;
+	height: 26vh;
+}
+
+/* Three in front: the middle product large, the outer two turned in 3D. */
+.mb-ad__three {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1vh;
+	perspective: 120vh;
+}
+
+.mb-ad--showcase .mb-ad__item--middle {
+	z-index: 1;
+	width: 52vh;
+}
+
+.mb-ad--showcase .mb-ad__item--middle .mb-ad__img {
+	width: 52vh;
+	height: 50vh;
+}
+
+.mb-ad--showcase .mb-ad__item--left,
+.mb-ad--showcase .mb-ad__item--right {
+	width: 34vh;
+	opacity: 0.88;
+}
+
+.mb-ad--showcase .mb-ad__item--left .mb-ad__img,
+.mb-ad--showcase .mb-ad__item--right .mb-ad__img {
+	width: 34vh;
+	height: 36vh;
+}
+
+.mb-ad--showcase .mb-ad__item--left {
+	transform: rotateY(34deg) translateZ(-8vh);
+}
+
+.mb-ad--showcase .mb-ad__item--right {
+	transform: rotateY(-34deg) translateZ(-8vh);
+}
+
+.mb-ad--showcase .mb-ad__item--middle .mb-ad__name {
+	font-size: 1.35em;
+}
+
+/* In and out. */
+.mb-ad__stage--in-fade {
+	animation: mb-fade-in 0.6s ease-out both;
+}
+
+.mb-ad__stage--in-slide {
+	animation: mb-slide-in 0.7s cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+
+.mb-ad__stage--in-pop {
+	animation: mb-pop-in 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+
+.mb-ad__stage--in-zoom {
+	animation: mb-zoom-in 0.7s ease-out both;
+}
+
+.mb-ad__stage--in-blur {
+	animation: mb-blur-in 0.7s ease-out both;
+}
+
+.mb-ad__stage--out-fade {
+	animation: mb-fade-in 0.7s ease-in reverse both;
+}
+
+.mb-ad__stage--out-slide {
+	animation: mb-slide-in 0.7s ease-in reverse both;
+}
+
+.mb-ad__stage--out-pop {
+	animation: mb-pop-out 0.7s ease-in both;
+}
+
+.mb-ad__stage--out-zoom {
+	animation: mb-zoom-in 0.7s ease-in reverse both;
+}
+
+.mb-ad__stage--out-blur {
+	animation: mb-blur-in 0.7s ease-in reverse both;
+}
+
+@keyframes mb-fade-in {
+
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes mb-slide-in {
+
+	from {
+		opacity: 0;
+		transform: translateY(12vh);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes mb-pop-in {
+
+	from {
+		opacity: 0;
+		transform: scale(0.6);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes mb-pop-out {
+
+	from {
+		opacity: 1;
+		transform: none;
+	}
+
+	to {
+		opacity: 0;
+		transform: scale(0.7);
+	}
+}
+
+@keyframes mb-zoom-in {
+
+	from {
+		opacity: 0;
+		transform: scale(1.3);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes mb-blur-in {
+
+	from {
+		opacity: 0;
+		filter: blur(3vh);
+	}
+
+	to {
+		opacity: 1;
+		filter: none;
+	}
+}
+
+@keyframes mb-view {
+
+	from {
+		opacity: 0;
+		transform: translateY(1.5vh);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes mb-run {
+
+	from {
+		transform: translateX(0);
+	}
+
+	to {
+		transform: translateX(-50%);
+	}
+}

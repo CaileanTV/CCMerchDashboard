@@ -547,6 +547,7 @@ final class ShellControllerTest extends TestCase {
 		self::assertStringContainsString( "script-src 'self' 'nonce-abc='", $app );
 		self::assertStringContainsString( "connect-src 'self'", $app );
 		self::assertStringContainsString( "object-src 'none'", $app );
+		self::assertStringContainsString( "frame-src 'self';", $app, 'The merch ad preview (ADR-113) frames only this site.' );
 		self::assertStringContainsString( "base-uri 'none'", $app );
 		self::assertStringContainsString( "frame-ancestors 'self'", $app );
 		self::assertStringNotContainsString( 'unsafe-eval', $app );

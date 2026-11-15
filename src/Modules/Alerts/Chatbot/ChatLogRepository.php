@@ -53,9 +53,10 @@ final class ChatLogRepository {
 	 * @param string       $name           Chatter display name.
 	 * @param string       $color          Chatter colour (#rrggbb or '').
 	 * @param string       $text           Message text.
+	 * @return bool Whether it is new (a message delivered again is stored once).
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function add( ChatPlatform $platform, string $broadcaster_id, string $message_id, string $login, string $name, string $color, string $text ): void {
+	public function add( ChatPlatform $platform, string $broadcaster_id, string $message_id, string $login, string $name, string $color, string $text ): bool {
 		$wpdb = $this->wpdb;
 		$sql  = $wpdb->prepare(
 			'INSERT IGNORE INTO %i (platform, broadcaster_id, message_id, chatter_login, chatter_name, color, text, created_at) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
@@ -70,11 +71,15 @@ final class ChatLogRepository {
 			gmdate( 'Y-m-d H:i:s' )
 		);
 
-		if ( null === $sql || false === $wpdb->query( $sql ) || '' !== $wpdb->last_error ) { // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Prepared above; a custom table.
+		$inserted = null === $sql ? false : $wpdb->query( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery -- Prepared above; a custom table.
+
+		if ( false === $inserted || '' !== $wpdb->last_error ) {
 			throw new DatabaseException( 'Could not store the chat message.' );
 		}
 
 		$this->prune( $platform, $broadcaster_id );
+
+		return $inserted > 0;
 	}
 
 	/**

@@ -112,9 +112,22 @@ final class CreatorMetaStore {
 	public const TWITCH_EXTENSION = 'twitch_extension';
 
 	/**
+	 * The creator's merch ad overlay (phase 50, ADR-113): design, products,
+	 * pill, timing, animations, the overlay id and the background-free
+	 * images. Written by the creator through `/me`.
+	 */
+	public const MERCH_AD = 'merch_ad';
+
+	/**
+	 * The creator's !merch chat command (phase 50, ADR-113): on/off, the text
+	 * and the cooldown. Written by the creator through `/me`.
+	 */
+	public const MERCH_COMMAND = 'merch_command';
+
+	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BILLING_DETAILS, self::BILLING_SUBMISSION, self::BILLING_CONFIRMED, self::BILLING_CPR, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP, self::TWITCH_SUB_DISCOUNT, self::TWITCH_GIFTING, self::TWITCH_EXTENSION );
+	private const KEYS = array( self::BILLING_DETAILS, self::BILLING_SUBMISSION, self::BILLING_CONFIRMED, self::BILLING_CPR, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP, self::TWITCH_SUB_DISCOUNT, self::TWITCH_GIFTING, self::TWITCH_EXTENSION, self::MERCH_AD, self::MERCH_COMMAND );
 
 	/**
 	 * Constructor.

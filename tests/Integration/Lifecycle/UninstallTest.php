@@ -32,6 +32,8 @@ use MerchBoard\Modules\Alerts\Api\AlertApiSwitch;
 use MerchBoard\Modules\Alerts\Presets\OverlayPresetStore;
 use MerchBoard\Modules\Alerts\Legal\YouTubeTerms;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchAccount;
+use MerchBoard\Modules\Community\MerchAd\MerchAdFiles;
+use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionApp;
 use MerchBoard\Modules\Alerts\Fonts\AlertFonts;
 use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorRepository;
@@ -129,6 +131,10 @@ final class UninstallTest extends IntegrationTestCase {
 		update_option( AlertFonts::APPROVED_OPTION, array( array( 'family' => 'Roboto' ) ), false );
 		set_transient( AlertFonts::CATALOG_KEY, array( array( 'family' => 'Roboto' ) ), 60 );
 		update_option( TwitchAccount::OPTION, array( 'client_id' => 'abc' ), false );
+		update_option( TwitchExtensionApp::OPTION, array( 'client_id' => 'abc' ), false );
+		$merch_ad = wp_upload_dir( null, false )['basedir'] . '/' . MerchAdFiles::FOLDER . '/7';
+		wp_mkdir_p( $merch_ad );
+		file_put_contents( $merch_ad . '/p1-0123456789ab.png', 'png' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
 		update_option( ChatbotFormat::OPTION, array( 'mode' => 'order' ), false );
 		update_option( AlertApiSwitch::OPTION, '1', false );
 		update_option( KickAccount::OPTION, array( 'client_id' => 'abc' ), false );
@@ -163,11 +169,12 @@ final class UninstallTest extends IntegrationTestCase {
 		self::assertSame( array( null ), array_values( array_unique( array_column( $creators, 'user_id' ) ) ) );
 		self::assertSame( $max_creator, maybe_unserialize( (string) $this->raw_option( RestoredHistory::OPTION ) )['max_creator_id'] ?? null );
 
-		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION, AlertFonts::KEY_OPTION, AlertFonts::APPROVED_OPTION, TwitchAccount::OPTION, ChatbotFormat::OPTION, KickAccount::OPTION, YouTubeAccount::OPTION, YouTubeLegal::OPTION, GlobalOverlayStore::OPTION, OverlayPresetStore::OPTION, Uninstaller::RETIRED_CREATOR_PAGE_OPTION, AlertApiSwitch::OPTION, ...RemoveImportOptions::OPTIONS ) as $option ) {
+		foreach ( array( Migrator::VERSION_OPTION, Migrator::LOCK_OPTION, RoleManager::VERSION_OPTION, Settings::OPTION, AlertFonts::KEY_OPTION, AlertFonts::APPROVED_OPTION, TwitchAccount::OPTION, TwitchExtensionApp::OPTION, ChatbotFormat::OPTION, KickAccount::OPTION, YouTubeAccount::OPTION, YouTubeLegal::OPTION, GlobalOverlayStore::OPTION, OverlayPresetStore::OPTION, Uninstaller::RETIRED_CREATOR_PAGE_OPTION, AlertApiSwitch::OPTION, ...RemoveImportOptions::OPTIONS ) as $option ) {
 			self::assertNull( $this->raw_option( $option ), $option );
 		}
 
 		self::assertFalse( get_transient( AlertFonts::CATALOG_KEY ), 'The font catalogue is removed.' );
+		self::assertDirectoryDoesNotExist( wp_upload_dir( null, false )['basedir'] . '/' . MerchAdFiles::FOLDER, 'The merch ad images are removed (ADR-113).' );
 
 		self::assertNull( get_role( Capabilities::CREATOR_ROLE ) );
 		self::assertSame( array(), $this->plugin_caps_on_roles() );

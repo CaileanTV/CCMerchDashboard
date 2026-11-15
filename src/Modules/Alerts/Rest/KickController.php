@@ -153,14 +153,34 @@ final class KickController extends RestController {
 			return;
 		}
 
-		$this->chat->add(
+		$text = is_string( $payload['content'] ?? null ) ? $payload['content'] : '';
+
+		$new = $this->chat->add(
 			ChatPlatform::Kick,
 			$channel->broadcaster_id,
 			$message_id,
 			is_string( $sender['channel_slug'] ?? null ) ? $sender['channel_slug'] : '',
 			is_string( $sender['username'] ?? null ) ? $sender['username'] : '',
 			is_string( $identity['username_color'] ?? null ) ? $identity['username_color'] : '',
-			is_string( $payload['content'] ?? null ) ? $payload['content'] : ''
+			$text
 		);
+
+		if ( ! $new ) {
+			// Kick delivered the message again.
+			return;
+		}
+
+		$sender_id = $sender['user_id'] ?? null;
+
+		/**
+		 * A chat message in a creator's Kick channel, from the signed webhook
+		 * (commands such as !merch, ADR-113).
+		 *
+		 * @param int    $creator_id Creator.
+		 * @param string $chatter_id Chatter's Kick user id.
+		 * @param string $login      Chatter's channel slug.
+		 * @param string $text       Message text.
+		 */
+		do_action( 'merchboard_kick_chat_message', $channel->creator_id, is_int( $sender_id ) || is_string( $sender_id ) ? (string) $sender_id : '', is_string( $sender['channel_slug'] ?? null ) ? $sender['channel_slug'] : '', $text );
 	}
 }

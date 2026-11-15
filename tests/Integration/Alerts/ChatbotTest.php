@@ -1376,10 +1376,18 @@ final class ChatbotTest extends IntegrationTestCase {
 			'content'     => '<b>hype</b>',
 		);
 
+		$heard  = array();
+		$listen = static function ( mixed ...$args ) use ( &$heard ): void {
+			$heard[] = $args;
+		};
+		add_action( 'merchboard_kick_chat_message', $listen, 10, 4 );
+
 		self::assertSame( 200, $this->kick_event( $message, $key )->get_status() );
 		self::assertSame( 200, $this->kick_event( $message, $key, 'chat.message.sent', 'delivery-2' )->get_status() );
 		self::assertSame( 200, $this->kick_event( array( 'follower' => array() ), $key, 'channel.followed', 'delivery-3' )->get_status() );
+		remove_action( 'merchboard_kick_chat_message', $listen, 10 );
 		self::assertSame( 1, $this->count_rows( Tables::ALERT_CHAT_LOG ), 'Stored once; other events are ignored.' );
+		self::assertSame( array( array( $nova, '5', 'viewer5', '<b>hype</b>' ) ), $heard, 'Commands (ADR-113) hear a message once, also when Kick delivers it again.' );
 
 		$this->as_admin();
 		$chat = $this->call( 'GET', '/merchboard/v1/alerts/chat/kick/' . $nova );

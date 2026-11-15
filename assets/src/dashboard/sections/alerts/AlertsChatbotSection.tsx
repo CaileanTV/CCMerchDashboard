@@ -28,6 +28,7 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Field } from '../../components/Field';
 import { Skeleton } from '../../components/Skeleton';
+import { MerchCommandCard } from './MerchCommandCard';
 import { Toast } from '../../components/Toast';
 import { useApi } from '../../hooks/useApi';
 import { TemplateVariables } from './TemplateVariables';
@@ -735,6 +736,7 @@ function ChatbotContent( { initial }: { readonly initial: ChatbotState } ) {
 					{ __( 'Save chatbot settings', 'merchboard' ) }
 				</Button>
 			</Card>
+			<MerchCommandCard onSave={ setToast } />
 			<Toast message={ toast } onDismiss={ dismissToast } />
 		</div>
 	);

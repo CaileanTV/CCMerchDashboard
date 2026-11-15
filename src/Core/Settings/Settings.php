@@ -185,6 +185,12 @@ final class Settings {
 	public const COMMUNITY_TWITCH_EXTENSION_ENABLED = 'community_twitch_extension_enabled';
 
 	/**
+	 * Whether creators can run the merch ad overlay in their stream
+	 * (ADR-113). Off by default.
+	 */
+	public const COMMUNITY_MERCH_AD_ENABLED = 'community_merch_ad_enabled';
+
+	/**
 	 * The query parameter of the public community links (CommunityLink;
 	 * `?<name>=<token>`). Defaults to the name used before 2.1.1.
 	 */
@@ -294,7 +300,7 @@ final class Settings {
 	/**
 	 * Defaults.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool, community_twitch_extension_enabled: bool, community_link_param: string, community_link_previous: list<string>}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool, community_twitch_extension_enabled: bool, community_merch_ad_enabled: bool, community_link_param: string, community_link_previous: list<string>}
 	 */
 	public static function defaults(): array {
 		return array(
@@ -323,6 +329,7 @@ final class Settings {
 			self::COMMUNITY_TWITCH_GIFTING_ENABLED      => false,
 			self::COMMUNITY_GIVEAWAYS_ENABLED           => false,
 			self::COMMUNITY_TWITCH_EXTENSION_ENABLED    => false,
+			self::COMMUNITY_MERCH_AD_ENABLED            => false,
 			self::COMMUNITY_LINK_PARAM                  => CommunityLink::LEGACY,
 			self::COMMUNITY_LINK_PREVIOUS               => array(),
 		);
@@ -335,7 +342,7 @@ final class Settings {
 	 * default.
 	 *
 	 * @param array<mixed> $values Raw values.
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool, community_twitch_extension_enabled: bool, community_link_param: string, community_link_previous: list<string>}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool, community_twitch_extension_enabled: bool, community_merch_ad_enabled: bool, community_link_param: string, community_link_previous: list<string>}
 	 */
 	public static function sanitize( array $values ): array {
 		$slug   = $values[ self::DASHBOARD_SLUG ] ?? null;
@@ -378,6 +385,7 @@ final class Settings {
 			self::COMMUNITY_TWITCH_GIFTING_ENABLED      => true === ( $values[ self::COMMUNITY_TWITCH_GIFTING_ENABLED ] ?? false ),
 			self::COMMUNITY_GIVEAWAYS_ENABLED           => true === ( $values[ self::COMMUNITY_GIVEAWAYS_ENABLED ] ?? false ),
 			self::COMMUNITY_TWITCH_EXTENSION_ENABLED    => true === ( $values[ self::COMMUNITY_TWITCH_EXTENSION_ENABLED ] ?? false ),
+			self::COMMUNITY_MERCH_AD_ENABLED            => true === ( $values[ self::COMMUNITY_MERCH_AD_ENABLED ] ?? false ),
 			self::COMMUNITY_LINK_PARAM                  => is_string( $link ) && CommunityLink::valid( $link ) ? $link : CommunityLink::LEGACY,
 			self::COMMUNITY_LINK_PREVIOUS               => array_slice( array_values( array_unique( array_filter( is_array( $before ) ? $before : array(), static fn( mixed $name ): bool => is_string( $name ) && CommunityLink::valid( $name ) ) ) ), 0, CommunityLink::MAX_PREVIOUS ),
 		);
@@ -503,7 +511,7 @@ final class Settings {
 	/**
 	 * Current settings.
 	 *
-	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool, community_twitch_extension_enabled: bool, community_link_param: string, community_link_previous: list<string>}
+	 * @return array{delete_data_on_uninstall: bool, dashboard_slug: string, counted_order_statuses: list<string>, logo_attachment_id: int, payout_holding_days: int, payout_gift_card_provider: string, company_cvr: string, company_name: string, company_email: string, alerts_enabled: bool, checkout_username_enabled: bool, checkout_username_label: string, checkout_username_help: string, sound_max_bytes: int, sound_max_seconds: int, designer_enabled: bool, printful_enabled: bool, gelato_enabled: bool, prodigi_enabled: bool, printify_enabled: bool, designer_digitization_fee: string, community_twitch_sub_discount_enabled: bool, community_twitch_gifting_enabled: bool, community_giveaways_enabled: bool, community_twitch_extension_enabled: bool, community_merch_ad_enabled: bool, community_link_param: string, community_link_previous: list<string>}
 	 */
 	public static function all(): array {
 		$stored = get_option( self::OPTION, array() );
@@ -661,6 +669,13 @@ final class Settings {
 	 */
 	public static function twitch_extension_enabled(): bool {
 		return self::all()[ self::COMMUNITY_TWITCH_EXTENSION_ENABLED ];
+	}
+
+	/**
+	 * Whether creators can use the merch ad overlay (ADR-113).
+	 */
+	public static function merch_ad_enabled(): bool {
+		return self::all()[ self::COMMUNITY_MERCH_AD_ENABLED ];
 	}
 
 	/**
