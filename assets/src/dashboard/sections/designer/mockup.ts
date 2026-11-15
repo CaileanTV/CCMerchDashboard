@@ -419,16 +419,20 @@ export async function composeMockup(
 }
 
 /**
- * The mockup of a PSD scene as a JPEG, or null when it cannot be drawn.
+ * The mockup of a PSD scene, or null when it cannot be drawn: a JPEG on
+ * white, or (`transparent`) a PNG without background when the PSD has a
+ * transparent background (ADR-114); the blob's type says which it is.
  *
- * @param scene The scene.
- * @param url   `data:` URL of its image.
- * @param print The print file.
+ * @param scene       The scene.
+ * @param url         `data:` URL of its image.
+ * @param print       The print file.
+ * @param transparent A PNG without background where the PSD has none.
  */
 export async function composeScene(
 	scene: Scene,
 	url: string,
-	print: HTMLCanvasElement
+	print: HTMLCanvasElement,
+	transparent = false
 ): Promise< Blob | null > {
 	const image = await load( url );
 	const atlas =
@@ -457,15 +461,35 @@ export async function composeScene(
 			atlas.canvas.width,
 			atlas.canvas.height
 		),
-		printContext.getImageData( 0, 0, print.width, print.height )
+		printContext.getImageData( 0, 0, print.width, print.height ),
+		transparent
 	);
+	// Without a transparent pixel the PSD has a background: a JPEG on white as before.
+	const clear =
+		transparent &&
+		drawn.data.some( ( value, index ) => index % 4 === 3 && value < 128 );
+	const flat =
+		transparent && ! clear
+			? renderScene(
+					scene,
+					atlas.context.getImageData(
+						0,
+						0,
+						atlas.canvas.width,
+						atlas.canvas.height
+					),
+					printContext.getImageData( 0, 0, print.width, print.height )
+				)
+			: drawn;
 	const result = target.context.createImageData( scene.width, scene.height );
 
-	result.data.set( drawn.data );
+	result.data.set( flat.data );
 	target.context.putImageData( result, 0, 0 );
 
 	return new Promise( ( resolve ) =>
-		target.canvas.toBlob( resolve, 'image/jpeg', QUALITY )
+		clear
+			? target.canvas.toBlob( resolve, 'image/png' )
+			: target.canvas.toBlob( resolve, 'image/jpeg', QUALITY )
 	);
 }
 

@@ -188,6 +188,53 @@ describe( 'a mockup scene', () => {
 			)
 		).toEqual( [ 128, 178, 255 ] );
 	} );
+
+	it( 'leaves out the white document where the PSD has no pixels (ADR-114)', () => {
+		// A product picture covering the left half: opaque red, half-covered at its edge column.
+		const atlas = plain( 4, 2, [ 0, 0, 0, 0 ] );
+		atlas.data.set( [ 200, 20, 20, 255 ], 0 );
+		atlas.data.set( [ 200, 20, 20, 128 ], 4 );
+		const scene = {
+			width: 4,
+			height: 1,
+			steps: [
+				{
+					type: 'image' as const,
+					rect: { x: 0, y: 0, width: 4, height: 1 },
+					left: 0,
+					top: 0,
+					blend: 'normal' as const,
+					opacity: 1,
+				},
+			],
+		};
+		const drawn = renderScene(
+			scene,
+			atlas,
+			plain( 1, 1, [ 0, 0, 0, 0 ] ),
+			true
+		);
+
+		expect( Array.from( drawn.data.slice( 0, 4 ) ) ).toEqual( [
+			200, 20, 20, 255,
+		] );
+		// The half-covered edge keeps its own colour, without white mixed in.
+		pixel( drawn, 1, 0 ).forEach( ( value, channel ) =>
+			expect(
+				Math.abs( value - ( [ 200, 20, 20 ][ channel ] ?? 0 ) )
+			).toBeLessThanOrEqual( 1 )
+		);
+		expect( drawn.data[ 7 ] ).toBe( 128 );
+		expect( drawn.data[ 11 ] ).toBe( 0 );
+		// Without it: the same scene on white, as before.
+		expect(
+			pixel(
+				renderScene( scene, atlas, plain( 1, 1, [ 0, 0, 0, 0 ] ) ),
+				2,
+				0
+			)
+		).toEqual( [ 255, 255, 255 ] );
+	} );
 } );
 
 describe( 'the import of a mockup PSD', () => {

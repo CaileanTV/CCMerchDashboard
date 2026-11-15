@@ -477,19 +477,25 @@ function lay(
 }
 
 /**
- * A mockup: the steps on a white document.
+ * A mockup: the steps on a white document. With `transparent` (ADR-114) the
+ * document is only where the PSD's own pixels are: each pixel's alpha is how
+ * much its pictures cover it, and the white is taken out of its colour. The
+ * design shows only on the product (it adds no cover of its own).
  *
- * @param scene The scene.
- * @param atlas The scene's image.
- * @param print The print file.
+ * @param scene       The scene.
+ * @param atlas       The scene's image.
+ * @param print       The print file.
+ * @param transparent Without the white document.
  */
 export function renderScene(
 	scene: Scene,
 	atlas: Pixels,
-	print: Pixels
+	print: Pixels,
+	transparent = false
 ): Pixels {
 	const { width, height } = scene;
 	const data = new Uint8ClampedArray( width * height * 4 ).fill( 255 );
+	const cover = transparent ? new Float32Array( width * height ) : null;
 
 	for ( const step of scene.steps ) {
 		if ( step.type === 'image' ) {
@@ -515,14 +521,23 @@ export function renderScene(
 					const alpha = atlas.data[ from + 3 ] as number;
 
 					if ( alpha > 0 ) {
+						const strength = ( alpha / 255 ) * step.opacity;
+						const pixel = y * width + x;
+
 						lay(
 							data,
-							( y * width + x ) * 4,
+							pixel * 4,
 							atlas.data,
 							from,
 							step.blend,
-							( alpha / 255 ) * step.opacity
+							strength
 						);
+
+						if ( cover !== null ) {
+							cover[ pixel ] =
+								( cover[ pixel ] as number ) +
+								strength * ( 1 - ( cover[ pixel ] as number ) );
+						}
 					}
 				}
 			}
@@ -565,6 +580,25 @@ export function renderScene(
 					lay( data, at, layer, at, 'normal', alpha );
 				}
 			}
+		}
+	}
+
+	if ( cover !== null ) {
+		for ( let pixel = 0; pixel < width * height; pixel++ ) {
+			const covered = cover[ pixel ] as number;
+			const at = pixel * 4;
+
+			// On white, a colour C shown with cover a gives C·a + 255·(1 − a): take the white out.
+			for ( let channel = 0; channel < 3; channel++ ) {
+				data[ at + channel ] =
+					covered > 0
+						? ( ( data[ at + channel ] as number ) -
+								255 * ( 1 - covered ) ) /
+							covered
+						: 0;
+			}
+
+			data[ at + 3 ] = Math.round( covered * 255 );
 		}
 	}
 

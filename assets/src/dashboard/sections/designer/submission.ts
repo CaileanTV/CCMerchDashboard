@@ -494,7 +494,7 @@ async function uploadPart(
 		const sceneMockup =
 			view.scene === null || sceneUrl === null
 				? null
-				: await composeScene( view.scene, sceneUrl, print );
+				: await composeScene( view.scene, sceneUrl, print, true );
 
 		if ( view.scene !== null && sceneMockup === null ) {
 			return { ok: false, reason: 'render' };
@@ -510,8 +510,8 @@ async function uploadPart(
 				layers,
 				colorKey
 			);
-			// Without background (PNG) when the side has an outline (ADR-114); a PSD scene and
-			// sides without one stay JPEG on white.
+			// Without background (PNG) when the side has an outline or the PSD a transparent
+			// background (ADR-114); sides without one stay JPEG on white.
 			const transparent = sceneMockup === null;
 			const mockup =
 				sceneMockup ??

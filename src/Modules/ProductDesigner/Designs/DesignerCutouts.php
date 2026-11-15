@@ -36,7 +36,9 @@ defined( 'ABSPATH' ) || exit;
  *   (a JPEG; a provider's photos stay) on a side with an outline: its
  *   silhouette, else its background in that colour when that is a PNG
  *   without background (the template's own photo), else its colour mask
- *   when the colour has no photo of its own. A PSD scene stays as it is.
+ *   when the colour has no photo of its own. A PSD scene (e.g. a mug) can
+ *   always be made: the browser keeps it a JPEG when the PSD has a
+ *   background, and it is not sent.
  * - The administrator's browser draws them from the stored print files and
  *   the template's layers (job()) and sends each PNG (store()). They wait in
  *   the shop product's meta PENDING until approved or discarded.
@@ -225,7 +227,7 @@ final class DesignerCutouts {
 				'color'  => $slot['hex'],
 				'view'   => MeDesignerController::view_data( $base, $slot['view'] ),
 				'print'  => DesignerVersionFiles::url( (int) $version['id'], $print ),
-				'layers' => array_map( array( DesignerAssetDownload::class, 'url' ), self::layers( $slot['view'], $slot['color'] ) ),
+				'layers' => array_map( array( DesignerAssetDownload::class, 'url' ), null === $slot['view']->scene ? self::layers( $slot['view'], $slot['color'] ) : array_intersect_key( $slot['view']->layers, array( BaseView::SCENE => true ) ) ),
 			);
 		}
 
@@ -542,9 +544,9 @@ final class DesignerCutouts {
 
 	/**
 	 * The images of a version that can be made without background, by
-	 * `<side>:<colour>`: a side of the base product without a PSD scene and
-	 * with an outline in that colour, whose mockup is still the browser's
-	 * JPEG. None while a provider's photos are the images.
+	 * `<side>:<colour>`: a side of the base product with a PSD scene or with
+	 * an outline in that colour, whose mockup is still the browser's JPEG.
+	 * None while a provider's photos are the images.
 	 *
 	 * @param array<string, mixed> $version Live version.
 	 * @param BaseProduct          $base    Its base product.
@@ -561,10 +563,10 @@ final class DesignerCutouts {
 		$slots = array();
 
 		foreach ( $base->views as $view ) {
-			foreach ( null === $view->scene ? ( $files['mockups'][ $view->key ] ?? array() ) : array() as $color => $file ) {
+			foreach ( $files['mockups'][ $view->key ] ?? array() as $color => $file ) {
 				$color = (string) $color;
 
-				if ( isset( $hexes[ $color ] ) && 'image/jpeg' === ( $file['mime'] ?? '' ) && null !== $this->outline( $view, $color ) ) {
+				if ( isset( $hexes[ $color ] ) && 'image/jpeg' === ( $file['mime'] ?? '' ) && ( null !== $view->scene || null !== $this->outline( $view, $color ) ) ) {
 					$slots[ $view->key . ':' . $color ] = array(
 						'view'  => $view,
 						'color' => $color,
@@ -674,8 +676,8 @@ final class DesignerCutouts {
 	 */
 	private function outlined( BaseProduct $base ): bool {
 		foreach ( $base->views as $view ) {
-			foreach ( null === $view->scene ? $base->colors : array() as $color ) {
-				if ( null !== $this->outline( $view, $color['key'] ) ) {
+			foreach ( $base->colors as $color ) {
+				if ( null !== $view->scene || null !== $this->outline( $view, $color['key'] ) ) {
 					return true;
 				}
 			}

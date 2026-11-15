@@ -9,7 +9,10 @@ import { __, sprintf } from '@wordpress/i18n';
 
 import { parseView } from '../dashboard/api/designer';
 import type { LayerKind } from '../dashboard/api/designer';
-import { composeMockup } from '../dashboard/sections/designer/mockup';
+import {
+	composeMockup,
+	composeScene,
+} from '../dashboard/sections/designer/mockup';
 
 export interface CutoutSlot {
 	readonly key: string;
@@ -124,14 +127,19 @@ export async function drawSlot( slot: CutoutSlot ): Promise< Blob | null > {
 		return null;
 	}
 
-	const image = await composeMockup(
-		view,
-		slot.layers as Partial< Record< LayerKind, string > >,
-		slot.color,
-		print,
-		null,
-		true
-	);
+	// A PSD scene: its own picture with the design, without the white document.
+	const scene = slot.layers.scene;
+	const image =
+		view.scene !== null && scene !== undefined
+			? await composeScene( view.scene, scene, print, true )
+			: await composeMockup(
+					view,
+					slot.layers as Partial< Record< LayerKind, string > >,
+					slot.color,
+					print,
+					null,
+					true
+				);
 
 	// A side the browser finds no outline on stays as it is.
 	return image?.type === 'image/png' ? image : null;
