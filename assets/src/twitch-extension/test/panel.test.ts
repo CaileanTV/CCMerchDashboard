@@ -40,7 +40,7 @@ beforeEach( () => {
 afterEach( () => {
 	root.remove();
 	delete document.body.dataset.api;
-	document.body.classList.remove( 'mb-dark' );
+	document.documentElement.classList.remove( 'mb-dark' );
 	jest.restoreAllMocks();
 } );
 
@@ -161,6 +161,8 @@ describe( 'the Twitch Extension panel (ADR-112)', () => {
 		);
 
 		context( { theme: 'dark' } );
-		expect( document.body.classList.contains( 'mb-dark' ) ).toBe( true );
+		expect( document.documentElement.classList.contains( 'mb-dark' ) ).toBe(
+			true
+		);
 	} );
 } );

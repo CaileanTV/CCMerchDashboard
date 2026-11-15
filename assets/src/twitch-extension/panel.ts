@@ -236,7 +236,10 @@ export function start( root: HTMLElement, ext: TwitchExt ): void {
 	renderMessage( root, TEXTS[ language ].loading );
 
 	ext.onContext( ( context ) => {
-		document.body.classList.toggle( 'mb-dark', context.theme === 'dark' );
+		document.documentElement.classList.toggle(
+			'mb-dark',
+			context.theme === 'dark'
+		);
 	} );
 
 	// Twitch calls this again when the token is renewed; the panel loads once per channel.

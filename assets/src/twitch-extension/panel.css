@@ -7,7 +7,7 @@
 	--mb-accent: #9146ff;
 }
 
-body.mb-dark {
+:root.mb-dark {
 	--mb-bg: #18181b;
 	--mb-fg: #efeff1;
 	--mb-muted: #adadb8;

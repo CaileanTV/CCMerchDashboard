@@ -103,7 +103,9 @@ final class TwitchExtensionController extends RestController {
 				}
 
 				$response = new WP_REST_Response( $this->panel->for_channel( $channel ), 200 );
-				$response->header( 'Cache-Control', 'private, max-age=60' );
+				// The URL is the same for every channel: the browser must never reuse an answer (the shop caches it).
+				$response->header( 'Cache-Control', 'no-store' );
+				$response->header( 'Vary', 'Origin, Authorization' );
 
 				return $response;
 			}
