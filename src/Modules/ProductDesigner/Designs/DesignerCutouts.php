@@ -283,7 +283,7 @@ final class DesignerCutouts {
 	 * @param int          $product Designer product.
 	 * @param string       $key     `<side>:<colour>`.
 	 * @param array<mixed> $upload  The PNG (one entry of $_FILES).
-	 * @throws DesignerException When it is not live, busy, no open image or no PNG of the side's size.
+	 * @throws DesignerException When it is not live, busy, no open image or no PNG of the side's mockup size.
 	 * @throws DatabaseException When it cannot be read.
 	 */
 	public function store( int $product, string $key, array $upload ): void {
@@ -294,7 +294,8 @@ final class DesignerCutouts {
 				$slot                     = $this->slots( $version, $base )[ $key ] ?? self::refuse( DesignerException::DESIGN_INVALID );
 				$file                     = $this->files->store( $upload, true );
 
-				if ( $file['width'] !== $slot['view']->width || $file['height'] !== $slot['view']->height ) {
+				// A PSD scene draws its mockup in its own size, not the template layers' (e.g. mugs).
+				if ( array( $file['width'], $file['height'] ) !== $slot['view']->mockup_size() ) {
 					$this->files->delete( $file['file'] );
 					self::refuse( DesignerException::BASE_LAYER_SIZE );
 				}

@@ -45,6 +45,8 @@ export interface SceneImage {
 	readonly top: number;
 	readonly blend: SceneBlend;
 	readonly opacity: number;
+	/** The PSD's background layer: left out of an image without background (ADR-114). */
+	readonly background?: boolean;
 }
 
 /** A smart object: which end of the print file it shows, and its warp. */
@@ -498,6 +500,15 @@ export function renderScene(
 	const cover = transparent ? new Float32Array( width * height ) : null;
 
 	for ( const step of scene.steps ) {
+		// Without the white document the PSD's background is left out too, as a PNG export with it hidden.
+		if (
+			step.type === 'image' &&
+			cover !== null &&
+			step.background === true
+		) {
+			continue;
+		}
+
 		if ( step.type === 'image' ) {
 			for ( let row = 0; row < step.rect.height; row++ ) {
 				const y = row + step.top;

@@ -6792,6 +6792,7 @@ Accepteret af projektejeren 2026-11-15. Udgives i 2.2.0 sammen med fase 48–50.
 - **Leverandører:** Printful bedes om PNG ved katalogimport og produktbilleder, og en PNG-skabelon foretrækkes. Mediebiblioteket mærker kun et billede uden baggrund (`_merchboard_transparent`), når PNG'en faktisk har gennemsigtige pixels.
 - **Uden formatvalg:** Gelato, Prodigi og Printify har ikke et formatvalg i de kald, vi bruger. Deres billeder bruges, som de kommer.
 - **Fotos på hvidt** (fx kopper fra PSD-skabeloner): admin-siden laver silhuetten fra skabelonens foto ved at fjerne en ensfarvet baggrund, og den automatiske kørsel gør det først. En silhuet giver aldrig en ny version af basisproduktet (`BaseProductService::set_silhouette()`). Den afvises, hvis PNG'en ikke har gennemsigtige pixels.
+- **PSD-scenens baggrund:** importen holder PSD'ens baggrundslag for sig (`background: true` på trinnet), og billedet uden baggrund udelader det, som en PNG-eksport med laget skjult. For scener importeret før fjernes en ensfarvet baggrund i det første, dækkende billede ved tegningen. Billedet har scenens egen størrelse (`mockup_size()`).
 - **PSD-scener** (fx kopper) tegnes uden det hvide dokument, hvor PSD'ens egne billeder ikke dækker. Hvidt regnes ud af halvt dækkede kanter. Uden en gennemsigtig pixel forbliver de JPEG. Pkt. 3's "PSD-scener får JPEG som før" gælder ikke længere.
 
 ## Context

@@ -4,7 +4,7 @@
 import { describe, expect, it } from '@jest/globals';
 import type { Layer, Psd } from 'ag-psd';
 
-import { sceneFromPsd } from '../../admin/psd-scene';
+import { isBackdrop, sceneFromPsd } from '../../admin/psd-scene';
 import { TemplateError } from '../../admin/psd-template';
 import {
 	FLAT_MESH,
@@ -238,6 +238,87 @@ describe( 'a mockup scene', () => {
 } );
 
 describe( 'the import of a mockup PSD', () => {
+	it( 'keeps the PSD’s background as its own step, left out without background (ADR-114)', () => {
+		const mug = layer( 'Mug', {
+			left: 2,
+			top: 2,
+			right: 8,
+			bottom: 8,
+			imageData: {
+				...plain( 6, 6, [ 40, 40, 160, 255 ] ),
+				colorSpace: 'srgb',
+			} as ImageData,
+		} );
+		const { scene, atlas } = sceneFromPsd(
+			psd( [
+				layer( 'Baggrund', {
+					imageData: {
+						...plain( 10, 10, [ 255, 255, 255, 255 ] ),
+						colorSpace: 'srgb',
+					} as ImageData,
+				} ),
+				mug,
+				smartObject( 'Design' ),
+			] )
+		);
+
+		expect( scene.steps[ 0 ] ).toMatchObject( {
+			type: 'image',
+			background: true,
+		} );
+		expect( scene.steps[ 1 ] ).not.toHaveProperty( 'background' );
+
+		const drawn = renderScene(
+			scene,
+			atlas,
+			plain( 1, 1, [ 0, 0, 0, 0 ] ),
+			true
+		);
+
+		expect( drawn.data[ 3 ] ).toBe( 0 );
+		expect( drawn.data[ ( 5 * 10 + 5 ) * 4 + 3 ] ).toBe( 255 );
+		// With the white document the background is drawn as before.
+		expect(
+			pixel(
+				renderScene( scene, atlas, plain( 1, 1, [ 0, 0, 0, 0 ] ) ),
+				0,
+				0
+			)
+		).toEqual( [ 255, 255, 255 ] );
+	} );
+
+	it( 'keeps an unnamed bottom layer only when it is one opaque colour over the whole document', () => {
+		const sheet = layer( 'Layer 1' );
+
+		expect(
+			isBackdrop(
+				sheet,
+				{
+					left: 0,
+					top: 0,
+					width: 10,
+					height: 10,
+					data: plain( 10, 10, [ 255, 255, 255, 255 ] ).data,
+				},
+				10,
+				10
+			)
+		).toBe( true );
+		expect(
+			isBackdrop(
+				sheet,
+				{
+					left: 2,
+					top: 0,
+					width: 8,
+					height: 10,
+					data: plain( 8, 10, [ 255, 255, 255, 255 ] ).data,
+				},
+				10,
+				10
+			)
+		).toBe( false );
+	} );
 	it( 'keeps the order of the layers and each design’s end of the print', () => {
 		const { scene, designs, atlas } = sceneFromPsd(
 			psd( [

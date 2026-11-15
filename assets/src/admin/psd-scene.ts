@@ -62,6 +62,63 @@ interface Piece {
 }
 
 /**
+ * Whether the bottom layer is the PSD's background (ADR-114): named so
+ * (Photoshop's "Background"/"Baggrund"), or one opaque colour over the whole
+ * document. An image without background leaves it out, as a PNG export with
+ * the layer hidden.
+ *
+ * @param layer  The layer.
+ * @param image  Its pixels on the document.
+ * @param width  Document width.
+ * @param height Document height.
+ */
+export function isBackdrop(
+	layer: Layer,
+	image: Piece,
+	width: number,
+	height: number
+): boolean {
+	if (
+		/^(background|baggrund|hintergrund|arrière-plan)$/i.test(
+			( layer.name ?? '' ).trim()
+		)
+	) {
+		return true;
+	}
+
+	if (
+		image.left > 0 ||
+		image.top > 0 ||
+		image.left + image.width < width ||
+		image.top + image.height < height
+	) {
+		return false;
+	}
+
+	const { data } = image;
+	const first = [ data[ 0 ] ?? 0, data[ 1 ] ?? 0, data[ 2 ] ?? 0 ];
+
+	for ( let row = 0; row < 16; row++ ) {
+		for ( let column = 0; column < 16; column++ ) {
+			const x = Math.floor( ( column * ( image.width - 1 ) ) / 15 );
+			const y = Math.floor( ( row * ( image.height - 1 ) ) / 15 );
+			const at = ( y * image.width + x ) * 4;
+
+			if (
+				( data[ at + 3 ] ?? 0 ) < 255 ||
+				Math.abs( ( data[ at ] ?? 0 ) - ( first[ 0 ] ?? 0 ) ) > 8 ||
+				Math.abs( ( data[ at + 1 ] ?? 0 ) - ( first[ 1 ] ?? 0 ) ) > 8 ||
+				Math.abs( ( data[ at + 2 ] ?? 0 ) - ( first[ 2 ] ?? 0 ) ) > 8
+			) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+/**
  * The visible layers, bottom first, with the opacity of their groups.
  *
  * @param children Layers and groups.
@@ -489,6 +546,7 @@ export function sceneFromPsd( psd: Psd ): PsdScene {
 				readonly piece: number;
 				readonly blend: SceneBlend;
 				readonly opacity: number;
+				readonly background?: boolean;
 		  }
 		| { readonly design: Layer; readonly mask: number | null }
 	)[] = [];
@@ -496,7 +554,7 @@ export function sceneFromPsd( psd: Psd ): PsdScene {
 	let plate = new Uint8ClampedArray( width * height * 4 );
 	let clip: Uint8ClampedArray | null = null;
 
-	const flush = (): void => {
+	const flush = ( background = false ): void => {
 		const image = cropped( plate, width, height );
 
 		if ( image !== null ) {
@@ -505,10 +563,12 @@ export function sceneFromPsd( psd: Psd ): PsdScene {
 				piece: pieces.length - 1,
 				blend: 'normal',
 				opacity: 1,
+				...( background ? { background: true } : {} ),
 			} );
 			plate = new Uint8ClampedArray( width * height * 4 );
 		}
 	};
+	let bottom = true;
 
 	for ( const { layer, opacity } of visible( psd.children ?? [], 1, lost ) ) {
 		if ( hasLoss( layer ) ) {
@@ -592,7 +652,16 @@ export function sceneFromPsd( psd: Psd ): PsdScene {
 			lost.add( layer.name ?? '' );
 		}
 
-		if ( blend === undefined || blend === 'normal' ) {
+		// The PSD's background stays a step of its own, so an image without background can leave it out.
+		if (
+			bottom &&
+			drafts.length === 0 &&
+			( blend === undefined || blend === 'normal' ) &&
+			isBackdrop( layer, image, width, height )
+		) {
+			merge( plate, size, image, strength, clipped );
+			flush( true );
+		} else if ( blend === undefined || blend === 'normal' ) {
 			merge( plate, size, image, strength, clipped );
 		} else {
 			flush();
@@ -612,6 +681,8 @@ export function sceneFromPsd( psd: Psd ): PsdScene {
 				} );
 			}
 		}
+
+		bottom = false;
 
 		if ( layer.clipping !== true ) {
 			const alpha = new Uint8ClampedArray( width * height );
@@ -667,6 +738,7 @@ export function sceneFromPsd( psd: Psd ): PsdScene {
 			top: box.top,
 			blend: draft.blend,
 			opacity: draft.opacity,
+			...( draft.background === true ? { background: true } : {} ),
 		};
 	} );
 

@@ -11,6 +11,7 @@ import type { DesignerView, LayerKind } from '../../api/designer';
 import { stitched, stitchMargin } from './embroidery';
 import { renderScene } from './scene';
 import type { Pixels, Scene, SceneRect } from './scene';
+import { removeBackground } from '../community/cutout';
 
 /** JPEG quality of a mockup. */
 const QUALITY = 0.92;
@@ -419,6 +420,43 @@ export async function composeMockup(
 }
 
 /**
+ * Removes a plain background from a scene's first picture when it covers
+ * the whole document and no step is marked as the PSD's background: a scene
+ * imported before ADR-114 merged the PSD's background layer with the
+ * product above it. Changes only the drawing's copy of the atlas.
+ *
+ * @param scene   The scene.
+ * @param context The atlas's copy.
+ */
+function clearMergedBackground(
+	scene: Scene,
+	context: CanvasRenderingContext2D
+): void {
+	const first = scene.steps[ 0 ];
+
+	if (
+		first === undefined ||
+		first.type !== 'image' ||
+		scene.steps.some(
+			( step ) => step.type === 'image' && step.background === true
+		) ||
+		first.left > 0 ||
+		first.top > 0 ||
+		first.left + first.rect.width < scene.width ||
+		first.top + first.rect.height < scene.height
+	) {
+		return;
+	}
+
+	const { x, y, width, height } = first.rect;
+	const pixels = context.getImageData( x, y, width, height );
+
+	if ( removeBackground( pixels ) ) {
+		context.putImageData( pixels, x, y );
+	}
+}
+
+/**
  * The mockup of a PSD scene, or null when it cannot be drawn: a JPEG on
  * white, or (`transparent`) a PNG without background when the PSD has a
  * transparent background (ADR-114); the blob's type says which it is.
@@ -452,6 +490,10 @@ export async function composeScene(
 	}
 
 	atlas.context.drawImage( image, 0, 0 );
+
+	if ( transparent ) {
+		clearMergedBackground( scene, atlas.context );
+	}
 
 	const drawn = renderScene(
 		scene,

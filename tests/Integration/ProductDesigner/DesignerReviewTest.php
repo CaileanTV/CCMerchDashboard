@@ -1976,13 +1976,93 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertSame( array( 'background' ), array_keys( $job['slots'][0]['layers'] ) );
 	}
 
+	public function test_a_psd_scene_image_has_the_scene_s_own_size(): void {
+		// A mug: template layers of 400 × 400, its PSD scene 600 × 400 (the owner's test 2026-11-15).
+		$scene = (string) wp_json_encode(
+			array(
+				'width'  => 600,
+				'height' => 400,
+				'steps'  => array(
+					array(
+						'type'   => 'design',
+						'end'    => 'start',
+						'width'  => 10,
+						'height' => 10,
+						'quad'   => array( 0, 0, 10, 0, 10, 10, 0, 10 ),
+						'mesh'   => array_fill( 0, 32, 0.5 ),
+						'mask'   => null,
+					),
+				),
+			)
+		);
+		$mug   = $this->bases->save(
+			null,
+			array(
+				'name'        => 'Mug',
+				'description' => '',
+				'base_price'  => '99,95',
+				'category_id' => '0',
+				'colors'      => "Black #111111\nSand #d8c8a8",
+				'sizes'       => 'S, M',
+			),
+			array(
+				array(
+					'key'       => '',
+					'name'      => 'Front',
+					'x'         => '100',
+					'y'         => '100',
+					'width'     => '200',
+					'height'    => '200',
+					'width_mm'  => '30',
+					'height_mm' => '40',
+					'dpi'       => '100',
+					'remove'    => false,
+					'clear'     => array(),
+					'scene'     => $scene,
+					'uploads'   => array(
+						'background' => AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'photo.png' ),
+						'scene'      => AlertImagesTest::upload( AlertImagesTest::png( 64, 64 ), 'scene.png' ),
+					),
+				),
+			)
+		);
+		$this->bases->set_active( $mug, true );
+
+		$product = $this->drafts->create( $this->creator, $mug );
+		$this->save( $product, '20' );
+		$this->submissions->attach( $this->creator, $product, 'print:front', AlertImagesTest::upload( AlertImagesTest::png( 118, 157 ), 'print.png' ) );
+
+		foreach ( array( 'black', 'sand' ) as $color ) {
+			$this->submissions->attach( $this->creator, $product, 'mockup:front:' . $color, AlertImagesTest::upload( self::jpeg( 600, 400 ), 'mockup.jpg' ) );
+		}
+
+		$this->submissions->submit( $this->creator, $product );
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+
+		$cutouts = new DesignerCutouts( $this->products, $this->bases_repository(), $this->files, new DesignerMedia( $this->files ), $this->guard, $this->writer, $this->service( AuditTrail::class ), new DesignerAssetRepository( $this->wpdb ) );
+
+		self::assertSame( array( 'scene' ), array_keys( $cutouts->job( $product )['slots'][0]['layers'] ?? array() ), 'The browser draws the scene.' );
+
+		try {
+			$cutouts->store( $product, 'front:black', AlertImagesTest::upload( self::cutout_photo( true ), 'cutout.png' ) );
+			self::fail( 'The template layers\' size is not the scene\'s.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::BASE_LAYER_SIZE, $e->reason() );
+		}
+
+		$cutouts->store( $product, 'front:black', AlertImagesTest::upload( self::cutout_photo( true, 600 ), 'cutout.png' ) );
+		self::assertNotNull( $cutouts->waiting_file( $product, 'front:black' ), 'The scene\'s own size is kept.' );
+	}
+
 	/**
 	 * A 400 × 400 product photo as PNG: a product on a transparent or a grey ground.
 	 *
 	 * @param bool $clear Whether the ground is transparent.
+	 * @param int  $width Width (the height is 400).
 	 */
-	private static function cutout_photo( bool $clear ): string {
-		$image = imagecreatetruecolor( 400, 400 );
+	private static function cutout_photo( bool $clear, int $width = 400 ): string {
+		$image = imagecreatetruecolor( max( 1, $width ), 400 );
 
 		self::assertNotFalse( $image );
 		imagealphablending( $image, false );

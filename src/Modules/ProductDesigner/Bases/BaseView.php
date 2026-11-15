@@ -275,7 +275,8 @@ final readonly class BaseView {
 			if ( 'image' === $type ) {
 				$opacity = $step['opacity'] ?? null;
 
-				if ( ! $rect( $step['rect'] ?? null ) || ! $place( $step['left'] ?? null ) || ! $place( $step['top'] ?? null ) || ! in_array( $step['blend'] ?? null, self::SCENE_BLENDS, true ) || ! is_numeric( $opacity ) || $opacity < 0 || $opacity > 1 ) {
+				// `background`: the PSD's background layer, left out of the images without background (ADR-114).
+				if ( ! $rect( $step['rect'] ?? null ) || ! $place( $step['left'] ?? null ) || ! $place( $step['top'] ?? null ) || ! in_array( $step['blend'] ?? null, self::SCENE_BLENDS, true ) || ! is_numeric( $opacity ) || $opacity < 0 || $opacity > 1 || ! is_bool( $step['background'] ?? false ) ) {
 					return false;
 				}
 			} elseif ( 'design' === $type ) {

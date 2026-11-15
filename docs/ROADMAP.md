@@ -1428,6 +1428,10 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - **Automatisk:** "Brug billeder uden baggrund på alle produkter" gør det samme for alle.
   - **Baggrund, der ikke er ensfarvet:** upload en PNG uden baggrund (fx eksporteret fra PSD'en) direkte i produktets række eller som silhuet på basisproduktet.
   - **Fejl vises (projektejerens test 2026-11-15: kopperne mislykkedes uden fejlkode):** hvert trin viser grunden med en kode (fx `file_too_large`, `not_plain`, `http_500`). Siden genindlæses kun, når alt lykkedes. Browseren tjekker uploadgrænsen, før den sender, og en upload, PHP har droppet (over `post_max_size`), svarer `file_too_large`.
+- **51.10 Kopperne fra PSD-scener (projektejerens test på stg 2026-11-15: "Billedet har ikke skabelonens størrelse (base_layer_size)"):** ✅
+  - **Størrelse:** en PSD-scenes billede har scenens egen størrelse, ikke skabelonlagenes; serveren tjekker nu `BaseView::mockup_size()`.
+  - **Som PSD-eksport uden baggrund:** PSD'ens baggrundslag (navnet "Background"/"Baggrund", eller ét dækkende, ensfarvet bundlag) bliver ved importen et trin for sig, markeret `background`, og udelades i billedet uden baggrund. Det svarer til at skjule laget og eksportere.
+  - **Allerede importerede scener** (baggrunden smeltet sammen med produktet): dækker det første billede hele scenen, fjernes dets ensfarvede baggrund ved tegningen. Det kræver ingen ny import.
 - **51.6 Test og levering:** ✅ unit-, Jest- og integrationstest (godkend, fortryd, kassér), danske tekster og docs. Runtime 2026-11-15 i Chrome med den byggede admin-bundle: opgave → tegning → upload for en side med farvemaske og en side med eget farvefoto og silhuet; baggrund, gulvskygge og halsåbning blev gennemsigtige. Godkend og fortryd kræver produktlåsen (MySQL) og testes på stg.
 
 ## Fase 52 – Gelato-produkter med egne valg, printområde pr. variant og skærelinje 📋 (projektejerens ønske 2026-11-15; efter 2.2.0, version 2.3.0; ADR-115 foreslået, planen afventer godkendelse)
