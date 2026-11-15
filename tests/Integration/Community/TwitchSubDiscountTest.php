@@ -28,6 +28,7 @@ use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCampaign;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscount;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscountInvalid;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscountRepository;
+use MerchBoard\Modules\Community\TwitchSubs\TwitchSubProductNote;
 use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Creators\CreatorStatus;
@@ -312,6 +313,40 @@ final class TwitchSubDiscountTest extends IntegrationTestCase {
 		self::assertNull( $this->discount->rate( 501 ) );
 		self::assertSame( 0, $this->discount->highest_offer( array( 501, 502 ) ), 'The shop card offers nothing.' );
 		self::assertSame( 404, $this->error_status( ( new MeTwitchSubDiscountController( $this->service( CreatorContext::class ), $this->settings, static fn(): ?string => null, static fn(): bool => true, new RecordingLogger() ) )->permission() ) );
+	}
+
+	public function test_the_product_page_line_names_the_discount_per_tier_highest_first(): void {
+		$note = new TwitchSubProductNote( $this->discount );
+
+		self::assertSame( '', $note->line( 501 ), 'No campaign, no line.' );
+
+		$this->settings->save(
+			$this->nova,
+			$this->input(
+				array(
+					self::campaign(
+						array(
+							'tiers' => array(
+								1 => 5,
+								2 => 0,
+								3 => 16.67,
+							),
+						)
+					),
+				)
+			)
+		);
+		$this->discount = $this->discount();
+		$line           = ( new TwitchSubProductNote( $this->discount ) )->line( 501 );
+
+		self::assertStringContainsString( '16.67 % for Tier 3', $line );
+		self::assertStringContainsString( '5 % for Tier 1', $line );
+		self::assertStringNotContainsString( 'Tier 2', $line, 'A tier without a discount is left out.' );
+		self::assertLessThan( strpos( $line, 'Tier 1' ), strpos( $line, 'Tier 3' ), 'The highest tier first.' );
+		self::assertStringContainsString( 'Log in with Twitch in the cart', $line );
+
+		Settings::save( array_merge( Settings::all(), array( Settings::COMMUNITY_TWITCH_SUB_DISCOUNT_ENABLED => false ) ) );
+		self::assertSame( '', ( new TwitchSubProductNote( $this->discount ) )->line( 501 ), 'Switched off for the shop.' );
 	}
 
 	public function test_a_campaign_outside_its_period_gives_nothing(): void {

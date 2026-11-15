@@ -55,6 +55,7 @@ use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCoupon;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscount;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscountRepository;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubPrivacy;
+use MerchBoard\Modules\Community\TwitchSubs\TwitchSubProductNote;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubOrderInfo;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubShopCard;
 use MerchBoard\Modules\Creators\CreatorRepository;
@@ -161,6 +162,8 @@ final class CommunityModule implements Module {
 				$container->get( TwitchSubCheckout::class )->register();
 				// The Twitch login card in the cart and the checkout (its hooks only fire on the front end).
 				( new TwitchSubShopCard( $container->get( TwitchSubDiscount::class ), $container->get( TwitchCustomerLogin::class ), $container->get( TwitchCustomerSession::class ) ) )->register();
+				// The discount per tier under the product's price (ADR-111).
+				( new TwitchSubProductNote( $container->get( TwitchSubDiscount::class ) ) )->register();
 				// Gifting (ADR-107): the purchase, the draws in the chat and jobs, the code and the claim link.
 				$container->get( GiftPurchase::class )->register();
 				$container->get( GiftDraws::class )->register();
@@ -180,7 +183,8 @@ final class CommunityModule implements Module {
 			static fn( int $creator_id ): string => $container->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '',
 			self::product_name( ... ),
 			self::product_url( ... ),
-			$container->get( Logger::class )
+			$container->get( Logger::class ),
+			static fn( int $order_id ): int => count( $container->get( GiftRepository::class )->for_order( $order_id ) )
 		) )->register();
 		( new GiftOrderInfo( $container->get( GiftRepository::class ) ) )->register();
 		( new GiveawayOrderInfo( $container->get( GiveawayRepository::class ) ) )->register();
@@ -282,10 +286,24 @@ final class CommunityModule implements Module {
 				$c->get( GiftRepository::class ),
 				static fn( int $product_id ): ?int => $c->get( ProductCreatorLink::class )->creator_id( $product_id ),
 				static fn( int $creator_id ): ?bool => self::live( $c, $creator_id ),
-				static function ( Gift $gift ) use ( $c ): void {
-					$c->get( GiftDraws::class )->paid( $gift );
+				static function ( Gift $gift, int $of ) use ( $c ): void {
+					$c->get( GiftDraws::class )->paid( $gift, $of );
 				},
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				// The gift box: the creator's name and Twitch channel (ADR-111).
+				static function ( int $creator_id ) use ( $c ): ?array {
+					try {
+						$channel = $c->get( ChatbotChannelRepository::class )->find( $creator_id, ChatPlatform::Twitch );
+						$name    = $c->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '';
+					} catch ( DatabaseException ) {
+						return null;
+					}
+
+					return $channel->connected() && '' !== $channel->broadcaster_login ? array(
+						'name'  => (string) $name,
+						'login' => (string) $channel->broadcaster_login,
+					) : null;
+				}
 			)
 		);
 		$container->set(

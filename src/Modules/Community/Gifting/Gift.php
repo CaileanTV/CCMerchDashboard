@@ -63,6 +63,7 @@ final readonly class Gift {
 	 * @param int|null             $coupon_id        The gift code's coupon.
 	 * @param string               $created_at       UTC.
 	 * @param int|null             $giveaway_id      The giveaway the gift belongs to (ADR-110); null for a bought gift.
+	 * @param int                  $order_unit       Which of its order's gifts it is, from 1 (ADR-111).
 	 */
 	public function __construct(
 		public int $id,
@@ -83,7 +84,8 @@ final readonly class Gift {
 		public ?string $claim_token,
 		public ?int $coupon_id,
 		public string $created_at,
-		public ?int $giveaway_id = null
+		public ?int $giveaway_id = null,
+		public int $order_unit = 1
 	) {
 	}
 
@@ -138,7 +140,8 @@ final readonly class Gift {
 			$text( $row['claim_token'] ?? null ),
 			is_numeric( $row['coupon_id'] ?? null ) ? (int) $row['coupon_id'] : null,
 			(string) ( $row['created_at'] ?? '' ),
-			is_numeric( $row['giveaway_id'] ?? null ) ? (int) $row['giveaway_id'] : null
+			is_numeric( $row['giveaway_id'] ?? null ) ? (int) $row['giveaway_id'] : null,
+			max( 1, (int) ( $row['order_unit'] ?? 1 ) )
 		);
 	}
 }

@@ -391,7 +391,7 @@ final class RecordingWpdb extends wpdb {
 			return $result;
 		}
 
-		if ( null !== $prepared && 'ALTER TABLE %i ADD UNIQUE KEY %i (gift_card_provider, gift_card_external_id)' === $prepared['query'] ) {
+		if ( null !== $prepared && in_array( $prepared['query'], array( 'ALTER TABLE %i ADD UNIQUE KEY %i (gift_card_provider, gift_card_external_id)', 'ALTER TABLE %i ADD UNIQUE KEY %i (order_id, order_unit)' ), true ) ) {
 			$result = $this->query_results[ $query ] ?? true;
 
 			if ( false !== $result ) {

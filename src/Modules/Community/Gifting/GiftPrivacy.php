@@ -89,38 +89,37 @@ final class GiftPrivacy {
 
 		foreach ( $orders as $order ) {
 			try {
-				$gift = $this->gifts->find_by_order( (int) $order->get_id() );
+				$gifts = $this->gifts->for_order( (int) $order->get_id() );
 			} catch ( DatabaseException ) {
-				$gift = null;
+				$gifts = array();
 			}
 
-			if ( null === $gift ) {
-				continue;
+			// Every gift of the purchase (ADR-111).
+			foreach ( $gifts as $gift ) {
+				$data[] = array(
+					'group_id'    => 'merchboard-twitch-gift',
+					'group_label' => __( 'Twitch gifts', 'merchboard' ),
+					'item_id'     => 'twitch-gift-' . $gift->id,
+					'data'        => array(
+						array(
+							'name'  => __( 'Order', 'merchboard' ),
+							'value' => (string) $order->get_order_number(),
+						),
+						array(
+							'name'  => __( 'Name in the announcement', 'merchboard' ),
+							'value' => $gift->buyer_name ?? __( 'Anonymous', 'merchboard' ),
+						),
+						array(
+							'name'  => __( 'Winner', 'merchboard' ),
+							'value' => (string) $gift->winner_login,
+						),
+						array(
+							'name'  => __( 'Status', 'merchboard' ),
+							'value' => $gift->status,
+						),
+					),
+				);
 			}
-
-			$data[] = array(
-				'group_id'    => 'merchboard-twitch-gift',
-				'group_label' => __( 'Twitch gifts', 'merchboard' ),
-				'item_id'     => 'twitch-gift-' . $gift->id,
-				'data'        => array(
-					array(
-						'name'  => __( 'Order', 'merchboard' ),
-						'value' => (string) $order->get_order_number(),
-					),
-					array(
-						'name'  => __( 'Name in the announcement', 'merchboard' ),
-						'value' => $gift->buyer_name ?? __( 'Anonymous', 'merchboard' ),
-					),
-					array(
-						'name'  => __( 'Winner', 'merchboard' ),
-						'value' => (string) $gift->winner_login,
-					),
-					array(
-						'name'  => __( 'Status', 'merchboard' ),
-						'value' => $gift->status,
-					),
-				),
-			);
 		}
 
 		return array(

@@ -323,13 +323,45 @@ final class TwitchGiftingTest extends IntegrationTestCase {
 		self::assertCount( 1, $this->rows( Tables::GIFTS ) );
 	}
 
+	public function test_several_gifts_in_one_purchase_are_drawn_one_at_a_time(): void {
+		$this->settings->save( $this->nova, $this->values( true ) );
+		$order = ++$this->order;
+		$gifts = array();
+
+		for ( $unit = 1; $unit <= 3; $unit++ ) {
+			$gifts[] = $this->gifts->create( $this->nova, $order, 501, '83.0000', '50.0000', 'DKK', 'Mads', $unit );
+		}
+
+		self::assertNull( $this->gifts->create( $this->nova, $order, 501, '83.0000', '50.0000', 'DKK', 'Mads', 2 ), 'Each gift of the order is stored once.' );
+		self::assertSame( array( 1, 2, 3 ), array_map( static fn( Gift $gift ): int => $gift->order_unit, $this->gifts->for_order( $order ) ) );
+
+		foreach ( $gifts as $gift ) {
+			self::assertNotNull( $gift );
+			$this->draws->paid( $gift, 3 );
+		}
+
+		self::assertSame( array( array( 'bought', $gifts[0]?->id, array( 'count' => '3' ) ) ), $this->events, 'The creator hears about the purchase once, with the number of gifts.' );
+		self::assertSame( array( $this->nova, '🎁 Mads har givet Stream tee (gave 1 af 3)! Skriv !enter inden for 60 sekunder for at være med i lodtrækningen.' ), $this->sent[0] ?? null );
+		self::assertCount( 1, $this->sent, 'One window at a time.' );
+		self::assertSame( array( Gift::ENTERING, Gift::WAITING, Gift::WAITING ), array_map( static fn( Gift $gift ): string => $gift->status, $this->gifts->for_order( $order ) ) );
+
+		// The order is cancelled: only the gifts without a winner go.
+		$this->execute( "UPDATE %i SET status = 'won', winner_twitch_id = '99', winner_login = 'viewer' WHERE id = %d", $this->table( Tables::GIFTS ), (int) $gifts[0]?->id );
+
+		foreach ( $this->gifts->for_order( $order ) as $gift ) {
+			$this->gifts->cancel( $gift->id );
+		}
+
+		self::assertSame( array( Gift::WON, Gift::CANCELLED, Gift::CANCELLED ), array_map( static fn( Gift $gift ): string => $gift->status, $this->gifts->for_order( $order ) ) );
+	}
+
 	public function test_a_gift_paid_while_live_is_announced_and_drawn(): void {
 		$this->settings->save( $this->nova, $this->values( true ) );
 		$gift = $this->gift( 'Mads' );
 
 		$this->draws->paid( $gift );
 
-		self::assertSame( array( array( 'bought', $gift->id, array() ) ), $this->events );
+		self::assertSame( array( array( 'bought', $gift->id, array( 'count' => '1' ) ) ), $this->events );
 		self::assertSame( array( $this->nova, '🎁 Mads har givet Stream tee! Skriv !enter inden for 60 sekunder for at være med i lodtrækningen.' ), $this->sent[0] ?? null );
 		self::assertSame( array( GiftDraws::DRAW_HOOK, array( $gift->id ), 61 ), $this->jobs[0] ?? null );
 		self::assertSame( Gift::ENTERING, $this->gifts->find( $gift->id )?->status );

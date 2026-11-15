@@ -43,16 +43,18 @@ final class GiftRepository {
 	 * @param string      $shipping_credit Shipping covered.
 	 * @param string      $currency        Currency.
 	 * @param string|null $buyer_name      Name to announce, null for anonymous.
-	 * @return Gift|null The new gift; null when the order's gift existed already.
+	 * @param int         $order_unit      Which of the order's gifts (1–10, ADR-111).
+	 * @return Gift|null The new gift; null when that gift of the order existed already.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function create( int $creator_id, int $order_id, int $product_id, string $unit_price, string $shipping_credit, string $currency, ?string $buyer_name ): ?Gift {
+	public function create( int $creator_id, int $order_id, int $product_id, string $unit_price, string $shipping_credit, string $currency, ?string $buyer_name, int $order_unit = 1 ): ?Gift {
 		$now = self::now();
 		$sql = $this->wpdb->prepare(
-			"INSERT IGNORE INTO %i (creator_id, order_id, product_id, unit_price, shipping_credit, currency, buyer_name, status, draws, created_at, updated_at) VALUES (%d, %d, %d, %s, %s, %s, NULLIF(%s, ''), %s, 0, %s, %s)",
+			"INSERT IGNORE INTO %i (creator_id, order_id, order_unit, product_id, unit_price, shipping_credit, currency, buyer_name, status, draws, created_at, updated_at) VALUES (%d, %d, %d, %d, %s, %s, %s, NULLIF(%s, ''), %s, 0, %s, %s)",
 			$this->table(),
 			$creator_id,
 			$order_id,
+			$order_unit,
 			$product_id,
 			$unit_price,
 			$shipping_credit,
@@ -70,7 +72,17 @@ final class GiftRepository {
 		}
 
 		// Two requests marking the order paid at once: only the one that inserted goes on.
-		return 1 === (int) $inserted ? $this->find_by( 'order_id', $order_id ) : null;
+		if ( 1 !== (int) $inserted ) {
+			return null;
+		}
+
+		foreach ( $this->for_order( $order_id ) as $gift ) {
+			if ( $order_unit === $gift->order_unit ) {
+				return $gift;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -167,13 +179,31 @@ final class GiftRepository {
 	}
 
 	/**
-	 * The gift of an order.
+	 * The first gift of an order (one per unit since ADR-111; see for_order()).
 	 *
 	 * @param int $order_id Gift order.
 	 * @throws DatabaseException When it cannot be read.
 	 */
 	public function find_by_order( int $order_id ): ?Gift {
-		return $this->find_by( 'order_id', $order_id );
+		return $this->for_order( $order_id )[0] ?? null;
+	}
+
+	/**
+	 * Every gift of a gift order, in order (ADR-111: one per unit bought).
+	 *
+	 * @param int $order_id Gift order.
+	 * @return list<Gift>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function for_order( int $order_id ): array {
+		$wpdb = $this->wpdb;
+		$rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE order_id = %d ORDER BY order_unit, id', $this->table(), $order_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Own table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the gifts of an order.', array( 'order_id' => $order_id ) );
+		}
+
+		return $this->gifts( $rows );
 	}
 
 	/**

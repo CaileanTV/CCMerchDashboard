@@ -55,21 +55,32 @@ final class GiftNotices {
 	private Closure $product_url;
 
 	/**
+	 * The number of gifts of a gift order (ADR-111).
+	 *
+	 * @var Closure(int): int
+	 */
+	private ?Closure $units;
+
+	/**
 	 * Constructor.
 	 *
 	 * @phpstan-param Closure(int): string $creator_name
 	 * @phpstan-param Closure(int): string $product_name
 	 * @phpstan-param Closure(int): string $product_url
 	 *
-	 * @param Closure $creator_name A creator's name ('' when unknown).
-	 * @param Closure $product_name A product's name ('' when it is gone).
-	 * @param Closure $product_url  A product's page.
-	 * @param Logger  $logger       Technical log.
+	 * @param Closure      $creator_name A creator's name ('' when unknown).
+	 * @param Closure      $product_name A product's name ('' when it is gone).
+	 * @param Closure      $product_url  A product's page.
+	 * @param Logger       $logger       Technical log.
+	 * @param Closure|null $units        The number of gifts of a gift order; null counts 1.
+	 *
+	 * @phpstan-param (Closure(int): int)|null $units
 	 */
-	public function __construct( Closure $creator_name, Closure $product_name, Closure $product_url, private Logger $logger ) {
+	public function __construct( Closure $creator_name, Closure $product_name, Closure $product_url, private Logger $logger, ?Closure $units = null ) {
 		$this->creator_name = $creator_name;
 		$this->product_name = $product_name;
 		$this->product_url  = $product_url;
+		$this->units        = $units;
 	}
 
 	/**
@@ -92,8 +103,12 @@ final class GiftNotices {
 			return;
 		}
 
-		$data    = is_array( $data ) ? $data : array();
-		$product = ( $this->product_name )( $gift->product_id );
+		$data = is_array( $data ) ? $data : array();
+		$of   = null === $this->units || $gift->order_id < 1 ? 1 : max( 1, ( $this->units )( $gift->order_id ) );
+		$name = ( $this->product_name )( $gift->product_id );
+		// "Hoodie (gift 2 of 3)" in the buyer's mails and notes when the purchase has several gifts (ADR-111).
+		/* translators: 1: product name, 2: which gift, 3: number of gifts. */
+		$product = $of > 1 ? sprintf( __( '%1$s (gift %2$d of %3$d)', 'merchboard' ), $name, $gift->order_unit, $of ) : $name;
 		$winner  = is_string( $data['winner'] ?? null ) ? $data['winner'] : (string) $gift->winner_login;
 		$code    = is_string( $data['code'] ?? null ) ? $data['code'] : '';
 		$order   = wc_get_order( $gift->order_id );
@@ -101,17 +116,25 @@ final class GiftNotices {
 
 		switch ( $event ) {
 			case 'bought':
+				// Once per purchase (GiftDraws::paid() sends it for the first gift), with the number of gifts.
 				do_action(
 					'merchboard_notify',
 					'gift_bought',
 					$gift->creator_id,
 					array(
-						'product' => $product,
+						'product' => $name,
 						'buyer'   => (string) $gift->buyer_name,
+						'count'   => (string) max( 1, (int) ( $data['count'] ?? $of ) ),
 					),
 					'gift:' . $gift->id . ':bought'
 				);
-				$this->note( $order, __( 'Twitch gift: paid and waiting for a draw in the stream.', 'merchboard' ) );
+				$this->note(
+					$order,
+					$of > 1
+						/* translators: %d: number of gifts. */
+						? sprintf( __( 'Twitch gifts: %d gifts paid and waiting for draws in the stream, one at a time.', 'merchboard' ), $of )
+						: __( 'Twitch gift: paid and waiting for a draw in the stream.', 'merchboard' )
+				);
 				break;
 
 			case 'won':

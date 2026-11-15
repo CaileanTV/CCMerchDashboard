@@ -1068,12 +1068,9 @@ final class CreatorTypes {
 			array(
 				'product' => 'Stream tee',
 				'buyer'   => 'Mads',
+				'count'   => '1',
 			),
-			static fn( NotificationData $d ): string => '' === $d->text( 'buyer' )
-				/* translators: %s: product name. */
-				? sprintf( __( 'Someone bought %s as a gift in your stream.', 'merchboard' ), $d->text( 'product' ) )
-				/* translators: 1: the buyer's chosen name, 2: product name. */
-				: sprintf( __( '%1$s bought %2$s as a gift in your stream.', 'merchboard' ), $d->text( 'buyer' ), $d->text( 'product' ) ),
+			static fn( NotificationData $d ): string => self::gift_bought_text( $d ),
 			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
 				/* translators: %s: product name. */
 				sprintf( __( 'A gift was bought in your stream: %s', 'merchboard' ), $d->text( 'product' ) ),
@@ -1095,6 +1092,29 @@ final class CreatorTypes {
 				self::closing()
 			)
 		);
+	}
+
+	/**
+	 * The bell line of a gift purchase: one gift, or several (ADR-111).
+	 *
+	 * @param NotificationData $d Data (`product`, `buyer`, `count`).
+	 */
+	private static function gift_bought_text( NotificationData $d ): string {
+		$count = max( 1, (int) $d->text( 'count' ) );
+
+		if ( $count > 1 ) {
+			return '' === $d->text( 'buyer' )
+				/* translators: 1: number of gifts, 2: product name. */
+				? sprintf( __( 'Someone bought %1$d × %2$s as gifts in your stream.', 'merchboard' ), $count, $d->text( 'product' ) )
+				/* translators: 1: the buyer's chosen name, 2: number of gifts, 3: product name. */
+				: sprintf( __( '%1$s bought %2$d × %3$s as gifts in your stream.', 'merchboard' ), $d->text( 'buyer' ), $count, $d->text( 'product' ) );
+		}
+
+		return '' === $d->text( 'buyer' )
+			/* translators: %s: product name. */
+			? sprintf( __( 'Someone bought %s as a gift in your stream.', 'merchboard' ), $d->text( 'product' ) )
+			/* translators: 1: the buyer's chosen name, 2: product name. */
+			: sprintf( __( '%1$s bought %2$s as a gift in your stream.', 'merchboard' ), $d->text( 'buyer' ), $d->text( 'product' ) );
 	}
 
 	/**

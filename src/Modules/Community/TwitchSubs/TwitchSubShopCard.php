@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Community\TwitchSubs;
 
+use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerLogin;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerSession;
 use MerchBoard\Modules\Alerts\Rest\ShopTwitchController;
@@ -29,8 +30,14 @@ defined( 'ABSPATH' ) || exit;
  *   out of Twitch".
  *
  * The result of a login (`?twitch=…`) is shown once. Everything is escaped;
- * customers never see the names of production partners. Uses WooCommerce's
- * own notice classes, so the theme styles it.
+ * customers never see the names of production partners.
+ *
+ * ADR-111 pkt. 4: the card is a modern card (templates/community/
+ * twitch-card.php) with the highest discount per tier in the cart. Classic
+ * pages show it right above the products (`woocommerce_before_cart_table`)
+ * and above the billing details (`woocommerce_checkout_before_customer_details`);
+ * block pages in front of the block; the shortcode `[merchboard_twitch_card]`
+ * places it anywhere else. It shows once per page.
  */
 final class TwitchSubShopCard {
 
@@ -56,20 +63,28 @@ final class TwitchSubShopCard {
 	 * Hooks the card into the cart and the checkout.
 	 */
 	public function register(): void {
-		add_action( 'woocommerce_before_cart', array( $this, 'classic_cart' ) );
-		add_action( 'woocommerce_before_checkout_form', array( $this, 'classic_checkout' ) );
+		add_action( 'woocommerce_before_cart_table', array( $this, 'classic_cart' ) );
+		add_action( 'woocommerce_checkout_before_customer_details', array( $this, 'classic_checkout' ) );
 		add_filter( 'render_block', array( $this, 'block' ), 10, 2 );
+		add_shortcode( 'merchboard_twitch_card', array( $this, 'shortcode' ) );
 	}
 
 	/**
-	 * `woocommerce_before_cart`.
+	 * `[merchboard_twitch_card]`: the card where a page builder places it.
+	 */
+	public function shortcode(): string {
+		return $this->html( function_exists( 'is_checkout' ) && is_checkout() ? 'checkout' : 'cart' );
+	}
+
+	/**
+	 * `woocommerce_before_cart_table`: right above the products.
 	 */
 	public function classic_cart(): void {
 		echo $this->html( 'cart' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built from escaped parts in html().
 	}
 
 	/**
-	 * `woocommerce_before_checkout_form`.
+	 * `woocommerce_checkout_before_customer_details`: right above the billing details.
 	 */
 	public function classic_checkout(): void {
 		echo $this->html( 'checkout' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Built from escaped parts in html().
@@ -109,15 +124,13 @@ final class TwitchSubShopCard {
 			return '';
 		}
 
-		$this->shown = true;
-		$account     = $this->session->account();
-		$token       = null === $account ? null : $this->session->token();
-		$parts       = array();
-		$result      = self::result();
-
-		if ( '' !== $result ) {
-			$parts[] = '<p>' . esc_html( $result ) . '</p>';
-		}
+		$this->shown     = true;
+		$account         = $this->session->account();
+		$token           = null === $account ? null : $this->session->token();
+		$merchboard_card = array(
+			'result' => self::result(),
+			'tiers'  => $this->tiers( $products ),
+		);
 
 		if ( null !== $account && null !== $token ) {
 			$applies = false;
@@ -129,39 +142,58 @@ final class TwitchSubShopCard {
 				}
 			}
 
-			$parts[] = '<p>' . esc_html(
-				sprintf(
-					/* translators: %s: the customer's Twitch name. */
-					__( 'You are logged in with Twitch as %s.', 'merchboard' ),
-					$account['login']
-				)
-			) . ' ' . esc_html(
-				$applies
-					? __( 'Your subscriber discount is taken off the eligible products.', 'merchboard' )
-					: __( 'Your Twitch account has no subscription that gives a discount on these products.', 'merchboard' )
-			) . '</p>';
-			$parts[] = '<p><a href="' . esc_url( ShopTwitchController::link( 'logout', $target ) ) . '">' . esc_html__( 'Log out of Twitch', 'merchboard' ) . '</a></p>';
+			$merchboard_card += array(
+				'account' => (string) $account['login'],
+				'applies' => $applies,
+				'logout'  => ShopTwitchController::link( 'logout', $target ),
+			);
 		} else {
-			$remembered = $this->session->remembered( get_current_user_id() );
-			$parts[]    = '<p>' . esc_html(
-				sprintf(
-					/* translators: %s: the highest discount in percent (e.g. 16.67). */
-					__( 'Do you subscribe on Twitch? Log in with Twitch and get up to %s %% off as a subscriber.', 'merchboard' ),
-					TwitchSubCampaign::percent_label( $highest )
-				)
-			) . '</p>';
-			$parts[] = '<p><a class="button" href="' . esc_url( ShopTwitchController::link( 'login', $target ) ) . '">' . esc_html(
-				null === $remembered
-					? __( 'Log in with Twitch', 'merchboard' )
-					: sprintf(
-						/* translators: %s: the customer's remembered Twitch name. */
-						__( 'Check my subscription as %s', 'merchboard' ),
-						$remembered['login']
-					)
-			) . '</a></p>';
+			$remembered       = $this->session->remembered( get_current_user_id() );
+			$merchboard_card += array(
+				'login'      => ShopTwitchController::link( 'login', $target ),
+				'remembered' => null === $remembered ? '' : (string) $remembered['login'],
+			);
 		}
 
-		return '<div class="woocommerce-info merchboard-twitch-sub" role="status">' . implode( '', $parts ) . '</div>';
+		ob_start();
+		require dirname( __DIR__, 4 ) . '/templates/community/twitch-card.php';
+
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * The highest discount on offer per tier among the cart's products,
+	 * highest tier first, as shown (e.g. [3 => '15', 2 => '10', 1 => '5']).
+	 *
+	 * @phpstan-param list<int> $products
+	 *
+	 * @param int[] $products Parent products.
+	 * @return array<int, string>
+	 */
+	private function tiers( array $products ): array {
+		$best = array(
+			3 => 0,
+			2 => 0,
+			1 => 0,
+		);
+
+		foreach ( $products as $product ) {
+			try {
+				$offer = $this->discount->offer( $product );
+			} catch ( DatabaseException ) {
+				$offer = null;
+			}
+
+			if ( null === $offer ) {
+				continue;
+			}
+
+			foreach ( array_keys( $best ) as $tier ) {
+				$best[ $tier ] = max( $best[ $tier ], $offer['campaign']->bps( $tier ) );
+			}
+		}
+
+		return array_map( array( TwitchSubCampaign::class, 'percent_label' ), array_filter( $best ) );
 	}
 
 	/**

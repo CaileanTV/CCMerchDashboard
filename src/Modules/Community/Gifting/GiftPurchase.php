@@ -33,12 +33,14 @@ defined( 'ABSPATH' ) || exit;
  *   product's creator has gifting open (on, not paused), a connected Twitch
  *   channel, and is live.
  * - The gift is bought alone: the cheapest variant (the winner chooses size
- *   and colour later), quantity 1, nothing else in the cart, and one
- *   shipping rate of 50 (incl. VAT).
+ *   and colour later), 1–10 units (ADR-111: each unit is its own gift with
+ *   its own draw), nothing else in the cart, and one shipping rate of 50
+ *   (incl. VAT) per gift.
  * - The buyer's optional name is the alerts' username field (with its
  *   checkbox in the block checkout); without one the gift is anonymous.
- * - When the order is paid the gift is recorded once and handed to the
- *   draws; a cancelled or refunded order cancels a gift that has no winner.
+ * - When the order is paid its gifts are recorded once per unit and handed
+ *   to the draws; a cancelled or refunded order cancels the gifts that have
+ *   no winner.
  */
 final class GiftPurchase {
 
@@ -58,9 +60,19 @@ final class GiftPurchase {
 	public const SHIPPING = '50';
 
 	/**
+	 * The most gifts in one purchase (ADR-111).
+	 */
+	public const MAX_GIFTS = 10;
+
+	/**
 	 * Query argument of the gift button.
 	 */
 	private const QUERY = 'merchboard_gift';
+
+	/**
+	 * Query argument of the number of gifts.
+	 */
+	private const QUANTITY = 'merchboard_gift_quantity';
 
 	/**
 	 * Nonce action of the gift button.
@@ -82,30 +94,40 @@ final class GiftPurchase {
 	private Closure $live;
 
 	/**
-	 * Called with a newly paid gift.
+	 * Called with a newly paid gift and the number of gifts in its order.
 	 *
-	 * @var Closure(Gift): void
+	 * @var Closure(Gift, int): void
 	 */
 	private Closure $on_paid;
+
+	/**
+	 * A creator's name and Twitch channel login for the gift box, or null.
+	 *
+	 * @var Closure(int): ?array{name: string, login: string}
+	 */
+	private ?Closure $channel;
 
 	/**
 	 * Constructor.
 	 *
 	 * @phpstan-param Closure(int): ?int $creator_of
 	 * @phpstan-param Closure(int): ?bool $live
-	 * @phpstan-param Closure(Gift): void $on_paid
+	 * @phpstan-param Closure(Gift, int): void $on_paid
+	 * @phpstan-param (Closure(int): ?array{name: string, login: string})|null $channel
 	 *
 	 * @param GiftingSettingsRepository $settings   The creators' gifting settings.
 	 * @param GiftRepository            $gifts      Gifts.
 	 * @param Closure                   $creator_of The creator of a parent product, or null.
 	 * @param Closure                   $live       Whether a creator is live; null without a connected channel.
-	 * @param Closure                   $on_paid    Called with a newly paid gift (the draws).
+	 * @param Closure                   $on_paid    Called with a newly paid gift and its order's number of gifts (the draws).
 	 * @param Logger                    $logger     Technical log.
+	 * @param Closure|null              $channel    A creator's name and Twitch login for the gift box; null shows no channel link.
 	 */
-	public function __construct( private GiftingSettingsRepository $settings, private GiftRepository $gifts, Closure $creator_of, Closure $live, Closure $on_paid, private Logger $logger ) {
+	public function __construct( private GiftingSettingsRepository $settings, private GiftRepository $gifts, Closure $creator_of, Closure $live, Closure $on_paid, private Logger $logger, ?Closure $channel = null ) {
 		$this->creator_of = $creator_of;
 		$this->live       = $live;
 		$this->on_paid    = $on_paid;
+		$this->channel    = $channel;
 	}
 
 	/**
@@ -150,24 +172,32 @@ final class GiftPurchase {
 	}
 
 	/**
-	 * `woocommerce_after_add_to_cart_form`: the gift button.
+	 * `woocommerce_after_add_to_cart_form`: the gift box (ADR-111): the
+	 * creator live on Twitch, a number of gifts and the button.
 	 */
 	public function button(): void {
 		global $product;
 
-		if ( ! $product instanceof WC_Product || null === $this->giftable( (int) $product->get_id() ) ) {
+		$creator_id = $product instanceof WC_Product ? $this->giftable( (int) $product->get_id() ) : null;
+
+		if ( ! $product instanceof WC_Product || null === $creator_id ) {
 			return;
 		}
 
-		$url = add_query_arg(
-			array(
-				self::QUERY => (int) $product->get_id(),
-				'_wpnonce'  => wp_create_nonce( self::NONCE ),
-			),
-			self::permalink( (int) $product->get_id() )
+		$channel        = null === $this->channel ? null : ( $this->channel )( $creator_id );
+		$merchboard_box = array(
+			'action'   => self::permalink( (int) $product->get_id() ),
+			'product'  => (int) $product->get_id(),
+			'query'    => self::QUERY,
+			'quantity' => self::QUANTITY,
+			'nonce'    => wp_create_nonce( self::NONCE ),
+			'max'      => self::MAX_GIFTS,
+			'name'     => null === $channel ? '' : $channel['name'],
+			'login'    => null === $channel ? '' : $channel['login'],
+			'shipping' => self::SHIPPING,
 		);
 
-		echo '<p class="merchboard-gift-button"><a class="button alt" href="' . esc_url( $url ) . '">' . esc_html__( 'Give as a gift in the stream', 'merchboard' ) . '</a><br><small>' . esc_html__( 'A viewer in the chat wins it and chooses size and colour. Shipping of the gift: 50 kr.', 'merchboard' ) . '</small></p>';
+		include dirname( __DIR__, 4 ) . '/templates/community/gift-box.php';
 	}
 
 	/**
@@ -197,8 +227,9 @@ final class GiftPurchase {
 		}
 
 		[ $variation_id, $attributes ] = self::cheapest( $product );
+		$quantity                      = isset( $_GET[ self::QUANTITY ] ) ? self::quantity( absint( $_GET[ self::QUANTITY ] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Verified above.
 
-		if ( false === WC()->cart->add_to_cart( $product_id, 1, $variation_id, $attributes, array( self::ITEM_KEY => true ) ) ) {
+		if ( false === WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $attributes, array( self::ITEM_KEY => true ) ) ) {
 			wc_add_notice( __( 'The gift cannot be bought right now.', 'merchboard' ), 'error' );
 			wp_safe_redirect( $back );
 			exit;
@@ -225,8 +256,9 @@ final class GiftPurchase {
 
 	/**
 	 * `woocommerce_check_cart_items` (also the block checkout's cart check): a
-	 * gift is alone, one unit, and its creator's gifting is still open. A
-	 * guest who logs in gets the saved cart merged in; this stops that order.
+	 * gift is alone, 1–MAX_GIFTS units, and its creator's gifting is still
+	 * open. A guest who logs in gets the saved cart merged in; this stops that
+	 * order.
 	 */
 	public function check_cart(): void {
 		$cart = function_exists( 'WC' ) ? WC()->cart : null;
@@ -236,7 +268,9 @@ final class GiftPurchase {
 			return;
 		}
 
-		if ( 1 !== count( $cart->get_cart() ) || 1 !== (int) ( $gift['quantity'] ?? 1 ) ) {
+		$units = (int) ( $gift['quantity'] ?? 1 );
+
+		if ( 1 !== count( $cart->get_cart() ) || $units < 1 || $units > self::MAX_GIFTS ) {
 			wc_add_notice( __( 'A gift is bought on its own. Remove the other products from the cart to give the gift.', 'merchboard' ), 'error' );
 
 			return;
@@ -271,7 +305,7 @@ final class GiftPurchase {
 	}
 
 	/**
-	 * `woocommerce_before_calculate_totals`: a gift is always one unit.
+	 * `woocommerce_before_calculate_totals`: a gift purchase is 1–MAX_GIFTS units.
 	 *
 	 * @param mixed $cart The cart.
 	 */
@@ -281,10 +315,21 @@ final class GiftPurchase {
 		}
 
 		foreach ( $cart->get_cart() as $key => $item ) {
-			if ( true === ( $item[ self::ITEM_KEY ] ?? false ) && 1 !== (int) ( $item['quantity'] ?? 1 ) ) {
-				$cart->set_quantity( (string) $key, 1, false );
+			$units = (int) ( $item['quantity'] ?? 1 );
+
+			if ( true === ( $item[ self::ITEM_KEY ] ?? false ) && self::quantity( $units ) !== $units ) {
+				$cart->set_quantity( (string) $key, self::quantity( $units ), false );
 			}
 		}
+	}
+
+	/**
+	 * A number of gifts within 1–MAX_GIFTS.
+	 *
+	 * @param int $units Units asked for.
+	 */
+	public static function quantity( int $units ): int {
+		return max( 1, min( self::MAX_GIFTS, $units ) );
 	}
 
 	/**
@@ -303,13 +348,14 @@ final class GiftPurchase {
 		return array(
 			array(
 				'key'   => __( 'Gift', 'merchboard' ),
-				'value' => __( 'A viewer in the stream wins it and chooses size and colour.', 'merchboard' ),
+				'value' => __( 'Each gift is won by a viewer in the stream, who chooses size and colour.', 'merchboard' ),
 			),
 		);
 	}
 
 	/**
-	 * `woocommerce_cart_item_quantity`: a gift's quantity cannot be changed.
+	 * `woocommerce_cart_item_quantity`: the number of gifts is chosen on the
+	 * product page and shown as it is here.
 	 *
 	 * @param mixed $html Quantity field.
 	 * @param mixed $key  Cart item key.
@@ -319,12 +365,12 @@ final class GiftPurchase {
 	public function quantity_html( mixed $html, mixed $key, mixed $item = null ): mixed {
 		unset( $key );
 
-		return is_array( $item ) && true === ( $item[ self::ITEM_KEY ] ?? false ) ? '1' : $html;
+		return is_array( $item ) && true === ( $item[ self::ITEM_KEY ] ?? false ) ? (string) self::quantity( (int) ( $item['quantity'] ?? 1 ) ) : $html;
 	}
 
 	/**
-	 * `woocommerce_store_api_product_quantity_maximum`: one gift in the
-	 * block cart.
+	 * `woocommerce_store_api_product_quantity_maximum`: at most MAX_GIFTS
+	 * gifts in the block cart.
 	 *
 	 * @param mixed $maximum Maximum.
 	 * @param mixed $product Product.
@@ -334,12 +380,13 @@ final class GiftPurchase {
 	public function quantity_maximum( mixed $maximum, mixed $product, mixed $item = null ): mixed {
 		unset( $product );
 
-		return is_array( $item ) && true === ( $item[ self::ITEM_KEY ] ?? false ) ? 1 : $maximum;
+		return is_array( $item ) && true === ( $item[ self::ITEM_KEY ] ?? false ) ? self::MAX_GIFTS : $maximum;
 	}
 
 	/**
-	 * `woocommerce_package_rates`: a gift has one shipping rate of 50 incl.
-	 * VAT (the winner pays more when the shipping to the winner costs more).
+	 * `woocommerce_package_rates`: a gift purchase has one shipping rate of
+	 * 50 incl. VAT per gift (the winner pays more when the shipping to the
+	 * winner costs more).
 	 *
 	 * @param mixed $rates   Rates.
 	 * @param mixed $package Package.
@@ -350,11 +397,13 @@ final class GiftPurchase {
 		$only     = 1 === count( $contents ) ? reset( $contents ) : null;
 
 		// Only a package of the gift alone (anything else is stopped by check_cart()).
-		if ( ! is_array( $only ) || true !== ( $only[ self::ITEM_KEY ] ?? false ) || 1 !== (int) ( $only['quantity'] ?? 1 ) || ! class_exists( WC_Shipping_Rate::class ) ) {
+		$units = is_array( $only ) ? (int) ( $only['quantity'] ?? 1 ) : 0;
+
+		if ( ! is_array( $only ) || true !== ( $only[ self::ITEM_KEY ] ?? false ) || self::quantity( $units ) !== $units || ! class_exists( WC_Shipping_Rate::class ) ) {
 			return $rates;
 		}
 
-		return array( 'merchboard_gift' => self::rate( 'merchboard_gift', __( 'Gift shipping', 'merchboard' ) ) );
+		return array( 'merchboard_gift' => self::rate( 'merchboard_gift', __( 'Gift shipping', 'merchboard' ), (float) self::SHIPPING * $units ) );
 	}
 
 	/**
@@ -362,11 +411,12 @@ final class GiftPurchase {
 	 * name, never mistaken for a gift) a creator's giveaway paid in the shop
 	 * (ADR-110).
 	 *
-	 * @param string $id    Rate id.
-	 * @param string $label Name shown in the checkout and on the order.
+	 * @param string     $id    Rate id.
+	 * @param string     $label Name shown in the checkout and on the order.
+	 * @param float|null $gross Amount incl. VAT; null for SHIPPING.
 	 */
-	public static function rate( string $id, string $label ): WC_Shipping_Rate {
-		$gross     = (float) self::SHIPPING;
+	public static function rate( string $id, string $label, ?float $gross = null ): WC_Shipping_Rate {
+		$gross     = $gross ?? (float) self::SHIPPING;
 		$tax_rates = wc_tax_enabled() ? WC_Tax::get_shipping_tax_rates() : array();
 		$net       = array() === $tax_rates ? $gross : $gross / ( 1 + array_sum( array_map( static fn( array $rate ): float => is_numeric( $rate['rate'] ?? null ) ? (float) $rate['rate'] / 100 : 0.0, $tax_rates ) ) );
 		$taxes     = array() === $tax_rates ? array() : WC_Tax::calc_shipping_tax( $net, $tax_rates );
@@ -398,7 +448,7 @@ final class GiftPurchase {
 
 	/**
 	 * `woocommerce_order_status_processing`/`_completed`: records a paid
-	 * gift once and hands it to the draws.
+	 * order's gifts once per unit (ADR-111) and hands them to the draws.
 	 *
 	 * @param mixed $order_id Order id.
 	 */
@@ -415,7 +465,8 @@ final class GiftPurchase {
 			return;
 		}
 
-		$paid = (float) $line->get_total( 'edit' ) + (float) $line->get_total_tax( 'edit' );
+		$paid  = (float) $line->get_total( 'edit' ) + (float) $line->get_total_tax( 'edit' );
+		$units = self::quantity( (int) $line->get_quantity() );
 
 		if ( $paid <= 0 ) {
 			// Nothing paid for the product: nothing to give.
@@ -424,43 +475,46 @@ final class GiftPurchase {
 			return;
 		}
 
-		try {
-			if ( null !== $this->gifts->find_by_order( (int) $order->get_id() ) ) {
-				return;
-			}
+		$name     = WooCommercePaidOrderReader::username( $order );
+		$shipping = ( (float) $order->get_shipping_total( 'edit' ) + (float) $order->get_shipping_tax( 'edit' ) ) / $units;
+		$new      = array();
 
-			$name = WooCommercePaidOrderReader::username( $order );
-			$gift = $this->gifts->create(
-				(int) $line->get_meta( self::LINE_META, true, 'edit' ),
-				(int) $order->get_id(),
-				(int) $line->get_product_id(),
-				number_format( $paid, 4, '.', '' ),
-				number_format( min( (float) self::SHIPPING, (float) $order->get_shipping_total( 'edit' ) + (float) $order->get_shipping_tax( 'edit' ) ), 4, '.', '' ),
-				(string) $order->get_currency( 'edit' ),
-				'' === $name ? null : $name
-			);
+		// One gift per unit; each is stored once, so a second "paid" adds none.
+		try {
+			for ( $unit = 1; $unit <= $units; $unit++ ) {
+				$gift = $this->gifts->create(
+					(int) $line->get_meta( self::LINE_META, true, 'edit' ),
+					(int) $order->get_id(),
+					(int) $line->get_product_id(),
+					number_format( $paid / $units, 4, '.', '' ),
+					number_format( min( (float) self::SHIPPING, $shipping ), 4, '.', '' ),
+					(string) $order->get_currency( 'edit' ),
+					'' === $name ? null : $name,
+					$unit
+				);
+
+				if ( null !== $gift ) {
+					$new[] = $gift;
+				}
+			}
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'A paid gift could not be recorded.', array( 'order_id' => (int) $order->get_id() ) + $e->context() );
-
-			return;
 		}
 
-		if ( null !== $gift ) {
-			( $this->on_paid )( $gift );
+		foreach ( $new as $gift ) {
+			( $this->on_paid )( $gift, $units );
 		}
 	}
 
 	/**
-	 * `woocommerce_order_status_cancelled`/`_refunded`: a gift without a
-	 * winner is cancelled; one with a winner stays (ADR-107 pkt. 9).
+	 * `woocommerce_order_status_cancelled`/`_refunded`: the order's gifts
+	 * without a winner are cancelled; those with a winner stay (ADR-107 pkt. 9).
 	 *
 	 * @param mixed $order_id Order id.
 	 */
 	public function cancelled( mixed $order_id ): void {
 		try {
-			$gift = is_numeric( $order_id ) ? $this->gifts->find_by_order( (int) $order_id ) : null;
-
-			if ( null !== $gift ) {
+			foreach ( is_numeric( $order_id ) ? $this->gifts->for_order( (int) $order_id ) : array() as $gift ) {
 				$this->gifts->cancel( $gift->id );
 			}
 		} catch ( DatabaseException $e ) {

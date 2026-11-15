@@ -37,6 +37,7 @@ final class GiftTexts {
 			'more'      => '%1$s og %2$d flere',
 			'reminder'  => '⏰ %1$d sekunder tilbage! Skriv !enter for at være med i lodtrækningen om %2$s.',
 			'giveaway'  => '🎁 %1$s giver %2$s væk! Skriv !enter inden for %3$d sekunder for at være med i lodtrækningen.',
+			'unit'      => ' (gave %1$d af %2$d)',
 		),
 		'en' => array(
 			'announce'  => '🎁 %1$s gifted %2$s! Type !enter within %3$d seconds to join the draw.',
@@ -52,6 +53,7 @@ final class GiftTexts {
 			'more'      => '%1$s and %2$d more',
 			'reminder'  => '⏰ %1$d seconds left! Type !enter to join the draw for %2$s.',
 			'giveaway'  => '🎁 %1$s is giving away %2$s! Type !enter within %3$d seconds to join the draw.',
+			'unit'      => ' (gift %1$d of %2$d)',
 		),
 	);
 
@@ -77,6 +79,17 @@ final class GiftTexts {
 	 */
 	public static function giveaway( string $language, string $creator, string $product, int $seconds ): string {
 		return sprintf( self::text( $language, 'giveaway' ), $creator, $product, $seconds );
+	}
+
+	/**
+	 * " (gift n of N)" after the product of a purchase with several gifts (ADR-111).
+	 *
+	 * @param string $language `da` or `en`.
+	 * @param int    $unit     Which gift, from 1.
+	 * @param int    $of       Gifts in the purchase.
+	 */
+	public static function unit( string $language, int $unit, int $of ): string {
+		return sprintf( self::text( $language, 'unit' ), $unit, $of );
 	}
 
 	/**

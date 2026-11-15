@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Merch Dashboard 2.1.0\n"
+"Project-Id-Version: Merch Dashboard 2.1.1\n"
 "Report-Msgid-Bugs-To: https://github.com/CaileanTV/CCMerchDashboard/issues\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-12T18:23:41+00:00\n"
+"POT-Creation-Date: 2026-11-15T14:01:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -751,7 +751,7 @@ msgid "Creator went live"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:203
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1368
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1388
 msgid "Request to go live declined"
 msgstr ""
 
@@ -1561,7 +1561,7 @@ msgid "All events"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogPage.php:250
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1086
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1083
 #: src/Modules/ProductDesigner/DesignerNotifications.php:304
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:208
 #: build/dashboard.js:69
@@ -3472,7 +3472,7 @@ msgid "Orders with alerts"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/OrderLogTab.php:243
-#: src/Modules/Community/Gifting/GiftPrivacy.php:107
+#: src/Modules/Community/Gifting/GiftPrivacy.php:105
 #: src/Modules/Community/TwitchSubs/TwitchSubPrivacy.php:116
 #: src/Modules/Notifications/Catalog/AdminTypes.php:320
 #: src/Modules/Notifications/Catalog/AdminTypes.php:350
@@ -3501,7 +3501,7 @@ msgid "Chat"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/OrderLogTab.php:261
-#: src/Modules/Community/Gifting/GiftPrivacy.php:112
+#: src/Modules/Community/Gifting/GiftPrivacy.php:110
 #: build/dashboard.js:69
 msgid "Anonymous"
 msgstr ""
@@ -3880,6 +3880,7 @@ msgstr ""
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:49
 #: src/Modules/Community/TwitchSubs/TwitchSubCoupon.php:357
 #: src/Modules/Community/TwitchSubs/TwitchSubOrderInfo.php:83
+#: templates/community/twitch-card.php:76
 #: build/dashboard.js:76
 msgid "Twitch subscriber discount"
 msgstr ""
@@ -4048,82 +4049,101 @@ msgstr ""
 msgid "Gift shipping covered"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftNotices.php:114
+#. translators: 1: product name, 2: which gift, 3: number of gifts.
+#: src/Modules/Community/Gifting/GiftNotices.php:111
+#, php-format
+msgid "%1$s (gift %2$d of %3$d)"
+msgstr ""
+
+#. translators: %d: number of gifts.
+#: src/Modules/Community/Gifting/GiftNotices.php:135
+#, php-format
+msgid "Twitch gifts: %d gifts paid and waiting for draws in the stream, one at a time."
+msgstr ""
+
+#: src/Modules/Community/Gifting/GiftNotices.php:136
 msgid "Twitch gift: paid and waiting for a draw in the stream."
 msgstr ""
 
 #. translators: %s: the winner's Twitch name.
-#: src/Modules/Community/Gifting/GiftNotices.php:119
+#: src/Modules/Community/Gifting/GiftNotices.php:142
 #, php-format
 msgid "Twitch gift: won by %s. The winner has 24 hours to claim it."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Community/Gifting/GiftNotices.php:123
+#: src/Modules/Community/Gifting/GiftNotices.php:146
 #, php-format
 msgid "Your gift %s has a winner"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftNotices.php:124
+#: src/Modules/Community/Gifting/GiftNotices.php:147
 msgid "Your gift has a winner"
 msgstr ""
 
 #. translators: 1: the winner's Twitch name, 2: product name, 3: creator name.
-#: src/Modules/Community/Gifting/GiftNotices.php:127
+#: src/Modules/Community/Gifting/GiftNotices.php:150
 #, php-format
 msgid "%1$s won the %2$s you gave in %3$s's stream. The winner has 24 hours to claim it; we let you know when it is claimed."
 msgstr ""
 
 #. translators: %s: the winner's Twitch name.
-#: src/Modules/Community/Gifting/GiftNotices.php:144
+#: src/Modules/Community/Gifting/GiftNotices.php:167
 #, php-format
 msgid "Twitch gift: claimed by %s."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Community/Gifting/GiftNotices.php:148
+#: src/Modules/Community/Gifting/GiftNotices.php:171
 #, php-format
 msgid "Your gift %s was claimed"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftNotices.php:149
+#: src/Modules/Community/Gifting/GiftNotices.php:172
 msgid "Your gift was claimed"
 msgstr ""
 
 #. translators: 1: the winner's Twitch name, 2: product name.
-#: src/Modules/Community/Gifting/GiftNotices.php:152
+#: src/Modules/Community/Gifting/GiftNotices.php:175
 #, php-format
 msgid "%1$s claimed the %2$s you gave. Thank you for your gift to the community!"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftNotices.php:168
+#: src/Modules/Community/Gifting/GiftNotices.php:191
 msgid "Twitch gift: nobody claimed it after three draws. The buyer got the gift code by e-mail."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Community/Gifting/GiftNotices.php:172
+#: src/Modules/Community/Gifting/GiftNotices.php:195
 #, php-format
 msgid "Your gift %s comes back to you"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftNotices.php:173
+#: src/Modules/Community/Gifting/GiftNotices.php:196
 msgid "Your gift comes back to you"
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Community/Gifting/GiftNotices.php:176
+#: src/Modules/Community/Gifting/GiftNotices.php:199
 #, php-format
 msgid "Nobody claimed the %s you gave after three draws, so the gift comes back to you."
 msgstr ""
 
 #. translators: %s: the gift code.
-#: src/Modules/Community/Gifting/GiftNotices.php:178
+#: src/Modules/Community/Gifting/GiftNotices.php:201
 #, php-format
 msgid "Use the code %s in the shop: it covers the product, in the size and colour you choose, and up to 50 kr. of the shipping. You pay only if you choose a dearer variant or shipping. The code can be used once."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftNotices.php:230
+#: src/Modules/Community/Gifting/GiftNotices.php:253
 msgid "Go to the product"
+msgstr ""
+
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:56
+#: src/Modules/Community/Gifting/GiftPrivacy.php:56
+#: src/Modules/Community/Gifting/GiftPrivacy.php:72
+#: src/Modules/Community/Gifting/GiftPrivacy.php:101
+msgid "Twitch gifts"
 msgstr ""
 
 #: src/Modules/Community/Gifting/GiftOrderInfo.php:56
@@ -4135,64 +4155,64 @@ msgstr ""
 msgid "Not paid yet: the gift is recorded when the order is paid."
 msgstr ""
 
+#. translators: 1: which gift, 2: number of gifts.
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:70
+#, php-format
+msgid "Gift %1$d of %2$d"
+msgstr ""
+
 #. translators: %s: the winner's Twitch name.
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:65
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:77
 #, php-format
 msgid "Winner: %s"
 msgstr ""
 
 #. translators: %d: number of draws.
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:69
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:81
 #, php-format
 msgid "Draws: %d of 3"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:75
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:86
 msgid "Do not refund this order: the gift has been drawn, and a refund does not take it back from the winner or the buyer."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:88
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:99
 msgid "Waiting for a draw in the stream."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:89
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:100
 msgid "The chat is typing !enter now."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:90
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:101
 msgid "Won; the winner has 24 hours to claim it."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:91
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:102
 msgid "Claimed by the winner."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:92
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:103
 msgid "Nobody claimed it after three draws; the buyer got the gift code."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:93
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:104
 #: src/Modules/Community/Giveaways/GiveawayOrderInfo.php:82
 msgid "Cancelled."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPrivacy.php:56
-#: src/Modules/Community/Gifting/GiftPrivacy.php:72
-#: src/Modules/Community/Gifting/GiftPrivacy.php:103
-msgid "Twitch gifts"
-msgstr ""
-
-#: src/Modules/Community/Gifting/GiftPrivacy.php:111
+#: src/Modules/Community/Gifting/GiftPrivacy.php:109
 msgid "Name in the announcement"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPrivacy.php:115
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1126
+#: src/Modules/Community/Gifting/GiftPrivacy.php:113
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1146
 #: build/dashboard.js:70
 msgid "Winner"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPrivacy.php:119
+#: src/Modules/Community/Gifting/GiftPrivacy.php:117
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:384
 #: src/Modules/Creators/Admin/CreatorsListTable.php:83
 #: src/Modules/News/Admin/NewsAdminPage.php:223
@@ -4221,52 +4241,44 @@ msgstr ""
 msgid "Status"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPrivacy.php:153
+#: src/Modules/Community/Gifting/GiftPrivacy.php:152
 msgid "The names of the Twitch gifts could not be erased. Please try again."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:170
-msgid "Give as a gift in the stream"
-msgstr ""
-
-#: src/Modules/Community/Gifting/GiftPurchase.php:170
-msgid "A viewer in the chat wins it and chooses size and colour. Shipping of the gift: 50 kr."
-msgstr ""
-
-#: src/Modules/Community/Gifting/GiftPurchase.php:188
-#: src/Modules/Community/Gifting/GiftPurchase.php:202
+#: src/Modules/Community/Gifting/GiftPurchase.php:218
+#: src/Modules/Community/Gifting/GiftPurchase.php:233
 msgid "The gift cannot be bought right now."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:194
+#: src/Modules/Community/Gifting/GiftPurchase.php:224
 msgid "A gift is bought on its own. Please finish or empty your cart first, and then give the gift."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:218
+#: src/Modules/Community/Gifting/GiftPurchase.php:249
 msgid "A gift is bought on its own. Finish the gift first."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:240
+#: src/Modules/Community/Gifting/GiftPurchase.php:274
 msgid "A gift is bought on its own. Remove the other products from the cart to give the gift."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:249
+#: src/Modules/Community/Gifting/GiftPurchase.php:283
 msgid "Gifts cannot be bought for this stream right now. Please remove the gift from the cart."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:267
+#: src/Modules/Community/Gifting/GiftPurchase.php:301
 msgid "Codes cannot be used on a gift."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:305
+#: src/Modules/Community/Gifting/GiftPurchase.php:350
 msgid "Gift"
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:306
-msgid "A viewer in the stream wins it and chooses size and colour."
+#: src/Modules/Community/Gifting/GiftPurchase.php:351
+msgid "Each gift is won by a viewer in the stream, who chooses size and colour."
 msgstr ""
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:357
+#: src/Modules/Community/Gifting/GiftPurchase.php:406
 msgid "Gift shipping"
 msgstr ""
 
@@ -4452,55 +4464,35 @@ msgstr ""
 msgid "creator %1$d: tier %2$d"
 msgstr ""
 
-#. translators: %s: the customer's Twitch name.
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:135
+#. translators: 1: discount in percent (e.g. 15 or 16,67), 2: subscriber tier (1–3).
+#: src/Modules/Community/TwitchSubs/TwitchSubProductNote.php:102
 #, php-format
-msgid "You are logged in with Twitch as %s."
+msgid "%1$s %% for Tier %2$d"
 msgstr ""
 
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:140
-msgid "Your subscriber discount is taken off the eligible products."
-msgstr ""
-
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:141
-msgid "Your Twitch account has no subscription that gives a discount on these products."
-msgstr ""
-
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:143
-#: templates/community/gift-claim.php:88
-msgid "Log out of Twitch"
-msgstr ""
-
-#. translators: %s: the highest discount in percent (e.g. 16.67).
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:149
+#. translators: %s: the discounts per tier, e.g. "15 % for Tier 3, 10 % for Tier 2 and 5 % for Tier 1".
+#: src/Modules/Community/TwitchSubs/TwitchSubProductNote.php:112
 #, php-format
-msgid "Do you subscribe on Twitch? Log in with Twitch and get up to %s %% off as a subscriber."
+msgid "Twitch subs get a discount on this product: %s."
 msgstr ""
 
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:155
-#: templates/community/gift-claim.php:97
-msgid "Log in with Twitch"
+#: src/Modules/Community/TwitchSubs/TwitchSubProductNote.php:114
+msgid "Log in with Twitch in the cart, and the discount is taken off automatically."
 msgstr ""
 
-#. translators: %s: the customer's remembered Twitch name.
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:158
-#, php-format
-msgid "Check my subscription as %s"
-msgstr ""
-
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:176
+#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:208
 msgid "You are now logged in with Twitch."
 msgstr ""
 
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:177
+#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:209
 msgid "The Twitch login was cancelled."
 msgstr ""
 
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:178
+#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:210
 msgid "Twitch login is not available right now."
 msgstr ""
 
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:179
+#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:211
 msgid "The Twitch login did not work. Please try again."
 msgstr ""
 
@@ -6022,7 +6014,7 @@ msgstr ""
 #: src/Modules/Notifications/Catalog/AdminTypes.php:351
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:422
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:501
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1382
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1402
 #: src/Modules/ProductDesigner/DesignerNotifications.php:377
 #: src/Modules/ProductDesigner/DesignerNotifications.php:422
 #: src/Modules/ProductDesigner/DesignerNotifications.php:463
@@ -6298,11 +6290,11 @@ msgstr ""
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:179
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:817
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:953
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1085
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1125
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1162
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1196
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1230
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1082
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1145
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1182
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1216
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1250
 #: src/Modules/ProductDesigner/Admin/DesignerFeesSection.php:122
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:187
 #: src/Modules/ProductDesigner/DesignerNotifications.php:142
@@ -6726,7 +6718,7 @@ msgid "When a platform stops your chatbot from reaching your channel. You get on
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:41
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1291
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1311
 msgid "Your webhook was paused"
 msgstr ""
 
@@ -6751,7 +6743,7 @@ msgid "When the winner of a Twitch gift in your stream claims it."
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:44
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1145
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1165
 msgid "Giveaway link ready"
 msgstr ""
 
@@ -6760,7 +6752,7 @@ msgid "When nobody in the chat claimed your giveaway after three draws, so you g
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:45
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1179
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1199
 msgid "Giveaway code used"
 msgstr ""
 
@@ -6769,7 +6761,7 @@ msgid "When the winner of your giveaway uses the code."
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:46
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1213
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1233
 msgid "Giveaway expired"
 msgstr ""
 
@@ -6778,7 +6770,7 @@ msgid "When your giveaway runs out without being used."
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:47
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1310
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1330
 msgid "New YouTube terms"
 msgstr ""
 
@@ -7346,9 +7338,9 @@ msgstr ""
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:739
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:769
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1017
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1354
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1383
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1414
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1374
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1403
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1434
 msgid "Open your dashboard"
 msgstr ""
 
@@ -7614,355 +7606,367 @@ msgid "When a viewer buys one of the creator's products as a Twitch gift."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1074
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1076
+#, php-format
+msgid "A gift was bought in your stream: %s"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1077
+msgid "A gift for your chat"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1078
+msgid "A viewer bought one of your products as a gift for your chat. The bot draws a winner among those who type !enter. The sale counts for you as usual."
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1090
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1150
+msgid "Open Twitch gifting"
+msgstr ""
+
+#. translators: 1: number of gifts, 2: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1108
+#, php-format
+msgid "Someone bought %1$d × %2$s as gifts in your stream."
+msgstr ""
+
+#. translators: 1: the buyer's chosen name, 2: number of gifts, 3: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1110
+#, php-format
+msgid "%1$s bought %2$d × %3$s as gifts in your stream."
+msgstr ""
+
+#. translators: %s: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1115
 #, php-format
 msgid "Someone bought %s as a gift in your stream."
 msgstr ""
 
 #. translators: 1: the buyer's chosen name, 2: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1076
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1117
 #, php-format
 msgid "%1$s bought %2$s as a gift in your stream."
 msgstr ""
 
-#. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1079
-#, php-format
-msgid "A gift was bought in your stream: %s"
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1080
-msgid "A gift for your chat"
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1081
-msgid "A viewer bought one of your products as a gift for your chat. The bot draws a winner among those who type !enter. The sale counts for you as usual."
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1093
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1130
-msgid "Open Twitch gifting"
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1107
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1127
 msgid "Gift claimed by the winner"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1108
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1128
 msgid "When the winner of a Twitch gift in the creator's stream claims it."
 msgstr ""
 
 #. translators: 1: the winner's Twitch name, 2: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1118
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1138
 #, php-format
 msgid "%1$s claimed the gift %2$s."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1121
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1141
 #, php-format
 msgid "The gift %s was claimed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1122
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1142
 msgid "A gift was claimed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1123
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1143
 msgid "The winner of a gift in your stream logged in with Twitch and got the gift code."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1146
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1166
 msgid "When nobody claimed the creator's giveaway after three draws in the chat, so the creator gets the link to pass on."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1156
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1176
 #, php-format
 msgid "Nobody claimed your giveaway %s after three draws. The link is ready on the Giveaways page."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1159
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1179
 #, php-format
 msgid "Your giveaway %s has a link for you"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1160
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1180
 msgid "Your giveaway link is ready"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1161
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1181
 msgid "Nobody in the chat claimed your giveaway after three draws. Pass the link on to a winner yourself; it can be redeemed for 30 days."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1165
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1199
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1233
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1185
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1219
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1253
 msgid "Open Giveaways"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1180
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1200
 msgid "When the winner of the creator's giveaway uses the code; a giveaway from the balance is charged then."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1190
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1210
 #, php-format
 msgid "The code of your giveaway %s was used."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1193
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1213
 #, php-format
 msgid "The code of your giveaway %s was used"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1194
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1214
 msgid "Your giveaway was used"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1195
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1215
 msgid "The winner has used the code of your giveaway. If you paid it from your balance, it is charged now."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1214
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1234
 msgid "When the creator's giveaway runs out without being used; nothing is charged."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1224
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1244
 #, php-format
 msgid "Your giveaway %s ran out without being used."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1227
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1247
 #, php-format
 msgid "Your giveaway %s ran out"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1228
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1248
 msgid "Your giveaway ran out"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1229
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1249
 msgid "Nobody used your giveaway within 30 days. Nothing is charged from your balance, and the money is no longer set aside."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1247
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1267
 msgid "Chatbot lost access"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1248
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1268
 msgid "When a platform refuses the chatbot's access to the creator's channel; once until it is connected again."
 msgstr ""
 
 #. translators: %s: platform, e.g. Twitch.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1255
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1275
 #, php-format
 msgid "The chatbot lost access to your %s channel. Connect it again under Alerts."
 msgstr ""
 
 #. translators: %s: platform.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1258
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1278
 #, php-format
 msgid "The chatbot lost access to your %s channel"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1259
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1279
 msgid "Your chatbot needs to be connected again"
 msgstr ""
 
 #. translators: %s: platform.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1261
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1281
 #, php-format
 msgid "%s no longer lets the chatbot write in your channel, so purchases are not announced in your chat. Connect the channel again under Alerts."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1265
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1285
 msgid "Connect again"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1279
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1299
 msgid "Webhook paused"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1280
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1300
 msgid "When one of the creator's webhooks is paused after 10 failed deliveries in a row."
 msgstr ""
 
 #. translators: %s: webhook name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1287
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1307
 #, php-format
 msgid "Your webhook \"%s\" was paused after 10 failed deliveries."
 msgstr ""
 
 #. translators: %s: webhook name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1290
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1310
 #, php-format
 msgid "Your webhook \"%s\" was paused"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1292
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1312
 msgid "The last 10 deliveries to your webhook failed, so we paused it. Check the receiver, then resume the webhook under Alerts."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1293
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1313
 msgid "Webhook"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1296
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1316
 msgid "See your webhooks"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1311
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1331
 msgid "When an administrator renews the YouTube chatbot's terms, which every creator must accept again."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1317
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1337
 msgid "Please accept the new terms of the YouTube chatbot under Alerts."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1319
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1339
 msgid "Please accept the new YouTube terms"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1320
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1340
 msgid "New terms for the YouTube chatbot"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1321
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1341
 msgid "The terms of the YouTube chatbot were updated. Until you accept them, the chatbot does not write in your YouTube chat."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1325
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1345
 msgid "Read and accept"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1339
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1359
 msgid "Live in the shop"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1340
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1360
 msgid "When an administrator approves that a creator who signed up goes live."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1346
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1366
 msgid "You are live in the shop! Your approved designs are on their way."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1348
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1368
 msgid "You are live in the shop"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1349
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1369
 msgid "You are live!"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1350
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1370
 msgid "We approved your request: your shop is live, and your approved designs are on their way to the shop. Share the link with your followers."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1369
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1389
 msgid "When an administrator declines a request to go live, with the reason."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1375
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1395
 msgid "Your request to go live was not approved yet. Read the reason in your dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1377
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1397
 msgid "Your request to go live"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1378
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1398
 msgid "Not live yet"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1379
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1399
 msgid "We could not approve your request to go live yet. You can change what is needed and ask again from your dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1399
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1409
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1419
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1429
 msgid "New version of the agreement"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1400
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1420
 msgid "When an administrator publishes a new version of the agreement for creators; sent to creators who signed up themselves."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1406
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1426
 msgid "Our agreement was changed. Please read and accept the new version."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1406
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1426
 msgid "Our agreement was updated. You can read the new version in your dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1408
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1428
 msgid "Please accept our new agreement"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1408
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1428
 msgid "Our agreement was updated"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1410
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1430
 msgid "We changed our agreement with you. Please read and accept the new version in your dashboard; until then you cannot request a payout."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1410
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1430
 msgid "We made a minor update to our agreement with you. You can read the new version in your dashboard; you do not need to do anything."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1428
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1448
 msgid "API key created or revoked"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1429
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1449
 msgid "When an API key is created for the creator, or an administrator revokes their keys (security message)."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1439
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1459
 msgid "An administrator revoked your API keys."
 msgstr ""
 
 #. translators: %s: key name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1441
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1461
 #, php-format
 msgid "A new API key \"%s\" was created."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1444
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1445
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1464
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1465
 msgid "Your API keys were revoked"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1446
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1466
 msgid "An administrator revoked your API keys, so they no longer work. Please contact us if you have questions."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1450
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1464
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1470
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1484
 msgid "See your API keys"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1455
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1456
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1475
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1476
 msgid "A new API key was created"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1458
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1478
 msgid "A new API key was created for your account."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1459
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1479
 msgid "If you did not create it, revoke it under Alerts and contact us."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1461
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1481
 msgid "Key"
 msgstr ""
 
@@ -14411,6 +14415,35 @@ msgstr ""
 msgid "Version %1$d, published %2$s"
 msgstr ""
 
+#: templates/community/gift-box.php:52
+#: templates/community/gift-box.php:95
+msgid "Give as a gift in the stream"
+msgstr ""
+
+#: templates/community/gift-box.php:56
+msgid "Live on Twitch"
+msgstr ""
+
+#. translators: %s: the creator's name, linked to the Twitch channel.
+#: templates/community/gift-box.php:65
+#, php-format
+msgid "%s is live on Twitch right now. Give this product to lucky viewers who are watching!"
+msgstr ""
+
+#: templates/community/gift-box.php:78
+msgid "The creator is live on Twitch right now. Give this product to lucky viewers who are watching!"
+msgstr ""
+
+#: templates/community/gift-box.php:89
+msgid "Number of gifts"
+msgstr ""
+
+#. translators: %s: the gift shipping per gift, e.g. 50.
+#: templates/community/gift-box.php:100
+#, php-format
+msgid "Each gift gets its own winner, who chooses size and colour. Shipping: %s kr. per gift."
+msgstr ""
+
 #: templates/community/gift-claim.php:26
 msgid "You won a gift!"
 msgstr ""
@@ -14443,6 +14476,11 @@ msgstr ""
 #: templates/community/gift-claim.php:85
 #, php-format
 msgid "You are logged in with Twitch as %1$s, but the gift was won by %2$s. Log out of Twitch and log in as the winner."
+msgstr ""
+
+#: templates/community/gift-claim.php:88
+#: templates/community/twitch-card.php:69
+msgid "Log out of Twitch"
 msgstr ""
 
 #: templates/community/gift-claim.php:90
@@ -14479,6 +14517,41 @@ msgstr ""
 
 #: templates/community/gift-claim.php:96
 msgid "Log in with the Twitch account that won. Then you choose size and colour, and the gift code is used in the cart."
+msgstr ""
+
+#: templates/community/gift-claim.php:97
+#: templates/community/twitch-card.php:98
+msgid "Log in with Twitch"
+msgstr ""
+
+#. translators: %s: the customer's Twitch name.
+#: templates/community/twitch-card.php:59
+#, php-format
+msgid "Logged in as %s"
+msgstr ""
+
+#: templates/community/twitch-card.php:63
+msgid "✓ Your subscriber discount is taken off"
+msgstr ""
+
+#: templates/community/twitch-card.php:65
+msgid "No subscriber discount on these products"
+msgstr ""
+
+#: templates/community/twitch-card.php:77
+msgid "Do you subscribe on Twitch? Log in and the discount is taken off the eligible products."
+msgstr ""
+
+#. translators: 1: subscriber tier (1–3), 2: discount in percent.
+#: templates/community/twitch-card.php:84
+#, php-format
+msgid "Tier %1$d · up to %2$s %%"
+msgstr ""
+
+#. translators: %s: the customer's remembered Twitch name.
+#: templates/community/twitch-card.php:100
+#, php-format
+msgid "Check my subscription as %s"
 msgstr ""
 
 #: templates/dashboard/no-access.php:31

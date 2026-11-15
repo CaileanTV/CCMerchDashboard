@@ -23,6 +23,7 @@ use MerchBoard\Core\Database\Migrations\AddDesignerPrimaryImage;
 use MerchBoard\Core\Database\Migrations\AddDesignerSmallSidePrice;
 use MerchBoard\Core\Database\Migrations\CreateDesignerFees;
 use MerchBoard\Core\Database\Migrations\AddDesignerShopPrice;
+use MerchBoard\Core\Database\Migrations\AddGiftOrderUnits;
 use MerchBoard\Core\Database\Migrations\CreateAlertEventsTable;
 use MerchBoard\Core\Database\Migrations\CreateAlertChatbotTables;
 use MerchBoard\Core\Database\Migrations\CreateAlertOverlaysTable;
@@ -129,6 +130,7 @@ final class Schema {
 			49 => new AddSalesSubDiscount(),
 			50 => new CreateGiftsTable(),
 			51 => new CreateGiveawaysTable(),
+			52 => new AddGiftOrderUnits(),
 		);
 	}
 }

@@ -253,9 +253,13 @@ final class GiftDraws {
 	 * creator is live and no other window is open.
 	 *
 	 * @param Gift $gift The new gift.
+	 * @param int  $of   Gifts in its purchase (ADR-111).
 	 */
-	public function paid( Gift $gift ): void {
-		( $this->notify )( 'bought', $gift, array() );
+	public function paid( Gift $gift, int $of = 1 ): void {
+		// One "bought" per purchase, with the number of gifts (ADR-111).
+		if ( 1 === $gift->order_unit ) {
+			( $this->notify )( 'bought', $gift, array( 'count' => (string) $of ) );
+		}
 
 		try {
 			$this->next( $gift->creator_id );
@@ -549,7 +553,9 @@ final class GiftDraws {
 				continue;
 			}
 
-			if ( ! $this->open( $gift, $settings->window, GiftTexts::announce( $settings->language, $gift->buyer_name, ( $this->product_name )( $gift->product_id ), $settings->window ) ) ) {
+			$product = ( $this->product_name )( $gift->product_id ) . $this->unit_label( $gift, $settings->language );
+
+			if ( ! $this->open( $gift, $settings->window, GiftTexts::announce( $settings->language, $gift->buyer_name, $product, $settings->window ) ) ) {
 				// Another request opened a window just now: one at a time.
 				return false;
 			}
@@ -565,6 +571,20 @@ final class GiftDraws {
 		}
 
 		return false;
+	}
+
+	/**
+	 * " (gift n of N)" for a gift of a purchase with several gifts (ADR-111),
+	 * else ''.
+	 *
+	 * @param Gift   $gift     Gift.
+	 * @param string $language `da` or `en`.
+	 * @throws DatabaseException When the order's gifts cannot be read.
+	 */
+	private function unit_label( Gift $gift, string $language ): string {
+		$of = $gift->order_id > 0 ? count( $this->gifts->for_order( $gift->order_id ) ) : 1;
+
+		return $of > 1 ? GiftTexts::unit( $language, $gift->order_unit, $of ) : '';
 	}
 
 	/**

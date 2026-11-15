@@ -48,16 +48,28 @@ final class GiftOrderInfo {
 		}
 
 		try {
-			$gift = $this->gifts->find_by_order( (int) $order->get_id() );
+			$gifts = $this->gifts->for_order( (int) $order->get_id() );
 		} catch ( DatabaseException ) {
-			$gift = null;
+			$gifts = array();
 		}
 
-		echo '<div class="form-field form-field-wide merchboard-gift-info"><h3>' . esc_html__( 'Twitch gift', 'merchboard' ) . '</h3><p>';
+		echo '<div class="form-field form-field-wide merchboard-gift-info"><h3>' . esc_html( count( $gifts ) > 1 ? __( 'Twitch gifts', 'merchboard' ) : __( 'Twitch gift', 'merchboard' ) ) . '</h3>';
 
-		if ( null === $gift ) {
-			echo esc_html__( 'Not paid yet: the gift is recorded when the order is paid.', 'merchboard' );
-		} else {
+		if ( array() === $gifts ) {
+			echo '<p>' . esc_html__( 'Not paid yet: the gift is recorded when the order is paid.', 'merchboard' ) . '</p>';
+		}
+
+		$drawn = false;
+
+		// One paragraph per gift of the purchase (ADR-111).
+		foreach ( $gifts as $gift ) {
+			echo '<p>';
+
+			if ( count( $gifts ) > 1 ) {
+				/* translators: 1: which gift, 2: number of gifts. */
+				echo '<strong>' . esc_html( sprintf( __( 'Gift %1$d of %2$d', 'merchboard' ), $gift->order_unit, count( $gifts ) ) ) . '</strong><br>';
+			}
+
 			echo esc_html( self::status( $gift ) );
 
 			if ( null !== $gift->winner_login && in_array( $gift->status, array( Gift::WON, Gift::CLAIMED ), true ) ) {
@@ -66,12 +78,11 @@ final class GiftOrderInfo {
 			}
 
 			/* translators: %d: number of draws. */
-			echo '<br>' . esc_html( sprintf( __( 'Draws: %d of 3', 'merchboard' ), $gift->draws ) );
+			echo '<br>' . esc_html( sprintf( __( 'Draws: %d of 3', 'merchboard' ), $gift->draws ) ) . '</p>';
+			$drawn = $drawn || in_array( $gift->status, array( Gift::WON, Gift::CLAIMED, Gift::RETURNED ), true );
 		}
 
-		echo '</p>';
-
-		if ( null !== $gift && in_array( $gift->status, array( Gift::WON, Gift::CLAIMED, Gift::RETURNED ), true ) ) {
+		if ( $drawn ) {
 			echo '<p class="merchboard-gift-info__warning" style="color:#b32d2e"><strong>' . esc_html__( 'Do not refund this order: the gift has been drawn, and a refund does not take it back from the winner or the buyer.', 'merchboard' ) . '</strong></p>';
 		}
 

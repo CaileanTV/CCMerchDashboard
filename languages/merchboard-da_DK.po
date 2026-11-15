@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-12T18:23:47+00:00\n"
+"PO-Revision-Date: 2026-11-15T14:01:58+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -751,7 +751,7 @@ msgid "Creator went live"
 msgstr "Creator gik live"
 
 #: src/Modules/Admin/AuditLogFormatter.php:203
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1368
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1388
 msgid "Request to go live declined"
 msgstr "Anmodning om at gå live afvist"
 
@@ -1561,7 +1561,7 @@ msgid "All events"
 msgstr "Alle hændelser"
 
 #: src/Modules/Admin/AuditLogPage.php:250
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1086
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1083
 #: src/Modules/ProductDesigner/DesignerNotifications.php:304
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:208
 #: build/dashboard.js:69
@@ -3472,7 +3472,7 @@ msgid "Orders with alerts"
 msgstr "Ordrer med alerts"
 
 #: src/Modules/Alerts/Admin/OrderLogTab.php:243
-#: src/Modules/Community/Gifting/GiftPrivacy.php:107
+#: src/Modules/Community/Gifting/GiftPrivacy.php:105
 #: src/Modules/Community/TwitchSubs/TwitchSubPrivacy.php:116
 #: src/Modules/Notifications/Catalog/AdminTypes.php:320
 #: src/Modules/Notifications/Catalog/AdminTypes.php:350
@@ -3501,7 +3501,7 @@ msgid "Chat"
 msgstr "Chat"
 
 #: src/Modules/Alerts/Admin/OrderLogTab.php:261
-#: src/Modules/Community/Gifting/GiftPrivacy.php:112
+#: src/Modules/Community/Gifting/GiftPrivacy.php:110
 #: build/dashboard.js:69
 msgid "Anonymous"
 msgstr "Anonym"
@@ -3880,6 +3880,7 @@ msgstr "Linknavnet skal være 2–40 små bogstaver, tal, - eller _, starte med 
 #: src/Modules/Community/Dashboard/CommunityDashboardSection.php:49
 #: src/Modules/Community/TwitchSubs/TwitchSubCoupon.php:357
 #: src/Modules/Community/TwitchSubs/TwitchSubOrderInfo.php:83
+#: templates/community/twitch-card.php:76
 #: build/dashboard.js:76
 msgid "Twitch subscriber discount"
 msgstr "Twitch subscriber rabat"
@@ -4048,83 +4049,102 @@ msgstr "Merch Dashboard: Twitch-gave"
 msgid "Gift shipping covered"
 msgstr "Gave-fragt betalt"
 
-#: src/Modules/Community/Gifting/GiftNotices.php:114
+#. translators: 1: product name, 2: which gift, 3: number of gifts.
+#: src/Modules/Community/Gifting/GiftNotices.php:111
+#, php-format
+msgid "%1$s (gift %2$d of %3$d)"
+msgstr "%1$s (gave %2$d af %3$d)"
+
+#. translators: %d: number of gifts.
+#: src/Modules/Community/Gifting/GiftNotices.php:135
+#, php-format
+msgid "Twitch gifts: %d gifts paid and waiting for draws in the stream, one at a time."
+msgstr "Twitch-gaver: %d gaver betalt og venter på lodtrækning i streamen, én ad gangen."
+
+#: src/Modules/Community/Gifting/GiftNotices.php:136
 msgid "Twitch gift: paid and waiting for a draw in the stream."
 msgstr "Twitch-gave: betalt og venter på lodtrækning i streamen."
 
 #. translators: %s: the winner's Twitch name.
-#: src/Modules/Community/Gifting/GiftNotices.php:119
+#: src/Modules/Community/Gifting/GiftNotices.php:142
 #, php-format
 msgid "Twitch gift: won by %s. The winner has 24 hours to claim it."
 msgstr "Twitch-gave: vundet af %s. Vinderen har 24 timer til at hente den."
 
 #. translators: %s: product name.
-#: src/Modules/Community/Gifting/GiftNotices.php:123
+#: src/Modules/Community/Gifting/GiftNotices.php:146
 #, php-format
 msgid "Your gift %s has a winner"
 msgstr "Din gave %s har fået en vinder"
 
-#: src/Modules/Community/Gifting/GiftNotices.php:124
+#: src/Modules/Community/Gifting/GiftNotices.php:147
 msgid "Your gift has a winner"
 msgstr "Din gave har fået en vinder"
 
 #. translators: 1: the winner's Twitch name, 2: product name, 3: creator name.
-#: src/Modules/Community/Gifting/GiftNotices.php:127
+#: src/Modules/Community/Gifting/GiftNotices.php:150
 #, php-format
 msgid "%1$s won the %2$s you gave in %3$s's stream. The winner has 24 hours to claim it; we let you know when it is claimed."
 msgstr "%1$s vandt den %2$s, du gav i %3$ss stream. Vinderen har 24 timer til at hente den. Vi giver besked, når den er hentet."
 
 #. translators: %s: the winner's Twitch name.
-#: src/Modules/Community/Gifting/GiftNotices.php:144
+#: src/Modules/Community/Gifting/GiftNotices.php:167
 #, php-format
 msgid "Twitch gift: claimed by %s."
 msgstr "Twitch-gave: hentet af %s."
 
 #. translators: %s: product name.
-#: src/Modules/Community/Gifting/GiftNotices.php:148
+#: src/Modules/Community/Gifting/GiftNotices.php:171
 #, php-format
 msgid "Your gift %s was claimed"
 msgstr "Din gave %s er hentet"
 
-#: src/Modules/Community/Gifting/GiftNotices.php:149
+#: src/Modules/Community/Gifting/GiftNotices.php:172
 msgid "Your gift was claimed"
 msgstr "Din gave er hentet"
 
 #. translators: 1: the winner's Twitch name, 2: product name.
-#: src/Modules/Community/Gifting/GiftNotices.php:152
+#: src/Modules/Community/Gifting/GiftNotices.php:175
 #, php-format
 msgid "%1$s claimed the %2$s you gave. Thank you for your gift to the community!"
 msgstr "%1$s har hentet den %2$s, du gav. Tak for din gave til fællesskabet!"
 
-#: src/Modules/Community/Gifting/GiftNotices.php:168
+#: src/Modules/Community/Gifting/GiftNotices.php:191
 msgid "Twitch gift: nobody claimed it after three draws. The buyer got the gift code by e-mail."
 msgstr "Twitch-gave: ingen hentede den efter tre lodtrækninger. Køberen har fået gavekoden på e-mail."
 
 #. translators: %s: product name.
-#: src/Modules/Community/Gifting/GiftNotices.php:172
+#: src/Modules/Community/Gifting/GiftNotices.php:195
 #, php-format
 msgid "Your gift %s comes back to you"
 msgstr "Din gave %s kommer tilbage til dig"
 
-#: src/Modules/Community/Gifting/GiftNotices.php:173
+#: src/Modules/Community/Gifting/GiftNotices.php:196
 msgid "Your gift comes back to you"
 msgstr "Din gave kommer tilbage til dig"
 
 #. translators: %s: product name.
-#: src/Modules/Community/Gifting/GiftNotices.php:176
+#: src/Modules/Community/Gifting/GiftNotices.php:199
 #, php-format
 msgid "Nobody claimed the %s you gave after three draws, so the gift comes back to you."
 msgstr "Ingen hentede den %s, du gav, efter tre lodtrækninger, så gaven kommer tilbage til dig."
 
 #. translators: %s: the gift code.
-#: src/Modules/Community/Gifting/GiftNotices.php:178
+#: src/Modules/Community/Gifting/GiftNotices.php:201
 #, php-format
 msgid "Use the code %s in the shop: it covers the product, in the size and colour you choose, and up to 50 kr. of the shipping. You pay only if you choose a dearer variant or shipping. The code can be used once."
 msgstr "Brug koden %s i butikken. Den dækker produktet i den størrelse og farve, du vælger, og op til 50 kr. af fragten. Du betaler kun, hvis du vælger en dyrere variant eller fragt. Koden kan bruges én gang."
 
-#: src/Modules/Community/Gifting/GiftNotices.php:230
+#: src/Modules/Community/Gifting/GiftNotices.php:253
 msgid "Go to the product"
 msgstr "Gå til produktet"
+
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:56
+#: src/Modules/Community/Gifting/GiftPrivacy.php:56
+#: src/Modules/Community/Gifting/GiftPrivacy.php:72
+#: src/Modules/Community/Gifting/GiftPrivacy.php:101
+msgid "Twitch gifts"
+msgstr "Twitch-gaver"
 
 #: src/Modules/Community/Gifting/GiftOrderInfo.php:56
 #: templates/community/gift-claim.php:26
@@ -4135,64 +4155,64 @@ msgstr "Twitch-gave"
 msgid "Not paid yet: the gift is recorded when the order is paid."
 msgstr "Ikke betalt endnu: gaven registreres, når ordren er betalt."
 
+#. translators: 1: which gift, 2: number of gifts.
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:70
+#, php-format
+msgid "Gift %1$d of %2$d"
+msgstr "Gave %1$d af %2$d"
+
 #. translators: %s: the winner's Twitch name.
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:65
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:77
 #, php-format
 msgid "Winner: %s"
 msgstr "Vinder: %s"
 
 #. translators: %d: number of draws.
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:69
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:81
 #, php-format
 msgid "Draws: %d of 3"
 msgstr "Lodtrækninger: %d af 3"
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:75
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:86
 msgid "Do not refund this order: the gift has been drawn, and a refund does not take it back from the winner or the buyer."
 msgstr "Refundér ikke denne ordre: gaven er trukket, og en refundering tager den ikke tilbage fra vinderen eller køberen."
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:88
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:99
 msgid "Waiting for a draw in the stream."
 msgstr "Venter på lodtrækning i streamen."
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:89
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:100
 msgid "The chat is typing !enter now."
 msgstr "Chatten skriver !enter nu."
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:90
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:101
 msgid "Won; the winner has 24 hours to claim it."
 msgstr "Vundet. Vinderen har 24 timer til at hente den."
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:91
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:102
 msgid "Claimed by the winner."
 msgstr "Hentet af vinderen."
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:92
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:103
 msgid "Nobody claimed it after three draws; the buyer got the gift code."
 msgstr "Ingen hentede den efter tre lodtrækninger. Køberen har fået gavekoden."
 
-#: src/Modules/Community/Gifting/GiftOrderInfo.php:93
+#: src/Modules/Community/Gifting/GiftOrderInfo.php:104
 #: src/Modules/Community/Giveaways/GiveawayOrderInfo.php:82
 msgid "Cancelled."
 msgstr "Annulleret."
 
-#: src/Modules/Community/Gifting/GiftPrivacy.php:56
-#: src/Modules/Community/Gifting/GiftPrivacy.php:72
-#: src/Modules/Community/Gifting/GiftPrivacy.php:103
-msgid "Twitch gifts"
-msgstr "Twitch-gaver"
-
-#: src/Modules/Community/Gifting/GiftPrivacy.php:111
+#: src/Modules/Community/Gifting/GiftPrivacy.php:109
 msgid "Name in the announcement"
 msgstr "Navn i annonceringen"
 
-#: src/Modules/Community/Gifting/GiftPrivacy.php:115
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1126
+#: src/Modules/Community/Gifting/GiftPrivacy.php:113
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1146
 #: build/dashboard.js:70
 msgid "Winner"
 msgstr "Vinder"
 
-#: src/Modules/Community/Gifting/GiftPrivacy.php:119
+#: src/Modules/Community/Gifting/GiftPrivacy.php:117
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:384
 #: src/Modules/Creators/Admin/CreatorsListTable.php:83
 #: src/Modules/News/Admin/NewsAdminPage.php:223
@@ -4221,52 +4241,44 @@ msgstr "Vinder"
 msgid "Status"
 msgstr "Status"
 
-#: src/Modules/Community/Gifting/GiftPrivacy.php:153
+#: src/Modules/Community/Gifting/GiftPrivacy.php:152
 msgid "The names of the Twitch gifts could not be erased. Please try again."
 msgstr "Navnene på Twitch-gaverne kunne ikke slettes. Prøv igen."
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:170
-msgid "Give as a gift in the stream"
-msgstr "Giv som gave på streamen"
-
-#: src/Modules/Community/Gifting/GiftPurchase.php:170
-msgid "A viewer in the chat wins it and chooses size and colour. Shipping of the gift: 50 kr."
-msgstr "En seer i chatten vinder den og vælger størrelse og farve. Fragt for gaven: 50 kr."
-
-#: src/Modules/Community/Gifting/GiftPurchase.php:188
-#: src/Modules/Community/Gifting/GiftPurchase.php:202
+#: src/Modules/Community/Gifting/GiftPurchase.php:218
+#: src/Modules/Community/Gifting/GiftPurchase.php:233
 msgid "The gift cannot be bought right now."
 msgstr "Gaven kan ikke købes lige nu."
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:194
+#: src/Modules/Community/Gifting/GiftPurchase.php:224
 msgid "A gift is bought on its own. Please finish or empty your cart first, and then give the gift."
 msgstr "En gave købes for sig. Gør dit køb færdigt eller tøm kurven først, og giv så gaven."
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:218
+#: src/Modules/Community/Gifting/GiftPurchase.php:249
 msgid "A gift is bought on its own. Finish the gift first."
 msgstr "En gave købes for sig. Gør gaven færdig først."
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:240
+#: src/Modules/Community/Gifting/GiftPurchase.php:274
 msgid "A gift is bought on its own. Remove the other products from the cart to give the gift."
 msgstr "En gave købes for sig. Fjern de andre produkter fra kurven for at give gaven."
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:249
+#: src/Modules/Community/Gifting/GiftPurchase.php:283
 msgid "Gifts cannot be bought for this stream right now. Please remove the gift from the cart."
 msgstr "Der kan ikke købes gaver til denne stream lige nu. Fjern gaven fra kurven."
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:267
+#: src/Modules/Community/Gifting/GiftPurchase.php:301
 msgid "Codes cannot be used on a gift."
 msgstr "Koder kan ikke bruges på en gave."
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:305
+#: src/Modules/Community/Gifting/GiftPurchase.php:350
 msgid "Gift"
 msgstr "Gave"
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:306
-msgid "A viewer in the stream wins it and chooses size and colour."
-msgstr "En seer i streamen vinder den og vælger størrelse og farve."
+#: src/Modules/Community/Gifting/GiftPurchase.php:351
+msgid "Each gift is won by a viewer in the stream, who chooses size and colour."
+msgstr "Hver gave vindes af en seer i streamen, som selv vælger størrelse og farve."
 
-#: src/Modules/Community/Gifting/GiftPurchase.php:357
+#: src/Modules/Community/Gifting/GiftPurchase.php:406
 msgid "Gift shipping"
 msgstr "Gave-fragt"
 
@@ -4452,55 +4464,35 @@ msgstr "Abonnement tjekket"
 msgid "creator %1$d: tier %2$d"
 msgstr "creator %1$d: tier %2$d"
 
-#. translators: %s: the customer's Twitch name.
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:135
+#. translators: 1: discount in percent (e.g. 15 or 16,67), 2: subscriber tier (1–3).
+#: src/Modules/Community/TwitchSubs/TwitchSubProductNote.php:102
 #, php-format
-msgid "You are logged in with Twitch as %s."
-msgstr "Du er logget ind med Twitch som %s."
+msgid "%1$s %% for Tier %2$d"
+msgstr "%1$s %% for Tier %2$d"
 
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:140
-msgid "Your subscriber discount is taken off the eligible products."
-msgstr "Din subscriber rabat er trukket fra på de produkter, den gælder for."
-
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:141
-msgid "Your Twitch account has no subscription that gives a discount on these products."
-msgstr "Din Twitch-konto har intet abonnement, der giver rabat på disse produkter."
-
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:143
-#: templates/community/gift-claim.php:88
-msgid "Log out of Twitch"
-msgstr "Log ud fra Twitch"
-
-#. translators: %s: the highest discount in percent (e.g. 16.67).
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:149
+#. translators: %s: the discounts per tier, e.g. "15 % for Tier 3, 10 % for Tier 2 and 5 % for Tier 1".
+#: src/Modules/Community/TwitchSubs/TwitchSubProductNote.php:112
 #, php-format
-msgid "Do you subscribe on Twitch? Log in with Twitch and get up to %s %% off as a subscriber."
-msgstr "Er du subscriber på Twitch? Log ind med Twitch, og få op til %s %% rabat som subscriber."
+msgid "Twitch subs get a discount on this product: %s."
+msgstr "Twitch subs får rabat på dette produkt: %s."
 
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:155
-#: templates/community/gift-claim.php:97
-msgid "Log in with Twitch"
-msgstr "Log ind med Twitch"
+#: src/Modules/Community/TwitchSubs/TwitchSubProductNote.php:114
+msgid "Log in with Twitch in the cart, and the discount is taken off automatically."
+msgstr "Log ind med Twitch i kurven, så trækkes rabatten automatisk."
 
-#. translators: %s: the customer's remembered Twitch name.
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:158
-#, php-format
-msgid "Check my subscription as %s"
-msgstr "Tjek mit abonnement som %s"
-
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:176
+#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:208
 msgid "You are now logged in with Twitch."
 msgstr "Du er nu logget ind med Twitch."
 
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:177
+#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:209
 msgid "The Twitch login was cancelled."
 msgstr "Twitch-login blev afbrudt."
 
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:178
+#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:210
 msgid "Twitch login is not available right now."
 msgstr "Twitch-login er ikke tilgængeligt lige nu."
 
-#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:179
+#: src/Modules/Community/TwitchSubs/TwitchSubShopCard.php:211
 msgid "The Twitch login did not work. Please try again."
 msgstr "Twitch-login virkede ikke. Prøv venligst igen."
 
@@ -6022,7 +6014,7 @@ msgstr "Forsøg"
 #: src/Modules/Notifications/Catalog/AdminTypes.php:351
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:422
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:501
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1382
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1402
 #: src/Modules/ProductDesigner/DesignerNotifications.php:377
 #: src/Modules/ProductDesigner/DesignerNotifications.php:422
 #: src/Modules/ProductDesigner/DesignerNotifications.php:463
@@ -6298,11 +6290,11 @@ msgstr "En creator har bedt om at få et produkt slettet. Der sker intet med pro
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:179
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:817
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:953
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1085
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1125
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1162
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1196
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1230
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1082
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1145
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1182
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1216
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1250
 #: src/Modules/ProductDesigner/Admin/DesignerFeesSection.php:122
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:187
 #: src/Modules/ProductDesigner/DesignerNotifications.php:142
@@ -6726,7 +6718,7 @@ msgid "When a platform stops your chatbot from reaching your channel. You get on
 msgstr "Når en platform forhindrer din chatbot i at nå din kanal. Du får én mail, indtil den er forbundet igen."
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:41
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1291
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1311
 msgid "Your webhook was paused"
 msgstr "Din webhook er sat på pause"
 
@@ -6751,7 +6743,7 @@ msgid "When the winner of a Twitch gift in your stream claims it."
 msgstr "Når vinderen af en Twitch-gave i din stream henter den."
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:44
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1145
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1165
 msgid "Giveaway link ready"
 msgstr "Giveaway-link klar"
 
@@ -6760,7 +6752,7 @@ msgid "When nobody in the chat claimed your giveaway after three draws, so you g
 msgstr "Når ingen i chatten har hentet din giveaway efter tre lodtrækninger, så du får linket."
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:45
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1179
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1199
 msgid "Giveaway code used"
 msgstr "Giveaway-kode brugt"
 
@@ -6769,7 +6761,7 @@ msgid "When the winner of your giveaway uses the code."
 msgstr "Når vinderen af din giveaway bruger koden."
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:46
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1213
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1233
 msgid "Giveaway expired"
 msgstr "Giveaway udløbet"
 
@@ -6778,7 +6770,7 @@ msgid "When your giveaway runs out without being used."
 msgstr "Når din giveaway udløber uden at være brugt."
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:47
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1310
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1330
 msgid "New YouTube terms"
 msgstr "Nye YouTube-vilkår"
 
@@ -7346,9 +7338,9 @@ msgstr "Log ind med dit sædvanlige brugernavn og din adgangskode."
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:739
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:769
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1017
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1354
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1383
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1414
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1374
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1403
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1434
 msgid "Open your dashboard"
 msgstr "Åbn dit dashboard"
 
@@ -7614,355 +7606,367 @@ msgid "When a viewer buys one of the creator's products as a Twitch gift."
 msgstr "Når en seer køber et af creatorens produkter som Twitch-gave."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1074
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1076
+#, php-format
+msgid "A gift was bought in your stream: %s"
+msgstr "En gave er købt i din stream: %s"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1077
+msgid "A gift for your chat"
+msgstr "En gave til din chat"
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1078
+msgid "A viewer bought one of your products as a gift for your chat. The bot draws a winner among those who type !enter. The sale counts for you as usual."
+msgstr "En seer har købt et af dine produkter som gave til din chat. Botten trækker en vinder blandt dem, der skriver !enter. Salget tæller for dig som normalt."
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1090
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1150
+msgid "Open Twitch gifting"
+msgstr "Åbn Twitch gifting"
+
+#. translators: 1: number of gifts, 2: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1108
+#, php-format
+msgid "Someone bought %1$d × %2$s as gifts in your stream."
+msgstr "En seer købte %1$d × %2$s som gaver i din stream."
+
+#. translators: 1: the buyer's chosen name, 2: number of gifts, 3: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1110
+#, php-format
+msgid "%1$s bought %2$d × %3$s as gifts in your stream."
+msgstr "%1$s købte %2$d × %3$s som gaver i din stream."
+
+#. translators: %s: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1115
 #, php-format
 msgid "Someone bought %s as a gift in your stream."
 msgstr "En seer har købt %s som gave i din stream."
 
 #. translators: 1: the buyer's chosen name, 2: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1076
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1117
 #, php-format
 msgid "%1$s bought %2$s as a gift in your stream."
 msgstr "%1$s har købt %2$s som gave i din stream."
 
-#. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1079
-#, php-format
-msgid "A gift was bought in your stream: %s"
-msgstr "En gave er købt i din stream: %s"
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1080
-msgid "A gift for your chat"
-msgstr "En gave til din chat"
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1081
-msgid "A viewer bought one of your products as a gift for your chat. The bot draws a winner among those who type !enter. The sale counts for you as usual."
-msgstr "En seer har købt et af dine produkter som gave til din chat. Botten trækker en vinder blandt dem, der skriver !enter. Salget tæller for dig som normalt."
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1093
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1130
-msgid "Open Twitch gifting"
-msgstr "Åbn Twitch gifting"
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1107
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1127
 msgid "Gift claimed by the winner"
 msgstr "Gave hentet af vinderen"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1108
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1128
 msgid "When the winner of a Twitch gift in the creator's stream claims it."
 msgstr "Når vinderen af en Twitch-gave i creatorens stream henter den."
 
 #. translators: 1: the winner's Twitch name, 2: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1118
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1138
 #, php-format
 msgid "%1$s claimed the gift %2$s."
 msgstr "%1$s har hentet gaven %2$s."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1121
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1141
 #, php-format
 msgid "The gift %s was claimed"
 msgstr "Gaven %s er hentet"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1122
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1142
 msgid "A gift was claimed"
 msgstr "En gave er hentet"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1123
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1143
 msgid "The winner of a gift in your stream logged in with Twitch and got the gift code."
 msgstr "Vinderen af en gave i din stream har logget ind med Twitch og fået gavekoden."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1146
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1166
 msgid "When nobody claimed the creator's giveaway after three draws in the chat, so the creator gets the link to pass on."
 msgstr "Når ingen har hentet creatorens giveaway efter tre lodtrækninger i chatten, så creatoren får linket til at give videre."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1156
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1176
 #, php-format
 msgid "Nobody claimed your giveaway %s after three draws. The link is ready on the Giveaways page."
 msgstr "Ingen hentede din giveaway %s efter tre lodtrækninger. Linket er klar på siden Giveaways."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1159
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1179
 #, php-format
 msgid "Your giveaway %s has a link for you"
 msgstr "Din giveaway %s har et link til dig"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1160
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1180
 msgid "Your giveaway link is ready"
 msgstr "Dit giveaway-link er klar"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1161
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1181
 msgid "Nobody in the chat claimed your giveaway after three draws. Pass the link on to a winner yourself; it can be redeemed for 30 days."
 msgstr "Ingen i chatten hentede din giveaway efter tre lodtrækninger. Giv selv linket videre til en vinder; det kan indløses i 30 dage."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1165
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1199
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1233
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1185
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1219
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1253
 msgid "Open Giveaways"
 msgstr "Åbn Giveaways"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1180
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1200
 msgid "When the winner of the creator's giveaway uses the code; a giveaway from the balance is charged then."
 msgstr "Når vinderen af creatorens giveaway bruger koden; en giveaway fra saldoen trækkes da."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1190
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1210
 #, php-format
 msgid "The code of your giveaway %s was used."
 msgstr "Koden til din giveaway %s er brugt."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1193
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1213
 #, php-format
 msgid "The code of your giveaway %s was used"
 msgstr "Koden til din giveaway %s er brugt"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1194
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1214
 msgid "Your giveaway was used"
 msgstr "Din giveaway er brugt"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1195
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1215
 msgid "The winner has used the code of your giveaway. If you paid it from your balance, it is charged now."
 msgstr "Vinderen har brugt koden til din giveaway. Hvis du betaler den fra din saldo, trækkes beløbet nu."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1214
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1234
 msgid "When the creator's giveaway runs out without being used; nothing is charged."
 msgstr "Når creatorens giveaway udløber uden at være brugt; intet trækkes."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1224
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1244
 #, php-format
 msgid "Your giveaway %s ran out without being used."
 msgstr "Din giveaway %s udløb uden at være brugt."
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1227
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1247
 #, php-format
 msgid "Your giveaway %s ran out"
 msgstr "Din giveaway %s er udløbet"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1228
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1248
 msgid "Your giveaway ran out"
 msgstr "Din giveaway er udløbet"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1229
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1249
 msgid "Nobody used your giveaway within 30 days. Nothing is charged from your balance, and the money is no longer set aside."
 msgstr "Ingen brugte din giveaway inden for 30 dage. Intet trækkes fra din saldo, og beløbet er ikke længere reserveret."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1247
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1267
 msgid "Chatbot lost access"
 msgstr "Chatbot mistede adgang"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1248
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1268
 msgid "When a platform refuses the chatbot's access to the creator's channel; once until it is connected again."
 msgstr "Når en platform afviser chatbottens adgang til creatorens kanal; én gang, indtil den er forbundet igen."
 
 #. translators: %s: platform, e.g. Twitch.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1255
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1275
 #, php-format
 msgid "The chatbot lost access to your %s channel. Connect it again under Alerts."
 msgstr "Chatbotten har mistet adgangen til din %s-kanal. Forbind den igen under Alerts."
 
 #. translators: %s: platform.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1258
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1278
 #, php-format
 msgid "The chatbot lost access to your %s channel"
 msgstr "Chatbotten har mistet adgangen til din %s-kanal"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1259
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1279
 msgid "Your chatbot needs to be connected again"
 msgstr "Din chatbot skal forbindes igen"
 
 #. translators: %s: platform.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1261
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1281
 #, php-format
 msgid "%s no longer lets the chatbot write in your channel, so purchases are not announced in your chat. Connect the channel again under Alerts."
 msgstr "%s lader ikke længere chatbotten skrive i din kanal, så køb bliver ikke annonceret i din chat. Forbind kanalen igen under Alerts."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1265
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1285
 msgid "Connect again"
 msgstr "Forbind igen"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1279
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1299
 msgid "Webhook paused"
 msgstr "Webhook sat på pause"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1280
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1300
 msgid "When one of the creator's webhooks is paused after 10 failed deliveries in a row."
 msgstr "Når en af creatorens webhooks sættes på pause efter 10 fejlede leveringer i træk."
 
 #. translators: %s: webhook name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1287
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1307
 #, php-format
 msgid "Your webhook \"%s\" was paused after 10 failed deliveries."
 msgstr "Din webhook \"%s\" er sat på pause efter 10 fejlede leveringer."
 
 #. translators: %s: webhook name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1290
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1310
 #, php-format
 msgid "Your webhook \"%s\" was paused"
 msgstr "Din webhook \"%s\" er sat på pause"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1292
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1312
 msgid "The last 10 deliveries to your webhook failed, so we paused it. Check the receiver, then resume the webhook under Alerts."
 msgstr "De seneste 10 leveringer til din webhook fejlede, så vi har sat den på pause. Tjek modtageren, og genoptag derefter webhooken under Alerts."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1293
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1313
 msgid "Webhook"
 msgstr "Webhook"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1296
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1316
 msgid "See your webhooks"
 msgstr "Se dine webhooks"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1311
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1331
 msgid "When an administrator renews the YouTube chatbot's terms, which every creator must accept again."
 msgstr "Når en administrator fornyer YouTube-chatbottens vilkår, som alle creators skal acceptere igen."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1317
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1337
 msgid "Please accept the new terms of the YouTube chatbot under Alerts."
 msgstr "Acceptér venligst YouTube-chatbottens nye vilkår under Alerts."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1319
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1339
 msgid "Please accept the new YouTube terms"
 msgstr "Acceptér venligst de nye YouTube-vilkår"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1320
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1340
 msgid "New terms for the YouTube chatbot"
 msgstr "Nye vilkår for YouTube-chatbotten"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1321
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1341
 msgid "The terms of the YouTube chatbot were updated. Until you accept them, the chatbot does not write in your YouTube chat."
 msgstr "YouTube-chatbottens vilkår er opdateret. Indtil du accepterer dem, skriver chatbotten ikke i din YouTube-chat."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1325
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1345
 msgid "Read and accept"
 msgstr "Læs og acceptér"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1339
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1359
 msgid "Live in the shop"
 msgstr "Live i butikken"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1340
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1360
 msgid "When an administrator approves that a creator who signed up goes live."
 msgstr "Når en administrator godkender, at en creator, der har oprettet sig selv, går live."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1346
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1366
 msgid "You are live in the shop! Your approved designs are on their way."
 msgstr "Du er live i butikken! Dine godkendte designs er på vej."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1348
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1368
 msgid "You are live in the shop"
 msgstr "Du er live i butikken"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1349
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1369
 msgid "You are live!"
 msgstr "Du er live!"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1350
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1370
 msgid "We approved your request: your shop is live, and your approved designs are on their way to the shop. Share the link with your followers."
 msgstr "Vi har godkendt din anmodning: din shop er live, og dine godkendte designs er på vej i butikken. Del linket med dine følgere."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1369
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1389
 msgid "When an administrator declines a request to go live, with the reason."
 msgstr "Når en administrator afviser en anmodning om at gå live, med begrundelsen."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1375
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1395
 msgid "Your request to go live was not approved yet. Read the reason in your dashboard."
 msgstr "Din anmodning om at gå live er ikke godkendt endnu. Læs begrundelsen i dit dashboard."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1377
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1397
 msgid "Your request to go live"
 msgstr "Din anmodning om at gå live"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1378
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1398
 msgid "Not live yet"
 msgstr "Ikke live endnu"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1379
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1399
 msgid "We could not approve your request to go live yet. You can change what is needed and ask again from your dashboard."
 msgstr "Vi kunne ikke godkende din anmodning om at gå live endnu. Du kan rette det nødvendige og anmode igen fra dit dashboard."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1399
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1409
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1419
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1429
 msgid "New version of the agreement"
 msgstr "Ny version af aftalen"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1400
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1420
 msgid "When an administrator publishes a new version of the agreement for creators; sent to creators who signed up themselves."
 msgstr "Når en administrator udgiver en ny version af aftalen for creators; sendes til creators, der har oprettet sig selv."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1406
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1426
 msgid "Our agreement was changed. Please read and accept the new version."
 msgstr "Vores aftale er ændret. Læs og acceptér den nye version."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1406
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1426
 msgid "Our agreement was updated. You can read the new version in your dashboard."
 msgstr "Vores aftale er opdateret. Du kan læse den nye version i dit dashboard."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1408
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1428
 msgid "Please accept our new agreement"
 msgstr "Acceptér venligst vores nye aftale"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1408
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1428
 msgid "Our agreement was updated"
 msgstr "Vores aftale er opdateret"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1410
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1430
 msgid "We changed our agreement with you. Please read and accept the new version in your dashboard; until then you cannot request a payout."
 msgstr "Vi har ændret vores aftale med dig. Læs og acceptér den nye version i dit dashboard; indtil da kan du ikke anmode om udbetaling."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1410
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1430
 msgid "We made a minor update to our agreement with you. You can read the new version in your dashboard; you do not need to do anything."
 msgstr "Vi har lavet en mindre opdatering af vores aftale med dig. Du kan læse den nye version i dit dashboard; du skal ikke gøre noget."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1428
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1448
 msgid "API key created or revoked"
 msgstr "API-nøgle oprettet eller tilbagekaldt"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1429
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1449
 msgid "When an API key is created for the creator, or an administrator revokes their keys (security message)."
 msgstr "Når der oprettes en API-nøgle til creatoren, eller en administrator tilbagekalder creatorens nøgler (sikkerhedsbesked)."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1439
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1459
 msgid "An administrator revoked your API keys."
 msgstr "En administrator har tilbagekaldt dine API-nøgler."
 
 #. translators: %s: key name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1441
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1461
 #, php-format
 msgid "A new API key \"%s\" was created."
 msgstr "En ny API-nøgle \"%s\" er oprettet."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1444
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1445
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1464
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1465
 msgid "Your API keys were revoked"
 msgstr "Dine API-nøgler er tilbagekaldt"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1446
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1466
 msgid "An administrator revoked your API keys, so they no longer work. Please contact us if you have questions."
 msgstr "En administrator har tilbagekaldt dine API-nøgler, så de virker ikke længere. Kontakt os, hvis du har spørgsmål."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1450
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1464
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1470
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1484
 msgid "See your API keys"
 msgstr "Se dine API-nøgler"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1455
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1456
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1475
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1476
 msgid "A new API key was created"
 msgstr "En ny API-nøgle er oprettet"
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1458
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1478
 msgid "A new API key was created for your account."
 msgstr "Der er oprettet en ny API-nøgle til din konto."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1459
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1479
 msgid "If you did not create it, revoke it under Alerts and contact us."
 msgstr "Hvis du ikke selv har oprettet den, så tilbagekald den under Alerts, og kontakt os."
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1461
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1481
 msgid "Key"
 msgstr "Nøgle"
 
@@ -14411,6 +14415,35 @@ msgstr "Googles privatlivspolitik"
 msgid "Version %1$d, published %2$s"
 msgstr "Version %1$d, offentliggjort %2$s"
 
+#: templates/community/gift-box.php:52
+#: templates/community/gift-box.php:95
+msgid "Give as a gift in the stream"
+msgstr "Giv som gave på streamen"
+
+#: templates/community/gift-box.php:56
+msgid "Live on Twitch"
+msgstr "Live på Twitch"
+
+#. translators: %s: the creator's name, linked to the Twitch channel.
+#: templates/community/gift-box.php:65
+#, php-format
+msgid "%s is live on Twitch right now. Give this product to lucky viewers who are watching!"
+msgstr "%s er live på Twitch lige nu. Giv produktet til heldige seere, der ser med!"
+
+#: templates/community/gift-box.php:78
+msgid "The creator is live on Twitch right now. Give this product to lucky viewers who are watching!"
+msgstr "Creatoren er live på Twitch lige nu. Giv produktet til heldige seere, der ser med!"
+
+#: templates/community/gift-box.php:89
+msgid "Number of gifts"
+msgstr "Antal gaver"
+
+#. translators: %s: the gift shipping per gift, e.g. 50.
+#: templates/community/gift-box.php:100
+#, php-format
+msgid "Each gift gets its own winner, who chooses size and colour. Shipping: %s kr. per gift."
+msgstr "Hver gave får sin egen vinder, som selv vælger størrelse og farve. Fragt: %s kr. pr. gave."
+
 #: templates/community/gift-claim.php:26
 msgid "You won a gift!"
 msgstr "Du har vundet en gave!"
@@ -14444,6 +14477,11 @@ msgstr "Hent gaven inden %s."
 #, php-format
 msgid "You are logged in with Twitch as %1$s, but the gift was won by %2$s. Log out of Twitch and log in as the winner."
 msgstr "Du er logget ind med Twitch som %1$s, men gaven blev vundet af %2$s. Log ud af Twitch, og log ind som vinderen."
+
+#: templates/community/gift-claim.php:88
+#: templates/community/twitch-card.php:69
+msgid "Log out of Twitch"
+msgstr "Log ud fra Twitch"
 
 #: templates/community/gift-claim.php:90
 msgid "The gift has been redeemed. Open it again to see the gift code."
@@ -14480,6 +14518,41 @@ msgstr "Hent gaven"
 #: templates/community/gift-claim.php:96
 msgid "Log in with the Twitch account that won. Then you choose size and colour, and the gift code is used in the cart."
 msgstr "Log ind med den Twitch-konto, der vandt. Derefter vælger du størrelse og farve, og gavekoden bruges i kurven."
+
+#: templates/community/gift-claim.php:97
+#: templates/community/twitch-card.php:98
+msgid "Log in with Twitch"
+msgstr "Log ind med Twitch"
+
+#. translators: %s: the customer's Twitch name.
+#: templates/community/twitch-card.php:59
+#, php-format
+msgid "Logged in as %s"
+msgstr "Logget ind som %s"
+
+#: templates/community/twitch-card.php:63
+msgid "✓ Your subscriber discount is taken off"
+msgstr "✓ Din subscriber rabat er trukket fra"
+
+#: templates/community/twitch-card.php:65
+msgid "No subscriber discount on these products"
+msgstr "Ingen subscriber rabat på disse varer"
+
+#: templates/community/twitch-card.php:77
+msgid "Do you subscribe on Twitch? Log in and the discount is taken off the eligible products."
+msgstr "Er du subscriber på Twitch? Log ind, så trækkes rabatten fra på de varer, den gælder for."
+
+#. translators: 1: subscriber tier (1–3), 2: discount in percent.
+#: templates/community/twitch-card.php:84
+#, php-format
+msgid "Tier %1$d · up to %2$s %%"
+msgstr "Tier %1$d · op til %2$s %%"
+
+#. translators: %s: the customer's remembered Twitch name.
+#: templates/community/twitch-card.php:100
+#, php-format
+msgid "Check my subscription as %s"
+msgstr "Tjek mit abonnement som %s"
 
 #: templates/dashboard/no-access.php:31
 msgid "Access not active"
