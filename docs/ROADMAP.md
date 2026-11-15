@@ -1418,7 +1418,48 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - én knap, "Brug billeder uden baggrund på alle produkter", laver billederne og sætter dem i shoppen med det samme (fortryd pr. produkt);
   - Printful bedes om PNG (katalogimport og produktbilleder), og PNG-skabeloner foretrækkes.
   - Gelato, Prodigi og Printify har intet formatvalg i de kald, vi bruger.
+- **51.8 PSD-scener uden baggrund (projektejerens ønske 2026-11-15):** ✅ fx kopperne, hvis PSD har gennemsigtig baggrund.
+  - **Hvorfor:** de blev tegnet på et hvidt dokument og gemt som JPG.
+  - **Nu:** de tegnes uden det hvide dokument, hvor PSD'ens egne billeder ikke dækker, og gemmes som PNG. Kanterne beholder deres egen farve uden hvidt.
+  - **Uden gennemsigtighed:** en PSD med baggrund forbliver JPG.
+  - **Hvor:** nye designs og den automatiske kørsel på Forslag → "Billeder uden baggrund".
 - **51.6 Test og levering:** ✅ unit-, Jest- og integrationstest (godkend, fortryd, kassér), danske tekster og docs. Runtime 2026-11-15 i Chrome med den byggede admin-bundle: opgave → tegning → upload for en side med farvemaske og en side med eget farvefoto og silhuet; baggrund, gulvskygge og halsåbning blev gennemsigtige. Godkend og fortryd kræver produktlåsen (MySQL) og testes på stg.
+
+## Fase 52 – Gelato-produkter med egne valg, printområde pr. variant og skærelinje 📋 (projektejerens ønske 2026-11-15; efter 2.2.0, version 2.3.0; ADR-115 og plan afventer godkendelse)
+
+**Baggrund:** de samme rettelser er lavet i Lumise-addon'et "CCMerch Udbydere" 1.2.4–1.2.7. Projektejerens noter ligger i `ændringer fra lumise/` (ikke i git).
+- **Testskabelon:** Gelatos Fine Art Poster `68af8365-1ca7-4207-af23-15b6378d0128`.
+- **Varianter:** 58, nemlig 29 størrelser × Orientation (Vertical/Horizontal).
+- **Printflader:** printArea `"1"`, 28 forskellige printformater og 4 mm bleed.
+
+**Tjekket i Dashboardets kode 2026-11-15:**
+1. **Akser fra skabelonens egne valg** (fx Retning × Størrelse).
+   - **I dag:** `GelatoCatalog::choice()` laver kun farve × størrelse, og dubletter forsvinder uden besked. Plakaten giver derfor 29 i stedet for 58 varianter.
+   - **Skal laves:**
+     - et valg ved navn Size/Format/Størrelse bliver størrelsen, og Color/Colour/Farve bliver farven;
+     - andre valg (Orientation, Paper, Frame, Material, Finish) får deres eget, danske navn: Retning, Lodret/Vandret, Papir, Ramme, Materiale, Overflade;
+     - aksenavnene vises i importen og bliver attributnavne;
+     - dubletter tælles og vises.
+2. **Printområde, printmål og foto pr. variant** (lodret ≠ vandret, A3 ≠ A0). **Den vigtigste.**
+   - **I dag:** `GelatoCatalog::sides()` læser kun den første variant, og en side har ét printmål. Alle plakatstørrelser får den første variants mål, og vandrette får det lodrette printområde.
+   - **Begrænsning:** "sider pr. størrelse" rækker ikke (28 formater, højst 8 sider).
+   - **Skal laves:** printmål (mm/dpi) pr. størrelse og printområde og foto pr. værdi af den første akse, når den ikke er farve. Det ændrer skabelonen, designeren, printfilerne, mockups og prisen og kræver ADR-115.
+3. **Størrelsesnavne.**
+   - **I dag:** `size_of()` og basisproduktet klipper eller afviser over 20 tegn (plakaten har op til 23), og dobbelte mellemrum samles ikke.
+   - **Skal laves:** længere grænse (60), sammenligning af rensede navne og en test med `8x12"`.
+4. **Størrelsesrækkefølge:** tøj XS < S < M < L < XL < 2XL … 8XL (XXL = 2XL), alt andet efter printfladens areal fra mindst til størst; lige store beholder skabelonens rækkefølge.
+5. **Navne på printflader:** `"1"` vises som "Forside", andre tal som "Side 2", "Side 3" …
+6. **Skærelinje (bleed).**
+   - **Bleed:** de færdige mål hentes fra Gelatos produkt-API (`GET /v3/products/{productUid}`, `dimensions`). Bleed = (printflade − færdigt mål) / 2 pr. akse, kun mellem 0,5 og 15 mm (prøv også bredde og højde byttet om). Det gemmes pr. variant og side, og svaret caches 30 dage.
+   - **Designeren:** grå nedtoning uden for skærelinjen, en rød stiplet linje med hvid kant og teksten "Alt uden for den røde linje kan blive skåret af."
+   - **Aldrig i eksporten:** linjerne kommer aldrig med i det gemte design, printfilen (som beholder hele bleed), mockups eller billeder.
+   - **Eksisterende basisprodukter:** opdateres med "Hent bleed fra Gelato".
+
+**Ikke relevant for Dashboardet** (Lumise-særheder): hvid flade bag produktbilledet, zoner altid "portrait", menulinjens højde, broderi- og mockup-bjælken og design i ordremails.
+
+**Rækkefølge (forslag):** 3, 4 og 5 først (små og uafhængige), derefter 1 og 2 sammen, så 6.
+
+**Næste skridt:** ADR-115 og en plan til projektejerens godkendelse. Addon'ets kildekode læses kun med projektejerens tilladelse (Project Isolation).
 
 ## Version 2.1.1 ✅ (tagget 2026-11-12 på 555ae87)
 

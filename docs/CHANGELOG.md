@@ -33,7 +33,7 @@ Fase 48 (ADR-111), fase 49 (ADR-112), fase 50 (ADR-113) og fase 51 (ADR-114): co
   - OBS-linkets navn vælges under Indstillinger → Community (standard `merch_ad`, auditeret); det første navn `merchboard_merch_ad` og op til 10 tidligere navne virker fortsat.
 - **Produktbilleder uden baggrund** (fase 51, ADR-114):
   - **Omridset:** er skabelonens foto en PNG uden baggrund, er det selv produktets omrids. Ellers bruges et valgfrit lag "Silhuet" (som "Lav den ud fra baggrunden" kan lave i browseren fra et ensfarvet foto) eller farvemasken.
-  - **Nye designs:** shoppens billeder er PNG uden baggrund på sider med et omrids. PSD-scener, sider uden omrids og broderiets nærbilleder er JPEG som før.
+  - **Nye designs:** shoppens billeder er PNG uden baggrund på sider med et omrids og på PSD-scener med gennemsigtig baggrund (fx kopper). Sider uden omrids, PSD'er med baggrund og broderiets nærbilleder er JPEG som før.
   - **Eksisterende produkter:** fanen Forslag → "Billeder uden baggrund" viser hvert godkendt produkt med shoppens billede ved siden af det nye.
     - "Brug billeder uden baggrund på alle produkter" laver billederne i admins browser og sætter dem i shoppen med det samme, på det gamle billedes plads i produktet, galleriet og variationerne.
     - Det enkelte produkt kan også laves og godkendes for sig. "Fortryd" sætter de gamle billeder tilbage, og "Kassér" dropper de ventende.

@@ -6791,6 +6791,7 @@ Accepteret af projektejeren 2026-11-15. Udgives i 2.2.0 sammen med fase 48–50.
 - **Én knap kører det hele.** "Brug billeder uden baggrund på alle produkter" laver billederne og sætter dem i shoppen med det samme, produkt for produkt, uden en godkendelse pr. produkt. "Fortryd" pr. produkt består, og det enkelte produkt kan stadig laves og godkendes for sig.
 - **Leverandører:** Printful bedes om PNG ved katalogimport og produktbilleder, og en PNG-skabelon foretrækkes. Mediebiblioteket mærker kun et billede uden baggrund (`_merchboard_transparent`), når PNG'en faktisk har gennemsigtige pixels.
 - **Uden formatvalg:** Gelato, Prodigi og Printify har ikke et formatvalg i de kald, vi bruger. Deres billeder bruges, som de kommer.
+- **PSD-scener** (fx kopper) tegnes uden det hvide dokument, hvor PSD'ens egne billeder ikke dækker. Hvidt regnes ud af halvt dækkede kanter. Uden en gennemsigtig pixel forbliver de JPEG. Pkt. 3's "PSD-scener får JPEG som før" gælder ikke længere.
 
 ## Context
 Merch-reklamen (ADR-113) og Twitch-panelet (ADR-112) skal vise produkterne uden baggrund. Det fungerer dårligt at fjerne baggrunden fra shoppens billeder bagefter, fordi baggrunden ofte ikke er ensfarvet.
