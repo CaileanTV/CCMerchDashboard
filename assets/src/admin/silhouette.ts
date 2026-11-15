@@ -75,6 +75,20 @@ async function silhouetteOf( image: HTMLImageElement ): Promise< Blob | null > {
 }
 
 /**
+ * The silhouette PNG of a photo at a URL, or null when it cannot be read or
+ * its background is not plain.
+ *
+ * @param url The photo's URL.
+ */
+export async function silhouetteFromUrl( url: string ): Promise< Blob | null > {
+	try {
+		return await silhouetteOf( await load( url ) );
+	} catch {
+		return null;
+	}
+}
+
+/**
  * Wires a "Make it from the background" button.
  *
  * @param button The button (`data-index`: the side's index in the form).

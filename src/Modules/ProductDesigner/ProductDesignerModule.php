@@ -306,7 +306,7 @@ final class ProductDesignerModule implements Module {
 				$c->get( DesignerAssetRepository::class )
 			)
 		);
-		$container->set( DesignerCutoutsPage::class, static fn( Container $c ): DesignerCutoutsPage => new DesignerCutoutsPage( $c->get( DesignerCutouts::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ) ) );
+		$container->set( DesignerCutoutsPage::class, static fn( Container $c ): DesignerCutoutsPage => new DesignerCutoutsPage( $c->get( DesignerCutouts::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ), $c->get( BaseProductService::class ) ) );
 		$container->set(
 			DesignerApply::class,
 			static fn( Container $c ): DesignerApply => new DesignerApply(

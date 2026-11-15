@@ -1941,6 +1941,23 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$view   = $this->bases_repository()->find( $opaque )?->views[0] ?? self::fail( 'No side.' );
 		self::assertNull( $cutouts->outline( $view, 'black' ) );
 
+		// The photo on white: the admin page offers it for a silhouette, which keeps the base product's version.
+		self::assertSame( array( 'front' ), array_column( $cutouts->outline_job( $opaque ), 'key' ) );
+		$before = $this->bases_repository()->find( $opaque )?->version;
+
+		try {
+			$this->bases->set_silhouette( $opaque, 'front', AlertImagesTest::upload( self::cutout_photo( false ), 'silhouette.png' ) );
+			self::fail( 'A PNG without transparent pixels is no outline.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::FILE_TYPE, $e->reason() );
+		}
+
+		$this->bases->set_silhouette( $opaque, 'front', AlertImagesTest::upload( self::cutout_photo( true ), 'silhouette.png' ) );
+		$view = $this->bases_repository()->find( $opaque )?->views[0] ?? self::fail( 'No side.' );
+		self::assertSame( 'silhouette', ( new DesignerCutouts( $this->products, $this->bases_repository(), $this->files, new DesignerMedia( $this->files ), $this->guard, $this->writer, $this->service( AuditTrail::class ), new DesignerAssetRepository( $this->wpdb ) ) )->outline( $view, 'black' ) );
+		self::assertSame( $before, $this->bases_repository()->find( $opaque )?->version, 'No new version.' );
+		self::assertSame( array(), $cutouts->outline_job( $opaque ) );
+
 		// A product approved before on the clear photo can be made and shows the photo as its outline.
 		$product = $this->drafts->create( $this->creator, $clear );
 		$this->save( $product, '20' );

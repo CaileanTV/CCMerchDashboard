@@ -127,7 +127,7 @@ final class DesignerCutouts {
 	 * Each image: the shop's current attachment (`old`), and the new one as a
 	 * waiting file (`waiting`) or an approved attachment (`approved`).
 	 *
-	 * @return list<array{product: int, creator_id: int, wc_product_id: int, version_id: int, title: string, state: string, undo: bool, slots: list<array{key: string, label: string, old: int|null, waiting: bool, approved: int|null}>}>
+	 * @return list<array{product: int, creator_id: int, base_id: int, wc_product_id: int, version_id: int, title: string, state: string, undo: bool, slots: list<array{key: string, label: string, old: int|null, waiting: bool, approved: int|null}>}>
 	 * @throws DatabaseException When the products cannot be read.
 	 */
 	public function overview(): array {
@@ -162,6 +162,7 @@ final class DesignerCutouts {
 			$rows[] = array(
 				'product'       => $row['id'],
 				'creator_id'    => $row['creator_id'],
+				'base_id'       => $row['base_id'],
 				'wc_product_id' => $row['wc_product_id'],
 				'version_id'    => $row['live_version_id'],
 				'title'         => (string) ( $version['title'] ?? '' ),
@@ -236,6 +237,44 @@ final class DesignerCutouts {
 			'version' => (int) $version['id'],
 			'slots'   => $slots,
 		);
+	}
+
+	/**
+	 * The sides of a base product without an outline, with the photo a
+	 * silhouette can be made from (its background, else its first colour's
+	 * own photo): the administrator's browser removes a plain background and
+	 * sends the silhouette (ADR-114, the owner's wish 2026-11-15: the old
+	 * images on white become images without background).
+	 *
+	 * @param int $base_id Base product.
+	 * @return list<array{key: string, name: string, photo: string}>
+	 * @throws DesignerException When the base product is unknown.
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	public function outline_job( int $base_id ): array {
+		$base  = $this->bases->find( $base_id ) ?? self::refuse( DesignerException::BASE_UNKNOWN );
+		$sides = array();
+
+		foreach ( $base->views as $view ) {
+			$photo = $view->layers['background'] ?? array_values( $view->color_backgrounds() )[0] ?? null;
+
+			if ( null !== $view->scene || null === $photo ) {
+				continue;
+			}
+
+			foreach ( $base->colors as $color ) {
+				if ( null === $this->outline( $view, $color['key'] ) ) {
+					$sides[] = array(
+						'key'   => $view->key,
+						'name'  => $view->name,
+						'photo' => DesignerAssetDownload::url( $photo ),
+					);
+					break;
+				}
+			}
+		}
+
+		return $sides;
 	}
 
 	/**

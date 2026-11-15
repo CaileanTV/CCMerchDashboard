@@ -9,6 +9,7 @@ import { __, sprintf } from '@wordpress/i18n';
 
 import { parseView } from '../dashboard/api/designer';
 import type { LayerKind } from '../dashboard/api/designer';
+import { silhouetteFromUrl } from './silhouette';
 import {
 	composeMockup,
 	composeScene,
@@ -228,6 +229,83 @@ async function makeProduct(
 }
 
 /**
+ * Gives the sides of a product's base product without an outline a
+ * silhouette made from the template's photo on white (`data-outline-job`,
+ * `data-outline`). True when there was nothing to do or every side got one.
+ *
+ * @param button The product's button.
+ * @param say    Shows the progress.
+ */
+async function makeOutline(
+	button: HTMLButtonElement,
+	say: ( text: string ) => void
+): Promise< boolean > {
+	const jobUrl = button.dataset.outlineJob;
+
+	if ( jobUrl === undefined ) {
+		return true;
+	}
+
+	say( __( 'Removing the white background…', 'merchboard' ) );
+
+	const answer: unknown = await fetch( jobUrl, {
+		credentials: 'same-origin',
+	} )
+		.then( ( response ) => response.json() )
+		.catch( () => null );
+	const sides =
+		typeof answer === 'object' &&
+		answer !== null &&
+		( answer as { success?: unknown } ).success === true
+			? ( answer as { data?: { sides?: unknown } } ).data?.sides
+			: null;
+
+	if ( ! Array.isArray( sides ) ) {
+		say( __( 'The product could not be read.', 'merchboard' ) );
+		return false;
+	}
+
+	for ( const side of sides as { key?: unknown; photo?: unknown }[] ) {
+		const png =
+			typeof side.photo === 'string'
+				? await silhouetteFromUrl( side.photo )
+				: null;
+
+		if ( png === null || typeof side.key !== 'string' ) {
+			say(
+				__(
+					'The background is not plain. Upload a PNG without background as the silhouette on the base product.',
+					'merchboard'
+				)
+			);
+			return false;
+		}
+
+		const body = new FormData();
+		body.append( 'side', side.key );
+		body.append(
+			'file',
+			new File( [ png ], 'silhouette.png', { type: 'image/png' } )
+		);
+
+		const sent = await fetch( button.dataset.outline ?? '', {
+			method: 'POST',
+			credentials: 'same-origin',
+			body,
+		} )
+			.then( ( response ) => response.ok )
+			.catch( () => false );
+
+		if ( ! sent ) {
+			say( __( 'The silhouette could not be saved.', 'merchboard' ) );
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
  * Puts a product's waiting images in the shop.
  *
  * @param button The product's button (`data-apply`).
@@ -285,10 +363,18 @@ function start(): void {
 
 	buttons.forEach( ( button ) =>
 		button.addEventListener( 'click', () => {
+			const say = statusOf( button );
+
 			lock( true );
-			void makeProduct( button, statusOf( button ) ).then( () =>
-				window.location.reload()
-			);
+			void makeOutline( button, say ).then( async ( outlined ) => {
+				if ( ! outlined ) {
+					lock( false );
+					return;
+				}
+
+				await makeProduct( button, say );
+				window.location.reload();
+			} );
 		} )
 	);
 
@@ -310,7 +396,12 @@ function start(): void {
 					)
 				);
 
-				if ( button.dataset.state === 'todo' ) {
+				// The old images on white: an outline from the template's photo first.
+				if ( ! ( await makeOutline( button, statusOf( button ) ) ) ) {
+					continue;
+				}
+
+				if ( button.dataset.state !== 'pending' ) {
 					await makeProduct( button, statusOf( button ) );
 				}
 

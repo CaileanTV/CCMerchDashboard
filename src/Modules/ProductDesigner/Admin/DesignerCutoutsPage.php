@@ -15,6 +15,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Admin\Approvals\ApprovalTab;
 use MerchBoard\Modules\Admin\Approvals\ApprovalsPage;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerCutouts;
 
@@ -52,23 +53,29 @@ final class DesignerCutoutsPage {
 
 	public const ACTION_APPLY = 'merchboard_designer_cutouts_apply';
 
+	public const ACTION_OUTLINE_JOB = 'merchboard_designer_cutouts_outline_job';
+
+	public const ACTION_OUTLINE = 'merchboard_designer_cutouts_outline';
+
 	public const RESULT_ARG = 'merchboard_cutouts_result';
 
 	/**
 	 * Constructor.
 	 *
-	 * @param DesignerCutouts   $cutouts    The images without background.
-	 * @param CreatorRepository $creators   Creators.
-	 * @param Logger            $logger     Technical log.
-	 * @param string            $plugin_dir Plugin folder (with slash).
-	 * @param string            $plugin_url Plugin URL (with slash).
+	 * @param DesignerCutouts    $cutouts    The images without background.
+	 * @param CreatorRepository  $creators   Creators.
+	 * @param Logger             $logger     Technical log.
+	 * @param string             $plugin_dir Plugin folder (with slash).
+	 * @param string             $plugin_url Plugin URL (with slash).
+	 * @param BaseProductService $bases     Base products (the silhouettes).
 	 */
 	public function __construct(
 		private DesignerCutouts $cutouts,
 		private CreatorRepository $creators,
 		private Logger $logger,
 		private string $plugin_dir,
-		private string $plugin_url
+		private string $plugin_url,
+		private BaseProductService $bases
 	) {
 	}
 
@@ -81,6 +88,8 @@ final class DesignerCutoutsPage {
 		add_action( 'admin_post_' . self::ACTION_UPLOAD, array( $this, 'handle_upload' ) );
 		add_action( 'admin_post_' . self::ACTION_FILE, array( $this, 'handle_file' ) );
 		add_action( 'admin_post_' . self::ACTION_APPLY, array( $this, 'handle_apply' ) );
+		add_action( 'admin_post_' . self::ACTION_OUTLINE_JOB, array( $this, 'handle_outline_job' ) );
+		add_action( 'admin_post_' . self::ACTION_OUTLINE, array( $this, 'handle_outline' ) );
 	}
 
 	/**
@@ -179,7 +188,7 @@ final class DesignerCutoutsPage {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The images are made in the browser, but its script is missing. Build the plugin (npm run build).', 'merchboard' ) . '</p></div>';
 		}
 
-		$open = array_values( array_filter( $rows, static fn( array $row ): bool => in_array( $row['state'], array( 'todo', 'pending' ), true ) ) );
+		$open = array_values( array_filter( $rows, static fn( array $row ): bool => in_array( $row['state'], array( 'todo', 'pending', 'none' ), true ) ) );
 
 		if ( $script && array() !== $open ) {
 			echo '<p><button type="button" class="button button-primary merchboard-cutouts-all">' . esc_html(
@@ -208,8 +217,8 @@ final class DesignerCutoutsPage {
 	/**
 	 * Renders one product.
 	 *
-	 * @param array{product: int, creator_id: int, wc_product_id: int, version_id: int, title: string, state: string, undo: bool, slots: list<array{key: string, label: string, old: int|null, waiting: bool, approved: int|null}>} $row    Product.
-	 * @param bool                                                                                                                                                                                                                  $script Whether the browser can make images.
+	 * @param array{product: int, creator_id: int, base_id: int, wc_product_id: int, version_id: int, title: string, state: string, undo: bool, slots: list<array{key: string, label: string, old: int|null, waiting: bool, approved: int|null}>} $row    Product.
+	 * @param bool                                                                                                                                                                                                                                $script Whether the browser can make images.
 	 */
 	private function render_row( array $row, bool $script ): void {
 		$product = $row['product'];
@@ -244,7 +253,7 @@ final class DesignerCutoutsPage {
 
 		echo '</div></td><td>';
 
-		if ( $script && in_array( $row['state'], array( 'todo', 'pending' ), true ) ) {
+		if ( $script && in_array( $row['state'], array( 'todo', 'pending', 'none' ), true ) ) {
 			$job    = add_query_arg(
 				array(
 					'action'   => self::ACTION_JOB,
@@ -270,7 +279,45 @@ final class DesignerCutoutsPage {
 				admin_url( 'admin-post.php' )
 			);
 
-			echo '<p><button type="button" class="button merchboard-cutouts-make" data-state="' . esc_attr( $row['state'] ) . '" data-job="' . esc_url( $job ) . '" data-upload="' . esc_url( $upload ) . '" data-apply="' . esc_url( $apply ) . '">' . esc_html( 'pending' === $row['state'] ? __( 'Make again', 'merchboard' ) : __( 'Make images', 'merchboard' ) ) . '</button> <span class="merchboard-cutouts-make__status" aria-live="polite"></span></p>';
+			$outline = array();
+
+			// The old images on white: a silhouette from the template's photo first (the owner's wish 2026-11-15).
+			if ( 'none' === $row['state'] ) {
+				$base_nonce = wp_create_nonce( self::base_nonce_action( $row['base_id'] ) );
+
+				foreach ( array(
+					'job'  => self::ACTION_OUTLINE_JOB,
+					'save' => self::ACTION_OUTLINE,
+				) as $name => $action ) {
+					$outline[ $name ] = add_query_arg(
+						array(
+							'action'   => $action,
+							'base'     => $row['base_id'],
+							'_wpnonce' => $base_nonce,
+						),
+						admin_url( 'admin-post.php' )
+					);
+				}
+			}
+
+			echo '<p><button type="button" class="button merchboard-cutouts-make" data-state="' . esc_attr( $row['state'] ) . '" data-job="' . esc_url( $job ) . '" data-upload="' . esc_url( $upload ) . '" data-apply="' . esc_url( $apply ) . '"' . ( isset( $outline['job'], $outline['save'] ) ? ' data-outline-job="' . esc_url( $outline['job'] ) . '" data-outline="' . esc_url( $outline['save'] ) . '"' : '' ) . '>' . esc_html(
+				match ( $row['state'] ) {
+					'pending' => __( 'Make again', 'merchboard' ),
+					'none'    => __( 'Remove the white background and make images', 'merchboard' ),
+					default   => __( 'Make images', 'merchboard' ),
+				}
+			) . '</button> <span class="merchboard-cutouts-make__status" aria-live="polite"></span></p>';
+
+			if ( 'none' === $row['state'] ) {
+				echo '<p class="description">' . wp_kses(
+					sprintf(
+						/* translators: %s: link to the base product. */
+						__( 'The template\'s photo is on white: its background is removed to give the product an outline. If the background is not plain, upload a PNG without background (e.g. exported from the PSD) as the silhouette on %s.', 'merchboard' ),
+						'<a href="' . esc_url( BaseProductsPage::edit_url( $row['base_id'] ) ) . '">' . esc_html__( 'the base product', 'merchboard' ) . '</a>'
+					),
+					array( 'a' => array( 'href' => array() ) )
+				) . '</p>';
+			}
 		}
 
 		if ( 'pending' === $row['state'] ) {
@@ -313,7 +360,7 @@ final class DesignerCutoutsPage {
 	private static function state_label( string $state ): string {
 		return match ( $state ) {
 			'provider' => __( 'Photos from the provider (unchanged)', 'merchboard' ),
-			'none'     => __( 'No side has an outline. Give the base product a silhouette.', 'merchboard' ),
+			'none'     => __( 'The template\'s photo is on white: no outline yet', 'merchboard' ),
 			'done'     => __( 'Nothing left to make', 'merchboard' ),
 			'pending'  => __( 'Waiting for your approval', 'merchboard' ),
 			default    => __( 'Images can be made', 'merchboard' ),
@@ -378,6 +425,70 @@ final class DesignerCutoutsPage {
 			$this->logger->error( 'The job of images without background failed.', array_merge( $e->context(), array( 'design_product_id' => $product ) ) );
 			wp_send_json_error( array( 'reason' => 'error' ), 500 );
 		}
+	}
+
+	/**
+	 * Nonce action of a base product's silhouettes.
+	 *
+	 * @param int $base_id Base product.
+	 */
+	public static function base_nonce_action( int $base_id ): string {
+		return self::ACTION_OUTLINE . '_' . $base_id;
+	}
+
+	/**
+	 * Sends the sides of a base product that need a silhouette, as JSON.
+	 */
+	public function handle_outline_job(): void {
+		$base = $this->base( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in base(); only an id is read.
+
+		try {
+			wp_send_json_success( array( 'sides' => $this->cutouts->outline_job( $base ) ) );
+		} catch ( DesignerException $e ) {
+			wp_send_json_error( array( 'reason' => $e->reason() ), 409 );
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'The sides without an outline could not be read.', array_merge( $e->context(), array( 'base_id' => $base ) ) );
+			wp_send_json_error( array( 'reason' => 'error' ), 500 );
+		}
+	}
+
+	/**
+	 * Keeps a side's silhouette the browser made and answers in JSON.
+	 */
+	public function handle_outline(): void {
+		$base   = $this->base( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in base(); only an id is read.
+		$side   = isset( $_POST['side'] ) && is_string( $_POST['side'] ) ? sanitize_key( wp_unslash( $_POST['side'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in base().
+		$upload = isset( $_FILES['file'] ) && is_array( $_FILES['file'] ) ? $_FILES['file'] : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in base(); DesignerFiles validates the file.
+
+		try {
+			$this->bases->set_silhouette( $base, $side, $upload );
+			wp_send_json_success();
+		} catch ( DesignerException $e ) {
+			wp_send_json_error( array( 'reason' => $e->reason() ), 422 );
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'A silhouette could not be kept.', array_merge( $e->context(), array( 'base_id' => $base ) ) );
+			wp_send_json_error( array( 'reason' => 'error' ), 500 );
+		}
+	}
+
+	/**
+	 * The base product of a request, after the capability and its nonce.
+	 *
+	 * @param array<mixed> $input Unslashed input.
+	 */
+	private function base( array $input ): int {
+		if ( ! current_user_can( Capabilities::MANAGE_DESIGNER ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to manage the product designer.', 'merchboard' ), '', array( 'response' => 403 ) );
+		}
+
+		$base  = is_string( $input['base'] ?? null ) && 1 === preg_match( '/^[1-9]\d{0,18}$/', $input['base'] ) ? (int) $input['base'] : 0;
+		$nonce = is_string( $input['_wpnonce'] ?? null ) ? $input['_wpnonce'] : '';
+
+		if ( 0 === $base || false === wp_verify_nonce( $nonce, self::base_nonce_action( $base ) ) ) {
+			wp_die( esc_html__( 'The link you followed has expired. Please try again.', 'merchboard' ), '', array( 'response' => 403 ) );
+		}
+
+		return $base;
 	}
 
 	/**

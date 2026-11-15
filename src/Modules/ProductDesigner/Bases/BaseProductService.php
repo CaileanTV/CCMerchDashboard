@@ -18,6 +18,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Providers\ImageProbe;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
@@ -409,6 +410,85 @@ class BaseProductService {
 			foreach ( $stored as $file ) {
 				$this->files->delete( $file['file'] );
 			}
+
+			throw $e;
+		}
+
+		$this->forget_layers( $replaced );
+	}
+
+	/**
+	 * Gives a side its silhouette (ADR-114): a PNG of the side's size with a
+	 * transparent background, e.g. made from the template's photo or exported
+	 * from the PSD. It changes nothing a design was made on, so the base
+	 * product keeps its version and waiting designs stay valid.
+	 *
+	 * @param int          $id     Base product.
+	 * @param string       $side   The side's key.
+	 * @param array<mixed> $upload The PNG (one entry of $_FILES).
+	 * @throws DesignerException When the user may not, the side is unknown or a PSD scene, or the file is refused.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_silhouette( int $id, string $side, array $upload ): void {
+		self::authorize();
+
+		$base  = $this->existing( $id );
+		$index = null;
+
+		if ( BaseProduct::RETIRED === $base->status ) {
+			self::reject( DesignerException::BASE_RETIRED );
+		}
+
+		foreach ( $base->views as $position => $view ) {
+			if ( $side === $view->key && null === $view->scene ) {
+				$index = $position;
+			}
+		}
+
+		if ( null === $index ) {
+			self::reject( DesignerException::BASE_VIEW );
+		}
+
+		$view = $base->views[ $index ];
+		$file = $this->files->store( $upload, true );
+
+		try {
+			$path = $this->files->path( $file['file'] );
+			$body = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- The file just stored in the plugin's own folder.
+
+			if ( $file['width'] !== $view->width || $file['height'] !== $view->height ) {
+				self::reject( DesignerException::BASE_LAYER_SIZE );
+			}
+
+			// Without transparent pixels it is no outline.
+			if ( false === $body || ! ImageProbe::transparent( $body ) ) {
+				self::reject( DesignerException::FILE_TYPE );
+			}
+
+			$replaced = $this->transaction->run(
+				function () use ( $id, $base, $view, $index, $file ): array {
+					$layers                         = $view->layers;
+					$layers[ BaseView::SILHOUETTE ] = $this->assets->insert( DesignerAssetRepository::LAYER, $base->name . ' – ' . $view->name . ' – ' . BaseView::SILHOUETTE, $file );
+					$changed                        = $this->with_layers( $base, $index, $layers, false );
+
+					$this->bases->update( $id, $changed );
+					$this->audit->record(
+						AuditAction::DesignerBaseChanged,
+						null,
+						array(
+							'base_id'        => $id,
+							'base_name'      => $changed->name,
+							'version'        => $changed->version,
+							'changed_fields' => array( 'silhouette' ),
+							'status'         => $changed->status,
+						)
+					);
+
+					return array_values( array_diff( $base->layer_assets(), $changed->layer_assets() ) );
+				}
+			);
+		} catch ( DesignerException | DatabaseException $e ) {
+			$this->files->delete( $file['file'] );
 
 			throw $e;
 		}
@@ -845,17 +925,18 @@ class BaseProductService {
 	 *
 	 * @param BaseProduct        $base   Base product.
 	 * @param int                $index  The side's place.
-	 * @param array<string, int> $layers Asset id by layer.
+	 * @param array<string, int> $layers      Asset id by layer.
+	 * @param bool               $new_version Whether it is a new version (a silhouette is not).
 	 * @throws DesignerException When the side is invalid.
 	 */
-	private function with_layers( BaseProduct $base, int $index, array $layers ): BaseProduct {
+	private function with_layers( BaseProduct $base, int $index, array $layers, bool $new_version = true ): BaseProduct {
 		$view = $base->views[ $index ];
 
 		try {
 			$side  = new BaseView( $view->key, $view->name, $view->width, $view->height, $layers, $view->area, $view->width_mm, $view->height_mm, $view->dpi, $view->thread_pack, $view->flat, $view->scene, $view->sizes, $view->small );
 			$views = array_map( static fn( BaseView $other ): BaseView => $other->key === $side->key ? $side : $other, $base->views );
 
-			return new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version + 1, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color, $base->tag_ids );
+			return new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $new_version ? $base->version + 1 : $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color, $base->tag_ids );
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_VIEW );
 		}
