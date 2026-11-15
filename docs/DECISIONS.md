@@ -6846,3 +6846,103 @@ Designeren tegner selv billederne, så omridset er kendt. Billeder uden baggrund
 
 ## Related
 ADR-080, ADR-096, ADR-099, ADR-112, ADR-113
+
+# ADR-115: Gelato-produkter med egne valg, formatgrupper, retning og skærelinje
+
+## Date
+2026-11-15
+
+## Status
+Foreslået 2026-11-15. Projektejeren har valgt "design pr. formatgruppe, men alle størrelser med, uanset målene" og "eget design pr. retning". Planen afventer godkendelse. Version 2.3.0 (fase 52).
+
+## Context
+Lumise-addon'et "CCMerch Udbydere" 1.2.4–1.2.7 fik rettelser til Gelato-produkter med andre valg end farve og størrelse. Projektejeren gav lov til at læse dets kildekode som forlæg 2026-11-15.
+
+**Testskabelon:** Fine Art Poster `68af8365-1ca7-4207-af23-15b6378d0128`.
+- 58 varianter: 29 størrelser × Orientation (Vertical/Horizontal).
+- Printflade `"1"` og 4 mm bleed.
+- 28 forskellige printformater.
+
+**Dashboardets Gelato-import i dag:**
+- laver kun farve × størrelse og mister retningen uden besked;
+- læser printflader fra den første variant;
+- klipper størrelsesnavne ved 20 tegn;
+- sorterer ikke størrelserne;
+- kalder printfladen "1";
+- kender ingen skærelinje.
+
+**Forskellen fra Lumise:**
+- **I Lumise** designer kunden én variant ad gangen, så hver variant kan have sin egen printflade.
+- **Hos os** designer creatoren én gang pr. side, og produktet sælges i alle størrelser. "Sider pr. størrelse" findes (`BaseView::$sizes`), men en side er knyttet til størrelser, ikke til farve eller retning. Et basisprodukt har højst 8 sider og 30 størrelser.
+
+## Decision
+1. **Akser fra skabelonens valg** (som addon'ets `axes()`).
+   - **Størrelse:** et valg ved navn Size/Sizes/Format/Størrelse.
+   - **Farve:** et valg, hvis navn indeholder Color/Colour/Farve, ellers `gco_` i productUid.
+   - **Første akse:** farven og alle andre valg (Orientation, Paper, Frame, Material, Finish).
+     - Navnene oversættes: Retning, Papir, Ramme, Materiale, Overflade, og Lodret/Vandret for Vertical/Portrait og Horizontal/Landscape.
+     - Flere valg samles med " / ".
+   - **Attributnavne:** akserne bliver WooCommerce-attributnavnene, fx "Retning" og "Størrelse". Tøj beholder "Farve" og "Størrelse".
+   - **Dubletter:** to varianter med samme værdier tælles og vises i importen; ingen forsvinder uden besked.
+2. **Formatgrupper** (projektejerens valg):
+   - **Grupper:** pr. værdi af den første akse, når den ikke er en farve (fx Lodret), samles størrelserne efter printfladens form. Forholdet mellem bredde og højde må højst afvige 3 %.
+   - **Sider:** hver gruppe bliver sin egen side (designfane) med sit eget foto, printområde og printmål, knyttet til gruppens størrelser og retning.
+   - **Plakaten:** 8 grupper pr. retning, så alle 29 størrelser kommer med. Fx deles A0–A3, 21×29,7 og 50×70 om ét design; de kvadratiske om ét.
+   - **Grænser:** et basisprodukt må have op til 24 sider og 60 størrelser (før 8 og 30).
+   - **Printmål:** sidens printmål er gruppens største størrelse, så printfilen har nok opløsning til dem alle.
+3. **Retning (eget design pr. retning)** (projektejerens valg):
+   - **Nyt felt:** en side kan, ud over størrelser, være knyttet til værdier af den første akse (`BaseView::$colors`), fx kun "Lodret".
+   - **Designeren** viser kun de sider, der hører til de valgte værdier og størrelser.
+   - **Krav:** hver valgt kombination skal have et design, ellers afvises indsendelsen (som `design_sizes` i dag).
+   - **Kun én retning:** creatoren kan sælge kun lodret ved kun at vælge den.
+4. **Printfil pr. størrelse:**
+   - **Én printfil pr. side**, som i dag, i gruppens største størrelse.
+   - **Afvigende form:** en størrelse, hvis form afviger fra sidens (højst 3 %), får printfilen beskåret i midten til sit eget forhold ("Fyld"). Det sker, når filen hentes af leverandøren (`SignedPrintFiles`, beskæringen gemmes). Designet er det samme; kun kanterne skæres.
+   - **Ordrelinjen** finder sin side ud fra både størrelse og retning.
+5. **Mål pr. variant:** hver størrelse får sit eget printmål (mm og dpi) fra sin egen variants `imagePlaceholders`, ikke kun den første variants. Fotoet og printområdet måles pr. værdi af den første akse (markør- og blank-produkter pr. værdi, som addon'ets `render_kinds()`).
+6. **Størrelsesnavne og rækkefølge:**
+   - **Navne:** op til 60 tegn. Navne sammenlignes efter rensning (dobbelte mellemrum samles), og `"` i navne virker hele vejen.
+   - **Rækkefølge:** tøj XS < S < M < L < XL < 2XL … 8XL (XXL = 2XL). Alt andet sorteres efter printfladens areal, fra mindst til størst; lige store beholder skabelonens rækkefølge.
+7. **Printfladens navn:** `"1"` vises som "Forside", andre tal som "Side 2", "Side 3" … Nøglen er uændret.
+8. **Skærelinje (bleed):**
+   - **Data:**
+     - De færdige mål hentes fra Gelatos produkt-API (`GET https://product.gelatoapis.com/v3/products/{productUid}`, `dimensions` i mm). Det er Gelatos eget API, og nøglen findes allerede.
+     - Bleed = (printflade − færdigt mål) / 2 pr. akse, kun mellem 0,5 og 15 mm. Bredde og højde prøves også byttet om.
+     - Svaret caches 30 dage pr. productUid. Fejl caches ikke og sletter aldrig en gemt bleed.
+     - Bleed gemmes pr. side og størrelse.
+   - **Designeren:**
+     - grå nedtoning uden for skærelinjen;
+     - en rød stiplet linje (#e0262b) med hvid kant;
+     - teksten "Alt uden for den røde linje kan blive skåret af."
+   - **Aldrig i eksporten:** linjerne kommer aldrig med i det gemte design, printfilen (som beholder hele bleed), mockups eller billeder uden baggrund.
+   - **Eksisterende basisprodukter:** "Hent bleed fra Gelato" på basisproduktet.
+9. **Kun Gelato i denne fase.** Printful, Prodigi og Printify er uændrede. Logikken for akser, navne og rækkefølge lægges, så de kan bruge den senere.
+
+## Alternatives considered
+- **Ét design tilpasset alle størrelser:** fravalgt af projektejeren. Forskellige formater beskæres for meget.
+- **Creatoren vælger få størrelser:** fravalgt. Projektejeren vil have alle størrelser med.
+- **Én printfil pr. størrelse fra browseren:** 58 store filer pr. plakat er for tungt at sende. En beskæring af gruppens fil på serveren giver det samme.
+- **Retning som del af størrelsen** ("A3 lodret"): giver 58 størrelser og én attribut i stedet for to.
+
+## Reason
+- Formatgrupper giver hver form sit eget design uden at miste størrelser.
+- Retning som akse giver de to attributter, kunderne kender fra Lumise.
+- Bleed fra Gelatos egne data viser creatoren, hvad der skæres af, uden at ændre printfilen.
+
+## Security
+- **Gelatos produkt-API:** kun GET, med den eksisterende nøgle.
+- **Beskæringen af printfiler** sker kun i den signerede rute og ændrer aldrig den gemte fil.
+- **Ingen nye kapabiliteter.** Basisprodukter kræver `merchboard_manage_designer` som i dag.
+
+## Migration/data implications
+- **Ingen schemaændring.** Sider gemmes som JSON på basisproduktet.
+- **Nye felter:** `BaseView` får `colors`, printmål pr. størrelse og bleed pr. størrelse.
+- **Eksisterende basisprodukter** er uændrede, til de importeres igen, eller bleed hentes.
+- **Versioner:** ændrede sider giver en ny version af basisproduktet efter de eksisterende regler.
+
+## Consequences
+- Plakater får mange designfaner (16 for Fine Art Poster). Designeren skal gøre det tydeligt, hvilke størrelser hver fane dækker.
+- Leverandørens beskæring af gruppens printfil fjerner højst 3 % i den ene retning.
+
+## Related
+ADR-080, ADR-084, ADR-096, ADR-099, ADR-102, ADR-114

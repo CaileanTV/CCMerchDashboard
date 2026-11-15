@@ -1425,7 +1425,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - **Hvor:** nye designs og den automatiske kørsel på Forslag → "Billeder uden baggrund".
 - **51.6 Test og levering:** ✅ unit-, Jest- og integrationstest (godkend, fortryd, kassér), danske tekster og docs. Runtime 2026-11-15 i Chrome med den byggede admin-bundle: opgave → tegning → upload for en side med farvemaske og en side med eget farvefoto og silhuet; baggrund, gulvskygge og halsåbning blev gennemsigtige. Godkend og fortryd kræver produktlåsen (MySQL) og testes på stg.
 
-## Fase 52 – Gelato-produkter med egne valg, printområde pr. variant og skærelinje 📋 (projektejerens ønske 2026-11-15; efter 2.2.0, version 2.3.0; ADR-115 og plan afventer godkendelse)
+## Fase 52 – Gelato-produkter med egne valg, printområde pr. variant og skærelinje 📋 (projektejerens ønske 2026-11-15; efter 2.2.0, version 2.3.0; ADR-115 foreslået, planen afventer godkendelse)
 
 **Baggrund:** de samme rettelser er lavet i Lumise-addon'et "CCMerch Udbydere" 1.2.4–1.2.7. Projektejerens noter ligger i `ændringer fra lumise/` (ikke i git).
 - **Testskabelon:** Gelatos Fine Art Poster `68af8365-1ca7-4207-af23-15b6378d0128`.
@@ -1459,7 +1459,44 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 
 **Rækkefølge (forslag):** 3, 4 og 5 først (små og uafhængige), derefter 1 og 2 sammen, så 6.
 
-**Næste skridt:** ADR-115 og en plan til projektejerens godkendelse. Addon'ets kildekode læses kun med projektejerens tilladelse (Project Isolation).
+**Projektejerens valg 2026-11-15:**
+- "Design pr. formatgruppe, men vigtigt vi får alle størrelser med, uanset målene."
+- "Eget design pr. retning."
+- Addon'ets kildekode må læses som forlæg; den ændres aldrig og kopieres ikke.
+
+**Plan** (ADR-115):
+- **52.1 ADR-115 og plan.** ✅ foreslået 2026-11-15.
+- **52.2 Navne, rækkefølge og printflader:**
+  - størrelsesnavne op til 60 tegn med rensede sammenligninger og `"`;
+  - sortering (tøj, ellers areal);
+  - "Forside" og "Side n" for talflader;
+  - grænserne 60 størrelser og 24 sider.
+- **52.3 Akser fra skabelonens valg:**
+  - Size/Format → størrelse, farve og andre valg → første akse med danske navne;
+  - attributnavne efter akserne;
+  - dubletter tælles og vises i importen.
+- **52.4 Formatgrupper og retning:**
+  - `BaseView::$colors` (siden hører kun til visse værdier af den første akse);
+  - grupper efter form (3 %) pr. værdi, når den første akse ikke er farve;
+  - printmål pr. størrelse fra hver variant;
+  - markør- og blank-gengivelse og måling pr. værdi.
+- **52.5 Designeren og indsendelsen:**
+  - fanerne følger valgte værdier og størrelser og viser, hvilke størrelser de dækker;
+  - krav om design for hver valgt kombination;
+  - billeder pr. værdi i shoppen og variationerne.
+- **52.6 Printfiler og ordrer:**
+  - ordrelinjen finder siden ud fra størrelse og retning;
+  - `SignedPrintFiles` beskærer gruppens fil til størrelsens form (gemt, højst 3 %).
+- **52.7 Skærelinje:**
+  - Gelatos `/v3/products/{productUid}` med cache;
+  - bleed pr. side og størrelse;
+  - overlay i designeren uden for eksporten;
+  - "Hent bleed fra Gelato" på basisproduktet.
+- **52.8 Test og levering:**
+  - unit og integration med Fine Art Poster-skabelonen (58 varianter, 16 sider, 4 mm bleed, `8x12"`);
+  - danske tekster og docs;
+  - runtime i Playground (import, designer med skærelinje, indsendelse);
+  - CI, 2.3.0-testpakke på stg.
 
 ## Version 2.1.1 ✅ (tagget 2026-11-12 på 555ae87)
 
