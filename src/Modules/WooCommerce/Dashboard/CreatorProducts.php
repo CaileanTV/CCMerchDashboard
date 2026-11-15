@@ -108,6 +108,35 @@ final class CreatorProducts {
 	}
 
 	/**
+	 * Ids of the creator's newest published products (not private ones),
+	 * newest first (the Twitch Extension panel, ADR-112).
+	 *
+	 * @param int $creator_id Creator id.
+	 * @param int $limit      The most ids.
+	 * @return list<int>
+	 * @throws DatabaseException When the query fails.
+	 */
+	public function newest( int $creator_id, int $limit ): array {
+		if ( $creator_id < 1 || $limit < 1 ) {
+			return array();
+		}
+
+		$wpdb = $this->wpdb;
+		$ids  = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read model of the creator's products; the panel caches its answer.
+			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- FROM_WHERE's six placeholders come from selection_args(), then LIMIT.
+				'SELECT p.ID ' . self::FROM_WHERE . " AND p.post_status = 'publish' ORDER BY p.post_date DESC, p.ID DESC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- FROM_WHERE is a constant with placeholders only.
+				...array_merge( $this->selection_args( $creator_id ), array( $limit ) )
+			)
+		);
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the creator\'s newest products.' );
+		}
+
+		return array_map( 'intval', $ids );
+	}
+
+	/**
 	 * Whether the product is one of the creator's listed products.
 	 *
 	 * @param int $creator_id Creator id.

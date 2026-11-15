@@ -1,0 +1,80 @@
+/* The Twitch Extension panel (ADR-112): 318 px wide, light and dark theme. */
+:root {
+	--mb-bg: #fff;
+	--mb-fg: #0e0e10;
+	--mb-muted: #53535f;
+	--mb-tile: #efeff1;
+	--mb-accent: #9146ff;
+}
+
+body.mb-dark {
+	--mb-bg: #18181b;
+	--mb-fg: #efeff1;
+	--mb-muted: #adadb8;
+	--mb-tile: #26262c;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	background: var(--mb-bg);
+	color: var(--mb-fg);
+	font: 13px/1.35 Inter, Roobert, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.mb-panel {
+	padding: 12px;
+}
+
+.mb-panel__title {
+	margin: 0 0 10px;
+	padding-left: 8px;
+	border-left: 3px solid var(--mb-accent);
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.mb-panel__grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.mb-panel__item {
+	display: grid;
+	gap: 6px;
+	min-width: 0;
+}
+
+.mb-panel__image {
+	display: block;
+	width: 100%;
+	aspect-ratio: 1;
+	border-radius: 6px;
+	background: var(--mb-tile);
+	object-fit: cover;
+}
+
+.mb-panel__name {
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.mb-panel__message {
+	margin: 0;
+	padding: 24px 8px;
+	color: var(--mb-muted);
+	text-align: center;
+}

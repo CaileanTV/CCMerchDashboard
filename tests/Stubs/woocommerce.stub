@@ -767,6 +767,14 @@ class WC_Product extends WC_Data {
 	public function get_image_id( $context = 'view' ) {}
 
 	/**
+	 * 'visible', 'catalog', 'search' or 'hidden'.
+	 *
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_catalog_visibility( $context = 'view' ) {}
+
+	/**
 	 * Product type, e.g. 'simple', 'variable', 'variation'.
 	 *
 	 * @return string

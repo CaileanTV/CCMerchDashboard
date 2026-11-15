@@ -927,4 +927,10 @@ enum AuditAction: string {
 	 * giveaway_id, reason.
 	 */
 	case GiveawayCancelled = 'giveaway_cancelled';
+
+	/**
+	 * A creator changed the Twitch Extension panel (ADR-112). Context:
+	 * changed_fields.
+	 */
+	case TwitchExtensionChanged = 'twitch_extension_changed';
 }

@@ -17,6 +17,7 @@ use MerchBoard\Core\Settings\CommunityLink;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\Admin\AlertsAdminPage;
 use MerchBoard\Modules\Community\CommunitySettings;
+use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionApp;
 use MerchBoard\Modules\Settings\Admin\SettingsPage;
 
 defined( 'ABSPATH' ) || exit;
@@ -53,15 +54,31 @@ final class CommunitySettingsSection {
 	private Closure $twitch;
 
 	/**
+	 * The form fields of the Twitch Extension's setup (ADR-112 pkt. 5).
+	 */
+	public const EXTENSION_CLIENT_ID = 'twitch_extension_client_id';
+
+	/**
+	 * The new secret ('' keeps the stored one).
+	 */
+	public const EXTENSION_SECRET = 'twitch_extension_secret';
+
+	/**
+	 * The install link.
+	 */
+	public const EXTENSION_INSTALL_URL = 'twitch_extension_install_url';
+
+	/**
 	 * Constructor.
 	 *
 	 * @phpstan-param Closure(): bool $twitch
 	 *
-	 * @param CommunitySettings $settings The switches.
-	 * @param Closure           $twitch   Whether Twitch is set up on the site.
-	 * @param Logger            $logger   Technical log.
+	 * @param CommunitySettings       $settings  The switches.
+	 * @param Closure                 $twitch    Whether Twitch is set up on the site.
+	 * @param Logger                  $logger    Technical log.
+	 * @param TwitchExtensionApp|null $extension The Twitch Extension's setup.
 	 */
-	public function __construct( private CommunitySettings $settings, Closure $twitch, private Logger $logger ) {
+	public function __construct( private CommunitySettings $settings, Closure $twitch, private Logger $logger, private ?TwitchExtensionApp $extension = null ) {
 		$this->twitch = $twitch;
 	}
 
@@ -86,6 +103,7 @@ final class CommunitySettingsSection {
 			'no_changes'     => array( __( 'No changes were made to the community settings.', 'merchboard' ), 'info' ),
 			'not_authorized' => array( __( 'You are not allowed to change these settings.', 'merchboard' ), 'error' ),
 			'error'          => array( __( 'A technical error occurred. The community settings were not changed.', 'merchboard' ), 'error' ),
+			'invalid_extension' => array( __( 'The Twitch Extension\'s Client ID, secret or install link is invalid. Nothing was changed.', 'merchboard' ), 'error' ),
 			'invalid_link'   => array( __( 'The link name must be 2–40 lowercase letters, digits, - or _, start with a letter and not be a name WordPress or the shop uses. Nothing was changed.', 'merchboard' ), 'error' ),
 			default          => null,
 		};
@@ -111,17 +129,23 @@ final class CommunitySettingsSection {
 				__( 'Off by default. Customers log in with Twitch in the cart and the checkout, and the discount is taken from the creator\'s profit. Off: the page disappears from the creators\' dashboards and no cart gets the discount; the creators\' campaigns are kept.', 'merchboard' ),
 				Settings::twitch_sub_discount_enabled(),
 			),
-			Settings::COMMUNITY_TWITCH_GIFTING_ENABLED => array(
+			Settings::COMMUNITY_TWITCH_GIFTING_ENABLED   => array(
 				__( 'Twitch gifting', 'merchboard' ),
 				__( 'Viewers can buy gifts that are drawn in the creator\'s Twitch chat', 'merchboard' ),
 				__( 'Off by default. Off pauses gifting: the page disappears from the creators\' dashboards, the gift button disappears and no new draws start. A draw already open ends as usual, winners can still claim their gift, and waiting gifts wait until gifting is switched on again.', 'merchboard' ),
 				Settings::twitch_gifting_enabled(),
 			),
-			Settings::COMMUNITY_GIVEAWAYS_ENABLED      => array(
+			Settings::COMMUNITY_GIVEAWAYS_ENABLED        => array(
 				__( 'Giveaways', 'merchboard' ),
 				__( 'Creators can give their own products away to their viewers', 'merchboard' ),
 				__( 'Off by default. The creator pays the base price and 50 kr. shipping: from the balance when the code is used, or in the shop. The bot draws the winner in the Twitch chat, or the creator passes a link on from their own giveaway. Off: the page disappears from the creators\' dashboards and no new giveaway starts; links and codes already given out still work.', 'merchboard' ),
 				Settings::giveaways_enabled(),
+			),
+			Settings::COMMUNITY_TWITCH_EXTENSION_ENABLED => array(
+				__( 'Twitch Extension', 'merchboard' ),
+				__( 'Creators can show their products in the shop\'s Twitch Extension panel', 'merchboard' ),
+				__( 'Off by default. The panel shows the creator\'s products with image and name only: Twitch does not allow prices, links to the shop or buying in an extension. Creators link to the shop from an ordinary Twitch panel. Off: the page disappears from the creators\' dashboards and the panel shows nothing.', 'merchboard' ),
+				Settings::twitch_extension_enabled(),
 			),
 		);
 
@@ -161,9 +185,44 @@ final class CommunitySettingsSection {
 		echo '<p class="description">' . esc_html( sprintf( __( 'The name in the public links of the community features, such as the gift and giveaway links, and later links of the same kind: %s', 'merchboard' ), home_url( '/' ) . '?' . $link . '=…' ) ) . '</p>';
 		echo '<p class="description">' . esc_html__( '2–40 lowercase letters, digits, - or _, starting with a letter. Links already passed on keep working after a change: the earlier names are still read.', 'merchboard' ) . '</p>';
 		echo '</td></tr>';
+
+		if ( null !== $this->extension ) {
+			$this->render_extension( $this->extension );
+		}
+
 		echo '</tbody></table>';
 		submit_button( __( 'Save community settings', 'merchboard' ), 'secondary' );
 		echo '</form>';
+	}
+
+	/**
+	 * The Twitch Extension's setup: Client ID, secret and install link.
+	 *
+	 * @param TwitchExtensionApp $extension The setup.
+	 */
+	private function render_extension( TwitchExtensionApp $extension ): void {
+		echo '<tr><th scope="row"><label for="merchboard-twitch-extension-client">' . esc_html__( 'Twitch Extension: Client ID', 'merchboard' ) . '</label></th><td>';
+		echo '<input type="text" class="regular-text code" id="merchboard-twitch-extension-client" name="' . esc_attr( self::EXTENSION_CLIENT_ID ) . '" value="' . esc_attr( $extension->client_id() ) . '" pattern="[a-z0-9]{20,40}" autocomplete="off">';
+		echo '<p class="description">' . esc_html__( 'From the extension in the Twitch developer console (dev.twitch.tv/console/extensions). The shop owns one extension that all creators install.', 'merchboard' ) . '</p>';
+		echo '</td></tr>';
+
+		echo '<tr><th scope="row"><label for="merchboard-twitch-extension-secret">' . esc_html__( 'Twitch Extension: secret', 'merchboard' ) . '</label></th><td>';
+
+		if ( TwitchExtensionApp::secret_in_config() ) {
+			echo '<p>' . esc_html__( 'Set in wp-config.php (MERCHBOARD_TWITCH_EXTENSION_SECRET).', 'merchboard' ) . '</p>';
+		} else {
+			echo '<input type="password" class="regular-text code" id="merchboard-twitch-extension-secret" name="' . esc_attr( self::EXTENSION_SECRET ) . '" value="" autocomplete="new-password">';
+			echo '<p class="description">' . esc_html( null !== $extension->key() ? __( 'A secret is stored (encrypted). Leave empty to keep it.', 'merchboard' ) : __( 'The extension\'s secret under "Extension Client Configuration" in the developer console. It is stored encrypted and never shown again.', 'merchboard' ) ) . '</p>';
+		}
+
+		echo '</td></tr>';
+
+		echo '<tr><th scope="row"><label for="merchboard-twitch-extension-url">' . esc_html__( 'Twitch Extension: install link', 'merchboard' ) . '</label></th><td>';
+		echo '<input type="url" class="regular-text code" id="merchboard-twitch-extension-url" name="' . esc_attr( self::EXTENSION_INSTALL_URL ) . '" value="' . esc_attr( $extension->install_url() ) . '" placeholder="https://dashboard.twitch.tv/extensions/…">';
+		echo '<p class="description">' . esc_html__( 'The extension\'s page on Twitch, where creators install it. Shown in the creators\' guide.', 'merchboard' ) . '</p>';
+		/* translators: %s: the REST URL of the panel. */
+		echo '<p class="description">' . esc_html( sprintf( __( 'Allowlist this site in the developer console (URL fetching and image domains). The panel reads: %s', 'merchboard' ), rest_url( 'merchboard/v1/twitch-extension/panel' ) ) ) . '</p>';
+		echo '</td></tr>';
 	}
 
 	/**
@@ -207,6 +266,16 @@ final class CommunitySettingsSection {
 		$values[ Settings::COMMUNITY_LINK_PARAM ] = $link;
 
 		try {
+			$extension = null === $this->extension || ! array_key_exists( self::EXTENSION_CLIENT_ID, $input ) ? array() : $this->extension->save(
+				is_scalar( $input[ self::EXTENSION_CLIENT_ID ] ?? null ) ? (string) $input[ self::EXTENSION_CLIENT_ID ] : '',
+				is_scalar( $input[ self::EXTENSION_SECRET ] ?? null ) ? (string) $input[ self::EXTENSION_SECRET ] : '',
+				is_scalar( $input[ self::EXTENSION_INSTALL_URL ] ?? null ) ? (string) $input[ self::EXTENSION_INSTALL_URL ] : ''
+			);
+
+			if ( null === $extension ) {
+				return self::url( 'invalid_extension' );
+			}
+
 			$changed = $this->settings->save( $values );
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'Saving the community settings failed.', array_merge( $e->context(), array( 'reason' => $e->getMessage() ) ) );
@@ -218,7 +287,7 @@ final class CommunitySettingsSection {
 			return self::url( 'not_authorized' );
 		}
 
-		return self::url( array() === $changed ? 'no_changes' : 'saved' );
+		return self::url( array() === $changed && array() === $extension ? 'no_changes' : 'saved' );
 	}
 
 	/**

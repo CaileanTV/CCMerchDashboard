@@ -8,6 +8,7 @@ import { AlertsHistorySection } from '../sections/alerts/AlertsHistorySection';
 import { AlertsSection } from '../sections/alerts/AlertsSection';
 import { AlertsWebhooksSection } from '../sections/alerts/AlertsWebhooksSection';
 import { GiveawaysSection } from '../sections/community/GiveawaysSection';
+import { TwitchExtensionSection } from '../sections/community/TwitchExtensionSection';
 import { TwitchGiftingSection } from '../sections/community/TwitchGiftingSection';
 import { TwitchSubDiscountSection } from '../sections/community/TwitchSubDiscountSection';
 import { DesignerSection } from '../sections/designer/DesignerSection';
@@ -45,6 +46,7 @@ const SECTION_COMPONENTS: Readonly< Record< string, () => ReactNode > > = {
 	'community-twitch-discount': () => <TwitchSubDiscountSection />,
 	'community-twitch-gifting': () => <TwitchGiftingSection />,
 	'community-giveaways': () => <GiveawaysSection />,
+	'community-twitch-extension': () => <TwitchExtensionSection />,
 	profile: () => <ProfileSection />,
 };
 

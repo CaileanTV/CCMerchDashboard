@@ -106,9 +106,15 @@ final class CreatorMetaStore {
 	public const TWITCH_GIFTING = 'twitch_gifting';
 
 	/**
+	 * The creator's Twitch Extension panel (phase 49, ADR-112): on/off and
+	 * the chosen products in order. Written by the creator through `/me`.
+	 */
+	public const TWITCH_EXTENSION = 'twitch_extension';
+
+	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BILLING_DETAILS, self::BILLING_SUBMISSION, self::BILLING_CONFIRMED, self::BILLING_CPR, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP, self::TWITCH_SUB_DISCOUNT, self::TWITCH_GIFTING );
+	private const KEYS = array( self::BILLING_DETAILS, self::BILLING_SUBMISSION, self::BILLING_CONFIRMED, self::BILLING_CPR, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP, self::TWITCH_SUB_DISCOUNT, self::TWITCH_GIFTING, self::TWITCH_EXTENSION );
 
 	/**
 	 * Constructor.

@@ -318,7 +318,8 @@ export type ConnectPage =
 	| 'alerts/chatbot'
 	| 'community/twitch-discount'
 	| 'community/twitch-gifting'
-	| 'community/giveaways';
+	| 'community/giveaways'
+	| 'community/twitch-extension';
 
 /**
  * The platform's page where the creator adds the bot to the own channel.

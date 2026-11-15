@@ -19,6 +19,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
+use MerchBoard\Modules\Alerts\Chatbot\ChatCipher;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotException;
 use MerchBoard\Modules\Alerts\Chatbot\ChatSender;
 use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
@@ -49,7 +50,12 @@ use MerchBoard\Modules\Community\Giveaways\GiveawayRepository;
 use MerchBoard\Modules\Community\Giveaways\Giveaways;
 use MerchBoard\Modules\Community\Rest\MeGiveawaysController;
 use MerchBoard\Modules\Community\Rest\MeTwitchGiftingController;
+use MerchBoard\Modules\Community\Rest\MeTwitchExtensionController;
 use MerchBoard\Modules\Community\Rest\MeTwitchSubDiscountController;
+use MerchBoard\Modules\Community\Rest\TwitchExtensionController;
+use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionApp;
+use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionPanel;
+use MerchBoard\Modules\Community\TwitchExtension\TwitchExtensionRepository;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCheckout;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubCoupon;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubDiscount;
@@ -135,6 +141,7 @@ final class CommunityModule implements Module {
 
 		self::register_gifting( $container );
 		self::register_giveaways( $container );
+		self::register_extension( $container );
 
 		$container->set( CommunitySettings::class, static fn( Container $c ): CommunitySettings => new CommunitySettings( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 
@@ -209,7 +216,7 @@ final class CommunityModule implements Module {
 		add_action(
 			'admin_init',
 			static function () use ( $container ): void {
-				( new CommunitySettingsSection( $container->get( CommunitySettings::class ), static fn(): bool => $container->get( TwitchAccount::class )->ready(), $container->get( Logger::class ) ) )->register();
+				( new CommunitySettingsSection( $container->get( CommunitySettings::class ), static fn(): bool => $container->get( TwitchAccount::class )->ready(), $container->get( Logger::class ), $container->get( TwitchExtensionApp::class ) ) )->register();
 				( new GiftingTestModeSection( $container->get( GiftingSettingsRepository::class ), $container->get( CreatorRepository::class ), $container->get( Logger::class ) ) )->register();
 			}
 		);
@@ -221,7 +228,87 @@ final class CommunityModule implements Module {
 				$container->get( MeTwitchGiftingController::class )->register_routes();
 				$container->get( MeGiveawaysController::class )->register_routes();
 				$container->get( GiftTicker::class )->register_routes();
+				$container->get( MeTwitchExtensionController::class )->register_routes();
+				$container->get( TwitchExtensionController::class )->register_routes();
 			}
+		);
+	}
+
+	/**
+	 * Registers the Twitch Extension panel (ADR-112).
+	 *
+	 * @param Container $container Shared service container.
+	 */
+	private static function register_extension( Container $container ): void {
+		$container->set(
+			TwitchExtensionApp::class,
+			static fn( Container $c ): TwitchExtensionApp => new TwitchExtensionApp( new ChatCipher( 'twitch-extension' ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) )
+		);
+		$container->set(
+			TwitchExtensionRepository::class,
+			static fn( Container $c ): TwitchExtensionRepository => new TwitchExtensionRepository(
+				$c->get( CreatorMetaStore::class ),
+				$c->get( AuditTrail::class ),
+				$c->get( Transaction::class ),
+				static fn( int $creator_id, int $product_id ): bool => $c->get( CreatorProducts::class )->owns( $creator_id, $product_id )
+			)
+		);
+		$container->set(
+			TwitchExtensionPanel::class,
+			static fn( Container $c ): TwitchExtensionPanel => new TwitchExtensionPanel(
+				$c->get( TwitchExtensionRepository::class ),
+				static function ( string $channel_id ) use ( $c ): ?int {
+					$channel = $c->get( ChatbotChannelRepository::class )->find_by_broadcaster( ChatPlatform::Twitch, $channel_id );
+
+					return null !== $channel && $channel->connected() ? $channel->creator_id : null;
+				},
+				static fn( int $creator_id ): string => $c->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '',
+				static fn( int $creator_id, int $limit ): array => $c->get( CreatorProducts::class )->newest( $creator_id, $limit ),
+				self::panel_product( ... )
+			)
+		);
+		$container->set(
+			MeTwitchExtensionController::class,
+			static fn( Container $c ): MeTwitchExtensionController => new MeTwitchExtensionController(
+				$c->get( CreatorContext::class ),
+				$c->get( TwitchExtensionRepository::class ),
+				$c->get( TwitchExtensionPanel::class ),
+				$c->get( TwitchExtensionApp::class ),
+				static function ( int $creator_id ) use ( $c ): ?string {
+					$channel = $c->get( ChatbotChannelRepository::class )->find( $creator_id, ChatPlatform::Twitch );
+
+					return $channel->connected() ? $channel->broadcaster_login : null;
+				},
+				static fn(): bool => $c->get( TwitchAccount::class )->ready(),
+				$c->get( Logger::class )
+			)
+		);
+		$container->set(
+			TwitchExtensionController::class,
+			static fn( Container $c ): TwitchExtensionController => new TwitchExtensionController( $c->get( TwitchExtensionApp::class ), $c->get( TwitchExtensionPanel::class ), $c->get( Logger::class ) )
+		);
+	}
+
+	/**
+	 * A product as the Twitch Extension panel shows it: name and image of a
+	 * published, visible parent product; null otherwise (ADR-112 pkt. 2).
+	 *
+	 * @param int $product_id Parent product.
+	 * @return array{name: string, image: string|null}|null
+	 */
+	private static function panel_product( int $product_id ): ?array {
+		$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+
+		if ( ! $product instanceof WC_Product || 'publish' !== $product->get_status() || 'hidden' === $product->get_catalog_visibility() || (int) $product->get_parent_id() > 0 ) {
+			return null;
+		}
+
+		$image_id = (int) $product->get_image_id();
+		$image    = $image_id > 0 ? wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) : false;
+
+		return array(
+			'name'  => wp_strip_all_tags( html_entity_decode( $product->get_name(), ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ),
+			'image' => is_string( $image ) && '' !== $image ? $image : null,
 		);
 	}
 

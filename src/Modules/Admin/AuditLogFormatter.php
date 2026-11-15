@@ -211,6 +211,7 @@ final class AuditLogFormatter {
 			AuditAction::GiveawayCreated => __( 'Creator created a giveaway', 'merchboard' ),
 			AuditAction::GiveawayCharged => __( 'Giveaway charged from the balance', 'merchboard' ),
 			AuditAction::GiveawayCancelled => __( 'Giveaway cancelled', 'merchboard' ),
+			AuditAction::TwitchExtensionChanged => __( 'Twitch Extension panel changed', 'merchboard' ),
 			AuditAction::DesignerProductCreated => __( 'Creator started a designer product', 'merchboard' ),
 			AuditAction::DesignerProductDeleted => __( 'Creator deleted a designer draft', 'merchboard' ),
 			AuditAction::DesignerVersionSubmitted => __( 'Creator submitted a design for approval', 'merchboard' ),
