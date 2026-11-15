@@ -4,7 +4,7 @@
 Creatorens Twitch-subscribers får automatisk rabat på creatorens produkter i butikken. Det er et af "Community Features" i MitCCMerch, inspireret af Fourthwall. Rabatten betales af creatorens fortjeneste, så virksomhedens del og andre creatores fortjeneste aldrig påvirkes.
 
 ## Current status
-I gang (fase 43, ADR-106). Udgives i næste version efter review og runtime-test.
+Udgivet i 2.0.0 (fase 43, ADR-106, tagget på `c2f212c`): reviewet, testet automatisk og afprøvet på stg. Kendt: blok-kurven viser den interne kode `merchboard-twitch-sub` i stedet for navnet (kræver JS; live bruger den klassiske kurv). Planlagt i fase 48: rabatlinjen pr. tier på produktsiden og et moderne Twitch-kort i kurv og kasse.
 
 ## User-facing functionality
 **Creatoren** (MitCCMerch → Community Features → Twitch subscriber discount; siden findes kun, når en administrator har slået rabatten til under Indstillinger → Community, ADR-108):

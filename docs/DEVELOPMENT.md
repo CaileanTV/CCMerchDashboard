@@ -284,7 +284,9 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 2.0.0: rabat til Twitch-subscribers og Twitch-gaver (fase 43 og 44)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-11** efter projektejerens valg ("Til testpakke på stg", version 2.0.0). Tag efter projektejerens OK efter testen på stg; tag og SHA-256 noteres her da.
+**Versions-bump og CHANGELOG-sektion 2026-11-11** efter projektejerens valg ("Til testpakke på stg", version 2.0.0).
+
+**Tagget 2026-11-11** efter projektejerens OK ("Vi er klar til at tagge"): annoteret tag `v2.0.0` på `c2f212c`, CI grøn med hele integrationssuiten. Release-workflowet (run `43096534457`) hang i GitHubs kø og kunne hverken annulleres eller genstartes, så draft-releasen blev oprettet manuelt 2026-11-15 med præcis workflowets trin (`npm run package -- --tag v2.0.0` fra tagget, samme ZIP-kontrol, release-tekst fra CHANGELOG, `gh release create --draft --verify-tag`). ZIP'en er byte-identisk med pakken fra tag-dagen: SHA-256 `4d22b1a79dc3e8ca09f8ec8976fc4063897de9b3ec33a30c090878a158e53dff`.
 - Testet med unit-, Jest- og integrationstests. Uafhængigt review af begge faser; fundene er rettet (`43a0fc7`, `c71c745`, `76ac116`). Twitch-login, kurven, kuponerne og chatten kan kun testes rigtigt på stg (HTTPS og Twitch-webhook).
 - **Tjek særligt på stg:** blok-kurven viser den reserverede kode `merchboard-twitch-sub` i stedet for "Twitch subscriber discount" (ikke rettet: kræver JS), og om blok-checkouten henter kurven igen efter beskeden "Din Twitch-subscriber-rabat er ændret".
 - CI skal være grøn med hele integrationssuiten på den taggede commit.

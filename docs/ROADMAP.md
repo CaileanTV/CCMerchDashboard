@@ -1128,7 +1128,7 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 
 **Efter fase 42:** samlet review og release af fase 41 og 42 (det tidligere 41.8): uafhængigt review, CI, testpakke på stg og bump til 1.8.0 efter projektejerens OK. **Status 2026-11-09:** review ✅, bump til 1.8.0 ✅, testpakke på stg ✅, ingen bekræftelse og CPR i stamdata ✅ (`9d50bc0`), tagget `v1.8.0` på `9d50bc0` efter projektejerens OK; draft-release byte-identisk med testpakken (DEVELOPMENT.md "Release 1.8.0").
 
-## Fase 43 – Twitch-login for kunder og rabat til Twitch-subscribers ✅ (plan godkendt 2026-11-10; ADR-106; Community Features punkt 3; udgives i 2.0.0 efter projektejerens test på stg)
+## Fase 43 – Twitch-login for kunder og rabat til Twitch-subscribers ✅ (plan godkendt 2026-11-10; ADR-106; Community Features punkt 3; udgivet i 2.0.0, tagget på c2f212c)
 
 **Projektejerens valg (2026-11-10):** se "Community Features (MitCCMerch)", punkt 3, nedenfor. Tilføjet efter undersøgelsen:
 - Creatoren betaler hele rabatten af sin fortjeneste på alle produkttyper, også almindelige andelsprodukter (en ny regnskabsregel).
@@ -1147,7 +1147,7 @@ Projektejerens krav: produkter fra produktdesigneren må ikke synkroniseres til 
 - **43.8 Tekster og faste lister:** ✅ alle nye tekster er oversat til dansk (`npm run i18n`). Faste lister er opdateret: audit, afinstallation (user meta og ordre-meta), "Se som creator", schema-version 49, `SchemaTest` og `PluginTest`. Dokumentation: DATABASE.md, MODULES.md og `docs/features/twitch-sub-discount.md`. CI-fejl rettet: modulet opretter først Twitch-tjenesterne på `init`, testene bruger gyldige Twitch-nøgler, og et subscription-svar gemt under kanal-id'et blev forkastet, fordi PHP gør tal-nøgler til heltal. De berørte integrationstests er grønne lokalt (47 tests).
 - **43.9 Runtime-test:** projektejerens test på stg sammen med fase 44–46 (testpakken nederst under fase 46): rigtigt Twitch-login, subscription-tjek, rabat i kurven og ordre. Der bygges ingen testpakke til fase 43 alene.
 
-## Fase 44 – Twitch-gifting ✅ (valg 2026-11-10; ADR-107; Community Features punkt 2; udgives i 2.0.0 efter projektejerens test på stg)
+## Fase 44 – Twitch-gifting ✅ (valg 2026-11-10; ADR-107; Community Features punkt 2; udgivet i 2.0.0, tagget på c2f212c)
 
 Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR. **Testes sammen med fase 43** i én testpakke på stg (projektejerens beslutning 2026-11-10); derefter samlet review, CI og release.
 
@@ -1179,7 +1179,7 @@ Bygger på Twitch-login'et fra fase 43. Planlægges med egen ADR. **Testes samme
 - **44.8a Testtilstand for gifting:** ✅ (a0cf2bc, docs 58df824) projektejerens ønske 2026-11-11: en administrator kan pr. creator lade creatoren regnes som live, så gaver kan testes uden en stream (ADR-107 statusnote).
 - **44.8b Chat og gaveside:** ✅ (2cb4915, docs 192bad0) projektejerens ønsker 2026-11-11: botten bekræfter `!enter` (samlet besked højst hvert 10. sekund, også "Allerede med", kan slås fra), "Tilmeldingen er lukket" og vinderen 10 sekunder senere, og vinderens link åbner en gaveside med "Log ind med Twitch" (ADR-107 statusnote).
 - **44.8c Påmindelser og links:** ✅ (0cc48a1 og commits efter) projektejerens ønsker 2026-11-11: botten minder chatten om `!enter` ved halvdelen og en fjerdedel af tiden og 10 sekunder før tilmeldingen lukker, over 75 sekunder også ved tre fjerdedele; et "ur" holder påmindelser, lukning og vinder til tiden i en stille chat (på stg kom de først efter vinduet, fordi jobbene højst kører én gang i minuttet); gifting-siden siger, at botten skal undtages, hvis kanalen fjerner links, og bot-teksterne siger, at gifting og subscriber-rabat kræver vores bot (ADR-107 statusnote).
-- **44.9 Review, CI og testpakke 2.0.0** for fase 43 og 44 på stg. ✅ Review ✅ (fund rettet i 43a0fc7, c71c745, 76ac116), bump til 2.0.0 ✅ (a3d498b), testpakke på stg ✅ 2026-11-11 (ZIP SHA-256 `db7bc7d1…`, schema-version 50, ingen PHP-fejl); ny testpakke med testtilstanden, bekræftelserne og gavesiden på stg ✅ 2026-11-11 (bygget fra 192bad0, ZIP SHA-256 `19a92340…`); rettelse: "Tilmeldingen er lukket" gentog sig uden objektcache (28a464c), ny testpakke på stg ✅ 2026-11-11 (ZIP SHA-256 `3b7d8c31…`). Den aktuelle testpakke med fase 45 og 46 står under fase 46.
+- **44.9 Review, CI og testpakke 2.0.0** for fase 43 og 44 på stg. ✅ Review ✅ (fund rettet i 43a0fc7, c71c745, 76ac116), bump til 2.0.0 ✅ (a3d498b), testpakke på stg ✅ 2026-11-11 (ZIP SHA-256 `db7bc7d1…`, schema-version 50, ingen PHP-fejl); ny testpakke med testtilstanden, bekræftelserne og gavesiden på stg ✅ 2026-11-11 (bygget fra 192bad0, ZIP SHA-256 `19a92340…`); rettelse: "Tilmeldingen er lukket" gentog sig uden objektcache (28a464c), ny testpakke på stg ✅ 2026-11-11 (ZIP SHA-256 `3b7d8c31…`). Den aktuelle testpakke med fase 45 og 46 står under fase 46. Tagget `v2.0.0` på c2f212c 2026-11-11; draft-releasen oprettet manuelt 2026-11-15, da workflowet hang (ZIP SHA-256 `4d22b1a7…`, se DEVELOPMENT.md "Release 2.0.0"). ✅
 
 - **Efter fase 44** ✅ review, rettelser, grøn CI, testpakke for fase 43 og 44 og upload til stg. Projektejeren tester, og tag og release sker først efter projektejerens OK. **Versionen bliver 2.0.0.**
 
@@ -1217,7 +1217,7 @@ Projektejerens ønske 2026-11-11: lærredet i alertdesigneren skal være hele al
 
 - **Efter fase 45 og 46:** review, grøn CI og ny testpakke 2.0.0 på stg. Testpakke på stg ✅ 2026-11-11 (bygget fra 6b7e207, ZIP SHA-256 `290b5731…`). Projektejeren slår knapperne til under Indstillinger → Community og tester. Tag efter projektejerens OK.
 
-## Fase 47 – Giveaway-links ✅ (plan godkendt 2026-11-11; ADR-110; Community Features punkt 1; udgives i 2.1.0; se [features/giveaways.md](features/giveaways.md))
+## Fase 47 – Giveaway-links ✅ (plan godkendt 2026-11-11; ADR-110; Community Features punkt 1; udgivet i 2.1.0, tagget på 5504fa2; se [features/giveaways.md](features/giveaways.md))
 
 Projektejerens ønske 2026-11-11: creatoren skal selv kunne give merch væk til seere, enten med vores bot i chatten eller med sit eget giveaway-system, hvor creatoren selv sender en kode til vinderen.
 
@@ -1306,12 +1306,12 @@ Bliver 2.1.0, fordi fase 47 (giveaway-links) kommer med.
 | Testing | Playwright E2E mod Playground i CI |
 | Teams | Flere brugere pr. creator |
 | Branding: brand-font | Self-hosted brand-font. Logo og temaer findes (fase 21). |
-| Community Features (MitCCMerch) | Projektejerens ønske 2026-11-09, inspireret af Fourthwall. Menuen "Community Features", rabat til Twitch-subscribers og Twitch-gifting er bygget (fase 43–45). Tilbage: giveaway-links, evt. rabat til YouTube-medlemmer og platform-integrationer som YouTube Product Shelf. Se afsnittet "Community Features (MitCCMerch)" nedenfor. |
+| Community Features (MitCCMerch) | Projektejerens ønske 2026-11-09, inspireret af Fourthwall. Menuen "Community Features", rabat til Twitch-subscribers, Twitch-gifting (fase 43–45, 2.0.0) og giveaways (fase 47, 2.1.0) er bygget. Planlagt: fase 48 (ny gave-boks, flere gaver pr. køb, moderne Twitch-login; afventer godkendelse). Tilbage: evt. rabat til YouTube-medlemmer og platform-integrationer som YouTube Product Shelf. Se afsnittet "Community Features (MitCCMerch)" nedenfor. |
 | Alerts: creatorens eget format | Projektejerens ønske 2026-10-23, ikke prioriteret: creatoren vælger selv, om chatbotten skriver én besked pr. ordrelinje eller én pr. ordre (i dag administratorens valg for alle), og kan gøre det samme med selve alerten i overlayet: én alert pr. ordre, fx "$UserName har købt merch", der skifter (cycler) mellem billederne af de købte varer. Kræver design af skabelon, varighed og billedskift, når det prioriteres |
 
 ### Community Features (MitCCMerch)
 
-Projektejerens ønske 2026-11-09. En ny menu "Community Features" i creator-dashboardet (MitCCMerch) med funktioner, som Fourthwall tilbyder sine creators (Fourthwalls hjælpesider læst 2026-11-09). Hver funktion planlægges som sin egen fase med ADR, når den prioriteres. **Status 2026-11-11:** punkt 2 og 3 er bygget (fase 43–45, udgives i 2.0.0); punkt 1, 4 og 5 er ikke prioriteret.
+Projektejerens ønske 2026-11-09. En ny menu "Community Features" i creator-dashboardet (MitCCMerch) med funktioner, som Fourthwall tilbyder sine creators (Fourthwalls hjælpesider læst 2026-11-09). Hver funktion planlægges som sin egen fase med ADR, når den prioriteres. **Status 2026-11-15:** punkt 1, 2 og 3 er bygget og udgivet (fase 43–45 i 2.0.0, fase 47 i 2.1.0 og linknavnet i 2.1.1). Fase 48 (gave-boksen, flere gaver pr. køb, rabatlinjen på produktsiden og et moderne Twitch-login) er planlagt og afventer godkendelse. Punkt 4 og 5 er ikke prioriteret.
 
 **Fælles regler (projektejerens):**
 - **Gavekort tæller ikke som fortjeneste:** en gavekortkode, som en giveaway eller et gift udløser, fratrækkes creatorens fortjeneste, så den ikke tælles to gange.
@@ -1319,7 +1319,7 @@ Projektejerens ønske 2026-11-09. En ny menu "Community Features" i creator-dash
   - Det kan ikke bruges med en creators separate chatbot.
   - Det virker også, selvom almindelige alert-beskeder i chatten er slået fra.
 
-**1. Giveaway-links** 🔄 bygges i fase 47 (ADR-110; projektejerens valg 2026-11-11 afløser afklaringspunkterne nedenfor)
+**1. Giveaway-links** ✅ bygget i fase 47 og udgivet i 2.1.0 (ADR-110; [features/giveaways.md](features/giveaways.md); projektejerens valg 2026-11-11 afløser afklaringspunkterne nedenfor)
 - **Hos Fourthwall:** creatoren vælger ét produkt og et antal unikke links til engangsbrug. Vinderen vælger størrelse og farve, indtaster adresse og får varen gratis. Creatoren betaler produktets grundpris plus den billigste fragt til vinderens adresse, trukket fra saldoen. Links kan ikke ændres eller annulleres.
 - **Hos os (projektejerens model):** creatoren vælger produkterne og køber et gavekort, der sendes til vinderen.
   - Creatoren betaler kun grundbeløbet.

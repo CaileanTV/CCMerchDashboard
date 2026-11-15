@@ -4,7 +4,7 @@
 En seer kan købe en af creatorens varer som gave til chatten, mens creatoren streamer på Twitch. Botten trækker en vinder blandt dem, der skriver `!enter`, og vinderen henter gaven med sit Twitch-login. Creatoren får fortjeneste af købet som ved ethvert salg ([ADR-107](../DECISIONS.md), ROADMAP fase 44, Community Features pkt. 2).
 
 ## Current status
-I gang (fase 44, testes sammen med fase 43 på stg og udgives som 2.0.0). 44.1–44.8 er bygget og testet automatisk. Mangler: review, CI, testpakke og runtime-test på stg (44.9). Lodtrækningen kræver chatbottens webhook og kan kun testes på et site med HTTPS (stg eller devpage).
+Udgivet i 2.0.0 (fase 44, tagget på `c2f212c`): reviewet, testet med unit-, Jest- og integrationstests og afprøvet på stg af projektejeren. Påmindelserne og gave-uret kom i 2.0.0; i 2.1.0 gennemføres en betalt gave-ordre automatisk, og i 2.1.1 vælger admin linknavnet (`CommunityLink`). Planlagt i fase 48: ny gave-boks og flere gaver pr. køb. Lodtrækningen kræver chatbottens webhook og kan kun testes på et site med HTTPS (stg eller devpage).
 
 ## User-facing functionality
 **Seeren (køberen):**
