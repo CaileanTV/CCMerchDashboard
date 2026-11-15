@@ -18,11 +18,22 @@ Fase 48 (ADR-111) og fase 49 (ADR-112); fase 50 (reklame-overlay og `!merch`, AD
   - **Endpoint:** `GET /merchboard/v1/twitch-extension/panel` kræver extensionens JWT.
   - **ZIP til Twitch:** `npm run twitch-extension -- --site <url>`.
   - Extensionen skal oprettes og godkendes hos Twitch, før creators kan bruge den.
+- **Merch-reklame i streamen** (fase 50, ADR-113): creatoren designer en reklame med op til 12 produkter uden baggrund, som vises i OBS som sin egen browser source hvert 1.–60. minut i 5–60 sekunder.
+  - **Designs:** Spotlight, Hylde, Karrusel, Kort i hjørnet og Tre i front (de yderste på skrå).
+  - **Udseende:** en pille med egen tekst (fx "Skriv !merch i chatten"), animationer ind og ud, accentfarve og lyst eller mørkt kort.
+  - **Billeder uden baggrund:** browseren fjerner automatisk en ensfarvet baggrund, når creatoren gemmer, og creatoren kan uploade sin egen PNG i stedet.
+  - **I dashboardet:** forhåndsvisning, "Vis nu" og nyt OBS-link.
+  - **Admin:** global knap under Indstillinger → Community (fra som standard).
+- **`!merch` i chatbotten** (fase 50): på Alerts → Chatbot slår creatoren kommandoen til og skriver svaret med `$Link` (creatorens kategoriside, ellers shoppen). Botten svarer på Twitch og Kick med en pause pr. kanal.
+- **Twitch Extension: vilkår og privatlivspolitik:** `/?merchboard_extension=terms` og `=privacy` (engelsk og dansk), som Twitch kræver.
 - **Database:** migration 52 tilføjer `merchboard_gifts.order_unit` og erstatter den unikke nøgle på `order_id` med (`order_id`, `order_unit`). Eksisterende gaver får 1 og virker uændret.
 
 ### Changed
 
 - En gavekurv viser ikke længere Twitch-kortet, for gaver købes uden rabat.
+- Dashboardets CSP tillader rammer fra sitet selv (`frame-src 'self'`) til forhåndsvisningen af merch-reklamen.
+- Kick-chatbeskeder udløser nu `merchboard_kick_chat_message` (én gang pr. besked), så kommandoer virker på Kick.
+- Opt-in-afinstallation sletter også merch-reklamens billeder og Twitch Extension-opsætningen.
 
 ## [2.1.1] - 2026-11-12
 

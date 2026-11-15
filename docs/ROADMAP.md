@@ -1329,7 +1329,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - Skærmbilleder, gennemgangsguide og indsendelse til Twitch.
   - Pluginets del udgives i 2.2.0 (sammen med fase 48 og 50). Extensionen kan bruges af alle creators, når Twitch har godkendt den.
 
-## Fase 50 – Reklame-overlay med creatorens produkter og !merch-kommando 🔄 (ønske 2026-11-15; afklaret og godkendt 2026-11-15; version 2.2.0 sammen med fase 48 og 49; ADR-113)
+## Fase 50 – Reklame-overlay med creatorens produkter og !merch-kommando ✅ (ønske 2026-11-15; afklaret, godkendt og bygget 2026-11-15; version 2.2.0 sammen med fase 48 og 49; ADR-113)
 
 **Projektejerens ønske 2026-11-15:**
 - **Reklame-overlay til streamen:** creatoren designer et overlay, der viser **flere af sine produkter** og eventuelt en **tekstboks eller pille** med en kommando, fx `!merch`.
@@ -1367,19 +1367,26 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 
 **Trin:**
 - **50.1 Afklaring og ADR-113:** ✅ 2026-11-15.
-- **50.2 Data og backend:**
+- **50.2 Data og backend:** ✅ `dd63afe`
   - creator-meta `merch_ad` og `merch_command` med validering og audit;
   - overlay-id og fornyelse;
   - uploads af billeder uden baggrund;
   - global knap `community_merch_ad_enabled`;
   - REST `/me/community/merch-ad` og `/me/alerts/chatbot/merch-command`.
-- **50.3 Overlayet:** siden til OBS (streng CSP), opdateringskaldet, de fem designs, timing, animationer og "Vis nu" (eget build-target).
-- **50.4 MitCCMerch:** siden Community Features → Merch-reklame med design, produkter (automatisk fritlægning og upload), pille, farver, hyppighed, animationer, live-forhåndsvisning og OBS-linket.
-- **50.5 `!merch`:**
+- **50.3 Overlayet:** ✅ `dd63afe` siden til OBS (streng CSP), opdateringskaldet, de fem designs, timing, animationer og "Vis nu" (eget build-target).
+- **50.4 MitCCMerch:** ✅ `dd63afe` siden Community Features → Merch-reklame med design, produkter (automatisk fritlægning og upload), pille, farver, hyppighed, animationer, live-forhåndsvisning og OBS-linket.
+- **50.5 `!merch`:** ✅ `dd63afe`
   - Kick-chatbeskeder som action;
   - kommandoen på Twitch og Kick med cooldown og kollektionslink;
   - kortet på Alerts → Chatbot.
-- **50.6 Test og levering:** tests, danske tekster, docs og runtime i Playground med skærmbilleder af alle designs.
+- **50.6 Test og levering:** ✅ tests, danske tekster og docs; runtime i Playground 2026-11-15:
+  - automatisk fritlægning af produkter med hvid baggrund;
+  - alle fem designs og lyst kort;
+  - statuskald, 404 og CSP;
+  - forhåndsvisningen (dashboardets CSP fik `frame-src 'self'`);
+  - `!merch`-kortet.
+  - Rettet undervejs: billeder, der dækkede navnet, karrusellens bredde, forhåndsvisning af en slået-fra reklame.
+  - `!merch` på rigtige Twitch- og Kick-kanaler testes på stg sammen med 2.2.0-testpakken.
 
 ## Version 2.1.1 ✅ (tagget 2026-11-12 på 555ae87)
 
