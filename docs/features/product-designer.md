@@ -216,6 +216,18 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
 - **Kopiér design:** knappen på hvert design og i designeren laver et nyt produkt med samme opsætning, også fra et design, der venter eller er afvist. Filer kopieres ikke.
 - **"Vælg alle"** ved farverne, og det valgte elements **størrelse i cm** ud fra sidens printstørrelse (også mens det skaleres).
 
+## Billeder uden baggrund (fase 51, ADR-114, 2026-11-15)
+- **Silhuet:** skabelonens sider har et valgfrit lag "Silhuet (billeder uden baggrund)": en PNG i lagenes størrelse, hvis synlige pixels er produktets omrids. I en PSD hedder laget `mb_silhouette`. "Lav den ud fra baggrunden" laver den i browseren ud fra baggrundsfotoet, når baggrunden er ensfarvet. Ellers uploades den. En silhuet giver ingen ny version af basisproduktet, og designs, der venter, forbliver gyldige.
+- **Omridset** er silhuetten, ellers farvemasken. En farve med sit eget foto har ingen farvemaske i tegningen, så den skal have en silhuet.
+- **Nye designs:** designeren tegner shoppens billeder uden hvidt underlag, klipper dem til omridset og sender dem som PNG (`mockup-<side>.png`). Sider uden omrids, PSD-scener og broderiets nærbilleder er JPEG som før. Mediebibliotekets PNG-billeder får meta `_merchboard_transparent`.
+- **Eksisterende produkter** (Forslag → "Billeder uden baggrund", `merchboard_manage_designer`):
+  - Hvert godkendt designer-produkt i shoppen vises med shoppens billede ved siden af det nye på ternet baggrund og en status.
+  - "Lav billeder" (pr. produkt eller for alle) tegner i admins browser ud fra versionens gemte printfiler og skabelonens lag. Hvert billede sendes for sig og venter i shop-produktets meta `_merchboard_cutouts`.
+  - **Godkend og brug i shoppen:** billederne kommer i mediebiblioteket og tager de gamle billeders pladser i produktbilledet, galleriet og variationerne, og versionens mockups bliver PNG'erne. Senere skift af produktbillede bruger dem. De gamle billeder bliver i mediebiblioteket.
+  - **Fortryd** sætter de gamle billeder tilbage; de nye venter igen. **Kassér** sletter de ventende.
+  - Alt sker under produktets lås og auditeres (`designer_cutouts_approved`, `designer_cutouts_reverted`).
+  - **Ikke berørt:** fotos fra leverandøren (versionens `mockup_state` er `ready`) og PSD-scener.
+
 ## Baggrundsfarve på AOP-produkter (fase 33, ADR-095, 2026-11-07)
 
 Admin markerer et grundprodukt med "Baggrundsfarve (AOP)". Kun på de produkter har designeren fanen "Baggrund".

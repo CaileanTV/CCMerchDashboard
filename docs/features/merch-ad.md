@@ -21,12 +21,16 @@ Kommer med i 2.2.0. `!merch` på rigtige Twitch- og Kick-kanaler testes på stg.
   - Karrusel: en stribe, hvor produkterne glider forbi.
   - Kort i hjørnet: et lille kort med produkt, navn og pille.
   - Tre i front: tre produkter, de yderste på skrå i 3D, med pillen under.
+  - Stak: ét produkt centreret forrest og to bagved, drejet og delvist skjult; en skyder bestemmer, hvor spredt de ligger.
+- **På alle designs** (ønsker 2026-11-15): pillen kan ligge under produktet eller over produktbilledet i dets nederste tredjedel, pillens størrelse vælges (lille, mellem, stor), og produktnavnene kan slås fra. Karrusellen gentager produkterne, så den kører uden tomme pladser.
 - **Pillen:** valgfri tekst, fx "Skriv !merch i chatten". Højst 60 tegn, kommandoer med `!` vises med fed, links og domæner afvises.
 - **Timing:** hvor ofte reklamen vises (hvert 1.–60. minut) og hvor længe (5–60 sekunder).
 - **Udseende:** animation ind og ud (fade, glid, pop, zoom, sløring), accentfarve og lyst eller mørkt kort.
 - **Produkter:** op til 12 af creatorens produkter i valgt rækkefølge, ellers de nyeste udgivne.
 - **Billeder uden baggrund:**
-  - Når creatoren gemmer, fjerner browseren automatisk en ensfarvet baggrund fra hvert produktbillede.
+  - Er shoppens billede et billede uden baggrund fra produktdesigneren (ADR-114), bruges det, som det er. Siden skriver "Uden baggrund (shoppens billede)".
+  - Ellers fjerner browseren automatisk en ensfarvet baggrund fra hvert produktbillede, når creatoren gemmer.
+  - Rækkefølgen er: creatorens egen upload, derefter designerens PNG, derefter den automatiske fritlægning.
   - Lykkes det ikke, siger siden det, og creatoren kan uploade sin egen PNG uden baggrund.
   - "Brug shoppens billede" fjerner det fritlagte billede igen; så vises shoppens billede i en flise.
 - **I OBS:** linket til en browser source (fx 1920 × 1080) med "Kopiér", "Vis nu" (reklamen vises inden for 10 sekunder) og "Nyt link" (det gamle holder op med at virke).
@@ -44,6 +48,7 @@ Kommer med i 2.2.0. `!merch` på rigtige Twitch- og Kick-kanaler testes på stg.
 
 ## Admin functionality
 - **Global knap:** "Merch-reklame" under Indstillinger → Community, fra som standard (ADR-108). Slået fra forsvinder siden, overlayet viser intet, og statuskaldet svarer 404.
+- **OBS-linkets navn:** under Indstillinger → Community (standard `merch_ad`, fx `?merch_ad=…`). Det første navn `merchboard_merch_ad` og op til 10 tidligere navne virker fortsat, og navne, som WordPress eller shoppen bruger, afvises.
 - **Kommandoen:** `!merch` hører til chatbotten og har ingen egen global knap.
 - **Audit:** `merch_ad_changed` og `merch_command_changed` med feltnavne.
 

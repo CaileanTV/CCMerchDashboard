@@ -6778,6 +6778,13 @@ ADR-033, ADR-065, ADR-066, ADR-108, ADR-112
 ## Status
 Accepteret af projektejeren 2026-11-15. Udgives i 2.2.0 sammen med fase 48–50.
 
+**Statusnote 2026-11-15 (bygget, `4cf006a`):**
+- Admin-siden er en fane på Merch Dashboard → Forslag ("Billeder uden baggrund"), ikke under Produktdesigner. Projektejerens regel fra 2026-11-02: alt, admin godkender, er en fane der.
+- De afventende billeder gemmes i shop-produktets meta `_merchboard_cutouts`, ikke i versionens `files`. Et udkast kopieret fra live-versionen deler dens filer, og et nyt stempel sletter udkastets filer.
+- Ved godkendelse bliver PNG'en versionens mockup. Den gamle private JPEG slettes, men det gamle billede bliver i mediebiblioteket (slot `replaced:<side>:<farve>`). "Fortryd" laver en privat kopi igen ud fra det. `_merchboard_cutouts_swap` husker, hvad der blev byttet.
+- Twitch-panelet viser shoppens billede og får PNG'en med godkendelsen; panelets ZIP hos Twitch er uændret.
+- Udbyderfotos genkendes på versionens `mockup_state` (`ready` eller `running`).
+
 ## Context
 Merch-reklamen (ADR-113) og Twitch-panelet (ADR-112) skal vise produkterne uden baggrund. Det fungerer dårligt at fjerne baggrunden fra shoppens billeder bagefter, fordi baggrunden ofte ikke er ensfarvet.
 

@@ -1387,8 +1387,14 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - `!merch`-kortet.
   - Rettet undervejs: billeder, der dækkede navnet, karrusellens bredde, forhåndsvisning af en slået-fra reklame.
   - `!merch` på rigtige Twitch- og Kick-kanaler testes på stg sammen med 2.2.0-testpakken.
+- **50.7 Ønsker efter testen på stg 2026-11-15:** ✅
+  - designet "Stak": ét produkt centreret forrest og to bagved, drejet og delvist skjult (`007491b`);
+  - på alle designs: pillen kan ligge over produktbilledet i den nederste tredjedel, pillens størrelse kan vælges, og produktnavnene kan slås fra; "Stak" har en skyder for, hvor spredt produkterne ligger (`f3c3854`);
+  - karrusellen gentager produkterne, så den kører uden tomme pladser (`f3c3854`);
+  - OBS-linkets navn vælges under Indstillinger → Community (standard `merch_ad`); tidligere navne virker fortsat (`f3c3854`);
+  - "Vis nu" viser reklamen, også mens den er slået fra, og dashboardet siger, at browser source er gennemsigtig mellem visningerne (`f3c3854`).
 
-## Fase 51 – Produktbilleder uden baggrund fra produktdesigneren (PNG) 🔄 (ønske og godkendelse 2026-11-15; version 2.2.0 sammen med fase 48–50; ADR-114)
+## Fase 51 – Produktbilleder uden baggrund fra produktdesigneren (PNG) ✅ (ønske og godkendelse 2026-11-15; version 2.2.0 sammen med fase 48–50; ADR-114)
 
 **Projektejerens ønske 2026-11-15:**
 - Alle produktbilleder fra designeren skal være PNG uden baggrund, kun produktet, fordi det ikke går at fjerne baggrunde bagefter.
@@ -1398,16 +1404,16 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 
 **Trin:**
 - **51.1 ADR-114 og plan.** ✅
-- **51.2 Silhuet-laget:**
-  - et valgfrit lag `silhouette` på skabelonens sider (admin-formular, REST, typer);
-  - "Lav silhuet automatisk" fra baggrundsfotoet.
-- **51.3 Tegning uden baggrund:** `composeMockup` uden hvidt underlag, klippet til silhuetten (eller farvemasken), som PNG. Nye indsendelser sender PNG for sider med silhuet.
-- **51.4 Admin-siden "Billeder uden baggrund":**
-  - de godkendte produkter med gammelt og nyt billede;
-  - "Lav nye" (admins browser tegner ud fra de gemte printfiler);
-  - "Godkend" (erstatter shoppens og variationernes billeder) og "Fortryd".
-- **51.5 Reklamen og Twitch-panelet** bruger designerens billeder uden baggrund (`_merchboard_transparent`).
-- **51.6 Test og levering:** tests, danske tekster, docs og runtime i Playground med et designer-produkt.
+- **51.2 Silhuet-laget:** ✅ `4cf006a`
+  - et valgfrit lag `silhouette` på skabelonens sider (admin-formular, PSD-lag `mb_silhouette`, typer);
+  - "Lav den ud fra baggrunden" laver silhuetten i browseren fra et ensfarvet baggrundsfoto.
+- **51.3 Tegning uden baggrund:** ✅ `4cf006a` `composeMockup` uden hvidt underlag, klippet til silhuetten (eller farvemasken), som PNG. Nye indsendelser sender PNG for sider med et omrids.
+- **51.4 Admin-fanen "Billeder uden baggrund":** ✅ `4cf006a` (en fane på Forslag, efter projektejerens regel om godkendelser 2026-11-02)
+  - de godkendte produkter med shoppens billede og det nye side om side;
+  - "Lav billeder" pr. produkt og for alle (admins browser tegner ud fra de gemte printfiler);
+  - "Godkend og brug i shoppen" (erstatter produktets, galleriets og variationernes billeder på deres pladser), "Kassér" og "Fortryd".
+- **51.5 Reklamen** bruger designerens billeder uden baggrund (`_merchboard_transparent`) direkte uden ny fritlægning. ✅ `4cf006a` Twitch-panelet viser shoppens billede, så det får PNG'en, når den er godkendt; panelets ZIP hos Twitch er uændret.
+- **51.6 Test og levering:** ✅ unit-, Jest- og integrationstest (godkend, fortryd, kassér), danske tekster og docs. Runtime 2026-11-15 i Chrome med den byggede admin-bundle: opgave → tegning → upload for en side med farvemaske og en side med eget farvefoto og silhuet; baggrund, gulvskygge og halsåbning blev gennemsigtige. Godkend og fortryd kræver produktlåsen (MySQL) og testes på stg.
 
 ## Version 2.1.1 ✅ (tagget 2026-11-12 på 555ae87)
 

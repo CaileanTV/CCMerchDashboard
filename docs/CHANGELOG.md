@@ -6,7 +6,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [2.2.0] - 2026-11-15
 
-Fase 48 (ADR-111), fase 49 (ADR-112) og fase 50 (ADR-113): community features i shoppen, Twitch Extension-panelet og merch-reklamen med `!merch`. Schemaændring 51 → 52. Opdateringen står i DEVELOPMENT.md ("Release 2.2.0").
+Fase 48 (ADR-111), fase 49 (ADR-112), fase 50 (ADR-113) og fase 51 (ADR-114): community features i shoppen, Twitch Extension-panelet, merch-reklamen med `!merch` og produktdesignerens billeder uden baggrund. Schemaændring 51 → 52. Opdateringen står i DEVELOPMENT.md ("Release 2.2.0").
 
 ### Added
 
@@ -26,6 +26,16 @@ Fase 48 (ADR-111), fase 49 (ADR-112) og fase 50 (ADR-113): community features i 
   - **Billeder uden baggrund:** browseren fjerner automatisk en ensfarvet baggrund, når creatoren gemmer, og creatoren kan uploade sin egen PNG i stedet.
   - **I dashboardet:** forhåndsvisning, "Vis nu" og nyt OBS-link.
   - **Admin:** global knap under Indstillinger → Community (fra som standard).
+- **Merch-reklamens valg efter testen på stg:**
+  - designet "Stak" med en skyder for, hvor spredt produkterne ligger;
+  - pillen over produktbilledet i den nederste tredjedel og pillens størrelse (lille, mellem, stor);
+  - produktnavnene kan slås fra;
+  - OBS-linkets navn vælges under Indstillinger → Community (standard `merch_ad`, auditeret); det første navn `merchboard_merch_ad` og op til 10 tidligere navne virker fortsat.
+- **Produktbilleder uden baggrund** (fase 51, ADR-114):
+  - **Silhuet:** skabelonens sider får et valgfrit lag "Silhuet" (produktets omrids). "Lav den ud fra baggrunden" laver det i browseren fra et ensfarvet baggrundsfoto.
+  - **Nye designs:** shoppens billeder er PNG uden baggrund på sider med silhuet eller farvemaske. PSD-scener og broderiets nærbilleder er JPEG som før.
+  - **Eksisterende produkter:** fanen Forslag → "Billeder uden baggrund" viser hvert godkendt produkt med shoppens billede ved siden af det nye. "Lav billeder" tegner dem i admins browser; "Godkend og brug i shoppen" sætter dem på det gamle billedes plads i produktet, galleriet og variationerne. "Fortryd" sætter de gamle tilbage, og "Kassér" dropper de nye. Det auditeres (`designer_cutouts_approved`, `designer_cutouts_reverted`). Fotos fra leverandøren forbliver, som de er.
+  - **Merch-reklamen** bruger et sådant billede, som det er, uden ny fritlægning.
 - **`!merch` i chatbotten** (fase 50): på Alerts → Chatbot slår creatoren kommandoen til og skriver svaret med `$Link` (creatorens kategoriside, ellers shoppen). Botten svarer på Twitch og Kick med en pause pr. kanal.
 - **Twitch Extension: vilkår og privatlivspolitik:** `/?merchboard_extension=terms` og `=privacy` (engelsk og dansk), som Twitch kræver.
 - **Database:** migration 52 tilføjer `merchboard_gifts.order_unit` og erstatter den unikke nøgle på `order_id` med (`order_id`, `order_unit`). Eksisterende gaver får 1 og virker uændret.
@@ -33,6 +43,8 @@ Fase 48 (ADR-111), fase 49 (ADR-112) og fase 50 (ADR-113): community features i 
 ### Changed
 
 - En gavekurv viser ikke længere Twitch-kortet, for gaver købes uden rabat.
+- Merch-reklamens karrusel gentager produkterne, så den kører uden tomme pladser. "Vis nu" viser reklamen, også mens den er slået fra, og dashboardet siger, at browser source er gennemsigtig mellem visningerne.
+- Designerens forhåndsvisning af et design vælger en mockup, også når den er en PNG.
 - Dashboardets CSP tillader rammer fra sitet selv (`frame-src 'self'`) til forhåndsvisningen af merch-reklamen.
 - Kick-chatbeskeder udløser nu `merchboard_kick_chat_message` (én gang pr. besked), så kommandoer virker på Kick.
 - Opt-in-afinstallation sletter også merch-reklamens billeder og Twitch Extension-opsætningen.
