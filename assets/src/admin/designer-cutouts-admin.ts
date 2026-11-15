@@ -93,6 +93,153 @@ export function parseJob( body: unknown ): CutoutSlot[] | null {
 }
 
 /**
+ * Why a step failed: a code (shown to the administrator, e.g. for support)
+ * and a readable text.
+ */
+export interface Failure {
+	readonly code: string;
+	readonly text: string;
+}
+
+/**
+ * A readable text for a failure code from the server or the browser.
+ *
+ * @param code The code.
+ */
+export function failureText( code: string ): string {
+	switch ( code ) {
+		case 'view':
+			return __( 'The side could not be read.', 'merchboard' );
+		case 'print':
+			return __( 'The print file could not be loaded.', 'merchboard' );
+		case 'draw':
+			return __(
+				'The image could not be drawn (a layer could not be loaded, or the browser ran out of memory).',
+				'merchboard'
+			);
+		case 'no_outline':
+			return __(
+				'The side has no outline: upload a PNG without background as the silhouette on the base product.',
+				'merchboard'
+			);
+		case 'not_plain':
+			return __(
+				'The background is not plain. Upload a PNG without background as the silhouette on the base product.',
+				'merchboard'
+			);
+		case 'file_too_large':
+			return __(
+				'The image is larger than the server accepts (upload limit). Raise the upload limit or upload a smaller template.',
+				'merchboard'
+			);
+		case 'base_layer_size':
+			return __(
+				'The image does not have the size of the template.',
+				'merchboard'
+			);
+		case 'file_type':
+			return __(
+				'The server refused the file (no PNG with transparent pixels).',
+				'merchboard'
+			);
+		case 'design_busy':
+			return __(
+				'The product is being changed right now. Try again in a minute.',
+				'merchboard'
+			);
+		case 'design_stale':
+			return __(
+				'There was nothing to put in the shop. Make the images again.',
+				'merchboard'
+			);
+		case 'not_live':
+			return __( 'The product is no longer in the shop.', 'merchboard' );
+		case 'network':
+			return __(
+				'The server did not answer (network or timeout).',
+				'merchboard'
+			);
+		default:
+			return __( 'A technical error occurred.', 'merchboard' );
+	}
+}
+
+/**
+ * A failure from a code.
+ *
+ * @param code The code.
+ */
+function failure( code: string ): Failure {
+	return { code, text: failureText( code ) };
+}
+
+/**
+ * One line about failures: "text (code)", the same ones once.
+ *
+ * @param failures The failures.
+ */
+export function describe( failures: readonly Failure[] ): string {
+	const seen = new Map< string, string >();
+
+	for ( const item of failures ) {
+		seen.set( item.code, `${ item.text } (${ item.code })` );
+	}
+
+	return Array.from( seen.values() ).join( ' ' );
+}
+
+/**
+ * Sends a request and reads the plugin's JSON answer: null when it
+ * succeeded, else the failure (the server's reason, the HTTP status, or
+ * `network`).
+ *
+ * @param url  The admin URL.
+ * @param init The request.
+ */
+async function request(
+	url: string,
+	init: RequestInit = {}
+): Promise< { failure: Failure | null; data: unknown } > {
+	let response: Response;
+
+	try {
+		response = await fetch( url, { credentials: 'same-origin', ...init } );
+	} catch {
+		return { failure: failure( 'network' ), data: null };
+	}
+
+	let body: unknown = null;
+
+	try {
+		body = await response.json();
+	} catch {
+		body = null;
+	}
+
+	const answer =
+		typeof body === 'object' && body !== null
+			? ( body as { success?: unknown; data?: unknown } )
+			: {};
+
+	if ( response.ok && answer.success === true ) {
+		return { failure: null, data: answer.data };
+	}
+
+	const reason =
+		typeof answer.data === 'object' &&
+		answer.data !== null &&
+		typeof ( answer.data as { reason?: unknown } ).reason === 'string'
+			? ( answer.data as { reason: string } ).reason
+			: `http_${ response.status }`;
+
+	// PHP drops a request larger than post_max_size: nothing arrives but the URL.
+	return {
+		failure: failure( 413 === response.status ? 'file_too_large' : reason ),
+		data: null,
+	};
+}
+
+/**
  * The print file on a canvas, or null.
  *
  * @param url The print file's URL.
@@ -116,34 +263,92 @@ async function printCanvas( url: string ): Promise< HTMLCanvasElement | null > {
 }
 
 /**
- * Draws one image without background, or null when it cannot be drawn.
+ * Draws one image without background, or why it cannot be drawn.
  *
  * @param slot The side and colour.
  */
-export async function drawSlot( slot: CutoutSlot ): Promise< Blob | null > {
+export async function drawSlot( slot: CutoutSlot ): Promise< Blob | Failure > {
 	const view = parseView( slot.view );
-	const print = view === null ? null : await printCanvas( slot.print );
 
-	if ( view === null || print === null ) {
-		return null;
+	if ( view === null ) {
+		return failure( 'view' );
 	}
 
-	// A PSD scene: its own picture with the design, without the white document.
-	const scene = slot.layers.scene;
-	const image =
-		view.scene !== null && scene !== undefined
-			? await composeScene( view.scene, scene, print, true )
-			: await composeMockup(
-					view,
-					slot.layers as Partial< Record< LayerKind, string > >,
-					slot.color,
-					print,
-					null,
-					true
-				);
+	const print = await printCanvas( slot.print );
+
+	if ( print === null ) {
+		return failure( 'print' );
+	}
+
+	let image: Blob | null;
+
+	try {
+		// A PSD scene: its own picture with the design, without the white document.
+		const scene = slot.layers.scene;
+		image =
+			view.scene !== null && scene !== undefined
+				? await composeScene( view.scene, scene, print, true )
+				: await composeMockup(
+						view,
+						slot.layers as Partial< Record< LayerKind, string > >,
+						slot.color,
+						print,
+						null,
+						true
+					);
+	} catch {
+		image = null;
+	}
+
+	if ( image === null ) {
+		return failure( 'draw' );
+	}
 
 	// A side the browser finds no outline on stays as it is.
-	return image?.type === 'image/png' ? image : null;
+	return image.type === 'image/png' ? image : failure( 'no_outline' );
+}
+
+/**
+ * The largest file the server takes (`data-max-bytes` on the table), or 0.
+ */
+function maxBytes(): number {
+	const value = Number(
+		document.querySelector< HTMLElement >( '[data-max-bytes]' )?.dataset
+			.maxBytes ?? 0
+	);
+
+	return Number.isFinite( value ) && value > 0 ? value : 0;
+}
+
+/**
+ * Sends a file to an admin URL.
+ *
+ * @param url    The URL.
+ * @param fields Other fields.
+ * @param file   The PNG.
+ * @param name   Its file name.
+ */
+async function send(
+	url: string,
+	fields: Record< string, string >,
+	file: Blob,
+	name: string
+): Promise< Failure | null > {
+	const limit = maxBytes();
+
+	if ( limit > 0 && file.size > limit ) {
+		return failure( 'file_too_large' );
+	}
+
+	const body = new FormData();
+
+	for ( const [ key, value ] of Object.entries( fields ) ) {
+		body.append( key, value );
+	}
+
+	body.append( 'file', new File( [ file ], name, { type: 'image/png' } ) );
+
+	return ( await request( url, { method: 'POST', body } ) ).failure;
 }
 
 /**
@@ -151,118 +356,105 @@ export async function drawSlot( slot: CutoutSlot ): Promise< Blob | null > {
  *
  * @param button The product's button (`data-job`, `data-upload`).
  * @param say    Shows the progress.
- * @return Whether every image was made.
+ * @return The failures; none when every image was made.
  */
 async function makeProduct(
 	button: HTMLButtonElement,
 	say: ( text: string ) => void
-): Promise< boolean > {
-	const job = await fetch( button.dataset.job ?? '', {
-		credentials: 'same-origin',
-	} )
-		.then( ( response ) => response.json() )
-		.then( parseJob )
-		.catch( () => null );
+): Promise< Failure[] > {
+	const answer = await request( button.dataset.job ?? '' );
+	const job =
+		answer.failure === null
+			? parseJob( { success: true, data: answer.data } )
+			: null;
 
 	if ( job === null ) {
-		say( __( 'The product could not be read.', 'merchboard' ) );
-		return false;
+		const failed = [ answer.failure ?? failure( 'view' ) ];
+		say( describe( failed ) );
+		return failed;
 	}
 
+	const failures: Failure[] = [];
 	let done = 0;
-	let failed = 0;
 
-	for ( const slot of job ) {
+	for ( const [ index, slot ] of job.entries() ) {
 		say(
 			sprintf(
 				/* translators: 1: images done, 2: all images. */
 				__( 'Image %1$d of %2$d…', 'merchboard' ),
-				done + failed + 1,
+				index + 1,
 				job.length
 			)
 		);
 
 		const png = await drawSlot( slot );
-		const body = new FormData();
-		body.append( 'key', slot.key );
+		const failed =
+			png instanceof Blob
+				? await send(
+						button.dataset.upload ?? '',
+						{ key: slot.key },
+						png,
+						'cutout.png'
+					)
+				: png;
 
-		if ( png !== null ) {
-			body.append(
-				'file',
-				new File( [ png ], 'cutout.png', { type: 'image/png' } )
-			);
-		}
-
-		const sent =
-			png !== null &&
-			( await fetch( button.dataset.upload ?? '', {
-				method: 'POST',
-				credentials: 'same-origin',
-				body,
-			} )
-				.then( ( response ) => response.ok )
-				.catch( () => false ) );
-
-		if ( sent ) {
+		if ( failed === null ) {
 			done++;
 		} else {
-			failed++;
+			failures.push( failed );
 		}
 	}
 
 	say(
-		failed === 0
+		0 === failures.length
 			? sprintf(
 					/* translators: %d: number of images. */
 					__( '%d images made.', 'merchboard' ),
 					done
 				)
 			: sprintf(
-					/* translators: 1: images made, 2: images that failed. */
-					__( '%1$d images made, %2$d failed.', 'merchboard' ),
+					/* translators: 1: images made, 2: images that failed, 3: why. */
+					__( '%1$d images made, %2$d failed: %3$s', 'merchboard' ),
 					done,
-					failed
+					failures.length,
+					describe( failures )
 				)
 	);
 
-	return failed === 0;
+	return failures;
 }
 
 /**
  * Gives the sides of a product's base product without an outline a
  * silhouette made from the template's photo on white (`data-outline-job`,
- * `data-outline`). True when there was nothing to do or every side got one.
+ * `data-outline`).
  *
  * @param button The product's button.
  * @param say    Shows the progress.
+ * @return The failures; none when there was nothing to do or every side got one.
  */
 async function makeOutline(
 	button: HTMLButtonElement,
 	say: ( text: string ) => void
-): Promise< boolean > {
+): Promise< Failure[] > {
 	const jobUrl = button.dataset.outlineJob;
 
 	if ( jobUrl === undefined ) {
-		return true;
+		return [];
 	}
 
 	say( __( 'Removing the white background…', 'merchboard' ) );
 
-	const answer: unknown = await fetch( jobUrl, {
-		credentials: 'same-origin',
-	} )
-		.then( ( response ) => response.json() )
-		.catch( () => null );
+	const answer = await request( jobUrl );
 	const sides =
-		typeof answer === 'object' &&
-		answer !== null &&
-		( answer as { success?: unknown } ).success === true
-			? ( answer as { data?: { sides?: unknown } } ).data?.sides
+		typeof answer.data === 'object' && answer.data !== null
+			? ( answer.data as { sides?: unknown } ).sides
 			: null;
 
-	if ( ! Array.isArray( sides ) ) {
-		say( __( 'The product could not be read.', 'merchboard' ) );
-		return false;
+	if ( answer.failure !== null || ! Array.isArray( sides ) ) {
+		const failed = [ answer.failure ?? failure( 'view' ) ];
+		say( describe( failed ) );
+		return failed;
 	}
 
 	for ( const side of sides as { key?: unknown; photo?: unknown }[] ) {
@@ -270,60 +462,36 @@ async function makeOutline(
 			typeof side.photo === 'string'
 				? await silhouetteFromUrl( side.photo )
 				: null;
+		const failed =
+			png === null || typeof side.key !== 'string'
+				? failure( 'not_plain' )
+				: await send(
+						button.dataset.outline ?? '',
+						{ side: side.key },
+						png,
+						'silhouette.png'
+					);
 
-		if ( png === null || typeof side.key !== 'string' ) {
-			say(
-				__(
-					'The background is not plain. Upload a PNG without background as the silhouette on the base product.',
-					'merchboard'
-				)
-			);
-			return false;
-		}
-
-		const body = new FormData();
-		body.append( 'side', side.key );
-		body.append(
-			'file',
-			new File( [ png ], 'silhouette.png', { type: 'image/png' } )
-		);
-
-		const sent = await fetch( button.dataset.outline ?? '', {
-			method: 'POST',
-			credentials: 'same-origin',
-			body,
-		} )
-			.then( ( response ) => response.ok )
-			.catch( () => false );
-
-		if ( ! sent ) {
-			say( __( 'The silhouette could not be saved.', 'merchboard' ) );
-			return false;
+		if ( failed !== null ) {
+			say( describe( [ failed ] ) );
+			return [ failed ];
 		}
 	}
 
-	return true;
+	return [];
 }
 
 /**
  * Puts a product's waiting images in the shop.
  *
  * @param button The product's button (`data-apply`).
- * @return Whether images were put in the shop.
+ * @return The failure, or null.
  */
-async function applyProduct( button: HTMLButtonElement ): Promise< boolean > {
-	const answer = await fetch( button.dataset.apply ?? '', {
-		method: 'POST',
-		credentials: 'same-origin',
-	} )
-		.then( ( response ) => response.json() )
-		.catch( () => null );
-
-	return (
-		typeof answer === 'object' &&
-		answer !== null &&
-		( answer as { success?: unknown } ).success === true
-	);
+async function applyProduct(
+	button: HTMLButtonElement
+): Promise< Failure | null > {
+	return ( await request( button.dataset.apply ?? '', { method: 'POST' } ) )
+		.failure;
 }
 
 /**
@@ -337,12 +505,14 @@ function statusOf( element: Element ): ( text: string ) => void {
 	return ( text: string ) => {
 		if ( status instanceof HTMLElement ) {
 			status.textContent = text;
+			status.style.color = text.includes( '(' ) ? '#b32d2e' : '';
 		}
 	};
 }
 
 /**
- * Wires the buttons.
+ * Wires the buttons. The page reloads only when everything worked, so a
+ * failure stays on the screen with its reason and code.
  */
 function start(): void {
 	const buttons = Array.from(
@@ -366,27 +536,67 @@ function start(): void {
 			const say = statusOf( button );
 
 			lock( true );
-			void makeOutline( button, say ).then( async ( outlined ) => {
-				if ( ! outlined ) {
-					lock( false );
+			void ( async () => {
+				const failed = await makeOutline( button, say );
+
+				if ( 0 === failed.length ) {
+					failed.push( ...( await makeProduct( button, say ) ) );
+				}
+
+				if ( 0 === failed.length ) {
+					window.location.reload();
 					return;
 				}
 
-				await makeProduct( button, say );
-				window.location.reload();
-			} );
+				lock( false );
+			} )();
 		} )
 	);
+
+	// A silhouette uploaded by hand (e.g. a PNG exported from the PSD), then the page shows the product as ready.
+	document
+		.querySelectorAll< HTMLInputElement >(
+			'input.merchboard-cutouts-silhouette'
+		)
+		.forEach( ( input ) =>
+			input.addEventListener( 'change', () => {
+				const file = input.files?.[ 0 ];
+
+				if ( file === undefined ) {
+					return;
+				}
+
+				const say = statusOf( input );
+
+				say( __( 'Saving the silhouette…', 'merchboard' ) );
+				void send(
+					input.dataset.outline ?? '',
+					{ side: input.dataset.side ?? '' },
+					file,
+					'silhouette.png'
+				).then( ( failed ) => {
+					if ( failed === null ) {
+						window.location.reload();
+						return;
+					}
+
+					say( describe( [ failed ] ) );
+				} );
+			} )
+		);
 
 	// The automatic run: make each product's images and put them in the shop at once.
 	all?.addEventListener( 'click', () => {
 		const say = statusOf( all );
 		let applied = 0;
+		let failedProducts = 0;
 
 		lock( true );
 
 		void ( async () => {
 			for ( const [ index, button ] of buttons.entries() ) {
+				const sayHere = statusOf( button );
+
 				say(
 					sprintf(
 						/* translators: 1: product number, 2: all products. */
@@ -397,31 +607,48 @@ function start(): void {
 				);
 
 				// The old images on white: an outline from the template's photo first.
-				if ( ! ( await makeOutline( button, statusOf( button ) ) ) ) {
-					continue;
+				const failed = await makeOutline( button, sayHere );
+
+				if (
+					0 === failed.length &&
+					button.dataset.state !== 'pending'
+				) {
+					failed.push( ...( await makeProduct( button, sayHere ) ) );
 				}
 
-				if ( button.dataset.state !== 'pending' ) {
-					await makeProduct( button, statusOf( button ) );
-				}
+				const applyFailed =
+					0 === failed.length ? await applyProduct( button ) : null;
 
-				if ( await applyProduct( button ) ) {
+				if ( 0 === failed.length && applyFailed === null ) {
 					applied++;
+				} else {
+					failedProducts++;
+
+					if ( applyFailed !== null ) {
+						sayHere( describe( [ applyFailed ] ) );
+					}
 				}
 			}
 
 			say(
 				sprintf(
-					/* translators: 1: products changed, 2: all products. */
+					/* translators: 1: products changed, 2: all products, 3: products that failed. */
 					__(
-						'%1$d of %2$d products use images without background.',
+						'%1$d of %2$d products use images without background. %3$d failed: see the reason at each product.',
 						'merchboard'
 					),
 					applied,
-					buttons.length
+					buttons.length,
+					failedProducts
 				)
 			);
-			window.location.reload();
+
+			if ( 0 === failedProducts ) {
+				window.location.reload();
+				return;
+			}
+
+			lock( false );
 		} )();
 	} );
 }

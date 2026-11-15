@@ -3,7 +3,11 @@
  */
 import { describe, expect, it } from '@jest/globals';
 
-import { parseJob } from '../designer-cutouts-admin';
+import {
+	describe as describeFailures,
+	failureText,
+	parseJob,
+} from '../designer-cutouts-admin';
 import { toSilhouette } from '../silhouette';
 
 const slot = {
@@ -49,5 +53,21 @@ describe( 'toSilhouette', () => {
 		toSilhouette( data );
 
 		expect( Array.from( data ) ).toEqual( [ 0, 0, 0, 255, 0, 0, 0, 0 ] );
+	} );
+} );
+
+describe( 'failures', () => {
+	it( 'shows a reason and its code, each once', () => {
+		const big = {
+			code: 'file_too_large',
+			text: failureText( 'file_too_large' ),
+		};
+
+		expect( describeFailures( [ big, big ] ) ).toBe(
+			`${ big.text } (file_too_large)`
+		);
+		expect( failureText( 'http_500' ) ).toBe(
+			'A technical error occurred.'
+		);
 	} );
 } );

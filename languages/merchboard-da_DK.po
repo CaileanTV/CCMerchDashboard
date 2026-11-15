@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-15T21:03:45+00:00\n"
+"PO-Revision-Date: 2026-11-15T21:22:24+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -157,9 +157,9 @@ msgstr "Du har desværre ikke adgang til at administrere creators."
 #: src/Modules/ProductDesigner/Admin/BaseProductActions.php:91
 #: src/Modules/ProductDesigner/Admin/CampaignActions.php:77
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:109
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:493
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:548
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:583
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:519
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:575
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:610
 #: src/Modules/ProductDesigner/Admin/DesignerNotificationActions.php:76
 #: src/Modules/ProductDesigner/Admin/DesignerReviewActions.php:79
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:103
@@ -2252,7 +2252,7 @@ msgstr "Afspil"
 #: src/Modules/Alerts/Admin/ChatbotAdminTab.php:452
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:120
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:170
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:208
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:210
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:205
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:401
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:187
@@ -6117,7 +6117,7 @@ msgid "You are not allowed to change the notifications."
 msgstr "Du har ikke adgang til at ændre notifikationerne."
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:115
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:154
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:155
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:112
 msgid "A technical error occurred. Nothing was changed; try again or check the log."
 msgstr "Der opstod en teknisk fejl. Intet er ændret; prøv igen, eller tjek loggen."
@@ -6460,7 +6460,7 @@ msgstr "En creator har bedt om at få et produkt slettet. Der sker intet med pro
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1182
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1216
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1250
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:208
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:210
 #: src/Modules/ProductDesigner/Admin/DesignerFeesSection.php:122
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:187
 #: src/Modules/ProductDesigner/DesignerNotifications.php:142
@@ -8187,10 +8187,10 @@ msgstr "Til administratoren"
 #: src/Modules/ProductDesigner/Admin/BaseProductActions.php:82
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:314
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:101
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:164
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:486
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:539
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:576
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:165
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:512
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:566
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:603
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:154
 #: src/Modules/ProductDesigner/Admin/DesignerReviewActions.php:72
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:97
@@ -8490,7 +8490,7 @@ msgid "Use PNG, JPG or WebP images; template layers must be PNG."
 msgstr "Brug PNG-, JPG- eller WebP-billeder; skabelonlag skal være PNG."
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:303
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:153
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:154
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:106
 msgid "You are not allowed to manage the product designer."
 msgstr "Du har ikke adgang til at administrere produktdesigneren."
@@ -9581,140 +9581,148 @@ msgid "Ended"
 msgstr "Afsluttet"
 
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:122
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:558
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:585
 #: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:198
 msgid "The file no longer exists."
 msgstr "Filen findes ikke længere."
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:136
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:137
 #: build/dashboard.js:73
 msgid "Images without background"
 msgstr "Billeder uden baggrund"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:147
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:148
 msgid "The images without background are in the shop now."
 msgstr "Billederne uden baggrund er nu i shoppen."
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:148
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:149
 msgid "The old images are back in the shop. The images without background wait for approval again."
 msgstr "De gamle billeder er tilbage i shoppen. Billederne uden baggrund venter på godkendelse igen."
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:149
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:150
 msgid "The images were discarded."
 msgstr "Billederne blev kasseret."
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:150
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:151
+#: build/designer-cutouts-admin.js:1
 msgid "The product is being changed right now. Try again in a minute."
 msgstr "Produktet bliver ændret lige nu. Prøv igen om et minut."
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:151
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:152
 msgid "The images belong to an older version of the product, or there is nothing to change. Make them again."
 msgstr "Billederne hører til en ældre version af produktet, eller der er intet at ændre. Lav dem igen."
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:152
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:153
+#: build/designer-cutouts-admin.js:1
 msgid "The product is no longer in the shop."
 msgstr "Produktet er ikke længere i shoppen."
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:178
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:179
 msgid "The products could not be read. Try again or check the log."
 msgstr "Produkterne kunne ikke læses. Prøv igen, eller se loggen."
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:185
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:186
 msgid "The product images of designs approved before can be made without background: only the product, as PNG, cut to the template's own PNG photo (or its silhouette or colour mask). They are used in the merch ad and the Twitch panel and in the shop, in the place of the old images. Photos from the provider stay as they are."
 msgstr "Produktbillederne af tidligere godkendte designs kan laves uden baggrund: kun produktet, som PNG, klippet til skabelonens eget PNG-foto (eller dens silhuet eller farvemaske). De bruges i merch-reklamen, Twitch-panelet og shoppen i stedet for de gamle billeder. Fotos fra leverandøren forbliver, som de er."
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:188
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:189
 msgid "The images are made in the browser, but its script is missing. Build the plugin (npm run build)."
 msgstr "Billederne laves i browseren, men scriptet mangler. Byg pluginnet (npm run build)."
 
 #. translators: %d: number of products.
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:196
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:197
 #, php-format
 msgid "Use images without background on %d product"
 msgid_plural "Use images without background on all %d products"
 msgstr[0] "Brug billeder uden baggrund på %d produkt"
 msgstr[1] "Brug billeder uden baggrund på alle %d produkter"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:198
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:199
 msgid "Makes the images and puts them in the shop at once, product by product. Keep this page open until it is done. \"Undo\" puts a product's old images back."
 msgstr "Laver billederne og sætter dem i shoppen med det samme, produkt for produkt. Hold siden åben, til den er færdig. \"Fortryd\" sætter et produkts gamle billeder tilbage."
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:202
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:203
 msgid "There are no approved designer products in the shop."
 msgstr "Der er ingen godkendte designer-produkter i shoppen."
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:208
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:210
 msgid "Images (shop → without background)"
 msgstr "Billeder (shop → uden baggrund)"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:235
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:237
 msgid "Images without background are in the shop."
 msgstr "Billeder uden baggrund er i shoppen."
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:249
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:251
 #: build/dashboard.js:122
 msgid "No image"
 msgstr "Intet billede"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:250
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:252
 msgid "Not made yet"
 msgstr "Ikke lavet endnu"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:251
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:253
 msgid "in the shop"
 msgstr "i shoppen"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:310
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:307
 msgid "Make again"
 msgstr "Lav igen"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:311
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:308
 msgid "Remove the white background and make images"
 msgstr "Fjern den hvide baggrund og lav billeder"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:312
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:309
 msgid "Make images"
 msgstr "Lav billeder"
 
 #. translators: %s: link to the base product.
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:320
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:317
 #, php-format
 msgid "The template's photo is on white: its background is removed to give the product an outline. If the background is not plain, upload a PNG without background (e.g. exported from the PSD) as the silhouette on %s."
 msgstr "Skabelonens foto står på hvidt: baggrunden fjernes, så produktet får et omrids. Er baggrunden ikke ensfarvet, så upload en PNG uden baggrund (fx eksporteret fra PSD'en) som silhuet på %s."
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:321
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:318
 msgid "the base product"
 msgstr "basisproduktet"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:329
+#. translators: %s: the side's name.
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:335
+#, php-format
+msgid "Upload a PNG without background for \"%s\":"
+msgstr "Upload en PNG uden baggrund til \"%s\":"
+
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:342
 msgid "Approve and use in the shop"
 msgstr "Godkend og brug i shoppen"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:331
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:344
 msgid "Discard"
 msgstr "Kassér"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:336
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:349
 msgid "Undo: old images back"
 msgstr "Fortryd: gamle billeder tilbage"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:367
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:380
 msgid "Photos from the provider (unchanged)"
 msgstr "Fotos fra leverandøren (uændret)"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:368
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:381
 msgid "The template's photo is on white: no outline yet"
 msgstr "Skabelonens foto står på hvidt: intet omrids endnu"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:369
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:382
 msgid "Nothing left to make"
 msgstr "Intet tilbage at lave"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:370
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:383
 msgid "Waiting for your approval"
 msgstr "Venter på din godkendelse"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:371
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:384
 msgid "Images can be made"
 msgstr "Billeder kan laves"
 
@@ -21291,9 +21299,48 @@ msgid "The dashboard could not be started."
 msgstr "Dashboardet kunne ikke startes."
 
 #: build/designer-cutouts-admin.js:1
-#: build/designer-cutouts-admin.js:4
-msgid "The product could not be read."
-msgstr "Produktet kunne ikke læses."
+msgid "The side could not be read."
+msgstr "Siden kunne ikke læses."
+
+#: build/designer-cutouts-admin.js:1
+msgid "The print file could not be loaded."
+msgstr "Printfilen kunne ikke hentes."
+
+#: build/designer-cutouts-admin.js:1
+msgid "The image could not be drawn (a layer could not be loaded, or the browser ran out of memory)."
+msgstr "Billedet kunne ikke tegnes (et lag kunne ikke hentes, eller browseren løb tør for hukommelse)."
+
+#: build/designer-cutouts-admin.js:1
+msgid "The side has no outline: upload a PNG without background as the silhouette on the base product."
+msgstr "Siden har intet omrids: upload en PNG uden baggrund som silhuet på basisproduktet."
+
+#: build/designer-cutouts-admin.js:1
+msgid "The background is not plain. Upload a PNG without background as the silhouette on the base product."
+msgstr "Baggrunden er ikke ensfarvet. Upload en PNG uden baggrund som silhuet på basisproduktet."
+
+#: build/designer-cutouts-admin.js:1
+msgid "The image is larger than the server accepts (upload limit). Raise the upload limit or upload a smaller template."
+msgstr "Billedet er større, end serveren tager imod (uploadgrænsen). Hæv uploadgrænsen, eller upload en mindre skabelon."
+
+#: build/designer-cutouts-admin.js:1
+msgid "The image does not have the size of the template."
+msgstr "Billedet har ikke skabelonens størrelse."
+
+#: build/designer-cutouts-admin.js:1
+msgid "The server refused the file (no PNG with transparent pixels)."
+msgstr "Serveren afviste filen (ingen PNG med gennemsigtige pixels)."
+
+#: build/designer-cutouts-admin.js:1
+msgid "There was nothing to put in the shop. Make the images again."
+msgstr "Der var intet at sætte i shoppen. Lav billederne igen."
+
+#: build/designer-cutouts-admin.js:1
+msgid "The server did not answer (network or timeout)."
+msgstr "Serveren svarede ikke (netværk eller timeout)."
+
+#: build/designer-cutouts-admin.js:1
+msgid "A technical error occurred."
+msgstr "Der opstod en teknisk fejl."
 
 #. translators: 1: images done, 2: all images.
 #: build/designer-cutouts-admin.js:2
@@ -21307,23 +21354,19 @@ msgstr "Billede %1$d af %2$d …"
 msgid "%d images made."
 msgstr "%d billeder lavet."
 
-#. translators: 1: images made, 2: images that failed.
+#. translators: 1: images made, 2: images that failed, 3: why.
 #: build/designer-cutouts-admin.js:4
 #, js-format
-msgid "%1$d images made, %2$d failed."
-msgstr "%1$d billeder lavet, %2$d mislykkedes."
+msgid "%1$d images made, %2$d failed: %3$s"
+msgstr "%1$d billeder lavet, %2$d mislykkedes: %3$s"
 
 #: build/designer-cutouts-admin.js:4
 msgid "Removing the white background…"
 msgstr "Fjerner den hvide baggrund …"
 
 #: build/designer-cutouts-admin.js:4
-msgid "The background is not plain. Upload a PNG without background as the silhouette on the base product."
-msgstr "Baggrunden er ikke ensfarvet. Upload en PNG uden baggrund som silhuet på basisproduktet."
-
-#: build/designer-cutouts-admin.js:4
-msgid "The silhouette could not be saved."
-msgstr "Silhuetten kunne ikke gemmes."
+msgid "Saving the silhouette…"
+msgstr "Gemmer silhuetten …"
 
 #. translators: 1: product number, 2: all products.
 #: build/designer-cutouts-admin.js:5
@@ -21331,8 +21374,8 @@ msgstr "Silhuetten kunne ikke gemmes."
 msgid "Product %1$d of %2$d…"
 msgstr "Produkt %1$d af %2$d …"
 
-#. translators: 1: products changed, 2: all products.
+#. translators: 1: products changed, 2: all products, 3: products that failed.
 #: build/designer-cutouts-admin.js:6
 #, js-format
-msgid "%1$d of %2$d products use images without background."
-msgstr "%1$d af %2$d produkter bruger billeder uden baggrund."
+msgid "%1$d of %2$d products use images without background. %3$d failed: see the reason at each product."
+msgstr "%1$d af %2$d produkter bruger billeder uden baggrund. %3$d mislykkedes: se grunden ved hvert produkt."

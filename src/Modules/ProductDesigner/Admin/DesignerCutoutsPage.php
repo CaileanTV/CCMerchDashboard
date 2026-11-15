@@ -18,6 +18,7 @@ use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerCutouts;
+use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -205,7 +206,8 @@ final class DesignerCutoutsPage {
 		}
 
 		echo '<style>.merchboard-cutouts td{vertical-align:top}.merchboard-cutouts__images{display:flex;flex-wrap:wrap;gap:12px;margin:0}.merchboard-cutouts__images figure{margin:0;display:grid;gap:4px;justify-items:start}.merchboard-cutouts__pair{display:flex;gap:6px}.merchboard-cutouts__pair img,.merchboard-cutouts__pair span{width:96px;height:96px;object-fit:contain;border:1px solid #dcdcde;border-radius:4px}.merchboard-cutouts__pair .is-new{background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0 0/16px 16px}.merchboard-cutouts__pair span{display:grid;place-items:center;color:#646970;font-size:11px;text-align:center}.merchboard-cutouts figcaption{font-size:12px;color:#50575e}.merchboard-cutouts form{display:inline}</style>';
-		echo '<table class="widefat striped merchboard-cutouts"><thead><tr><th scope="col">' . esc_html__( 'Product', 'merchboard' ) . '</th><th scope="col">' . esc_html__( 'Images (shop → without background)', 'merchboard' ) . '</th><th scope="col">' . esc_html__( 'Actions', 'merchboard' ) . '</th></tr></thead><tbody>';
+		// The browser checks each image against the upload limit before it sends it.
+		echo '<table class="widefat striped merchboard-cutouts" data-max-bytes="' . esc_attr( (string) DesignerFiles::max_bytes() ) . '"><thead><tr><th scope="col">' . esc_html__( 'Product', 'merchboard' ) . '</th><th scope="col">' . esc_html__( 'Images (shop → without background)', 'merchboard' ) . '</th><th scope="col">' . esc_html__( 'Actions', 'merchboard' ) . '</th></tr></thead><tbody>';
 
 		foreach ( $rows as $row ) {
 			$this->render_row( $row, $script );
@@ -317,6 +319,22 @@ final class DesignerCutoutsPage {
 					),
 					array( 'a' => array( 'href' => array() ) )
 				) . '</p>';
+
+				// Or the outline directly: a PNG without background exported from the PSD.
+				try {
+					$sides = $this->cutouts->outline_job( $row['base_id'] );
+				} catch ( DesignerException | DatabaseException ) {
+					$sides = array();
+				}
+
+				foreach ( $sides as $side ) {
+					$field = 'merchboard-silhouette-' . $product . '-' . $side['key'];
+
+					echo '<p><label for="' . esc_attr( $field ) . '">' . esc_html(
+						/* translators: %s: the side's name. */
+						sprintf( __( 'Upload a PNG without background for "%s":', 'merchboard' ), $side['name'] )
+					) . '</label> <input type="file" accept="image/png" class="merchboard-cutouts-silhouette" id="' . esc_attr( $field ) . '" data-side="' . esc_attr( $side['key'] ) . '" data-outline="' . esc_url( $outline['save'] ) . '"> <span aria-live="polite"></span></p>';
+				}
 			}
 		}
 
@@ -456,7 +474,8 @@ final class DesignerCutoutsPage {
 	 * Keeps a side's silhouette the browser made and answers in JSON.
 	 */
 	public function handle_outline(): void {
-		$base   = $this->base( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in base(); only an id is read.
+		$base = $this->base( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in base(); only an id is read.
+		self::refuse_dropped_upload();
 		$side   = isset( $_POST['side'] ) && is_string( $_POST['side'] ) ? sanitize_key( wp_unslash( $_POST['side'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in base().
 		$upload = isset( $_FILES['file'] ) && is_array( $_FILES['file'] ) ? $_FILES['file'] : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in base(); DesignerFiles validates the file.
 
@@ -468,6 +487,18 @@ final class DesignerCutoutsPage {
 		} catch ( DatabaseException $e ) {
 			$this->logger->error( 'A silhouette could not be kept.', array_merge( $e->context(), array( 'base_id' => $base ) ) );
 			wp_send_json_error( array( 'reason' => 'error' ), 500 );
+		}
+	}
+
+	/**
+	 * Answers `file_too_large` when PHP dropped the whole request body
+	 * (larger than `post_max_size`): nothing but the URL arrived.
+	 */
+	private static function refuse_dropped_upload(): void {
+		$length = isset( $_SERVER['CONTENT_LENGTH'] ) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
+
+		if ( array() === $_FILES && array() === $_POST && $length > 0 ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only whether anything arrived.
+			wp_send_json_error( array( 'reason' => DesignerException::FILE_TOO_LARGE ), 413 );
 		}
 	}
 
@@ -512,8 +543,9 @@ final class DesignerCutoutsPage {
 	 */
 	public function handle_upload(): void {
 		$product = $this->product( wp_unslash( $_GET ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in product(); only an id is read.
-		$key     = isset( $_POST['key'] ) && is_string( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in product().
-		$upload  = isset( $_FILES['file'] ) && is_array( $_FILES['file'] ) ? $_FILES['file'] : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in product(); DesignerFiles validates the file.
+		self::refuse_dropped_upload();
+		$key    = isset( $_POST['key'] ) && is_string( $_POST['key'] ) ? sanitize_text_field( wp_unslash( $_POST['key'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in product().
+		$upload = isset( $_FILES['file'] ) && is_array( $_FILES['file'] ) ? $_FILES['file'] : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified in product(); DesignerFiles validates the file.
 
 		try {
 			$this->cutouts->store( $product, $key, $upload );

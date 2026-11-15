@@ -1426,7 +1426,8 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **51.9 Gamle billeder på hvidt (projektejerens ønske 2026-11-15):** ✅ fx kopper fra PSD-skabeloner, hvis foto står på hvidt, viste "Ingen side har et omrids".
   - **Nyt:** "Fjern den hvide baggrund og lav billeder" fjerner den ensfarvede baggrund fra skabelonens foto i browseren og gemmer resultatet som sidens silhuet (uden ny version af basisproduktet). Derefter laves billederne uden baggrund.
   - **Automatisk:** "Brug billeder uden baggrund på alle produkter" gør det samme for alle.
-  - **Baggrund, der ikke er ensfarvet:** upload en PNG uden baggrund (fx eksporteret fra PSD'en) som silhuet på basisproduktet.
+  - **Baggrund, der ikke er ensfarvet:** upload en PNG uden baggrund (fx eksporteret fra PSD'en) direkte i produktets række eller som silhuet på basisproduktet.
+  - **Fejl vises (projektejerens test 2026-11-15: kopperne mislykkedes uden fejlkode):** hvert trin viser grunden med en kode (fx , , ). Siden genindlæses kun, når alt lykkedes. Browseren tjekker uploadgrænsen, før den sender, og en upload, PHP har droppet (over ), svarer .
 - **51.6 Test og levering:** ✅ unit-, Jest- og integrationstest (godkend, fortryd, kassér), danske tekster og docs. Runtime 2026-11-15 i Chrome med den byggede admin-bundle: opgave → tegning → upload for en side med farvemaske og en side med eget farvefoto og silhuet; baggrund, gulvskygge og halsåbning blev gennemsigtige. Godkend og fortryd kræver produktlåsen (MySQL) og testes på stg.
 
 ## Fase 52 – Gelato-produkter med egne valg, printområde pr. variant og skærelinje 📋 (projektejerens ønske 2026-11-15; efter 2.2.0, version 2.3.0; ADR-115 foreslået, planen afventer godkendelse)

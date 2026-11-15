@@ -227,7 +227,8 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
   - **Fotos på hvidt:** et produkt, hvis skabelon ikke har et omrids, får "Fjern den hvide baggrund og lav billeder".
     - Admins browser fjerner den ensfarvede baggrund fra sidens foto og gemmer resultatet som silhuet. Basisproduktet beholder sin version.
     - Derefter laves billederne. Den automatiske kørsel gør det samme.
-    - Er baggrunden ikke ensfarvet, siger siden det, og en PNG uden baggrund (fx eksporteret fra PSD'en) uploades som silhuet på basisproduktet.
+    - Er baggrunden ikke ensfarvet, siger siden det. Så uploades en PNG uden baggrund (fx eksporteret fra PSD'en) direkte i produktets række eller som silhuet på basisproduktet.
+  - **Fejl:** hvert trin viser grunden og en kode, og siden genindlæses kun, når alt lykkedes. Uploadgrænsen () tjekkes i browseren; en upload over  svarer .
   - **Pr. produkt:** "Lav billeder" tegner et produkts billeder, som så venter i shop-produktets meta `_merchboard_cutouts`, til de godkendes.
   - **Godkend og brug i shoppen:** billederne kommer i mediebiblioteket og tager de gamle billeders pladser i produktbilledet, galleriet og variationerne, og versionens mockups bliver PNG'erne. Senere skift af produktbillede bruger dem. De gamle billeder bliver i mediebiblioteket.
   - **Fortryd** sætter de gamle billeder tilbage; de nye venter igen. **Kassér** sletter de ventende.
