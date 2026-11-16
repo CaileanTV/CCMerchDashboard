@@ -6802,7 +6802,10 @@ Accepteret af projektejeren 2026-11-15. Udgives i 2.2.0 sammen med fase 48–50.
   - **Hvem:** fotos fra Printful, Gelato og Prodigi kommer nu med på siden, når de stadig har baggrund (JPEG, eller PNG uden gennemsigtige pixels).
   - **Hvordan:** admins browser fjerner den ensfarvede baggrund fra selve fotoet og gemmer en PNG i fotoets egen størrelse. Den tegnes ikke igen ud fra skabelonen.
   - **Derefter:** Godkend, Fortryd og den automatiske kørsel virker som for designerens billeder.
-  - **Grænse:** et foto med en baggrund, der ikke er ensfarvet (fx et livsstilsfoto), giver `not_plain` og forbliver, som det er.
+  - **Kun studiefotos** (projektejerens test samme dag: et miljøfoto mistede det meste af personen). Et foto tilbydes kun, når baggrunden er lys og ensfarvet langs mindst 90 % af kanten: kantens median, hvor den mørkeste kanal er mindst 200, og hvor punkterne ligger højst 40 fra den.
+    - Tjekket sker både på serveren (`ImageProbe::studio()`, husket pr. fil) og i browseren (`not_studio`).
+    - En fritlægning, der næsten intet efterlader (under 4 %), afvises.
+    - Miljøfotos forbliver, som de er.
 - **PSD-scenens baggrund:** importen holder PSD'ens baggrundslag for sig (`background: true` på trinnet), og billedet uden baggrund udelader det, som en PNG-eksport med laget skjult. For scener importeret før fjernes en ensfarvet baggrund i det første, dækkende billede ved tegningen. Billedet har scenens egen størrelse (`mockup_size()`).
 - **PSD-scener** (fx kopper) tegnes uden det hvide dokument, hvor PSD'ens egne billeder ikke dækker. Hvidt regnes ud af halvt dækkede kanter. Uden en gennemsigtig pixel forbliver de JPEG. Pkt. 3's "PSD-scener får JPEG som før" gælder ikke længere.
 

@@ -1443,6 +1443,10 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - **Hvordan:** browseren fjerner den ensfarvede baggrund fra selve fotoet (PNG i fotoets størrelse).
   - **Derefter:** Godkend, Fortryd og "Brug billeder uden baggrund på alle produkter" virker som for de andre.
   - **Nye leverandørprodukter:** Printful bedes allerede om PNG; har et foto alligevel baggrund, står det på siden som "Billeder kan laves".
+  - **Kun studiefotos (projektejerens test 2026-11-16):** Printfuls miljøfotos (en person i et mørkt rum) mistede det meste af personen og T-shirten.
+    - **Hvad tilbydes:** kun fotos på en lys, ensfarvet baggrund langs mindst 90 % af kanten (`ImageProbe::studio()` på serveren, `isStudioPhoto()` i browseren).
+    - **Sikring:** browseren afviser også en fritlægning, der næsten intet efterlader.
+    - **Miljøfotos:** forbliver, som de er.
 - **51.6 Test og levering:** ✅ unit-, Jest- og integrationstest (godkend, fortryd, kassér), danske tekster og docs. Runtime 2026-11-15 i Chrome med den byggede admin-bundle: opgave → tegning → upload for en side med farvemaske og en side med eget farvefoto og silhuet; baggrund, gulvskygge og halsåbning blev gennemsigtige. Godkend og fortryd kræver produktlåsen (MySQL) og testes på stg.
 
 ## Fase 52 – Gelato-produkter med egne valg, printområde pr. variant og skærelinje 📋 (projektejerens ønske 2026-11-15; efter 2.2.0, version 2.3.0; ADR-115 foreslået, planen afventer godkendelse)

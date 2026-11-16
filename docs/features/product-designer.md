@@ -235,7 +235,8 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
   - **Fortryd** sætter de gamle billeder tilbage; de nye venter igen. **Kassér** sletter de ventende.
   - Alt sker under produktets lås og auditeres (`designer_cutouts_approved`, `designer_cutouts_reverted`).
   - **Leverandørfotos** (versionens `mockup_state` er `ready`, fx Printful, Gelato, Prodigi):
-    - Et foto, der stadig har baggrund (JPEG, eller PNG uden gennemsigtige pixels), får den ensfarvede baggrund fjernet direkte fra fotoet i admins browser.
+    - Et studiefoto, der stadig har baggrund (JPEG, eller PNG uden gennemsigtige pixels), får den ensfarvede baggrund fjernet direkte fra fotoet i admins browser.
+    - Kun studiefotos tilbydes (`ImageProbe::studio()`, husket pr. fil i 30 dage): baggrunden skal være lys (mørkeste kanal mindst 200) og ensfarvet langs mindst 90 % af kanten. Miljøfotos (en person i et rum) forbliver, som de er. Browseren tjekker det samme (`not_studio`) og afviser en fritlægning, der efterlader under 4 % af billedet.
     - Resultatet er en PNG i fotoets egen størrelse. Den tegnes ikke igen ud fra skabelonen.
     - Er baggrunden ikke ensfarvet, vises `not_plain`, og fotoet forbliver, som det er.
   - **PSD-sider:** står altid som "kan laves"; har PSD'en baggrund, sendes intet.

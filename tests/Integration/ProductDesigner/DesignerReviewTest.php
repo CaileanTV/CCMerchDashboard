@@ -1977,14 +1977,12 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	}
 
 	public function test_a_provider_s_photos_get_their_background_removed_from_the_photo(): void {
-		// A product whose images are a provider's photos (e.g. Printful's), 500 × 400.
+		// A product whose images are a provider's photos (e.g. Printful's): a studio photo in black, a lifestyle photo in sand.
 		$product = $this->drafts->create( $this->creator, $this->base );
 		$this->save( $product, '20' );
 		$this->submissions->attach( $this->creator, $product, 'print:front', AlertImagesTest::upload( AlertImagesTest::png( 118, 157 ), 'print.png' ) );
-
-		foreach ( array( 'black', 'sand' ) as $color ) {
-			$this->submissions->attach( $this->creator, $product, 'mockup:front:' . $color, AlertImagesTest::upload( self::jpeg( 400, 400 ), 'mockup.jpg' ) );
-		}
+		$this->submissions->attach( $this->creator, $product, 'mockup:front:black', AlertImagesTest::upload( self::provider_photo( true ), 'mockup.jpg' ) );
+		$this->submissions->attach( $this->creator, $product, 'mockup:front:sand', AlertImagesTest::upload( self::provider_photo( false ), 'mockup.jpg' ) );
 
 		$this->submissions->submit( $this->creator, $product );
 		$this->review->approve( $this->pending_id( $product ) );
@@ -1996,21 +1994,25 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$cutouts = new DesignerCutouts( $this->products, $this->bases_repository(), $this->files, new DesignerMedia( $this->files ), $this->guard, $this->writer, $this->service( AuditTrail::class ), new DesignerAssetRepository( $this->wpdb ) );
 		$job     = $cutouts->job( $product );
 
-		self::assertSame( array( 'front:black', 'front:sand' ), array_column( $job['slots'], 'key' ) );
+		self::assertSame( array( 'front:black' ), array_column( $job['slots'], 'key' ), 'Only the studio photo: the lifestyle photo stays (the owner\'s test 2026-11-16).' );
 		self::assertStringContainsString( 'action=' . DesignerVersionFiles::ACTION, $job['slots'][0]['photo'] ?? '', 'The browser cuts out the photo itself.' );
 		self::assertArrayNotHasKey( 'layers', $job['slots'][0], 'Nothing is drawn again.' );
 
 		$row = array_values( array_filter( $cutouts->overview(), static fn( array $row ): bool => $row['product'] === $product ) )[0] ?? self::fail( 'Not listed.' );
 		self::assertSame( 'todo', $row['state'], 'A provider\'s photos can be made without background.' );
 
-		foreach ( array( 'front:black', 'front:sand' ) as $key ) {
-			$cutouts->store( $product, $key, AlertImagesTest::upload( self::cutout_photo( true ), 'cutout.png' ) );
+		try {
+			$cutouts->store( $product, 'front:sand', AlertImagesTest::upload( self::cutout_photo( true ), 'cutout.png' ) );
+			self::fail( 'A lifestyle photo is not offered.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_INVALID, $e->reason() );
 		}
 
-		self::assertSame( 2, $cutouts->approve( $product ) );
+		$cutouts->store( $product, 'front:black', AlertImagesTest::upload( self::cutout_photo( true ), 'cutout.png' ) );
+		self::assertSame( 1, $cutouts->approve( $product ) );
 
 		$mockups = SubmissionFiles::decode( (string) ( $this->products->version( $version )['files'] ?? '' ) )['mockups']['front'];
-		self::assertSame( array( 'image/png', 'image/png' ), array_column( $mockups, 'mime' ) );
+		self::assertSame( array( 'image/png', 'image/jpeg' ), array( $mockups['black']['mime'] ?? null, $mockups['sand']['mime'] ?? null ) );
 		self::assertSame( array(), $cutouts->job( $product )['slots'], 'Nothing left: the photos are without background now.' );
 	}
 
@@ -2109,6 +2111,24 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		imagefilledrectangle( $image, 100, 80, 300, 360, (int) imagecolorallocatealpha( $image, 235, 235, 235, 0 ) );
 		ob_start();
 		imagepng( $image );
+
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * A provider's 400 × 400 photo: a studio photo (a dark shirt on light
+	 * grey) or a lifestyle photo (the shirt in a dark room).
+	 *
+	 * @param bool $studio Whether it is a studio photo.
+	 */
+	private static function provider_photo( bool $studio ): string {
+		$image = imagecreatetruecolor( 400, 400 );
+
+		self::assertNotFalse( $image );
+		imagefill( $image, 0, 0, (int) ( $studio ? imagecolorallocate( $image, 244, 244, 244 ) : imagecolorallocate( $image, 20, 40, 45 ) ) );
+		imagefilledrectangle( $image, 120, 80, 280, 360, (int) imagecolorallocate( $image, 15, 15, 15 ) );
+		ob_start();
+		imagejpeg( $image );
 
 		return (string) ob_get_clean();
 	}

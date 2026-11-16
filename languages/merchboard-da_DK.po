@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-16T20:08:21+00:00\n"
+"PO-Revision-Date: 2026-11-16T20:23:06+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -21283,6 +21283,10 @@ msgstr "Siden har intet omrids: upload en PNG uden baggrund som silhuet på basi
 #: build/designer-cutouts-admin.js:1
 msgid "The background is not plain. Upload a PNG without background as the silhouette on the base product."
 msgstr "Baggrunden er ikke ensfarvet. Upload en PNG uden baggrund som silhuet på basisproduktet."
+
+#: build/designer-cutouts-admin.js:1
+msgid "The photo is no studio photo on a light, plain background (e.g. a person in a room); it stays as it is."
+msgstr "Fotoet er ikke et studiefoto på en lys, ensfarvet baggrund (fx en person i et rum); det forbliver, som det er."
 
 #: build/designer-cutouts-admin.js:1
 msgid "The image is larger than the server accepts (upload limit). Raise the upload limit or upload a smaller template."

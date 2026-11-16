@@ -1,6 +1,11 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { backgroundOf, removeBackground } from '../sections/community/cutout';
+import {
+	backgroundOf,
+	isStudioPhoto,
+	keptEnough,
+	removeBackground,
+} from '../sections/community/cutout';
 import type { Pixels } from '../sections/community/cutout';
 
 /**
@@ -59,6 +64,27 @@ describe( 'removing a plain background (ADR-113)', () => {
 		// The middle of the product is untouched, its edge is softened.
 		expect( image.data[ ( 10 * 20 + 10 ) * 4 + 3 ] ).toBe( 255 );
 		expect( image.data[ ( 6 * 20 + 10 ) * 4 + 3 ] ).toBe( 160 );
+	} );
+
+	it( 'tells a studio photo from a dark or lifestyle one (ADR-114)', () => {
+		expect(
+			isStudioPhoto( picture( 20, [ 244, 244, 244 ], [ 20, 20, 20 ] ) )
+		).toBe( true );
+		expect(
+			isStudioPhoto( picture( 20, [ 20, 40, 45 ], [ 10, 10, 10 ] ) )
+		).toBe( false );
+	} );
+
+	it( 'notices when a fill ran into the product', () => {
+		const empty = picture( 20, [ 252, 252, 250 ], [ 200, 0, 0 ] );
+
+		empty.data.fill( 0 );
+		expect( keptEnough( empty ) ).toBe( false );
+
+		const kept = picture( 20, [ 252, 252, 250 ], [ 200, 0, 0 ] );
+
+		removeBackground( kept );
+		expect( keptEnough( kept ) ).toBe( true );
 	} );
 
 	it( 'leaves an image without a plain background alone', () => {

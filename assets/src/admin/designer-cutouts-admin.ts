@@ -10,7 +10,11 @@ import { __, sprintf } from '@wordpress/i18n';
 import { parseView } from '../dashboard/api/designer';
 import type { LayerKind } from '../dashboard/api/designer';
 import { silhouetteFromUrl } from './silhouette';
-import { removeBackground } from '../dashboard/sections/community/cutout';
+import {
+	isStudioPhoto,
+	keptEnough,
+	removeBackground,
+} from '../dashboard/sections/community/cutout';
 import {
 	composeMockup,
 	composeScene,
@@ -146,6 +150,11 @@ export function failureText( code: string ): string {
 		case 'not_plain':
 			return __(
 				'The background is not plain. Upload a PNG without background as the silhouette on the base product.',
+				'merchboard'
+			);
+		case 'not_studio':
+			return __(
+				'The photo is no studio photo on a light, plain background (e.g. a person in a room); it stays as it is.',
 				'merchboard'
 			);
 		case 'file_too_large':
@@ -311,7 +320,12 @@ async function photoCutout( url: string ): Promise< Blob | Failure > {
 	context.drawImage( image, 0, 0 );
 	const pixels = context.getImageData( 0, 0, canvas.width, canvas.height );
 
-	if ( ! removeBackground( pixels ) ) {
+	// Only a studio photo: a lifestyle photo's "background" is the picture itself.
+	if ( ! isStudioPhoto( pixels ) ) {
+		return failure( 'not_studio' );
+	}
+
+	if ( ! removeBackground( pixels ) || ! keptEnough( pixels ) ) {
 		return failure( 'not_plain' );
 	}
 

@@ -601,9 +601,10 @@ final class DesignerCutouts {
 	 * without transparent pixels):
 	 * - the browser's mockups on a side with a PSD scene or an outline in that
 	 *   colour: drawn again (`photo` false, the side's mockup size);
-	 * - a provider's photos (e.g. Printful's; the owner's wish 2026-11-16):
-	 *   the plain background is removed from the photo itself (`photo` true,
-	 *   the photo's own size). Embroidery close-ups stay.
+	 * - a provider's studio photos (e.g. Printful's; the owner's wish
+	 *   2026-11-16): the plain background is removed from the photo itself
+	 *   (`photo` true, the photo's own size). Lifestyle photos and embroidery
+	 *   close-ups stay.
 	 *
 	 * @param array<string, mixed> $version Live version.
 	 * @param BaseProduct          $base    Its base product.
@@ -636,7 +637,8 @@ final class DesignerCutouts {
 					continue;
 				}
 
-				if ( $provider ) {
+				// Only a provider's studio photo: a lifestyle photo stays as it is.
+				if ( $provider && $this->studio( $file ) ) {
 					$slots[ $side . ':' . $color ] = array(
 						'view'  => $view,
 						'side'  => $side,
@@ -645,7 +647,7 @@ final class DesignerCutouts {
 						'photo' => true,
 						'size'  => array( (int) ( $file['width'] ?? 0 ), (int) ( $file['height'] ?? 0 ) ),
 					);
-				} elseif ( null !== $view && ( null !== $view->scene || null !== $this->outline( $view, $color ) ) ) {
+				} elseif ( ! $provider && null !== $view && ( null !== $view->scene || null !== $this->outline( $view, $color ) ) ) {
 					$slots[ $side . ':' . $color ] = array(
 						'view'  => $view,
 						'side'  => $side,
@@ -659,6 +661,30 @@ final class DesignerCutouts {
 		}
 
 		return $slots;
+	}
+
+	/**
+	 * Whether a provider's photo is a studio photo (ImageProbe::studio()),
+	 * remembered per file: the files never change.
+	 *
+	 * @param array<string, mixed> $file Stored file.
+	 */
+	private function studio( array $file ): bool {
+		$name = is_string( $file['file'] ?? null ) ? $file['file'] : '';
+		$key  = 'merchboard_studio_' . md5( $name );
+		$seen = get_transient( $key );
+
+		if ( '1' === $seen || '0' === $seen ) {
+			return '1' === $seen;
+		}
+
+		$path   = '' === $name ? null : $this->files->path( $name );
+		$body   = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A mockup in the plugin's own folder.
+		$studio = false !== $body && ImageProbe::studio( $body );
+
+		set_transient( $key, $studio ? '1' : '0', 30 * DAY_IN_SECONDS );
+
+		return $studio;
 	}
 
 	/**

@@ -108,6 +108,62 @@ final class ImageProbe {
 	}
 
 	/**
+	 * Whether a photo is a studio photo: the product on a light, plain
+	 * backdrop along nearly all of its edge (ADR-114, the owner's test
+	 * 2026-11-16: a provider's lifestyle photos lost the product). The same
+	 * rule as `isStudioPhoto()` in the browser: the backdrop is the median of
+	 * the edge, its darkest channel at least 200, and at least 90 % of the
+	 * edge within 40 of it.
+	 *
+	 * @param string $bytes Image.
+	 */
+	public static function studio( string $bytes ): bool {
+		try {
+			$im = self::image( $bytes );
+		} catch ( InvalidArgumentException ) {
+			return false;
+		}
+
+		$width  = imagesx( $im );
+		$height = imagesy( $im );
+		$points = array();
+		$steps  = 64;
+
+		for ( $i = 0; $i < $steps; $i++ ) {
+			$x        = intdiv( $i * ( $width - 1 ), $steps - 1 );
+			$y        = intdiv( $i * ( $height - 1 ), $steps - 1 );
+			$points[] = array( $x, 0 );
+			$points[] = array( $x, $height - 1 );
+			$points[] = array( 0, $y );
+			$points[] = array( $width - 1, $y );
+		}
+
+		$colors = array_map(
+			static function ( array $point ) use ( $im ): array {
+				$p = imagecolorat( $im, $point[0], $point[1] );
+
+				return array( ( $p >> 16 ) & 255, ( $p >> 8 ) & 255, $p & 255, ( $p >> 24 ) & 127 );
+			},
+			$points
+		);
+		$median = array();
+
+		foreach ( array( 0, 1, 2 ) as $channel ) {
+			$values = array_column( $colors, $channel );
+			sort( $values );
+			$median[] = $values[ intdiv( count( $values ), 2 ) ];
+		}
+
+		if ( min( $median ) < 200 ) {
+			return false;
+		}
+
+		$plain = array_filter( $colors, static fn( array $c ): bool => $c[3] < 127 && sqrt( ( $c[0] - $median[0] ) ** 2 + ( $c[1] - $median[1] ) ** 2 + ( $c[2] - $median[2] ) ** 2 ) <= 40 );
+
+		return count( $plain ) >= 0.9 * count( $colors );
+	}
+
+	/**
 	 * Whether GD can measure.
 	 */
 	public static function available(): bool {

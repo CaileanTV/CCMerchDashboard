@@ -19,6 +19,15 @@ const TOLERANCE = 40;
 /** How much of the edge must be the background for it to count as plain. */
 const PLAIN_SHARE = 0.6;
 
+/** A studio backdrop is light: its darkest channel at least this. */
+const STUDIO_LIGHT = 200;
+
+/** How much of a studio photo's edge is the backdrop. */
+const STUDIO_SHARE = 0.9;
+
+/** The least of the picture a cut-out photo keeps. */
+const MIN_KEPT = 0.04;
+
 /**
  * The distance between two colours.
  *
@@ -74,6 +83,54 @@ export function backgroundOf( image: Pixels ): [ number, number, number ] {
 	};
 
 	return [ channel( 0 ), channel( 1 ), channel( 2 ) ];
+}
+
+/**
+ * Whether a photo is a studio photo: the product on a light, plain backdrop
+ * that runs along nearly all of its edge (ADR-114, the owner's test
+ * 2026-11-16). A lifestyle photo (a person in a room) or a dark one is not:
+ * its "background" is the picture, and removing it destroys the product.
+ * ImageProbe::studio() on the server uses the same rule.
+ *
+ * @param image The pixels.
+ */
+export function isStudioPhoto( image: Pixels ): boolean {
+	const { data, width, height } = image;
+
+	if ( width < 3 || height < 3 ) {
+		return false;
+	}
+
+	const colour = backgroundOf( image );
+
+	if ( Math.min( ...colour ) < STUDIO_LIGHT ) {
+		return false;
+	}
+
+	const border = edge( width, height );
+	const plain = border.filter(
+		( index ) =>
+			( data[ index + 3 ] ?? 0 ) > 0 &&
+			distance( data, index, colour ) <= TOLERANCE
+	);
+
+	return plain.length >= border.length * STUDIO_SHARE;
+}
+
+/**
+ * Whether a cut-out kept enough of the picture: a fill that ran into the
+ * product leaves almost nothing.
+ *
+ * @param image The pixels after removeBackground().
+ */
+export function keptEnough( image: Pixels ): boolean {
+	let kept = 0;
+
+	for ( let index = 3; index < image.data.length; index += 4 ) {
+		kept += ( image.data[ index ] ?? 0 ) > 16 ? 1 : 0;
+	}
+
+	return kept >= image.width * image.height * MIN_KEPT;
 }
 
 /**

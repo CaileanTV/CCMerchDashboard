@@ -137,6 +137,32 @@ final class ImageProbeTest extends TestCase {
 		self::assertFalse( ImageProbe::transparent( '' ) );
 	}
 
+	public function test_only_a_photo_on_a_light_plain_backdrop_is_a_studio_photo(): void {
+		$photo = static function ( array $ground, bool $room ): string {
+			$image = imagecreatetruecolor( 120, 120 );
+
+			self::assertNotFalse( $image );
+			imagefill( $image, 0, 0, (int) imagecolorallocate( $image, $ground[0], $ground[1], $ground[2] ) );
+			// A shirt in the middle; in a room the edge shows a lamp and a desk.
+			imagefilledrectangle( $image, 40, 30, 80, 110, (int) imagecolorallocate( $image, 15, 15, 15 ) );
+
+			if ( $room ) {
+				imagefilledrectangle( $image, 0, 80, 119, 119, (int) imagecolorallocate( $image, 90, 60, 40 ) );
+				imagefilledrectangle( $image, 100, 0, 119, 50, (int) imagecolorallocate( $image, 30, 200, 160 ) );
+			}
+
+			ob_start();
+			imagejpeg( $image );
+
+			return (string) ob_get_clean();
+		};
+
+		self::assertTrue( ImageProbe::studio( $photo( array( 244, 244, 244 ), false ) ), 'Light grey studio backdrop.' );
+		self::assertFalse( ImageProbe::studio( $photo( array( 20, 40, 45 ), false ) ), 'A dark backdrop: the picture itself.' );
+		self::assertFalse( ImageProbe::studio( $photo( array( 244, 244, 244 ), true ) ), 'A room along the edge.' );
+		self::assertFalse( ImageProbe::studio( 'not an image' ) );
+	}
+
 	public function test_a_flat_side_lies_on_a_white_sheet(): void {
 		$image = imagecreatefromstring( ImageProbe::blank( 30, 20 ) );
 
