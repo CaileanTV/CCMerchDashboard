@@ -170,40 +170,98 @@ class AlertTts {
 			return $url;
 		}
 
+		global $wpdb;
+
+		// One site-wide, non-waiting lock protects the shared allowance, test
+		// counters and cache misses, including across PHP workers/servers.
+		$lock = 'merchboard_tts_' . md5( DB_NAME . '|' . $wpdb->options );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- A database mutex cannot be cached.
+		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ) ) {
+			return '';
+		}
+
+		try {
+			// Another worker may have filled this file or changed the counters
+			// since this request populated its WordPress option cache.
+			if ( is_file( $path ) ) {
+				return $url;
+			}
+			foreach ( array( TtsSettings::USAGE_OPTION, TtsSettings::OPTION ) as $option ) {
+				wp_cache_delete( $option, 'options' );
+			}
+			wp_cache_delete( 'notoptions', 'options' );
+			if ( null !== $test ) {
+				wp_cache_delete( '_transient_merchboard_tts_tests_' . $test, 'options' );
+				wp_cache_delete( '_transient_timeout_merchboard_tts_tests_' . $test, 'options' );
+			}
+
+			return $this->generate( $voice, $text, $test, $dir, $path, $url );
+		} finally {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the connection's mutex.
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+		}
+	}
+
+	/**
+	 * Makes an uncached read-out while holding the site's TTS lock.
+	 *
+	 * @param string   $voice Voice.
+	 * @param string   $text  Text.
+	 * @param int|null $test  Test creator.
+	 * @param string   $dir   Cache directory.
+	 * @param string   $path  Cache file.
+	 * @param string   $url   Cache URL.
+	 */
+	private function generate( string $voice, string $text, ?int $test, string $dir, string $path, string $url ): string {
 		$chars = mb_strlen( $text );
 
-		// Over the limit, the request's time budget or during a pause after a failure: no new read-out.
 		if ( ! $this->settings->allows( $chars ) || $this->spent >= self::BUDGET || false !== get_transient( 'merchboard_tts_paused' ) || ( null !== $test && ! self::test_allowed( $test ) ) ) {
 			return '';
 		}
 
+		// Reserve durably before contacting the paid provider. A crashed or
+		// ambiguous request keeps its reservation rather than overspending.
+		$previous = get_option( TtsSettings::USAGE_OPTION, array() );
+		if ( ! $this->settings->count( $chars ) ) {
+			return '';
+		}
+
+		$refused      = false;
 		$start        = microtime( true );
-		$audio        = $this->synthesize( $voice, $text );
+		$audio        = $this->synthesize( $voice, $text, $refused );
 		$this->spent += microtime( true ) - $start;
 
 		if ( null === $audio ) {
+			if ( $refused ) {
+				update_option( TtsSettings::USAGE_OPTION, $previous, false );
+			}
 			set_transient( 'merchboard_tts_paused', 1, self::PAUSE );
+			return '';
 		}
 
-		if ( null === $audio || ! wp_mkdir_p( $dir ) ) {
+		if ( ! wp_mkdir_p( $dir ) ) {
 			return '';
 		}
 
 		// No listing of the folder on servers that list folders.
 		if ( ! is_file( $dir . '/index.php' ) ) {
 			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- The plugin's own folder.
-			file_put_contents(
-				$dir . '/index.php',
-				'<?php
-// Silence is golden.
-'
-			);
+			file_put_contents( $dir . '/index.php', "<?php\n// Silence is golden.\n" );
 		}
 
-		$this->settings->count( $chars );
-
+		// Publish only complete files: cache hits do not take the generation lock.
 		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- A new file in the plugin's own uploads folder.
-		return false === file_put_contents( $path, $audio ) ? '' : $url;
+		if ( false === file_put_contents( $path . '.tmp', $audio ) ) {
+			wp_delete_file( $path . '.tmp' );
+			return '';
+		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Atomic publication in the same directory.
+		if ( ! rename( $path . '.tmp', $path ) ) {
+			wp_delete_file( $path . '.tmp' );
+			return '';
+		}
+
+		return $url;
 	}
 
 	/**
@@ -211,11 +269,13 @@ class AlertTts {
 	 *
 	 * @param string $voice Voice.
 	 * @param string $text  Text.
+	 * @param bool   $refused Whether the provider definitively rejected the request.
 	 */
-	private function synthesize( string $voice, string $text ): ?string {
+	private function synthesize( string $voice, string $text, bool &$refused ): ?string {
 		$key = $this->settings->key();
 
 		if ( null === $key ) {
+			$refused = true;
 			return null;
 		}
 
@@ -235,6 +295,7 @@ class AlertTts {
 		);
 
 		if ( null === $answer || 200 !== $answer[0] ) {
+			$refused = null !== $answer && $answer[0] >= 400 && $answer[0] < 500;
 			$this->logger->warning( 'Google Text-to-Speech refused a read-out.', array( 'status' => null === $answer ? 0 : $answer[0] ) );
 
 			return null;
@@ -255,15 +316,13 @@ class AlertTts {
 	private static function test_allowed( int $creator_id ): bool {
 		$key   = 'merchboard_tts_tests_' . $creator_id;
 		$count = get_transient( $key );
-		$count = is_int( $count ) ? $count : 0;
+		$count = is_numeric( $count ) ? max( 0, (int) $count ) : 0;
 
 		if ( $count >= self::TESTS_PER_HOUR ) {
 			return false;
 		}
 
-		set_transient( $key, $count + 1, HOUR_IN_SECONDS );
-
-		return true;
+		return set_transient( $key, $count + 1, HOUR_IN_SECONDS );
 	}
 
 	/**

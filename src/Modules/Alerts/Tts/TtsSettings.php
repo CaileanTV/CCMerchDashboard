@@ -106,12 +106,13 @@ class TtsSettings {
 	}
 
 	/**
-	 * Counts characters read out this month.
+	 * Reserves characters this month; the caller must hold the site TTS lock.
 	 *
 	 * @param int $chars Characters.
+	 * @return bool Whether the reservation was persisted.
 	 */
-	public function count( int $chars ): void {
-		update_option(
+	public function count( int $chars ): bool {
+		return update_option(
 			self::USAGE_OPTION,
 			array(
 				'month' => self::month(),

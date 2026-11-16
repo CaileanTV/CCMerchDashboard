@@ -151,6 +151,38 @@ final class AlertTtsTest extends IntegrationTestCase {
 		self::assertCount( 1, $this->sent );
 	}
 
+	public function test_a_busy_generation_lock_prevents_provider_calls(): void {
+		$this->settings->save( true, 20, self::KEY );
+		$other = new \wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		$lock  = 'merchboard_tts_' . md5( DB_NAME . '|' . $this->wpdb->options );
+		self::assertSame( '1', $other->get_var( $other->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ) );
+		try {
+			self::assertSame( '', $this->tts()->url_for( self::look(), self::event(), 'contending request' ) );
+			self::assertCount( 0, $this->sent );
+			self::assertSame( 0, $this->settings->used() );
+		} finally {
+			$other->get_var( $other->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+			$other->close();
+		}
+		self::assertNotSame( '', $this->tts()->url_for( self::look(), self::event(), 'contending request' ) );
+		self::assertSame( '', $this->tts()->url_for( self::look(), self::event(), 'another request' ) );
+		self::assertCount( 1, $this->sent );
+	}
+
+	public function test_usage_is_reserved_before_http_and_uncertain_failures_keep_it(): void {
+		$this->settings->save( true, 20, self::KEY );
+		$tts = new AlertTts(
+			$this->settings,
+			$this->service( Logger::class ),
+			function (): ?array {
+				self::assertSame( 18, $this->settings->used(), 'Reserved before the provider is called.' );
+				return null;
+			}
+		);
+		self::assertSame( '', $tts->url_for( self::look(), self::event(), 'nova bought Hoodie' ) );
+		self::assertSame( 18, $this->settings->used(), 'A timeout may have incurred provider usage.' );
+	}
+
 	public function test_the_key_is_checked_encrypted_and_never_audited(): void {
 		try {
 			$this->settings->save( true, 1000, 'not a key' );
