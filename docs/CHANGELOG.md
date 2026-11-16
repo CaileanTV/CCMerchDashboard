@@ -38,7 +38,8 @@ Fase 48 (ADR-111), fase 49 (ADR-112), fase 50 (ADR-113) og fase 51 (ADR-114): co
     - "Brug billeder uden baggrund på alle produkter" laver billederne i admins browser og sætter dem i shoppen med det samme, på det gamle billedes plads i produktet, galleriet og variationerne.
     - Står skabelonens foto på hvidt (fx kopper), fjernes den hvide baggrund først, så produktet får et omrids ("Fjern den hvide baggrund og lav billeder"). Den automatiske kørsel gør det også.
     - Det enkelte produkt kan også laves og godkendes for sig. "Fortryd" sætter de gamle billeder tilbage, og "Kassér" dropper de ventende.
-    - Det auditeres (`designer_cutouts_approved`, `designer_cutouts_reverted`). Fotos fra leverandøren forbliver, som de er.
+    - Det auditeres (`designer_cutouts_approved`, `designer_cutouts_reverted`).
+    - Fotos fra leverandøren (Printful, Gelato, Prodigi) får deres ensfarvede baggrund fjernet direkte fra fotoet og bliver PNG i fotoets egen størrelse.
   - **Leverandører:** Printful bedes om PNG ved katalogimport og produktbilleder, og PNG-skabeloner foretrækkes.
   - **Merch-reklamen** bruger et sådant billede, som det er.
 - **`!merch` i chatbotten** (fase 50): på Alerts → Chatbot slår creatoren kommandoen til og skriver svaret med `$Link` (creatorens kategoriside, ellers shoppen). Botten svarer på Twitch og Kick med en pause pr. kanal.

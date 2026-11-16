@@ -1815,8 +1815,8 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$job = $cutouts->job( $product );
 		self::assertSame( array( 'front:black', 'front:sand' ), array_column( $job['slots'], 'key' ) );
 		self::assertSame( '#111111', $job['slots'][0]['color'] );
-		self::assertStringContainsString( 'action=' . DesignerVersionFiles::ACTION, $job['slots'][0]['print'] );
-		self::assertSame( array( 'color' ), array_keys( $job['slots'][0]['layers'] ), 'The colour mask is the outline.' );
+		self::assertStringContainsString( 'action=' . DesignerVersionFiles::ACTION, $job['slots'][0]['print'] ?? '' );
+		self::assertSame( array( 'color' ), array_keys( $job['slots'][0]['layers'] ?? array() ), 'The colour mask is the outline.' );
 		self::assertSame( 400, $job['slots'][0]['view']['width'] ?? null );
 
 		foreach ( array( array( 'front:green', 400, DesignerException::DESIGN_INVALID ), array( 'front:black', 200, DesignerException::BASE_LAYER_SIZE ) ) as [ $key, $size, $reason ] ) {
@@ -1973,7 +1973,45 @@ final class DesignerReviewTest extends IntegrationTestCase {
 
 		$job = $cutouts->job( $product );
 		self::assertSame( array( 'front:black', 'front:sand' ), array_column( $job['slots'], 'key' ) );
-		self::assertSame( array( 'background' ), array_keys( $job['slots'][0]['layers'] ) );
+		self::assertSame( array( 'background' ), array_keys( $job['slots'][0]['layers'] ?? array() ) );
+	}
+
+	public function test_a_provider_s_photos_get_their_background_removed_from_the_photo(): void {
+		// A product whose images are a provider's photos (e.g. Printful's), 500 × 400.
+		$product = $this->drafts->create( $this->creator, $this->base );
+		$this->save( $product, '20' );
+		$this->submissions->attach( $this->creator, $product, 'print:front', AlertImagesTest::upload( AlertImagesTest::png( 118, 157 ), 'print.png' ) );
+
+		foreach ( array( 'black', 'sand' ) as $color ) {
+			$this->submissions->attach( $this->creator, $product, 'mockup:front:' . $color, AlertImagesTest::upload( self::jpeg( 400, 400 ), 'mockup.jpg' ) );
+		}
+
+		$this->submissions->submit( $this->creator, $product );
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+
+		$version = (int) ( $this->products->live( $product )['id'] ?? 0 );
+		$this->products->set_mockup_state( $version, 'ready' );
+
+		$cutouts = new DesignerCutouts( $this->products, $this->bases_repository(), $this->files, new DesignerMedia( $this->files ), $this->guard, $this->writer, $this->service( AuditTrail::class ), new DesignerAssetRepository( $this->wpdb ) );
+		$job     = $cutouts->job( $product );
+
+		self::assertSame( array( 'front:black', 'front:sand' ), array_column( $job['slots'], 'key' ) );
+		self::assertStringContainsString( 'action=' . DesignerVersionFiles::ACTION, $job['slots'][0]['photo'] ?? '', 'The browser cuts out the photo itself.' );
+		self::assertArrayNotHasKey( 'layers', $job['slots'][0], 'Nothing is drawn again.' );
+
+		$row = array_values( array_filter( $cutouts->overview(), static fn( array $row ): bool => $row['product'] === $product ) )[0] ?? self::fail( 'Not listed.' );
+		self::assertSame( 'todo', $row['state'], 'A provider\'s photos can be made without background.' );
+
+		foreach ( array( 'front:black', 'front:sand' ) as $key ) {
+			$cutouts->store( $product, $key, AlertImagesTest::upload( self::cutout_photo( true ), 'cutout.png' ) );
+		}
+
+		self::assertSame( 2, $cutouts->approve( $product ) );
+
+		$mockups = SubmissionFiles::decode( (string) ( $this->products->version( $version )['files'] ?? '' ) )['mockups']['front'];
+		self::assertSame( array( 'image/png', 'image/png' ), array_column( $mockups, 'mime' ) );
+		self::assertSame( array(), $cutouts->job( $product )['slots'], 'Nothing left: the photos are without background now.' );
 	}
 
 	public function test_a_psd_scene_image_has_the_scene_s_own_size(): void {

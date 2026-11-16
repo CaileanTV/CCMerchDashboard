@@ -183,7 +183,7 @@ final class DesignerCutoutsPage {
 
 		$script = $this->enqueue();
 
-		echo '<p>' . esc_html__( 'The product images of designs approved before can be made without background: only the product, as PNG, cut to the template\'s own PNG photo (or its silhouette or colour mask). They are used in the merch ad and the Twitch panel and in the shop, in the place of the old images. Photos from the provider stay as they are.', 'merchboard' ) . '</p>';
+		echo '<p>' . esc_html__( 'The product images of designs approved before can be made without background: only the product, as PNG, cut to the template\'s own PNG photo (or its silhouette or colour mask). They are used in the merch ad and the Twitch panel and in the shop, in the place of the old images. Photos from the provider (e.g. Printful) get their plain background removed.', 'merchboard' ) . '</p>';
 
 		if ( ! $script ) {
 			echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'The images are made in the browser, but its script is missing. Build the plugin (npm run build).', 'merchboard' ) . '</p></div>';
@@ -377,7 +377,6 @@ final class DesignerCutoutsPage {
 	 */
 	private static function state_label( string $state ): string {
 		return match ( $state ) {
-			'provider' => __( 'Photos from the provider (unchanged)', 'merchboard' ),
 			'none'     => __( 'The template\'s photo is on white: no outline yet', 'merchboard' ),
 			'done'     => __( 'Nothing left to make', 'merchboard' ),
 			'pending'  => __( 'Waiting for your approval', 'merchboard' ),

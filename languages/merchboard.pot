@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-16T19:59:41+00:00\n"
+"POT-Creation-Date: 2026-11-16T20:08:14+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -157,9 +157,9 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/BaseProductActions.php:91
 #: src/Modules/ProductDesigner/Admin/CampaignActions.php:77
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:109
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:519
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:575
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:610
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:518
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:574
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:609
 #: src/Modules/ProductDesigner/Admin/DesignerNotificationActions.php:76
 #: src/Modules/ProductDesigner/Admin/DesignerReviewActions.php:79
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:103
@@ -8188,9 +8188,9 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:314
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:101
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:165
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:512
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:566
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:603
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:511
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:565
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:602
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:154
 #: src/Modules/ProductDesigner/Admin/DesignerReviewActions.php:72
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:97
@@ -9581,7 +9581,7 @@ msgid "Ended"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:122
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:585
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:584
 #: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:198
 msgid "The file no longer exists."
 msgstr ""
@@ -9621,7 +9621,7 @@ msgid "The products could not be read. Try again or check the log."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:186
-msgid "The product images of designs approved before can be made without background: only the product, as PNG, cut to the template's own PNG photo (or its silhouette or colour mask). They are used in the merch ad and the Twitch panel and in the shop, in the place of the old images. Photos from the provider stay as they are."
+msgid "The product images of designs approved before can be made without background: only the product, as PNG, cut to the template's own PNG photo (or its silhouette or colour mask). They are used in the merch ad and the Twitch panel and in the shop, in the place of the old images. Photos from the provider (e.g. Printful) get their plain background removed."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:189
@@ -9706,22 +9706,18 @@ msgid "Undo: old images back"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:380
-msgid "Photos from the provider (unchanged)"
-msgstr ""
-
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:381
 msgid "The template's photo is on white: no outline yet"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:382
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:381
 msgid "Nothing left to make"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:383
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:382
 msgid "Waiting for your approval"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:384
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:383
 msgid "Images can be made"
 msgstr ""
 

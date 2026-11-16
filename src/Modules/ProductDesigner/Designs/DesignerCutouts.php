@@ -32,8 +32,10 @@ defined( 'ABSPATH' ) || exit;
  * ADR-114 pkt. 4: the products in the shop from before get images without
  * background through the administrator.
  *
+ * - A provider's photos (e.g. Printful's) get their plain background
+ *   removed from the photo itself (the owner's wish 2026-11-16).
  * - An image can be made for a side and colour whose mockup the browser drew
- *   (a JPEG; a provider's photos stay) on a side with an outline: its
+ *   (a JPEG) on a side with an outline: its
  *   silhouette, else its background in that colour when that is a PNG
  *   without background (the template's own photo), else its colour mask
  *   when the colour has no photo of its own. A PSD scene (e.g. a mug) can
@@ -121,8 +123,8 @@ final class DesignerCutouts {
 	 * The approved designer products in the shop with their images, newest
 	 * first, for the admin page.
 	 *
-	 * State: `provider` (the provider's photos), `none` (no side with an
-	 * outline), `done` (nothing left to make), `todo` or `pending` (made,
+	 * State: `none` (no side with an outline), `done` (nothing left to
+	 * make), `todo` or `pending` (made,
 	 * waiting for approval); `undo` when approved images can be put back.
 	 * Each image: the shop's current attachment (`old`), and the new one as a
 	 * waiting file (`waiting`) or an approved attachment (`approved`).
@@ -167,11 +169,10 @@ final class DesignerCutouts {
 				'version_id'    => $row['live_version_id'],
 				'title'         => (string) ( $version['title'] ?? '' ),
 				'state'         => match ( true ) {
-					self::provider( $version )                   => 'provider',
-					array() !== $pending                         => 'pending',
-					array() !== $open                            => 'todo',
-					array() !== $swap || $this->outlined( $base ) => 'done',
-					default                                      => 'none',
+					array() !== $pending => 'pending',
+					array() !== $open    => 'todo',
+					array() !== $swap || self::provider( $version ) || $this->outlined( $base ) => 'done',
+					default              => 'none',
 				},
 				'undo'          => array() !== $swap,
 				'slots'         => $slots,
@@ -204,7 +205,10 @@ final class DesignerCutouts {
 	 * background and the colour mask), all through admin URLs.
 	 *
 	 * @param int $product Designer product.
-	 * @return array{product: int, version: int, slots: list<array{key: string, color: string, view: array<string, mixed>, print: string, layers: array<string, string>}>}
+	 * A provider's photo (e.g. Printful's) is sent as `photo`: the browser
+	 * removes its plain background (the owner's wish 2026-11-16).
+	 *
+	 * @return array{product: int, version: int, slots: list<array{key: string, color: string, photo?: string, view?: array<string, mixed>, print?: string, layers?: array<string, string>}>}
 	 * @throws DesignerException When it is not live.
 	 * @throws DatabaseException When it cannot be read.
 	 */
@@ -216,6 +220,15 @@ final class DesignerCutouts {
 		$slots                    = array();
 
 		foreach ( $this->slots( $version, $base ) as $key => $slot ) {
+			if ( null === $slot['view'] || $slot['photo'] ) {
+				$slots[] = array(
+					'key'   => $key,
+					'color' => $slot['hex'],
+					'photo' => DesignerVersionFiles::url( (int) $version['id'], SubmissionFiles::MOCKUP . ':' . $key ),
+				);
+				continue;
+			}
+
 			$part  = ColorDesigns::part_of( $design, $slot['color'] );
 			$print = ColorDesigns::SHARED === $part ? SubmissionFiles::PRINT . ':' . $slot['view']->key : SubmissionFiles::PRINT . ':' . $slot['view']->key . ':' . $part;
 
@@ -294,8 +307,8 @@ final class DesignerCutouts {
 				$slot                     = $this->slots( $version, $base )[ $key ] ?? self::refuse( DesignerException::DESIGN_INVALID );
 				$file                     = $this->files->store( $upload, true );
 
-				// A PSD scene draws its mockup in its own size, not the template layers' (e.g. mugs).
-				if ( array( $file['width'], $file['height'] ) !== $slot['view']->mockup_size() ) {
+				// A PSD scene draws its mockup in its own size (e.g. mugs); a provider's photo keeps its own.
+				if ( array( $file['width'], $file['height'] ) !== $slot['size'] ) {
 					$this->files->delete( $file['file'] );
 					self::refuse( DesignerException::BASE_LAYER_SIZE );
 				}
@@ -366,9 +379,9 @@ final class DesignerCutouts {
 						$swapped[ $key ] = array(
 							'old'  => $old,
 							'new'  => $added[ $key ],
-							'file' => $mockups[ $open[ $key ]['view']->key ][ $open[ $key ]['color'] ] ?? null,
+							'file' => $mockups[ $open[ $key ]['side'] ][ $open[ $key ]['color'] ] ?? null,
 						);
-						$mockups[ $open[ $key ]['view']->key ][ $open[ $key ]['color'] ] = $file;
+						$mockups[ $open[ $key ]['side'] ][ $open[ $key ]['color'] ] = $file;
 					}
 
 					if ( array() === $swapped ) {
@@ -584,39 +597,85 @@ final class DesignerCutouts {
 
 	/**
 	 * The images of a version that can be made without background, by
-	 * `<side>:<colour>`: a side of the base product with a PSD scene or with
-	 * an outline in that colour, whose mockup is still the browser's JPEG.
-	 * None while a provider's photos are the images.
+	 * `<side>:<colour>`, while they still have a background (a JPEG, or a PNG
+	 * without transparent pixels):
+	 * - the browser's mockups on a side with a PSD scene or an outline in that
+	 *   colour: drawn again (`photo` false, the side's mockup size);
+	 * - a provider's photos (e.g. Printful's; the owner's wish 2026-11-16):
+	 *   the plain background is removed from the photo itself (`photo` true,
+	 *   the photo's own size). Embroidery close-ups stay.
 	 *
 	 * @param array<string, mixed> $version Live version.
 	 * @param BaseProduct          $base    Its base product.
-	 * @return array<string, array{view: BaseView, color: string, hex: string}>
+	 * @return array<string, array{view: BaseView|null, side: string, color: string, hex: string, photo: bool, size: array{0: int, 1: int}}>
 	 * @throws DatabaseException When a layer cannot be read.
 	 */
 	public function slots( array $version, BaseProduct $base ): array {
-		if ( self::provider( $version ) ) {
-			return array();
-		}
-
-		$files = SubmissionFiles::decode( is_string( $version['files'] ?? null ) ? $version['files'] : null );
-		$hexes = array_column( $base->colors, 'hex', 'key' );
-		$slots = array();
+		$files    = SubmissionFiles::decode( is_string( $version['files'] ?? null ) ? $version['files'] : null );
+		$hexes    = array_column( $base->colors, 'hex', 'key' );
+		$views    = array();
+		$provider = self::provider( $version );
+		$slots    = array();
 
 		foreach ( $base->views as $view ) {
-			foreach ( $files['mockups'][ $view->key ] ?? array() as $color => $file ) {
+			$views[ $view->key ] = $view;
+		}
+
+		foreach ( $files['mockups'] as $side => $colors ) {
+			$side = (string) $side;
+			$view = $views[ $side ] ?? null;
+
+			if ( SubmissionFiles::is_close( $side ) ) {
+				continue;
+			}
+
+			foreach ( $colors as $color => $file ) {
 				$color = (string) $color;
 
-				if ( isset( $hexes[ $color ] ) && 'image/jpeg' === ( $file['mime'] ?? '' ) && ( null !== $view->scene || null !== $this->outline( $view, $color ) ) ) {
-					$slots[ $view->key . ':' . $color ] = array(
+				if ( ! isset( $hexes[ $color ] ) || ! $this->has_background( $file ) ) {
+					continue;
+				}
+
+				if ( $provider ) {
+					$slots[ $side . ':' . $color ] = array(
 						'view'  => $view,
+						'side'  => $side,
 						'color' => $color,
 						'hex'   => $hexes[ $color ],
+						'photo' => true,
+						'size'  => array( (int) ( $file['width'] ?? 0 ), (int) ( $file['height'] ?? 0 ) ),
+					);
+				} elseif ( null !== $view && ( null !== $view->scene || null !== $this->outline( $view, $color ) ) ) {
+					$slots[ $side . ':' . $color ] = array(
+						'view'  => $view,
+						'side'  => $side,
+						'color' => $color,
+						'hex'   => $hexes[ $color ],
+						'photo' => false,
+						'size'  => $view->mockup_size(),
 					);
 				}
 			}
 		}
 
 		return $slots;
+	}
+
+	/**
+	 * Whether a stored mockup still has a background: a JPEG (or WebP), or a
+	 * PNG without transparent pixels.
+	 *
+	 * @param array<string, mixed> $file Stored file.
+	 */
+	private function has_background( array $file ): bool {
+		if ( 'image/png' !== ( $file['mime'] ?? '' ) ) {
+			return true;
+		}
+
+		$path = is_string( $file['file'] ?? null ) ? $this->files->path( $file['file'] ) : null;
+		$body = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A mockup in the plugin's own folder.
+
+		return false !== $body && ! ImageProbe::transparent( $body );
 	}
 
 	/**
@@ -700,7 +759,7 @@ final class DesignerCutouts {
 	}
 
 	/**
-	 * Whether a provider's photos are a version's images (ADR-114 pkt. 6).
+	 * Whether a provider's photos are a version's images (cut out from the photo, not drawn again).
 	 *
 	 * @param array<string, mixed> $version Version.
 	 */

@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-16T19:59:47+00:00\n"
+"PO-Revision-Date: 2026-11-16T20:08:21+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -157,9 +157,9 @@ msgstr "Du har desværre ikke adgang til at administrere creators."
 #: src/Modules/ProductDesigner/Admin/BaseProductActions.php:91
 #: src/Modules/ProductDesigner/Admin/CampaignActions.php:77
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:109
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:519
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:575
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:610
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:518
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:574
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:609
 #: src/Modules/ProductDesigner/Admin/DesignerNotificationActions.php:76
 #: src/Modules/ProductDesigner/Admin/DesignerReviewActions.php:79
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:103
@@ -8188,9 +8188,9 @@ msgstr "Til administratoren"
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:314
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:101
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:165
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:512
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:566
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:603
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:511
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:565
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:602
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:154
 #: src/Modules/ProductDesigner/Admin/DesignerReviewActions.php:72
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:97
@@ -9581,7 +9581,7 @@ msgid "Ended"
 msgstr "Afsluttet"
 
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:122
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:585
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:584
 #: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:198
 msgid "The file no longer exists."
 msgstr "Filen findes ikke længere."
@@ -9621,8 +9621,8 @@ msgid "The products could not be read. Try again or check the log."
 msgstr "Produkterne kunne ikke læses. Prøv igen, eller se loggen."
 
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:186
-msgid "The product images of designs approved before can be made without background: only the product, as PNG, cut to the template's own PNG photo (or its silhouette or colour mask). They are used in the merch ad and the Twitch panel and in the shop, in the place of the old images. Photos from the provider stay as they are."
-msgstr "Produktbillederne af tidligere godkendte designs kan laves uden baggrund: kun produktet, som PNG, klippet til skabelonens eget PNG-foto (eller dens silhuet eller farvemaske). De bruges i merch-reklamen, Twitch-panelet og shoppen i stedet for de gamle billeder. Fotos fra leverandøren forbliver, som de er."
+msgid "The product images of designs approved before can be made without background: only the product, as PNG, cut to the template's own PNG photo (or its silhouette or colour mask). They are used in the merch ad and the Twitch panel and in the shop, in the place of the old images. Photos from the provider (e.g. Printful) get their plain background removed."
+msgstr "Produktbillederne af tidligere godkendte designs kan laves uden baggrund: kun produktet, som PNG, klippet til skabelonens eget PNG-foto (eller dens silhuet eller farvemaske). De bruges i merch-reklamen, Twitch-panelet og shoppen i stedet for de gamle billeder. Fotos fra leverandøren (fx Printful) får deres ensfarvede baggrund fjernet."
 
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:189
 msgid "The images are made in the browser, but its script is missing. Build the plugin (npm run build)."
@@ -9706,22 +9706,18 @@ msgid "Undo: old images back"
 msgstr "Fortryd: gamle billeder tilbage"
 
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:380
-msgid "Photos from the provider (unchanged)"
-msgstr "Fotos fra leverandøren (uændret)"
-
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:381
 msgid "The template's photo is on white: no outline yet"
 msgstr "Skabelonens foto står på hvidt: intet omrids endnu"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:382
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:381
 msgid "Nothing left to make"
 msgstr "Intet tilbage at lave"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:383
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:382
 msgid "Waiting for your approval"
 msgstr "Venter på din godkendelse"
 
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:384
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:383
 msgid "Images can be made"
 msgstr "Billeder kan laves"
 

@@ -1438,6 +1438,11 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - **Reklamen:** bruger shoppens billede; et billede uden baggrund står frit, andre ligger i en flise.
   - **Server:** `…/cutouts`-ruterne og indstillingen `cutouts` er fjernet.
   - **Gamle filer:** filer fra testene ryddes op, når creatoren slettes, og ved afinstallation.
+- **51.12 Leverandørfotos uden baggrund (projektejerens ønske 2026-11-16):** ✅
+  - **Hvad:** fotos fra Printful, Gelato og Prodigi, der stadig har baggrund, kommer med på Forslag → "Billeder uden baggrund".
+  - **Hvordan:** browseren fjerner den ensfarvede baggrund fra selve fotoet (PNG i fotoets størrelse).
+  - **Derefter:** Godkend, Fortryd og "Brug billeder uden baggrund på alle produkter" virker som for de andre.
+  - **Nye leverandørprodukter:** Printful bedes allerede om PNG; har et foto alligevel baggrund, står det på siden som "Billeder kan laves".
 - **51.6 Test og levering:** ✅ unit-, Jest- og integrationstest (godkend, fortryd, kassér), danske tekster og docs. Runtime 2026-11-15 i Chrome med den byggede admin-bundle: opgave → tegning → upload for en side med farvemaske og en side med eget farvefoto og silhuet; baggrund, gulvskygge og halsåbning blev gennemsigtige. Godkend og fortryd kræver produktlåsen (MySQL) og testes på stg.
 
 ## Fase 52 – Gelato-produkter med egne valg, printområde pr. variant og skærelinje 📋 (projektejerens ønske 2026-11-15; efter 2.2.0, version 2.3.0; ADR-115 foreslået, planen afventer godkendelse)

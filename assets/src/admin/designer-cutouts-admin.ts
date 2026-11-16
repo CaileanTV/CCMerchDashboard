@@ -10,6 +10,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import { parseView } from '../dashboard/api/designer';
 import type { LayerKind } from '../dashboard/api/designer';
 import { silhouetteFromUrl } from './silhouette';
+import { removeBackground } from '../dashboard/sections/community/cutout';
 import {
 	composeMockup,
 	composeScene,
@@ -19,6 +20,8 @@ export interface CutoutSlot {
 	readonly key: string;
 	/** The colour (`#rrggbb`). */
 	readonly color: string;
+	/** A provider's photo to remove the plain background from; '' to draw. */
+	readonly photo: string;
 	/** The side as the designer reads it. */
 	readonly view: unknown;
 	/** The print file's URL. */
@@ -58,7 +61,7 @@ export function parseJob( body: unknown ): CutoutSlot[] | null {
 			return null;
 		}
 
-		const { key, color, view, print, layers } = slot as Record<
+		const { key, color, view, print, layers, photo } = slot as Record<
 			string,
 			unknown
 		>;
@@ -66,7 +69,24 @@ export function parseJob( body: unknown ): CutoutSlot[] | null {
 		if (
 			typeof key !== 'string' ||
 			typeof color !== 'string' ||
-			! /^#[0-9a-f]{6}$/.test( color ) ||
+			! /^#[0-9a-f]{6}$/.test( color )
+		) {
+			return null;
+		}
+
+		if ( typeof photo === 'string' ) {
+			parsed.push( {
+				key,
+				color,
+				photo,
+				view: null,
+				print: '',
+				layers: {},
+			} );
+			continue;
+		}
+
+		if (
 			typeof print !== 'string' ||
 			typeof layers !== 'object' ||
 			layers === null ||
@@ -78,6 +98,7 @@ export function parseJob( body: unknown ): CutoutSlot[] | null {
 		parsed.push( {
 			key,
 			color,
+			photo: '',
 			view,
 			print,
 			layers: Object.fromEntries(
@@ -263,11 +284,56 @@ async function printCanvas( url: string ): Promise< HTMLCanvasElement | null > {
 }
 
 /**
+ * A provider's photo without its plain background, as a PNG of the photo's
+ * own size, or why it cannot be made.
+ *
+ * @param url The photo's admin URL.
+ */
+async function photoCutout( url: string ): Promise< Blob | Failure > {
+	const image = new Image();
+	image.src = url;
+
+	try {
+		await image.decode();
+	} catch {
+		return failure( 'print' );
+	}
+
+	const canvas = document.createElement( 'canvas' );
+	canvas.width = image.naturalWidth;
+	canvas.height = image.naturalHeight;
+	const context = canvas.getContext( '2d' );
+
+	if ( context === null ) {
+		return failure( 'draw' );
+	}
+
+	context.drawImage( image, 0, 0 );
+	const pixels = context.getImageData( 0, 0, canvas.width, canvas.height );
+
+	if ( ! removeBackground( pixels ) ) {
+		return failure( 'not_plain' );
+	}
+
+	context.putImageData( pixels, 0, 0 );
+
+	const png = await new Promise< Blob | null >( ( resolve ) =>
+		canvas.toBlob( resolve, 'image/png' )
+	);
+
+	return png === null ? failure( 'draw' ) : png;
+}
+
+/**
  * Draws one image without background, or why it cannot be drawn.
  *
  * @param slot The side and colour.
  */
 export async function drawSlot( slot: CutoutSlot ): Promise< Blob | Failure > {
+	if ( slot.photo !== '' ) {
+		return photoCutout( slot.photo );
+	}
+
 	const view = parseView( slot.view );
 
 	if ( view === null ) {

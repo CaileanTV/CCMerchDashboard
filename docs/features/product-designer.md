@@ -234,7 +234,11 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
   - **Godkend og brug i shoppen:** billederne kommer i mediebiblioteket og tager de gamle billeders pladser i produktbilledet, galleriet og variationerne, og versionens mockups bliver PNG'erne. Senere skift af produktbillede bruger dem. De gamle billeder bliver i mediebiblioteket.
   - **Fortryd** sætter de gamle billeder tilbage; de nye venter igen. **Kassér** sletter de ventende.
   - Alt sker under produktets lås og auditeres (`designer_cutouts_approved`, `designer_cutouts_reverted`).
-  - **Ikke berørt:** fotos fra leverandøren (versionens `mockup_state` er `ready`). En PSD-side står altid som "kan laves"; har PSD'en baggrund, sendes intet.
+  - **Leverandørfotos** (versionens `mockup_state` er `ready`, fx Printful, Gelato, Prodigi):
+    - Et foto, der stadig har baggrund (JPEG, eller PNG uden gennemsigtige pixels), får den ensfarvede baggrund fjernet direkte fra fotoet i admins browser.
+    - Resultatet er en PNG i fotoets egen størrelse. Den tegnes ikke igen ud fra skabelonen.
+    - Er baggrunden ikke ensfarvet, vises `not_plain`, og fotoet forbliver, som det er.
+  - **PSD-sider:** står altid som "kan laves"; har PSD'en baggrund, sendes intet.
 - **Leverandører:** Printful bedes om PNG ved katalogimportens gengivelser og ved produktbillederne, og en PNG-skabelon foretrækkes. Gelato, Prodigi og Printify har intet formatvalg i de kald, vi bruger. Et billede mærkes `_merchboard_transparent` kun, når PNG'en har gennemsigtige pixels.
 
 ## Baggrundsfarve på AOP-produkter (fase 33, ADR-095, 2026-11-07)
