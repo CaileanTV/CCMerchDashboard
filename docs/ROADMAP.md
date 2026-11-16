@@ -1279,7 +1279,8 @@ Projektejerens ønsker 2026-11-12, med Fourthwall som forbillede:
 - **48.8 Test og levering:**
   - ✅ tests, danske tekster og docs;
   - ✅ runtime i Playground (2026-11-15) med skærmbilleder: gave-boksen (desktop og mobil), 3 gaver giver fragt 150 kr., rabatlinjen, kortet i kurv og kasse ikke logget ind og logget ind (tier 3, rabat 15 % trukket), mørkt tema og mobil;
-  - ✅ bump til 2.2.0 og testpakke på stg 2026-11-15 (2.2.0 rummer fase 48, 49 og 50, projektejerens beslutning 2026-11-15). Tag efter projektejerens OK efter testen.
+  - ✅ bump til 2.2.0 og testpakke på stg 2026-11-15 (2.2.0 rummer fase 48, 49 og 50, projektejerens beslutning 2026-11-15; fase 51 kom med samme dag).
+  - ✅ tagget `v2.2.0` på `78047e4` 2026-11-16 efter projektejerens OK. Draft-releasen er byte-identisk med testpakken (SHA-256 `3bdfeb5f…7b43`), og projektejeren udgiver den.
 
 ## Fase 49 – Twitch Extension med creatorens produkter 🔄 (idé 2026-11-15; afklaret og godkendt 2026-11-15: panel uden butikslink; version 2.2.0 sammen med fase 48 og 50; ADR-112)
 

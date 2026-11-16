@@ -253,7 +253,9 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 **Versions-bump og CHANGELOG-sektion 2026-11-15** efter projektejerens beslutning (2.2.0 rummer fase 48, 49 og 50; fase 51 kom med samme dag). Testpakke på stg; tag efter projektejerens OK efter testen. Schemaændring 51 → 52 (`merchboard_gifts.order_unit`).
 
-**Testpakke på stg 2026-11-15:** `dist/merchboard-mvp-2.2.0.zip` fra `c9df69b`, SHA-256 `2db65e078efe57ae80a77470286e8c34162316d1b3e2fc5e3ff1e40a38440741`. stg viser version 2.2.0 og schema-version 52 uden PHP-fejl; vilkårssiderne, kurven og shoppen svarer 200.
+**Tagget 2026-11-16** efter projektejerens OK ("Når CI er grøn må du gerne tagge med det samme"): annoteret tag `v2.2.0` på `78047e4`, efter testene på stg med fase 51's rettelser (PSD-kopper, leverandørfotos kun som studiefotos, reklamen uden eget valg af baggrund, glød og gradient). CI grøn med hele integrationssuiten (run `43957213466`), release-workflowet grønt (run `43963050797`). Draft-releasens ZIP er byte-identisk med den sidste testpakke: SHA-256 `3bdfeb5f7a3b6a017104c1f5025bbd1aaea8c81356fca07fa9aaf2afbce47b43`.
+
+**Første testpakke på stg 2026-11-15:** `dist/merchboard-mvp-2.2.0.zip` fra `c9df69b`, SHA-256 `2db65e078efe57ae80a77470286e8c34162316d1b3e2fc5e3ff1e40a38440741`. stg viser version 2.2.0 og schema-version 52 uden PHP-fejl; vilkårssiderne, kurven og shoppen svarer 200.
 
 1. **Opdatér** med ZIP'en. Overview skal vise version 2.2.0 og schema-version 52.
 2. **Fase 48:** gave-boksen med LIVE-mærket på et produkt hos en creator i testtilstand; køb 2–3 gaver (fragt 50 kr. pr. gave), og de trækkes én ad gangen ("gave 1 af 3"). Rabatlinjen står under prisen, og Twitch-kortet står over produkterne i kurven og over "Faktureringsoplysninger" i kassen.
