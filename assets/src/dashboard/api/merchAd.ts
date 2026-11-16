@@ -34,9 +34,7 @@ export interface MerchAdProduct {
 	readonly name: string;
 	/** The shop image, or null. */
 	readonly image: string | null;
-	/** The background-free image, or null. */
-	readonly cutout: string | null;
-	/** The shop image is already without background (ADR-114). */
+	/** The shop image is without background (ADR-114). */
 	readonly transparent: boolean;
 }
 
@@ -70,8 +68,6 @@ export interface MerchAdState extends MerchAdValues {
 		readonly maxNote: number;
 		readonly every: readonly [ number, number ];
 		readonly seconds: readonly [ number, number ];
-		readonly maxBytes: number;
-		readonly maxPixels: number;
 	};
 }
 
@@ -127,14 +123,8 @@ function parseProduct( body: unknown ): MerchAdProduct | null {
 
 	const id = positive( body.id );
 	const image = url( body.image );
-	const cutout = url( body.cutout );
 
-	if (
-		id === null ||
-		typeof body.name !== 'string' ||
-		image === undefined ||
-		cutout === undefined
-	) {
+	if ( id === null || typeof body.name !== 'string' || image === undefined ) {
 		return null;
 	}
 
@@ -142,7 +132,6 @@ function parseProduct( body: unknown ): MerchAdProduct | null {
 		id,
 		name: body.name,
 		image,
-		cutout,
 		transparent: body.transparent === true,
 	};
 }
@@ -173,8 +162,6 @@ export function parseMerchAd( body: unknown ): MerchAdState | null {
 	const maxNote = positive( limits.max_note );
 	const everyLimits = pair( limits.every );
 	const secondsLimits = pair( limits.seconds );
-	const maxBytes = positive( limits.max_bytes );
-	const maxPixels = positive( limits.max_pixels );
 
 	if (
 		typeof body.enabled !== 'boolean' ||
@@ -198,9 +185,7 @@ export function parseMerchAd( body: unknown ): MerchAdState | null {
 		maxProducts === null ||
 		maxNote === null ||
 		everyLimits === null ||
-		secondsLimits === null ||
-		maxBytes === null ||
-		maxPixels === null
+		secondsLimits === null
 	) {
 		return null;
 	}
@@ -228,8 +213,6 @@ export function parseMerchAd( body: unknown ): MerchAdState | null {
 			maxNote,
 			every: everyLimits,
 			seconds: secondsLimits,
-			maxBytes,
-			maxPixels,
 		},
 	};
 }
@@ -296,38 +279,4 @@ export function regenerateMerchAd(): Promise< ApiResult< MerchAdState > > {
  */
 export function showMerchAd(): Promise< ApiResult< MerchAdState > > {
 	return request( { path: `${ PATH }/show`, method: 'POST' }, parseMerchAd );
-}
-
-/**
- * Stores a background-free image for a product.
- *
- * @param productId The product.
- * @param png       The image as a `data:image/png;base64,…` URL.
- */
-export function addCutout(
-	productId: number,
-	png: string
-): Promise< ApiResult< MerchAdState > > {
-	return request(
-		{
-			path: `${ PATH }/cutouts`,
-			method: 'POST',
-			data: { product_id: productId, png },
-		},
-		parseMerchAd
-	);
-}
-
-/**
- * Removes a product's background-free image.
- *
- * @param productId The product.
- */
-export function removeCutout(
-	productId: number
-): Promise< ApiResult< MerchAdState > > {
-	return request(
-		{ path: `${ PATH }/cutouts/${ productId }`, method: 'DELETE' },
-		parseMerchAd
-	);
 }

@@ -17,12 +17,6 @@ jest.mock( '@wordpress/api-fetch', () => ( {
 	default: jest.fn(),
 } ) );
 
-jest.mock( '../sections/community/cutout', () => ( {
-	cutoutFrom: jest.fn( async ( source: string ) =>
-		source.includes( '7' ) ? 'data:image/png;base64,AAAA' : null
-	),
-} ) );
-
 const PATH = '/merchboard/v1/me/community/merch-ad';
 const COMMAND = '/merchboard/v1/me/alerts/chatbot/merch-command';
 const PRODUCTS = '/merchboard/v1/me/products?page=1&per_page=100';
@@ -50,8 +44,6 @@ const STATE = {
 		max_note: 60,
 		every: [ 1, 60 ],
 		seconds: [ 5, 60 ],
-		max_bytes: 4194304,
-		max_pixels: 2000,
 	},
 };
 
@@ -66,10 +58,10 @@ const SAVED = {
 		{
 			id: 7,
 			name: 'Hoodie',
-			image: 'https://shop.test/7.jpg',
-			cutout: null,
+			image: 'https://shop.test/7.png',
+			transparent: true,
 		},
-		{ id: 8, name: 'Mug', image: 'https://shop.test/8.jpg', cutout: null },
+		{ id: 8, name: 'Mug', image: 'https://shop.test/8.jpg' },
 	],
 };
 
@@ -149,7 +141,7 @@ describe( 'the merch ad and !merch (ADR-113)', () => {
 		).toBeNull();
 	} );
 
-	it( 'saves the ad, then removes the backgrounds and shows the OBS link', async () => {
+	it( 'saves the ad and shows the OBS link, with the shop images as they are', async () => {
 		const { container, requests } = await show( {
 			[ `GET ${ PATH }` ]: () => response( 200, STATE ),
 			[ `GET ${ PRODUCTS }` ]: () =>
@@ -162,17 +154,6 @@ describe( 'the merch ad and !merch (ADR-113)', () => {
 					1
 				),
 			[ `POST ${ PATH }` ]: () => response( 200, SAVED ),
-			[ `POST ${ PATH }/cutouts` ]: () =>
-				response( 200, {
-					...SAVED,
-					products: [
-						{
-							...SAVED.products[ 0 ],
-							cutout: 'https://shop.test/c7.png',
-						},
-						SAVED.products[ 1 ],
-					],
-				} ),
 		} );
 
 		expect( container.textContent ).toContain(
@@ -196,17 +177,13 @@ describe( 'the merch ad and !merch (ADR-113)', () => {
 			design: 'showcase',
 			product_ids: [ 7, 8 ],
 		} );
-		const cutouts = requests.filter(
-			( request ) => request.path === `${ PATH }/cutouts`
-		);
-		expect( cutouts ).toHaveLength( 1 );
-		expect( cutouts[ 0 ]?.data ).toEqual( {
-			product_id: 7,
-			png: 'data:image/png;base64,AAAA',
-		} );
-		expect( container.textContent ).toContain(
-			'The background could not be removed automatically.'
-		);
+		// The images are the shop's (without background since ADR-114): nothing to cut out or upload.
+		expect(
+			requests.filter( ( request ) =>
+				request.path.startsWith( `${ PATH }/` )
+			)
+		).toHaveLength( 0 );
+		expect( container.textContent ).not.toContain( 'Upload PNG' );
 		expect(
 			(
 				container.querySelector(

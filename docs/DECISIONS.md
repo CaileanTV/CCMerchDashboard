@@ -6707,6 +6707,12 @@ ADR-066, ADR-106, ADR-107, ADR-108, ADR-111
 ## Status
 Accepteret af projektejeren 2026-11-15 (afklaringen i trin 50.1). Udgives i 2.2.0 sammen med fase 48 og 49.
 
+**Statusnote 2026-11-16 (projektejerens ønske):**
+- **Pkt. 4 er erstattet.** Creatorens valg af billeder uden baggrund er fjernet: den automatiske fritlægning, "Upload PNG" og "Brug shoppens billede". Produkterne er uden baggrund nu (ADR-114).
+- **Reklamen bruger shoppens billede.** Et billede uden baggrund (`_merchboard_transparent`) står frit, andre ligger i en flise.
+- **Ruterne og felterne er væk.** `…/cutouts`-ruterne og indstillingen `cutouts` er fjernet.
+- **Gamle filer ryddes op.** Filer fra testene på stg ligger i `uploads/merchboard-merch-ad/` og fjernes stadig, når creatoren slettes, og ved afinstallation.
+
 ## Context
 Projektejeren vil have to ting:
 - **Et reklame-overlay**, som creatoren designer: det viser flere af creatorens produkter med billeder uden baggrund og eventuelt en pille med en kommando som `!merch`. Creatoren vælger mellem flere moderne designs og bestemmer, hvor ofte og hvor længe overlayet vises og med hvilke animationer.

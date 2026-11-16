@@ -23,7 +23,7 @@ Fase 48 (ADR-111), fase 49 (ADR-112), fase 50 (ADR-113) og fase 51 (ADR-114): co
 - **Merch-reklame i streamen** (fase 50, ADR-113): creatoren designer en reklame med op til 12 produkter uden baggrund, som vises i OBS som sin egen browser source hvert 1.–60. minut i 5–60 sekunder.
   - **Designs:** Spotlight, Hylde, Karrusel, Kort i hjørnet og Tre i front (de yderste på skrå).
   - **Udseende:** en pille med egen tekst (fx "Skriv !merch i chatten"), animationer ind og ud, accentfarve og lyst eller mørkt kort.
-  - **Billeder uden baggrund:** browseren fjerner automatisk en ensfarvet baggrund, når creatoren gemmer, og creatoren kan uploade sin egen PNG i stedet.
+  - **Billederne:** shoppens billeder. Et billede uden baggrund fra produktdesigneren står frit, andre ligger i en flise. Creatoren vælger intet om baggrunden.
   - **I dashboardet:** forhåndsvisning, "Vis nu" og nyt OBS-link.
   - **Admin:** global knap under Indstillinger → Community (fra som standard).
 - **Merch-reklamens valg efter testen på stg:**
@@ -40,7 +40,7 @@ Fase 48 (ADR-111), fase 49 (ADR-112), fase 50 (ADR-113) og fase 51 (ADR-114): co
     - Det enkelte produkt kan også laves og godkendes for sig. "Fortryd" sætter de gamle billeder tilbage, og "Kassér" dropper de ventende.
     - Det auditeres (`designer_cutouts_approved`, `designer_cutouts_reverted`). Fotos fra leverandøren forbliver, som de er.
   - **Leverandører:** Printful bedes om PNG ved katalogimport og produktbilleder, og PNG-skabeloner foretrækkes.
-  - **Merch-reklamen** bruger et sådant billede, som det er, uden ny fritlægning.
+  - **Merch-reklamen** bruger et sådant billede, som det er.
 - **`!merch` i chatbotten** (fase 50): på Alerts → Chatbot slår creatoren kommandoen til og skriver svaret med `$Link` (creatorens kategoriside, ellers shoppen). Botten svarer på Twitch og Kick med en pause pr. kanal.
 - **Twitch Extension: vilkår og privatlivspolitik:** `/?merchboard_extension=terms` og `=privacy` (engelsk og dansk), som Twitch kræver.
 - **Database:** migration 52 tilføjer `merchboard_gifts.order_unit` og erstatter den unikke nøgle på `order_id` med (`order_id`, `order_unit`). Eksisterende gaver får 1 og virker uændret.

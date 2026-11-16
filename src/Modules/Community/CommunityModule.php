@@ -281,7 +281,6 @@ final class CommunityModule implements Module {
 			MerchAdView::class,
 			static fn( Container $c ): MerchAdView => new MerchAdView(
 				$c->get( MerchAdRepository::class ),
-				$c->get( MerchAdFiles::class ),
 				static fn( int $creator_id, int $limit ): array => $c->get( CreatorProducts::class )->newest( $creator_id, $limit ),
 				static fn( int $product_id ): ?array => self::panel_product( $product_id, 'woocommerce_single' )
 			)
@@ -300,7 +299,7 @@ final class CommunityModule implements Module {
 		);
 		$container->set(
 			MeMerchAdController::class,
-			static fn( Container $c ): MeMerchAdController => new MeMerchAdController( $c->get( CreatorContext::class ), $c->get( MerchAdRepository::class ), $c->get( MerchAdView::class ), $c->get( MerchAdFiles::class ), $owns( $c ), $c->get( Logger::class ) )
+			static fn( Container $c ): MeMerchAdController => new MeMerchAdController( $c->get( CreatorContext::class ), $c->get( MerchAdRepository::class ), $c->get( MerchAdView::class ), $c->get( Logger::class ) )
 		);
 
 		$container->set( MerchCommandRepository::class, static fn( Container $c ): MerchCommandRepository => new MerchCommandRepository( $c->get( CreatorMetaStore::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );

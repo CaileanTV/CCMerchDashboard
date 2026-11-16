@@ -180,7 +180,6 @@ final class MerchAdRepository {
 			strtolower( (string) $accent ),
 			(string) $values['theme'],
 			'' === $before->overlay_id ? self::new_id() : $before->overlay_id,
-			$before->cutouts,
 			$before->show_at,
 			(string) $values['pill_position'],
 			(string) $values['pill_size'],
@@ -224,30 +223,6 @@ final class MerchAdRepository {
 		$settings->show_at = $now;
 
 		return $this->store( $creator_id, $settings, array() );
-	}
-
-	/**
-	 * Sets or removes a product's background-free image.
-	 *
-	 * @param int         $creator_id Creator.
-	 * @param int         $product_id Parent product.
-	 * @param string|null $file       File name, or null to remove it.
-	 * @return string|null The replaced file, to be deleted.
-	 * @throws \MerchBoard\Core\Database\DatabaseException When it cannot be stored.
-	 */
-	public function set_cutout( int $creator_id, int $product_id, ?string $file ): ?string {
-		$settings = clone $this->find( $creator_id );
-		$old      = $settings->cutouts[ $product_id ] ?? null;
-
-		if ( null === $file ) {
-			unset( $settings->cutouts[ $product_id ] );
-		} else {
-			$settings->cutouts[ $product_id ] = $file;
-		}
-
-		$this->store( $creator_id, $settings, array() );
-
-		return $old;
 	}
 
 	/**

@@ -14,7 +14,6 @@ use MerchBoard\Core\Http\RestController;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Access\CreatorContext;
-use MerchBoard\Modules\Community\MerchAd\MerchAdFiles;
 use MerchBoard\Modules\Community\MerchAd\MerchAdPage;
 use MerchBoard\Modules\Community\MerchAd\MerchAdRepository;
 use MerchBoard\Modules\Community\MerchAd\MerchAdSettings;
@@ -33,12 +32,13 @@ defined( 'ABSPATH' ) || exit;
  * on (else 404 `merchboard_community_disabled`):
  *
  * - `GET`/`POST /me/community/merch-ad`: the settings, the OBS link, the
- *   products with shop and background-free images, and the limits.
+ *   products with their shop images, and the limits.
  * - `POST /me/community/merch-ad/regenerate`: a new OBS link.
  * - `POST /me/community/merch-ad/show`: "show now".
- * - `POST /me/community/merch-ad/cutouts`: `{ product_id, png }` (a data URL)
- *   stores a background-free image for one of the creator's products.
- * - `DELETE /me/community/merch-ad/cutouts/{product}`: removes it.
+ *
+ * The images are the shop's: without background since ADR-114, so creators
+ * no longer upload or cut out images of their own (the owner's wish
+ * 2026-11-16).
  */
 final class MeMerchAdController extends RestController {
 
@@ -55,30 +55,19 @@ final class MeMerchAdController extends RestController {
 	private Closure $now;
 
 	/**
-	 * Whether a product is one of the creator's.
-	 *
-	 * @var Closure(int, int): bool
-	 */
-	private Closure $owns;
-
-	/**
 	 * Constructor.
 	 *
-	 * @phpstan-param Closure(int, int): bool $owns
 	 * @phpstan-param (Closure(): int)|null $now
 	 *
 	 * @param CreatorContext    $context  The current creator.
 	 * @param MerchAdRepository $settings The creators' ads.
 	 * @param MerchAdView       $view     What an ad shows.
-	 * @param MerchAdFiles      $files    The background-free images.
-	 * @param Closure           $owns     Whether a product (2nd) is one of the creator's (1st).
 	 * @param Logger            $logger   Technical log.
 	 * @param Closure|null      $now      Unix time now (tests).
 	 */
-	public function __construct( private CreatorContext $context, private MerchAdRepository $settings, private MerchAdView $view, private MerchAdFiles $files, Closure $owns, Logger $logger, ?Closure $now = null ) {
+	public function __construct( private CreatorContext $context, private MerchAdRepository $settings, private MerchAdView $view, Logger $logger, ?Closure $now = null ) {
 		parent::__construct( $logger );
-		$this->owns = $owns;
-		$this->now  = $now ?? static fn(): int => time();
+		$this->now = $now ?? static fn(): int => time();
 	}
 
 	/**
@@ -86,14 +75,12 @@ final class MeMerchAdController extends RestController {
 	 */
 	public function register_routes(): void {
 		$routes = array(
-			self::ROUTE                               => array(
+			self::ROUTE                 => array(
 				array( WP_REST_Server::READABLE, 'get_settings' ),
 				array( WP_REST_Server::EDITABLE, 'save' ),
 			),
-			self::ROUTE . '/regenerate'               => array( array( WP_REST_Server::CREATABLE, 'regenerate' ) ),
-			self::ROUTE . '/show'                     => array( array( WP_REST_Server::CREATABLE, 'show' ) ),
-			self::ROUTE . '/cutouts'                  => array( array( WP_REST_Server::CREATABLE, 'add_cutout' ) ),
-			self::ROUTE . '/cutouts/(?P<product>\d+)' => array( array( WP_REST_Server::DELETABLE, 'remove_cutout' ) ),
+			self::ROUTE . '/regenerate' => array( array( WP_REST_Server::CREATABLE, 'regenerate' ) ),
+			self::ROUTE . '/show'       => array( array( WP_REST_Server::CREATABLE, 'show' ) ),
 		);
 
 		foreach ( $routes as $route => $methods ) {
@@ -188,61 +175,6 @@ final class MeMerchAdController extends RestController {
 	}
 
 	/**
-	 * Stores a background-free image for one of the creator's products.
-	 *
-	 * @param WP_REST_Request $request Request.
-	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
-	 */
-	public function add_cutout( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		return $this->with_creator(
-			function ( int $creator_id ) use ( $request ): WP_REST_Response|WP_Error {
-				$body    = (array) $request->get_json_params();
-				$product = $body['product_id'] ?? null;
-				$png     = $body['png'] ?? null;
-
-				if ( ! is_int( $product ) || $product < 1 || ! ( $this->owns )( $creator_id, $product ) ) {
-					return self::invalid( new TwitchSubDiscountInvalid( array( 'product_id' => 'not_owned' ) ) );
-				}
-
-				$bytes = is_string( $png ) && 1 === preg_match( '#^data:image/png;base64,([A-Za-z0-9+/=]+)$#', $png, $match ) ? base64_decode( $match[1], true ) : false; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- An uploaded PNG.
-
-				try {
-					$file = $this->files->store( $creator_id, $product, false === $bytes ? '' : $bytes );
-					$old  = $this->settings->set_cutout( $creator_id, $product, $file );
-				} catch ( TwitchSubDiscountInvalid $e ) {
-					return self::invalid( $e );
-				}
-
-				if ( null !== $old ) {
-					$this->files->delete( $creator_id, $old );
-				}
-
-				return $this->answer( $creator_id );
-			}
-		);
-	}
-
-	/**
-	 * Removes a product's background-free image.
-	 *
-	 * @param WP_REST_Request $request Request.
-	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
-	 */
-	public function remove_cutout( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		return $this->with_creator(
-			function ( int $creator_id ) use ( $request ): WP_REST_Response {
-				$old = $this->settings->set_cutout( $creator_id, (int) $request->get_param( 'product' ), null );
-
-				if ( null !== $old ) {
-					$this->files->delete( $creator_id, $old );
-				}
-
-				return $this->answer( $creator_id );
-			}
-		);
-	}
-
-	/**
 	 * Runs a callback for the current creator.
 	 *
 	 * @param Closure $callback The creator's id → the answer.
@@ -300,8 +232,6 @@ final class MeMerchAdController extends RestController {
 					'max_note'     => TwitchExtensionSettings::MAX_NOTE,
 					'every'        => array( MerchAdSettings::MIN_EVERY, MerchAdSettings::MAX_EVERY ),
 					'seconds'      => array( MerchAdSettings::MIN_SECONDS, MerchAdSettings::MAX_SECONDS ),
-					'max_bytes'    => MerchAdFiles::MAX_BYTES,
-					'max_pixels'   => MerchAdFiles::MAX_PIXELS,
 				),
 			),
 			200

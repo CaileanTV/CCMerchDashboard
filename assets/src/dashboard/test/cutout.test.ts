@@ -1,10 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import {
-	backgroundOf,
-	removeBackground,
-	visibleBox,
-} from '../sections/community/cutout';
+import { backgroundOf, removeBackground } from '../sections/community/cutout';
 import type { Pixels } from '../sections/community/cutout';
 
 /**
@@ -63,12 +59,6 @@ describe( 'removing a plain background (ADR-113)', () => {
 		// The middle of the product is untouched, its edge is softened.
 		expect( image.data[ ( 10 * 20 + 10 ) * 4 + 3 ] ).toBe( 255 );
 		expect( image.data[ ( 6 * 20 + 10 ) * 4 + 3 ] ).toBe( 160 );
-		expect( visibleBox( image ) ).toEqual( {
-			x: 6,
-			y: 6,
-			width: 8,
-			height: 8,
-		} );
 	} );
 
 	it( 'leaves an image without a plain background alone', () => {
@@ -77,15 +67,5 @@ describe( 'removing a plain background (ADR-113)', () => {
 
 		expect( removeBackground( image ) ).toBe( false );
 		expect( image.data ).toEqual( before );
-	} );
-
-	it( 'finds nothing visible in an empty image', () => {
-		expect(
-			visibleBox( {
-				data: new Uint8ClampedArray( 4 * 4 * 4 ),
-				width: 4,
-				height: 4,
-			} )
-		).toBeNull();
 	} );
 } );

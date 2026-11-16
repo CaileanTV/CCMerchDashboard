@@ -76,25 +76,23 @@ final class MerchAdSettings {
 	 * Constructor.
 	 *
 	 * @phpstan-param list<int> $product_ids
-	 * @phpstan-param array<int, string> $cutouts
 	 *
-	 * @param bool               $enabled     Whether the overlay shows the ad.
-	 * @param string             $design      One of DESIGNS.
-	 * @param int[]              $product_ids Chosen parent products, in order.
-	 * @param string             $note        The pill's text; '' for none.
-	 * @param int                $every       Minutes between two showings.
-	 * @param int                $seconds     Seconds a showing lasts.
-	 * @param string             $enter       Animation in.
-	 * @param string             $leave       Animation out.
-	 * @param string             $accent      Accent colour, #rrggbb.
-	 * @param string             $theme       One of THEMES.
-	 * @param string             $overlay_id  The secret id in the OBS link ('' before the first save).
-	 * @param array<int, string> $cutouts     Background-free image file per product.
-	 * @param int                $show_at     When "show now" was pressed (Unix time; 0 never).
-	 * @param string             $pill_position One of PILL_POSITIONS.
-	 * @param string             $pill_size   One of PILL_SIZES.
-	 * @param bool               $show_names  Whether the products' names are shown.
-	 * @param int                $stack_spread The stack: how far the products behind stick out (0–100).
+	 * @param bool   $enabled     Whether the overlay shows the ad.
+	 * @param string $design      One of DESIGNS.
+	 * @param int[]  $product_ids Chosen parent products, in order.
+	 * @param string $note        The pill's text; '' for none.
+	 * @param int    $every       Minutes between two showings.
+	 * @param int    $seconds     Seconds a showing lasts.
+	 * @param string $enter       Animation in.
+	 * @param string $leave       Animation out.
+	 * @param string $accent      Accent colour, #rrggbb.
+	 * @param string $theme       One of THEMES.
+	 * @param string $overlay_id  The secret id in the OBS link ('' before the first save).
+	 * @param int    $show_at     When "show now" was pressed (Unix time; 0 never).
+	 * @param string $pill_position One of PILL_POSITIONS.
+	 * @param string $pill_size   One of PILL_SIZES.
+	 * @param bool   $show_names  Whether the products' names are shown.
+	 * @param int    $stack_spread The stack: how far the products behind stick out (0–100).
 	 */
 	public function __construct(
 		public bool $enabled = false,
@@ -108,7 +106,6 @@ final class MerchAdSettings {
 		public string $accent = '#9146ff',
 		public string $theme = 'dark',
 		public string $overlay_id = '',
-		public array $cutouts = array(),
 		public int $show_at = 0,
 		public string $pill_position = 'below',
 		public string $pill_size = 'medium',
@@ -127,13 +124,6 @@ final class MerchAdSettings {
 		$default = new self();
 		$ids     = is_array( $s['product_ids'] ?? null ) ? $s['product_ids'] : array();
 		$ids     = array_values( array_unique( array_filter( array_map( static fn( mixed $id ): int => is_int( $id ) ? $id : 0, $ids ), static fn( int $id ): bool => $id > 0 ) ) );
-		$cutouts = array();
-
-		foreach ( is_array( $s['cutouts'] ?? null ) ? $s['cutouts'] : array() as $product => $file ) {
-			if ( is_int( $product ) && $product > 0 && is_string( $file ) && 1 === preg_match( '/^p\d+-[0-9a-f]{12}\.png$/', $file ) ) {
-				$cutouts[ $product ] = $file;
-			}
-		}
 
 		$note  = is_string( $s['note'] ?? null ) ? $s['note'] : '';
 		$pick  = static fn( string $key, array $allowed, string $fallback ): string => is_string( $s[ $key ] ?? null ) && in_array( $s[ $key ], $allowed, true ) ? $s[ $key ] : $fallback;
@@ -152,7 +142,6 @@ final class MerchAdSettings {
 			is_string( $s['accent'] ?? null ) && 1 === preg_match( '/^#[0-9a-f]{6}$/', $s['accent'] ) ? $s['accent'] : $default->accent,
 			$pick( 'theme', self::THEMES, $default->theme ),
 			$id,
-			$cutouts,
 			is_int( $s['show_at'] ?? null ) && $s['show_at'] > 0 ? $s['show_at'] : 0,
 			$pick( 'pill_position', self::PILL_POSITIONS, $default->pill_position ),
 			$pick( 'pill_size', self::PILL_SIZES, $default->pill_size ),
@@ -179,7 +168,6 @@ final class MerchAdSettings {
 			'accent'        => $this->accent,
 			'theme'         => $this->theme,
 			'overlay_id'    => $this->overlay_id,
-			'cutouts'       => $this->cutouts,
 			'show_at'       => $this->show_at,
 			'pill_position' => $this->pill_position,
 			'pill_size'     => $this->pill_size,

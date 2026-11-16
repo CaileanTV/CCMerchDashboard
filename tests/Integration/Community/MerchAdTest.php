@@ -43,11 +43,6 @@ use WP_REST_Response;
  */
 final class MerchAdTest extends IntegrationTestCase {
 
-	/**
-	 * A 16 × 16 PNG.
-	 */
-	private const PNG = 'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAIklEQVR4nGOY6PafgRJMkebBa8B/AnjUgJFhwMCnRPoaAACO9BXfQFRadAAAAABJRU5ErkJggg==';
-
 	private int $nova;
 
 	private int $user;
@@ -86,14 +81,15 @@ final class MerchAdTest extends IntegrationTestCase {
 		$products       = $this->products;
 		$owns           = static fn( int $creator_id, int $product_id ): bool => ( $products[ $product_id ][0] ?? null ) === $creator_id;
 		$this->settings = new MerchAdRepository( $this->service( CreatorMetaStore::class ), $this->service( AuditTrail::class ), $this->service( Transaction::class ), $owns );
-		$this->files    = new MerchAdFiles( $this->dir, 'https://shop.example/uploads' );
+		$this->files    = new MerchAdFiles( $this->dir );
 		$this->view     = new MerchAdView(
 			$this->settings,
-			$this->files,
 			static fn( int $creator_id, int $limit ): array => array_slice( array_keys( array_filter( $products, static fn( array $p ): bool => $p[0] === $creator_id && $p[2] ) ), 0, $limit ),
 			static fn( int $id ): ?array => isset( $products[ $id ] ) && $products[ $id ][2] ? array(
-				'name'  => $products[ $id ][1],
-				'image' => 'https://shop.example/' . $id . '.jpg',
+				'name'        => $products[ $id ][1],
+				'image'       => 'https://shop.example/' . $id . ( 502 === $id ? '.png' : '.jpg' ),
+				// The mug's shop image is a designer PNG without background (ADR-114).
+				'transparent' => 502 === $id,
 			) : null
 		);
 	}
@@ -158,41 +154,26 @@ final class MerchAdTest extends IntegrationTestCase {
 		self::assertSame( 1_800_000_000, $this->settings->show_now( $this->nova, 1_800_000_000 )->show_at );
 	}
 
-	public function test_the_overlay_shows_background_free_images_and_falls_back_to_the_shop_image(): void {
+	public function test_the_overlay_shows_the_shop_images_free_when_they_have_no_background(): void {
 		$this->settings->save( $this->nova, $this->form( array( 'product_ids' => array( 502, 503, 501 ) ) ) );
-		$file = $this->files->store( $this->nova, 502, (string) base64_decode( self::PNG ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Test fixture.
-		$this->settings->set_cutout( $this->nova, 502, $file );
 
 		$overlay = $this->view->overlay( $this->nova );
 		self::assertSame( array( 'over', 'large', false, 30 ), array( $overlay['pill_position'], $overlay['pill_size'], $overlay['show_names'], $overlay['stack_spread'] ) );
 
 		self::assertSame( array( 'Mug', 'Stream Hoodie' ), array_column( $overlay['products'], 'name' ), 'In order; an unpublished product is left out.' );
-		self::assertSame( 'https://shop.example/uploads/merchboard-merch-ad/' . $this->nova . '/' . $file, $overlay['products'][0]['image'] );
-		self::assertTrue( $overlay['products'][0]['cutout'] );
+		self::assertSame( 'https://shop.example/502.png', $overlay['products'][0]['image'] );
+		self::assertTrue( $overlay['products'][0]['cutout'], 'Without background: it stands free.' );
 		self::assertSame( 'https://shop.example/501.jpg', $overlay['products'][1]['image'] );
-		self::assertFalse( $overlay['products'][1]['cutout'] );
+		self::assertFalse( $overlay['products'][1]['cutout'], 'With a background: in a tile.' );
 		self::assertSame( array( 'name', 'image', 'cutout' ), array_keys( $overlay['products'][0] ), 'Never a price, link or supplier.' );
-		self::assertFileExists( $this->dir . '/merchboard-merch-ad/' . $this->nova . '/' . $file );
 
 		$version = $this->view->version( $this->nova );
 		$this->settings->save( $this->nova, $this->form( array( 'product_ids' => array( 502, 503, 501 ), 'design' => 'showcase' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
 		self::assertNotSame( $version, $this->view->version( $this->nova ), 'The overlay reloads when the ad changes.' );
-
-		foreach ( array(
-			'not_png'   => 'not an image',
-			'too_large' => str_repeat( 'x', MerchAdFiles::MAX_BYTES + 1 ),
-		) as $code => $bytes ) {
-			try {
-				$this->files->store( $this->nova, 501, $bytes );
-				self::fail( 'Refused: ' . $code );
-			} catch ( TwitchSubDiscountInvalid $e ) {
-				self::assertSame( array( 'png' => $code ), $e->fields() );
-			}
-		}
 	}
 
 	public function test_the_creators_routes_and_the_overlays_check(): void {
-		$controller = new MeMerchAdController( $this->service( CreatorContext::class ), $this->settings, $this->view, $this->files, static fn( int $creator_id, int $product_id ): bool => in_array( $product_id, array( 501, 502, 503 ), true ), new RecordingLogger(), static fn(): int => 1_800_000_123 );
+		$controller = new MeMerchAdController( $this->service( CreatorContext::class ), $this->settings, $this->view, new RecordingLogger(), static fn(): int => 1_800_000_123 );
 		wp_set_current_user( $this->user );
 
 		self::assertTrue( $controller->permission() );
@@ -209,18 +190,7 @@ final class MerchAdTest extends IntegrationTestCase {
 		self::assertFalse( MerchAdLink::valid( 'merchboard_gift_claim' ), 'Not the name of the gift links.' );
 		self::assertStringContainsString( 'preview=1', (string) $data['preview_url'] );
 		self::assertSame( array( 501 ), array_column( $data['products'], 'id' ) );
-		self::assertNull( $data['products'][0]['cutout'] );
-
-		$png = $controller->add_cutout( $this->json( 'POST', array( 'product_id' => 501, 'png' => 'data:image/png;base64,' . self::PNG ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
-		self::assertInstanceOf( WP_REST_Response::class, $png );
-		self::assertNotNull( ( (array) $png->get_data() )['products'][0]['cutout'] );
-
-		$other = $controller->add_cutout( $this->json( 'POST', array( 'product_id' => 601, 'png' => 'data:image/png;base64,' . self::PNG ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
-		self::assertInstanceOf( WP_Error::class, $other, 'Only own products.' );
-
-		$removed = $controller->remove_cutout( $this->json( 'DELETE', array(), array( 'product' => '501' ) ) );
-		self::assertInstanceOf( WP_REST_Response::class, $removed );
-		self::assertNull( ( (array) $removed->get_data() )['products'][0]['cutout'] );
+		self::assertSame( array( 'id', 'name', 'image', 'transparent' ), array_keys( $data['products'][0] ), 'The shop image only: nothing to cut out or upload.' );
 
 		$controller->show();
 		$id     = $this->settings->find( $this->nova )->overlay_id;

@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-15T21:32:01+00:00\n"
+"PO-Revision-Date: 2026-11-16T19:50:27+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -4517,11 +4517,11 @@ msgstr "Giveawayen kan ikke længere annulleres."
 msgid "The giveaway cannot be changed right now."
 msgstr "Giveawayen kan ikke ændres lige nu."
 
-#: src/Modules/Community/Rest/MeMerchAdController.php:120
+#: src/Modules/Community/Rest/MeMerchAdController.php:107
 msgid "The merch ad is not available."
 msgstr "Merch-reklamen er ikke tilgængelig."
 
-#: src/Modules/Community/Rest/MeMerchAdController.php:268
+#: src/Modules/Community/Rest/MeMerchAdController.php:200
 msgid "Some fields of the merch ad are missing or invalid."
 msgstr "Nogle felter i merch-reklamen mangler eller er ugyldige."
 
@@ -9587,7 +9587,6 @@ msgid "The file no longer exists."
 msgstr "Filen findes ikke længere."
 
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:137
-#: build/dashboard.js:73
 msgid "Images without background"
 msgstr "Billeder uden baggrund"
 
@@ -18943,47 +18942,6 @@ msgid "Search your products"
 msgstr "Søg i dine produkter"
 
 #: build/dashboard.js:73
-msgid "When you save, the background is removed automatically from each product image with a plain background. If the result is not good enough, or the image has a pattern behind the product, upload your own PNG without background."
-msgstr "Når du gemmer, fjernes baggrunden automatisk fra hvert produktbillede med en ensfarvet baggrund. Er resultatet ikke godt nok, eller har billedet et mønster bag produktet, så upload din egen PNG uden baggrund."
-
-#: build/dashboard.js:73
-msgid "You have no products to show yet."
-msgstr "Du har ingen produkter at vise endnu."
-
-#: build/dashboard.js:73
-msgid "Without background"
-msgstr "Uden baggrund"
-
-#: build/dashboard.js:73
-msgid "The background could not be removed automatically. Upload a PNG without background."
-msgstr "Baggrunden kunne ikke fjernes automatisk. Upload en PNG uden baggrund."
-
-#: build/dashboard.js:73
-msgid "Without background (the shop image)"
-msgstr "Uden baggrund (shoppens billede)"
-
-#: build/dashboard.js:73
-msgid "With the shop image"
-msgstr "Med shoppens billede"
-
-#: build/dashboard.js:73
-#: build/dashboard.js:86
-msgid "Remove background"
-msgstr "Fjern baggrund"
-
-#: build/dashboard.js:73
-msgid "Upload PNG"
-msgstr "Upload PNG"
-
-#: build/dashboard.js:73
-msgid "The image was saved."
-msgstr "Billedet er gemt."
-
-#: build/dashboard.js:73
-msgid "Use the shop image"
-msgstr "Brug shoppens billede"
-
-#: build/dashboard.js:73
 msgid "In OBS"
 msgstr "I OBS"
 
@@ -19563,6 +19521,10 @@ msgstr "Alle sider"
 #: build/dashboard.js:86
 msgid "Use the colour"
 msgstr "Brug farven"
+
+#: build/dashboard.js:86
+msgid "Remove background"
+msgstr "Fjern baggrund"
 
 #: build/dashboard.js:86
 msgid "Invalid colour"

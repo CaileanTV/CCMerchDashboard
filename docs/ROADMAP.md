@@ -1432,6 +1432,11 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - **Størrelse:** en PSD-scenes billede har scenens egen størrelse, ikke skabelonlagenes; serveren tjekker nu `BaseView::mockup_size()`.
   - **Som PSD-eksport uden baggrund:** PSD'ens baggrundslag (navnet "Background"/"Baggrund", eller ét dækkende, ensfarvet bundlag) bliver ved importen et trin for sig, markeret `background`, og udelades i billedet uden baggrund. Det svarer til at skjule laget og eksportere.
   - **Allerede importerede scener** (baggrunden smeltet sammen med produktet): dækker det første billede hele scenen, fjernes dets ensfarvede baggrund ved tegningen. Det kræver ingen ny import.
+- **51.11 Reklamen uden eget valg af baggrund (projektejerens ønske 2026-11-16):** ✅
+  - **Fjernet:** creatorens valg på billederne: den automatiske fritlægning, "Upload PNG" og "Brug shoppens billede". Produkterne er uden baggrund nu.
+  - **Reklamen:** bruger shoppens billede; et billede uden baggrund står frit, andre ligger i en flise.
+  - **Server:** `…/cutouts`-ruterne og indstillingen `cutouts` er fjernet.
+  - **Gamle filer:** filer fra testene ryddes op, når creatoren slettes, og ved afinstallation.
 - **51.6 Test og levering:** ✅ unit-, Jest- og integrationstest (godkend, fortryd, kassér), danske tekster og docs. Runtime 2026-11-15 i Chrome med den byggede admin-bundle: opgave → tegning → upload for en side med farvemaske og en side med eget farvefoto og silhuet; baggrund, gulvskygge og halsåbning blev gennemsigtige. Godkend og fortryd kræver produktlåsen (MySQL) og testes på stg.
 
 ## Fase 52 – Gelato-produkter med egne valg, printområde pr. variant og skærelinje 📋 (projektejerens ønske 2026-11-15; efter 2.2.0, version 2.3.0; ADR-115 foreslået, planen afventer godkendelse)

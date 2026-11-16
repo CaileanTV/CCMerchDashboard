@@ -14,10 +14,10 @@ use Closure;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The ad's content (ADR-113): the chosen products (or the newest) with name,
- * shop image and background-free image, and the look. The overlay uses the
- * background-free image and falls back to the shop image in a tile. Never a
- * price, a supplier or a link.
+ * The ad's content (ADR-113): the chosen products (or the newest) with name
+ * and shop image, and the look. A shop image without background (ADR-114)
+ * stands free in the overlay; another lies in a tile. Never a price, a
+ * supplier or a link.
  */
 final class MerchAdView {
 
@@ -42,11 +42,10 @@ final class MerchAdView {
 	 * @phpstan-param Closure(int): (array{name: string, image: string|null, transparent?: bool}|null) $product
 	 *
 	 * @param MerchAdRepository $settings The creators' ads.
-	 * @param MerchAdFiles      $files    The background-free images.
 	 * @param Closure           $newest   A creator's newest products.
 	 * @param Closure           $product  A product as shown.
 	 */
-	public function __construct( private MerchAdRepository $settings, private MerchAdFiles $files, Closure $newest, Closure $product ) {
+	public function __construct( private MerchAdRepository $settings, Closure $newest, Closure $product ) {
 		$this->newest  = $newest;
 		$this->product = $product;
 	}
@@ -55,7 +54,7 @@ final class MerchAdView {
 	 * The products of a creator's ad, in order.
 	 *
 	 * @param int $creator_id Creator.
-	 * @return list<array{id: int, name: string, image: string|null, cutout: string|null, transparent: bool}>
+	 * @return list<array{id: int, name: string, image: string|null, transparent: bool}>
 	 * @throws \MerchBoard\Core\Database\DatabaseException When the creator's products cannot be read.
 	 */
 	public function products( int $creator_id ): array {
@@ -70,13 +69,11 @@ final class MerchAdView {
 				continue;
 			}
 
-			$file       = $settings->cutouts[ $id ] ?? null;
 			$products[] = array(
 				'id'          => $id,
 				'name'        => $product['name'],
 				'image'       => $product['image'],
-				'cutout'      => null === $file ? null : $this->files->url( $creator_id, $file ),
-				// The shop image is already without background (ADR-114).
+				// The shop image is without background (ADR-114).
 				'transparent' => $product['transparent'] ?? false,
 			);
 
@@ -100,13 +97,11 @@ final class MerchAdView {
 		$products = array();
 
 		foreach ( $this->products( $creator_id ) as $product ) {
-			$image = $product['cutout'] ?? $product['image'];
-
-			if ( null !== $image ) {
+			if ( null !== $product['image'] ) {
 				$products[] = array(
 					'name'   => $product['name'],
-					'image'  => $image,
-					'cutout' => null !== $product['cutout'] || $product['transparent'],
+					'image'  => $product['image'],
+					'cutout' => $product['transparent'],
 				);
 			}
 		}

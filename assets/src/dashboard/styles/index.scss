@@ -2059,64 +2059,6 @@ input:disabled + .merchboard-sounds__upload {
 	padding: 2px;
 }
 
-.merchboard-merch-ad-file {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	overflow: hidden;
-	clip-path: inset(50%);
-}
-
-.merchboard-merch-ad-cutouts {
-	display: grid;
-	gap: var(--merchboard-space-2);
-	padding: 0;
-	margin: 0;
-	list-style: none;
-
-	li {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--merchboard-space-3);
-		align-items: center;
-		padding: var(--merchboard-space-2);
-		border: 1px solid var(--merchboard-border);
-		border-radius: var(--merchboard-radius);
-	}
-}
-
-.merchboard-merch-ad-cutouts__img {
-	display: grid;
-	place-items: center;
-	width: 4.5rem;
-	height: 4.5rem;
-	border-radius: 6px;
-	background: var(--merchboard-hover-bg);
-
-	img {
-		max-width: 100%;
-		max-height: 100%;
-		object-fit: contain;
-	}
-}
-
-.merchboard-merch-ad-cutouts__text {
-	display: grid;
-	flex: 1 1 12rem;
-	min-width: 0;
-
-	span {
-		color: var(--merchboard-text-muted);
-		font-size: 0.875rem;
-	}
-}
-
-.merchboard-merch-ad-cutouts__actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--merchboard-space-1);
-}
-
 .merchboard-merch-ad-link {
 	display: flex;
 	flex-wrap: wrap;

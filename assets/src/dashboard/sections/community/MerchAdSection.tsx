@@ -1,23 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import type { ChangeEvent, FormEvent } from 'react';
+import type { FormEvent } from 'react';
 
 import type { ApiError, ApiResult } from '../../api/client';
 import { MAX_PER_PAGE } from '../../api/client';
 import {
 	ANIMATIONS,
 	DESIGNS,
-	addCutout,
 	getMerchAd,
 	regenerateMerchAd,
-	removeCutout,
 	saveMerchAd,
 	showMerchAd,
 } from '../../api/merchAd';
 import type {
 	MerchAdAnimation,
 	MerchAdDesign,
-	MerchAdProduct,
 	MerchAdState,
 	MerchAdValues,
 } from '../../api/merchAd';
@@ -29,7 +26,6 @@ import { Card } from '../../components/Card';
 import { Skeleton } from '../../components/Skeleton';
 import { Toast } from '../../components/Toast';
 import { useApi } from '../../hooks/useApi';
-import { cutoutFrom } from './cutout';
 
 const MAX_PRODUCT_PAGES = 5;
 
@@ -175,20 +171,6 @@ async function loadProducts(
 }
 
 /**
- * Reads a chosen file as a data URL.
- *
- * @param file The file.
- */
-function readFile( file: File ): Promise< string > {
-	return new Promise( ( resolve, reject ) => {
-		const reader = new FileReader();
-		reader.onload = () => resolve( String( reader.result ) );
-		reader.onerror = () => reject( reader.error );
-		reader.readAsDataURL( file );
-	} );
-}
-
-/**
  * Community Features → Merch ad (ADR-113): the creator designs an ad with
  * products without background that shows in the stream every few minutes,
  * adds it to OBS as a browser source and can show it now.
@@ -205,7 +187,6 @@ export function MerchAdSection() {
 	const [ busy, setBusy ] = useState< string | null >( null );
 	const [ error, setError ] = useState< ApiError | null >( null );
 	const [ toast, setToast ] = useState< string | null >( null );
-	const [ failed, setFailed ] = useState< readonly number[] >( [] );
 	const [ frame, setFrame ] = useState( 0 );
 	const dismissToast = useCallback( () => setToast( null ), [] );
 
@@ -295,34 +276,6 @@ export function MerchAdSection() {
 		return null;
 	};
 
-	// Removes the background of every product that has no background-free image yet.
-	const autoCutouts = async ( list: readonly MerchAdProduct[] ) => {
-		const missed: number[] = [];
-
-		for ( const product of list ) {
-			if (
-				product.cutout !== null ||
-				product.transparent ||
-				product.image === null
-			) {
-				continue;
-			}
-
-			setBusy( `cutout-${ product.id }` );
-			const png = await cutoutFrom( product.image );
-
-			if ( png === null ) {
-				missed.push( product.id );
-				continue;
-			}
-
-			apply( await addCutout( product.id, png ) );
-		}
-
-		setBusy( null );
-		setFailed( missed );
-	};
-
 	const toggle = ( id: number, on: boolean ) =>
 		setValues( {
 			...values,
@@ -357,29 +310,7 @@ export function MerchAdSection() {
 
 		if ( saved !== null ) {
 			setValues( saved );
-			await autoCutouts( saved.products );
 		}
-	};
-
-	const upload = async (
-		product: MerchAdProduct,
-		event: ChangeEvent< HTMLInputElement >
-	) => {
-		const file = event.target.files?.[ 0 ];
-		event.target.value = '';
-
-		if ( file === undefined ) {
-			return;
-		}
-
-		setBusy( `cutout-${ product.id }` );
-		setError( null );
-		apply(
-			await addCutout( product.id, await readFile( file ) ),
-			__( 'The image was saved.', 'merchboard' )
-		);
-		setBusy( null );
-		setFailed( failed.filter( ( id ) => id !== product.id ) );
 	};
 
 	const number = ( field: 'every' | 'seconds', text: string ) =>
@@ -935,133 +866,6 @@ export function MerchAdSection() {
 						</Button>
 					</div>
 				</form>
-			</Card>
-
-			<Card title={ __( 'Images without background', 'merchboard' ) }>
-				<p className="merchboard-field__help">
-					{ __(
-						'When you save, the background is removed automatically from each product image with a plain background. If the result is not good enough, or the image has a pattern behind the product, upload your own PNG without background.',
-						'merchboard'
-					) }
-				</p>
-				{ errors.png !== undefined && (
-					<Alert tone="danger">{ fieldError( errors.png ) }</Alert>
-				) }
-				{ current.products.length === 0 ? (
-					<p className="merchboard-field__help">
-						{ __(
-							'You have no products to show yet.',
-							'merchboard'
-						) }
-					</p>
-				) : (
-					<ul className="merchboard-merch-ad-cutouts">
-						{ current.products.map( ( product ) => (
-							<li key={ product.id }>
-								<span className="merchboard-merch-ad-cutouts__img">
-									{ ( product.cutout ?? product.image ) !==
-										null && (
-										<img
-											src={
-												product.cutout ??
-												product.image ??
-												''
-											}
-											alt=""
-											loading="lazy"
-										/>
-									) }
-								</span>
-								<span className="merchboard-merch-ad-cutouts__text">
-									<strong>{ product.name }</strong>
-									<span>
-										{ product.cutout !== null &&
-											__(
-												'Without background',
-												'merchboard'
-											) }
-										{ product.cutout === null &&
-											failed.includes( product.id ) &&
-											__(
-												'The background could not be removed automatically. Upload a PNG without background.',
-												'merchboard'
-											) }
-										{ product.cutout === null &&
-											product.transparent &&
-											__(
-												'Without background (the shop image)',
-												'merchboard'
-											) }
-										{ product.cutout === null &&
-											! product.transparent &&
-											! failed.includes( product.id ) &&
-											__(
-												'With the shop image',
-												'merchboard'
-											) }
-									</span>
-								</span>
-								<span className="merchboard-merch-ad-cutouts__actions">
-									{ product.cutout === null &&
-										! product.transparent &&
-										product.image !== null && (
-											<Button
-												variant="secondary"
-												size="sm"
-												isBusy={
-													busy ===
-													`cutout-${ product.id }`
-												}
-												onClick={ () =>
-													void autoCutouts( [
-														product,
-													] )
-												}
-											>
-												{ __(
-													'Remove background',
-													'merchboard'
-												) }
-											</Button>
-										) }
-									<label
-										className="merchboard-button merchboard-button--secondary merchboard-button--sm"
-										htmlFor={ `merchboard-merch-ad-upload-${ product.id }` }
-									>
-										{ __( 'Upload PNG', 'merchboard' ) }
-										<input
-											id={ `merchboard-merch-ad-upload-${ product.id }` }
-											type="file"
-											accept="image/png"
-											className="merchboard-merch-ad-file"
-											onChange={ ( event ) =>
-												void upload( product, event )
-											}
-										/>
-									</label>
-									{ product.cutout !== null && (
-										<Button
-											variant="ghost"
-											size="sm"
-											onClick={ () =>
-												void removeCutout(
-													product.id
-												).then( ( result ) =>
-													apply( result )
-												)
-											}
-										>
-											{ __(
-												'Use the shop image',
-												'merchboard'
-											) }
-										</Button>
-									) }
-								</span>
-							</li>
-						) ) }
-					</ul>
-				) }
 			</Card>
 
 			<Card title={ __( 'In OBS', 'merchboard' ) }>

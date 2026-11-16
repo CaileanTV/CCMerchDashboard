@@ -1,21 +1,14 @@
 /**
- * Removes a plain background from a product image in the browser (ADR-113
- * pkt. 4): the colour along the edges is the background; it is flooded from
- * the edges with a tolerance, the edge of the product is softened and the
- * image is cropped to the product. Nothing leaves the browser except the
- * finished PNG. A background that is not plain is left alone (the creator
- * can upload an own PNG instead).
+ * Removes a plain background from an image in the browser: the colour along
+ * the edges is the background; it is flooded from the edges with a
+ * tolerance and the edge of the product is softened. A background that is
+ * not plain is left alone. Used for the silhouettes made from a template's
+ * photo on white and for PSD scenes imported with their background merged
+ * (ADR-114); first written for the merch ad (ADR-113 pkt. 4).
  */
 
 export interface Pixels {
 	readonly data: Uint8ClampedArray;
-	readonly width: number;
-	readonly height: number;
-}
-
-export interface Box {
-	readonly x: number;
-	readonly y: number;
 	readonly width: number;
 	readonly height: number;
 }
@@ -161,123 +154,4 @@ export function removeBackground( image: Pixels ): boolean {
 	}
 
 	return true;
-}
-
-/**
- * The box around the visible pixels, with a little room; null when none
- * is visible.
- *
- * @param image The pixels.
- */
-export function visibleBox( image: Pixels ): Box | null {
-	const { data, width, height } = image;
-	let left = width;
-	let top = height;
-	let right = -1;
-	let bottom = -1;
-
-	for ( let y = 0; y < height; y++ ) {
-		for ( let x = 0; x < width; x++ ) {
-			if ( ( data[ ( y * width + x ) * 4 + 3 ] ?? 0 ) > 16 ) {
-				left = Math.min( left, x );
-				right = Math.max( right, x );
-				top = Math.min( top, y );
-				bottom = Math.max( bottom, y );
-			}
-		}
-	}
-
-	if ( right < 0 ) {
-		return null;
-	}
-
-	const room = Math.round( Math.max( right - left, bottom - top ) * 0.02 );
-	const x = Math.max( 0, left - room );
-	const y = Math.max( 0, top - room );
-
-	return {
-		x,
-		y,
-		width: Math.min( width, right + room + 1 ) - x,
-		height: Math.min( height, bottom + room + 1 ) - y,
-	};
-}
-
-/**
- * A product image without its plain background, as a PNG data URL; null
- * when the image cannot be read (another domain) or the background is not
- * plain.
- *
- * @param source  The shop image's URL.
- * @param maxSide The longest side of the result.
- */
-export async function cutoutFrom(
-	source: string,
-	maxSide = 1200
-): Promise< string | null > {
-	const image = new Image();
-	image.decoding = 'async';
-	image.src = source;
-
-	try {
-		await image.decode();
-	} catch {
-		return null;
-	}
-
-	const scale = Math.min(
-		1,
-		maxSide / Math.max( image.naturalWidth, image.naturalHeight )
-	);
-	const width = Math.max( 1, Math.round( image.naturalWidth * scale ) );
-	const height = Math.max( 1, Math.round( image.naturalHeight * scale ) );
-	const canvas = document.createElement( 'canvas' );
-	canvas.width = width;
-	canvas.height = height;
-	const context = canvas.getContext( '2d' );
-
-	if ( context === null ) {
-		return null;
-	}
-
-	context.drawImage( image, 0, 0, width, height );
-
-	let pixels: ImageData;
-
-	try {
-		pixels = context.getImageData( 0, 0, width, height );
-	} catch {
-		// An image from another domain cannot be read.
-		return null;
-	}
-
-	if ( ! removeBackground( pixels ) ) {
-		return null;
-	}
-
-	const box = visibleBox( pixels );
-
-	if ( box === null ) {
-		return null;
-	}
-
-	context.putImageData( pixels, 0, 0 );
-	const cropped = document.createElement( 'canvas' );
-	cropped.width = box.width;
-	cropped.height = box.height;
-	cropped
-		.getContext( '2d' )
-		?.drawImage(
-			canvas,
-			box.x,
-			box.y,
-			box.width,
-			box.height,
-			0,
-			0,
-			box.width,
-			box.height
-		);
-
-	return cropped.toDataURL( 'image/png' );
 }
