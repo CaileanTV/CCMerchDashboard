@@ -482,6 +482,16 @@ final class CreatorRepository {
 			throw new DatabaseException( 'Could not update creator.' );
 		}
 
+		// Account changes permanently end eligibility for public sign-up cleanup.
+		if ( array_key_exists( 'user_id', $data ) ) {
+			$wpdb      = $this->wpdb;
+			$cancelled = $wpdb->update( Tables::name( $wpdb, Tables::CREATOR_SIGNUPS ), array( 'expires_at' => null ), array( 'creator_id' => $id ), array( '%s' ), array( '%d' ) );
+
+			if ( false === $cancelled ) {
+				throw new DatabaseException( 'Could not cancel sign-up expiry.' );
+			}
+		}
+
 		$creator = $this->find( $id );
 
 		if ( null === $creator ) {
