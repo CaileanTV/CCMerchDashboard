@@ -35,6 +35,8 @@ const AD: Ad = {
 	pillSize: 'medium',
 	showNames: true,
 	stackSpread: 50,
+	glow: true,
+	pillGradient: true,
 	products: [ PRODUCT( 'A' ), PRODUCT( 'B', false ), PRODUCT( 'C' ) ],
 };
 
@@ -45,6 +47,7 @@ const RAW = {
 	pill_size: 'medium',
 	show_names: true,
 	stack_spread: 50,
+	pill_gradient: true,
 };
 
 const CONFIG: Config = {
@@ -65,6 +68,15 @@ describe( 'the merch ad overlay (ADR-113)', () => {
 		expect( parseConfig( { ...CONFIG, ad: RAW } ) ).toEqual( CONFIG );
 		expect(
 			parseConfig( { ...CONFIG, ad: { ...RAW, pill_position: 'top' } } )
+		).toBeNull();
+		expect(
+			parseConfig( { ...CONFIG, ad: { ...RAW, glow: 'yes' } } )
+		).toBeNull();
+		expect(
+			parseConfig( {
+				...CONFIG,
+				ad: { ...RAW, pill_gradient: undefined },
+			} )
 		).toBeNull();
 		expect(
 			parseConfig( { ...CONFIG, ad: { ...RAW, stack_spread: 101 } } )
@@ -221,6 +233,26 @@ describe( 'the merch ad overlay (ADR-113)', () => {
 		).toBeNull();
 		expect( stackOffset( 0 ) ).toBe( '15%' );
 		expect( stackOffset( 100 ) ).toBe( '70%' );
+	} );
+
+	it( 'leaves out the glow and the pill gradient when the creator chose so', () => {
+		jest.useFakeTimers();
+		global.fetch = jest.fn(
+			() => new Promise( () => undefined )
+		) as unknown as typeof fetch;
+		const plain = document.createElement( 'div' );
+		const styled = document.createElement( 'div' );
+
+		start( plain, {
+			...CONFIG,
+			ad: { ...AD, glow: false, pillGradient: false },
+		} );
+		start( styled, CONFIG );
+
+		expect( plain.classList.contains( 'mb-ad--no-glow' ) ).toBe( true );
+		expect( plain.classList.contains( 'mb-ad--flat-pill' ) ).toBe( true );
+		expect( styled.classList.contains( 'mb-ad--no-glow' ) ).toBe( false );
+		expect( styled.classList.contains( 'mb-ad--flat-pill' ) ).toBe( false );
 	} );
 
 	it( 'shows a switched-off ad only in the preview', () => {

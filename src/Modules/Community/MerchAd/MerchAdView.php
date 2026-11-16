@@ -89,7 +89,7 @@ final class MerchAdView {
 	 * What the overlay draws.
 	 *
 	 * @param int $creator_id Creator.
-	 * @return array{enabled: bool, design: string, note: string, every: int, seconds: int, enter: string, leave: string, accent: string, theme: string, pill_position: string, pill_size: string, show_names: bool, stack_spread: int, products: list<array{name: string, image: string, cutout: bool}>}
+	 * @return array{enabled: bool, design: string, note: string, every: int, seconds: int, enter: string, leave: string, accent: string, theme: string, pill_position: string, pill_size: string, show_names: bool, stack_spread: int, glow: bool, pill_gradient: bool, products: list<array{name: string, image: string, cutout: bool}>}
 	 * @throws \MerchBoard\Core\Database\DatabaseException When the creator's products cannot be read.
 	 */
 	public function overlay( int $creator_id ): array {
@@ -120,6 +120,8 @@ final class MerchAdView {
 			'pill_size'     => $settings->pill_size,
 			'show_names'    => $settings->show_names,
 			'stack_spread'  => $settings->stack_spread,
+			'glow'          => $settings->glow,
+			'pill_gradient' => $settings->pill_gradient,
 			'products'      => $products,
 		);
 	}

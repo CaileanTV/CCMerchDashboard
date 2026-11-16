@@ -22,7 +22,7 @@ Fase 48 (ADR-111), fase 49 (ADR-112), fase 50 (ADR-113) og fase 51 (ADR-114): co
   - Extensionen skal oprettes og godkendes hos Twitch, før creators kan bruge den.
 - **Merch-reklame i streamen** (fase 50, ADR-113): creatoren designer en reklame med op til 12 produkter uden baggrund, som vises i OBS som sin egen browser source hvert 1.–60. minut i 5–60 sekunder.
   - **Designs:** Spotlight, Hylde, Karrusel, Kort i hjørnet og Tre i front (de yderste på skrå).
-  - **Udseende:** en pille med egen tekst (fx "Skriv !merch i chatten"), animationer ind og ud, accentfarve og lyst eller mørkt kort.
+  - **Udseende:** en pille med egen tekst (fx "Skriv !merch i chatten"), animationer ind og ud, accentfarve og lyst eller mørkt kort. Creatoren vælger, om produkterne og pillen gløder i accentfarven, og om pillen har gradient eller én farve.
   - **Billederne:** shoppens billeder. Et billede uden baggrund fra produktdesigneren står frit, andre ligger i en flise. Creatoren vælger intet om baggrunden.
   - **I dashboardet:** forhåndsvisning, "Vis nu" og nyt OBS-link.
   - **Admin:** global knap under Indstillinger → Community (fra som standard).

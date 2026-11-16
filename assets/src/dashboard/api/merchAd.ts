@@ -54,6 +54,10 @@ export interface MerchAdValues {
 	readonly pillSize: 'small' | 'medium' | 'large';
 	/** Whether the products' names are shown. */
 	readonly showNames: boolean;
+	/** The products and the pill glow in the accent colour. */
+	readonly glow: boolean;
+	/** The pill has a gradient (else one colour). */
+	readonly pillGradient: boolean;
 	/** The stack: how far the two products behind stick out (0–100). */
 	readonly stackSpread: number;
 }
@@ -177,6 +181,8 @@ export function parseMerchAd( body: unknown ): MerchAdState | null {
 		( body.pill_position !== 'below' && body.pill_position !== 'over' ) ||
 		! [ 'small', 'medium', 'large' ].includes( body.pill_size as string ) ||
 		typeof body.show_names !== 'boolean' ||
+		typeof body.glow !== 'boolean' ||
+		typeof body.pill_gradient !== 'boolean' ||
 		typeof body.stack_spread !== 'number' ||
 		productIds.some( ( id ) => id === null ) ||
 		products.some( ( product ) => product === null ) ||
@@ -204,6 +210,8 @@ export function parseMerchAd( body: unknown ): MerchAdState | null {
 		pillPosition: body.pill_position,
 		pillSize: body.pill_size as MerchAdValues[ 'pillSize' ],
 		showNames: body.show_names,
+		glow: body.glow,
+		pillGradient: body.pill_gradient,
 		stackSpread: body.stack_spread,
 		url: link,
 		previewUrl: preview,
@@ -257,6 +265,8 @@ export function saveMerchAd(
 				pill_position: values.pillPosition,
 				pill_size: values.pillSize,
 				show_names: values.showNames,
+				glow: values.glow,
+				pill_gradient: values.pillGradient,
 				stack_spread: values.stackSpread,
 			},
 		},

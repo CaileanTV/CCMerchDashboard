@@ -37,6 +37,10 @@ export interface Ad {
 	readonly pillSize: PillSize;
 	/** Whether the products' names are shown. */
 	readonly showNames: boolean;
+	/** The products and the pill glow in the accent colour. */
+	readonly glow: boolean;
+	/** The pill has a gradient (else one colour). */
+	readonly pillGradient: boolean;
 	/** Stack: how far the two products behind stick out (0 close – 100 spread). */
 	readonly stackSpread: number;
 	readonly products: readonly AdProduct[];
@@ -149,6 +153,8 @@ export function parseAd( value: unknown ): Ad | null {
 		( ad.pill_position !== 'below' && ad.pill_position !== 'over' ) ||
 		! [ 'small', 'medium', 'large' ].includes( ad.pill_size as string ) ||
 		typeof ad.show_names !== 'boolean' ||
+		typeof ad.glow !== 'boolean' ||
+		typeof ad.pill_gradient !== 'boolean' ||
 		within( ad.stack_spread, 0, 100 ) === null
 	) {
 		return null;
@@ -167,6 +173,8 @@ export function parseAd( value: unknown ): Ad | null {
 		pillPosition: ad.pill_position,
 		pillSize: ad.pill_size as PillSize,
 		showNames: ad.show_names,
+		glow: ad.glow,
+		pillGradient: ad.pill_gradient,
 		stackSpread: within( ad.stack_spread, 0, 100 ) ?? 50,
 		products,
 	};

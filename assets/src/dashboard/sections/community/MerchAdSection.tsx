@@ -367,6 +367,46 @@ export function MerchAdSection() {
 						/>{ ' ' }
 						{ __( "Show the products' names", 'merchboard' ) }
 					</label>
+					<label
+						className="merchboard-payouts__check"
+						htmlFor="merchboard-merch-ad-glow"
+					>
+						<input
+							id="merchboard-merch-ad-glow"
+							type="checkbox"
+							checked={ values.glow }
+							onChange={ ( event ) =>
+								setValues( {
+									...values,
+									glow: event.target.checked,
+								} )
+							}
+						/>{ ' ' }
+						{ __(
+							'Glow in the accent colour around the products and the pill',
+							'merchboard'
+						) }
+					</label>
+					<label
+						className="merchboard-payouts__check"
+						htmlFor="merchboard-merch-ad-gradient"
+					>
+						<input
+							id="merchboard-merch-ad-gradient"
+							type="checkbox"
+							checked={ values.pillGradient }
+							onChange={ ( event ) =>
+								setValues( {
+									...values,
+									pillGradient: event.target.checked,
+								} )
+							}
+						/>{ ' ' }
+						{ __(
+							'Gradient on the pill (off: one colour)',
+							'merchboard'
+						) }
+					</label>
 
 					<fieldset className="merchboard-community-campaign">
 						<legend className="merchboard-field__label">

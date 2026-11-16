@@ -232,7 +232,15 @@ export function start( root: HTMLElement, config: Config ): void {
 	let showing = false;
 	let lastShowAt = config.showAt;
 
-	root.className = `mb-ad mb-ad--${ ad.design } mb-ad--${ ad.theme }`;
+	root.className = [
+		'mb-ad',
+		`mb-ad--${ ad.design }`,
+		`mb-ad--${ ad.theme }`,
+		ad.glow ? '' : 'mb-ad--no-glow',
+		ad.pillGradient ? '' : 'mb-ad--flat-pill',
+	]
+		.filter( ( name ) => name !== '' )
+		.join( ' ' );
 	document.documentElement.classList.toggle(
 		'mb-ad-preview',
 		config.preview

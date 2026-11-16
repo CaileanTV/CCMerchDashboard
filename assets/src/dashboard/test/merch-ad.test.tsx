@@ -35,6 +35,8 @@ const STATE = {
 	pill_position: 'below',
 	pill_size: 'medium',
 	show_names: true,
+	glow: true,
+	pill_gradient: true,
 	stack_spread: 50,
 	url: null,
 	preview_url: null,

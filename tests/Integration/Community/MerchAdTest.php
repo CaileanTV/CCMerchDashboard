@@ -158,7 +158,7 @@ final class MerchAdTest extends IntegrationTestCase {
 		$this->settings->save( $this->nova, $this->form( array( 'product_ids' => array( 502, 503, 501 ) ) ) );
 
 		$overlay = $this->view->overlay( $this->nova );
-		self::assertSame( array( 'over', 'large', false, 30 ), array( $overlay['pill_position'], $overlay['pill_size'], $overlay['show_names'], $overlay['stack_spread'] ) );
+		self::assertSame( array( 'over', 'large', false, 30, false, false ), array( $overlay['pill_position'], $overlay['pill_size'], $overlay['show_names'], $overlay['stack_spread'], $overlay['glow'], $overlay['pill_gradient'] ) );
 
 		self::assertSame( array( 'Mug', 'Stream Hoodie' ), array_column( $overlay['products'], 'name' ), 'In order; an unpublished product is left out.' );
 		self::assertSame( 'https://shop.example/502.png', $overlay['products'][0]['image'] );
@@ -183,6 +183,7 @@ final class MerchAdTest extends IntegrationTestCase {
 		self::assertStringContainsString( '?merch_ad=', (string) $data['url'], 'The link name (default merch_ad).' );
 		self::assertSame( 'over', $data['pill_position'] );
 		self::assertFalse( $data['show_names'] );
+		self::assertSame( array( false, false ), array( $data['glow'], $data['pill_gradient'] ), 'Without glow and gradient.' );
 		self::assertSame( 30, $data['stack_spread'] );
 		$id = $this->settings->find( $this->nova )->overlay_id;
 		self::assertSame( $id, MerchAdLink::id( array( 'merch_ad' => $id ) ) );
@@ -289,6 +290,8 @@ final class MerchAdTest extends IntegrationTestCase {
 			'pill_size'     => 'large',
 			'show_names'    => false,
 			'stack_spread'  => 30,
+			'glow'          => false,
+			'pill_gradient' => false,
 		);
 	}
 

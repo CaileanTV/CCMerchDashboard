@@ -25,6 +25,9 @@ Kommer med i 2.2.0. `!merch` på rigtige Twitch- og Kick-kanaler testes på stg.
 - **Pillen:** valgfri tekst, fx "Skriv !merch i chatten". Højst 60 tegn, kommandoer med `!` vises med fed, links og domæner afvises.
 - **Timing:** hvor ofte reklamen vises (hvert 1.–60. minut) og hvor længe (5–60 sekunder).
 - **Udseende:** animation ind og ud (fade, glid, pop, zoom, sløring), accentfarve og lyst eller mørkt kort.
+- **Glød og gradient** (ønske 2026-11-16, begge til som standard):
+  - "Glød i accentfarven omkring produkterne og pillen": fra giver kun en neutral skygge.
+  - "Gradient på pillen": fra giver pillen én farve (accentfarven blandet med kortets).
 - **Produkter:** op til 12 af creatorens produkter i valgt rækkefølge, ellers de nyeste udgivne.
 - **Billederne:** shoppens billede.
   - Et billede uden baggrund fra produktdesigneren (ADR-114) står frit.

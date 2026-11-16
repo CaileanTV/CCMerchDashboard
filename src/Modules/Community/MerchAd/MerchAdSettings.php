@@ -93,6 +93,8 @@ final class MerchAdSettings {
 	 * @param string $pill_size   One of PILL_SIZES.
 	 * @param bool   $show_names  Whether the products' names are shown.
 	 * @param int    $stack_spread The stack: how far the products behind stick out (0–100).
+	 * @param bool   $glow        Whether the products and the pill glow in the accent colour.
+	 * @param bool   $pill_gradient Whether the pill has a gradient (else one colour).
 	 */
 	public function __construct(
 		public bool $enabled = false,
@@ -110,7 +112,9 @@ final class MerchAdSettings {
 		public string $pill_position = 'below',
 		public string $pill_size = 'medium',
 		public bool $show_names = true,
-		public int $stack_spread = 50
+		public int $stack_spread = 50,
+		public bool $glow = true,
+		public bool $pill_gradient = true
 	) {
 	}
 
@@ -146,7 +150,9 @@ final class MerchAdSettings {
 			$pick( 'pill_position', self::PILL_POSITIONS, $default->pill_position ),
 			$pick( 'pill_size', self::PILL_SIZES, $default->pill_size ),
 			false !== ( $s['show_names'] ?? true ),
-			$range( 'stack_spread', 0, 100, $default->stack_spread )
+			$range( 'stack_spread', 0, 100, $default->stack_spread ),
+			false !== ( $s['glow'] ?? true ),
+			false !== ( $s['pill_gradient'] ?? true )
 		);
 	}
 
@@ -173,6 +179,8 @@ final class MerchAdSettings {
 			'pill_size'     => $this->pill_size,
 			'show_names'    => $this->show_names,
 			'stack_spread'  => $this->stack_spread,
+			'glow'          => $this->glow,
+			'pill_gradient' => $this->pill_gradient,
 		);
 	}
 
@@ -182,6 +190,6 @@ final class MerchAdSettings {
 	 * @return list<string>
 	 */
 	public static function form_fields(): array {
-		return array( 'enabled', 'design', 'product_ids', 'note', 'every', 'seconds', 'enter', 'leave', 'accent', 'theme', 'pill_position', 'pill_size', 'show_names', 'stack_spread' );
+		return array( 'enabled', 'design', 'product_ids', 'note', 'every', 'seconds', 'enter', 'leave', 'accent', 'theme', 'pill_position', 'pill_size', 'show_names', 'stack_spread', 'glow', 'pill_gradient' );
 	}
 }

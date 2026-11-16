@@ -1393,6 +1393,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - karrusellen gentager produkterne, så den kører uden tomme pladser (`f3c3854`);
   - OBS-linkets navn vælges under Indstillinger → Community (standard `merch_ad`); tidligere navne virker fortsat (`f3c3854`);
   - "Vis nu" viser reklamen, også mens den er slået fra, og dashboardet siger, at browser source er gennemsigtig mellem visningerne (`f3c3854`).
+- **50.8 Glød og gradient (projektejerens ønske 2026-11-16):** ✅ creatoren slår glød i accentfarven (produkter og pille) og pillens gradient til og fra. Begge er til som standard, så eksisterende reklamer er uændrede.
 
 ## Fase 51 – Produktbilleder uden baggrund fra produktdesigneren (PNG) ✅ (ønske og godkendelse 2026-11-15; version 2.2.0 sammen med fase 48–50; ADR-114)
 

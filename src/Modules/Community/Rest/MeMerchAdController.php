@@ -224,6 +224,8 @@ final class MeMerchAdController extends RestController {
 				'pill_size'     => $settings->pill_size,
 				'show_names'    => $settings->show_names,
 				'stack_spread'  => $settings->stack_spread,
+				'glow'          => $settings->glow,
+				'pill_gradient' => $settings->pill_gradient,
 				'url'           => '' === $settings->overlay_id ? null : MerchAdPage::url( $settings->overlay_id ),
 				'preview_url'   => '' === $settings->overlay_id ? null : MerchAdPage::url( $settings->overlay_id, true ),
 				'products'      => $this->view->products( $creator_id ),

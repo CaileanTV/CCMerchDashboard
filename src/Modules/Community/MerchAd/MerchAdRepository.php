@@ -104,8 +104,10 @@ final class MerchAdRepository {
 			$errors['enabled'] = 'required';
 		}
 
-		if ( ! is_bool( $values['show_names'] ?? null ) ) {
-			$errors['show_names'] = 'required';
+		foreach ( array( 'show_names', 'glow', 'pill_gradient' ) as $field ) {
+			if ( ! is_bool( $values[ $field ] ?? null ) ) {
+				$errors[ $field ] = 'required';
+			}
 		}
 
 		foreach ( array(
@@ -184,7 +186,9 @@ final class MerchAdRepository {
 			(string) $values['pill_position'],
 			(string) $values['pill_size'],
 			true === $values['show_names'],
-			(int) $values['stack_spread']
+			(int) $values['stack_spread'],
+			true === $values['glow'],
+			true === $values['pill_gradient']
 		);
 
 		$old     = $before->to_stored();

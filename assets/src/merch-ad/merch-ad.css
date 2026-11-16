@@ -128,6 +128,20 @@ body {
 	overflow-wrap: anywhere;
 }
 
+/* Without glow: only the shadow that gives depth. */
+.mb-ad--no-glow .mb-ad__img--cutout img {
+	filter: drop-shadow(0 1.2vh 2.4vh rgb(0 0 0 / 45%));
+}
+
+.mb-ad--no-glow .mb-ad__pill {
+	box-shadow: 0 0.6vh 1.6vh rgb(0 0 0 / 30%);
+}
+
+/* A pill of one colour instead of the gradient. */
+.mb-ad--flat-pill .mb-ad__pill {
+	background: color-mix(in srgb, var(--mb-accent) 30%, var(--mb-card));
+}
+
 /* The pill's sizes. */
 .mb-ad__pill--small {
 	padding: 0.6vh 1.8vh;
