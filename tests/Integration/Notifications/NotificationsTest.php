@@ -221,6 +221,44 @@ final class NotificationsTest extends IntegrationTestCase {
 		self::assertSame( array( 'boom', 3 ), array( $failed->email_error, $failed->email_attempts ) );
 	}
 
+	public function test_news_requires_an_active_recipient_at_creation_and_delivery(): void {
+		update_option(
+			NotificationSettings::OPTION,
+			array(
+				'news_published' => array(
+					'email'     => true,
+					'dashboard' => true,
+				),
+			)
+		);
+		$notifier = $this->notifier();
+		$sender   = $this->sender();
+		$creators = $this->service( CreatorService::class );
+
+		$active = (int) $notifier->notify( 'news_published', $this->nova, array( 'title' => 'Active news' ) );
+		$sender->run( $active );
+		self::assertSame( Notification::EMAIL_SENT, $this->notifications->find( $active )?->email_status );
+		self::assertCount( 1, $this->mail->sent );
+
+		$pending = (int) $notifier->notify( 'news_published', $this->nova, array( 'title' => 'Private news' ) );
+		self::assertGreaterThan( 0, $pending );
+		$creators->set_status( $this->nova, CreatorStatus::Inactive );
+		self::assertNull( $notifier->notify( 'news_published', $this->nova, array( 'title' => 'Later news' ) ) );
+
+		$sender->run( $pending );
+		$sender->run( $pending );
+		$skipped = $this->notifications->find( $pending );
+		self::assertNotNull( $skipped );
+		self::assertSame( Notification::EMAIL_SKIPPED, $skipped->email_status );
+		self::assertSame( 0, $skipped->email_attempts );
+		self::assertCount( 1, $this->mail->sent, 'Deactivation blocks the queued title.' );
+
+		$status = (int) $notifier->notify( 'account_status', $this->nova, array( 'active' => false ) );
+		$sender->run( $status );
+		self::assertSame( Notification::EMAIL_SENT, $this->notifications->find( $status )?->email_status );
+		self::assertCount( 2, $this->mail->sent, 'An inactive creator still receives account-status notices.' );
+	}
+
 	public function test_without_a_queue_the_email_is_sent_at_the_end_of_the_request(): void {
 		$this->queue->is_available = false;
 		$notifier                  = $this->notifier();
