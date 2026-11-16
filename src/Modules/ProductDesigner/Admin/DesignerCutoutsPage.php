@@ -445,6 +445,17 @@ final class DesignerCutoutsPage {
 	}
 
 	/**
+	 * Whether a key names an image: `<side>:<colour>`, where the side is a
+	 * side of the base product or a provider's photo (`_photo-<n>`; the
+	 * owner's test 2026-11-16: their waiting images did not show).
+	 *
+	 * @param string $key Key.
+	 */
+	public static function valid_key( string $key ): bool {
+		return 1 === preg_match( '/^([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}):[a-z0-9%_-]{1,32}$/', $key );
+	}
+
+	/**
 	 * Nonce action of a base product's silhouettes.
 	 *
 	 * @param int $base_id Base product.
@@ -570,7 +581,7 @@ final class DesignerCutoutsPage {
 		$key     = is_string( $input['key'] ?? null ) ? rawurldecode( $input['key'] ) : '';
 		$nonce   = is_string( $input['_wpnonce'] ?? null ) ? $input['_wpnonce'] : '';
 
-		if ( 0 === $product || 1 !== preg_match( '/^[a-z0-9][a-z0-9-]{0,31}:[a-z0-9%_-]{1,32}$/', $key ) || false === wp_verify_nonce( $nonce, self::ACTION_FILE . '_' . $product . '_' . $key ) ) {
+		if ( 0 === $product || ! self::valid_key( $key ) || false === wp_verify_nonce( $nonce, self::ACTION_FILE . '_' . $product . '_' . $key ) ) {
 			wp_die( esc_html__( 'The link you followed has expired. Please try again.', 'merchboard' ), '', array( 'response' => 403 ) );
 		}
 
