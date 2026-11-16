@@ -149,39 +149,54 @@ final class SectionsAndTranslationsTest extends IntegrationTestCase {
 	}
 
 	public function test_shell_prints_the_danish_script_translations_with_the_nonce(): void {
-		$dir = sys_get_temp_dir() . '/merchboard-i18n-build/';
-
-		foreach ( array( 'build', 'languages' ) as $folder ) {
-			if ( ! is_dir( $dir . $folder ) ) {
-				mkdir( $dir . $folder, 0777, true ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Test fixture.
-			}
-		}
+		$dir = sys_get_temp_dir() . '/merchboard-i18n-build-' . bin2hex( random_bytes( 16 ) ) . '/';
+		// mkdir is atomic: never reuse an existing path for executable fixtures.
+		self::assertTrue( mkdir( $dir, 0700 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Private test fixture.
 
 		$json = 'merchboard-da_DK-' . md5( 'build/dashboard.js' ) . '.json';
-		copy( MERCHBOARD_TEST_ROOT . '/languages/' . $json, $dir . 'languages/' . $json );
-		file_put_contents( $dir . 'build/dashboard.asset.php', "<?php return array( 'dependencies' => array( 'wp-i18n' ), 'version' => 'i18n-test' );" ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
-		file_put_contents( $dir . 'build/dashboard.js', '/* bundle */' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
 
-		// The dashboard is a frontend page: it follows the site language (creators
-		// cannot reach their WordPress profile to pick a personal language).
-		$GLOBALS['locale'] = 'da_DK'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Simulates a Danish site.
-		wp_set_current_user( $this->creator );
-		self::assertSame( 'da_DK', determine_locale() );
+		try {
+			foreach ( array( 'build', 'languages' ) as $folder ) {
+				self::assertTrue( mkdir( $dir . $folder, 0700 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir -- Private test fixture.
+			}
 
-		$controller = new ShellController(
-			new DashboardRoute(),
-			$this->service( CreatorContext::class ),
-			new DashboardAssets( $dir, content_url( '/plugins/merchboard/' ), $this->service( Logger::class ) ),
-			$this->service( DashboardSections::class ),
-			new ThemePreference(),
-			$this->service( BrandLogo::class )
-		);
-		$response   = $controller->respond();
-		$html       = $controller->render( $response );
+			self::assertTrue( copy( MERCHBOARD_TEST_ROOT . '/languages/' . $json, $dir . 'languages/' . $json ) );
+			$manifest = "<?php return array( 'dependencies' => array( 'wp-i18n' ), 'version' => 'i18n-test' );";
+			self::assertSame( strlen( $manifest ), file_put_contents( $dir . 'build/dashboard.asset.php', $manifest ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
+			self::assertSame( strlen( '/* bundle */' ), file_put_contents( $dir . 'build/dashboard.js', '/* bundle */' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test fixture.
 
-		self::assertSame( 200, $response->status );
-		self::assertStringContainsString( 'Nettosalg (ekskl. moms)', $html, 'Script translations are printed for the bundle.' );
-		self::assertStringContainsString( '"locale":"da_DK"', $html );
-		self::assertSame( substr_count( $html, '<script' ), substr_count( $html, 'nonce="' . $response->script_nonce . '"' ), 'The translation script carries the nonce too.' );
+			// The dashboard is a frontend page: it follows the site language (creators
+			// cannot reach their WordPress profile to pick a personal language).
+			$GLOBALS['locale'] = 'da_DK'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Simulates a Danish site.
+			wp_set_current_user( $this->creator );
+			self::assertSame( 'da_DK', determine_locale() );
+
+			$controller = new ShellController(
+				new DashboardRoute(),
+				$this->service( CreatorContext::class ),
+				new DashboardAssets( $dir, content_url( '/plugins/merchboard/' ), $this->service( Logger::class ) ),
+				$this->service( DashboardSections::class ),
+				new ThemePreference(),
+				$this->service( BrandLogo::class )
+			);
+			$response   = $controller->respond();
+			$html       = $controller->render( $response );
+
+			self::assertSame( 200, $response->status );
+			self::assertStringContainsString( 'Nettosalg (ekskl. moms)', $html, 'Script translations are printed for the bundle.' );
+			self::assertStringContainsString( '"locale":"da_DK"', $html );
+			self::assertSame( substr_count( $html, '<script' ), substr_count( $html, 'nonce="' . $response->script_nonce . '"' ), 'The translation script carries the nonce too.' );
+		} finally {
+			foreach ( array( 'build/dashboard.asset.php', 'build/dashboard.js', 'languages/' . $json ) as $file ) {
+				if ( is_file( $dir . $file ) ) {
+					self::assertTrue( unlink( $dir . $file ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove private test fixture.
+				}
+			}
+			foreach ( array( 'build', 'languages', '' ) as $folder ) {
+				if ( is_dir( $dir . $folder ) ) {
+					self::assertTrue( rmdir( $dir . $folder ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- Remove private test fixture.
+				}
+			}
+		}
 	}
 }
