@@ -1829,7 +1829,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		}
 
 		foreach ( array_keys( $old ) as $key ) {
-			$cutouts->store( $product, $key, AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'cutout.png' ) );
+			$cutouts->store( $product, $key, AlertImagesTest::upload( self::cutout_photo( true ), 'cutout.png' ) );
 		}
 
 		self::assertSame( 'pending', $row( $cutouts->overview() )['state'] );
