@@ -1585,6 +1585,20 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - **Fundet undervejs:** et langt produktnavn gjorde designeren bredere end mobilen (rettet). `/me/go-live` og andre kald gav tilfældigt 500 i Playground, der ikke har `GET_LOCK`; det har intet med fasen at gøre.
   - **Mangler:** CI, og testpakke 2.4.0 på stg efter projektejerens test af 2.3.0.
 
+## Fase 55 – Creatoren anmoder om at få designs samlet (ccmerch-design-samling) 💡 (projektejerens idé 2026-11-22; tages op, når 2.3.0 er færdig; ikke planlagt)
+
+**Ønsket:** en creator kan anmode om, at nogle af sine designs samles med virksomhedens system "ccmerch-design-samling".
+
+**Afklares, før fasen planlægges:**
+- **Læseadgang:** projektejeren skal give lov til at læse pluginet `CCMerch-Elementor/ccmerch-design-samling` (read-only), som med Lumise-addon'et. Projektisolationen forbyder det ellers.
+- **Hvad en samling er:** et produkt med flere designs, en kollektion i shoppen eller noget tredje. Hvilke designs kan indgå: kun godkendte designs, også fra flere grundprodukter?
+- **Anmodningen:**
+  - hvor creatoren anmoder (fx under "Dine produkter");
+  - hvad admin godkender, og om det skal være en fane på "Forslag" (`merchboard_approval_tabs`);
+  - hvordan creatoren får svar (klokke og mail).
+- **Forbindelsen til ccmerch-design-samling:** hvad pluginet skal have at vide, og om det sker med en hook, en REST-kald eller manuelt.
+- **Pris og afregning:** hvordan et samlet produkt prissættes og afregnes med creatoren (ADR-080).
+
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
 - **M1** long-poll-pladser og grænse pr. besøgsadresse på overlay-feedene. ✅
