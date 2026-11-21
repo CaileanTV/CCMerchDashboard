@@ -132,7 +132,7 @@ final class MeBillingDetailsController extends RestController {
 				}
 
 				try {
-					$values = $this->cvr->lookup( (string) $request->get_param( 'cvr' ), $creator->id );
+					$values = $this->cvr->lookup( (string) $request->get_param( 'cvr' ), $creator->id, $creator->is_live() );
 				} catch ( CvrLookupException $e ) {
 					$status = match ( $e->reason() ) {
 						CvrLookup::NOT_FOUND => 404,

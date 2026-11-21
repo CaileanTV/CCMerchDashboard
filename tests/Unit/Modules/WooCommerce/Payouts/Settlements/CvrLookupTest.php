@@ -168,6 +168,37 @@ final class CvrLookupTest extends TestCase {
 		self::assertCount( CvrLookup::CREATOR_LIMIT + 2, $this->calls, 'After QUOTA_EXCEEDED nothing is sent for the rest of the day.' );
 	}
 
+	public function test_creators_who_are_not_live_share_part_of_the_site_s_calls(): void {
+		$this->body = '{"name":"Nova ApS"}';
+		$number     = 10000000;
+
+		// Not live (ADR-091): at most NOT_LIVE_LIMIT together, each at most CREATOR_LIMIT.
+		for ( $i = 0; $i < CvrLookup::NOT_LIVE_LIMIT; $i++ ) {
+			$this->lookup()->lookup( (string) ++$number, 100 + intdiv( $i, CvrLookup::CREATOR_LIMIT ), false );
+		}
+
+		$this->assertRefusedNotLive( (string) ++$number, 999 );
+		self::assertCount( CvrLookup::NOT_LIVE_LIMIT, $this->calls, 'The rest is kept for live creators.' );
+
+		$this->lookup()->lookup( (string) ++$number, 5, true );
+		self::assertCount( CvrLookup::NOT_LIVE_LIMIT + 1, $this->calls, 'A live creator may still look up.' );
+	}
+
+	/**
+	 * Requires a refusal for a creator who is not live.
+	 *
+	 * @param string $cvr     Number.
+	 * @param int    $creator Creator.
+	 */
+	private function assertRefusedNotLive( string $cvr, int $creator ): void { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid -- PHPUnit's naming.
+		try {
+			$this->lookup()->lookup( $cvr, $creator, false );
+			self::fail( 'Refused.' );
+		} catch ( CvrLookupException $e ) {
+			self::assertSame( CvrLookup::LIMIT, $e->reason() );
+		}
+	}
+
 	public function test_without_the_business_name_or_contact_e_mail_nothing_is_sent(): void {
 		$this->settings = array( 'company_name' => 'CCMerch ApS' );
 

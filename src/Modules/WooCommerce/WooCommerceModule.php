@@ -15,6 +15,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
 use MerchBoard\Modules\Admin\Approvals\ApprovalsPage;
 use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Database\NamedLock;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Core\Security\ProtectedProductMeta;
@@ -881,7 +882,7 @@ final class WooCommerceModule implements Module {
 		);
 		$container->set(
 			MeBillingDetailsController::class,
-			static fn( Container $c ): MeBillingDetailsController => new MeBillingDetailsController( $c->get( CreatorContext::class ), $c->get( BillingDetailsReview::class ), $c->get( Logger::class ), new CvrLookup( $c->get( Logger::class ) ) )
+			static fn( Container $c ): MeBillingDetailsController => new MeBillingDetailsController( $c->get( CreatorContext::class ), $c->get( BillingDetailsReview::class ), $c->get( Logger::class ), new CvrLookup( $c->get( Logger::class ), null, null, new NamedLock( $c->get( wpdb::class ) ) ) )
 		);
 		$container->set(
 			PayoutsPage::class,

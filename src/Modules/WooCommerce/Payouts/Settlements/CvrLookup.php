@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\WooCommerce\Payouts\Settlements;
 use Closure;
 use DateTimeImmutable;
 use DateTimeZone;
+use MerchBoard\Core\Database\NamedLock;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
 use WP_Error;
@@ -29,7 +30,11 @@ defined( 'ABSPATH' ) || exit;
  * Answers are cached for a day per number (also "not found"); at most
  * SITE_LIMIT calls a day for the site and CREATOR_LIMIT per creator keep the
  * free 50 a day from being reached, and QUOTA_EXCEEDED stops calls for the
- * rest of the day. The answer is untrusted: only the name, address, postcode
+ * rest of the day. Creators who are not live yet (ADR-091) share at most
+ * NOT_LIVE_LIMIT of the site's calls, so the rest is kept for live
+ * creators. The counters are read and raised under a named lock, so
+ * parallel lookups cannot pass a limit together (ADR-116, security review
+ * 2026-11-21). The answer is untrusted: only the name, address, postcode
  * and city are read as short single-line texts. Nothing is stored for the
  * creator; numbers and answers are never logged.
  */
@@ -48,7 +53,17 @@ final class CvrLookup {
 	/**
 	 * Most calls to cvrapi.dk a day for one creator.
 	 */
-	public const CREATOR_LIMIT = 10;
+	public const CREATOR_LIMIT = 4;
+
+	/**
+	 * Most calls to cvrapi.dk a day for all creators who are not live yet.
+	 */
+	public const NOT_LIVE_LIMIT = 20;
+
+	/**
+	 * The lock around the counters.
+	 */
+	private const LOCK = 'merchboard_cvr_count';
 
 	/**
 	 * Refusal and failure codes.
@@ -83,11 +98,12 @@ final class CvrLookup {
 	 * @phpstan-param (Closure(string, array<string, mixed>): mixed)|null $http
 	 * @phpstan-param (Closure(): DateTimeImmutable)|null $clock
 	 *
-	 * @param Logger       $logger Technical log (codes only).
-	 * @param Closure|null $http   HTTP GET; defaults to wp_remote_get().
-	 * @param Closure|null $clock  Current time; defaults to now (UTC).
+	 * @param Logger         $logger Technical log (codes only).
+	 * @param Closure|null   $http   HTTP GET; defaults to wp_remote_get().
+	 * @param Closure|null   $clock  Current time; defaults to now (UTC).
+	 * @param NamedLock|null $lock   The counters' lock; null counts without one (tests).
 	 */
-	public function __construct( private Logger $logger, ?Closure $http = null, ?Closure $clock = null ) {
+	public function __construct( private Logger $logger, ?Closure $http = null, ?Closure $clock = null, private ?NamedLock $lock = null ) {
 		$this->http  = $http ?? static fn( string $url, array $args ): mixed => wp_remote_get( $url, $args );
 		$this->clock = $clock ?? static fn(): DateTimeImmutable => new DateTimeImmutable( 'now', new DateTimeZone( 'UTC' ) );
 	}
@@ -116,10 +132,11 @@ final class CvrLookup {
 	 *
 	 * @param string $cvr        CVR number (spaces allowed).
 	 * @param int    $creator_id The creator asking (for the limit).
+	 * @param bool   $live       Whether the creator is live (ADR-091); others share NOT_LIVE_LIMIT.
 	 * @return array{legal_name: string, address_1: string, postcode: string, city: string, country: string}
 	 * @throws CvrLookupException With one of the codes.
 	 */
-	public function lookup( string $cvr, int $creator_id ): array {
+	public function lookup( string $cvr, int $creator_id, bool $live = true ): array {
 		$cvr = preg_replace( '/\s+/', '', $cvr ) ?? '';
 
 		if ( 1 !== preg_match( '/^\d{8}$/', $cvr ) ) {
@@ -141,16 +158,7 @@ final class CvrLookup {
 			throw new CvrLookupException( self::LIMIT );
 		}
 
-		$site    = (int) get_transient( self::PREFIX . 'site_' . $day );
-		$creator = (int) get_transient( self::PREFIX . 'creator_' . $day . '_' . $creator_id );
-
-		if ( $site >= self::SITE_LIMIT || $creator >= self::CREATOR_LIMIT ) {
-			throw new CvrLookupException( self::LIMIT );
-		}
-
-		// Counted before the call: every attempt uses the daily allowance.
-		set_transient( self::PREFIX . 'site_' . $day, $site + 1, $left );
-		set_transient( self::PREFIX . 'creator_' . $day . '_' . $creator_id, $creator + 1, $left );
+		$this->count( $day, $creator_id, $live, $left );
 
 		$response = ( $this->http )(
 			add_query_arg(
@@ -208,6 +216,50 @@ final class CvrLookup {
 		);
 
 		return $values;
+	}
+
+	/**
+	 * Counts a call before it is made (every attempt uses the daily
+	 * allowance), under the lock.
+	 *
+	 * @param string $day        Today, `Ymd` in Copenhagen.
+	 * @param int    $creator_id Creator.
+	 * @param bool   $live       Whether the creator is live.
+	 * @param int    $left       Seconds left of the day.
+	 * @throws CvrLookupException LIMIT when a limit is reached, UNAVAILABLE when the lock is not had in time.
+	 */
+	private function count( string $day, int $creator_id, bool $live, int $left ): void {
+		$work    = static function () use ( $day, $creator_id, $live, $left ): bool {
+			$keys    = array(
+				'site'     => self::PREFIX . 'site_' . $day,
+				'creator'  => self::PREFIX . 'creator_' . $day . '_' . $creator_id,
+				'not_live' => self::PREFIX . 'not_live_' . $day,
+			);
+			$counts  = array_map( static fn( string $key ): int => (int) get_transient( $key ), $keys );
+			$reached = $counts['site'] >= self::SITE_LIMIT || $counts['creator'] >= self::CREATOR_LIMIT || ( ! $live && $counts['not_live'] >= self::NOT_LIVE_LIMIT );
+
+			if ( $reached ) {
+				return false;
+			}
+
+			set_transient( $keys['site'], $counts['site'] + 1, $left );
+			set_transient( $keys['creator'], $counts['creator'] + 1, $left );
+
+			if ( ! $live ) {
+				set_transient( $keys['not_live'], $counts['not_live'] + 1, $left );
+			}
+
+			return true;
+		};
+		$allowed = null === $this->lock ? $work() : $this->lock->run( self::LOCK, 5, $work );
+
+		if ( null === $allowed ) {
+			throw new CvrLookupException( self::UNAVAILABLE );
+		}
+
+		if ( ! $allowed ) {
+			throw new CvrLookupException( self::LIMIT );
+		}
 	}
 
 	/**
