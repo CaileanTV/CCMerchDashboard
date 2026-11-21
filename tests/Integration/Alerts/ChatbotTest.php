@@ -883,16 +883,24 @@ final class ChatbotTest extends IntegrationTestCase {
 		self::assertTrue( $served );
 		self::assertSame( 'pogchamp-kappa-360noscope-vohiyo', ob_get_clean() );
 
-		// Chat messages, each stored once.
+		// Chat messages, each stored once and handled once (a delivery again runs nothing, security review 2026-11-21).
 		$message = array(
 			'message_id'         => 'msg-a',
+			'chatter_user_id'    => '9001',
 			'chatter_user_login' => 'viewer1',
 			'chatter_user_name'  => 'Viewer1',
 			'color'              => '#FF4500',
 			'message'            => array( 'text' => '<b>hype</b>' ),
 		);
+		$handled = array();
+		$listen  = static function ( mixed ...$args ) use ( &$handled ): void {
+			$handled[] = $args;
+		};
+		add_action( 'merchboard_twitch_chat_message', $listen, 10, 5 );
 		self::assertSame( 204, $this->event( 'notification', array( 'event' => $message ) )->get_status() );
 		self::assertSame( 204, $this->event( 'notification', array( 'event' => $message ), 'delivery-2' )->get_status() );
+		remove_action( 'merchboard_twitch_chat_message', $listen, 10 );
+		self::assertCount( 1, $handled, 'A message Twitch delivers again is handled once.' );
 		self::assertSame(
 			204,
 			$this->event(

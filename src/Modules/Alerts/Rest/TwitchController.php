@@ -216,7 +216,7 @@ final class TwitchController extends RestController {
 
 		if ( 'notification' === $type && null !== $channel && 'channel.chat.message' === ( $subscription['type'] ?? null ) ) {
 			$message = is_array( $event['message'] ?? null ) ? $event['message'] : array();
-			$this->chat->add(
+			$new     = $this->chat->add(
 				ChatPlatform::Twitch,
 				$broadcaster,
 				is_string( $event['message_id'] ?? null ) ? $event['message_id'] : '',
@@ -225,6 +225,11 @@ final class TwitchController extends RestController {
 				is_string( $event['color'] ?? null ) ? $event['color'] : '',
 				is_string( $message['text'] ?? null ) ? $message['text'] : ''
 			);
+
+			// Twitch delivers a message again when it got no answer in time: it runs once (as Kick's).
+			if ( ! $new ) {
+				return new WP_REST_Response( null, 204 );
+			}
 
 			$badges = array();
 
