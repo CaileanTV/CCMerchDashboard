@@ -41,6 +41,12 @@ defined( 'ABSPATH' ) || exit;
  * - A side with `sizes` belongs to those sizes only: each has its own template
  *   and print area, and the creator designs each for itself (the owner's
  *   choice 2026-10-31, cups of two sizes). Without any it is on every size.
+ * - A side with `colors` belongs to those values of the first axis only, e.g.
+ *   "Vertical" of a poster (ADR-115); without any it is on every colour.
+ * - A side's `formats` are the print size of each of its sizes in mm (with
+ *   a decimal) and the bleed, half of what the print area exceeds the
+ *   finished size by per axis (ADR-115): a format group of a poster, whose
+ *   print file has the largest size and is cut to each size's shape.
  */
 final readonly class BaseView {
 
@@ -153,20 +159,22 @@ final readonly class BaseView {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                                         $key         Stable key (a-z, 0-9, -), unique per base product.
-	 * @param string                                         $name        Name shown to creators.
-	 * @param int                                            $width       Template width in px.
-	 * @param int                                            $height      Template height in px.
-	 * @param array<string, int>                             $layers      Asset id by layer (LAYERS and colour backgrounds); missing layers are left out.
-	 * @param array{x: int, y: int, width: int, height: int} $area        Print area in template px.
-	 * @param int                                            $width_mm    Print width in mm.
-	 * @param int                                            $height_mm   Print height in mm.
-	 * @param int                                            $dpi         Print resolution.
-	 * @param string                                         $thread_pack The embroidery pack; empty when the side is printed.
-	 * @param bool                                           $flat        Whether the side is a flat part of an all-over product.
-	 * @param array<string, mixed>|null                      $scene       The side's PSD scene; it comes with the layer `scene`.
-	 * @param string[]                                       $sizes       The sizes the side belongs to; empty for every size.
-	 * @param bool                                           $small       Whether the side is a small design area, with the price of small extra areas.
+	 * @param string                                                                                     $key         Stable key (a-z, 0-9, -), unique per base product.
+	 * @param string                                                                                     $name        Name shown to creators.
+	 * @param int                                                                                        $width       Template width in px.
+	 * @param int                                                                                        $height      Template height in px.
+	 * @param array<string, int>                                                                         $layers      Asset id by layer (LAYERS and colour backgrounds); missing layers are left out.
+	 * @param array{x: int, y: int, width: int, height: int}                                             $area        Print area in template px.
+	 * @param int                                                                                        $width_mm    Print width in mm.
+	 * @param int                                                                                        $height_mm   Print height in mm.
+	 * @param int                                                                                        $dpi         Print resolution.
+	 * @param string                                                                                     $thread_pack The embroidery pack; empty when the side is printed.
+	 * @param bool                                                                                       $flat        Whether the side is a flat part of an all-over product.
+	 * @param array<string, mixed>|null                                                                  $scene       The side's PSD scene; it comes with the layer `scene`.
+	 * @param string[]                                                                                   $sizes       The sizes the side belongs to; empty for every size.
+	 * @param bool                                                                                       $small       Whether the side is a small design area, with the price of small extra areas.
+	 * @param string[]                                                                                   $colors      The colour keys the side belongs to; empty for every colour.
+	 * @param array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}> $formats Print size and bleed by size.
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -183,7 +191,9 @@ final readonly class BaseView {
 		public bool $flat = false,
 		public ?array $scene = null,
 		public array $sizes = array(),
-		public bool $small = false
+		public bool $small = false,
+		public array $colors = array(),
+		public array $formats = array()
 	) {
 		if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9-]{0,31}$/', $key ) || '' === $name || mb_strlen( $name ) > 60 ) {
 			throw new InvalidArgumentException( 'Invalid side.' );
@@ -222,6 +232,49 @@ final readonly class BaseView {
 		if ( in_array( '', $sizes, true ) ) {
 			throw new InvalidArgumentException( 'Invalid sizes of a side.' );
 		}
+
+		foreach ( $colors as $color ) {
+			if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9-]{0,31}$/', $color ) ) {
+				throw new InvalidArgumentException( 'Invalid colours of a side.' );
+			}
+		}
+
+		foreach ( $formats as $size => $format ) {
+			$bleed = $format['bleed'] ?? array( 0.0, 0.0 );
+
+			if ( '' === (string) $size || $format['width_mm'] <= 0 || $format['height_mm'] <= 0 || $format['width_mm'] > self::MAX_MM || $format['height_mm'] > self::MAX_MM || $bleed[0] < 0 || $bleed[1] < 0 || 2 * $bleed[0] >= $format['width_mm'] || 2 * $bleed[1] >= $format['height_mm'] ) {
+				throw new InvalidArgumentException( 'Invalid format of a side.' );
+			}
+		}
+	}
+
+	/**
+	 * Whether the side belongs to a colour (a value of the first axis).
+	 *
+	 * @param string $color Colour key.
+	 */
+	public function on_color( string $color ): bool {
+		return array() === $this->colors || in_array( $color, $this->colors, true );
+	}
+
+	/**
+	 * The side as it is with other formats (a fetched bleed).
+	 *
+	 * @param array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}> $formats Print size and bleed by size.
+	 * @throws InvalidArgumentException When a format is invalid.
+	 */
+	public function with_formats( array $formats ): self {
+		return new self( $this->key, $this->name, $this->width, $this->height, $this->layers, $this->area, $this->width_mm, $this->height_mm, $this->dpi, $this->thread_pack, $this->flat, $this->scene, $this->sizes, $this->small, $this->colors, $formats );
+	}
+
+	/**
+	 * The side as it is with other layers.
+	 *
+	 * @param array<string, int> $layers Asset id by layer.
+	 * @throws InvalidArgumentException When a layer is invalid.
+	 */
+	public function with_layers( array $layers ): self {
+		return new self( $this->key, $this->name, $this->width, $this->height, $layers, $this->area, $this->width_mm, $this->height_mm, $this->dpi, $this->thread_pack, $this->flat, $this->scene, $this->sizes, $this->small, $this->colors, $this->formats );
 	}
 
 	/**
@@ -347,6 +400,14 @@ final readonly class BaseView {
 			$side['small'] = true;
 		}
 
+		if ( array() !== $this->colors ) {
+			$side['colors'] = $this->colors;
+		}
+
+		if ( array() !== $this->formats ) {
+			$side['formats'] = $this->formats;
+		}
+
 		return $side;
 	}
 
@@ -387,7 +448,38 @@ final readonly class BaseView {
 			true === ( $data['flat'] ?? false ),
 			is_array( $data['scene'] ?? null ) ? $data['scene'] : null,
 			is_array( $data['sizes'] ?? null ) ? array_values( array_filter( $data['sizes'], 'is_string' ) ) : array(),
-			true === ( $data['small'] ?? false )
+			true === ( $data['small'] ?? false ),
+			is_array( $data['colors'] ?? null ) ? array_values( array_filter( $data['colors'], 'is_string' ) ) : array(),
+			self::formats_of( $data['formats'] ?? null )
 		);
+	}
+
+	/**
+	 * Formats from their stored or entered form; an invalid entry is left out.
+	 *
+	 * @param mixed $data Decoded formats.
+	 * @return array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>
+	 */
+	public static function formats_of( mixed $data ): array {
+		$formats = array();
+
+		foreach ( is_array( $data ) ? $data : array() as $size => $format ) {
+			if ( ! is_array( $format ) || ! is_numeric( $format['width_mm'] ?? null ) || ! is_numeric( $format['height_mm'] ?? null ) ) {
+				continue;
+			}
+
+			$formats[ (string) $size ] = array(
+				'width_mm'  => (float) $format['width_mm'],
+				'height_mm' => (float) $format['height_mm'],
+			);
+
+			$bleed = $format['bleed'] ?? null;
+
+			if ( is_array( $bleed ) && is_numeric( $bleed[0] ?? null ) && is_numeric( $bleed[1] ?? null ) ) {
+				$formats[ (string) $size ]['bleed'] = array( (float) $bleed[0], (float) $bleed[1] );
+			}
+		}
+
+		return $formats;
 	}
 }

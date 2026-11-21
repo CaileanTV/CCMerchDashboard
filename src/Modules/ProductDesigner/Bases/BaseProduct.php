@@ -37,13 +37,19 @@ final readonly class BaseProduct {
 	public const SOURCES = array( 'own', 'printful', 'gelato', 'prodigi', 'printify' );
 
 	/**
-	 * Most colours, sizes and sides.
+	 * Most colours, sizes and sides: a poster has 29 sizes in two directions,
+	 * in 16 groups of print sizes (ADR-115).
 	 */
 	public const MAX_COLORS = 60;
 
-	public const MAX_SIZES = 30;
+	public const MAX_SIZES = 60;
 
-	public const MAX_VIEWS = 8;
+	public const MAX_VIEWS = 24;
+
+	/**
+	 * The longest size name, e.g. `50x70 cm / 20x28"` (ADR-115).
+	 */
+	public const MAX_SIZE_LENGTH = 60;
 
 	/**
 	 * Constructor.
@@ -125,7 +131,7 @@ final readonly class BaseProduct {
 		}
 
 		foreach ( $sizes as $size ) {
-			if ( '' === $size || mb_strlen( $size ) > 20 ) {
+			if ( '' === $size || mb_strlen( $size ) > self::MAX_SIZE_LENGTH ) {
 				throw new InvalidArgumentException( 'Invalid size.' );
 			}
 		}
@@ -139,6 +145,18 @@ final readonly class BaseProduct {
 		if ( self::ACTIVE === $status && ( array() === $colors || array() === $sizes || array() === $views ) ) {
 			throw new InvalidArgumentException( 'An active base product needs colours, sizes and sides.' );
 		}
+	}
+
+	/**
+	 * A size name as stored: one line without commas (they separate sizes),
+	 * runs of spaces as one, at most MAX_SIZE_LENGTH characters. Names are
+	 * compared in this form, so `8x12"` and `8x12 "` stay apart but
+	 * `A3  (30x40)` and `A3 (30x40)` do not (ADR-115).
+	 *
+	 * @param string $name The name as given.
+	 */
+	public static function size_name( string $name ): string {
+		return trim( mb_substr( trim( sanitize_text_field( str_replace( ',', ' ', $name ) ) ), 0, self::MAX_SIZE_LENGTH ) );
 	}
 
 	/**

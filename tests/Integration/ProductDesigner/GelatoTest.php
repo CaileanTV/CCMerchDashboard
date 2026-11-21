@@ -281,6 +281,20 @@ final class GelatoTest extends IntegrationTestCase {
 				'stitches'   => array(),
 				'techniques' => array(),
 				'options'    => array(),
+				'axes'       => array(
+					'color' => 'Colour',
+					'size'  => 'Size',
+				),
+				'uids'       => array(
+					'black' => array(
+						'S' => 'apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_classic_gsi_s_gco_black',
+						'M' => 'apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_classic_gsi_m_gco_black',
+					),
+					'white' => array(
+						'S' => 'apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_classic_gsi_s_gco_white',
+						'M' => 'apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_classic_gsi_m_gco_white',
+					),
+				),
 			),
 			$this->bases->provider( $id )
 		);
@@ -290,6 +304,112 @@ final class GelatoTest extends IntegrationTestCase {
 		self::assertSame( array( self::ASSETS . 'marker-1.png', self::ASSETS . 'marker-2.png' ), array_column( $creates[0]['variants'][0]['imagePlaceholders'] ?? array(), 'fileUrl' ) );
 		self::assertSame( array( array( 'ImageFront', self::ASSETS . 'blank.png', 'slice' ), array( 'ImageBack', self::ASSETS . 'blank.png', 'slice' ) ), array_map( static fn( array $image ): array => array_values( $image ), $creates[1]['variants'][0]['imagePlaceholders'] ?? array() ) );
 		self::assertFalse( $creates[0]['isVisibleInTheOnlineStore'] ?? true );
+	}
+
+	public function test_a_poster_template_has_an_orientation_axis_and_format_groups_with_every_size(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$this->poster_answers();
+
+		$choice = ( new GelatoCatalog( $this->api ) )->choice( 'tpl-poster' );
+
+		self::assertSame( array( 'Vertical', 'Horizontal' ), array_column( $choice['colors'], 'name' ), 'The orientation is the first axis.' );
+		self::assertSame(
+			array(
+				'color' => 'Orientation',
+				'size'  => 'Size',
+			),
+			$choice['axes']
+		);
+		self::assertCount( 29, $choice['sizes'], 'All 29 sizes, whatever their print size (the owner\'s choice).' );
+		self::assertSame( array( '13x18 cm / 5x7″', '15x20 cm / 6x8″', '20x25 cm / 8x10″', '21x29.7 cm / 8x12"', '25x25 cm / 10x10″' ), array_slice( $choice['sizes'], 0, 5 ), 'Smallest print area first; the inch mark stays.' );
+		self::assertSame( 'A0 (84.1 x 118.9 cm)', $choice['sizes'][28], 'Runs of spaces become one.' );
+		self::assertTrue( $choice['grouped'] );
+		self::assertSame( 0, $choice['duplicates'] );
+		self::assertSame( 58, array_sum( array_map( 'count', $choice['variants'] ) ) );
+		self::assertCount( 16, $choice['sides'], 'Eight format groups per orientation.' );
+
+		$first = $choice['sides'][0];
+		self::assertSame( array( 'Vertical – format 1', 'g1', array( 'Vertical' ), '1 - sort kasse.png', 758, 1008 ), array( $first['name'], $first['group'], $first['colors'], $first['placement'], $first['width_mm'], $first['height_mm'] ), 'Numbered by the smallest size; the print size of the largest.' );
+		self::assertSame( array( '13x18 cm / 5x7″', '15x20 cm / 6x8″', '30x40 cm / 12x16″', '45x60 cm / 18x24″', '60x80 cm / 24x32″', '75x100 cm / 30x40″' ), $first['sizes'], 'Each at most 3 % from the shape of the largest size.' );
+
+		$a_sizes = array_values( array_filter( $choice['sides'], static fn( array $side ): bool => in_array( 'A3 (29.7 x 42 cm)', $side['sizes'], true ) && array( 'Vertical' ) === $side['colors'] ) )[0] ?? self::fail( 'No A3.' );
+		self::assertSame( array( '21x29.7 cm / 8x12"', 'A3 (29.7 x 42 cm)', 'A2 (42 x 59.4 cm)', '50x70 cm / 20x28″', 'A1 (59.4 x 84.1 cm)', '70x100 cm / 28x40″', 'A0 (84.1 x 118.9 cm)' ), $a_sizes['sizes'], 'The A sizes, 21 × 29.7, 50 × 70 and 70 × 100 share one design.' );
+		self::assertSame( array( 849, 1197, 'rp-43' ), array( $a_sizes['width_mm'], $a_sizes['height_mm'], $a_sizes['variant'] ), 'Rendered and printed in A0.' );
+		self::assertSame(
+			array(
+				'width_mm'  => 305.0,
+				'height_mm' => 428.0,
+			),
+			$a_sizes['formats']['A3 (29.7 x 42 cm)']
+		);
+		self::assertSame( array( array( '25x25 cm / 10x10″', '30x30 cm / 12x12″', '35x35 cm / 14x14″', '40x40 cm / 16x16″', '45x45 cm / 18x18″', '50x50 cm / 20x20″', '70x70 cm / 28x28″' ) ), array_values( array_map( static fn( array $side ): array => $side['sizes'], array_filter( $choice['sides'], static fn( array $side ): bool => 'Vertical' === $side['colors'][0] && $side['width_mm'] === $side['height_mm'] ) ) ), 'One design for the squares.' );
+		self::assertSame( 'Front', GelatoCatalog::side_label( '1' ) );
+		self::assertSame( 'Side 2', GelatoCatalog::side_label( '2' ) );
+
+		// A variant with the same values as another is counted, not lost without a word.
+		$template               = (array) json_decode( (string) $this->answers[ self::API . '/templates/tpl-poster' ]['body'], true );
+		$template['variants'][] = array_merge( $template['variants'][0], array( 'id' => 'rp-copy' ) );
+
+		$this->answers[ self::API . '/templates/tpl-poster' ] = self::answer( 200, $template );
+		self::assertSame( 1, ( new GelatoCatalog( $this->api ) )->choice( 'tpl-poster' )['duplicates'] );
+	}
+
+	public function test_a_poster_is_imported_with_a_side_per_format_group_its_sizes_orientation_and_bleed(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$this->poster_answers();
+
+		$catalog = $this->catalog();
+		$id      = $catalog->create(
+			'gelato',
+			'tpl-poster',
+			array(
+				'colors'     => array( 'Vertical', 'Horizontal' ),
+				'sizes'      => array_column( $this->poster_rows(), 2 ),
+				'sides'      => array( '1 - sort kasse.png' ),
+				'base_price' => '199',
+			)
+		);
+
+		$this->drain_import( $catalog, 200 );
+
+		$base = $this->bases->find( $id ) ?? self::fail( 'No base product.' );
+
+		self::assertSame( 'ready', $this->bases->import( $id )['state'] ?? null, (string) wp_json_encode( $this->bases->import( $id ) ) );
+		self::assertSame( array( array( 'vertical', 'Vertical' ), array( 'horizontal', 'Horizontal' ) ), array_map( static fn( array $color ): array => array( $color['key'], $color['name'] ), $base->colors ) );
+		self::assertCount( 29, $base->sizes );
+		self::assertCount( 16, $base->views );
+
+		$view = array_values( array_filter( $base->views, static fn( $side ): bool => in_array( 'A3 (29.7 x 42 cm)', $side->sizes, true ) && $side->on_color( 'vertical' ) ) )[0] ?? self::fail( 'No A3.' );
+		self::assertSame( array( 'vertical-format-3', 'Vertical – format 3', array( 'vertical' ), 849, 1197 ), array( $view->key, $view->name, $view->colors, $view->width_mm, $view->height_mm ) );
+		self::assertSame( $view->sizes, array_keys( $view->formats ) );
+		self::assertSame(
+			array(
+				'width_mm'  => 218.0,
+				'height_mm' => 305.0,
+				'bleed'     => array( 4.0, 4.0 ),
+			),
+			$view->formats['21x29.7 cm / 8x12"'],
+			'4 mm bleed from the finished size Gelato names.'
+		);
+		self::assertSame( array( 'horizontal' ), $base->views[8]->colors, 'The horizontal groups follow the vertical ones.' );
+		self::assertTrue( $view->on_color( 'vertical' ) );
+		self::assertFalse( $view->on_color( 'horizontal' ) );
+
+		$provider = $this->bases->provider( $id ) ?? self::fail( 'No provider data.' );
+		self::assertSame(
+			array(
+				'color' => 'Orientation',
+				'size'  => 'Size',
+			),
+			$provider['axes']
+		);
+		self::assertSame( 'fine_arts_poster_geo_simplified_product_12-0_ver_a3_200-gsm-80lb-enhanced-uncoated', $provider['uids']['vertical']['A3 (29.7 x 42 cm)'] ?? null );
+		self::assertSame( 'rp-13', $provider['variants']['vertical']['A3 (29.7 x 42 cm)'] ?? null );
+
+		$creates = array_map( static fn( array $call ): string => (string) ( json_decode( (string) ( $call[2]['body'] ?? '' ), true )['variants'][0]['templateVariantId'] ?? '' ), array_values( array_filter( $this->calls, static fn( array $call ): bool => 'POST' === $call[0] && str_ends_with( $call[1], 'products:create-from-template' ) ) ) );
+		self::assertCount( 32, $creates, 'A marker and a blank product per format group.' );
+		self::assertContains( 'rp-43', $creates, 'Each group is rendered with its largest size (A0 vertical).' );
+		self::assertCount( 58, array_filter( $this->calls, static fn( array $call ): bool => str_starts_with( $call[1], GelatoApi::PRODUCTS . '/v3/products/' ) ), 'The finished size of every format, once.' );
 	}
 
 	public function test_a_list_of_images_gives_each_side_its_own_photo(): void {
@@ -660,6 +780,100 @@ final class GelatoTest extends IntegrationTestCase {
 		$this->drain_import( $catalog );
 
 		return $id;
+	}
+
+	/**
+	 * The Fine Art Poster's variants (tests/Fixtures): id, orientation, size,
+	 * print width and height in mm, placeholder, print area, productUid.
+	 *
+	 * @return list<array{0: string, 1: string, 2: string, 3: int, 4: int, 5: string, 6: string, 7: string}>
+	 */
+	private function poster_rows(): array {
+		return require dirname( __DIR__, 2 ) . '/Fixtures/gelato-fine-art-poster.php';
+	}
+
+	/**
+	 * Gelato's Fine Art Poster template tpl-poster, the renders of its format
+	 * groups (a poster on a light wall, with the first marker on the marker
+	 * renders) and every format's finished size: 4 mm less per edge.
+	 */
+	private function poster_answers(): void {
+		$variants = array();
+
+		foreach ( $this->poster_rows() as [ $id, $orientation, $size, $width, $height, $placeholder, $area, $uid ] ) {
+			$variants[] = array(
+				'id'                => $id,
+				'title'             => $size . ' - ' . $orientation,
+				'productUid'        => $uid,
+				'variantOptions'    => array(
+					array(
+						'name'  => 'Orientation',
+						'value' => $orientation,
+					),
+					array(
+						'name'  => 'Size',
+						'value' => $size,
+					),
+				),
+				'imagePlaceholders' => array(
+					array(
+						'name'      => $placeholder,
+						'printArea' => $area,
+						'width'     => $width,
+						'height'    => $height,
+					),
+				),
+			);
+
+			$this->answers[ GelatoApi::PRODUCTS . '/v3/products/' . rawurlencode( $uid ) ] = self::answer(
+				200,
+				array(
+					'productUid' => $uid,
+					'dimensions' => array(
+						'Width'  => array(
+							'value'       => $width - 8,
+							'measureUnit' => 'mm',
+						),
+						'Height' => array(
+							'value'       => $height - 8,
+							'measureUnit' => 'mm',
+						),
+					),
+				)
+			);
+		}
+
+		$this->answers[ self::API . '/templates/tpl-poster' ] = self::answer(
+			200,
+			array(
+				'id'       => 'tpl-poster',
+				'title'    => 'Fine Art Poster',
+				'variants' => $variants,
+			)
+		);
+		// Each render is its own product: "… (marker@g3)" becomes gp-marker-g3.
+		$this->answers[ self::STORE_API . '/products:create-from-template' ] = static function ( array $args ): array {
+			$title = (string) ( json_decode( (string) ( $args['body'] ?? '' ), true )['title'] ?? '' );
+
+			return self::answer(
+				200,
+				array(
+					'id'     => 1 === preg_match( '/\((marker|blank)@(g\d+)\)$/', $title, $match ) ? 'gp-' . $match[1] . '-' . $match[2] : 'gp-1',
+					'status' => 'created',
+				)
+			);
+		};
+
+		foreach ( range( 1, 16 ) as $group ) {
+			foreach ( array( 'marker', 'blank' ) as $kind ) {
+				$this->answers[ self::STORE_API . '/products/gp-' . $kind . '-g' . $group ] = self::product( 'gp-' . $kind . '-g' . $group, 'https://cdn.example/poster-' . $kind . '.png' );
+			}
+		}
+
+		$poster = array( 50, 30, 100, 140, array( 250, 250, 250 ) );
+
+		$this->answers['https://cdn.example/poster-blank.png']  = self::file( Photo::png( 200, 200, array( 200, 190, 180 ), array( $poster ) ) );
+		$this->answers['https://cdn.example/poster-marker.png'] = self::file( Photo::png( 200, 200, array( 200, 190, 180 ), array( $poster, array( 55, 35, 90, 130, array( 235, 15, 230 ) ) ) ) );
 	}
 
 	/**

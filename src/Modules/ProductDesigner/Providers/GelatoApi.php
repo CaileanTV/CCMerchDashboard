@@ -23,6 +23,9 @@ defined( 'ABSPATH' ) || exit;
  * - on `https://ecommerce.gelatoapis.com`: `GET /v1/templates/{templateId}`,
  *   `POST /v1/stores/{storeId}/products:create-from-template` and
  *   `GET /v1/stores/{storeId}/products/{productId}`;
+ * - on `https://product.gelatoapis.com`: `GET /v3/products/{productUid}`,
+ *   the finished size of a catalog product (the bleed, ADR-115 pkt. 8),
+ *   kept 30 days per product; a failure is not kept;
  * - a download of a file Gelato returned (https, any host Gelato names).
  *
  * The template names the products (`productUid`), variants and image
@@ -34,6 +37,13 @@ defined( 'ABSPATH' ) || exit;
 class GelatoApi {
 
 	public const BASE = 'https://ecommerce.gelatoapis.com';
+
+	public const PRODUCTS = 'https://product.gelatoapis.com';
+
+	/**
+	 * The prefix of a product's kept finished size.
+	 */
+	private const DIMENSIONS = 'merchboard_gelato_dim_';
 
 	private const TIMEOUT = 15;
 
@@ -100,6 +110,48 @@ class GelatoApi {
 	}
 
 	/**
+	 * A catalog product's finished size in mm, [width, height] (`dimensions`
+	 * Width and Height in mm), or null when Gelato names none. Kept 30 days,
+	 * also "none"; a failed call is not kept.
+	 *
+	 * @param string $uid The product's `productUid`.
+	 * @return array{0: float, 1: float}|null
+	 * @throws GelatoException When the call fails.
+	 */
+	public function dimensions( string $uid ): ?array {
+		if ( 1 !== preg_match( '/^[A-Za-z0-9_.-]{5,200}$/', $uid ) ) {
+			return null;
+		}
+
+		$key  = self::DIMENSIONS . md5( $uid );
+		$kept = get_transient( $key );
+
+		if ( is_array( $kept ) ) {
+			return 2 === count( $kept ) ? array( (float) $kept[0], (float) $kept[1] ) : null;
+		}
+
+		$answer = $this->call( 'GET', '/v3/products/' . rawurlencode( $uid ), null, self::PRODUCTS );
+		$found  = is_array( $answer['dimensions'] ?? null ) ? $answer['dimensions'] : array();
+		$size   = array();
+
+		foreach ( array( 'Width', 'Height' ) as $axis ) {
+			$entry = is_array( $found[ $axis ] ?? null ) ? $found[ $axis ] : array();
+			$value = is_numeric( $entry['value'] ?? null ) ? (float) $entry['value'] : 0.0;
+
+			if ( $value <= 0 || 'mm' !== strtolower( is_string( $entry['measureUnit'] ?? null ) ? $entry['measureUnit'] : '' ) ) {
+				$size = array();
+				break;
+			}
+
+			$size[] = $value;
+		}
+
+		set_transient( $key, $size, 30 * DAY_IN_SECONDS );
+
+		return 2 === count( $size ) ? array( $size[0], $size[1] ) : null;
+	}
+
+	/**
 	 * A file Gelato returned: https only, at most the designer's file size.
 	 *
 	 * @param string $url URL from a Gelato answer.
@@ -142,10 +194,11 @@ class GelatoApi {
 	 * @param string                    $method Method.
 	 * @param string                    $path   Path.
 	 * @param array<string, mixed>|null $body   JSON body.
+	 * @param string                    $base   The API's address.
 	 * @return array<string, mixed>
 	 * @throws GelatoException When the call fails.
 	 */
-	private function call( string $method, string $path, ?array $body = null ): array {
+	private function call( string $method, string $path, ?array $body = null, string $base = self::BASE ): array {
 		$this->require_available();
 
 		$args = array(
@@ -162,8 +215,8 @@ class GelatoApi {
 			$args['body']                    = (string) wp_json_encode( $body );
 		}
 
-		$response = ( $this->http )( $method, self::BASE . $path, $args );
-		$call     = $method . ' ' . (string) wp_parse_url( self::BASE, PHP_URL_HOST ) . $path;
+		$response = ( $this->http )( $method, $base . $path, $args );
+		$call     = $method . ' ' . (string) wp_parse_url( $base, PHP_URL_HOST ) . $path;
 
 		if ( $response instanceof WP_Error ) {
 			self::fail( GelatoException::FAILED, $call );

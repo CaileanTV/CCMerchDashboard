@@ -190,11 +190,13 @@ class BaseProductRepository {
 	 * provider's placement by side key, its variant by colour key and size,
 	 * and the image of each side (empty for one imported before review
 	 * 30.15), the mockup styles the administrator chose (`photos`), the
-	 * stitch colours a creator can choose (`stitches`) and what a flat
-	 * product adds; null for an own base product.
+	 * stitch colours a creator can choose (`stitches`), what a flat product
+	 * adds and, from a Gelato template, the attribute names (`axes`) and each
+	 * variant's catalog product (`uids`, by colour key and size; ADR-115);
+	 * null for an own base product.
 	 *
 	 * @param int $id Id.
-	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, photos: list<string>, stitches: list<string>, techniques: array<string, string>, options: array<mixed>}|null
+	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, photos: list<string>, stitches: list<string>, techniques: array<string, string>, options: array<mixed>, axes: array<string, string>, uids: array<string, array<string, string>>}|null
 	 * @throws DatabaseException When it cannot be read.
 	 */
 	public function provider( int $id ): ?array {
@@ -237,6 +239,9 @@ class BaseProductRepository {
 			'stitches'   => array_values( self::strings( $current && is_array( $decoded['stitches'] ?? null ) ? $decoded['stitches'] : array() ) ),
 			'techniques' => self::strings( $current && is_array( $decoded['techniques'] ?? null ) ? $decoded['techniques'] : array() ),
 			'options'    => $current && is_array( $decoded['options'] ?? null ) ? $decoded['options'] : array(),
+			// The attribute names of a Gelato template's axes (ADR-115), e.g. "Orientation" and "Size".
+			'axes'       => array_filter( self::strings( $current && is_array( $decoded['axes'] ?? null ) ? $decoded['axes'] : array() ), static fn( string $name ): bool => '' !== $name ),
+			'uids'       => self::nested( $current && is_array( $decoded['uids'] ?? null ) ? $decoded['uids'] : array() ),
 		);
 	}
 
@@ -367,6 +372,24 @@ class BaseProductRepository {
 		}
 
 		return $strings;
+	}
+
+	/**
+	 * A map of maps of scalars as strings.
+	 *
+	 * @param array<mixed> $map Map.
+	 * @return array<string, array<string, string>>
+	 */
+	private static function nested( array $map ): array {
+		$nested = array();
+
+		foreach ( $map as $key => $inner ) {
+			if ( is_array( $inner ) ) {
+				$nested[ (string) $key ] = self::strings( $inner );
+			}
+		}
+
+		return $nested;
 	}
 
 	/**

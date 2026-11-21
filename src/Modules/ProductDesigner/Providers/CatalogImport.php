@@ -227,7 +227,8 @@ class CatalogImport {
 		$sheets = true === ( $choice['printed'] ?? false );
 		$list   = static fn( string $key ): array => array_map( 'strval', array_filter( is_array( $picked[ $key ] ?? null ) ? $picked[ $key ] : array(), 'is_scalar' ) );
 		$photos = self::chosen_photos( $choice['photos'] ?? array(), $list( 'photos' ) );
-		$sizes  = array_values( array_intersect( $choice['sizes'], $list( 'sizes' ) ) );
+		// Names are compared as stored (ADR-115): runs of spaces as one.
+		$sizes  = array_values( array_intersect( $choice['sizes'], array_map( BaseProduct::size_name( ... ), $list( 'sizes' ) ) ) );
 		$colors = array();
 		$render = array();
 
@@ -241,8 +242,11 @@ class CatalogImport {
 			}
 		}
 
-		$sides = array();
-		$packs = is_array( $picked['packs'] ?? null ) ? $picked['packs'] : array();
+		$sides   = array();
+		$packs   = is_array( $picked['packs'] ?? null ) ? $picked['packs'] : array();
+		$grouped = true === ( $choice['grouped'] ?? false );
+		$ticked  = array_keys( $render );
+		$groups  = array();
 
 		foreach ( $choice['sides'] as $side ) {
 			$key  = BaseView::key_of( $side['name'] );
@@ -250,8 +254,11 @@ class CatalogImport {
 			// A side of some sizes only comes with the ticked ones of them, and not at all without any.
 			$own  = $side['sizes'] ?? array();
 			$only = array_values( array_intersect( $own, $sizes ) );
+			// A format group's side (ADR-115) belongs to its value of the first axis; its markers are counted per group.
+			$values = array_values( array_intersect( $side['colors'] ?? array(), $ticked ) );
+			$room   = $grouped ? count( $sides ) < BaseProduct::MAX_VIEWS : count( $sides ) < count( ImageProbe::MARKERS );
 
-			if ( '' !== $key && ! isset( $sides[ $key ] ) && in_array( $side['placement'], $list( 'sides' ), true ) && count( $sides ) < count( ImageProbe::MARKERS ) && ( array() === $own || array() !== $only ) ) {
+			if ( '' !== $key && ! isset( $sides[ $key ] ) && in_array( $side['placement'], $list( 'sides' ), true ) && $room && ( array() === $own || array() !== $only ) && ( ! $grouped || array() !== $values ) ) {
 				$sides[ $key ] = array_merge(
 					array(
 						'key'         => $key,
@@ -260,6 +267,12 @@ class CatalogImport {
 					$side,
 					array( 'sizes' => $only )
 				);
+
+				if ( $grouped ) {
+					$sides[ $key ]['colors']           = $values;
+					$sides[ $key ]['formats']          = array_intersect_key( is_array( $side['formats'] ?? null ) ? $side['formats'] : array(), array_flip( $only ) );
+					$groups[ (string) $side['group'] ] = (string) $side['variant'];
+				}
 			}
 		}
 
@@ -284,6 +297,7 @@ class CatalogImport {
 		$keys = array_column( $base->colors ?? array(), 'key', 'name' );
 		$map  = array();
 		$data = array();
+		$uids = array();
 
 		foreach ( $render as $name => $variant ) {
 			$key          = (string) ( $keys[ $name ] ?? '' );
@@ -293,10 +307,21 @@ class CatalogImport {
 				if ( isset( $choice['variants'][ $name ][ $size ] ) ) {
 					$map[ $key ][ $size ] = $choice['variants'][ $name ][ $size ];
 				}
+
+				if ( is_string( $choice['uids'][ $name ][ $size ] ?? null ) && '' !== $choice['uids'][ $name ][ $size ] ) {
+					$uids[ $key ][ $size ] = $choice['uids'][ $name ][ $size ];
+				}
 			}
 		}
 
-		unset( $data[''], $map[''] );
+		unset( $data[''], $map[''], $uids[''] );
+
+		// A side's values are stored by colour key.
+		foreach ( $sides as $side_key => $side ) {
+			if ( isset( $side['colors'] ) ) {
+				$sides[ $side_key ]['colors'] = array_values( array_filter( array_map( static fn( string $name ): string => (string) ( $keys[ $name ] ?? '' ), $side['colors'] ) ) );
+			}
+		}
 
 		$this->bases->set_provider(
 			$id,
@@ -312,6 +337,8 @@ class CatalogImport {
 					'stitches'   => $choice['stitches'] ?? array(),
 					'techniques' => array_column( $sides, 'technique', 'key' ),
 					'options'    => $choice['options'] ?? array(),
+					'axes'       => $choice['axes'] ?? array(),
+					'uids'       => $uids,
 				)
 			)
 		);
@@ -322,7 +349,10 @@ class CatalogImport {
 				'ref'         => $ref,
 				'sides'       => array_values( $sides ),
 				'colors'      => $data,
-				'measure_hex' => GelatoCatalog::SOURCE === $source,
+				'groups'      => $groups,
+				'uids'        => $uids,
+				// The values of a grouped first axis (Vertical …) are no colours to measure.
+				'measure_hex' => GelatoCatalog::SOURCE === $source && ! $grouped,
 				'flat'        => $flat,
 				'printed'     => $sheets,
 			)
@@ -554,6 +584,7 @@ class CatalogImport {
 			'flat'     => $this->flatten( $id, $renderer, $data ),
 			'measure'  => $this->measure( $renderer, $data ),
 			'download' => $this->collect( $id, $renderer, $data ),
+			'bleed'    => $this->trims( $renderer, $data ),
 			default    => $this->render( $id, $renderer, $data ),
 		};
 
@@ -679,7 +710,7 @@ class CatalogImport {
 			}
 
 			if ( 'done' === $state['status'] ) {
-				$group = 'marker' === $kind ? 'marker' : 'blank';
+				$group = str_starts_with( (string) $kind, 'marker' ) ? 'marker' : 'blank';
 
 				$renders[ $kind ]['status'] = 'done';
 
@@ -724,30 +755,35 @@ class CatalogImport {
 	 * @throws InvalidArgumentException When a photo cannot be read.
 	 */
 	private function measure( CatalogRenderer $renderer, array &$data ): int {
-		$first    = (string) array_key_first( is_array( $data['colors'] ?? null ) ? $data['colors'] : array() );
-		$blank    = is_array( $data['images']['blank'] ?? null ) ? $data['images']['blank'] : array();
-		$marker   = is_array( $data['images']['marker'] ?? null ) ? $data['images']['marker'] : array();
-		$sides    = is_array( $data['sides'] ?? null ) ? array_values( $data['sides'] ) : array();
-		$measured = is_array( $data['measured'] ?? null ) ? $data['measured'] : array();
-		$done     = 0;
+		$first     = (string) array_key_first( is_array( $data['colors'] ?? null ) ? $data['colors'] : array() );
+		$blank     = is_array( $data['images']['blank'] ?? null ) ? $data['images']['blank'] : array();
+		$marker    = is_array( $data['images']['marker'] ?? null ) ? $data['images']['marker'] : array();
+		$sides     = is_array( $data['sides'] ?? null ) ? array_values( $data['sides'] ) : array();
+		$measured  = is_array( $data['measured'] ?? null ) ? $data['measured'] : array();
+		$positions = self::positions( $sides );
+		$done      = 0;
+		// Each format group (ADR-115) has its own renders; measured as `<group>@<slot>`.
+		$groups = array_map( 'strval', array_keys( is_array( $data['groups'] ?? null ) ? $data['groups'] : array() ) );
 
 		foreach ( $marker as $slot => $urls ) {
-			$slot = (string) $slot;
+			foreach ( array() === $groups ? array( $first ) : $groups as $group ) {
+				$at = array() === $groups ? (string) $slot : $group . '@' . $slot;
 
-			if ( isset( $measured[ $slot ] ) || ! is_string( $urls[ $first ] ?? null ) || ! is_string( $blank[ $slot ][ $first ] ?? null ) ) {
-				continue;
+				if ( isset( $measured[ $at ] ) || ! is_string( $urls[ $group ] ?? null ) || ! is_string( $blank[ $slot ][ $group ] ?? null ) ) {
+					continue;
+				}
+
+				if ( $done >= self::MEASURES_PER_RUN ) {
+					$data['measured'] = $measured;
+
+					return 0;
+				}
+
+				$count = array() === $groups ? count( $sides ) : count( array_filter( $positions, static fn( array $position ): bool => $group === $position[0] ) );
+
+				$measured[ $at ] = ImageProbe::markers( $renderer->download( $blank[ $slot ][ $group ] ), $renderer->download( $urls[ $group ] ), $count );
+				++$done;
 			}
-
-			if ( $done >= self::MEASURES_PER_RUN ) {
-				$data['measured'] = $measured;
-
-				return 0;
-			}
-
-			$found = ImageProbe::markers( $renderer->download( $blank[ $slot ][ $first ] ), $renderer->download( $urls[ $first ] ), count( $sides ) );
-
-			$measured[ $slot ] = $found;
-			++$done;
 		}
 
 		if ( array() === $measured ) {
@@ -760,8 +796,17 @@ class CatalogImport {
 		foreach ( array_keys( $sides ) as $index ) {
 			$best = null;
 
-			foreach ( $measured as $slot => $found ) {
-				$hit    = is_array( $found ) && is_array( $found['found'] ?? null ) ? ( $found['found'][ $index ] ?? null ) : null;
+			[ $group, $position ] = $positions[ $index ];
+
+			foreach ( $measured as $at => $found ) {
+				$parts = explode( '@', (string) $at, 2 );
+				$slot  = $parts[1] ?? $parts[0];
+
+				if ( ( isset( $parts[1] ) ? $parts[0] : '' ) !== $group ) {
+					continue;
+				}
+
+				$hit    = is_array( $found ) && is_array( $found['found'] ?? null ) ? ( $found['found'][ $position ] ?? null ) : null;
 				$width  = is_array( $found ) ? (int) ( $found['width'] ?? 0 ) : 0;
 				$height = is_array( $found ) ? (int) ( $found['height'] ?? 0 ) : 0;
 				$count  = is_array( $hit ) ? (int) ( $hit['count'] ?? 0 ) : 0;
@@ -800,6 +845,26 @@ class CatalogImport {
 	}
 
 	/**
+	 * Each side's format group (empty without groups) and its place among the
+	 * group's sides, which is its marker (ADR-115).
+	 *
+	 * @param array<int, mixed> $sides Import sides.
+	 * @return array<int, array{0: string, 1: int}>
+	 */
+	private static function positions( array $sides ): array {
+		$positions = array();
+		$counts    = array();
+
+		foreach ( $sides as $index => $side ) {
+			$group               = is_array( $side ) && is_string( $side['group'] ?? null ) ? $side['group'] : '';
+			$counts[ $group ]    = ( $counts[ $group ] ?? -1 ) + 1;
+			$positions[ $index ] = array( $group, $counts[ $group ] );
+		}
+
+		return $positions;
+	}
+
+	/**
 	 * Downloads the blank photo of each colour and side as a PNG of the
 	 * side's size.
 	 *
@@ -820,11 +885,14 @@ class CatalogImport {
 		$count  = 0;
 
 		foreach ( is_array( $data['chosen'] ?? null ) ? $data['chosen'] : array() as $index => $chosen ) {
-			$key = (string) ( $sides[ $index ]['key'] ?? '' );
+			$key   = (string) ( $sides[ $index ]['key'] ?? '' );
+			$group = is_string( $sides[ $index ]['group'] ?? null ) ? $sides[ $index ]['group'] : '';
+			// A format group's side has the photo of its group's render, for its own values only.
+			$own = '' === $group ? $colors : ( is_array( $sides[ $index ]['colors'] ?? null ) ? $sides[ $index ]['colors'] : array() );
 
-			foreach ( $colors as $color ) {
+			foreach ( $own as $color ) {
 				$color = (string) $color;
-				$url   = $blank[ $chosen['slot'] ][ $color ] ?? null;
+				$url   = $blank[ $chosen['slot'] ][ '' === $group ? $color : $group ] ?? null;
 
 				if ( isset( $data['files'][ $key ][ $color ] ) ) {
 					continue;
@@ -853,9 +921,78 @@ class CatalogImport {
 			}
 		}
 
+		$data['phase'] = 'bleed';
+
+		return 0;
+	}
+
+	/**
+	 * Asks Gelato for the finished size of each format's product (ADR-115
+	 * pkt. 8), a few per round; a failure leaves that size without a bleed.
+	 *
+	 * @param CatalogRenderer      $renderer Provider.
+	 * @param array<string, mixed> $data     Import data.
+	 * @return int Seconds to the next round.
+	 * @throws GelatoException When Gelato asks to wait.
+	 */
+	private function trims( CatalogRenderer $renderer, array &$data ): int {
+		$asked = 0;
+
+		if ( ! $renderer instanceof GelatoCatalog ) {
+			$data['phase'] = 'save';
+
+			return 0;
+		}
+
+		foreach ( self::format_uids( $data ) as $uid ) {
+			if ( isset( $data['trims'][ $uid ] ) ) {
+				continue;
+			}
+
+			if ( $asked >= self::DOWNLOADS_PER_RUN ) {
+				return 0;
+			}
+
+			try {
+				$data['trims'][ $uid ] = $renderer->dimensions( $uid ) ?? array();
+			} catch ( GelatoException $e ) {
+				if ( GelatoException::RATE_LIMITED === $e->reason() ) {
+					throw $e;
+				}
+
+				$data['trims'][ $uid ] = array();
+			}
+
+			++$asked;
+		}
+
 		$data['phase'] = 'save';
 
 		return 0;
+	}
+
+	/**
+	 * The `productUid` of every size of the sides with formats.
+	 *
+	 * @param array<string, mixed> $data Import data.
+	 * @return list<string>
+	 */
+	private static function format_uids( array $data ): array {
+		$uids = array();
+
+		foreach ( is_array( $data['sides'] ?? null ) ? $data['sides'] : array() as $side ) {
+			$color = is_array( $side ) && is_array( $side['colors'] ?? null ) ? (string) reset( $side['colors'] ) : '';
+
+			foreach ( is_array( $side ) && is_array( $side['formats'] ?? null ) ? array_keys( $side['formats'] ) : array() as $size ) {
+				$uid = $data['uids'][ $color ][ (string) $size ] ?? null;
+
+				if ( is_string( $uid ) && '' !== $uid && ! in_array( $uid, $uids, true ) ) {
+					$uids[] = $uid;
+				}
+			}
+		}
+
+		return $uids;
 	}
 
 	/**
@@ -909,12 +1046,13 @@ class CatalogImport {
 				continue;
 			}
 
-			[ $width_mm, $height_mm ] = ImageProbe::print_size( $chosen['box'], (int) $side['width_mm'], (int) $side['height_mm'] );
+			// A format group's photo shows the whole print (a poster): its print size stands, as each size's format follows it.
+			[ $width_mm, $height_mm ] = isset( $side['formats'] ) ? array( (int) $side['width_mm'], (int) $side['height_mm'] ) : ImageProbe::print_size( $chosen['box'], (int) $side['width_mm'], (int) $side['height_mm'] );
 
 			$area                  = ImageProbe::fit( $chosen['box'], $width_mm, $height_mm );
 			$slots[ $side['key'] ] = (string) $chosen['slot'];
 			$kept[ $side['key'] ]  = (string) $side['placement'];
-			$views[]               = array(
+			$view                  = array(
 				'key'         => '',
 				'name'        => (string) $side['name'],
 				'x'           => (string) $area['x'],
@@ -929,6 +1067,15 @@ class CatalogImport {
 				'clear'       => array(),
 				'uploads'     => $uploads,
 			);
+
+			// A format group's side (ADR-115): its sizes and values, and each size's print size and bleed.
+			if ( is_array( $side['formats'] ?? null ) && array() !== $side['formats'] ) {
+				$view['sizes']   = array_map( 'strval', is_array( $side['sizes'] ?? null ) ? $side['sizes'] : array() );
+				$view['colors']  = array_map( 'strval', is_array( $side['colors'] ?? null ) ? $side['colors'] : array() );
+				$view['formats'] = self::formats( $side, $data );
+			}
+
+			$views[] = $view;
 		}
 
 		if ( array() === $kept ) {
@@ -976,6 +1123,8 @@ class CatalogImport {
 					'stitches'   => $provider['stitches'] ?? array(),
 					'techniques' => $provider['techniques'] ?? array(),
 					'options'    => $provider['options'] ?? array(),
+					'axes'       => $provider['axes'] ?? array(),
+					'uids'       => $provider['uids'] ?? array(),
 				)
 			)
 		);
@@ -996,6 +1145,33 @@ class CatalogImport {
 				)
 			)
 		);
+	}
+
+	/**
+	 * A format group side's print size and bleed per size: the bleed from
+	 * the finished size Gelato named (GelatoCatalog::bleed()).
+	 *
+	 * @param array<string, mixed> $side Import side.
+	 * @param array<string, mixed> $data Import data.
+	 * @return array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>
+	 */
+	private static function formats( array $side, array $data ): array {
+		$formats = array();
+		$color   = is_array( $side['colors'] ?? null ) ? (string) reset( $side['colors'] ) : '';
+
+		foreach ( is_array( $side['formats'] ?? null ) ? $side['formats'] : array() as $size => $format ) {
+			$print = array( (float) ( $format['width_mm'] ?? 0 ), (float) ( $format['height_mm'] ?? 0 ) );
+			$uid   = $data['uids'][ $color ][ (string) $size ] ?? '';
+			$trim  = is_string( $uid ) ? ( $data['trims'][ $uid ] ?? array() ) : array();
+			$bleed = GelatoCatalog::bleed( $print, is_array( $trim ) && 2 === count( $trim ) ? array( (float) $trim[0], (float) $trim[1] ) : null );
+
+			$formats[ (string) $size ] = array(
+				'width_mm'  => $print[0],
+				'height_mm' => $print[1],
+			) + ( null === $bleed ? array() : array( 'bleed' => $bleed ) );
+		}
+
+		return $formats;
 	}
 
 	/**

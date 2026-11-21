@@ -91,12 +91,40 @@ class GelatoCatalog implements CatalogRenderer {
 	}
 
 	/**
-	 * What the administrator can pick from a template: the colours and
-	 * sizes of its variants and the image placeholders of the first one.
+	 * The largest difference in shape (width ÷ height) between the sizes of
+	 * one format group (ADR-115 pkt. 2).
+	 */
+	public const SHAPE_TOLERANCE = 0.03;
+
+	/**
+	 * The smallest and largest bleed in mm (ADR-115 pkt. 8).
+	 */
+	public const MIN_BLEED = 0.5;
+
+	public const MAX_BLEED = 15.0;
+
+	/**
+	 * What the administrator can pick from a template (ADR-115). The axes come
+	 * from the variants' own options:
+	 *
+	 * - the size is the catalog's `gsi_`, else an option named Size, Sizes,
+	 *   Format or Størrelse, else "One size";
+	 * - the first axis is the colour (the catalog's `gco_`, else an option
+	 *   named like Color, Colour or Farve) with every other option
+	 *   (Orientation, Paper, Frame …), its values joined by " / " ("Standard"
+	 *   without any).
+	 *
+	 * Two variants with the same values are counted in `duplicates`, never
+	 * dropped without a word. The sizes are sorted (SizeOrder). With options
+	 * besides the colour, or without a colour (`grouped`), every value of the first axis has its
+	 * own sides: its sizes in format groups of one shape (SHAPE_TOLERANCE),
+	 * each a side with the print size of its largest size, its own render
+	 * (`group`, `variant`) and each size's own print size (`formats`).
+	 * Otherwise the sides are the first variant's image placeholders, as before.
 	 *
 	 * @param string $ref   Template id.
-	 * @param int    $group Not used: a template has one print size per side.
-	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int}>, variants: array<string, array<string, string>>}
+	 * @param int    $group Not used: the format groups follow from the template.
+	 * @return array{name: string, description: string, image: string, colors: list<array{name: string, hex: string}>, sizes: list<string>, sides: list<array<string, mixed>>, variants: array<string, array<string, string>>, uids: array<string, array<string, string>>, axes: array{color: string, size: string}, grouped: bool, duplicates: int}
 	 * @throws GelatoException When Gelato refuses or fails, or the template cannot be a base product.
 	 */
 	public function choice( string $ref, int $group = 0 ): array {
@@ -104,37 +132,69 @@ class GelatoCatalog implements CatalogRenderer {
 
 		$template = $this->api->template( trim( $ref ) );
 		$variants = self::variants( $template );
-		$colors   = array();
-		$sizes    = array();
-		$map      = array();
+
+		[ $size_option, $color_option, $others ] = self::axes( $variants );
+
+		$colors     = array();
+		$sizes      = array();
+		$map        = array();
+		$uids       = array();
+		$found      = array();
+		$areas      = array();
+		$duplicates = 0;
+		$tinted     = null !== $color_option;
 
 		foreach ( $variants as $variant ) {
-			$color = self::color_of( $variant );
-			$size  = self::size_of( $variant );
-
 			if ( ! is_scalar( $variant['id'] ?? null ) || '' === (string) $variant['id'] ) {
 				continue;
 			}
 
-			if ( ! isset( $colors[ $color ] ) && count( $colors ) < BaseProduct::MAX_COLORS ) {
-				// Gelato names no colour codes: CatalogImport measures them on the blank photos.
-				$colors[ $color ] = array(
-					'name' => $color,
-					'hex'  => '#ffffff',
-				);
+			$size    = self::size_of( $variant, $size_option );
+			$color   = self::value_of( $variant, $color_option, $others );
+			$tinted  = $tinted || null !== self::attribute( $variant, 'gco' );
+			$full    = ! isset( $colors[ $color ] ) && count( $colors ) >= BaseProduct::MAX_COLORS;
+			$too_big = ! in_array( $size, $sizes, true ) && count( $sizes ) >= BaseProduct::MAX_SIZES;
+
+			if ( isset( $map[ $color ][ $size ] ) ) {
+				++$duplicates;
+				continue;
 			}
 
-			if ( ! in_array( $size, $sizes, true ) && count( $sizes ) < BaseProduct::MAX_SIZES ) {
+			if ( $full || $too_big ) {
+				continue;
+			}
+
+			// Gelato names no colour codes: CatalogImport measures them on the blank photos.
+			$colors[ $color ] ??= array(
+				'name' => $color,
+				'hex'  => '#ffffff',
+			);
+
+			if ( ! in_array( $size, $sizes, true ) ) {
 				$sizes[] = $size;
 			}
 
-			$map[ $color ][ $size ] ??= (string) $variant['id'];
+			$map[ $color ][ $size ]   = (string) $variant['id'];
+			$uids[ $color ][ $size ]  = is_string( $variant['productUid'] ?? null ) ? sanitize_text_field( $variant['productUid'] ) : '';
+			$found[ $color ][ $size ] = $variant;
+			$area                     = self::print_area( $variant );
+			$areas[ $size ]           = min( $areas[ $size ] ?? $area, $area );
 		}
 
-		$sides = array() === $variants ? array() : self::sides( $variants[0] );
+		$sizes = SizeOrder::sort( $sizes, $areas );
+		// Without a colour every size's print area can have its own shape, as with other options.
+		$grouped = array() !== $others || ! $tinted;
+		$first   = array() === $found ? null : reset( $found );
+		$sides   = $grouped ? self::groups( $found, $sizes ) : ( is_array( $first ) ? self::sides( (array) reset( $first ) ) : array() );
 
 		if ( array() === $colors || array() === $sides ) {
 			self::fail( GelatoException::INVALID );
+		}
+
+		$labels = $tinted ? array( __( 'Colour', 'merchboard' ) ) : array();
+
+		foreach ( $others as $other ) {
+			$labels[] = self::option_label( $other );
 		}
 
 		return array(
@@ -145,7 +205,237 @@ class GelatoCatalog implements CatalogRenderer {
 			'sizes'       => $sizes,
 			'sides'       => $sides,
 			'variants'    => $map,
+			'uids'        => $uids,
+			'axes'        => array(
+				'color' => array() === $labels ? __( 'Colour', 'merchboard' ) : mb_substr( implode( ' / ', $labels ), 0, 60 ),
+				'size'  => __( 'Size', 'merchboard' ),
+			),
+			'grouped'     => $grouped,
+			'duplicates'  => $duplicates,
 		);
+	}
+
+	/**
+	 * The template's axes from its variants' options: the size option, the
+	 * colour option and the others, each by its name as Gelato writes it.
+	 *
+	 * @param list<array<mixed>> $variants Variants.
+	 * @return array{0: string|null, 1: string|null, 2: list<string>}
+	 */
+	public static function axes( array $variants ): array {
+		$names = array();
+
+		foreach ( $variants as $variant ) {
+			foreach ( is_array( $variant['variantOptions'] ?? null ) ? $variant['variantOptions'] : array() as $option ) {
+				$name = is_array( $option ) && is_string( $option['name'] ?? null ) ? trim( $option['name'] ) : '';
+
+				if ( '' !== $name && ! in_array( $name, $names, true ) ) {
+					$names[] = $name;
+				}
+			}
+		}
+
+		$size  = null;
+		$color = null;
+
+		foreach ( $names as $name ) {
+			if ( null === $size && 1 === preg_match( '/^(sizes?|format|st(ø|oe?)rrelse)$/iu', $name ) ) {
+				$size = $name;
+			} elseif ( null === $color && 1 === preg_match( '/colou?r|farve/iu', $name ) ) {
+				$color = $name;
+			}
+		}
+
+		return array( $size, $color, array_values( array_diff( $names, array_filter( array( $size, $color ), 'is_string' ) ) ) );
+	}
+
+	/**
+	 * An option's name as creators and customers read it (an attribute name).
+	 *
+	 * @param string $name Gelato's option name.
+	 */
+	public static function option_label( string $name ): string {
+		return match ( strtolower( trim( $name ) ) ) {
+			'orientation' => __( 'Orientation', 'merchboard' ),
+			'paper'       => __( 'Paper', 'merchboard' ),
+			'frame'       => __( 'Frame', 'merchboard' ),
+			'material'    => __( 'Material', 'merchboard' ),
+			'finish'      => __( 'Finish', 'merchboard' ),
+			default       => mb_substr( trim( sanitize_text_field( $name ) ), 0, 60 ),
+		};
+	}
+
+	/**
+	 * An option's value as creators and customers read it.
+	 *
+	 * @param string $value Gelato's value.
+	 */
+	public static function option_value( string $value ): string {
+		return match ( strtolower( trim( $value ) ) ) {
+			'vertical', 'portrait'    => __( 'Vertical', 'merchboard' ),
+			'horizontal', 'landscape' => __( 'Horizontal', 'merchboard' ),
+			default                   => trim( $value ),
+		};
+	}
+
+	/**
+	 * A variant's value on the first axis: its colour and its other options.
+	 *
+	 * @param array<mixed> $variant      Variant.
+	 * @param string|null  $color_option The colour option's name.
+	 * @param string[]     $others       The other options' names.
+	 */
+	public static function value_of( array $variant, ?string $color_option, array $others ): string {
+		$parts = array();
+
+		// The catalog's colour wins over the template author's own names, as before (ADR-082).
+		if ( null !== self::attribute( $variant, 'gco' ) ) {
+			$parts[] = self::color_of( $variant );
+		} elseif ( null !== $color_option ) {
+			$parts[] = self::option( $variant, '/^' . preg_quote( $color_option, '/' ) . '$/iu' );
+		}
+
+		foreach ( $others as $other ) {
+			$value   = self::option( $variant, '/^' . preg_quote( $other, '/' ) . '$/iu' );
+			$parts[] = null === $value ? null : self::option_value( $value );
+		}
+
+		$parts = array_filter( $parts, static fn( ?string $part ): bool => null !== $part && '' !== $part );
+
+		return array() === $parts ? self::STANDARD_COLOR : mb_substr( trim( sanitize_text_field( implode( ' / ', $parts ) ) ), 0, 60 );
+	}
+
+	/**
+	 * The format groups of every value of the first axis: per value, its
+	 * sizes from the largest print area to the smallest, each joining the
+	 * group with the same print areas whose largest size (its print file) is
+	 * closest in shape, at most SHAPE_TOLERANCE apart, else starting one.
+	 * Each group's print area is a side with the print size of its largest
+	 * size; the groups are numbered by their smallest size.
+	 *
+	 * @param array<string, array<string, array<mixed>>> $found Variant by value and size.
+	 * @param string[]                                   $sizes The sizes in order.
+	 * @return list<array<string, mixed>>
+	 */
+	private static function groups( array $found, array $sizes ): array {
+		$sides  = array();
+		$number = 0;
+
+		foreach ( $found as $color => $by_size ) {
+			$own = array();
+
+			foreach ( $sizes as $size ) {
+				$list = isset( $by_size[ $size ] ) ? self::sides( $by_size[ $size ] ) : array();
+
+				if ( array() !== $list ) {
+					$own[ $size ] = $list;
+				}
+			}
+
+			// Largest first: a group's largest size is its print file, which each of its sizes is cut from.
+			$order = array_map( 'strval', array_keys( $own ) );
+			usort( $order, static fn( string $a, string $b ): int => self::area_of( $own[ $b ] ) <=> self::area_of( $own[ $a ] ) );
+
+			$groups = array();
+			$member = array();
+
+			foreach ( $order as $size ) {
+				$placements = implode( "\0", array_column( $own[ $size ], 'placement' ) );
+				$best       = null;
+				$closest    = INF;
+
+				// The group whose print file is closest in shape, within SHAPE_TOLERANCE.
+				foreach ( $groups as $index => $group ) {
+					$apart = $group['placements'] === $placements ? self::apart( $own[ $group['largest'] ], $own[ $size ] ) : INF;
+
+					if ( $apart <= self::SHAPE_TOLERANCE && $apart < $closest ) {
+						$best    = $index;
+						$closest = $apart;
+					}
+				}
+
+				if ( null === $best ) {
+					$best            = count( $groups );
+					$groups[ $best ] = array(
+						'placements' => $placements,
+						'largest'    => $size,
+					);
+				}
+
+				$member[ $size ] = $best;
+			}
+
+			// Each group's sizes in the product's order; the groups numbered by their smallest size.
+			$lists = array();
+
+			foreach ( array_keys( $own ) as $size ) {
+				$lists[ $member[ (string) $size ] ][] = (string) $size;
+			}
+
+			foreach ( array_values( $lists ) as $index => $list ) {
+				$largest = $groups[ $member[ $list[0] ] ]['largest'];
+				$key     = 'g' . ( ++$number );
+
+				foreach ( $own[ $largest ] as $at => $side ) {
+					$formats = array();
+
+					foreach ( $list as $size ) {
+						$formats[ $size ] = array(
+							'width_mm'  => round( $own[ $size ][ $at ]['mm'][0], 1 ),
+							'height_mm' => round( $own[ $size ][ $at ]['mm'][1], 1 ),
+						);
+					}
+
+					if ( count( $own[ $largest ] ) > 1 ) {
+						/* translators: 1: a side, e.g. "Front"; 2: a value such as "Vertical"; 3: the number of a group of sizes with one shape. */
+						$name = sprintf( __( '%1$s – %2$s – format %3$d', 'merchboard' ), $side['name'], $color, $index + 1 );
+					} else {
+						/* translators: 1: a value such as "Vertical"; 2: the number of a group of sizes with one shape. */
+						$name = sprintf( __( '%1$s – format %2$d', 'merchboard' ), $color, $index + 1 );
+					}
+
+					$sides[] = array_merge(
+						$side,
+						array(
+							'name'    => mb_substr( $name, 0, 60 ),
+							'sizes'   => $list,
+							'colors'  => array( (string) $color ),
+							'group'   => $key,
+							'variant' => (string) $by_size[ $largest ]['id'],
+							'formats' => $formats,
+						)
+					);
+				}
+			}
+		}
+
+		return array_slice( $sides, 0, BaseProduct::MAX_VIEWS );
+	}
+
+	/**
+	 * How far apart two variants' print areas are in shape: the largest
+	 * relative difference of width ÷ height over their sides.
+	 *
+	 * @param list<array{mm: array{0: float, 1: float}}> $first One variant's sides.
+	 * @param list<array{mm: array{0: float, 1: float}}> $other The other's, in the same order.
+	 */
+	private static function apart( array $first, array $other ): float {
+		$apart = 0.0;
+
+		foreach ( $first as $at => $side ) {
+			$apart = max( $apart, abs( ( $side['mm'][0] / $side['mm'][1] ) / ( $other[ $at ]['mm'][0] / $other[ $at ]['mm'][1] ) - 1 ) );
+		}
+
+		return $apart;
+	}
+
+	/**
+	 * A variant's print area in mm², its sides together.
+	 *
+	 * @param list<array{mm: array{0: float, 1: float}}> $sides The variant's sides.
+	 */
+	private static function area_of( array $sides ): float {
+		return array_sum( array_map( static fn( array $side ): float => $side['mm'][0] * $side['mm'][1], $sides ) );
 	}
 
 	/**
@@ -160,11 +450,12 @@ class GelatoCatalog implements CatalogRenderer {
 		$colors   = self::render_colors( $kind, $import );
 		$variants = array_values( $colors );
 		$images   = array();
+		$sides    = self::render_sides( $kind, $import );
 
-		foreach ( is_array( $import['sides'] ?? null ) ? array_values( $import['sides'] ) : array() as $index => $side ) {
-			$url = 'marker' === $kind ? ( $import['markers'][ $index ] ?? null ) : ( $import['blank'] ?? null );
+		foreach ( $sides as $index => $side ) {
+			$url = str_starts_with( $kind, 'marker' ) ? ( $import['markers'][ $index ] ?? null ) : ( $import['blank'] ?? null );
 
-			if ( ! is_array( $side ) || ! is_string( $side['placement'] ?? null ) || ! is_string( $url ) ) {
+			if ( ! is_string( $side['placement'] ?? null ) || ! is_string( $url ) ) {
 				self::fail( GelatoException::INVALID );
 			}
 
@@ -282,6 +573,23 @@ class GelatoCatalog implements CatalogRenderer {
 	 * @return list<string>
 	 */
 	public function render_kinds( array $import ): array {
+		$groups = is_array( $import['groups'] ?? null ) ? $import['groups'] : array();
+
+		// A format group (ADR-115) has its own variant: a marker and a blank render each.
+		if ( array() !== $groups ) {
+			$kinds = array();
+
+			foreach ( array_keys( $groups ) as $group ) {
+				$kinds[] = 'marker@' . $group;
+
+				if ( 'done' === ( $import['renders'][ 'marker@' . $group ]['status'] ?? null ) ) {
+					$kinds[] = 'blank@' . $group;
+				}
+			}
+
+			return $kinds;
+		}
+
 		$kinds = array( 'marker' );
 
 		if ( 'done' !== ( $import['renders']['marker']['status'] ?? null ) ) {
@@ -304,6 +612,14 @@ class GelatoCatalog implements CatalogRenderer {
 	 * @return array<string, string>
 	 */
 	private static function render_colors( string $kind, array $import ): array {
+		$at = strpos( $kind, '@' );
+
+		if ( false !== $at ) {
+			$group = substr( $kind, $at + 1 );
+
+			return is_scalar( $import['groups'][ $group ] ?? null ) ? array( $group => (string) $import['groups'][ $group ] ) : array();
+		}
+
 		$colors = array();
 
 		foreach ( is_array( $import['colors'] ?? null ) ? $import['colors'] : array() as $color => $variant ) {
@@ -315,6 +631,65 @@ class GelatoCatalog implements CatalogRenderer {
 		}
 
 		return array_slice( $colors, 0, 1, true );
+	}
+
+	/**
+	 * The sides a render shows, in their marker order: a format group's
+	 * (`marker@<group>`, `blank@<group>`), else every side.
+	 *
+	 * @param string               $kind   Render.
+	 * @param array<string, mixed> $import Import data.
+	 * @return list<array<mixed>>
+	 */
+	public static function render_sides( string $kind, array $import ): array {
+		$sides = array_values( array_filter( is_array( $import['sides'] ?? null ) ? $import['sides'] : array(), 'is_array' ) );
+		$at    = strpos( $kind, '@' );
+
+		if ( false === $at ) {
+			return $sides;
+		}
+
+		$group = substr( $kind, $at + 1 );
+
+		return array_values( array_filter( $sides, static fn( array $side ): bool => ( $side['group'] ?? null ) === $group ) );
+	}
+
+	/**
+	 * A catalog product's finished size in mm (GelatoApi::dimensions()).
+	 *
+	 * @param string $uid The product's `productUid`.
+	 * @return array{0: float, 1: float}|null
+	 * @throws GelatoException When the call fails.
+	 */
+	public function dimensions( string $uid ): ?array {
+		return $this->api->dimensions( $uid );
+	}
+
+	/**
+	 * The bleed of a print area in mm per axis, [x, y]: half of what the
+	 * print area exceeds the finished size by, only when both lie between
+	 * MIN_BLEED and MAX_BLEED, also with the finished size turned (ADR-115
+	 * pkt. 8). Null on clothing and anything else without a bleed.
+	 *
+	 * @param array{0: float, 1: float}      $area     The print area in mm.
+	 * @param array{0: float, 1: float}|null $finished The finished size in mm.
+	 * @return array{0: float, 1: float}|null
+	 */
+	public static function bleed( array $area, ?array $finished ): ?array {
+		if ( null === $finished || $area[0] <= 0 || $area[1] <= 0 ) {
+			return null;
+		}
+
+		foreach ( array( $finished, array( $finished[1], $finished[0] ) ) as $trim ) {
+			$x = ( $area[0] - $trim[0] ) / 2;
+			$y = ( $area[1] - $trim[1] ) / 2;
+
+			if ( $x >= self::MIN_BLEED && $y >= self::MIN_BLEED && $x <= self::MAX_BLEED && $y <= self::MAX_BLEED ) {
+				return array( round( $x, 2 ), round( $y, 2 ) );
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -370,6 +745,23 @@ class GelatoCatalog implements CatalogRenderer {
 	 * @return array<string, list<string>>
 	 */
 	public static function variant_images( array $answer, array $colors ): array {
+		// A product of one variant: every image is that variant's (a format group's render, ADR-115).
+		if ( 1 === count( $colors ) ) {
+			$urls = array();
+
+			foreach ( is_array( $answer['productImages'] ?? null ) ? $answer['productImages'] : array() as $image ) {
+				if ( is_array( $image ) && is_string( $image['fileUrl'] ?? null ) && '' !== $image['fileUrl'] && ! in_array( $image['fileUrl'], $urls, true ) ) {
+					$urls[] = $image['fileUrl'];
+				}
+			}
+
+			if ( array() === $urls && is_string( $answer['previewUrl'] ?? null ) && '' !== $answer['previewUrl'] ) {
+				$urls[] = $answer['previewUrl'];
+			}
+
+			return array() === $urls ? array() : array( (string) array_key_first( $colors ) => $urls );
+		}
+
 		$by_template = array_flip( array_filter( $colors, static fn( string $variant ): bool => '' !== $variant ) );
 		$by_variant  = array();
 		$images      = array();
@@ -452,12 +844,14 @@ class GelatoCatalog implements CatalogRenderer {
 	}
 
 	/**
-	 * A variant's size: the catalog's `gsi_` in its `productUid`, else its
-	 * option "Size" (a comma separates sizes), else "One size".
+	 * A variant's size: the catalog's `gsi_` in its `productUid`, else the
+	 * template's size option (ADR-115), else an option named like a size,
+	 * else "One size"; as a size name (BaseProduct::size_name()).
 	 *
 	 * @param array<mixed> $variant Variant.
+	 * @param string|null  $option  The template's size option (axes()).
 	 */
-	public static function size_of( array $variant ): string {
+	public static function size_of( array $variant, ?string $option = null ): string {
 		$value = self::attribute( $variant, 'gsi' );
 		$name  = null;
 
@@ -465,14 +859,51 @@ class GelatoCatalog implements CatalogRenderer {
 			$name = 1 === preg_match( '/^[a-z0-9]{1,4}$/', $value ) ? strtoupper( $value ) : ucfirst( str_replace( '-', ' ', $value ) );
 		}
 
-		return mb_substr( str_replace( ',', ' ', $name ?? self::option( $variant, '/^size$/i' ) ?? self::ONE_SIZE ), 0, 20 );
+		$own = null === $option ? null : self::option( $variant, '/^' . preg_quote( $option, '/' ) . '$/iu' );
+
+		return BaseProduct::size_name( $name ?? $own ?? self::option( $variant, '/^(sizes?|format|st(ø|oe?)rrelse)$/iu' ) ?? self::ONE_SIZE );
+	}
+
+	/**
+	 * A print area's name for creators: Gelato numbers the areas of a poster
+	 * or a canvas ("1"), which reads as "Forside", "Side 2" … (ADR-115 pkt. 7).
+	 *
+	 * @param string $label The print area or placeholder name.
+	 */
+	public static function side_label( string $label ): string {
+		$label = trim( $label );
+
+		if ( 1 === preg_match( '/^\d{1,2}$/', $label ) ) {
+			/* translators: %d: the number of a print area, 2 or more. */
+			return (int) $label <= 1 ? __( 'Front', 'merchboard' ) : sprintf( __( 'Side %d', 'merchboard' ), (int) $label );
+		}
+
+		return mb_substr( trim( sanitize_text_field( ucfirst( str_replace( array( '_', '-' ), ' ', $label ) ) ) ), 0, 60 );
+	}
+
+	/**
+	 * The print area of a variant in mm², all its placeholders together (the
+	 * order of sizes that are not clothing).
+	 *
+	 * @param array<mixed> $variant Variant.
+	 */
+	public static function print_area( array $variant ): float {
+		$area = 0.0;
+
+		foreach ( is_array( $variant['imagePlaceholders'] ?? null ) ? $variant['imagePlaceholders'] : array() as $placeholder ) {
+			if ( is_array( $placeholder ) ) {
+				$area += max( 0.0, (float) ( $placeholder['width'] ?? 0 ) ) * max( 0.0, (float) ( $placeholder['height'] ?? 0 ) );
+			}
+		}
+
+		return $area;
 	}
 
 	/**
 	 * The sides of a variant's image placeholders with their print size.
 	 *
 	 * @param array<mixed> $variant First variant.
-	 * @return list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int}>
+	 * @return list<array{placement: string, name: string, width_mm: int, height_mm: int, dpi: int, width: int, height: int, mm: array{0: float, 1: float}}>
 	 */
 	private static function sides( array $variant ): array {
 		$sides = array();
@@ -487,8 +918,7 @@ class GelatoCatalog implements CatalogRenderer {
 				continue;
 			}
 
-			$label = is_string( $placeholder['printArea'] ?? null ) && '' !== trim( $placeholder['printArea'] ) ? $placeholder['printArea'] : $name;
-			$label = mb_substr( trim( sanitize_text_field( ucfirst( str_replace( array( '_', '-' ), ' ', $label ) ) ) ), 0, 60 );
+			$label = self::side_label( is_string( $placeholder['printArea'] ?? null ) && '' !== trim( $placeholder['printArea'] ) ? $placeholder['printArea'] : $name );
 			$key   = substr( sanitize_title( $label ), 0, 32 );
 
 			if ( '' === $key || isset( $keys[ $key ] ) ) {
@@ -505,6 +935,7 @@ class GelatoCatalog implements CatalogRenderer {
 				'dpi'       => $dpi,
 				'width'     => (int) round( $width_mm * $dpi / 25.4 ),
 				'height'    => (int) round( $height_mm * $dpi / 25.4 ),
+				'mm'        => array( (float) $placeholder['width'], (float) $placeholder['height'] ),
 			);
 		}
 

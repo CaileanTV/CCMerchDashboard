@@ -287,7 +287,7 @@ final class BaseProductsPage {
 			DesignerException::BASE_CATEGORY        => array( __( 'The category is not a product category.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_TAG             => array( __( 'A product tag no longer exists. Choose the tags again.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_COLORS          => array( __( 'Enter one colour per line: a name and a colour code such as #1a2b3c. Names must differ.', 'merchboard' ), 'error' ),
-			DesignerException::BASE_SIZES           => array( __( 'Sizes must differ and have at most 20 characters.', 'merchboard' ), 'error' ),
+			DesignerException::BASE_SIZES           => array( __( 'Sizes must differ and have at most 60 characters.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_VIEW            => array( __( 'Check the sides: each needs a unique name, a background or colour mask, a print area inside the template and a print size of 1–2000 mm at 72–600 dpi that gives a print file of at most 8000 × 8000 pixels.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_LAYER_SIZE      => array( __( 'All layers of a side must have the same size in pixels.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_INCOMPLETE      => array( __( 'An active base product needs at least one colour, one size and one side.', 'merchboard' ), 'error' ),
@@ -1255,18 +1255,30 @@ final class BaseProductsPage {
 			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'The print size depends on the size. A base product holds one print size: make one base product per size you want to offer.', 'merchboard' ) . '</p><p>' . implode( ' | ', $links ) . '</p></div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
 		}
 
+		$grouped = true === ( $choice['grouped'] ?? false );
+		$axes    = is_array( $choice['axes'] ?? null ) ? $choice['axes'] : array();
+
+		if ( (int) ( $choice['duplicates'] ?? 0 ) > 0 ) {
+			/* translators: %d: how many variants of the template repeat another's values. */
+			echo '<div class="notice notice-warning inline"><p>' . esc_html( sprintf( _n( '%d variant has the same values as another and is left out. Check the template in Gelato.', '%d variants have the same values as others and are left out. Check the template in Gelato.', (int) $choice['duplicates'], 'merchboard' ), (int) $choice['duplicates'] ) ) . '</p></div>';
+		}
+
+		if ( $grouped ) {
+			echo '<div class="notice notice-info inline"><p>' . esc_html__( 'The sizes of each value are grouped by the shape of their print area (at most 3 % apart). Each group is a side of its own with its own photo, so creators make one design per group, and every size is offered. The print file has the largest size of its group and is cut to the shape of each size.', 'merchboard' ) . '</p></div>';
+		}
+
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="catalog_create">';
 		echo '<input type="hidden" name="source" value="' . esc_attr( $source ) . '"><input type="hidden" name="ref" value="' . esc_attr( $ref ) . '"><input type="hidden" name="group" value="' . esc_attr( (string) ( $choice['group'] ?? 0 ) ) . '"><input type="hidden" name="units" value="' . esc_attr( $in_cm ? 'cm' : 'in' ) . '">';
 		wp_nonce_field( BaseProductActions::ACTION );
 		echo '<table class="form-table" role="presentation"><tbody>';
-		echo '<tr><th scope="row">' . esc_html__( 'Colours', 'merchboard' ) . '</th><td>';
+		echo '<tr><th scope="row">' . esc_html( is_string( $axes['color'] ?? null ) ? $axes['color'] : __( 'Colours', 'merchboard' ) ) . '</th><td>';
 
 		foreach ( $choice['colors'] as $color ) {
 			echo '<label style="display:inline-block;margin:0 1em .4em 0"><input type="checkbox" name="colors[]" value="' . esc_attr( $color['name'] ) . '" checked> <span style="display:inline-block;width:1em;height:1em;vertical-align:middle;border:1px solid #8c8f94;background:' . esc_attr( $color['hex'] ) . '"></span> ' . esc_html( $color['name'] ) . '</label>';
 		}
 
-		echo '</td></tr><tr><th scope="row">' . esc_html__( 'Sizes', 'merchboard' ) . '</th><td>';
+		echo '</td></tr><tr><th scope="row">' . esc_html( is_string( $axes['size'] ?? null ) ? $axes['size'] : __( 'Sizes', 'merchboard' ) ) . '</th><td>';
 
 		foreach ( $choice['sizes'] as $size ) {
 			echo '<label style="display:inline-block;margin:0 1em .4em 0"><input type="checkbox" name="sizes[]" value="' . esc_attr( $size ) . '" checked> ' . esc_html( $size ) . '</label>';
@@ -1284,7 +1296,7 @@ final class BaseProductsPage {
 		foreach ( $by_placement as $group ) {
 			$side = $group[0];
 			/* translators: 1: side name, 2: width in mm, 3: height in mm. */
-			$label    = implode( '; ', array_map( static fn( array $one ): string => sprintf( __( '%1$s (%2$d × %3$d mm)', 'merchboard' ), $one['name'], $one['width_mm'], $one['height_mm'] ), $group ) );
+			$label    = $grouped ? GelatoCatalog::side_label( $side['placement'] ) : implode( '; ', array_map( static fn( array $one ): string => sprintf( __( '%1$s (%2$d × %3$d mm)', 'merchboard' ), $one['name'], $one['width_mm'], $one['height_mm'] ), $group ) );
 			$stitched = GelatoCatalog::SOURCE === $source && 1 === preg_match( '/embroider/i', $side['name'] . ' ' . $side['placement'] );
 			$first    = ThreadPacks::all()[0]['id'];
 			echo '<p style="margin:0 0 .4em"><label><input type="checkbox" name="sides[]" value="' . esc_attr( $side['placement'] ) . '"' . checked( in_array( $side['placement'], $defaults, true ), true, false ) . '> ' . esc_html( $label ) . '</label> ';
@@ -1294,9 +1306,21 @@ final class BaseProductsPage {
 			}
 
 			echo '</p>';
+
+			// A format group per line: its print size and the sizes it covers.
+			if ( $grouped ) {
+				echo '<ul style="margin:0 0 .8em 1.6em;list-style:disc">';
+
+				foreach ( $group as $one ) {
+					/* translators: 1: side name, 2: width in mm, 3: height in mm, 4: the sizes of the side. */
+					echo '<li>' . esc_html( sprintf( __( '%1$s (%2$d × %3$d mm): %4$s', 'merchboard' ), $one['name'], $one['width_mm'], $one['height_mm'], implode( ', ', is_array( $one['sizes'] ?? null ) ? $one['sizes'] : array() ) ) ) . '</li>';
+				}
+
+				echo '</ul>';
+			}
 		}
 
-		if ( count( $choice['sides'] ) > count( ImageProbe::MARKERS ) ) {
+		if ( ! $grouped && count( $choice['sides'] ) > count( ImageProbe::MARKERS ) ) {
 			/* translators: 1: sides of the product, 2: the most sides of a base product. */
 			echo '<div class="notice notice-warning inline"><p>' . esc_html( sprintf( __( 'The product has %1$d sides with its groups of sizes, and a base product holds %2$d. Only the first ones of the ticked placements are imported: untick a placement you do not need.', 'merchboard' ), count( $choice['sides'] ), count( ImageProbe::MARKERS ) ) ) . '</p></div>';
 		}

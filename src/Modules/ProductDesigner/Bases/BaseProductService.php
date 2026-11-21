@@ -625,7 +625,7 @@ class BaseProductService {
 				continue;
 			}
 
-			if ( in_array( $size, $sizes, true ) || mb_strlen( $size ) > 20 ) {
+			if ( in_array( $size, $sizes, true ) || mb_strlen( $size ) > BaseProduct::MAX_SIZE_LENGTH ) {
 				self::reject( DesignerException::BASE_SIZES );
 			}
 
@@ -644,7 +644,7 @@ class BaseProductService {
 	 * @param string[]                                                                     $colors   Colour keys of the base product (a colour's own background).
 	 * @param string[]                                                                     $sizes   The base product's sizes (a side keeps to them).
 	 * @param-out list<array{file: string, mime: string, width: int, height: int, bytes: int}> $stored
-	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool}>
+	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool, colors: list<string>, formats: array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>}>
 	 * @throws DesignerException When a side or file is refused.
 	 */
 	private function plan_views( ?BaseProduct $existing, array $views, array &$stored, array $colors = array(), array $sizes = array() ): array {
@@ -735,21 +735,31 @@ class BaseProductService {
 				self::reject( DesignerException::BASE_VIEW );
 			}
 
+			// A side's values of the first axis and its formats (ADR-115): entered, else kept while they are still the product's.
+			$values  = is_array( $input['colors'] ?? null ) ? array_values( array_filter( $input['colors'], 'is_string' ) ) : array_values( array_intersect( $old->colors ?? array(), $colors ) );
+			$formats = array_key_exists( 'formats', $input ) ? BaseView::formats_of( $input['formats'] ) : array_intersect_key( $old->formats ?? array(), array_flip( $sizes ) );
+
+			if ( array() !== array_diff( $values, $colors ) || array() !== array_diff( array_map( 'strval', array_keys( $formats ) ), $sizes ) ) {
+				self::reject( DesignerException::BASE_VIEW );
+			}
+
 			$plans[] = array(
-				'key'    => $key,
-				'name'   => $name,
-				'width'  => $width,
-				'height' => $height,
-				'layers' => $layers,
-				'new'    => $new,
-				'input'  => $input,
-				'pack'   => $pack,
-				'sizes'  => $only,
+				'key'     => $key,
+				'name'    => $name,
+				'width'   => $width,
+				'height'  => $height,
+				'layers'  => $layers,
+				'new'     => $new,
+				'input'   => $input,
+				'pack'    => $pack,
+				'sizes'   => $only,
 				// A flat side stays flat; only an import makes one.
-				'flat'   => true === ( $input['flat'] ?? false ) || true === $old?->flat,
-				'scene'  => $scene,
+				'flat'    => true === ( $input['flat'] ?? false ) || true === $old?->flat,
+				'scene'   => $scene,
 				// A small design area has the price of small extra areas; a field left out keeps its value.
-				'small'  => is_scalar( $input['small'] ?? null ) ? '1' === (string) $input['small'] : true === $old?->small,
+				'small'   => is_scalar( $input['small'] ?? null ) ? '1' === (string) $input['small'] : true === $old?->small,
+				'colors'  => $values,
+				'formats' => $formats,
 			);
 		}
 
@@ -793,8 +803,8 @@ class BaseProductService {
 	/**
 	 * A side from its plan.
 	 *
-	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool} $plan   Plan.
-	 * @param array<string, int>                                                                                                                                                                                                                          $layers Asset id by layer.
+	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool, colors: list<string>, formats: array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>} $plan   Plan.
+	 * @param array<string, int>                                                                                                                                                                                                                                                                                                                                                     $layers Asset id by layer.
 	 * @throws DesignerException When the side is invalid.
 	 */
 	private function view( array $plan, array $layers ): BaseView {
@@ -834,7 +844,9 @@ class BaseProductService {
 				$plan['flat'],
 				$plan['scene'],
 				$plan['sizes'],
-				$plan['small']
+				$plan['small'],
+				$plan['colors'],
+				$plan['formats']
 			);
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_VIEW );
@@ -933,7 +945,7 @@ class BaseProductService {
 		$view = $base->views[ $index ];
 
 		try {
-			$side  = new BaseView( $view->key, $view->name, $view->width, $view->height, $layers, $view->area, $view->width_mm, $view->height_mm, $view->dpi, $view->thread_pack, $view->flat, $view->scene, $view->sizes, $view->small );
+			$side  = $view->with_layers( $layers );
 			$views = array_map( static fn( BaseView $other ): BaseView => $other->key === $side->key ? $side : $other, $base->views );
 
 			return new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $new_version ? $base->version + 1 : $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color, $base->tag_ids );
