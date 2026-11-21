@@ -69,6 +69,12 @@ final class ImageProbe {
 	private const TRIM = 0.01;
 
 	/**
+	 * The share of a marker's fullest column or row that counts as solid for
+	 * its exact edges.
+	 */
+	private const SOLID = 0.25;
+
+	/**
 	 * Pixels looked at along the longest side (every n-th pixel above it).
 	 */
 	private const SAMPLES = 500;
@@ -175,10 +181,14 @@ final class ImageProbe {
 	 * render of the same photo. A marker render of another size is scaled to
 	 * the blank one.
 	 *
+	 * Each marker has a box with TRIM ignored at its edges, against stray
+	 * pixels on a garment, and its `edge`: the marker's own edges to the
+	 * pixel, for a photo that shows the whole print (a poster, ADR-115).
+	 *
 	 * @param string $blank   The blank render (bytes).
 	 * @param string $marker  The marker render (bytes).
 	 * @param int    $markers How many marker colours to look for (the sides).
-	 * @return array{width: int, height: int, found: array<int, array{count: int, x: int, y: int, width: int, height: int}>}
+	 * @return array{width: int, height: int, found: array<int, array{count: int, x: int, y: int, width: int, height: int, edge: array{x: int, y: int, width: int, height: int}}>}
 	 * @throws InvalidArgumentException When an image cannot be read or is too large.
 	 */
 	public static function markers( string $blank, string $marker, int $markers ): array {
@@ -205,17 +215,7 @@ final class ImageProbe {
 
 		foreach ( range( 0, $height - 1, $step ) as $y ) {
 			foreach ( range( 0, $width - 1, $step ) as $x ) {
-				$p     = imagecolorat( $a, $x, $y );
-				$q     = imagecolorat( $b, $x, $y );
-				$red   = ( $q >> 16 ) & 255;
-				$green = ( $q >> 8 ) & 255;
-				$blue  = $q & 255;
-
-				if ( abs( ( ( $p >> 16 ) & 255 ) - $red ) + abs( ( ( $p >> 8 ) & 255 ) - $green ) + abs( ( $p & 255 ) - $blue ) < self::MIN_DIFFERENCE || max( $red, $green, $blue ) < self::MIN_BRIGHTNESS ) {
-					continue;
-				}
-
-				$index = self::nearest( self::normal( $red, $green, $blue ), $normal );
+				$index = self::marker_at( $a, $b, $x, $y, $normal );
 
 				if ( null === $index ) {
 					continue;
@@ -239,6 +239,7 @@ final class ImageProbe {
 				'y'      => $top,
 				'width'  => min( $width, $right + $step ) - $left,
 				'height' => min( $height, $bottom + $step ) - $top,
+				'edge'   => self::edge( $a, $b, $normal, $index, $columns[ $index ], $rows[ $index ], $step ),
 			);
 		}
 
@@ -401,6 +402,165 @@ final class ImageProbe {
 			'width'  => $width,
 			'height' => $height,
 		);
+	}
+
+	/**
+	 * A print area of a print size's proportions that covers a box, around
+	 * its middle and inside the image: on a photo that shows the whole print
+	 * (a poster), a design that fills the area reaches the print's edge, with
+	 * no strip of the blank print left beside it (the owner's test 2026-11-21).
+	 *
+	 * @param array{x: int, y: int, width: int, height: int} $box       Box.
+	 * @param int                                            $width_mm  Print width.
+	 * @param int                                            $height_mm Print height.
+	 * @param int                                            $image_w   The photo's width.
+	 * @param int                                            $image_h   The photo's height.
+	 * @return array{x: int, y: int, width: int, height: int}
+	 */
+	public static function cover( array $box, int $width_mm, int $height_mm, int $image_w, int $image_h ): array {
+		$ratio  = $width_mm / max( 1, $height_mm );
+		$width  = $box['width'];
+		$height = $box['height'];
+
+		if ( $width / max( 1, $height ) > $ratio ) {
+			$height = max( 1, (int) ceil( $width / $ratio ) );
+		} else {
+			$width = max( 1, (int) ceil( $height * $ratio ) );
+		}
+
+		$width  = min( $width, max( 1, $image_w ) );
+		$height = min( $height, max( 1, $image_h ) );
+
+		return array(
+			'x'      => max( 0, min( $box['x'] - intdiv( $width - $box['width'], 2 ), $image_w - $width ) ),
+			'y'      => max( 0, min( $box['y'] - intdiv( $height - $box['height'], 2 ), $image_h - $height ) ),
+			'width'  => $width,
+			'height' => $height,
+		);
+	}
+
+	/**
+	 * Which marker a pixel shows: it differs from the blank render enough and
+	 * its hue is a marker's; null otherwise.
+	 *
+	 * @param GdImage                                   $a      Blank render.
+	 * @param GdImage                                   $b      Marker render.
+	 * @param int                                       $x      Column.
+	 * @param int                                       $y      Row.
+	 * @param list<array{0: float, 1: float, 2: float}> $normal Normalised markers.
+	 */
+	private static function marker_at( GdImage $a, GdImage $b, int $x, int $y, array $normal ): ?int {
+		$p     = imagecolorat( $a, $x, $y );
+		$q     = imagecolorat( $b, $x, $y );
+		$red   = ( $q >> 16 ) & 255;
+		$green = ( $q >> 8 ) & 255;
+		$blue  = $q & 255;
+
+		if ( abs( ( ( $p >> 16 ) & 255 ) - $red ) + abs( ( ( $p >> 8 ) & 255 ) - $green ) + abs( ( $p & 255 ) - $blue ) < self::MIN_DIFFERENCE || max( $red, $green, $blue ) < self::MIN_BRIGHTNESS ) {
+			return null;
+		}
+
+		return self::nearest( self::normal( $red, $green, $blue ), $normal );
+	}
+
+	/**
+	 * A marker's own edges to the pixel: the sampled columns and rows where it
+	 * is solid (SOLID of its fullest), then pixel by pixel outwards while the
+	 * marker goes on, and one pixel more, as an edge pixel blended with its
+	 * surroundings can miss the threshold.
+	 *
+	 * @param GdImage                                   $a       Blank render.
+	 * @param GdImage                                   $b       Marker render.
+	 * @param list<array{0: float, 1: float, 2: float}> $normal  Normalised markers.
+	 * @param int                                       $index   The marker.
+	 * @param array<int, int>                           $columns Its sampled pixels by column.
+	 * @param array<int, int>                           $rows    Its sampled pixels by row.
+	 * @param int                                       $step    The sampling step.
+	 * @return array{x: int, y: int, width: int, height: int}
+	 */
+	private static function edge( GdImage $a, GdImage $b, array $normal, int $index, array $columns, array $rows, int $step ): array {
+		$width            = imagesx( $a );
+		$height           = imagesy( $a );
+		[ $left, $right ] = self::solid( $columns );
+		[ $top, $bottom ] = self::solid( $rows );
+		$column           = static function ( int $x ) use ( $a, $b, $normal, $index, &$top, &$bottom, $step ): bool {
+			foreach ( range( $top, $bottom, $step ) as $y ) {
+				if ( self::marker_at( $a, $b, $x, $y, $normal ) === $index ) {
+					return true;
+				}
+			}
+
+			return false;
+		};
+		$row              = static function ( int $y ) use ( $a, $b, $normal, $index, &$left, &$right, $step ): bool {
+			foreach ( range( $left, $right, $step ) as $x ) {
+				if ( self::marker_at( $a, $b, $x, $y, $normal ) === $index ) {
+					return true;
+				}
+			}
+
+			return false;
+		};
+
+		$left   = self::grow( $column, $left, -1, $width - 1, $step );
+		$right  = self::grow( $column, $right, 1, $width - 1, $step );
+		$top    = self::grow( $row, $top, -1, $height - 1, $step );
+		$bottom = self::grow( $row, $bottom, 1, $height - 1, $step );
+		$left   = max( 0, $left - 1 );
+		$top    = max( 0, $top - 1 );
+		$right  = min( $width - 1, $right + 1 );
+		$bottom = min( $height - 1, $bottom + 1 );
+
+		return array(
+			'x'      => $left,
+			'y'      => $top,
+			'width'  => $right - $left + 1,
+			'height' => $bottom - $top + 1,
+		);
+	}
+
+	/**
+	 * An edge moved outwards pixel by pixel while the marker goes on, between
+	 * two samples: never further than a step and one.
+	 *
+	 * @param callable(int): bool $hit   Whether the marker shows at a position.
+	 * @param int                 $edge  The edge.
+	 * @param int                 $delta -1 or 1.
+	 * @param int                 $last  The last position in the photo.
+	 * @param int                 $step  The sampling step.
+	 */
+	private static function grow( callable $hit, int $edge, int $delta, int $last, int $step ): int {
+		for ( $i = 0; $i <= $step; $i++ ) {
+			$next = $edge + $delta;
+
+			if ( $next < 0 || $next > $last || ! $hit( $next ) ) {
+				break;
+			}
+
+			$edge = $next;
+		}
+
+		return $edge;
+	}
+
+	/**
+	 * The first and last position where a histogram has at least SOLID of its
+	 * largest count: stray pixels elsewhere in the photo fall outside.
+	 *
+	 * @param array<int, int> $histogram Count by position.
+	 * @return array{0: int, 1: int}
+	 */
+	private static function solid( array $histogram ): array {
+		if ( array() === $histogram ) {
+			return array( 0, 0 );
+		}
+
+		ksort( $histogram );
+
+		$least = self::SOLID * max( $histogram );
+		$solid = array_keys( array_filter( $histogram, static fn( int $count ): bool => $count >= $least ) );
+
+		return array( $solid[0], $solid[ count( $solid ) - 1 ] );
 	}
 
 	/**

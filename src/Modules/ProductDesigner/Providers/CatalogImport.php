@@ -814,14 +814,16 @@ class CatalogImport {
 				$count  = is_array( $hit ) ? (int) ( $hit['count'] ?? 0 ) : 0;
 
 				if ( is_array( $hit ) && $count >= self::MIN_SHARE * $width * $height && $count > ( $best['count'] ?? 0 ) ) {
+					// A format group's photo shows the whole print (a poster): the marker's exact edges.
+					$box  = '' !== $group && is_array( $hit['edge'] ?? null ) ? $hit['edge'] : $hit;
 					$best = array(
 						'slot'   => (string) $slot,
 						'count'  => $count,
 						'box'    => array(
-							'x'      => (int) ( $hit['x'] ?? 0 ),
-							'y'      => (int) ( $hit['y'] ?? 0 ),
-							'width'  => max( 1, (int) ( $hit['width'] ?? 0 ) ),
-							'height' => max( 1, (int) ( $hit['height'] ?? 0 ) ),
+							'x'      => (int) ( $box['x'] ?? 0 ),
+							'y'      => (int) ( $box['y'] ?? 0 ),
+							'width'  => max( 1, (int) ( $box['width'] ?? 0 ) ),
+							'height' => max( 1, (int) ( $box['height'] ?? 0 ) ),
 						),
 						'width'  => $width,
 						'height' => $height,
@@ -1051,7 +1053,8 @@ class CatalogImport {
 			// A format group's photo shows the whole print (a poster): its print size stands, as each size's format follows it.
 			[ $width_mm, $height_mm ] = isset( $side['formats'] ) ? array( (int) $side['width_mm'], (int) $side['height_mm'] ) : ImageProbe::print_size( $chosen['box'], (int) $side['width_mm'], (int) $side['height_mm'] );
 
-			$area                  = ImageProbe::fit( $chosen['box'], $width_mm, $height_mm );
+			// The print area covers a poster to its edge, so no blank strip of it shows beside the design.
+			$area                  = isset( $side['formats'] ) ? ImageProbe::cover( $chosen['box'], $width_mm, $height_mm, (int) $chosen['width'], (int) $chosen['height'] ) : ImageProbe::fit( $chosen['box'], $width_mm, $height_mm );
 			$slots[ $side['key'] ] = (string) $chosen['slot'];
 			$kept[ $side['key'] ]  = (string) $side['placement'];
 			$view                  = array(

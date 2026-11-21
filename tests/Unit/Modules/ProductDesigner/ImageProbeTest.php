@@ -63,6 +63,47 @@ final class ImageProbeTest extends TestCase {
 		self::assertBox( array( 150, 80, 100, 120 ), $found['found'][0] );
 	}
 
+	public function test_a_poster_s_marker_has_its_exact_edges_beside_the_trimmed_box(): void {
+		$wall   = array( 200, 190, 180 );
+		$paper  = array( 250, 250, 250 );
+		$blank  = Photo::png( 2000, 1500, $wall, array( array( 301, 203, 1203, 1001, $paper ) ) );
+		$marker = Photo::png(
+			2000,
+			1500,
+			$wall,
+			array(
+				array( 301, 203, 1203, 1001, array( 255, 0, 255 ) ),
+				// A stray magenta speck elsewhere on the wall.
+				array( 1800, 1400, 3, 3, array( 255, 0, 255 ) ),
+			)
+		);
+		$found = ImageProbe::markers( $blank, $marker, 1 )['found'][0];
+
+		self::assertGreaterThanOrEqual( 8, 301 + 1203 - ( $found['x'] + $found['width'] ), 'The trimmed box stops short of the right edge.' );
+		self::assertSame(
+			array(
+				'x'      => 300,
+				'y'      => 202,
+				'width'  => 1205,
+				'height' => 1003,
+			),
+			$found['edge'],
+			'The exact edges, one pixel more on each side; the speck is left out.'
+		);
+	}
+
+	public function test_a_poster_s_print_area_covers_the_box_inside_the_photo(): void {
+		$box = array(
+			'x'      => 300,
+			'y'      => 200,
+			'width'  => 750,
+			'height' => 1000,
+		);
+
+		self::assertSame( array( 'x' => 299, 'y' => 200, 'width' => 752, 'height' => 1000 ), ImageProbe::cover( $box, 758, 1008, 2000, 1500 ), 'Wider by the bleed\'s share, never narrower.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( array( 'x' => 0, 'y' => 0, 'width' => 800, 'height' => 1000 ), ImageProbe::cover( array( 'x' => 0, 'y' => 0, 'width' => 800, 'height' => 1000 ), 900, 1000, 800, 1000 ), 'Never outside the photo.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	}
+
 	public function test_nothing_is_found_without_a_marker_hue(): void {
 		$grey = Photo::png( 400, 300, self::STUDIO, array( array( 100, 50, 200, 220, array( 120, 120, 120 ) ) ) );
 

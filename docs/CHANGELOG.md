@@ -29,6 +29,11 @@ Fase 52 (ADR-115). Ingen schemaændring.
 
 ### Fixed
 
+- **Designfeltet på plakater (formatgrupper) går helt ud til plakatens kant** (projektejerens test på stg 2026-11-21). Før lå der en hvid stribe af plakaten rundt om feltet:
+  - målingen skar 1 % af markøren væk i hver kant mod løse pixels og så kun på hver 4. pixel;
+  - feltet blev lagt inden i markøren.
+
+  Nu måles markørens egne kanter på pixel, og feltet dækker markøren. Andre produkter måles som før. Allerede importerede plakater får det nye felt ved en ny import, eller feltet kan rettes under siden.
 - **"Prøv igen" på en Gelato-import med formatgrupper** (fx Fine Art Poster) glemte grupperne. Alle 16 sider blev sendt i én gengivelse med kun 6 markører, og importen fejlede straks med "Gelato svarede med noget, der ikke kan bruges", uden at Gelato blev kaldt (stg 2026-11-21).
 - **Pris pr. størrelse:** en størrelse med et almindeligt anførselstegn (fx plakatens `21x29.7 cm / 8x12"`) mistede sin pris ved gem, fordi formularen sendes som multipart, og der skrives `"` i et feltnavn som `%22`. Størrelsens navn sendes nu som værdi.
 
