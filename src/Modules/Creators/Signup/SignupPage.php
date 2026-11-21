@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Creators\Signup;
 
 use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Core\Http\ClientIp;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Creators\Agreement\Agreement;
 use MerchBoard\Modules\Creators\CreatorRepository;
@@ -143,7 +144,7 @@ final class SignupPage {
 		}
 
 		try {
-			$outcome = $this->signup->submit( $input, self::address() );
+			$outcome = $this->signup->submit( $input, ClientIp::address() );
 		} catch ( SignupException $e ) {
 			return array_merge(
 				$form,
@@ -165,15 +166,5 @@ final class SignupPage {
 		}
 
 		return array( 'redirect' => 'linked' === $outcome ? $this->route->url() : add_query_arg( 'sent', '1', $this->url() ) );
-	}
-
-	/**
-	 * The visitor's address as the web server saw it (never a forwarded
-	 * header, which anyone can set). Only a keyed hash of it is kept.
-	 */
-	private static function address(): string {
-		$address = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
-
-		return '' === $address ? 'unknown' : $address;
 	}
 }
