@@ -14,6 +14,7 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
 use MerchBoard\Modules\Admin\Approvals\ApprovalsPage;
 use MerchBoard\Core\Database\Transaction;
+use MerchBoard\Core\Database\NamedLock;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
 use MerchBoard\Modules\Access\CreatorContext;
@@ -71,6 +72,7 @@ use MerchBoard\Modules\ProductDesigner\Providers\GelatoCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulMockups;
+use MerchBoard\Modules\ProductDesigner\Providers\PreviewQuota;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyApi;
@@ -284,7 +286,8 @@ final class ProductDesignerModule implements Module {
 				$c->get( Logger::class ),
 				$c->get( DesignerShop::class ),
 				$c->get( PrintfulMockups::class ),
-				$c->get( ProdigiMockups::class )
+				$c->get( ProdigiMockups::class ),
+				new PreviewQuota( new NamedLock( $c->get( wpdb::class ) ) )
 			)
 		);
 		// The approval queue and the designer's notifications (step 30.9).

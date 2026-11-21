@@ -31,9 +31,11 @@ class CreatorUploads {
 	public const MAX_FILES = 200;
 
 	/**
-	 * Most bytes per creator (1 GB).
+	 * Most bytes per creator: 500 MB (the owner's choice 2026-11-21, ADR-116;
+	 * 1 GB before). Files already stored stay; a new upload past it is
+	 * refused with UPLOAD_QUOTA.
 	 */
-	public const MAX_TOTAL_BYTES = 1073741824;
+	public const MAX_TOTAL_BYTES = 524288000;
 
 	/**
 	 * Constructor.

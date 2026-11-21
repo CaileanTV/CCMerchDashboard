@@ -37,6 +37,11 @@ function failure( reason: string | undefined ): string {
 	switch ( reason ) {
 		case 'design_empty':
 			return __( 'Add something to your product first.', 'merchboard' );
+		case 'preview_quota':
+			return __(
+				'You have made the most photos for today. Please try again tomorrow. You can still send your design.',
+				'merchboard'
+			);
 		case 'preview_busy':
 			return __(
 				'We can only make a limited number of photos a minute. Please try again in a minute.',

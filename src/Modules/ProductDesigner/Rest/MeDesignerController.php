@@ -36,6 +36,7 @@ use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulMockups;
+use MerchBoard\Modules\ProductDesigner\Providers\PreviewQuota;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiException;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiMockups;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
@@ -96,6 +97,7 @@ final class MeDesignerController extends RestController {
 	 * @param DesignerShop              $shop        The creator's decisions about the shop.
 	 * @param PrintfulMockups|null      $mockups     Printful's mockups (the preview, the stitch colours).
 	 * @param ProdigiMockups|null       $prodigi     Prodigi's mockups (the preview, ADR-102).
+	 * @param PreviewQuota|null         $quota       Previews per creator a day (ADR-116); null for none.
 	 */
 	public function __construct(
 		private CreatorContext $context,
@@ -110,7 +112,8 @@ final class MeDesignerController extends RestController {
 		Logger $logger,
 		private DesignerShop $shop,
 		private ?PrintfulMockups $mockups = null,
-		private ?ProdigiMockups $prodigi = null
+		private ?ProdigiMockups $prodigi = null,
+		private ?PreviewQuota $quota = null
 	) {
 		parent::__construct( $logger );
 	}
@@ -601,6 +604,11 @@ final class MeDesignerController extends RestController {
 
 					if ( ! SubmissionFiles::complete( $draft ) ) {
 						throw new DesignerException( DesignerException::SUBMISSION_FILES );
+					}
+
+					// Each start is a task at the provider: at most PreviewQuota::PER_DAY a day.
+					if ( null !== $this->quota && ! $this->quota->take( $creator->id ) ) {
+						throw new DesignerException( DesignerException::PREVIEW_QUOTA );
 					}
 
 					$previewer->start_preview( (int) $draft['id'] );
@@ -1180,7 +1188,11 @@ final class MeDesignerController extends RestController {
 	 */
 	private static function refused( DesignerException $e ): WP_Error {
 		$reason = $e->reason();
-		$status = in_array( $reason, array( DesignerException::DESIGN_UNKNOWN, DesignerException::UPLOAD_UNKNOWN, DesignerException::BASE_UNKNOWN ), true ) ? 404 : 400;
+		$status = match ( true ) {
+			in_array( $reason, array( DesignerException::DESIGN_UNKNOWN, DesignerException::UPLOAD_UNKNOWN, DesignerException::BASE_UNKNOWN ), true ) => 404,
+			DesignerException::PREVIEW_QUOTA === $reason => 429,
+			default => 400,
+		};
 
 		return self::error( 'merchboard_designer_refused', __( 'The product designer refused the change.', 'merchboard' ), $status, array( 'reason' => $reason ) );
 	}

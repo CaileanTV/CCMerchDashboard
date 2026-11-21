@@ -10,6 +10,10 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Tests\Integration\ProductDesigner;
 
+use DateTimeZone;
+use DateTimeImmutable;
+use MerchBoard\Core\Database\NamedLock;
+use MerchBoard\Modules\ProductDesigner\Providers\PreviewQuota;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
@@ -597,7 +601,8 @@ final class ProdigiTest extends IntegrationTestCase {
 			$this->service( Logger::class ),
 			new DesignerShop( $this->products, $drafts, $guard, new RecordingDesignerWriter( $guard, new ProductPosts( $this->wpdb ) ), $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->files, $this->bases ),
 			null,
-			$this->mockups()
+			$this->mockups(),
+			new PreviewQuota( new NamedLock( $this->wpdb ) )
 		);
 		$register   = static function () use ( $controller ): void {
 			$controller->register_routes();
@@ -626,6 +631,13 @@ final class ProdigiTest extends IntegrationTestCase {
 			self::assertSame( 'done', $done['status'] ?? null );
 			self::assertCount( 1, $done['images'] ?? array() );
 			self::assertStringNotContainsString( 'prodigi', strtolower( (string) wp_json_encode( $done ) ), 'The provider is never named to the creator.' );
+
+			// The day's previews used up (security review 2026-11-21): a clear 429, never a 500.
+			$day = ( new DateTimeImmutable( 'now', new DateTimeZone( 'Europe/Copenhagen' ) ) )->format( 'Ymd' );
+			set_transient( 'merchboard_previews_' . $day . '_' . (int) ( $this->products->version( $version )['creator_id'] ?? 0 ), PreviewQuota::PER_DAY, HOUR_IN_SECONDS );
+			$quota = rest_do_request( new WP_REST_Request( 'POST', $route ) );
+
+			self::assertSame( array( 429, 'preview_quota' ), array( $quota->get_status(), $quota->get_data()['data']['reason'] ?? null ) );
 		} finally {
 			remove_action( 'rest_api_init', $register );
 			$GLOBALS['wp_rest_server'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Fresh REST server after the test.

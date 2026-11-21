@@ -135,6 +135,9 @@ final class DesignerException extends RuntimeException {
 
 	public const PREVIEW_FAILED = 'preview_failed';
 
+	/** The creator started PreviewQuota::PER_DAY previews today (ADR-116). */
+	public const PREVIEW_QUOTA = 'preview_quota';
+
 	/**
 	 * The product is being written to the shop just now (ADR-096): try again.
 	 */
