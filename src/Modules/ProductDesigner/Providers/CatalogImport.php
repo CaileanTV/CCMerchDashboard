@@ -1122,17 +1122,18 @@ class CatalogImport {
 			(string) ( $data['ref'] ?? '' ),
 			self::json(
 				array(
-					'placements' => $kept,
-					'variants'   => $provider['variants'] ?? array(),
-					'slots'      => $slots,
-					'flat'       => $provider['flat'] ?? false,
-					'photos'     => $provider['photos'] ?? array(),
-					'stitches'   => $provider['stitches'] ?? array(),
-					'techniques' => $provider['techniques'] ?? array(),
-					'options'    => $provider['options'] ?? array(),
-					'axes'       => $provider['axes'] ?? array(),
-					'uids'       => $provider['uids'] ?? array(),
-					'scenes'     => array_filter( $scenes ),
+					'placements'    => $kept,
+					'variants'      => $provider['variants'] ?? array(),
+					'slots'         => $slots,
+					'flat'          => $provider['flat'] ?? false,
+					'photos'        => $provider['photos'] ?? array(),
+					'stitches'      => $provider['stitches'] ?? array(),
+					'techniques'    => $provider['techniques'] ?? array(),
+					'options'       => $provider['options'] ?? array(),
+					'axes'          => $provider['axes'] ?? array(),
+					'uids'          => $provider['uids'] ?? array(),
+					'scenes'        => array_filter( $scenes ),
+					'share_formats' => $provider['share_formats'] ?? true,
 				)
 			)
 		);

@@ -41,6 +41,15 @@ defined( 'ABSPATH' ) || exit;
  * (the shared design). A colour is in at most one design; colours not
  * chosen are dropped and so is a design left without colours. Without any,
  * the key is left out, so a design from before keeps its stamp.
+ *
+ * ADR-118: `formats` lets a poster's formats share one design per value of
+ * the first axis: `{ "shared": { "<value>": { "width", "height", "objects",
+ * "background"? } }, "links": { "<format side>": "<value>" }, "fit": {
+ * "<format side>": "smart"|"fill"|"fit" } }`. A link is kept only for a
+ * format side of that value with a shared design, a fit only for a linked
+ * side, and a shared design only while a side uses it; its objects are
+ * checked like a side's. Each linked side's fitted copy is in `sides`, and
+ * that copy is what is printed. Without a link the key is left out.
  */
 final class DesignValidator {
 
@@ -91,7 +100,7 @@ final class DesignValidator {
 	 * @param BaseProduct   $base     The base product it is designed on.
 	 * @param string[]      $stitches The stitch colours the base product has; the first without a choice.
 	 * @param string[]|null $colors   The chosen colours (null: every colour of the base product).
-	 * @return array{version: int, sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>, stitch?: string, designs?: list<array{id: string, colors: list<string>, sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>}>}
+	 * @return array{version: int, sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>, formats?: array{shared: array<string, array{width: int, height: int, objects: list<array<string, mixed>>, background?: string}>, links: array<string, string>, fit: array<string, string>}, stitch?: string, designs?: list<array{id: string, colors: list<string>, sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>, formats?: array{shared: array<string, array{width: int, height: int, objects: list<array<string, mixed>>, background?: string}>, links: array<string, string>, fit: array<string, string>}}>}
 	 * @throws DesignerException When the design is invalid (DESIGN_INVALID).
 	 */
 	public function validate( mixed $design, BaseProduct $base, array $stitches = array(), ?array $colors = null ): array {
@@ -133,7 +142,7 @@ final class DesignValidator {
 	 * @param mixed         $designs Input.
 	 * @param BaseProduct   $base    The base product.
 	 * @param string[]|null $colors  The chosen colours (null: all of the base product).
-	 * @return list<array{id: string, colors: list<string>, sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>}>
+	 * @return list<array{id: string, colors: list<string>, sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>, formats?: array{shared: array<string, array{width: int, height: int, objects: list<array<string, mixed>>, background?: string}>, links: array<string, string>, fit: array<string, string>}}>
 	 * @throws DesignerException When a design is refused.
 	 */
 	private function designs( mixed $designs, BaseProduct $base, ?array $colors ): array {
@@ -195,7 +204,7 @@ final class DesignValidator {
 	 *
 	 * @param array<mixed, mixed> $design Input.
 	 * @param BaseProduct         $base   The base product.
-	 * @return array{sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>}
+	 * @return array{sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>, formats?: array{shared: array<string, array{width: int, height: int, objects: list<array<string, mixed>>, background?: string}>, links: array<string, string>, fit: array<string, string>}}
 	 * @throws DesignerException When something is refused.
 	 */
 	private function part( array $design, BaseProduct $base ): array {
@@ -233,7 +242,74 @@ final class DesignValidator {
 			$normalized['threads'] = $threads;
 		}
 
+		$formats = $this->formats( $design['formats'] ?? null, $base );
+
+		if ( null !== $formats ) {
+			$normalized['formats'] = $formats;
+		}
+
 		return $normalized;
+	}
+
+	/**
+	 * The shared designs of a poster's formats (ADR-118); null without a link.
+	 *
+	 * @param mixed       $formats Input.
+	 * @param BaseProduct $base    The base product.
+	 * @return array{shared: array<string, array{width: int, height: int, objects: list<array<string, mixed>>, background?: string}>, links: array<string, string>, fit: array<string, string>}|null
+	 * @throws DesignerException When a shared design is refused.
+	 */
+	private function formats( mixed $formats, BaseProduct $base ): ?array {
+		if ( ! is_array( $formats ) ) {
+			return null;
+		}
+
+		$links  = array();
+		$fit    = array();
+		$shared = array();
+		$given  = is_array( $formats['shared'] ?? null ) ? $formats['shared'] : array();
+
+		foreach ( $base->views as $view ) {
+			$value = $formats['links'][ $view->key ] ?? null;
+
+			if ( array() !== $view->formats && is_string( $value ) && in_array( $value, $view->colors, true ) && is_array( $given[ $value ] ?? null ) ) {
+				$links[ $view->key ] = $value;
+
+				$mode = $formats['fit'][ $view->key ] ?? null;
+
+				if ( in_array( $mode, array( 'fill', 'fit' ), true ) ) {
+					$fit[ $view->key ] = $mode;
+				}
+			}
+		}
+
+		foreach ( array_unique( array_values( $links ) ) as $value ) {
+			$item    = $given[ $value ];
+			$size    = static fn( mixed $number ): bool => is_int( $number ) && $number >= 1 && $number <= 20000;
+			$objects = $item['objects'] ?? null;
+
+			if ( ! $size( $item['width'] ?? null ) || ! $size( $item['height'] ?? null ) || ! is_array( $objects ) || ! array_is_list( $objects ) || count( $objects ) > self::MAX_OBJECTS ) {
+				self::refuse();
+			}
+
+			$shared[ $value ] = array(
+				'width'   => $item['width'],
+				'height'  => $item['height'],
+				'objects' => array_map( fn( mixed $item ): array => $this->object( $item ), $objects ),
+			);
+
+			$background = $item['background'] ?? null;
+
+			if ( $base->background_color && is_string( $background ) && 1 === preg_match( '/^#[0-9a-fA-F]{6}$/', $background ) ) {
+				$shared[ $value ]['background'] = strtolower( $background );
+			}
+		}
+
+		return array() === $links ? null : array(
+			'shared' => $shared,
+			'links'  => $links,
+			'fit'    => $fit,
+		);
 	}
 
 	/**

@@ -52,7 +52,6 @@ import {
 	duplicateObject,
 	objectSizeInCm,
 	sizeInCm,
-	withBackground,
 	withKnownBackground,
 	moveObject,
 	fitted,
@@ -82,6 +81,7 @@ import {
 	effectiveParts,
 } from './design-model';
 import type {
+	AdaptMode,
 	DesignDocument,
 	DesignObject,
 	ExtraArea,
@@ -89,6 +89,18 @@ import type {
 	ShapeType,
 	TextObject,
 } from './design-model';
+import {
+	adaptOf,
+	linkOf,
+	linked,
+	sharedWith,
+	syncedAll,
+	unlinked,
+	unshared,
+	withAdapt,
+	withSideBackground,
+	withSideObjects,
+} from './format-designs';
 import type { FabricStage, StageMeasure } from './fabric-stage';
 import { FontPicker } from '../../components/FontPicker';
 import { addFontStylesheet } from '../alerts/useFontStylesheet';
@@ -258,7 +270,19 @@ function Editor( props: EditorProps ) {
 	const [ toProfit, setToProfit ] = useState( false );
 	const [ sending, setSending ] = useState( false );
 	const draft = product.draft!;
-	const history = useHistory< DesignDocument >( props.design );
+	// ADR-118: a poster's formats share one design from the start (or never, when the base product does not offer it).
+	const [ initial ] = useState( () =>
+		base.shareFormats
+			? syncedAll(
+					props.design,
+					base.views,
+					draft.sizes,
+					draft.colors,
+					true
+				)
+			: unshared( props.design )
+	);
+	const history = useHistory< DesignDocument >( initial );
 	const [ title, setTitle ] = useState( draft.postfix );
 	const [ colors, setColors ] = useState< readonly string[] >( draft.colors );
 	const [ stitch, setStitch ] = useState(
@@ -303,7 +327,7 @@ function Editor( props: EditorProps ) {
 		readonly target: string;
 	} | null >( null );
 	const [ saved, setSaved ] = useState( {
-		design: props.design,
+		design: initial,
 		stitch,
 		price: draft.price,
 		primaryImage: draft.primaryImage,
@@ -367,6 +391,12 @@ function Editor( props: EditorProps ) {
 	const previewRef = useRef( previewColor );
 	previewRef.current = previewColor;
 	sideRef.current = view?.key ?? side;
+	// ADR-118: the chosen sizes and the colours of the design shown, for edits of a shared format.
+	const partColors = colors.filter(
+		( key ) => partOf( whole, key ) === activePart
+	);
+	const formatRef = useRef( { sizes, colors: partColors } );
+	formatRef.current = { sizes, colors: partColors };
 
 	/** Changes the design of the colour shown (ADR-096); every colour with that design follows. */
 	const editPart = ( change: ( part: DesignDocument ) => DesignDocument ) =>
@@ -656,7 +686,14 @@ function Editor( props: EditorProps ) {
 						}
 
 						editPart( ( present ) =>
-							withObjects( present, sideRef.current, next )
+							withSideObjects(
+								present,
+								base.views,
+								sideRef.current,
+								next,
+								formatRef.current.sizes,
+								formatRef.current.colors
+							)
 						);
 					},
 					onSelect: setSelected,
@@ -760,8 +797,68 @@ function Editor( props: EditorProps ) {
 
 	const setObjects = ( next: readonly DesignObject[] ) => {
 		if ( view !== undefined ) {
-			editPart( ( present ) => withObjects( present, view.key, next ) );
+			editPart( ( present ) =>
+				withSideObjects(
+					present,
+					base.views,
+					view.key,
+					next,
+					sizes,
+					partColors
+				)
+			);
 		}
+	};
+
+	// ADR-118: every linked format follows the sizes and colours chosen; sharing off leaves each format its own.
+	useEffect( () => {
+		history.live( ( full ) => {
+			const next = base.shareFormats
+				? syncedAll( full, base.views, sizes, colors, false )
+				: unshared( full );
+
+			return JSON.stringify( next ) === JSON.stringify( full )
+				? full
+				: next;
+		} );
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- Only when the choice changes.
+	}, [ sizes, colors ] );
+
+	const formatLink = view === undefined ? null : linkOf( design, view.key );
+
+	/**
+	 * Puts the side shown on its orientation's shared design, or on its own (ADR-118).
+	 *
+	 * @param shared Whether it shares.
+	 */
+	const chooseFormatDesign = ( shared: boolean ) => {
+		if ( view === undefined ) {
+			return;
+		}
+
+		if ( ! shared ) {
+			editPart( ( present ) => unlinked( present, view.key ) );
+
+			return;
+		}
+
+		if (
+			objects.length > 0 &&
+			design.formats?.shared[ view.colors[ 0 ] ?? '' ] !== undefined &&
+			// eslint-disable-next-line no-alert -- A plain confirmation, as elsewhere in the dashboard.
+			! window.confirm(
+				__(
+					'Use the shared design on this format? Its own design is replaced.',
+					'merchboard'
+				)
+			)
+		) {
+			return;
+		}
+
+		editPart( ( present ) =>
+			linked( present, base.views, view.key, sizes, partColors )
+		);
 	};
 
 	const add = ( object: DesignObject ) => {
@@ -842,10 +939,13 @@ function Editor( props: EditorProps ) {
 	const setBackground = ( chosen: string | null, allSides: boolean ) => {
 		if ( view !== undefined ) {
 			editPart( ( present ) =>
-				withBackground(
+				withSideBackground(
 					present,
+					base.views,
 					allSides ? printed : [ view.key ],
-					chosen
+					chosen,
+					sizes,
+					partColors
 				)
 			);
 		}
@@ -1059,15 +1159,25 @@ function Editor( props: EditorProps ) {
 				? primaryImage
 				: null,
 			design: {
-				...mapParts( prunedDesigns( whole, colors ), ( part ) =>
-					withKnownThreads(
-						withKnownBackground(
-							part,
-							base.views,
-							base.backgroundColor
-						),
-						base.views
-					)
+				...mapParts(
+					base.shareFormats
+						? syncedAll(
+								prunedDesigns( whole, colors ),
+								base.views,
+								sizes,
+								colors,
+								false
+							)
+						: prunedDesigns( whole, colors ),
+					( part ) =>
+						withKnownThreads(
+							withKnownBackground(
+								part,
+								base.views,
+								base.backgroundColor
+							),
+							base.views
+						)
 				),
 				...( stitch === '' ? {} : { stitch } ),
 			},
@@ -1746,6 +1856,111 @@ function Editor( props: EditorProps ) {
 								</button>
 							) ) }
 						</span>
+						{ base.shareFormats && view.format ? (
+							<span className="merchboard-product-designer__design-status">
+								<select
+									className="merchboard-product-designer__design-choice"
+									aria-label={ __(
+										'Design of this format',
+										'merchboard'
+									) }
+									value={
+										formatLink === null ? 'own' : 'shared'
+									}
+									onChange={ ( event ) =>
+										chooseFormatDesign(
+											event.target.value === 'shared'
+										)
+									}
+								>
+									<option value="shared">
+										{ sprintf(
+											/* translators: %s: orientation, e.g. "Vertical". */
+											__(
+												'Shared design (%s)',
+												'merchboard'
+											),
+											colorName( view.colors[ 0 ] ?? '' )
+										) }
+									</option>
+									<option value="own">
+										{ __( 'Own design', 'merchboard' ) }
+									</option>
+								</select>
+								{ formatLink === null ? null : (
+									<select
+										className="merchboard-product-designer__design-choice"
+										aria-label={ __(
+											'How the shared design is fitted to this format',
+											'merchboard'
+										) }
+										value={ adaptOf( design, view.key ) }
+										onChange={ ( event ) =>
+											editPart( ( present ) =>
+												withAdapt(
+													present,
+													base.views,
+													view.key,
+													event.target
+														.value as AdaptMode,
+													sizes,
+													partColors
+												)
+											)
+										}
+									>
+										<option value="smart">
+											{ __( 'Fit: smart', 'merchboard' ) }
+										</option>
+										<option value="fill">
+											{ __(
+												'Fit: fill the format',
+												'merchboard'
+											) }
+										</option>
+										<option value="fit">
+											{ __(
+												'Fit: whole design inside',
+												'merchboard'
+											) }
+										</option>
+									</select>
+								) }
+								{ formatLink === null
+									? null
+									: ( () => {
+											const names = sharedWith(
+												design,
+												view.key
+											)
+												.map(
+													( key ) =>
+														shownViews.find(
+															( candidate ) =>
+																candidate.key ===
+																key
+														)?.name
+												)
+												.filter(
+													( name ): name is string =>
+														name !== undefined
+												);
+
+											return names.length === 0 ? null : (
+												<span>
+													{ sprintf(
+														/* translators: %s: names of formats. */
+														__(
+															'Shared with: %s',
+															'merchboard'
+														),
+														names.join( ', ' )
+													) }
+												</span>
+											);
+										} )() }
+							</span>
+						) : null }
 						{ colors.length > 1 ? (
 							<span className="merchboard-product-designer__design-status">
 								<span>
@@ -2852,6 +3067,33 @@ export function ProductPanel( props: ProductPanelProps ) {
 		order.filter( ( item ) =>
 			item === value ? ! list.includes( value ) : list.includes( item )
 		);
+	// ADR-118: a poster's sizes by format, those of the first chosen orientation.
+	const orientation = props.colors[ 0 ] ?? base.colors[ 0 ]?.key ?? '';
+	// A base product without sides (a test of the panel alone) has no formats.
+	const groups = ( base.views ?? [] ).filter(
+		( view ) =>
+			view.format &&
+			view.sizes.length > 0 &&
+			view.colors.includes( orientation )
+	);
+	const sizeBox = ( size: string ) => (
+		<Labelled
+			key={ size }
+			className="merchboard-product-designer__option"
+			label={ <>{ size }</> }
+		>
+			{ ( id ) => (
+				<input
+					id={ id }
+					type="checkbox"
+					checked={ props.sizes.includes( size ) }
+					onChange={ () =>
+						props.onSizes( toggle( props.sizes, size, base.sizes ) )
+					}
+				/>
+			) }
+		</Labelled>
+	);
 
 	return (
 		<div className="merchboard-product-designer__stack">
@@ -3017,26 +3259,80 @@ export function ProductPanel( props: ProductPanelProps ) {
 				<legend className="merchboard-field__label">
 					{ __( 'Sizes', 'merchboard' ) }
 				</legend>
-				{ base.sizes.map( ( size ) => (
-					<Labelled
-						key={ size }
-						className="merchboard-product-designer__option"
-						label={ <>{ size }</> }
-					>
-						{ ( id ) => (
-							<input
-								id={ id }
-								type="checkbox"
-								checked={ props.sizes.includes( size ) }
-								onChange={ () =>
-									props.onSizes(
-										toggle( props.sizes, size, base.sizes )
-									)
-								}
-							/>
-						) }
-					</Labelled>
-				) ) }
+				{ groups.length === 0
+					? base.sizes.map( sizeBox )
+					: [
+							...groups.map( ( group ) => {
+								const own = base.sizes.filter( ( size ) =>
+									group.sizes.includes( size )
+								);
+								const all = own.every( ( size ) =>
+									props.sizes.includes( size )
+								);
+								const some = own.some( ( size ) =>
+									props.sizes.includes( size )
+								);
+
+								return (
+									<div
+										key={ group.key }
+										className="merchboard-product-designer__size-group"
+									>
+										<Labelled
+											className="merchboard-product-designer__option"
+											label={
+												<strong>{ group.name }</strong>
+											}
+										>
+											{ ( id ) => (
+												<input
+													id={ id }
+													type="checkbox"
+													checked={ all }
+													ref={ ( element ) => {
+														if (
+															element !== null
+														) {
+															element.indeterminate =
+																some && ! all;
+														}
+													} }
+													onChange={ () =>
+														props.onSizes(
+															base.sizes.filter(
+																( size ) =>
+																	all
+																		? props.sizes.includes(
+																				size
+																			) &&
+																			! own.includes(
+																				size
+																			)
+																		: props.sizes.includes(
+																				size
+																			) ||
+																			own.includes(
+																				size
+																			)
+															)
+														)
+													}
+												/>
+											) }
+										</Labelled>
+										{ own.map( sizeBox ) }
+									</div>
+								);
+							} ),
+							...base.sizes
+								.filter(
+									( size ) =>
+										! groups.some( ( group ) =>
+											group.sizes.includes( size )
+										)
+								)
+								.map( sizeBox ),
+						] }
 			</fieldset>
 		</div>
 	);

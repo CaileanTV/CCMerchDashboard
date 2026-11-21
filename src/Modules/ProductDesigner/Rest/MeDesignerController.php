@@ -1108,6 +1108,8 @@ final class MeDesignerController extends RestController {
 			'background_color' => $base->background_color,
 			// The first axis's name, e.g. "Orientation" (ADR-115); '' for colours.
 			'color_label'      => null === $base->id ? '' : ( $this->bases->provider( $base->id )['axes']['color'] ?? '' ),
+			// ADR-118: whether the formats of a poster can share one design.
+			'share_formats'    => null !== $base->id && array() !== array_filter( $base->views, static fn( BaseView $view ): bool => array() !== $view->formats ) && ( $this->bases->provider( $base->id )['share_formats'] ?? false ),
 			'currency'         => $base->currency,
 			'colors'           => $base->colors,
 			'sizes'            => $base->sizes,
@@ -1144,6 +1146,8 @@ final class MeDesignerController extends RestController {
 			// ADR-115: the values the side belongs to, and where each of its sizes is cut.
 			'colors'       => $view->colors,
 			'trims'        => (object) $view->trims(),
+			// ADR-118: a format side can share a design with the other formats of its value.
+			'format'       => array() !== $view->formats,
 			'small'        => $view->small,
 			'scene'        => $view->scene,
 			'embroidery'   => null === $pack ? null : array(

@@ -88,6 +88,11 @@ export interface DesignerView {
 	 * anything; the designer draws the line, never the files.
 	 */
 	readonly trims: Readonly< Record< string, DesignerTrim > >;
+	/**
+	 * A format group's side of a poster (ADR-115): it can share a design with
+	 * the other formats of its value (ADR-118).
+	 */
+	readonly format: boolean;
 	/** A small design area: as an extra area it costs `smallSidePrice`. */
 	readonly small: boolean;
 }
@@ -121,6 +126,8 @@ export interface DesignerBase {
 	readonly backgroundColor: boolean;
 	/** The first axis's name, e.g. "Orientation" (ADR-115); empty for colours. */
 	readonly colorLabel: string;
+	/** Whether a poster's formats can share one design (ADR-118). */
+	readonly shareFormats: boolean;
 	readonly currency: string;
 	readonly colors: readonly DesignerColor[];
 	readonly sizes: readonly string[];
@@ -466,6 +473,7 @@ export function parseView( value: unknown ): DesignerView | null {
 			? value.colors.filter( isString )
 			: [],
 		trims: parseTrims( value.trims ),
+		format: value.format === true,
 		small: value.small === true,
 	};
 }
@@ -557,6 +565,7 @@ function parseBase( value: unknown ): DesignerBase | null {
 				colorLabel: isString( value.color_label )
 					? value.color_label
 					: '',
+				shareFormats: value.share_formats === true,
 				currency: value.currency,
 				preview: value.preview === true,
 				stitches: strings( value.stitches ) ?? [],

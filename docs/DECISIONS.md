@@ -7096,3 +7096,56 @@ Projektejeren vil have Gelatos mockups med "miljøer" på plakaterne.
 
 ## Related
 ADR-082, ADR-096, ADR-098, ADR-114, ADR-115
+
+# ADR-118: Fælles design på tværs af plakatformater
+
+## Date
+2026-11-21
+
+## Status
+Accepteret af projektejeren 2026-11-21 (planen godkendt). Projektejerens valg:
+- creatoren vælger tilpasningen pr. format;
+- deling sker pr. retning.
+
+Version 2.4.0 (fase 54).
+
+## Context
+**I dag:** en plakat (ADR-115) har en formatside pr. formatgruppe og retning, fx "Lodret – format 1" (A-serien) og "Lodret – format 2" (kvadrat). Creatoren skal lave et design på hver side for sig, og størrelserne vælges i én flad liste.
+
+**Projektejeren vil have:**
+- størrelserne valgt ud fra formaterne;
+- ét design, der deles af formaterne og tilpasser sig automatisk;
+- mulighed for, at enkelte formater får deres eget design.
+
+## Decision
+1. **Fælles design pr. retning:**
+   - Designet gemmes én gang i dokumentet som `formats.shared[<retning>] = { width, height, objects }`. Det er en master i referenceformatets printpixel.
+   - Hver tilknyttet formatside får en tilpasset kopi i `sides[side]`.
+   - Serverens regler læser kun `sides`: dækning, pris, printfiler, mockups, Gelatos miljøbilleder og ordrefiler. De er derfor uændrede, og kopien er det, der trykkes.
+2. **Valg pr. formatfane:**
+   - Hver formatfane er på "Fælles design" eller "Eget design" (`formats.links[side] = <retning>`; en side uden link har eget design).
+   - Nye plakatdesigns starter fælles.
+   - "Eget design" tager den aktuelle tilpassede kopi med som udgangspunkt.
+   - Designs uden `formats` er uændrede: hver side har sit eget.
+3. **Tilpasning pr. tilknyttet format** (`formats.fit[side]`), som creatoren vælger:
+   - **`smart` (standard):** et objekt, der dækker hele feltet, fylder det nye felt. Andre objekter beholder deres relative placering og skaleres efter den korte side.
+   - **`fill`:** hele designet dækker feltet, og det, der stikker ud, beskæres.
+   - **`fit`:** hele designet er inden for feltet, og kanterne får baggrundsfarven, ellers hvid.
+   - Hver tilpasning er en ensartet skalering plus forskydning pr. objekt og kan vendes om. En ændring på en tilknyttet fane føres derfor tilbage til masteren og ud til de andre.
+4. **Størrelser pr. format:** plakater viser størrelserne grupperet pr. format i den viste retning, med "Vælg hele formatet". Valget er fortsat `sizes`.
+5. **Serveren:**
+   - `DesignValidator` beholder og validerer `formats` på dokumentets og farvedesigns' niveau:
+     - siderne skal være formatsider på retningen;
+     - tilpasningen skal være `smart`, `fill` eller `fit`;
+     - masterens objekter valideres som andre objekter;
+     - grænsen er 256 KB i alt.
+   - "Kopiér design" rydder links til sider, der ikke findes.
+   - Ingen schemaændring.
+6. **Prisen er uændret:** hver kombination af størrelse og retning har én side.
+
+## Consequences
+- **Plads:** dokumentet indeholder masteren plus en kopi pr. tilknyttet format. 256 KB rækker til mange formater, fordi billeder kun gemmes som asset-id.
+- **Kopier:** en kopi laves af browseren. Serveren tjekker ikke, at den svarer til masteren, men kopien er det, der trykkes og godkendes.
+
+## Related
+ADR-096, ADR-115, ADR-117

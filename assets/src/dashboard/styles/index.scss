@@ -2125,6 +2125,8 @@ input:disabled + .merchboard-sounds__upload {
 
 .merchboard-product-designer {
 	display: grid;
+	// One column no wider than the page: a long product name is cut.
+	grid-template-columns: minmax(0, 1fr);
 	gap: var(--merchboard-space-4);
 }
 
@@ -2491,6 +2493,14 @@ input:disabled + .merchboard-sounds__upload {
 		display: grid;
 		gap: var(--merchboard-space-1);
 	}
+}
+
+// ADR-118: a poster's sizes by format, one row each.
+.merchboard-product-designer__size-group {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-1) var(--merchboard-space-3);
+	inline-size: 100%;
 }
 
 .merchboard-product-designer__option {

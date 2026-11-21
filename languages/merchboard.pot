@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-21T21:21:00+00:00\n"
+"POT-Creation-Date: 2026-11-21T22:39:59+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -1224,7 +1224,7 @@ msgid "Already in the ledger"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:528
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Not counted"
 msgstr ""
 
@@ -1258,26 +1258,26 @@ msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:555
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Sale"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:556
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Refund"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:557
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Reversal"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:558
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:494
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Correction"
 msgstr ""
 
@@ -1317,7 +1317,7 @@ msgstr ""
 #: src/Modules/Admin/AuditLogFormatter.php:826
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
-#: build/dashboard.js:102
+#: build/dashboard.js:104
 msgid "Inactive"
 msgstr ""
 
@@ -1450,10 +1450,10 @@ msgstr ""
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1806
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1813
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:218
-#: build/dashboard.js:102
-#: build/dashboard.js:103
+#: build/dashboard.js:104
+#: build/dashboard.js:105
 msgid "Active"
 msgstr ""
 
@@ -1588,13 +1588,13 @@ msgstr ""
 #: src/Modules/ProductDesigner/DesignerNotifications.php:304
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:208
 #: build/dashboard.js:75
-#: build/dashboard.js:130
+#: build/dashboard.js:132
 msgid "From"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogPage.php:256
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:208
-#: build/dashboard.js:130
+#: build/dashboard.js:132
 msgid "To"
 msgstr ""
 
@@ -1721,7 +1721,7 @@ msgstr ""
 
 #: src/Modules/Admin/OverviewPage.php:192
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:425
-#: build/dashboard.js:114
+#: build/dashboard.js:116
 msgid "Available"
 msgstr ""
 
@@ -1895,7 +1895,7 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "None"
 msgstr ""
 
@@ -2224,15 +2224,15 @@ msgstr ""
 #: src/Modules/Alerts/Admin/AlertsAdminPage.php:431
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:369
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:463
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:519
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1715
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:526
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1722
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:161
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:199
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:203
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:205
 #: build/dashboard.js:60
 #: build/dashboard.js:79
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Name"
 msgstr ""
 
@@ -2256,7 +2256,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:205
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:401
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:187
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Actions"
 msgstr ""
 
@@ -2273,14 +2273,14 @@ msgstr[1] ""
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:124
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:386
 #: src/Modules/Dashboard/Branding/BrandingSettings.php:271
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:548
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:574
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1402
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:555
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:581
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1409
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:205
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:218
 #: build/dashboard.js:73
 #: build/dashboard.js:75
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Remove"
 msgstr ""
 
@@ -3180,7 +3180,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:371
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:719
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:674
-#: build/dashboard.js:108
+#: build/dashboard.js:110
 msgid "Yes"
 msgstr ""
 
@@ -3204,7 +3204,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:371
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:719
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:675
-#: build/dashboard.js:108
+#: build/dashboard.js:110
 msgid "No"
 msgstr ""
 
@@ -3255,7 +3255,7 @@ msgid "Where people write about privacy and the terms. [EMAIL]"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/CompanyDetailsSection.php:104
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "CVR number"
 msgstr ""
 
@@ -3266,7 +3266,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:762
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:836
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:688
-#: build/dashboard.js:108
+#: build/dashboard.js:110
 msgid "Not registered"
 msgstr ""
 
@@ -3278,9 +3278,9 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:300
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:765
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:840
-#: build/dashboard.js:103
-#: build/dashboard.js:111
-#: build/dashboard.js:114
+#: build/dashboard.js:105
+#: build/dashboard.js:113
+#: build/dashboard.js:116
 msgid "Address"
 msgstr ""
 
@@ -3388,15 +3388,15 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Font"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:120
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:170
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:796
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:945
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1034
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:803
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:952
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1041
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:200
 msgid "Category"
 msgstr ""
@@ -3418,9 +3418,9 @@ msgid "Search fonts"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:152
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:795
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:944
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1033
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:802
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:951
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1040
 msgid "Search"
 msgstr ""
 
@@ -3517,8 +3517,8 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1017
 #: build/dashboard.js:26
-#: build/dashboard.js:100
-#: build/dashboard.js:113
+#: build/dashboard.js:102
+#: build/dashboard.js:115
 msgid "Order"
 msgstr ""
 
@@ -3650,7 +3650,7 @@ msgid "Terms of service"
 msgstr ""
 
 #: src/Modules/Alerts/Admin/YouTubeLegalTab.php:92
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Open"
 msgstr ""
 
@@ -4346,7 +4346,7 @@ msgstr ""
 #: src/Modules/News/Admin/NewsAdminPage.php:334
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:208
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:369
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1593
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1600
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:161
 #: src/Modules/ProductDesigner/Admin/DesignerFeesSection.php:122
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:187
@@ -4360,11 +4360,11 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:524
 #: build/dashboard.js:66
 #: build/dashboard.js:75
-#: build/dashboard.js:100
-#: build/dashboard.js:103
-#: build/dashboard.js:117
+#: build/dashboard.js:102
+#: build/dashboard.js:105
 #: build/dashboard.js:119
-#: build/dashboard.js:122
+#: build/dashboard.js:121
+#: build/dashboard.js:124
 msgid "Status"
 msgstr ""
 
@@ -4716,7 +4716,7 @@ msgstr ""
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
 #: build/dashboard.js:95
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Text"
 msgstr ""
 
@@ -4750,7 +4750,7 @@ msgid "Published versions"
 msgstr ""
 
 #: src/Modules/Creators/Admin/AgreementSettingsSection.php:192
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "None yet."
 msgstr ""
 
@@ -4762,7 +4762,7 @@ msgstr ""
 #: src/Modules/Creators/Admin/AgreementSettingsSection.php:197
 #: src/Modules/News/Admin/NewsAdminPage.php:223
 #: src/Modules/News/Admin/NewsAdminPage.php:415
-#: build/dashboard.js:122
+#: build/dashboard.js:124
 msgid "Published"
 msgstr ""
 
@@ -4939,7 +4939,7 @@ msgstr ""
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:274
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:520
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Proposed"
 msgstr ""
 
@@ -5258,12 +5258,12 @@ msgstr ""
 #: build/alerts-global-admin.js:19
 #: build/alerts-presets-admin.js:19
 #: build/dashboard.js:48
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Edit"
 msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorsListTable.php:236
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:679
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:686
 msgid "Activate"
 msgstr ""
 
@@ -5272,7 +5272,7 @@ msgid "Deactivate"
 msgstr ""
 
 #: src/Modules/Creators/Admin/CreatorsListTable.php:241
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1735
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1742
 #: build/alerts-global-admin.js:11
 #: build/alerts-global-admin.js:16
 #: build/alerts-global-admin.js:20
@@ -5285,9 +5285,9 @@ msgstr ""
 #: build/dashboard.js:49
 #: build/dashboard.js:60
 #: build/dashboard.js:95
-#: build/dashboard.js:99
-#: build/dashboard.js:121
-#: build/dashboard.js:124
+#: build/dashboard.js:101
+#: build/dashboard.js:123
+#: build/dashboard.js:126
 msgid "Delete"
 msgstr ""
 
@@ -5388,7 +5388,7 @@ msgid "Decline"
 msgstr ""
 
 #: src/Modules/Creators/Admin/GoLivePage.php:246
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1487
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1494
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:212
 #: build/alerts-global-admin.js:1
 #: build/alerts-presets-admin.js:1
@@ -6036,7 +6036,7 @@ msgid "Preview"
 msgstr ""
 
 #: src/Modules/News/Admin/NewsAdminPage.php:329
-#: build/dashboard.js:126
+#: build/dashboard.js:128
 msgid "Withdraw"
 msgstr ""
 
@@ -6067,9 +6067,9 @@ msgid "Withdrawn"
 msgstr ""
 
 #: src/Modules/News/Admin/NewsAdminPage.php:417
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1808
-#: build/dashboard.js:99
-#: build/dashboard.js:119
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1815
+#: build/dashboard.js:101
+#: build/dashboard.js:121
 msgid "Draft"
 msgstr ""
 
@@ -6280,7 +6280,7 @@ msgstr ""
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:269
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1166
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1244
-#: build/dashboard.js:104
+#: build/dashboard.js:106
 msgid "PayPal"
 msgstr ""
 
@@ -6290,7 +6290,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:544
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1167
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1245
-#: build/dashboard.js:104
+#: build/dashboard.js:106
 msgid "Gift card"
 msgstr ""
 
@@ -6298,7 +6298,7 @@ msgstr ""
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:271
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1165
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1243
-#: build/dashboard.js:104
+#: build/dashboard.js:106
 msgid "Bank transfer"
 msgstr ""
 
@@ -6346,9 +6346,9 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:363
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:521
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:820
-#: build/dashboard.js:106
-#: build/dashboard.js:107
-#: build/dashboard.js:117
+#: build/dashboard.js:108
+#: build/dashboard.js:109
+#: build/dashboard.js:119
 msgid "Amount"
 msgstr ""
 
@@ -6358,7 +6358,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:295
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:363
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:522
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Method"
 msgstr ""
 
@@ -6490,10 +6490,10 @@ msgstr ""
 #: build/dashboard.js:66
 #: build/dashboard.js:75
 #: build/dashboard.js:95
-#: build/dashboard.js:100
-#: build/dashboard.js:113
-#: build/dashboard.js:119
-#: build/dashboard.js:122
+#: build/dashboard.js:102
+#: build/dashboard.js:115
+#: build/dashboard.js:121
+#: build/dashboard.js:124
 msgid "Product"
 msgstr ""
 
@@ -7038,19 +7038,19 @@ msgid "Sale incl. VAT"
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:173
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "Your profit"
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:179
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1020
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Quantity"
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:179
-#: build/dashboard.js:120
+#: build/dashboard.js:122
 msgid "Price incl. VAT"
 msgstr ""
 
@@ -7120,7 +7120,7 @@ msgid "Ready for payout"
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:255
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Request a payout"
 msgstr ""
 
@@ -7253,7 +7253,7 @@ msgid "Your payout as a gift card is ready. For your security, the code is only 
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:453
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Value"
 msgstr ""
 
@@ -7295,7 +7295,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:820
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
-#: build/dashboard.js:107
+#: build/dashboard.js:109
 msgid "Difference"
 msgstr ""
 
@@ -7596,7 +7596,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/DesignerNotifications.php:308
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:820
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
-#: build/dashboard.js:107
+#: build/dashboard.js:109
 msgid "Before"
 msgstr ""
 
@@ -8521,27 +8521,27 @@ msgid "No base products yet."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:369
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "Base price"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:369
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:478
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1276
-#: build/dashboard.js:99
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:485
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1283
+#: build/dashboard.js:101
 msgid "Colours"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:369
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:479
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1282
-#: build/dashboard.js:99
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:486
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1289
+#: build/dashboard.js:101
 msgid "Sizes"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:369
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:482
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1288
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:489
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1295
 #: build/dashboard.js:95
 msgid "Sides"
 msgstr ""
@@ -8557,7 +8557,7 @@ msgid "Designs"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:401
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:722
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:729
 msgid "← All base products"
 msgstr ""
 
@@ -8600,7 +8600,7 @@ msgid "Creators have designs on this base product. A new base price or template 
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:464
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Description"
 msgstr ""
 
@@ -8614,7 +8614,7 @@ msgstr ""
 
 #. translators: %s: currency code, e.g. "DKK".
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:467
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1346
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1353
 #, php-format
 msgid "Base price incl. VAT (%s)"
 msgstr ""
@@ -8636,130 +8636,142 @@ msgstr ""
 msgid "For all-over products such as jerseys: the colour fills the whole print area of each side under the design, also in the print file. A side with only a colour is printed but costs nothing extra. Embroidered sides have no background."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:469
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:473
+msgid "Shared design across formats"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:473
+msgid "Creators can use one design for all formats"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:473
+msgid "The design is fitted to each format automatically, per orientation, and a creator can still give a format its own design. Without the tick, each format is designed on its own."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:476
 msgid "Price per size"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:469
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:476
 msgid "Different base prices per size"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:471
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:478
 msgid "Without the tick, every size has the base price above. With it, a size left empty has that price too. A creator's percent is taken of each size's price; a fixed profit is the same for every size."
 msgstr ""
 
 #. translators: %s: currency code, e.g. "DKK".
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:473
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:480
 #, php-format
 msgid "Price per extra large design area incl. VAT (%s)"
 msgstr ""
 
 #. translators: %s: currency code, e.g. "DKK".
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:473
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:480
 msgid "What the company keeps for each further large design area. The most expensive area used is included in the base price. 0 means extra areas cost nothing."
 msgstr ""
 
 #. translators: %s: currency code, e.g. "DKK".
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:475
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:482
 #, php-format
 msgid "Price per extra small design area incl. VAT (%s)"
 msgstr ""
 
 #. translators: %s: currency code, e.g. "DKK".
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:475
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:482
 msgid "The same for each further small design area, e.g. a sleeve or the neck. Each side is large or small under Sides."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:476
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:483
 msgid "Default category"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:476
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:483
 msgid "Used for a creator without their own product category."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:477
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1759
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:484
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1766
 msgid "Product tags"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:477
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:484
 msgid "Every designer product of this base product gets the ticked WooCommerce product tags, e.g. for features on the product page. Products in the shop get a change in the background; tags set by hand in WooCommerce stay. Creators do not see them."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:478
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:485
 msgid "One per line: a name and a colour code, e.g. \"Black #111111\"."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:479
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:486
 msgid "Separated by commas, e.g. \"S, M, L, XL\". Creators and customers see them in this order."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:483
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:490
 msgid "Each side has a mockup template of PNG layers of the same size: the background, the colour mask (tinted in the product colour), the shading and the highlight, and optionally a cutout, where the product lies in front of the design. The print area is where the design is placed on the template (in pixels) and its real size when printed (millimetres at a resolution in dpi)."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:493
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:500
 msgid "Create base product"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:493
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:500
 msgid "Save base product"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:517
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:524
 msgid "New side"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:522
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:529
 msgid "Leave empty to add no side."
 msgstr ""
 
 #. translators: 1: width in px, 2: height in px.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:525
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:532
 #, php-format
 msgid "Template %1$d × %2$d px"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:532
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:539
 msgid "Import from PSD"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:533
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:540
 msgid "Layers mb_background, mb_color, mb_shading, mb_highlight, mb_cutout (optional) and mb_print_area. The PSD stays on your computer; only the PNG layers are uploaded when you save."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:535
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:542
 msgid "Colour photos"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:536
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:543
 msgid "Choose all the PNG photos of this side at once. A file named after a colour, e.g. \"Black.png\", becomes that colour's background, and a new colour is added to the list. Check the small pictures: exactly these are uploaded when you save."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:554
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:561
 msgid "Where this PNG is opaque, the product is shown in front of the design, e.g. the strings of a hoodie (a mask.png). It has the size of the other layers. The print file is not changed, and designs waiting for approval stay valid."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:558
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:565
 msgid "The product's outline: where this PNG is opaque, the product images without background keep the product; everything else becomes transparent. Without it the colour mask is used. Sides with colour photos only need it. It has the size of the other layers."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:559
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:566
 msgid "Make it from the background"
 msgstr ""
 
 #. translators: %s: colour name.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:570
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:577
 #, php-format
 msgid "Background in %s"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:585
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:592
 msgid "Print area in the template (px):"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:590
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:597
 #: build/alerts-global-admin.js:16
 #: build/alerts-global-admin.js:18
 #: build/alerts-presets-admin.js:16
@@ -8769,499 +8781,499 @@ msgstr ""
 msgid "Width"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:591
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:598
 #: build/alerts-global-admin.js:18
 #: build/alerts-presets-admin.js:18
 #: build/dashboard.js:47
 msgid "Height"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:605
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:612
 msgid "Print size:"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:606
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:613
 msgid "Width (mm)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:607
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:614
 msgid "Height (mm)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:608
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:615
 msgid "Resolution (dpi)"
 msgstr ""
 
 #. translators: 1: width in px, 2: height in px.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:613
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:620
 #, php-format
 msgid "Print file: %1$d × %2$d px"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:616
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1306
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:623
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1313
 msgid "Embroidery pack"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:617
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:624
 msgid "On an embroidered side, the design keeps to the threads of the pack."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:622
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:629
 msgid "Design area:"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:623
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:630
 #: build/dashboard.js:70
 msgid "Large"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:624
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:631
 #: build/dashboard.js:70
 msgid "Small"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:625
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:632
 msgid "As an extra design area, the side costs the base product's price for a large or a small area. The most expensive area used is included in the base price."
 msgstr ""
 
 #. translators: %s: sizes.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:632
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:639
 #, php-format
 msgid "Only for these sizes: %s"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:636
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:643
 msgid "Remove this side"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:650
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:657
 msgid "No embroidery"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:671
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:678
 msgid "This base product is retired: its products are out of the shop, and it cannot be changed or activated again."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:677
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:684
 msgid "Back to draft"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:677
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:684
 msgid "Creators can no longer start designs on it. Products in the shop are not affected."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:679
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:686
 msgid "Creators can design on it."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:683
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:690
 msgid "Delete base product"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:685
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:692
 msgid "Retire"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:686
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:693
 msgid "Retiring takes every product of this base product out of the shop (they become drafts and stay for the order history), rejects the designs waiting for approval and tells the creators. It cannot be undone."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:687
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:694
 msgid "Yes, retire this base product for good."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:688
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:695
 msgid "Retire base product"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:704
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:711
 msgid "Own base product"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:707
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:714
 msgid "From Printful's catalog"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:711
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:718
 msgid "From a Gelato template"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:715
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:722
 msgid "From Prodigi's catalogue"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:719
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:726
 msgid "From Printify's catalog"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:754
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:761
 msgid "Enter the Printful API token under Settings → Product designer first."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:793
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:800
 msgid "Pick the product. Only products sold in Europe that can be sent to Denmark are listed. Printful renders it without a design in every colour you tick; those photos are what creators design on, and the print areas are measured on them. All-over products are designed on their flat sewing pattern instead."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:796
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:805
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:945
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1034
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1040
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:803
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:812
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:952
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1041
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1047
 msgid "— All —"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:805
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:812
 msgid "Technique"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:814
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:951
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1047
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:821
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:958
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1054
 #: build/dashboard.js:95
-#: build/dashboard.js:130
+#: build/dashboard.js:132
 msgid "Show"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:817
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:824
 msgid "Printful's newest API does not answer right now, so the list is not limited to Europe. A product you pick is still checked."
 msgstr ""
 
 #. translators: %d: number of products.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:821
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:953
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1050
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:828
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:960
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1057
 #, php-format
 msgid "%d product."
 msgid_plural "%d products."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:824
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:956
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1057
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:831
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:963
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1064
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:314
 msgid "No products found."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:858
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:865
 msgid "Direct-to-garment print"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:859
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:866
 msgid "Embroidery"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:860
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:867
 msgid "All-over print (cut and sewn)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:861
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:868
 msgid "Sublimation"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:862
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:869
 msgid "Print on film (DTF)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:863
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:870
 msgid "Digital print"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:864
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:871
 msgid "UV print"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:865
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:872
 msgid "Knitwear"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:885
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:892
 msgid "← Previous"
 msgstr ""
 
 #. translators: 1: page, 2: pages.
 #. translators: 1: page number, 2: number of pages.
 #. translators: 1: current page number, 2: number of pages.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:889
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:896
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1116
 #: build/dashboard.js:25
 #, php-format,js-format
 msgid "Page %1$d of %2$d"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:892
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:899
 msgid "Next →"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:907
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:914
 msgid "Enter the Prodigi API key under Settings → Product designer first."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:942
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:949
 msgid "Prodigi's whole catalogue: search or pick a category, then pick the product. Creators design on a white sheet in the shape of the print area, and Prodigi makes the mockups. The product's page shows its colours, sizes and print areas before you import it."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:983
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:990
 msgid "Enter the Printify access token under Settings → Product designer first."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1031
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1038
 msgid "Pick a product, then its producer. The import brings the colours, sizes and print areas. You add your own photos afterwards and draw the print area on them."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1040
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1047
 msgid "Producer"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1046
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1053
 msgid "Only producers in the EU"
 msgstr ""
 
 #. translators: %d: number of products.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1050
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1057
 msgid "A producer is in the EU by the address Printify shows for it."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1053
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1060
 msgid "The producers are being read in the background. Reload the page in a minute to see all of them on the products."
 msgstr ""
 
 #. translators: %d: number of further producers.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1094
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1101
 #, php-format
 msgid "+%d more"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1103
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1110
 msgid "← Back"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1123
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1130
 msgid "T-shirts"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1124
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1131
 msgid "Hoodies"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1125
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1132
 msgid "Sweatshirts"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1126
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1133
 msgid "Other clothing and shoes"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1127
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1134
 msgid "Caps and hats"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1128
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1135
 msgid "Mugs and bottles"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1129
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1136
 msgid "Bags"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1130
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1137
 msgid "Posters and wall art"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1131
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1138
 msgid "Phone and tech"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1132
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1139
 msgid "Home and kitchen"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1133
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1140
 msgid "Stickers and paper"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1134
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1141
 msgid "Jewellery and accessories"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1135
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1142
 msgid "Pets"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1136
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1143
 msgid "Other"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1158
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1165
 msgid "No producer makes this product."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1163
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1170
 msgid "Choose the producer. Colours, sizes and print areas differ between them. The ones in the EU are listed first; the place is the address Printify shows for the producer."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1180
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1187
 msgid "Enter the Gelato API key and store id under Settings → Product designer first."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1194
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1201
 msgid "Gelato renders products only from a template. Make one template in the Gelato dashboard of the product you want, with the colours and sizes creators may choose, one named image layer per side and at least one mockup: Gelato makes the photos from the mockups in the template. Any design in it is never shown: we replace it with an empty file and later with the creators' print files. The template id is in the template's address at Gelato."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1196
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1203
 msgid "Gelato template id"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1196
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1203
 msgid "Fetch"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1239
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1246
 msgid "Show the sizes in inches"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1239
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1246
 msgid "Show the sizes in centimetres"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1240
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1247
 msgid "Two sizes would get the same name in whole centimetres, so they stay in inches."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1240
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1247
 msgid "The sizes are shown in whole centimetres."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1240
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1247
 msgid "The sizes are shown in inches."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1256
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1263
 msgid "The print size depends on the size. A base product holds one print size: make one base product per size you want to offer."
 msgstr ""
 
 #. translators: %d: how many variants of the template repeat another's values.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1264
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1271
 #, php-format
 msgid "%d variant has the same values as another and is left out. Check the template in Gelato."
 msgid_plural "%d variants have the same values as others and are left out. Check the template in Gelato."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1268
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1275
 msgid "The sizes of each value are grouped by the shape of their print area (at most 3 % apart). Each group is a side of its own with its own photo, so creators make one design per group, and every size is offered. The print file has the largest size of its group and is cut to the shape of each size."
 msgstr ""
 
 #. translators: 1: side name, 2: width in mm, 3: height in mm.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1300
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1336
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1307
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1343
 #, php-format
 msgid "%1$s (%2$d × %3$d mm)"
 msgstr ""
 
 #. translators: 1: side name, 2: width in mm, 3: height in mm, 4: the sizes of the side.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1317
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1324
 #, php-format
 msgid "%1$s (%2$d × %3$d mm): %4$s"
 msgstr ""
 
 #. translators: 1: sides of the product, 2: the most sides of a base product.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1326
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1333
 #, php-format
 msgid "The product has %1$d sides with its groups of sizes, and a base product holds %2$d. Only the first ones of the ticked placements are imported: untick a placement you do not need."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1329
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1336
 msgid "At most six sides. Each starts as a white sheet with the smallest print size of the sizes you can choose, which fits them all at 300 dpi."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1329
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1336
 msgid "Each side is a flat part of the sewing pattern. Keep every part you want printed: an unticked part stays white on the product."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1329
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1336
 msgid "At most six sides. Each is rendered and measured; a side whose print area cannot be found on the photos is left out."
 msgstr ""
 
 #. translators: %s: the template's image layers with their sizes.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1341
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1348
 #, php-format
 msgid "Image layers in the template: %s"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1342
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1349
 msgid "Check in Gelato that each image layer fills the whole print area. Creators can only design on this size, and we cannot check it ourselves, because Gelato does not tell us the largest area. If you change the template, make a new import."
 msgstr ""
 
 #. translators: %s: currency code, e.g. "DKK".
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1348
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1355
 #, php-format
 msgid "Price per extra design area incl. VAT (%s)"
 msgstr ""
 
 #. translators: %s: currency code, e.g. "DKK".
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1348
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1355
 msgid "What the company keeps for each part after the first. An all-over design usually covers every part: 0 means they cost nothing extra."
 msgstr ""
 
 #. translators: %s: currency code, e.g. "DKK".
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1348
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1355
 msgid "What the company keeps for each design area after the first. 0 means extra areas cost nothing."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1350
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1357
 msgid "The base product is created as a draft at once. Then choose your own photos on each side and draw the print area on them."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1350
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1357
 msgid "The base product is created as a draft at once. Its sewing patterns, if it has any, are fetched in the background. Creators design on the flat parts; the provider makes their mockups when they are sent for approval."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1350
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1357
 msgid "The base product is created as a draft at once. The provider then renders its photos without a design and with a marker per side, from which the photos per colour and the print areas are taken, in the background (a few minutes). Check them and activate it."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1351
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1358
 msgid "Create and import"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1370
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1377
 msgid "Mockups"
 msgstr ""
 
 #. translators: %d: the most photos of a design.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1385
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1392
 #, php-format
 msgid "The photos Printful makes of each design sent for approval. They become the product's images in the shop, in place of the mockups the creator's browser made, and each is made per colour. At most %d: more are left out."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1398
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1405
 msgid "Mockup PSD"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1401
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1408
 msgid "Imported."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1408
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1415
 msgid "Let creators see this mockup while they design (\"See the finished product\")"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1409
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1416
 msgid "For a product whose mockup wraps the design, like a mug. Smart objects with \"design\" in their name take the print file: \"højre\" shows its right end, \"venstre\" its left end. Each design then gets this mockup instead of the one drawn on the template."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1433
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1440
 msgid "Order of the mockups"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1434
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1441
 msgid "The order of the photos in the shop. The first is the main image. Designs already sent keep theirs."
 msgstr ""
 
 #. translators: %s: the photo's id.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1443
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1450
 #, php-format
 msgid "Mockup %s"
 msgstr ""
@@ -9270,7 +9282,7 @@ msgstr ""
 #. translators: %s: name of a side.
 #. translators: %s: a size.
 #. translators: %s: colour name.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1447
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1454
 #: build/base-products-admin.js:8
 #: build/base-products-admin.js:15
 #: build/dashboard.js:95
@@ -9282,7 +9294,7 @@ msgstr ""
 #. translators: %s: name of a side.
 #. translators: %s: a size.
 #. translators: %s: colour name.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1449
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1456
 #: build/base-products-admin.js:10
 #: build/base-products-admin.js:16
 #: build/dashboard.js:95
@@ -9291,154 +9303,154 @@ msgid "Move %s down"
 msgstr ""
 
 #. translators: %s: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1474
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1481
 #, php-format
 msgid "The photos and print areas are being imported from %s in the background. The status below updates by itself; the base product cannot be activated meanwhile."
 msgstr ""
 
 #. translators: 1: Printful or Gelato, 2: reason.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1477
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1484
 #, php-format
 msgid "The import from %1$s failed: %2$s"
 msgstr ""
 
 #. translators: %s: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1490
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1497
 #, php-format
 msgid "Imported from %s: colours, sizes and print sizes. Add your own photos on each side, draw the print area on them, and check everything before you activate the base product."
 msgstr ""
 
 #. translators: %s: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1490
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1497
 #, php-format
 msgid "Imported from %s: the flat parts with their print areas. Check them before you activate the base product."
 msgstr ""
 
 #. translators: %s: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1490
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1497
 #, php-format
 msgid "Imported from %s: one photo per colour and a measured print area per side. Check each print area before you activate the base product."
 msgstr ""
 
 #. translators: 1: names of sides, 2: Printful or Gelato.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1494
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1501
 #, php-format
 msgid "Left out because %2$s's photos do not show them: %1$s."
 msgstr ""
 
 #. translators: %d: how many sizes of the sides have a bleed.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1508
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1515
 msgid "Fetch the bleed from Gelato"
 msgstr ""
 
 #. translators: %d: how many sizes of the sides have a bleed.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1508
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1515
 #, php-format
 msgid "%d size of the sides has a bleed. Creators see a red line where the print can be cut off."
 msgid_plural "%d sizes of the sides have a bleed. Creators see a red line where the print can be cut off."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1521
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1528
 msgid "Show the provider's answer"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1535
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1542
 msgid "The provider's answer (no keys)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1575
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1582
 msgid "The provider renders the product"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1576
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1583
 msgid "The print areas are measured"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1577
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1584
 msgid "The photos are downloaded"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1578
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1585
 msgid "The sides are saved"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1593
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1600
 msgid "Render"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1593
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1600
 msgid "The provider says"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1593
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1600
 msgid "Picture"
 msgstr ""
 
 #. translators: %d: minutes.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1608
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1615
 #, php-format
 msgid "The background job has not run for %d minutes. Check that WP-Cron or Action Scheduler runs on this site."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1612
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1619
 msgid "Start the import over"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1628
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1635
 msgid "Product with markers"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1628
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1635
 msgid "Blank product"
 msgstr ""
 
 #. translators: 1: looks so far, 2: most looks.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1639
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1646
 #: build/dashboard.js:63
 msgid "Ready"
 msgstr ""
 
 #. translators: 1: looks so far, 2: most looks.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1639
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1646
 #, php-format
 msgid "Waiting (look %1$d of %2$d)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1679
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1686
 msgid "importing…"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1680
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1687
 msgid "import failed"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1711
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1718
 msgid "Images every creator can use in the designer. PNG, JPG or WebP; use PNG for transparency."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1717
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1724
 msgid "Add clipart"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1722
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1729
 #: build/dashboard.js:95
 msgid "No cliparts yet."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1756
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1763
 msgid "There are no product tags in WooCommerce yet."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1781
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1788
 msgid "— None —"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1807
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1814
 msgid "Retired"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1819
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1826
 #: build/alerts-global-admin.js:18
 #: build/alerts-presets-admin.js:18
 #: build/dashboard.js:47
@@ -9446,23 +9458,23 @@ msgstr ""
 msgid "Background"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1820
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1827
 msgid "Colour mask"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1821
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1828
 msgid "Shading"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1822
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1829
 msgid "Cutout (e.g. strings on a hoodie)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1823
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1830
 msgid "Silhouette (images without background)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1824
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1831
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
@@ -9542,8 +9554,8 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:161
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:717
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:780
-#: build/dashboard.js:111
-#: build/dashboard.js:128
+#: build/dashboard.js:113
+#: build/dashboard.js:130
 msgid "Period"
 msgstr ""
 
@@ -9692,7 +9704,7 @@ msgid "Images without background are in the shop."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:251
-#: build/dashboard.js:122
+#: build/dashboard.js:124
 msgid "No image"
 msgstr ""
 
@@ -10019,7 +10031,7 @@ msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:205
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:208
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Code"
 msgstr ""
 
@@ -10030,7 +10042,7 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Colour"
 msgstr ""
 
@@ -10333,7 +10345,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/DesignerNotifications.php:143
 #: src/Modules/ProductDesigner/DesignerNotifications.php:191
 #: src/Modules/ProductDesigner/DesignerNotifications.php:605
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "Customer price incl. VAT"
 msgstr ""
 
@@ -10343,7 +10355,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/DesignerNotifications.php:264
 #: src/Modules/ProductDesigner/DesignerNotifications.php:313
 #: src/Modules/ProductDesigner/DesignerNotifications.php:345
-#: build/dashboard.js:121
+#: build/dashboard.js:123
 msgid "Open the designer"
 msgstr ""
 
@@ -10867,18 +10879,18 @@ msgstr ""
 
 #: src/Modules/ProductDesigner/Providers/PrintfulCatalog.php:1176
 #: build/dashboard.js:86
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "White"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Providers/PrintfulCatalog.php:1177
 #: build/dashboard.js:86
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Black"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Providers/PrintfulCatalog.php:1178
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Clear"
 msgstr ""
 
@@ -10894,11 +10906,11 @@ msgstr ""
 msgid "Product photo %d"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1184
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1188
 msgid "The product designer is not available."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1207
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1211
 msgid "The product designer refused the change."
 msgstr ""
 
@@ -11459,7 +11471,7 @@ msgstr ""
 #: build/dashboard.js:83
 #: build/dashboard.js:89
 #: build/dashboard.js:95
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Cancel"
 msgstr ""
 
@@ -12216,8 +12228,8 @@ msgstr ""
 #. translators: 1: menu group, e.g. "Alerts", 2: page in the group.
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:160
 #: build/dashboard.js:62
-#: build/dashboard.js:128
-#: build/dashboard.js:131
+#: build/dashboard.js:130
+#: build/dashboard.js:133
 #, php-format,js-format
 msgid "%1$s: %2$s"
 msgstr ""
@@ -12325,7 +12337,7 @@ msgstr ""
 
 #. translators: 1: first day, 2: last day (both included).
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:99
-#: build/dashboard.js:102
+#: build/dashboard.js:104
 #, php-format,js-format
 msgid "Last 30 days: %1$s – %2$s"
 msgstr ""
@@ -12335,34 +12347,34 @@ msgid "The shop's sales of this creator's products after discounts, including VA
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:109
-#: build/dashboard.js:102
+#: build/dashboard.js:104
 msgid "No sales in the last 30 days."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:115
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "The figures are shown per currency and never added together."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:135
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "Sales (incl. VAT)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:135
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "Net sales (excl. VAT)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:140
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "VAT is missing for some older sales in this period, so the amounts are shown excluding VAT."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:145
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:163
-#: build/dashboard.js:101
-#: build/dashboard.js:128
+#: build/dashboard.js:103
+#: build/dashboard.js:130
 msgid "Units"
 msgstr ""
 
@@ -12370,30 +12382,30 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:164
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:665
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:62
-#: build/dashboard.js:101
-#: build/dashboard.js:128
+#: build/dashboard.js:103
+#: build/dashboard.js:130
 msgid "Orders"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Sales per day (incl. VAT)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Net sales per day"
 msgstr ""
 
 #. translators: %s: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:157
-#: build/dashboard.js:129
+#: build/dashboard.js:131
 #, php-format,js-format
 msgid "Sales, units and orders per period (%s)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:161
-#: build/dashboard.js:128
+#: build/dashboard.js:130
 msgid "Day"
 msgstr ""
 
@@ -12474,7 +12486,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:324
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:425
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:781
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Currency"
 msgstr ""
 
@@ -12608,7 +12620,7 @@ msgid "Ledger events"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Date"
 msgstr ""
 
@@ -12618,9 +12630,9 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
-#: build/dashboard.js:100
-#: build/dashboard.js:101
-#: build/dashboard.js:124
+#: build/dashboard.js:102
+#: build/dashboard.js:103
+#: build/dashboard.js:126
 msgid "Profit"
 msgstr ""
 
@@ -12636,10 +12648,10 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:719
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:676
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1246
-#: build/dashboard.js:100
-#: build/dashboard.js:108
-#: build/dashboard.js:114
-#: build/dashboard.js:124
+#: build/dashboard.js:102
+#: build/dashboard.js:110
+#: build/dashboard.js:116
+#: build/dashboard.js:126
 msgid "Unknown"
 msgstr ""
 
@@ -12805,7 +12817,7 @@ msgid "Complete"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:832
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Incomplete"
 msgstr ""
 
@@ -13131,7 +13143,7 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1019
-#: build/dashboard.js:113
+#: build/dashboard.js:115
 msgid "Type"
 msgstr ""
 
@@ -13164,7 +13176,7 @@ msgstr ""
 #: build/dashboard.js:1
 #: build/dashboard.js:84
 #: build/dashboard.js:95
-#: build/dashboard.js:114
+#: build/dashboard.js:116
 msgid "Close"
 msgstr ""
 
@@ -13192,9 +13204,9 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:492
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1180
-#: build/dashboard.js:99
-#: build/dashboard.js:104
-#: build/dashboard.js:119
+#: build/dashboard.js:101
+#: build/dashboard.js:106
+#: build/dashboard.js:121
 msgid "Rejected"
 msgstr ""
 
@@ -13375,7 +13387,7 @@ msgid "CPR number: missing. The creator adds it in the creator dashboard; until 
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:271
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Master data for settlement documents"
 msgstr ""
 
@@ -13414,17 +13426,17 @@ msgid "Address, line 2"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:302
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Postcode"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:303
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "City"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:304
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Country"
 msgstr ""
 
@@ -13449,7 +13461,7 @@ msgid "Private person (CPR number with each payout)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutSettingsSections.php:344
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Save master data"
 msgstr ""
 
@@ -13638,7 +13650,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:363
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:525
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:166
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Requested"
 msgstr ""
 
@@ -13681,7 +13693,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:526
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:194
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:200
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Handled"
 msgstr ""
 
@@ -13705,9 +13717,9 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:722
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1179
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:821
-#: build/dashboard.js:104
-#: build/dashboard.js:113
-#: build/dashboard.js:114
+#: build/dashboard.js:106
+#: build/dashboard.js:115
+#: build/dashboard.js:116
 msgid "Paid out"
 msgstr ""
 
@@ -13716,7 +13728,7 @@ msgid "Balance"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:425
-#: build/dashboard.js:114
+#: build/dashboard.js:116
 msgid "Outstanding"
 msgstr ""
 
@@ -13813,15 +13825,15 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:709
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:642
-#: build/dashboard.js:109
+#: build/dashboard.js:111
 msgid "Preliminary, not approved by an auditor or SKAT."
 msgstr ""
 
 #. translators: 1: number of the corrected document, 2: number of the original settlement document.
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:712
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:819
-#: build/dashboard.js:107
-#: build/dashboard.js:114
+#: build/dashboard.js:109
+#: build/dashboard.js:116
 msgid "Download PDF"
 msgstr ""
 
@@ -13831,19 +13843,19 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:716
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:638
-#: build/dashboard.js:111
+#: build/dashboard.js:113
 msgid "Issued"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:717
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:778
-#: build/dashboard.js:111
+#: build/dashboard.js:113
 msgid "Whole history"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:719
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:668
-#: build/dashboard.js:111
+#: build/dashboard.js:113
 msgid "VAT registered at issue"
 msgstr ""
 
@@ -13851,20 +13863,20 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:864
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:573
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:813
-#: build/dashboard.js:106
-#: build/dashboard.js:111
+#: build/dashboard.js:108
+#: build/dashboard.js:113
 msgid "Commission in the period"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:721
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:812
-#: build/dashboard.js:113
+#: build/dashboard.js:115
 msgid "Carried from earlier"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:723
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:839
-#: build/dashboard.js:113
+#: build/dashboard.js:115
 msgid "Carried forward"
 msgstr ""
 
@@ -13876,8 +13888,8 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:867
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:576
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:878
-#: build/dashboard.js:106
-#: build/dashboard.js:111
+#: build/dashboard.js:108
+#: build/dashboard.js:113
 msgid "Commission excl. VAT"
 msgstr ""
 
@@ -13886,8 +13898,8 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:869
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:578
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:880
-#: build/dashboard.js:107
-#: build/dashboard.js:112
+#: build/dashboard.js:109
+#: build/dashboard.js:114
 #, php-format,js-format
 msgid "VAT (%s %%)"
 msgstr ""
@@ -13896,8 +13908,8 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:870
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:579
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:881
-#: build/dashboard.js:107
-#: build/dashboard.js:112
+#: build/dashboard.js:109
+#: build/dashboard.js:114
 msgid "Commission incl. VAT"
 msgstr ""
 
@@ -13905,55 +13917,55 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:874
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:583
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:885
-#: build/dashboard.js:107
-#: build/dashboard.js:112
+#: build/dashboard.js:109
+#: build/dashboard.js:114
 msgid "Commission without VAT (not VAT registered when sold)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:746
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:921
-#: build/dashboard.js:112
+#: build/dashboard.js:114
 msgid "Commission of sales while not VAT registered, incl. VAT"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:747
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:922
-#: build/dashboard.js:112
+#: build/dashboard.js:114
 msgid "VAT deducted (not VAT registered when sold)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:748
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:923
-#: build/dashboard.js:112
+#: build/dashboard.js:114
 msgid "Commission of sales while not VAT registered, paid out"
 msgstr ""
 
 #. translators: %s: references of the recalculations, e.g. R2-000001.
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:754
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:818
-#: build/dashboard.js:113
+#: build/dashboard.js:115
 #, php-format,js-format
 msgid "Adjustments (%s)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:764
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:839
-#: build/dashboard.js:111
-#: build/dashboard.js:114
+#: build/dashboard.js:113
+#: build/dashboard.js:116
 msgid "Legal name"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:766
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:841
-#: build/dashboard.js:111
-#: build/dashboard.js:114
+#: build/dashboard.js:113
+#: build/dashboard.js:116
 msgid "CVR/SE no."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:767
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:844
-#: build/dashboard.js:111
-#: build/dashboard.js:114
+#: build/dashboard.js:113
+#: build/dashboard.js:116
 msgid "Issuer CVR no."
 msgstr ""
 
@@ -13983,18 +13995,18 @@ msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:820
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:598
-#: build/dashboard.js:107
+#: build/dashboard.js:109
 msgid "Corrected"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:842
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:712
-#: build/dashboard.js:114
+#: build/dashboard.js:116
 msgid "Issued by"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:843
-#: build/dashboard.js:114
+#: build/dashboard.js:116
 msgid "Issuer address"
 msgstr ""
 
@@ -14090,17 +14102,17 @@ msgid "The details cannot be shown. Please try again later."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:998
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Registration number"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:999
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Account number"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1001
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "PayPal email address"
 msgstr ""
 
@@ -14206,7 +14218,7 @@ msgid "Reject request"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1178
-#: build/dashboard.js:104
+#: build/dashboard.js:106
 msgid "Pending"
 msgstr ""
 
@@ -14214,7 +14226,7 @@ msgstr ""
 #: build/dashboard.js:63
 #: build/dashboard.js:65
 #: build/dashboard.js:75
-#: build/dashboard.js:104
+#: build/dashboard.js:106
 msgid "Cancelled"
 msgstr ""
 
@@ -14225,7 +14237,7 @@ msgstr ""
 #. translators: 1: amount, 2: currency code.
 #. translators: 1: price as stored in the shop, 2: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:52
-#: build/dashboard.js:123
+#: build/dashboard.js:125
 #, php-format,js-format
 msgid "%1$s %2$s"
 msgstr ""
@@ -14548,25 +14560,25 @@ msgid "This gift card was issued as a creator payout. It can only be redeemed at
 msgstr ""
 
 #: src/Modules/WooCommerce/Payouts/Settlements/CvrLookup.php:289
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Denmark"
 msgstr ""
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:256
-#: build/dashboard.js:114
+#: build/dashboard.js:116
 msgid "Tax and reporting"
 msgstr ""
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:257
-#: build/dashboard.js:114
+#: build/dashboard.js:116
 msgid "You are responsible for finding out about and meeting your own tax and reporting obligations to the Danish Tax Agency. Depending on your situation, this may include whether the amount must be included in your taxable income and whether you have VAT obligations. This document shows the payout and its basis according to the information registered in the system. It is not tax advice and has not been approved by an auditor or the Danish Tax Agency."
 msgstr ""
 
 #. translators: %s: document number.
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:358
-#: build/dashboard.js:108
-#: build/dashboard.js:109
 #: build/dashboard.js:110
+#: build/dashboard.js:111
+#: build/dashboard.js:112
 #, php-format,js-format
 msgid "Settlement document %s"
 msgstr ""
@@ -14620,7 +14632,7 @@ msgstr ""
 
 #. translators: 1: company name, 2: creator name.
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:651
-#: build/dashboard.js:111
+#: build/dashboard.js:113
 #, php-format,js-format
 msgid "Self-billing: issued by %1$s on behalf of %2$s."
 msgstr ""
@@ -14688,7 +14700,7 @@ msgid "VAT deducted from the payout"
 msgstr ""
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:958
-#: build/dashboard.js:113
+#: build/dashboard.js:115
 msgid "Settled sales"
 msgstr ""
 
@@ -14697,17 +14709,17 @@ msgid "No sales rows were settled with this document."
 msgstr ""
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1021
-#: build/dashboard.js:113
+#: build/dashboard.js:115
 msgid "Net"
 msgstr ""
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1022
-#: build/dashboard.js:113
+#: build/dashboard.js:115
 msgid "VAT on the sale"
 msgstr ""
 
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1023
-#: build/dashboard.js:113
+#: build/dashboard.js:115
 msgid "Commission"
 msgstr ""
 
@@ -14717,7 +14729,7 @@ msgstr ""
 
 #. translators: 1: number of the correction document, 2: date, 3: reason.
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1069
-#: build/dashboard.js:114
+#: build/dashboard.js:116
 #, php-format,js-format
 msgid "Corrected by %1$s (%2$s): %3$s"
 msgstr ""
@@ -15135,7 +15147,7 @@ msgid "Log out"
 msgstr ""
 
 #: templates/dashboard/shell.php:48
-#: build/dashboard.js:131
+#: build/dashboard.js:133
 msgid "Loading your dashboard…"
 msgstr ""
 
@@ -15407,7 +15419,7 @@ msgstr ""
 #: build/dashboard.js:32
 #: build/dashboard.js:45
 #: build/dashboard.js:95
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Uploading…"
 msgstr ""
 
@@ -15567,7 +15579,7 @@ msgstr ""
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:37
 #: build/dashboard.js:45
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Product image"
 msgstr ""
 
@@ -15694,14 +15706,14 @@ msgstr ""
 #: build/alerts-presets-admin.js:25
 #: build/dashboard.js:38
 #: build/dashboard.js:70
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Design"
 msgstr ""
 
 #: build/alerts-global-admin.js:9
 #: build/alerts-presets-admin.js:9
 #: build/dashboard.js:38
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "My designs"
 msgstr ""
 
@@ -15844,9 +15856,9 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
-#: build/dashboard.js:99
-#: build/dashboard.js:121
-#: build/dashboard.js:122
+#: build/dashboard.js:101
+#: build/dashboard.js:123
+#: build/dashboard.js:124
 #, js-format
 msgid "Delete %s"
 msgstr ""
@@ -16644,14 +16656,14 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Alignment"
 msgstr ""
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Left"
 msgstr ""
 
@@ -16664,7 +16676,7 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Right"
 msgstr ""
 
@@ -16689,7 +16701,7 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Italic"
 msgstr ""
 
@@ -16892,7 +16904,7 @@ msgstr ""
 #: build/alerts-global-admin.js:18
 #: build/alerts-presets-admin.js:18
 #: build/dashboard.js:47
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Opacity"
 msgstr ""
 
@@ -17186,7 +17198,7 @@ msgstr ""
 #: build/alerts-global-admin.js:24
 #: build/alerts-presets-admin.js:24
 #: build/dashboard.js:53
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 #, js-format
 msgid "Use at most %d characters."
 msgstr ""
@@ -17578,7 +17590,7 @@ msgid "Choose a background or colour photos to draw the print area on them."
 msgstr ""
 
 #: build/dashboard.js:1
-#: build/dashboard.js:104
+#: build/dashboard.js:106
 msgid "Please accept our agreement first. You find it at the top of your dashboard."
 msgstr ""
 
@@ -17665,7 +17677,7 @@ msgid "This page could not be displayed."
 msgstr ""
 
 #: build/dashboard.js:2
-#: build/dashboard.js:131
+#: build/dashboard.js:133
 msgid "Please reload the page."
 msgstr ""
 
@@ -18645,7 +18657,7 @@ msgid "Your own giveaway (link)"
 msgstr ""
 
 #: build/dashboard.js:65
-#: build/dashboard.js:122
+#: build/dashboard.js:124
 msgid "Price"
 msgstr ""
 
@@ -18998,7 +19010,7 @@ msgid "Dark"
 msgstr ""
 
 #: build/dashboard.js:72
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Light"
 msgstr ""
 
@@ -19386,7 +19398,7 @@ msgid "%d chosen"
 msgstr ""
 
 #: build/dashboard.js:82
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "You have no products yet."
 msgstr ""
 
@@ -19444,9 +19456,9 @@ msgstr ""
 
 #: build/dashboard.js:82
 #: build/dashboard.js:95
-#: build/dashboard.js:99
-#: build/dashboard.js:121
-#: build/dashboard.js:122
+#: build/dashboard.js:101
+#: build/dashboard.js:123
+#: build/dashboard.js:124
 msgid "Delete product"
 msgstr ""
 
@@ -19759,12 +19771,12 @@ msgid "This side has no elements yet."
 msgstr ""
 
 #: build/dashboard.js:95
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Forward"
 msgstr ""
 
 #: build/dashboard.js:95
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Backward"
 msgstr ""
 
@@ -19811,7 +19823,7 @@ msgid "Your profit is %s. Customers pay only the price without profit, and you e
 msgstr ""
 
 #: build/dashboard.js:95
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Send for approval"
 msgstr ""
 
@@ -19832,7 +19844,7 @@ msgid "This design has been submitted and cannot be edited here."
 msgstr ""
 
 #: build/dashboard.js:95
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Back to my designs"
 msgstr ""
 
@@ -19867,12 +19879,12 @@ msgid "Cancel the change"
 msgstr ""
 
 #: build/dashboard.js:95
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "The design could not be copied. Please try again."
 msgstr ""
 
 #: build/dashboard.js:95
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Copy design"
 msgstr ""
 
@@ -19958,1421 +19970,1461 @@ msgstr ""
 msgid "No uploads yet."
 msgstr ""
 
-#. translators: 1: design name, 2: colour names.
+#: build/dashboard.js:95
+msgid "Design of this format"
+msgstr ""
+
+#: build/dashboard.js:95
+msgid "Use the shared design on this format? Its own design is replaced."
+msgstr ""
+
+#. translators: %s: orientation, e.g. "Vertical".
 #: build/dashboard.js:96
+#, js-format
+msgid "Shared design (%s)"
+msgstr ""
+
+#: build/dashboard.js:96
+msgid "Own design"
+msgstr ""
+
+#: build/dashboard.js:96
+msgid "How the shared design is fitted to this format"
+msgstr ""
+
+#: build/dashboard.js:96
+msgid "Fit: smart"
+msgstr ""
+
+#: build/dashboard.js:96
+msgid "Fit: fill the format"
+msgstr ""
+
+#: build/dashboard.js:96
+msgid "Fit: whole design inside"
+msgstr ""
+
+#. translators: %s: names of formats.
+#: build/dashboard.js:97
+#, js-format
+msgid "Shared with: %s"
+msgstr ""
+
+#. translators: 1: design name, 2: colour names.
+#: build/dashboard.js:98
 #, js-format
 msgid "%1$s – for %2$s"
 msgstr ""
 
-#: build/dashboard.js:96
+#: build/dashboard.js:98
 msgid "Preview colour"
 msgstr ""
 
 #. translators: %s: side name, e.g. "Front".
-#: build/dashboard.js:96
+#: build/dashboard.js:98
 #, js-format
 msgid "Design of the side %s"
 msgstr ""
 
-#: build/dashboard.js:96
+#: build/dashboard.js:98
 msgid "The designer could not be loaded. Please reload the page."
 msgstr ""
 
-#: build/dashboard.js:96
+#: build/dashboard.js:98
 msgid "Everything outside the red line can be cut off."
 msgstr ""
 
-#: build/dashboard.js:96
+#: build/dashboard.js:98
 msgid "Drag, scale and rotate the elements on the product. The dashed frame is the print area."
 msgstr ""
 
-#: build/dashboard.js:96
+#: build/dashboard.js:98
 msgid "This is the flat part before it is sewn. Fill it to the edges, for what falls outside the solid line is cut away. The labels on the pattern are in English: keep text and logos inside \"Safe Print Area\" (the dashed line), \"Folding line\" is where the part is folded, \"Collar\" is the collar, and \"Placement on product\" shows where the part sits. See how it looks with \"See the finished product\"."
 msgstr ""
 
 #. translators: 1: print width in px, 2: print height in px, 3: resolution in dpi.
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 #, js-format
 msgid "Print file: %1$d × %2$d px at %3$d dpi."
 msgstr ""
 
 #. translators: %s: price.
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 #, js-format
 msgid "Saved price: %s"
 msgstr ""
 
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "Design details"
 msgstr ""
 
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "Selected element"
 msgstr ""
 
 #. translators: %s: width × height in cm, e.g. "12,5 × 8,0 cm".
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 #, js-format
 msgid "Size on the print: %s"
 msgstr ""
 
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "Price per colour"
 msgstr ""
 
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "The finished mockups are made automatically before we can approve your design. We then review it and answer you, also if it does not look right or something else is wrong."
 msgstr ""
 
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "From design to shop"
 msgstr ""
 
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "Design your product and set your profit."
 msgstr ""
 
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "Send it for approval. The finished mockups are made automatically before we can approve your design."
 msgstr ""
 
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "We review your design and answer you, also if it does not look right or something else is wrong."
 msgstr ""
 
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "Price and profit"
 msgstr ""
 
 #. translators: %s: currency code.
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 #, js-format
 msgid "Amount (%s)"
 msgstr ""
 
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "Percent"
 msgstr ""
 
 #. translators: %s: side, e.g. "Sleeve".
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 #, js-format
 msgid "Extra design area: %s"
 msgstr ""
 
 #. translators: %s: size.
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 #, js-format
 msgid "Customer price, %s"
 msgstr ""
 
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "Enter a profit of at least 0."
 msgstr ""
 
 #. translators: %s: sides with their prices, e.g. "Back 50.00 kr., Sleeve 20.00 kr.".
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 #, js-format
 msgid "The most expensive design area you use is included in the base price. Each further area costs: %s."
 msgstr ""
 
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 msgid "The company always keeps the base price and the price of extra design areas. Your profit is incl. VAT; the VAT on it is deducted if you are not VAT registered."
 msgstr ""
 
 #. translators: %s: the digitization fee.
-#: build/dashboard.js:97
+#: build/dashboard.js:99
 #, js-format
 msgid "A new embroidery file costs %s for digitization. It is drawn from your account at the first purchase of the product, whichever variant it is. If that is your own order, it is drawn from your account too, so your account can go below zero, and the amount is offset against your coming profit. A file you have used before costs nothing."
 msgstr ""
 
 #. translators: 1: threads in use, 2: the most threads allowed.
-#: build/dashboard.js:98
+#: build/dashboard.js:100
 #, js-format
 msgid "Thread colours (%1$d of %2$d)"
 msgstr ""
 
-#: build/dashboard.js:98
+#: build/dashboard.js:100
 msgid "This side is embroidered: every colour becomes the nearest thread. Choose another thread below if you like."
 msgstr ""
 
-#: build/dashboard.js:98
+#: build/dashboard.js:100
 msgid "Designs with a lot of fine detail are rejected, as they often cannot be embroidered correctly."
 msgstr ""
 
-#: build/dashboard.js:98
+#: build/dashboard.js:100
 msgid "Your design has more colours than the threads allow, so the smallest ones use the nearest thread."
 msgstr ""
 
 #. translators: %s: the thread found.
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 #, js-format
 msgid "Back to %s"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Give your product a title of at most 120 characters."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Your profit must be a number of at least 0."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Choose at least one colour and one size."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "A product with this name already exists. Add something to the name to tell them apart."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "The design contains something that cannot be used (an unknown font, a removed image or too many elements)."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Your design could not be saved. Please try again."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Add something to your product before you send it."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Each size you offer needs its own design. Add a design to it, or remove the design from a size you do not offer."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "The product was changed by us in the meantime. Open your design again and send it."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "This product already waits for approval."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "An image of your design is too large to send. Please contact us."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "The thread colours of this product have changed. Reload the page and send your design again."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Your design could not be drawn in this browser. Please try again, or use another browser."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Your design could not be sent. Please try again."
 msgstr ""
 
 #. translators: 1: product title, 2: the customer's price.
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 #, js-format
 msgid "%1$s waits for our approval (customer price incl. VAT: %2$s). We let you know when it has been reviewed. Until then nothing changes in the shop."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "The design could not be withdrawn. Please try again."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Withdraw and edit"
 msgstr ""
 
 #. translators: 1: product title, 2: the customer's price.
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 #, js-format
 msgid "%1$s is not in the shop now (customer price incl. VAT: %2$s). You can put it back without a new approval."
 msgstr ""
 
 #. translators: 1: product title, 2: the customer's price.
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 #, js-format
 msgid "%1$s is in the shop (customer price incl. VAT: %2$s). A change is sent for approval like a new design; the shop keeps this version until we approve it."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "That did not work. Please try again."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Use as the product image"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Make a change"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Put in the shop"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Set as draft"
 msgstr ""
 
 #. translators: 1: width in cm, 2: height in cm.
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 #, js-format
 msgid "%1$s × %2$s cm"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Product name"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Add to the name"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "The name starts with your name and the product. If you make more than one of the same product, add a word to tell them apart."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Select all"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Stitching"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Design for each colour"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "You choose the order of the colours and the main product image when you send for approval."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Weight"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Centre"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Fill"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Outline"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Fill the print area"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Fit in the print area"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "In the shop · change in progress"
 msgstr ""
 
-#: build/dashboard.js:99
-#: build/dashboard.js:118
+#: build/dashboard.js:101
+#: build/dashboard.js:120
 msgid "In the shop"
 msgstr ""
 
-#: build/dashboard.js:99
-#: build/dashboard.js:118
+#: build/dashboard.js:101
+#: build/dashboard.js:120
 msgid "Not in the shop"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Waiting for approval"
 msgstr ""
 
-#: build/dashboard.js:99
-#: build/dashboard.js:119
+#: build/dashboard.js:101
+#: build/dashboard.js:121
 msgid "Approved · in the shop when you go live"
 msgstr ""
 
-#: build/dashboard.js:99
-#: build/dashboard.js:119
+#: build/dashboard.js:101
+#: build/dashboard.js:121
 msgid "Taken out of the shop"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Loading the designer…"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Would you like some of your designs collected in one product, so customers choose between them instead of finding several products (for example several T-shirt designs)? Contact us, and we will put them together in one product. This works for every kind of product."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "No designs yet."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Choose a product below and design it."
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "The design could not be opened. Please try again."
 msgstr ""
 
 #. translators: %s: design title.
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 #, js-format
 msgid "Copy %s as a new design"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "Design a new product"
 msgstr ""
 
-#: build/dashboard.js:99
+#: build/dashboard.js:101
 msgid "No products to design yet."
 msgstr ""
 
 #. translators: 1: base price, 2: number of colours, 3: sizes.
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 #, js-format
 msgid "Base price %1$s · %2$d colours · %3$s"
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "The design could not be started. Please try again."
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Not available"
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Profit is your share of what customers paid, including VAT, with the markup that applied when each order line was created. It is not your payout."
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Incomplete: some sales lack the historical data needed to calculate profit, so no total is shown."
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Unknown: the sales lack the historical data needed to calculate profit."
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Refund recorded"
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Order total:"
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Your order lines"
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Unnamed product"
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Notes"
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Loading orders…"
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "There are no order lines on this page."
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "You have no orders yet."
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Orders with your products will appear here."
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Refund recorded: at least one refund applies to this order line."
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Not counted: the order does not currently count as a sale."
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "Order pages"
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "This field is required."
 msgstr ""
 
-#: build/dashboard.js:100
+#: build/dashboard.js:102
 msgid "This text is too long."
 msgstr ""
 
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "Enter a full https:// address on the platform, or just the user name."
 msgstr ""
 
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "This cannot be changed on this shop."
 msgstr ""
 
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "The image is too large (at most 5 MB)."
 msgstr ""
 
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "Use a JPG, PNG or WebP image."
 msgstr ""
 
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "The image could not be read."
 msgstr ""
 
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "The image is too small."
 msgstr ""
 
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "The image is too big (at most 4096 pixels wide and high)."
 msgstr ""
 
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "The logo must be square."
 msgstr ""
 
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "This value is not valid."
 msgstr ""
 
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "The shop's sales of your products after discounts, including VAT, excluding shipping and fees. It is not your payout."
 msgstr ""
 
-#: build/dashboard.js:101
+#: build/dashboard.js:103
 msgid "Sales figures are not available."
 msgstr ""
 
-#: build/dashboard.js:102
+#: build/dashboard.js:104
 msgid "Sales of your products will appear here."
 msgstr ""
 
-#: build/dashboard.js:102
+#: build/dashboard.js:104
 msgid "Profit applies to the same 30 days as the sales figures."
 msgstr ""
 
-#: build/dashboard.js:102
+#: build/dashboard.js:104
 msgid "Loading key figures…"
 msgstr ""
 
-#: build/dashboard.js:102
+#: build/dashboard.js:104
 msgid "(opens in a new tab)"
 msgstr ""
 
-#: build/dashboard.js:102
+#: build/dashboard.js:104
 msgid "Edit profile"
 msgstr ""
 
-#: build/dashboard.js:102
+#: build/dashboard.js:104
 msgid "Your profile is still empty."
 msgstr ""
 
-#: build/dashboard.js:102
+#: build/dashboard.js:104
 msgid "Add a description and links to your channels."
 msgstr ""
 
-#: build/dashboard.js:102
-#: build/dashboard.js:127
+#: build/dashboard.js:104
+#: build/dashboard.js:129
 msgid "Loading your profile…"
 msgstr ""
 
 #. translators: %s: creator display name.
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 #, js-format
 msgid "Welcome, %s"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "This is your creator dashboard. Here you will follow your merch and keep your profile up to date."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Account status:"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Your profile"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Key figures"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Why do we need your CPR number?"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "When you are paid as a private person without a CVR number, we must report the payout to the Danish Tax Agency (eIndkomst) under section 4 of the Tax Reporting Act (skatteindberetningsloven), and the report needs your CPR number."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Your data are safe:"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Your CPR number is stored encrypted and used only to report your payouts. It is never shown on your settlement documents."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Our recommendation:"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Register a sole proprietorship (personligt ejet mindre virksomhed, PMV). It is free, and you then use its CVR number instead of your CPR number."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Name or company name"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Your full legal name, or your company name if you are paid as a company."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Address, line 2 (optional)"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Eight digits (a CVR or SE number)."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Please fill in this field."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "This is too long."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "A CVR number is eight digits."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Please enter a valid CPR number (10 digits, written DDMMYY-XXXX)."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "The CPR number cannot be saved right now. Please contact us."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Please check this field."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Your master data are saved. If something changes, correct it here."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Please fill in your master data. We need them for your settlement documents and before your first payout."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Loading your master data…"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Master data saved."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "I am a registered business with a CVR number"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Without a CVR number you are paid as a private person, and we need your CPR number."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "CPR number"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Your CPR number is stored encrypted and is not shown. Type it only to change it."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "10 digits, written DDMMYY-XXXX."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Filled in from the CVR register. Please check the details before you save them."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "No company was found with this CVR number. Please check it, or fill in the details yourself."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Too many lookups today. Please fill in the details yourself or try again tomorrow."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "The CVR register could not be reached right now. Please fill in the details yourself."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Fill in from the CVR number"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Disabled"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Expired"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Not usable"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "The gift card cannot be shown right now. Please try again later."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Show gift card"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Balance now"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Expires"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Hide code"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Show code"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "The code was copied."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "The code could not be copied. Show it and copy it by hand."
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Copy code"
 msgstr ""
 
-#: build/dashboard.js:103
+#: build/dashboard.js:105
 msgid "Hide gift card"
 msgstr ""
 
 #. translators: %s: payout id.
-#: build/dashboard.js:104
+#: build/dashboard.js:106
 #, js-format
 msgid "Gift card of payout #%s. Anyone who has the code can use it; keep it to yourself."
 msgstr ""
 
-#: build/dashboard.js:104
+#: build/dashboard.js:106
 msgid "Fill in all fields of the request."
 msgstr ""
 
-#: build/dashboard.js:104
+#: build/dashboard.js:106
 msgid "Enter an amount greater than 0 with at most as many decimals as the shop uses."
 msgstr ""
 
-#: build/dashboard.js:104
+#: build/dashboard.js:106
 msgid "The amount is more than you can request right now."
 msgstr ""
 
-#: build/dashboard.js:104
+#: build/dashboard.js:106
 msgid "Please add your CPR number to your master data below first."
 msgstr ""
 
-#: build/dashboard.js:104
+#: build/dashboard.js:106
 msgid "Please fill in your master data for settlement documents below first."
 msgstr ""
 
-#: build/dashboard.js:104
+#: build/dashboard.js:106
 msgid "Your balance cannot be calculated right now, because some sales lack the data needed. No payout can be requested until it is known."
 msgstr ""
 
 #. translators: %d: maximum number of pending requests.
-#: build/dashboard.js:105
+#: build/dashboard.js:107
 #, js-format
 msgid "You already have %d pending requests. Wait until one is handled, or cancel one."
 msgstr ""
 
 #. translators: %d: maximum number of requests per 24 hours.
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 #, js-format
 msgid "You have made %d requests in the last 24 hours. Please try again later."
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "This payout method is not available right now."
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Check the payment details: a registration number has 4 digits, an account number 1–10 digits, and PayPal needs a valid email address."
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Another payout of yours is being processed. Please try again in a moment."
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "The request has already been handled, so it can no longer be cancelled."
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "The request was not accepted."
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "No payout method is available right now, so no payout can be requested. Please contact us."
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "There is nothing to request yet. Your balance appears here once your sales have passed the holding period."
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Your request has been sent. It is reserved until it is handled."
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Available:"
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Request the full available amount"
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Payout method"
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "4 digits"
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "1–10 digits"
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "You receive a gift card for the shop of the requested amount, without VAT. It appears here when we have created it. Treat its code like cash: anyone who has it can use it."
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Your payment details are encrypted, used only for this payout and deleted when it has been handled. Afterwards only a masked version is shown."
 msgstr ""
 
-#: build/dashboard.js:106
-#: build/dashboard.js:127
+#: build/dashboard.js:108
+#: build/dashboard.js:129
 msgid "Sending…"
 msgstr ""
 
-#: build/dashboard.js:106
+#: build/dashboard.js:108
 msgid "Request payout"
 msgstr ""
 
-#: build/dashboard.js:107
+#: build/dashboard.js:109
 msgid "The correction document does not change the original document or the completed payout. The difference is not settled automatically."
 msgstr ""
 
-#: build/dashboard.js:108
+#: build/dashboard.js:110
 msgid "The settlement document cannot be shown right now. Please try again later."
 msgstr ""
 
-#: build/dashboard.js:114
+#: build/dashboard.js:116
 msgid "Print or save as PDF"
 msgstr ""
 
-#: build/dashboard.js:114
+#: build/dashboard.js:116
 msgid "The PDF cannot be downloaded right now. Please try again later."
 msgstr ""
 
-#: build/dashboard.js:114
+#: build/dashboard.js:116
 msgid "Requested, pending"
 msgstr ""
 
-#: build/dashboard.js:114
+#: build/dashboard.js:116
 msgid "Earned after the holding period"
 msgstr ""
 
-#: build/dashboard.js:114
+#: build/dashboard.js:116
 msgid "Reserved for giveaways"
 msgstr ""
 
 #. translators: %d: number of sales.
-#: build/dashboard.js:115
+#: build/dashboard.js:117
 #, js-format
 msgid "Your balance is unknown: %d sales lack the data needed to calculate your payout. No payout can be requested until this is resolved."
 msgstr ""
 
-#: build/dashboard.js:115
+#: build/dashboard.js:117
 msgid "Your balance"
 msgstr ""
 
 #. translators: %d: number of days.
-#: build/dashboard.js:116
+#: build/dashboard.js:118
 #, js-format
 msgid "Sales count after a holding period of %d days. Refunds count at once."
 msgstr ""
 
-#: build/dashboard.js:116
+#: build/dashboard.js:118
 msgid "All your sales count."
 msgstr ""
 
 #. translators: %s: date.
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 #, js-format
 msgid "Sales from %s count."
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Payout methods: bank transfer and PayPal."
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Bank transfer and PayPal are not available right now."
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "You can also choose a gift card for the shop."
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "You have no earnings to pay out yet."
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "This request could not be found."
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "The request could not be cancelled. Please try again in a moment."
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Confirm cancellation"
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Keep"
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Cancel request"
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Not yet"
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "The request has been cancelled."
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Your payout requests"
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Loading your balance…"
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Loading payout requests…"
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "There are no payout requests on this page."
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "You have no payout requests yet."
 msgstr ""
 
-#: build/dashboard.js:117
+#: build/dashboard.js:119
 msgid "Payout request pages"
 msgstr ""
 
 #. translators: %s: date the change was sent.
-#: build/dashboard.js:118
+#: build/dashboard.js:120
 #, js-format
 msgid "In the shop · a change waits for approval (sent %s)"
 msgstr ""
 
-#: build/dashboard.js:118
+#: build/dashboard.js:120
 msgid "In the shop · your change was rejected"
 msgstr ""
 
 #. translators: %s: date the product was sent.
-#: build/dashboard.js:119
+#: build/dashboard.js:121
 #, js-format
 msgid "Waiting for approval (sent %s)"
 msgstr ""
 
-#: build/dashboard.js:119
+#: build/dashboard.js:121
 msgid "Your designs"
 msgstr ""
 
 #. translators: %s: the administrator's note.
-#: build/dashboard.js:120
+#: build/dashboard.js:122
 #, js-format
 msgid "Note: %s"
 msgstr ""
 
 #. translators: 1: price in the shop, 2: price after the change is approved.
-#: build/dashboard.js:121
+#: build/dashboard.js:123
 #, js-format
 msgid "%1$s (after approval %2$s)"
 msgstr ""
 
-#: build/dashboard.js:121
+#: build/dashboard.js:123
 msgid "Loading your designs…"
 msgstr ""
 
-#: build/dashboard.js:121
+#: build/dashboard.js:123
 msgid "No designs in the shop or waiting for approval yet."
 msgstr ""
 
-#: build/dashboard.js:121
+#: build/dashboard.js:123
 msgid "Design a product in the designer and send it for approval."
 msgstr ""
 
 #. translators: %d: number of drafts.
-#: build/dashboard.js:122
+#: build/dashboard.js:124
 #, js-format
 msgid "You have %d draft in the designer."
 msgid_plural "You have %d drafts in the designer."
 msgstr[0] ""
 msgstr[1] ""
 
-#: build/dashboard.js:122
+#: build/dashboard.js:124
 msgid "Deletion awaiting handling"
 msgstr ""
 
-#: build/dashboard.js:122
+#: build/dashboard.js:124
 msgid "No sales"
 msgstr ""
 
-#: build/dashboard.js:122
+#: build/dashboard.js:124
 msgid "Your products"
 msgstr ""
 
-#: build/dashboard.js:122
+#: build/dashboard.js:124
 msgid "Private"
 msgstr ""
 
-#: build/dashboard.js:122
+#: build/dashboard.js:124
 msgid "No price"
 msgstr ""
 
 #. translators: 1: lowest price, 2: highest price, 3: currency code (e.g. DKK).
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 #, js-format
 msgid "%1$s–%2$s %3$s"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Stock"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "In stock"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Out of stock"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "On backorder"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Loading products…"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "There are no products on this page."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Products linked to you in the shop will appear here."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Product pages"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Your discount code has already been replaced 3 times in the last 24 hours. Try again later."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Your discount code has been ended. Contact us if you need a new one."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Your discount code is being changed right now. Try again in a moment."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Your discount code was not reset. Nothing was changed; try again later."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Your discount code"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "With your own discount code you can buy your own merchandise without paying for your profit. Orders bought with your own discount code do not count in your sales and your profit."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Code:"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Your new discount code is ready. The old code no longer works."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Your new discount code is ready. The old code no longer works. Show the new code when no one else can see your screen."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Your discount code is ready."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Your discount code is ready. Show the code when no one else can see your screen."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Hide discount code"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Show discount code"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Reset and generate a new discount code"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "The old code stops working at once."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Reset discount code"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "E-mail notifications"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Loading e-mail notifications…"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Choose which e-mails you want. E-mails about payouts, settlement documents, your discount code, security and your account are always sent. All notifications are also shown at the bell at the top of the dashboard."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Your creator profile has no login, so no e-mails are sent."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "There are no e-mails you can turn off right now."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "E-mail notifications saved."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Waiting for approval."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:126
 msgid "Waiting for approval: remove the current one."
 msgstr ""
 
 #. translators: %s: the proposed text.
-#: build/dashboard.js:125
+#: build/dashboard.js:127
 #, js-format
 msgid "Waiting for approval: “%s”"
 msgstr ""
 
 #. translators: %s: field, e.g. "Description".
-#: build/dashboard.js:126
+#: build/dashboard.js:128
 #, js-format
 msgid "Withdraw the proposal for %s"
 msgstr ""
 
-#: build/dashboard.js:126
+#: build/dashboard.js:128
 msgid "Your last proposal was not approved."
 msgstr ""
 
 #. translators: %s: the administrator's note.
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 #, js-format
 msgid "Your last proposal was not approved: %s"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Approved – shown when your shop goes live."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Now: the shop’s standard banner with your logo."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Now in the shop."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Proposed image"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Upload new"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Dark black"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Dark green"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Dark blue"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Dark red"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Dark pink"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Theme saved."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Appearance"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Theme"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "System default follows the light or dark setting of your device."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "System default"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Logo (category image)"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Banner"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Banner on mobile"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Square, JPG, PNG or WebP, at least 300 × 300 pixels and at most 5 MB. Larger than 1000 × 1000 pixels is scaled down. Without an own banner it is shown in the middle of the shop’s standard banner."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "JPG, PNG or WebP, at least 1280 pixels wide and at most 5 MB, e.g. 2000 × 394 pixels. The banner is shown in full, without cropping. Remove it to show the standard banner again."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Optional, for screens below 768 pixels: JPG, PNG or WebP, at least 600 pixels wide and at most 5 MB. It is shown in full, without cropping."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Image sent for approval."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Sent for approval."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Proposal withdrawn."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "No changes to send."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Your changes are sent to the shop for approval. They are shown in the shop when an administrator has approved them."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "You do not have a product category in the shop yet. Your proposals are kept until you get one."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "About you"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Also the name of your category in the shop."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Logo and banner"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Link on the banner"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Optional, e.g. your Twitch or YouTube channel. Opens in a new tab."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Social media"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Shown as icons on your category page. Enter the full address or just your user name (e.g. @name)."
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Password"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Change your password"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Sales per week (incl. VAT)"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Sales per month (incl. VAT)"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Net sales per week"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "Net sales per month"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:129
 msgid "(the table below has the same figures)"
 msgstr ""
 
-#: build/dashboard.js:128
+#: build/dashboard.js:130
 msgid "Week"
 msgstr ""
 
-#: build/dashboard.js:128
+#: build/dashboard.js:130
 msgid "Month"
 msgstr ""
 
-#: build/dashboard.js:128
+#: build/dashboard.js:130
 msgid "Your sales"
 msgstr ""
 
 #. translators: 1: first day, 2: last day (both included), 3: interval (Day, Week or Month).
-#: build/dashboard.js:130
+#: build/dashboard.js:132
 #, js-format
 msgid "Period: %1$s – %2$s · Interval: %3$s"
 msgstr ""
 
-#: build/dashboard.js:130
+#: build/dashboard.js:132
 msgid "No sales in this period."
 msgstr ""
 
-#: build/dashboard.js:130
+#: build/dashboard.js:132
 msgid "Choose another period, or check back after your next sale."
 msgstr ""
 
-#: build/dashboard.js:130
+#: build/dashboard.js:132
 msgid "Loading sales…"
 msgstr ""
 
-#: build/dashboard.js:130
+#: build/dashboard.js:132
 msgid "This period cannot be shown. Choose at most 366 days, weeks or months and at most five years."
 msgstr ""
 
-#: build/dashboard.js:130
+#: build/dashboard.js:132
 msgid "The end date must be on or after the start date."
 msgstr ""
 
-#: build/dashboard.js:130
+#: build/dashboard.js:132
 msgid "Choose period"
 msgstr ""
 
-#: build/dashboard.js:130
+#: build/dashboard.js:132
 msgid "Interval"
 msgstr ""
 
-#: build/dashboard.js:131
+#: build/dashboard.js:133
 msgid "This section is not available yet."
 msgstr ""
 
-#: build/dashboard.js:131
+#: build/dashboard.js:133
 msgid "Page not found"
 msgstr ""
 
-#: build/dashboard.js:131
+#: build/dashboard.js:133
 msgid "This page does not exist."
 msgstr ""
 
-#: build/dashboard.js:131
+#: build/dashboard.js:133
 msgid "Go to the start page"
 msgstr ""
 
-#: build/dashboard.js:131
+#: build/dashboard.js:133
 msgid "The dashboard could not be started."
 msgstr ""
 

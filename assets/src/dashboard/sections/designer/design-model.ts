@@ -82,6 +82,40 @@ export interface DesignDocument {
 	 * the top level, the shared design. Left out when there are none.
 	 */
 	readonly designs?: readonly ColorDesign[];
+	/**
+	 * A poster's formats sharing one design per value (ADR-118); left out
+	 * when every format has its own.
+	 */
+	readonly formats?: FormatDesigns;
+}
+
+/** How a shared format design is fitted to a format (ADR-118). */
+export type AdaptMode = 'smart' | 'fill' | 'fit';
+
+/** The adaptations a creator can choose, the default first. */
+export const ADAPT_MODES: readonly AdaptMode[] = [ 'smart', 'fill', 'fit' ];
+
+/**
+ * The design formats of one value share (ADR-118): its objects in its own
+ * print pixels (`width` × `height`) and its background colour.
+ */
+export interface SharedFormat {
+	readonly width: number;
+	readonly height: number;
+	readonly objects: readonly DesignObject[];
+	readonly background?: string;
+}
+
+/**
+ * The shared designs of a poster's formats (ADR-118): one per value of the
+ * first axis (an orientation), the format sides that use it (`links`, side
+ * key → value) and how each is fitted (`fit`, `smart` when left out). Each
+ * linked side has its fitted copy in `sides`: the copy is what is printed.
+ */
+export interface FormatDesigns {
+	readonly shared: Readonly< Record< string, SharedFormat > >;
+	readonly links: Readonly< Record< string, string > >;
+	readonly fit: Readonly< Record< string, AdaptMode > >;
 }
 
 /** A design of some colours of the product (ADR-096). */
@@ -92,6 +126,7 @@ export interface ColorDesign {
 	readonly sides: DesignDocument[ 'sides' ];
 	readonly threads?: NonNullable< DesignDocument[ 'threads' ] >;
 	readonly background?: NonNullable< DesignDocument[ 'background' ] >;
+	readonly formats?: FormatDesigns;
 }
 
 /** The id of the shared design. */
@@ -298,7 +333,10 @@ export function parseDesign( value: unknown ): DesignDocument | null {
  */
 function parsePart(
 	value: Record< string, unknown >
-): Pick< DesignDocument, 'sides' | 'background' | 'threads' > | null {
+): Pick<
+	DesignDocument,
+	'sides' | 'background' | 'threads' | 'formats'
+> | null {
 	const sides: Record< string, DesignObject[] > = {};
 	const raw =
 		Array.isArray( value.sides ) && value.sides.length === 0
@@ -331,6 +369,7 @@ function parsePart(
 
 	const threads = parseThreads( value.threads );
 	const background = parseBackground( value.background );
+	const formats = parseFormats( value.formats );
 
 	for ( const side of Object.keys( background ?? {} ) ) {
 		sides[ side ] ??= [];
@@ -340,7 +379,81 @@ function parsePart(
 		sides,
 		...( background === undefined ? {} : { background } ),
 		...( threads === undefined ? {} : { threads } ),
+		...( formats === undefined ? {} : { formats } ),
 	};
+}
+
+/**
+ * A record from the server, where an empty one comes as a list.
+ *
+ * @param value Value.
+ */
+function recordOf( value: unknown ): Record< string, unknown > {
+	return isRecord( value ) ? value : {};
+}
+
+/**
+ * The shared format designs of a stored design (ADR-118); undefined without
+ * any link. What is invalid is left out.
+ *
+ * @param value Value.
+ */
+function parseFormats( value: unknown ): FormatDesigns | undefined {
+	if ( ! isRecord( value ) ) {
+		return undefined;
+	}
+
+	const shared: Record< string, SharedFormat > = {};
+	const links: Record< string, string > = {};
+	const fit: Record< string, AdaptMode > = {};
+
+	for ( const [ key, item ] of Object.entries( recordOf( value.shared ) ) ) {
+		if (
+			! isRecord( item ) ||
+			! isNumber( item.width ) ||
+			! isNumber( item.height ) ||
+			item.width < 1 ||
+			item.height < 1 ||
+			! Array.isArray( item.objects )
+		) {
+			continue;
+		}
+
+		const objects = item.objects.map( parseObject );
+
+		if ( objects.some( ( object ) => object === null ) ) {
+			continue;
+		}
+
+		shared[ key ] = {
+			width: item.width,
+			height: item.height,
+			objects: objects as DesignObject[],
+			...( typeof item.background === 'string' &&
+			COLOR.test( item.background )
+				? { background: item.background }
+				: {} ),
+		};
+	}
+
+	for ( const [ side, key ] of Object.entries( recordOf( value.links ) ) ) {
+		if ( typeof key === 'string' && shared[ key ] !== undefined ) {
+			links[ side ] = key;
+		}
+	}
+
+	for ( const [ side, mode ] of Object.entries( recordOf( value.fit ) ) ) {
+		if (
+			links[ side ] !== undefined &&
+			ADAPT_MODES.includes( mode as AdaptMode )
+		) {
+			fit[ side ] = mode as AdaptMode;
+		}
+	}
+
+	return Object.keys( links ).length === 0
+		? undefined
+		: { shared, links, fit };
 }
 
 /**
@@ -1277,8 +1390,10 @@ export function partDoc( design: DesignDocument, id: string ): DesignDocument {
 		id === SHARED
 			? design
 			: designsOf( design ).find( ( item ) => item.id === id );
-	const source: Pick< DesignDocument, 'sides' | 'background' | 'threads' > =
-		found ?? { sides: {} };
+	const source: Pick<
+		DesignDocument,
+		'sides' | 'background' | 'threads' | 'formats'
+	> = found ?? { sides: {} };
 
 	return {
 		version: design.version,
@@ -1287,6 +1402,7 @@ export function partDoc( design: DesignDocument, id: string ): DesignDocument {
 			? {}
 			: { background: source.background } ),
 		...( source.threads === undefined ? {} : { threads: source.threads } ),
+		...( source.formats === undefined ? {} : { formats: source.formats } ),
 		...( design.stitch === undefined ? {} : { stitch: design.stitch } ),
 	};
 }
@@ -1310,6 +1426,7 @@ export function withPart(
 			? {}
 			: { background: part.background } ),
 		...( part.threads === undefined ? {} : { threads: part.threads } ),
+		...( part.formats === undefined ? {} : { formats: part.formats } ),
 	};
 
 	if ( id === SHARED ) {
@@ -1432,6 +1549,9 @@ export function newColorDesign(
 					...( copy.threads === undefined
 						? {}
 						: { threads: copy.threads } ),
+					...( copy.formats === undefined
+						? {}
+						: { formats: copy.formats } ),
 				},
 			],
 		},
@@ -1508,6 +1628,7 @@ function keptDesigns(
 			? {}
 			: { background: design.background } ),
 		...( design.threads === undefined ? {} : { threads: design.threads } ),
+		...( design.formats === undefined ? {} : { formats: design.formats } ),
 		...( design.stitch === undefined ? {} : { stitch: design.stitch } ),
 	};
 
@@ -1567,6 +1688,7 @@ function mergedParts(
 		sides,
 		...( Object.keys( background ).length === 0 ? {} : { background } ),
 		...( Object.keys( threads ).length === 0 ? {} : { threads } ),
+		...( first.formats === undefined ? {} : { formats: first.formats } ),
 	};
 }
 

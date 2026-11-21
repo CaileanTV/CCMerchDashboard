@@ -114,7 +114,12 @@ final class BaseProductActions {
 
 					$before = $id > 0 ? BasePriceSchedule::scheduled( $id ) : null;
 					$saved  = $this->bases->save( $id > 0 ? $id : null, $fields, self::views( $input, $files ) );
-					$after  = BasePriceSchedule::scheduled( $saved );
+
+					// ADR-118: only a base product with formats shows the tick.
+					if ( '1' === $text( 'formats_shown' ) ) {
+						$this->bases->set_share_formats( $saved, '1' === $text( 'share_formats' ) );
+					}
+					$after = BasePriceSchedule::scheduled( $saved );
 
 					return BaseProductsPage::edit_url( $saved, null !== $after && $after !== $before ? 'price_scheduled' : 'saved' );
 				case 'color_photos':

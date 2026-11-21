@@ -324,6 +324,44 @@ class BaseProductService {
 	}
 
 	/**
+	 * Whether creators can share one design among a poster's formats
+	 * (ADR-118). Nothing a design was made on changes: no new version.
+	 *
+	 * @param int  $id Base product.
+	 * @param bool $on Whether they can.
+	 * @throws DesignerException When the user may not or the base product is unknown.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_share_formats( int $id, bool $on ): void {
+		self::authorize();
+
+		$base = $this->existing( $id );
+
+		$provider = $this->bases->provider( $id );
+
+		if ( null === $provider || $provider['share_formats'] === $on ) {
+			return;
+		}
+
+		$this->transaction->run(
+			function () use ( $id, $on, $base ): void {
+				$this->bases->set_share_formats( $id, $on );
+				$this->audit->record(
+					AuditAction::DesignerBaseChanged,
+					null,
+					array(
+						'base_id'        => $id,
+						'base_name'      => $base->name,
+						'version'        => $base->version,
+						'changed_fields' => array( 'share_formats' ),
+						'status'         => $base->status,
+					)
+				);
+			}
+		);
+	}
+
+	/**
 	 * Gives sides other formats: each size's print size and bleed (ADR-115,
 	 * "Hent bleed fra Gelato"). Nothing a design was made on changes, so the
 	 * base product keeps its version.

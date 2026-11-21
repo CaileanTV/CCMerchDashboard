@@ -194,10 +194,12 @@ class BaseProductRepository {
 	 * adds and, from a Gelato template, the attribute names (`axes`) and each
 	 * variant's catalog product (`uids`, by colour key and size; ADR-115)
 	 * and the positions of a format side's environment photos among its
-	 * render's images (`scenes`, ADR-117); null for an own base product.
+	 * render's images (`scenes`, ADR-117) and whether creators can share one
+	 * design among a poster's formats (`share_formats`, ADR-118; on unless
+	 * the administrator turned it off); null for an own base product.
 	 *
 	 * @param int $id Id.
-	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, photos: list<string>, stitches: list<string>, techniques: array<string, string>, options: array<mixed>, axes: array<string, string>, uids: array<string, array<string, string>>, scenes: array<string, list<int>>}|null
+	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, photos: list<string>, stitches: list<string>, techniques: array<string, string>, options: array<mixed>, axes: array<string, string>, uids: array<string, array<string, string>>, scenes: array<string, list<int>>, share_formats: bool}|null
 	 * @throws DatabaseException When it cannot be read.
 	 */
 	public function provider( int $id ): ?array {
@@ -230,20 +232,21 @@ class BaseProductRepository {
 		$photos = $current && is_array( $decoded['photos'] ?? $decoded['styles'] ?? null ) ? ( $decoded['photos'] ?? $decoded['styles'] ) : array();
 
 		return array(
-			'source'     => (string) $row['source'],
-			'ref'        => $row['provider_ref'],
-			'placements' => self::strings( $current ? $decoded['placements'] : $decoded ),
-			'variants'   => $variants,
-			'slots'      => self::strings( $current && is_array( $decoded['slots'] ?? null ) ? $decoded['slots'] : array() ),
-			'flat'       => $current && true === ( $decoded['flat'] ?? false ),
-			'photos'     => array_values( array_unique( array_diff( self::strings( $photos ), array( '0', '' ) ) ) ),
-			'stitches'   => array_values( self::strings( $current && is_array( $decoded['stitches'] ?? null ) ? $decoded['stitches'] : array() ) ),
-			'techniques' => self::strings( $current && is_array( $decoded['techniques'] ?? null ) ? $decoded['techniques'] : array() ),
-			'options'    => $current && is_array( $decoded['options'] ?? null ) ? $decoded['options'] : array(),
+			'source'        => (string) $row['source'],
+			'ref'           => $row['provider_ref'],
+			'placements'    => self::strings( $current ? $decoded['placements'] : $decoded ),
+			'variants'      => $variants,
+			'slots'         => self::strings( $current && is_array( $decoded['slots'] ?? null ) ? $decoded['slots'] : array() ),
+			'flat'          => $current && true === ( $decoded['flat'] ?? false ),
+			'photos'        => array_values( array_unique( array_diff( self::strings( $photos ), array( '0', '' ) ) ) ),
+			'stitches'      => array_values( self::strings( $current && is_array( $decoded['stitches'] ?? null ) ? $decoded['stitches'] : array() ) ),
+			'techniques'    => self::strings( $current && is_array( $decoded['techniques'] ?? null ) ? $decoded['techniques'] : array() ),
+			'options'       => $current && is_array( $decoded['options'] ?? null ) ? $decoded['options'] : array(),
 			// The attribute names of a Gelato template's axes (ADR-115), e.g. "Orientation" and "Size".
-			'axes'       => array_filter( self::strings( $current && is_array( $decoded['axes'] ?? null ) ? $decoded['axes'] : array() ), static fn( string $name ): bool => '' !== $name ),
-			'uids'       => self::nested( $current && is_array( $decoded['uids'] ?? null ) ? $decoded['uids'] : array() ),
-			'scenes'     => self::positions( $current && is_array( $decoded['scenes'] ?? null ) ? $decoded['scenes'] : array() ),
+			'axes'          => array_filter( self::strings( $current && is_array( $decoded['axes'] ?? null ) ? $decoded['axes'] : array() ), static fn( string $name ): bool => '' !== $name ),
+			'uids'          => self::nested( $current && is_array( $decoded['uids'] ?? null ) ? $decoded['uids'] : array() ),
+			'scenes'        => self::positions( $current && is_array( $decoded['scenes'] ?? null ) ? $decoded['scenes'] : array() ),
+			'share_formats' => ! ( $current && false === ( $decoded['share_formats'] ?? true ) ),
 		);
 	}
 
@@ -265,6 +268,17 @@ class BaseProductRepository {
 		}
 
 		return $positions;
+	}
+
+	/**
+	 * Stores whether creators can share one design among a poster's formats (ADR-118).
+	 *
+	 * @param int  $id Id.
+	 * @param bool $on Whether they can.
+	 * @throws DatabaseException When it cannot be read or stored.
+	 */
+	public function set_share_formats( int $id, bool $on ): void {
+		$this->set_template_field( $id, 'share_formats', $on );
 	}
 
 	/**
@@ -296,14 +310,14 @@ class BaseProductRepository {
 	/**
 	 * Changes one field of a base product's provider data.
 	 *
-	 * @phpstan-param list<string> $value
+	 * @phpstan-param list<string>|bool $value
 	 *
-	 * @param int      $id    Id.
-	 * @param string   $field Field.
-	 * @param string[] $value Value.
+	 * @param int           $id    Id.
+	 * @param string        $field Field.
+	 * @param string[]|bool $value Value.
 	 * @throws DatabaseException When it cannot be read or stored.
 	 */
-	private function set_template_field( int $id, string $field, array $value ): void {
+	private function set_template_field( int $id, string $field, array|bool $value ): void {
 		$wpdb     = $this->wpdb;
 		$template = $wpdb->get_var( $wpdb->prepare( 'SELECT provider_template FROM %i WHERE id = %d', $this->table(), $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own table.
 		$decoded  = json_decode( (string) $template, true );

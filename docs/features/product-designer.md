@@ -279,6 +279,25 @@ Gelato-skabeloner med andre valg end farve og størrelse, fx plakater med retnin
 - **Gelatos egne mockups:** en formatgruppes side beholder browserens billeder på Gelatos foto af gruppen, for gruppesiderne deler placering. Fra fase 53 kommer Gelatos miljøbilleder i tillæg (se nedenfor).
 - **Kun Gelato:** Printful, Prodigi og Printify er uændrede.
 
+## Fælles design på tværs af plakatformater (fase 54, ADR-118, 2026-11-22)
+
+- **Fælles design pr. retning:**
+  - en plakats formatsider i samme retning deler ét design (`formats.shared[<retning>]`, gemt i referenceformatets printpixel);
+  - hver tilknyttet formatside får en tilpasset kopi i `sides`, og kopien er den, der trykkes. Pris, dækning, printfiler, mockups og ordrer er derfor uændrede;
+  - nye plakatdesigns starter fælles;
+  - kopier laves kun til formater, hvis retning og en af størrelserne er valgt.
+- **Tilpasning pr. format** (`formats.fit`), som creatoren vælger:
+  - **smart:** et objekt, der dækker hele feltet, bliver ved med at dække. Andre objekter beholder deres placering i forhold til feltet og skaleres efter den korte side;
+  - **fyld formatet:** hele designet dækker formatet;
+  - **hele designet inden for:** hele designet er inden for formatet.
+- **Redigering:**
+  - en ændring på et tilknyttet format føres tilbage til masteren og ud til de andre formater;
+  - "Eget design" tager formatets kopi med som udgangspunkt;
+  - "Fælles design" spørger, før et eget design erstattes.
+- **Størrelser:** på plakater står de grupperet pr. format i den første valgte retning, med et flueben for hele formatet.
+- **Slå fra:** fluebenet "Fælles design på tværs af formater" på grundproduktet (`share_formats` i leverandørdata, til som standard). Er det fra, får hvert format sin kopi som eget design.
+- **Serveren:** `DesignValidator` beholder kun links fra formatsider til deres egen retning, tilpasningerne `fill` og `fit` (smart udelades) og fælles designs, som en side bruger.
+
 ## Gelatos miljøbilleder på plakater (fase 53, ADR-117, 2026-11-21)
 
 Gelato-skabelonen kan have flere mockup-scener. Fine Art Poster har en stue med plakaten på væggen og den flade plakat, og Gelato laver ét billede pr. scene.
