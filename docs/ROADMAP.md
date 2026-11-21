@@ -1585,7 +1585,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - **Fundet undervejs:** et langt produktnavn gjorde designeren bredere end mobilen (rettet). `/me/go-live` og andre kald gav tilfældigt 500 i Playground, der ikke har `GET_LOCK`; det har intet med fasen at gøre.
   - **Mangler:** CI, og testpakke 2.4.0 på stg efter projektejerens test af 2.3.0.
 
-## Fase 55 – Creatoren anmoder om at få designs samlet (ccmerch-design-samling) 💡 (projektejerens idé 2026-11-22; tages op, når 2.3.0 er færdig; ikke planlagt)
+## Fase 55 – Creatoren anmoder om at få designs samlet (ccmerch-design-samling) 💡 (projektejerens idé 2026-11-22; version 2.5.0; tages op, når 2.3.0 er færdig; ikke planlagt)
 
 **Ønsket:** en creator kan anmode om, at nogle af sine designs samles med virksomhedens system "ccmerch-design-samling".
 
