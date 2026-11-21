@@ -251,7 +251,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 2.3.0: Gelato-produkter med egne valg, formatgrupper og skærelinje (fase 52, ADR-115)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-21.** Ingen schemaændring. Testpakke på stg. Tag efter projektejerens OK og grøn CI.
+**Versions-bump og CHANGELOG-sektion 2026-11-21.** Ingen schemaændring. Testpakke på stg: `merchboard-mvp-2.3.0.zip` fra c77d4aa, sha256 `236e40f8a796a82691f2709bed33661500cc62079d99880ccd34d17961f534d0`. Den erstatter pakken fra b14b161. Tag efter projektejerens OK og grøn CI.
 
 1. **Opdatér** med ZIP'en. Overview skal vise version 2.3.0 og schema-version 52.
 2. **Import af plakaten:**
@@ -259,6 +259,10 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
    - siden viser "Retning" og "Størrelse", 29 sorterede størrelser og under "Forside" 16 formatgrupper med deres størrelser;
    - efter importen har grundproduktet 16 sider ("Lodret – format 1" …), og knappen "Hent bleed fra Gelato" viser antallet af størrelser med bleed.
    - **Bemærk:** importen opretter 32 skjulte produkter i Gelato-butikken (en markør og en tom pr. gruppe).
+   - **Grundpris pr. størrelse:**
+     - sæt flueben i "Forskellig grundpris pr. størrelse", udfyld tabellen (også `21x29.7 cm / 8x12"`) og gem;
+     - efter gem står alle priserne der stadig;
+     - i designeren viser "Kundepris, <størrelse>" hver størrelses pris.
 3. **Designeren:**
    - med "Lodret" valgt ses kun de lodrette faner, hver med sine størrelser;
    - der vises en rød stiplet linje og teksten "Alt uden for den røde linje kan blive skåret af.";
