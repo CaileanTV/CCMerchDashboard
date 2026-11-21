@@ -242,6 +242,43 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
   - **PSD-sider:** står altid som "kan laves"; har PSD'en baggrund, sendes intet.
 - **Leverandører:** Printful bedes om PNG ved katalogimportens gengivelser og ved produktbillederne, og en PNG-skabelon foretrækkes. Gelato, Prodigi og Printify har intet formatvalg i de kald, vi bruger. Et billede mærkes `_merchboard_transparent` kun, når PNG'en har gennemsigtige pixels.
 
+## Gelato-produkter med egne valg, formatgrupper og skærelinje (fase 52, ADR-115, 2026-11-21)
+
+Gelato-skabeloner med andre valg end farve og størrelse, fx plakater med retning (Lodret/Vandret) og 29 størrelser.
+
+- **Akser:**
+  - størrelsen er katalogets `gsi_`, ellers et valg ved navn Size/Sizes/Format/Størrelse;
+  - den første akse er farven (`gco_`, ellers et valg som Color/Colour/Farve) plus alle andre valg (Orientation, Paper, Frame, Material, Finish), oversat til Retning, Papir, Ramme, Materiale, Overflade og Lodret/Vandret og samlet med " / ";
+  - attributnavnet i butikken følger aksen, fx "Retning" og "Størrelse". Tøj beholder "Farve";
+  - varianter med samme værdier tælles og vises i importen.
+- **Størrelser:**
+  - op til 60 tegn. Dobbelte mellemrum samles, og `"` virker hele vejen, fx `21x29.7 cm / 8x12"`;
+  - sortering: tøj XS–8XL (XXL = 2XL), alt andet efter printfladens areal;
+  - højst 60 størrelser og 24 sider.
+- **Printfladens navn:** Gelatos "1" hedder "Forside", andre tal "Side n".
+- **Formatgrupper** (projektejerens valg):
+  - de gælder, når skabelonen har andre valg end farven, eller ingen farve. For hver værdi af den første akse samles størrelserne efter printfladens form;
+  - en størrelse går i den gruppe, hvis største størrelse har den nærmeste form, højst 3 % fra;
+  - hver gruppe er sin egen side, fx "Lodret – format 2", med eget foto, printområde og printmål (gruppens største størrelse) og egen gengivelse hos Gelato (markør og tom pr. gruppe);
+  - Fine Art Poster giver 8 grupper pr. retning, i alt 16 sider. A0–A3, 21×29,7, 50×70 og 70×100 deler ét design.
+- **Retning (eget design pr. retning):**
+  - en side hører til bestemte værdier (`BaseView::$colors`), og designeren viser kun de sider, der passer til den viste værdi og de valgte størrelser;
+  - hver fane viser de størrelser, den dækker;
+  - indsendelsen kræver et design for hver valgt kombination af værdi og størrelse (`design_sizes`) og billeder kun af sidens egne værdier;
+  - creatoren kan sælge kun lodret ved kun at vælge "Lodret".
+- **Printfil pr. størrelse:**
+  - der er én printfil pr. side i gruppens største størrelse;
+  - ordrelinjen finder siden ud fra størrelse og retning. Linkets printfil beskæres i midten til størrelsens form (højst 3 %, `PrintFileCrop`, gemt som egen fil). Den gemte fil ændres aldrig.
+- **Skærelinje (bleed):**
+  - bleed = (printflade − færdigt mål) / 2 pr. akse, kun mellem 0,5 og 15 mm (også med målene byttet om);
+  - de færdige mål kommer fra Gelatos `GET /v3/products/{productUid}` og gemmes 30 dage. Fejl gemmes ikke;
+  - bleed gemmes pr. side og størrelse (`formats`);
+  - designeren viser en rød stiplet linje med hvid kant og grå nedtoning uden for, med teksten "Alt uden for den røde linje kan blive skåret af.";
+  - linjen er en overlægning uden for lærredet og kommer aldrig med i design, printfil, mockups eller billeder;
+  - knappen "Hent bleed fra Gelato" på et Gelato-grundprodukt henter bleed igen, også til produkter importeret før 2.3.0. Det giver ingen ny version.
+- **Gelatos egne mockups:** en formatgruppes side beholder browserens billeder på Gelatos foto af gruppen, for gruppesiderne deler placering.
+- **Kun Gelato:** Printful, Prodigi og Printify er uændrede.
+
 ## Baggrundsfarve på AOP-produkter (fase 33, ADR-095, 2026-11-07)
 
 Admin markerer et grundprodukt med "Baggrundsfarve (AOP)". Kun på de produkter har designeren fanen "Baggrund".

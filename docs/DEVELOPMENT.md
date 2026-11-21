@@ -249,6 +249,27 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 2.3.0: Gelato-produkter med egne valg, formatgrupper og skærelinje (fase 52, ADR-115)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-21.** Ingen schemaændring. Testpakke på stg. Tag efter projektejerens OK og grøn CI.
+
+1. **Opdatér** med ZIP'en. Overview skal vise version 2.3.0 og schema-version 52.
+2. **Import af plakaten:**
+   - "Nyt grundprodukt" → "Fra en Gelato-skabelon" med Fine Art Poster (`68af8365-1ca7-4207-af23-15b6378d0128`);
+   - siden viser "Retning" og "Størrelse", 29 sorterede størrelser og under "Forside" 16 formatgrupper med deres størrelser;
+   - efter importen har grundproduktet 16 sider ("Lodret – format 1" …), og knappen "Hent bleed fra Gelato" viser antallet af størrelser med bleed.
+   - **Bemærk:** importen opretter 32 skjulte produkter i Gelato-butikken (en markør og en tom pr. gruppe).
+3. **Designeren:**
+   - med "Lodret" valgt ses kun de lodrette faner, hver med sine størrelser;
+   - der vises en rød stiplet linje og teksten "Alt uden for den røde linje kan blive skåret af.";
+   - "Retning" står over værdierne.
+4. **Indsendelse:** et design på kun nogle af fanerne afvises med beskeden om størrelser. Når alle valgte retninger og størrelser har et design, kan det sendes.
+5. **Butikken:** produktet har attributterne "Retning" og "Størrelse", og en lodret variant viser det lodrette billede.
+6. **Ordren:** printfil-linket på en ordrelinje i en størrelse med anden form (fx 21×29,7 i A-gruppen) giver en fil beskåret til størrelsens form.
+7. **Tøj fra Gelato:** importerer som før (farve × størrelse, én side pr. placering).
+
+**Tilbagerulning:** installér 2.2.1-ZIP'en igen. Sider med `colors` og `formats` læses af 2.2.1 som almindelige sider pr. størrelse. Formatgrupperne har kun deres egne størrelser, så designs bliver ved med at virke.
+
 ## Release 2.2.1: sikkerhedsrettelser (ADR-116)
 
 **Versions-bump og CHANGELOG-sektion 2026-11-21** efter sikkerhedstjekket af ccmerch.dk. Ingen schemaændring.

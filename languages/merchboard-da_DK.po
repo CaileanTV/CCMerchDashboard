@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-21T14:46:49+00:00\n"
+"PO-Revision-Date: 2026-11-21T15:16:48+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -10882,11 +10882,11 @@ msgstr "Klar"
 msgid "Product photo %d"
 msgstr "Produktfoto %d"
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1177
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1179
 msgid "The product designer is not available."
 msgstr "Produktdesigneren er ikke tilgængelig."
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1200
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1202
 msgid "The product designer refused the change."
 msgstr "Produktdesigneren afviste ændringen."
 

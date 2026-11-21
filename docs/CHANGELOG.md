@@ -4,6 +4,28 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-11-21
+
+Fase 52 (ADR-115). Ingen schemaændring.
+
+### Added
+
+- **Gelato-produkter med egne valg (fase 52, ADR-115):**
+  - akser fra skabelonens valg, fx Retning × Størrelse, med danske attributnavne;
+  - formatgrupper med 3 % tolerance, så alle størrelser kommer med;
+  - eget design pr. retning;
+  - printfil beskåret til hver størrelses form ved ordren;
+  - rød skærelinje med bleed fra Gelatos produkt-API i designeren;
+  - knappen "Hent bleed fra Gelato".
+
+### Changed
+
+- **Grundprodukter:** størrelsesnavne op til 60 tegn (før 20), højst 60 størrelser og 24 sider (før 30 og 8).
+- **Gelato-importen:**
+  - størrelserne sorteres;
+  - printflade "1" hedder "Forside";
+  - dubletter tælles og vises.
+
 ## [2.2.1] - 2026-11-21
 
 Sikkerhedsrettelser efter sikkerhedstjekket af ccmerch.dk 2026-11-21 (ADR-116). Ingen schemaændring.

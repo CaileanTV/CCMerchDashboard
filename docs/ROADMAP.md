@@ -1451,7 +1451,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - **Ventende leverandørfotos vises (samme test):** et ventende billede af et leverandørfoto (`_photo-<n>`) blev vist som et brudt billede, fordi visningsruten kun godtog sidenøgler. Det blev først synligt efter godkendelse. Rettet med `DesignerCutoutsPage::valid_key()`.
 - **51.6 Test og levering:** ✅ unit-, Jest- og integrationstest (godkend, fortryd, kassér), danske tekster og docs. Runtime 2026-11-15 i Chrome med den byggede admin-bundle: opgave → tegning → upload for en side med farvemaske og en side med eget farvefoto og silhuet; baggrund, gulvskygge og halsåbning blev gennemsigtige. Godkend og fortryd kræver produktlåsen (MySQL) og testes på stg.
 
-## Fase 52 – Gelato-produkter med egne valg, printområde pr. variant og skærelinje 📋 (projektejerens ønske 2026-11-15; efter 2.2.0, version 2.3.0; ADR-115 foreslået, planen afventer godkendelse)
+## Fase 52 – Gelato-produkter med egne valg, printområde pr. variant og skærelinje 🔄 (projektejerens ønske 2026-11-15; version 2.3.0; ADR-115 accepteret 2026-11-21)
 
 **Baggrund:** de samme rettelser er lavet i Lumise-addon'et "CCMerch Udbydere" 1.2.4–1.2.7. Projektejerens noter ligger i `ændringer fra lumise/` (ikke i git).
 - **Testskabelon:** Gelatos Fine Art Poster `68af8365-1ca7-4207-af23-15b6378d0128`.
@@ -1491,21 +1491,25 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - Addon'ets kildekode må læses som forlæg; den ændres aldrig og kopieres ikke.
 
 **Plan** (ADR-115):
-- **52.1 ADR-115 og plan.** ✅ foreslået 2026-11-15.
+- **52.1 ADR-115 og plan.** ✅ foreslået 2026-11-15, accepteret 2026-11-21.
 - **52.2 Navne, rækkefølge og printflader:**
   - størrelsesnavne op til 60 tegn med rensede sammenligninger og `"`;
   - sortering (tøj, ellers areal);
   - "Forside" og "Side n" for talflader;
   - grænserne 60 størrelser og 24 sider.
+  - ✅ 17bd175
 - **52.3 Akser fra skabelonens valg:**
   - Size/Format → størrelse, farve og andre valg → første akse med danske navne;
   - attributnavne efter akserne;
   - dubletter tælles og vises i importen.
+  - ✅ 17bd175
 - **52.4 Formatgrupper og retning:**
   - `BaseView::$colors` (siden hører kun til visse værdier af den første akse);
   - grupper efter form (3 %) pr. værdi, når den første akse ikke er farve;
   - printmål pr. størrelse fra hver variant;
   - markør- og blank-gengivelse og måling pr. værdi.
+  - ✅ 17bd175 (en størrelse går i gruppen med den nærmeste form til gruppens største størrelse; Fine Art Poster giver 8 pr. retning)
+- **52.5–52.7** ✅ 041399b (designer, indsendelse, butik, ordre med beskåret printfil, skærelinje og "Hent bleed fra Gelato").
 - **52.5 Designeren og indsendelsen:**
   - fanerne følger valgte værdier og størrelser og viser, hvilke størrelser de dækker;
   - krav om design for hver valgt kombination;
@@ -1523,6 +1527,13 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - danske tekster og docs;
   - runtime i Playground (import, designer med skærelinje, indsendelse);
   - CI, 2.3.0-testpakke på stg.
+  - ✅ unit, integration og Jest; danske tekster og docs (17bd175, 041399b).
+  - ✅ runtime i Playground 2026-11-21 med en seedet plakat (Gelato kan ikke nås fra Playground):
+    - kun de lodrette faner ved "Lodret" og de vandrette ved "Vandret", hver med sine størrelser;
+    - den røde skærelinje og teksten om beskæring;
+    - "Retning" over værdierne;
+    - desktop og mobil, ingen konsolfejl.
+  - **Mangler:** importen mod Gelato og en rigtig indsendelse sker på stg (testpakke 2.3.0), CI og tag efter projektejerens OK.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 

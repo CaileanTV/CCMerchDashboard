@@ -6870,7 +6870,14 @@ ADR-080, ADR-096, ADR-099, ADR-112, ADR-113
 2026-11-15
 
 ## Status
-Foreslået 2026-11-15. Projektejeren har valgt "design pr. formatgruppe, men alle størrelser med, uanset målene" og "eget design pr. retning". Planen afventer godkendelse. Version 2.3.0 (fase 52).
+Foreslået 2026-11-15. Projektejeren har valgt "design pr. formatgruppe, men alle størrelser med, uanset målene" og "eget design pr. retning". Accepteret af projektejeren 2026-11-21 ("så derefter skal vi køre fase 52"). Version 2.3.0 (fase 52).
+
+**Gennemførelsen 2026-11-21:**
+- **Formatgrupper:** en størrelse går i den gruppe, hvis største størrelse (printfilen) har den nærmeste form inden for 3 %. Fine Art Poster giver præcis 8 grupper pr. retning.
+- **Grupperingen gælder** også skabeloner uden farve.
+- **Farve og størrelse:** katalogets `gco_` og `gsi_` vinder fortsat over skabelonens egne navne, som før.
+- **Gelatos egne mockups** bruges ikke på formatgruppers sider. De deler placering, så browserens billeder på Gelatos gruppefoto bliver.
+- **Beskæringen af printfilen** sker i det signerede admin-download for ordrelinjens størrelse (`DesignerVersionFiles` med `size`), og beskæringen gemmes som egen fil.
 
 ## Context
 Lumise-addon'et "CCMerch Udbydere" 1.2.4–1.2.7 fik rettelser til Gelato-produkter med andre valg end farve og størrelse. Projektejeren gav lov til at læse dets kildekode som forlæg 2026-11-15.

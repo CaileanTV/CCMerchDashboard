@@ -580,6 +580,12 @@ Kun mens produktdesigneren er slået til (ellers 404 `merchboard_designer_disabl
 
 En side i `GET /me/designer` har `sizes` (2026-10-31): de størrelser, siden hører til; tom for alle. `POST .../submit` svarer `design_sizes`, når en valgt størrelse mangler et design, eller et design ligger på en størrelse, der ikke er valgt.
 
+Fra 2.3.0 (ADR-115) har en side også:
+- `colors`: de værdier af den første akse, fx en retning, siden hører til; tom for alle;
+- `trims`: pr. størrelse, hvor printet kan blive skåret, som andele af printområdet (`x`, `y`, `width`, `height`). Kun størrelser, der mister noget.
+
+`design_sizes` gælder så hver valgt kombination af værdi og størrelse. Mockups sendes kun for sidens egne værdier (ellers `submission_file`).
+
 `POST` og `GET /me/designer/products/{id}/preview` (2026-10-31): starter og læser billeder af kladden. Svar: `status` (`none`, `pending`, `failed`, `done`) og `images` med `side` (sidens nøgle, eller `_photo-<stil>` for et valgt foto, der ikke hører til en side), `color` og `url` (`data:`). Afvisninger: `preview_unavailable`, `preview_busy`, `preview_failed`, `submission_files`.
 
 `PUT /me/designer/products/{id}` (2026-10-31): `colors` gemmes i den sendte rækkefølge.
