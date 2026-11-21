@@ -1524,7 +1524,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - runtime i Playground (import, designer med skærelinje, indsendelse);
   - CI, 2.3.0-testpakke på stg.
 
-## Version 2.2.1 – sikkerhedsrettelser 🔄 (sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
+## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
 - **M1** long-poll-pladser og grænse pr. besøgsadresse på overlay-feedene. ✅
 - **M2** merch-reklamens status slår id op før rate limit; 404 tælles pr. adresse. ✅
@@ -1533,7 +1533,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **L2** Twitch-beskeder leveret igen kører ikke handlingen igen. ✅
 - **L4** feedet går højst 20 alerts tilbage. ✅
 - **L5** fælles klient-IP bag Cloudflare til alle rate limits. ✅
-- **Mangler:** CI, testpakke og tag efter projektejerens OK.
+- **Levering:** CI grøn, tagget `v2.2.1` på 35011e4; draft-releasens ZIP er identisk med testpakken (sha `64036b3a…`). ✅
 
 ## Version 2.1.1 ✅ (tagget 2026-11-12 på 555ae87)
 

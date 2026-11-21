@@ -251,7 +251,9 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 2.2.1: sikkerhedsrettelser (ADR-116)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-21** efter sikkerhedstjekket af ccmerch.dk. Ingen schemaændring. Tag efter projektejerens OK og grøn CI.
+**Versions-bump og CHANGELOG-sektion 2026-11-21** efter sikkerhedstjekket af ccmerch.dk. Ingen schemaændring.
+
+**Tagget 2026-11-21:** `v2.2.1` på 35011e4 efter projektejerens OK og grøn CI (run 44908031939). Release-workflowet (run 44911145681) lavede draft-releasen med `merchboard-mvp-2.2.1.zip` (sha256 `64036b3a2750bdac4cf396767328e4c2b7470fca3770128f0eb675bd1a957901`), byte for byte den testede pakke. Projektejeren udgiver og installerer.
 
 1. **Opdatér** med ZIP'en. Overview skal vise version 2.2.1 og schema-version 52.
 2. **Overlay:** et åbent alert-overlay i OBS viser fortsat nye alerts med det samme. Et tredje vindue med samme overlay viser dem med op til 5 sekunders forsinkelse.
