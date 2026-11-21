@@ -83,6 +83,8 @@ final class GlobalOverlayFeed {
 			return self::answer( $this->events->latest_id_all(), $overlay, array() );
 		}
 
+		// Never further back than the newest alerts (ADR-116).
+		$after   = max( $after, $this->events->cursor_floor( null, OverlayFeed::KEEP ) );
 		$checks  = $wait ? OverlayFeed::WAIT_SECONDS : 0;
 		$version = $overlay->version();
 

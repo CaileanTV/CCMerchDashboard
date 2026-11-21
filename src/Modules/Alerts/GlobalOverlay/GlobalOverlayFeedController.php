@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\Alerts\GlobalOverlay;
 
 use MerchBoard\Core\Http\RestController;
 use MerchBoard\Core\Logging\Logger;
+use MerchBoard\Modules\Alerts\Overlay\OverlayLongPoll;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use WP_Error;
 use WP_REST_Request;
@@ -31,11 +32,12 @@ final class GlobalOverlayFeedController extends RestController {
 	/**
 	 * Constructor.
 	 *
-	 * @param GlobalOverlayFeed  $feed    The feed.
-	 * @param OverlayRateLimiter $limiter Rate limit per overlay id.
-	 * @param Logger             $logger  Technical log.
+	 * @param GlobalOverlayFeed    $feed    The feed.
+	 * @param OverlayRateLimiter   $limiter Rate limit per overlay id.
+	 * @param Logger               $logger  Technical log.
+	 * @param OverlayLongPoll|null $polls   Slots and requests per address (ADR-116); null for neither.
 	 */
-	public function __construct( private GlobalOverlayFeed $feed, private OverlayRateLimiter $limiter, Logger $logger ) {
+	public function __construct( private GlobalOverlayFeed $feed, private OverlayRateLimiter $limiter, Logger $logger, private ?OverlayLongPoll $polls = null ) {
 		parent::__construct( $logger );
 	}
 
@@ -79,6 +81,11 @@ final class GlobalOverlayFeedController extends RestController {
 			function () use ( $request ): WP_REST_Response|WP_Error {
 				$overlay_id = (string) $request->get_param( 'overlay_id' );
 
+				// Per visitor address first, across all ids, so guessing ids is limited too (ADR-116).
+				if ( null !== $this->polls && ! $this->polls->allow_address() ) {
+					return self::error( 'merchboard_too_many_requests', __( 'Too many requests. Please try again later.', 'merchboard' ), 429 );
+				}
+
 				if ( null === $this->feed->active( $overlay_id ) ) {
 					return self::not_found();
 				}
@@ -87,8 +94,16 @@ final class GlobalOverlayFeedController extends RestController {
 					return self::error( 'merchboard_too_many_requests', __( 'Too many requests. Please try again later.', 'merchboard' ), 429 );
 				}
 
-				$after  = $request->get_param( 'after' );
-				$answer = $this->feed->read( $overlay_id, is_numeric( $after ) ? (int) $after : null, true === $request->get_param( 'wait' ) );
+				$after = $request->get_param( 'after' );
+				$wait  = true === $request->get_param( 'wait' );
+				// At most OverlayLongPoll::SLOTS requests of an id wait; another answers at once.
+				$slot = $wait && null !== $this->polls ? $this->polls->slot( $overlay_id ) : null;
+
+				try {
+					$answer = $this->feed->read( $overlay_id, is_numeric( $after ) ? (int) $after : null, $wait && ( null === $this->polls || null !== $slot ) );
+				} finally {
+					$this->polls?->release( $slot );
+				}
 
 				if ( null === $answer ) {
 					return self::not_found();

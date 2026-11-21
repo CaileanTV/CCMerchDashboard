@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\Alerts;
 use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Container;
 use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Core\Database\NamedLock;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Module;
@@ -108,6 +109,7 @@ use MerchBoard\Modules\Alerts\Overlay\OverlayAssets;
 use MerchBoard\Modules\Alerts\Overlay\OverlayFeed;
 use MerchBoard\Modules\Alerts\Overlay\OverlayFeedController;
 use MerchBoard\Modules\Alerts\Overlay\OverlayPage;
+use MerchBoard\Modules\Alerts\Overlay\OverlayLongPoll;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRoute;
 use MerchBoard\Modules\Alerts\Overlay\OverlayTestQueue;
@@ -567,7 +569,7 @@ final class AlertsModule implements Module {
 		) )->register();
 		$container->set(
 			OverlayFeedController::class,
-			static fn( Container $c ): OverlayFeedController => new OverlayFeedController( $c->get( OverlayFeed::class ), new OverlayRateLimiter(), $c->get( Logger::class ) )
+			static fn( Container $c ): OverlayFeedController => new OverlayFeedController( $c->get( OverlayFeed::class ), new OverlayRateLimiter(), $c->get( Logger::class ), $c->get( OverlayLongPoll::class ) )
 		);
 		// MerchAlert answers its own URL while it is active (ADR-065 pkt. 5).
 		$container->set( OverlayRoute::class, static fn( Container $c ): OverlayRoute => new OverlayRoute( ! $c->get( AlertsAvailability::class )->merchalert_active() ) );
@@ -600,7 +602,9 @@ final class AlertsModule implements Module {
 			AdminGlobalOverlayController::class,
 			static fn( Container $c ): AdminGlobalOverlayController => new AdminGlobalOverlayController( $c->get( GlobalOverlayService::class ), $c->get( AlertsAvailability::class ), $c->get( Logger::class ), $c->get( AlertFonts::class ), $c->get( GlobalOverlaySounds::class ), $c->get( GlobalOverlayImages::class ), $c->get( TtsSettings::class ) )
 		);
-		$container->set( GlobalOverlayFeedController::class, static fn( Container $c ): GlobalOverlayFeedController => new GlobalOverlayFeedController( $c->get( GlobalOverlayFeed::class ), new OverlayRateLimiter(), $c->get( Logger::class ) ) );
+		$container->set( GlobalOverlayFeedController::class, static fn( Container $c ): GlobalOverlayFeedController => new GlobalOverlayFeedController( $c->get( GlobalOverlayFeed::class ), new OverlayRateLimiter(), $c->get( Logger::class ), $c->get( OverlayLongPoll::class ) ) );
+		// The feeds' slots and requests per visitor address (ADR-116): one counter for both feeds.
+		$container->set( OverlayLongPoll::class, static fn( Container $c ): OverlayLongPoll => new OverlayLongPoll( new NamedLock( $c->get( wpdb::class ) ), new OverlayRateLimiter( null, 'merchboard_alerts_ip_', OverlayLongPoll::PER_ADDRESS ) ) );
 		$container->set( GlobalOverlayRoute::class, static fn( Container $c ): GlobalOverlayRoute => new GlobalOverlayRoute( ! $c->get( AlertsAvailability::class )->merchalert_active() ) );
 		$container->set( GlobalOverlayPage::class, static fn( Container $c ): GlobalOverlayPage => new GlobalOverlayPage( $c->get( GlobalOverlayRoute::class ), $c->get( GlobalOverlayFeed::class ), $c->get( OverlayPage::class ), $c->get( Logger::class ), $c->get( GlobalOverlayImages::class ) ) );
 		$container->set(

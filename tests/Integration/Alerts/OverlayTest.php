@@ -12,6 +12,7 @@ namespace MerchBoard\Tests\Integration\Alerts;
 use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Audit\AuditTrail;
+use MerchBoard\Core\Database\NamedLock;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Modules\Alerts\AlertEvent;
@@ -23,6 +24,7 @@ use MerchBoard\Modules\Alerts\Overlay\OverlayAssets;
 use MerchBoard\Modules\Alerts\Overlay\OverlayFeed;
 use MerchBoard\Modules\Alerts\Overlay\OverlayFeedController;
 use MerchBoard\Modules\Alerts\Overlay\OverlayId;
+use MerchBoard\Modules\Alerts\Overlay\OverlayLongPoll;
 use MerchBoard\Modules\Alerts\Overlay\OverlayPage;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRoute;
@@ -32,7 +34,10 @@ use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use PHPUnit\Framework\Attributes\CoversClass;
+use WP_Error;
 use WP_REST_Request;
+use WP_REST_Response;
+use wpdb;
 
 /**
  * ADR-065 pkt. 4: the overlay id is the only credential, the feed starts at
@@ -163,6 +168,64 @@ final class OverlayTest extends IntegrationTestCase {
 		self::assertSame( array(), $answer['alerts'] );
 		self::assertSame( 0, $answer['cursor'] );
 		self::assertSame( array_fill( 0, OverlayFeed::WAIT_SECONDS, 1 ), $this->slept );
+	}
+
+	public function test_at_most_two_requests_of_an_id_wait_and_each_address_has_a_limit(): void {
+		$creator = $this->creators->create( 'Nova', CreatorStatus::Active );
+		$id      = $this->overlay( $creator->id );
+		$polls   = new OverlayLongPoll( new NamedLock( $this->wpdb ), new OverlayRateLimiter( null, 'merchboard_alerts_ip_test_' . wp_generate_password( 6, false ) . '_', 3 ) );
+
+		// Two other requests of the id hold both slots: each request has its own connection.
+		$one    = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		$two    = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+		$held   = array( new OverlayLongPoll( new NamedLock( $one ), new OverlayRateLimiter() ), new OverlayLongPoll( new NamedLock( $two ), new OverlayRateLimiter() ) );
+		$first  = $held[0]->slot( $id );
+		$second = $held[1]->slot( $id );
+		self::assertNotNull( $first );
+		self::assertNotNull( $second );
+		self::assertNotSame( $first, $second );
+		self::assertNull( $polls->slot( $id ), 'A third request of the id gets no slot.' );
+
+		$controller = new OverlayFeedController( $this->feed(), new OverlayRateLimiter(), new RecordingLogger(), $polls );
+		$request    = new WP_REST_Request( 'GET', '/merchboard/v1/alerts/overlay/' . $id . '/feed' );
+		$request->set_url_params( array( 'overlay_id' => $id ) );
+		$request->set_param( 'after', 0 );
+		$request->set_param( 'wait', true );
+		$this->slept = array();
+		$answer      = $controller->get_feed( $request );
+		self::assertInstanceOf( WP_REST_Response::class, $answer );
+		self::assertSame( array(), $this->slept, 'Without a slot it answers at once.' );
+
+		$held[0]->release( $first );
+		$held[1]->release( $second );
+		$one->close();
+		$two->close();
+		$controller->get_feed( $request );
+		self::assertSame( OverlayFeed::WAIT_SECONDS, count( $this->slept ), 'With a slot it waits as before.' );
+
+		// The visitor's address: at most 3 a minute here, across all ids, before the id is looked up.
+		$unknown = new WP_REST_Request( 'GET', '/merchboard/v1/alerts/overlay/' . str_repeat( 'b', 32 ) . '/feed' );
+		$unknown->set_url_params( array( 'overlay_id' => str_repeat( 'b', 32 ) ) );
+		foreach ( array( 404, 429 ) as $expected ) {
+			$refused = $controller->get_feed( $unknown );
+			self::assertInstanceOf( WP_Error::class, $refused );
+			self::assertSame( $expected, $refused->get_error_data()['status'] ?? null, 'The third request of the address is its last.' );
+		}
+	}
+
+	public function test_the_feed_never_reaches_further_back_than_the_newest_alerts(): void {
+		$creator = $this->creators->create( 'Nova', CreatorStatus::Active );
+		$id      = $this->overlay( $creator->id, array( 'template' => '$UserName bought $Product' ) );
+
+		for ( $i = 1; $i <= OverlayFeed::KEEP + 5; $i++ ) {
+			$this->event( $creator->id, 2000 + $i, 'fan' . $i );
+		}
+
+		$answer = $this->feed()->read( $id, 0, false );
+		self::assertNotNull( $answer );
+		self::assertCount( OverlayFeed::KEEP, $answer['alerts'], 'Only the newest alerts.' );
+		self::assertStringContainsString( 'fan6', $answer['alerts'][0]['text'] ?? '', 'The five oldest are left out.' );
+		self::assertSame( 0, count( $this->feed()->read( $id, $answer['cursor'], false )['alerts'] ?? array( 1 ) ) );
 	}
 
 	public function test_unknown_ids_and_inactive_creators_are_not_found(): void {

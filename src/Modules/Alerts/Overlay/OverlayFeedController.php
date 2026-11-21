@@ -27,18 +27,21 @@ defined( 'ABSPATH' ) || exit;
  * overlay shows anyway (alert texts with the customer's voluntary username,
  * product images), never ids of customers or orders. Requests are limited
  * per overlay id (429), an unknown id or an inactive creator gives 404
- * without saying which, and answers are never cached.
+ * without saying which, and answers are never cached. At most two requests
+ * of an id wait at a time, and each visitor address has a limit across all
+ * ids (OverlayLongPoll, ADR-116).
  */
 final class OverlayFeedController extends RestController {
 
 	/**
 	 * Constructor.
 	 *
-	 * @param OverlayFeed        $feed    Feed.
-	 * @param OverlayRateLimiter $limiter Request limit.
-	 * @param Logger             $logger  Technical log.
+	 * @param OverlayFeed          $feed    Feed.
+	 * @param OverlayRateLimiter   $limiter Request limit.
+	 * @param Logger               $logger  Technical log.
+	 * @param OverlayLongPoll|null $polls   Slots and requests per address (ADR-116); null for neither.
 	 */
-	public function __construct( private OverlayFeed $feed, private OverlayRateLimiter $limiter, Logger $logger ) {
+	public function __construct( private OverlayFeed $feed, private OverlayRateLimiter $limiter, Logger $logger, private ?OverlayLongPoll $polls = null ) {
 		parent::__construct( $logger );
 	}
 
@@ -82,6 +85,11 @@ final class OverlayFeedController extends RestController {
 			function () use ( $request ): WP_REST_Response|WP_Error {
 				$overlay_id = (string) $request->get_param( 'overlay_id' );
 
+				// Per visitor address first, across all ids, so guessing ids is limited too (ADR-116).
+				if ( null !== $this->polls && ! $this->polls->allow_address() ) {
+					return self::error( 'merchboard_too_many_requests', __( 'Too many requests. Please try again later.', 'merchboard' ), 429 );
+				}
+
 				// Only existing overlays are counted, so guessing ids writes nothing.
 				if ( ! OverlayId::valid( $overlay_id ) || null === $this->feed->active_overlay( $overlay_id ) ) {
 					return self::not_found();
@@ -91,8 +99,16 @@ final class OverlayFeedController extends RestController {
 					return self::error( 'merchboard_too_many_requests', __( 'Too many requests. Please try again later.', 'merchboard' ), 429 );
 				}
 
-				$after  = $request->get_param( 'after' );
-				$answer = $this->feed->read( $overlay_id, is_numeric( $after ) ? (int) $after : null, true === $request->get_param( 'wait' ) );
+				$after = $request->get_param( 'after' );
+				$wait  = true === $request->get_param( 'wait' );
+				// At most OverlayLongPoll::SLOTS requests of an id wait; another answers at once.
+				$slot = $wait && null !== $this->polls ? $this->polls->slot( $overlay_id ) : null;
+
+				try {
+					$answer = $this->feed->read( $overlay_id, is_numeric( $after ) ? (int) $after : null, $wait && ( null === $this->polls || null !== $slot ) );
+				} finally {
+					$this->polls?->release( $slot );
+				}
 
 				if ( null === $answer ) {
 					return self::not_found();

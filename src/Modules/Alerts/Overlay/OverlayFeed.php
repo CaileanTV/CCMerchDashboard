@@ -35,6 +35,9 @@ defined( 'ABSPATH' ) || exit;
  *   A long-poll answers at once when the version changes while it waits.
  * - **Not found:** an unknown id, a regenerated id or an inactive creator
  *   give null (404), without saying which.
+ * - **History:** a cursor never reaches further back than the creator's
+ *   newest KEEP alerts (ADR-116), so the feed cannot page through the
+ *   history.
  *
  * Test alerts (OverlayTestQueue) are delivered with id 0 and do not move
  * the cursor.
@@ -54,6 +57,11 @@ final class OverlayFeed {
 	 * At most this many alerts per answer.
 	 */
 	public const LIMIT = 20;
+
+	/**
+	 * The newest alerts a feed may still return, however old the cursor.
+	 */
+	public const KEEP = 20;
 
 	/**
 	 * Sleeps for a number of seconds.
@@ -119,6 +127,7 @@ final class OverlayFeed {
 			return self::answer( $this->events->latest_id( $overlay->creator_id ), $overlay, array() );
 		}
 
+		$after   = max( $after, $this->events->cursor_floor( $overlay->creator_id, self::KEEP ) );
 		$checks  = $wait ? self::WAIT_SECONDS : 0;
 		$version = $overlay->version();
 

@@ -338,6 +338,30 @@ final class AlertEventRepository {
 	}
 
 	/**
+	 * The lowest cursor a feed accepts (ADR-116, security review
+	 * 2026-11-21): the id just below the creator's newest `$keep` alerts, so
+	 * a cursor of 0 cannot page through the whole history; 0 when there are
+	 * no more.
+	 *
+	 * @param int|null $creator_id Creator; null for every creator (the global overlay).
+	 * @param int      $keep       Newest alerts a feed may still return.
+	 * @throws DatabaseException When the database cannot be read.
+	 * @phpstan-impure Reads the database.
+	 */
+	public function cursor_floor( ?int $creator_id, int $keep ): int {
+		$wpdb = $this->wpdb;
+		$id   = null === $creator_id
+			? $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE imported = 0 ORDER BY id DESC LIMIT 1 OFFSET %d', $this->table(), max( 0, $keep ) ) ) // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- A custom table.
+			: $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE creator_id = %d AND imported = 0 ORDER BY id DESC LIMIT 1 OFFSET %d', $this->table(), $creator_id, max( 0, $keep ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- A custom table.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the alerts.' );
+		}
+
+		return is_numeric( $id ) ? (int) $id : 0;
+	}
+
+	/**
 	 * The id of the newest alert of any creator, 0 when there is none: the
 	 * global overlay's starting cursor (step 25.9.4).
 	 *
