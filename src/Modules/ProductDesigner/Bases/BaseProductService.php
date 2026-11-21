@@ -324,6 +324,53 @@ class BaseProductService {
 	}
 
 	/**
+	 * Gives sides other formats: each size's print size and bleed (ADR-115,
+	 * "Hent bleed fra Gelato"). Nothing a design was made on changes, so the
+	 * base product keeps its version.
+	 *
+	 * @param int                                                                                                       $id      Base product.
+	 * @param array<string, array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>> $formats Formats by side key.
+	 * @throws DesignerException When the user may not, or a side or format is refused.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_formats( int $id, array $formats ): void {
+		self::authorize();
+
+		$base = $this->existing( $id );
+
+		try {
+			$views = array_map( static fn( BaseView $view ): BaseView => isset( $formats[ $view->key ] ) ? $view->with_formats( $formats[ $view->key ] ) : $view, $base->views );
+
+			foreach ( $views as $view ) {
+				if ( array() !== array_diff( array_map( 'strval', array_keys( $view->formats ) ), $base->sizes ) ) {
+					self::reject( DesignerException::BASE_VIEW );
+				}
+			}
+
+			$changed = new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color, $base->tag_ids );
+		} catch ( InvalidArgumentException ) {
+			self::reject( DesignerException::BASE_VIEW );
+		}
+
+		$this->transaction->run(
+			function () use ( $id, $changed ): void {
+				$this->bases->update( $id, $changed );
+				$this->audit->record(
+					AuditAction::DesignerBaseChanged,
+					null,
+					array(
+						'base_id'        => $id,
+						'base_name'      => $changed->name,
+						'version'        => $changed->version,
+						'changed_fields' => array( 'formats' ),
+						'status'         => $changed->status,
+					)
+				);
+			}
+		);
+	}
+
+	/**
 	 * Adds a batch of photos to a side, each the own background of the colour
 	 * it is named after, and replaces what the colour had. The browser sends
 	 * many photos in batches, as one request may hold only a few files. A

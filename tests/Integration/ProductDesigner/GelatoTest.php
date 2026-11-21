@@ -33,6 +33,7 @@ use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoApi;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoBleed;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoMockups;
@@ -56,6 +57,7 @@ use WP_Error;
 #[CoversClass( GelatoCatalog::class )]
 #[CoversClass( CatalogImport::class )]
 #[CoversClass( GelatoMockups::class )]
+#[CoversClass( GelatoBleed::class )]
 final class GelatoTest extends IntegrationTestCase {
 
 	private const KEY = 'gelato-test-key-1234567890:abcdef';
@@ -410,6 +412,52 @@ final class GelatoTest extends IntegrationTestCase {
 		self::assertCount( 32, $creates, 'A marker and a blank product per format group.' );
 		self::assertContains( 'rp-43', $creates, 'Each group is rendered with its largest size (A0 vertical).' );
 		self::assertCount( 58, array_filter( $this->calls, static fn( array $call ): bool => str_starts_with( $call[1], GelatoApi::PRODUCTS . '/v3/products/' ) ), 'The finished size of every format, once.' );
+	}
+
+	public function test_the_bleed_is_fetched_again_from_gelato_for_a_base_product(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$this->poster_answers();
+
+		$catalog = $this->catalog();
+		$id      = $catalog->create(
+			'gelato',
+			'tpl-poster',
+			array(
+				'colors'     => array( 'Vertical' ),
+				'sizes'      => array( 'A3 (29.7 x 42 cm)', 'A2 (42 x 59.4  cm)' ),
+				'sides'      => array( '1 - sort kasse.png' ),
+				'base_price' => '199',
+			)
+		);
+
+		$this->drain_import( $catalog );
+
+		$view = $this->bases->find( $id )->views[0] ?? self::fail( 'No side.' );
+		self::assertSame( array( 'A3 (29.7 x 42 cm)', 'A2 (42 x 59.4 cm)' ), $view->sizes, 'Picked names are compared as stored.' );
+
+		// As a base product imported before the bleed was known.
+		$this->base_service()->set_formats(
+			$id,
+			array(
+				$view->key => array_map(
+					static fn( array $format ): array => array(
+						'width_mm'  => $format['width_mm'],
+						'height_mm' => $format['height_mm'],
+					),
+					$view->formats
+				),
+			)
+		);
+		self::assertSame( array(), array_filter( ( $this->bases->find( $id )->views[0] ?? self::fail( 'No side.' ) )->formats, static fn( array $format ): bool => isset( $format['bleed'] ) ) );
+
+		$version = $this->bases->find( $id )->version ?? 0;
+		$fetched = ( new GelatoBleed( $this->api, $this->bases, $this->base_service() ) )->fetch( $id );
+		$after   = $this->bases->find( $id ) ?? self::fail( 'No base product.' );
+
+		self::assertSame( 2, $fetched );
+		self::assertSame( array( 4.0, 4.0 ), $after->views[0]->formats['A2 (42 x 59.4 cm)']['bleed'] ?? null );
+		self::assertSame( $version, $after->version, 'The bleed changes no design: the same version.' );
+		self::assertNotSame( array(), $after->views[0]->trims(), 'Creators see the red line.' );
 	}
 
 	public function test_a_list_of_images_gives_each_side_its_own_photo(): void {
@@ -801,6 +849,9 @@ final class GelatoTest extends IntegrationTestCase {
 		$variants = array();
 
 		foreach ( $this->poster_rows() as [ $id, $orientation, $size, $width, $height, $placeholder, $area, $uid ] ) {
+			// A finished size is kept 30 days: each test asks Gelato afresh.
+			delete_transient( 'merchboard_gelato_dim_' . md5( $uid ) );
+
 			$variants[] = array(
 				'id'                => $id,
 				'title'             => $size . ' - ' . $orientation,

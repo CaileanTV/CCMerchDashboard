@@ -577,6 +577,86 @@ export function fitted(
 export interface SizedSide {
 	readonly key: string;
 	readonly sizes: readonly string[];
+	/** The colours (values of the first axis) the side belongs to; empty or left out for every colour (ADR-115). */
+	readonly colors?: readonly string[];
+}
+
+/**
+ * Whether sides belong to only some sizes or colours.
+ *
+ * @param views The sides of the base product.
+ */
+export function sizedSides( views: readonly SizedSide[] ): boolean {
+	return views.some(
+		( view ) => view.sizes.length > 0 || ( view.colors?.length ?? 0 ) > 0
+	);
+}
+
+/**
+ * Whether a side is on a size and, when one is named, a colour.
+ *
+ * @param view     The side.
+ * @param size     The size.
+ * @param colorKey The colour key; null for any.
+ */
+export function onSide(
+	view: SizedSide,
+	size: string,
+	colorKey: string | null = null
+): boolean {
+	return (
+		( view.sizes.length === 0 || view.sizes.includes( size ) ) &&
+		( colorKey === null ||
+			( view.colors?.length ?? 0 ) === 0 ||
+			( view.colors ?? [] ).includes( colorKey ) )
+	);
+}
+
+/**
+ * The sides of a list that belong to a colour (ADR-115); a side the base
+ * product does not have stays.
+ *
+ * @param views    The sides of the base product.
+ * @param keys     Side keys.
+ * @param colorKey The colour key.
+ */
+export function onColor(
+	views: readonly SizedSide[],
+	keys: readonly string[],
+	colorKey: string
+): string[] {
+	return keys.filter( ( key ) => {
+		const own = views.find( ( view ) => view.key === key )?.colors ?? [];
+
+		return own.length === 0 || own.includes( colorKey );
+	} );
+}
+
+/**
+ * Every chosen size with every chosen colour; the colour is null when no side
+ * belongs to only some colours (the server's `BaseProduct::combinations()`).
+ *
+ * @param views  The sides of the base product.
+ * @param sizes  The chosen sizes.
+ * @param colors The chosen colour keys.
+ */
+function combinations(
+	views: readonly SizedSide[],
+	sizes: readonly string[],
+	colors: readonly string[]
+): Array< [ string, string | null ] > {
+	const keys: Array< string | null > = views.some(
+		( view ) => ( view.colors?.length ?? 0 ) > 0
+	)
+		? [ ...colors ]
+		: [ null ];
+
+	return sizes.flatMap( ( size ) =>
+		keys.map( ( colorKey ): [ string, string | null ] => [
+			size,
+			colorKey,
+		] )
+	);
 }
 
 /**
@@ -682,48 +762,55 @@ export function withBackground(
 }
 
 /**
- * The used sides of a size. A side without sizes is on every size.
+ * The used sides of a size and colour. A side without sizes is on every size,
+ * one without colours on every colour.
  *
- * @param views  The sides of the base product.
- * @param design The document.
- * @param size   The size.
+ * @param views    The sides of the base product.
+ * @param design   The document.
+ * @param size     The size.
+ * @param colorKey The colour key; null for any.
  */
 function usedOnSize(
 	views: readonly SizedSide[],
 	design: DesignDocument,
-	size: string
+	size: string,
+	colorKey: string | null = null
 ): string[] {
 	const used = usedSides( design );
 
 	return views
 		.filter(
 			( view ) =>
-				used.includes( view.key ) &&
-				( view.sizes.length === 0 || view.sizes.includes( size ) )
+				used.includes( view.key ) && onSide( view, size, colorKey )
 		)
 		.map( ( view ) => view.key );
 }
 
 /**
- * How many used design areas one product has: with sides per size, those of
- * the size with the most (the server's `BaseProduct::areas()`).
+ * How many used design areas one product has: with sides per size or colour,
+ * those of the combination with the most (the server's `BaseProduct::areas()`).
  *
  * @param views  The sides of the base product.
  * @param design The document.
  * @param sizes  The chosen sizes.
+ * @param colors The chosen colour keys.
  */
 export function usedAreas(
 	views: readonly SizedSide[],
 	design: DesignDocument,
-	sizes: readonly string[]
+	sizes: readonly string[],
+	colors: readonly string[] = []
 ): number {
-	if ( views.every( ( view ) => view.sizes.length === 0 ) ) {
+	if ( ! sizedSides( views ) ) {
 		return usedSides( design ).length;
 	}
 
 	return Math.max(
 		0,
-		...sizes.map( ( size ) => usedOnSize( views, design, size ).length )
+		...combinations( views, sizes, colors ).map(
+			( [ size, colorKey ] ) =>
+				usedOnSize( views, design, size, colorKey ).length
+		)
 	);
 }
 
@@ -751,18 +838,20 @@ export interface ExtraArea {
  * @param sizes  The chosen sizes.
  * @param large  Price of an extra large area (decimal string).
  * @param small  Price of an extra small area (decimal string).
+ * @param colors The chosen colour keys (sides per colour, ADR-115).
  */
 export function extraAreas(
 	views: readonly PricedSide[],
 	design: DesignDocument,
 	sizes: readonly string[],
 	large: string,
-	small: string
+	small: string,
+	colors: readonly string[] = []
 ): ExtraArea[] {
 	// A side with only a background colour is free (ADR-095).
 	const used = designedSides( design );
 	// Without sides per size, a side the base product no longer has is a large area, as on the server.
-	const groups = views.every( ( view ) => view.sizes.length === 0 )
+	const groups = ! sizedSides( views )
 		? [
 				used.map(
 					( key ) =>
@@ -774,12 +863,11 @@ export function extraAreas(
 						}
 				),
 			]
-		: sizes.map( ( size ) =>
+		: combinations( views, sizes, colors ).map( ( [ size, colorKey ] ) =>
 				views.filter(
 					( view ) =>
 						used.includes( view.key ) &&
-						( view.sizes.length === 0 ||
-							view.sizes.includes( size ) )
+						onSide( view, size, colorKey )
 				)
 			);
 	let best: ExtraArea[] = [];
@@ -818,24 +906,28 @@ export function extraTotal( areas: readonly ExtraArea[] ): number {
 }
 
 /**
- * Whether a design fits the chosen sizes: with sides per size each chosen size
- * has a design, and no design lies on a size that is not chosen (the server's
- * `BaseProduct::covers()`).
+ * Whether a design fits the chosen sizes and colours: with sides per size or
+ * colour each chosen combination has a design, and no design lies on one that
+ * is not chosen (the server's `BaseProduct::covers()`).
  *
  * @param views  The sides of the base product.
  * @param design The document.
  * @param sizes  The chosen sizes.
+ * @param colors The chosen colour keys of this design.
  */
 export function coversSizes(
 	views: readonly SizedSide[],
 	design: DesignDocument,
-	sizes: readonly string[]
+	sizes: readonly string[],
+	colors: readonly string[] = []
 ): boolean {
-	if ( views.every( ( view ) => view.sizes.length === 0 ) ) {
+	if ( ! sizedSides( views ) ) {
 		return true;
 	}
 
-	const sold = sizes.map( ( size ) => usedOnSize( views, design, size ) );
+	const sold = combinations( views, sizes, colors ).map(
+		( [ size, colorKey ] ) => usedOnSize( views, design, size, colorKey )
+	);
 
 	return (
 		sold.every( ( sides ) => sides.length > 0 ) &&

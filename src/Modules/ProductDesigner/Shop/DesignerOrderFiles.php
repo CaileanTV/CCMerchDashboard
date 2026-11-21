@@ -206,9 +206,10 @@ class DesignerOrderFiles {
 	 * @param array<string, string>     $slots Slot by side.
 	 * @param array<string, mixed>|null $row   Version.
 	 * @param string|null               $size  Size of the order line.
+	 * @param string|null               $color Colour key of the order line: with sides per colour (ADR-115), only that colour's.
 	 * @return array<string, string>
 	 */
-	private function of_size( array $slots, ?array $row, ?string $size ): array {
+	private function of_size( array $slots, ?array $row, ?string $size, ?string $color = null ): array {
 		try {
 			$base = null === $size || null === $row ? null : $this->bases->find( (int) $row['base_id'] );
 		} catch ( DatabaseException ) {
@@ -220,7 +221,7 @@ class DesignerOrderFiles {
 		}
 
 		// A colour design's key is "side:id" (ADR-096).
-		$sides = $base->sides_of( $size );
+		$sides = $base->sides_of( $size, $color );
 		$own   = array_filter( $slots, static fn( int|string $key ): bool => in_array( explode( ':', (string) $key, 2 )[0], $sides, true ), ARRAY_FILTER_USE_KEY );
 
 		return array() === $own ? $slots : $own;
@@ -262,7 +263,7 @@ class DesignerOrderFiles {
 			$row = null;
 		}
 
-		$slots = $this->of_size( self::of_color( DesignerVersionFiles::slots( is_string( $row['files'] ?? null ) ? $row['files'] : null )['print'], $row, $color ), $row, $size );
+		$slots = $this->of_size( self::of_color( DesignerVersionFiles::slots( is_string( $row['files'] ?? null ) ? $row['files'] : null )['print'], $row, $color ), $row, $size, $color );
 
 		if ( array() === $slots ) {
 			echo esc_html__( 'none stored', 'merchboard' );
@@ -281,7 +282,8 @@ class DesignerOrderFiles {
 		$names = null === $base ? array() : array_column( $base->colors, 'name', 'key' );
 
 		foreach ( $slots as $side => $slot ) {
-			$links[] = '<a href="' . esc_url( DesignerVersionFiles::url( $version, $slot ) ) . '">' . esc_html( DesignerVersionFiles::print_label( (string) $side, is_string( $row['design'] ?? null ) ? $row['design'] : null, $names ) ) . '</a>';
+			// The line's size: a format group's file comes in that size's shape (ADR-115).
+			$links[] = '<a href="' . esc_url( DesignerVersionFiles::url( $version, $slot, (string) $size ) ) . '">' . esc_html( DesignerVersionFiles::print_label( (string) $side, is_string( $row['design'] ?? null ) ? $row['design'] : null, $names ) ) . '</a>';
 		}
 
 		echo implode( ', ', $links ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.

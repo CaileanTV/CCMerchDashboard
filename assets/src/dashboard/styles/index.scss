@@ -2198,6 +2198,31 @@ input:disabled + .merchboard-sounds__upload {
 	}
 }
 
+// The sizes a side covers (a format group, ADR-115).
+.merchboard-product-designer__side-sizes {
+	display: block;
+	max-width: 16rem;
+	font-size: var(--merchboard-text-xs, 0.75rem);
+	font-weight: 400;
+	color: var(--merchboard-text-muted);
+}
+
+// The cutting line (ADR-115): drawn over the canvas, never part of a file.
+.merchboard-product-designer__trim {
+	position: absolute;
+	pointer-events: none;
+	outline: 2px dashed var(--merchboard-trim-line);
+	box-shadow:
+		0 0 0 1px var(--merchboard-trim-edge),
+		0 0 0 9999px var(--merchboard-trim-shade);
+}
+
+.merchboard-product-designer__trim-note {
+	margin: var(--merchboard-space-1) 0 0;
+	font-size: var(--merchboard-text-sm);
+	color: var(--merchboard-text-muted);
+}
+
 .merchboard-product-designer__zoom {
 	display: inline-flex;
 	gap: var(--merchboard-space-2);

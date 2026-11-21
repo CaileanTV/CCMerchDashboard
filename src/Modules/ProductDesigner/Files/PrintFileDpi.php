@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\ProductDesigner\Files;
 
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -45,19 +46,31 @@ final class PrintFileDpi {
 	 * @param string              $side  Side key.
 	 */
 	public function apply( string $bytes, string $mime, array $row, string $side ): string {
+		$view = $this->view( $row, $side );
+
+		return null === $view ? $bytes : self::with_dpi( $bytes, $mime, $view->dpi );
+	}
+
+	/**
+	 * A version's side on its base product, or null.
+	 *
+	 * @param array<string, mixed> $row  Version row.
+	 * @param string               $side Side key.
+	 */
+	public function view( array $row, string $side ): ?BaseView {
 		try {
 			$base = is_numeric( $row['base_id'] ?? null ) ? $this->bases->find( (int) $row['base_id'] ) : null;
 		} catch ( DatabaseException ) {
-			return $bytes;
+			return null;
 		}
 
 		foreach ( null === $base ? array() : $base->views as $view ) {
 			if ( $view->key === $side ) {
-				return self::with_dpi( $bytes, $mime, $view->dpi );
+				return $view;
 			}
 		}
 
-		return $bytes;
+		return null;
 	}
 
 	/**

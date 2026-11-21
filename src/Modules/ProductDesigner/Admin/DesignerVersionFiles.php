@@ -14,6 +14,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Files\PrintFileCrop;
 use MerchBoard\Modules\ProductDesigner\Files\PrintFileDpi;
 
 defined( 'ABSPATH' ) || exit;
@@ -26,7 +27,8 @@ defined( 'ABSPATH' ) || exit;
  * (403) → nonce bound to version and slot (403) → a stored file of that
  * version (404). Sent with `nosniff` and `no-store`; a print file as a
  * download named after the product and side. Print files never get a
- * public URL.
+ * public URL. With `size`, a format group's print file is cut to that
+ * size's shape (ADR-115 pkt. 4) for the order line of that size.
  */
 final class DesignerVersionFiles {
 
@@ -38,8 +40,9 @@ final class DesignerVersionFiles {
 	 * @param DesignerProductRepository $products Designer products.
 	 * @param DesignerFiles             $files    Files.
 	 * @param PrintFileDpi|null         $dpi      The side's dpi in old print files; null to send them as they are.
+	 * @param PrintFileCrop|null        $crop     Cuts a format group's file to a size's shape; null never cuts.
 	 */
-	public function __construct( private DesignerProductRepository $products, private DesignerFiles $files, private ?PrintFileDpi $dpi = null ) {
+	public function __construct( private DesignerProductRepository $products, private DesignerFiles $files, private ?PrintFileDpi $dpi = null, private ?PrintFileCrop $crop = null ) {
 	}
 
 	/**
@@ -57,14 +60,18 @@ final class DesignerVersionFiles {
 	 *
 	 * @param int    $version_id Version.
 	 * @param string $slot       `print:<side>` or `mockup:<side>:<colour>`.
+	 * @param string $size       An order line's size: the print file in its shape; '' for the file as stored.
 	 */
-	public static function url( int $version_id, string $slot ): string {
+	public static function url( int $version_id, string $slot, string $size = '' ): string {
 		return add_query_arg(
-			array(
-				'action'   => self::ACTION,
-				'version'  => $version_id,
-				'slot'     => rawurlencode( $slot ),
-				'_wpnonce' => wp_create_nonce( self::nonce_action( $version_id, $slot ) ),
+			array_merge(
+				array(
+					'action'   => self::ACTION,
+					'version'  => $version_id,
+					'slot'     => rawurlencode( $slot ),
+					'_wpnonce' => wp_create_nonce( self::nonce_action( $version_id, $slot ) ),
+				),
+				'' === $size ? array() : array( 'size' => rawurlencode( $size ) )
 			),
 			admin_url( 'admin-post.php' )
 		);
@@ -201,9 +208,20 @@ final class DesignerVersionFiles {
 		$disposition = 'inline';
 
 		if ( SubmissionFiles::PRINT === $parts[0] ) {
-			// The side's dpi in a print file that has none (made before 2.1.0); the stored file stays.
+			$size = is_scalar( $input['size'] ?? null ) ? rawurldecode( (string) $input['size'] ) : '';
+			$view = null === $this->dpi || '' === $size ? null : $this->dpi->view( $row, (string) $parts[1] );
+			$cut  = null !== $view && null !== $this->crop && isset( $view->formats[ $size ] );
+
+			if ( $cut ) {
+				// A format group's file in the shape of the order line's size (ADR-115); the stored file stays.
+				[ $across, $down ] = $view->kept( $size );
+
+				$body = $this->crop->cut( $body, (string) $file['mime'], (string) $file['file'], $across, $down );
+			}
+
+			// The side's dpi in a print file that has none (made before 2.1.0, or just cut); the stored file stays.
 			$body        = null === $this->dpi ? $body : $this->dpi->apply( $body, (string) $file['mime'], $row, (string) $parts[1] );
-			$name        = sanitize_file_name( sanitize_title( (string) $row['title'] ) . '-v' . (int) $row['number'] . '-' . $parts[1] . ( null === $parts[2] ? '' : '-' . $parts[2] ) . ( 'image/jpeg' === $file['mime'] ? '.jpg' : '.png' ) );
+			$name        = sanitize_file_name( sanitize_title( (string) $row['title'] ) . '-v' . (int) $row['number'] . '-' . $parts[1] . ( null === $parts[2] ? '' : '-' . $parts[2] ) . ( $cut ? '-' . sanitize_title( $size ) : '' ) . ( 'image/jpeg' === $file['mime'] ? '.jpg' : '.png' ) );
 			$disposition = 'attachment; filename="' . $name . '"';
 		}
 

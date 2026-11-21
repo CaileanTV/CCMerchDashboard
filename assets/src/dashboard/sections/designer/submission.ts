@@ -20,6 +20,7 @@ import {
 	backgroundOf,
 	coversSizes,
 	objectsOf,
+	onColor,
 	effectiveParts,
 	partDoc,
 	partOf,
@@ -70,17 +71,23 @@ export function submissionSize(
 	colors: readonly string[],
 	views: readonly DesignerView[]
 ): number {
-	// Every design the colours use sends its own files (ADR-096).
+	// Every design the colours use sends its own files (ADR-096); a side of some colours only has their images (ADR-115).
 	return effectiveParts( design, colors ).reduce( ( sum, part ) => {
 		const sides = usedSides( partDoc( design, part.id ) );
-		const closeUps = views.filter(
-			( view ) => sides.includes( view.key ) && hasStitches( view )
-		).length;
+		const images = ( key: string ) =>
+			part.colors.filter( ( color ) =>
+				onColor( views, [ key ], color ).includes( key )
+			).length;
+		const closeUps = views
+			.filter(
+				( view ) => sides.includes( view.key ) && hasStitches( view )
+			)
+			.reduce( ( total, view ) => total + images( view.key ), 0 );
 
 		return (
 			sum +
-			sides.length * ( 1 + part.colors.length ) +
-			closeUps * part.colors.length
+			sides.reduce( ( total, key ) => total + 1 + images( key ), 0 ) +
+			closeUps
 		);
 	}, 0 );
 }
@@ -395,7 +402,9 @@ export async function uploadFiles(
 			return { ok: false, reason: 'design_empty' };
 		}
 
-		if ( ! coversSizes( input.base.views, doc, input.sizes ) ) {
+		if (
+			! coversSizes( input.base.views, doc, input.sizes, part.colors )
+		) {
 			return { ok: false, reason: 'design_sizes' };
 		}
 	}
@@ -500,7 +509,10 @@ async function uploadPart(
 			return { ok: false, reason: 'render' };
 		}
 
-		for ( const colorKey of input.colors ) {
+		// A side of some colours only has images of those (ADR-115).
+		for ( const colorKey of input.colors.filter(
+			( own ) => view.colors.length === 0 || view.colors.includes( own )
+		) ) {
 			const color = input.base.colors.find(
 				( candidate ) => candidate.key === colorKey
 			);

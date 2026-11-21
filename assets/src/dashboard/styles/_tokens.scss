@@ -48,6 +48,12 @@
 	--merchboard-danger: #b91c1c;
 	--merchboard-danger-bg: #fef2f2;
 	--merchboard-on-danger: #fff;
+
+	// The cutting line over a product photo in the designer (ADR-115): the
+	// same red and white edge in every theme, as the photo does not change.
+	--merchboard-trim-line: #e0262b;
+	--merchboard-trim-edge: #fff;
+	--merchboard-trim-shade: rgb(60 60 60 / 28%);
 	--merchboard-info: #1d4ed8;
 	--merchboard-info-bg: #eff6ff;
 
@@ -119,6 +125,11 @@
 	--merchboard-danger: #f87171;
 	--merchboard-danger-bg: #2e1414;
 	--merchboard-on-danger: #1a0707;
+
+	// The cutting line over a product photo is the same in every theme.
+	--merchboard-trim-line: #e0262b;
+	--merchboard-trim-edge: #fff;
+	--merchboard-trim-shade: rgb(60 60 60 / 28%);
 	--merchboard-info: #93b8f5;
 	--merchboard-info-bg: #111d33;
 

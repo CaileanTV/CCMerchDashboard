@@ -174,7 +174,7 @@ class WooCommerceDesignerWriter {
 		$single      = 1 === count( $color_names ) && 1 === count( $content->sizes );
 		$parent      = self::of_type( wc_get_product( $product->wc_product_id ), $single );
 
-		[ $color_name, $size_name ] = self::attribute_names( $parent );
+		[ $color_name, $size_name ] = self::attribute_names( $parent, $content->color_label );
 
 		$parent->set_name( $content->name );
 		$parent->set_description( $content->description );
@@ -540,19 +540,22 @@ class WooCommerceDesignerWriter {
 
 	/**
 	 * The names of the colour and size attributes: chosen at the first
-	 * write, in the site's language, and kept on the product after that.
+	 * write, in the site's language, and kept on the product after that. A
+	 * Gelato template's first axis has its own name, e.g. "Orientation"
+	 * (ADR-115).
 	 *
-	 * @param WC_Product_Simple|WC_Product_Variable $variable The product.
+	 * @param WC_Product_Simple|WC_Product_Variable $variable    The product.
+	 * @param string                                $color_label The first axis's name; '' for "Colour".
 	 * @return array{0: string, 1: string}
 	 */
-	private static function attribute_names( WC_Product_Simple|WC_Product_Variable $variable ): array {
+	private static function attribute_names( WC_Product_Simple|WC_Product_Variable $variable, string $color_label = '' ): array {
 		$stored = json_decode( (string) $variable->get_meta( self::ATTRIBUTES_META, true, 'edit' ), true );
 
 		if ( is_array( $stored ) && 2 === count( $stored ) && is_string( $stored[0] ?? null ) && is_string( $stored[1] ?? null ) && '' !== $stored[0] && '' !== $stored[1] ) {
 			return array( $stored[0], $stored[1] );
 		}
 
-		$names = array( __( 'Colour', 'merchboard' ), __( 'Size', 'merchboard' ) );
+		$names = array( '' === $color_label ? __( 'Colour', 'merchboard' ) : $color_label, __( 'Size', 'merchboard' ) );
 		$variable->update_meta_data( self::ATTRIBUTES_META, (string) wp_json_encode( $names ) );
 
 		return $names;

@@ -17,6 +17,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoBleed;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyException;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiException;
@@ -50,8 +51,9 @@ final class BaseProductActions {
 	 * @param Logger                 $logger   Technical log.
 	 * @param CatalogImport|null     $catalog  The catalog import (review 30.15).
 	 * @param BasePriceSchedule|null $schedule Planned price increases (ADR-094).
+	 * @param GelatoBleed|null       $bleed    Fetches a Gelato base product's bleed (ADR-115).
 	 */
-	public function __construct( private BaseProductService $bases, private ClipartLibrary $cliparts, private Logger $logger, private ?CatalogImport $catalog = null, private ?BasePriceSchedule $schedule = null ) {
+	public function __construct( private BaseProductService $bases, private ClipartLibrary $cliparts, private Logger $logger, private ?CatalogImport $catalog = null, private ?BasePriceSchedule $schedule = null, private ?GelatoBleed $bleed = null ) {
 	}
 
 	/**
@@ -177,6 +179,14 @@ final class BaseProductActions {
 					$this->catalog?->retry( $id );
 
 					return BaseProductsPage::edit_url( $id, 'importing' );
+				case 'gelato_bleed':
+					if ( null === $this->bleed || true === $this->catalog?->running( $id ) ) {
+						return BaseProductsPage::edit_url( $id, DesignerException::IMPORT_RUNNING );
+					}
+
+					$this->bleed->fetch( $id );
+
+					return BaseProductsPage::edit_url( $id, 'bleed_fetched' );
 				case 'retire':
 					if ( '1' !== $text( 'confirm_retire' ) ) {
 						return BaseProductsPage::edit_url( $id, 'retire_unconfirmed' );

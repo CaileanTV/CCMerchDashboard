@@ -77,8 +77,27 @@ export interface DesignerView {
 	readonly flat: boolean;
 	/** The sizes the side belongs to; empty for every size. */
 	readonly sizes: readonly string[];
+	/**
+	 * The colours (values of the first axis, e.g. an orientation) the side
+	 * belongs to; empty for every colour (ADR-115).
+	 */
+	readonly colors: readonly string[];
+	/**
+	 * Where each size is cut, as shares of the print area: what a size keeps
+	 * of the print file without its bleed (ADR-115). Only sizes that lose
+	 * anything; the designer draws the line, never the files.
+	 */
+	readonly trims: Readonly< Record< string, DesignerTrim > >;
 	/** A small design area: as an extra area it costs `smallSidePrice`. */
 	readonly small: boolean;
+}
+
+/** A share of a print area: x, y, width and height between 0 and 1. */
+export interface DesignerTrim {
+	readonly x: number;
+	readonly y: number;
+	readonly width: number;
+	readonly height: number;
 }
 
 export interface DesignerBase {
@@ -100,6 +119,8 @@ export interface DesignerBase {
 	readonly smallSidePrice: string;
 	/** Whether the creator can give the design a background colour (ADR-095). */
 	readonly backgroundColor: boolean;
+	/** The first axis's name, e.g. "Orientation" (ADR-115); empty for colours. */
+	readonly colorLabel: string;
 	readonly currency: string;
 	readonly colors: readonly DesignerColor[];
 	readonly sizes: readonly string[];
@@ -441,8 +462,48 @@ export function parseView( value: unknown ): DesignerView | null {
 		sizes: Array.isArray( value.sizes )
 			? value.sizes.filter( isString )
 			: [],
+		colors: Array.isArray( value.colors )
+			? value.colors.filter( isString )
+			: [],
+		trims: parseTrims( value.trims ),
 		small: value.small === true,
 	};
+}
+
+/**
+ * A side's cuts by size; a cut that is no share of the area is left out.
+ *
+ * @param value Value.
+ */
+function parseTrims( value: unknown ): Record< string, DesignerTrim > {
+	const trims: Record< string, DesignerTrim > = {};
+	const share = ( number: unknown ): number is number =>
+		typeof number === 'number' && number >= 0 && number <= 1;
+
+	if ( ! isRecord( value ) ) {
+		return trims;
+	}
+
+	for ( const [ size, trim ] of Object.entries( value ) ) {
+		if (
+			isRecord( trim ) &&
+			share( trim.x ) &&
+			share( trim.y ) &&
+			share( trim.width ) &&
+			share( trim.height ) &&
+			trim.width > 0 &&
+			trim.height > 0
+		) {
+			trims[ size ] = {
+				x: trim.x,
+				y: trim.y,
+				width: trim.width,
+				height: trim.height,
+			};
+		}
+	}
+
+	return trims;
 }
 
 /**
@@ -493,6 +554,9 @@ function parseBase( value: unknown ): DesignerBase | null {
 				extraSidePrice: value.extra_side_price,
 				smallSidePrice: value.small_side_price,
 				backgroundColor: value.background_color === true,
+				colorLabel: isString( value.color_label )
+					? value.color_label
+					: '',
 				currency: value.currency,
 				preview: value.preview === true,
 				stitches: strings( value.stitches ) ?? [],

@@ -51,6 +51,8 @@ use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Files\PrintFileCrop;
+use MerchBoard\Modules\ProductDesigner\Files\PrintFileDpi;
 use MerchBoard\Modules\ProductDesigner\Rest\MeDesignerController;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerOrderFiles;
@@ -901,6 +903,105 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		self::assertSame( array( '>front<' ), $this->order_links( $version, 'S' ) );
 		self::assertSame( array( '>large<' ), $this->order_links( $version, 'M' ) );
 		self::assertSame( array( '>front<', '>large<' ), $this->order_links( $version, 'unknown' ), 'A size it cannot place shows all.' );
+	}
+
+	public function test_each_orientation_has_its_own_side_from_the_design_to_the_cut_print_file(): void {
+		// ADR-115: "front" is only black's (think Vertical), "large" only sand's; M is a little wider than the side and has 1 mm bleed.
+		$views               = $this->base_views();
+		$views[0]['colors']  = array( 'black' );
+		$views[0]['formats'] = array(
+			'S' => array(
+				'width_mm'  => 30,
+				'height_mm' => 40,
+			),
+			'M' => array(
+				'width_mm'  => 31,
+				'height_mm' => 40,
+				'bleed'     => array( 1, 1 ),
+			),
+		);
+		$views[1]            = array_merge(
+			$views[0],
+			array(
+				'key'     => '',
+				'name'    => 'Large',
+				'uploads' => array( 'color' => AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'color.png' ) ),
+				'colors'  => array( 'sand' ),
+				'formats' => array(),
+			)
+		);
+
+		$this->bases->save( $this->base, $this->base_fields( '149,95' ), $views );
+		self::assertSame( array( array( 'black' ), array( 'sand' ) ), array_map( static fn( $view ): array => $view->colors, $this->bases_row()->views ) );
+
+		$product = $this->drafts->create( $this->creator, $this->base );
+
+		$this->save( $product, '20', array( 'front' ) );
+		$this->submissions->attach( $this->creator, $product, 'print:front', AlertImagesTest::upload( AlertImagesTest::png( 118, 157 ), 'print.png' ) );
+		$this->submissions->attach( $this->creator, $product, 'mockup:front:black', AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'mockup.png' ) );
+
+		try {
+			$this->submissions->attach( $this->creator, $product, 'mockup:front:sand', AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'mockup.png' ) );
+			self::fail( 'The front is no side of sand.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::SUBMISSION_FILE, $e->reason() );
+		}
+
+		try {
+			$this->submissions->submit( $this->creator, $product );
+			self::fail( 'Sand has no design.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_SIZES, $e->reason() );
+		}
+
+		$this->save( $product, '20', array( 'front', 'large' ) );
+
+		foreach ( array(
+			'front' => 'black',
+			'large' => 'sand',
+		) as $side => $color ) {
+			$this->submissions->attach( $this->creator, $product, 'print:' . $side, AlertImagesTest::upload( AlertImagesTest::png( 118, 157 ), 'print.png' ) );
+			$this->submissions->attach( $this->creator, $product, 'mockup:' . $side . ':' . $color, AlertImagesTest::upload( AlertImagesTest::png( 400, 400 ), 'mockup.png' ) );
+		}
+
+		$this->submissions->submit( $this->creator, $product );
+
+		$version = $this->pending_id( $product );
+
+		self::assertSame( '179.9400', $this->products->version( $version )['quoted_price'] ?? null, 'One design area on each poster: no extra area.' );
+
+		$this->review->approve( $version );
+		$this->drain();
+
+		[ , $content ] = $this->writer->contents[0];
+
+		self::assertNotSame( $content->size_images['S']['black'] ?? null, $content->size_images['S']['sand'] ?? null, 'Each orientation shows its own side.' );
+
+		self::assertSame( array( '>front<' ), $this->order_links( $version, 'S', 'black' ) );
+		self::assertSame( array( '>large<' ), $this->order_links( $version, 'S', 'sand' ) );
+
+		// The order line of M gets the front's print file cut to M's shape; the stored file stays.
+		$download = new DesignerVersionFiles( $this->products, $this->files, new PrintFileDpi( $this->bases_repository() ), new PrintFileCrop( $this->files ) );
+		$slot     = 'print:front';
+		$request  = static fn( string $size ): array => array(
+			'version'  => (string) $version,
+			'slot'     => rawurlencode( $slot ),
+			'_wpnonce' => wp_create_nonce( DesignerVersionFiles::nonce_action( $version, $slot ) ),
+			'size'     => $size,
+		);
+		$whole    = getimagesizefromstring( $download->response( $request( 'S' ) )['body'] );
+		$cut      = $download->response( $request( 'M' ) );
+		$size     = getimagesizefromstring( $cut['body'] );
+
+		self::assertSame( array( 118, 157 ), array( $whole[0] ?? 0, $whole[1] ?? 0 ), 'S has the side\'s shape: the whole file.' );
+		self::assertSame( array( 118, 152 ), array( $size[0] ?? 0, $size[1] ?? 0 ), 'M keeps the middle in its own shape.' );
+		self::assertStringContainsString( '-front-m.png', $cut['headers']['Content-Disposition'] ?? '' );
+		self::assertSame( $cut['body'], $download->response( $request( 'M' ) )['body'], 'The cut is kept.' );
+		self::assertStringContainsString( 'size=M', DesignerVersionFiles::url( $version, $slot, 'M' ) );
+
+		$front = $this->bases_row()->views[0];
+		self::assertArrayHasKey( 'M', $front->trims(), 'The designer draws the red line on M.' );
+		self::assertArrayNotHasKey( 'S', $front->trims() );
 	}
 
 	public function test_a_design_on_a_size_that_is_not_sold_is_refused(): void {

@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\ProductDesigner\Designs;
 
+use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -118,14 +120,43 @@ final class SubmissionFiles {
 	}
 
 	/**
-	 * The used sides of the design a colour uses (ADR-096).
+	 * The used sides of the design a colour uses (ADR-096) that belong to
+	 * the colour (ADR-115).
 	 *
-	 * @param array<mixed> $design Design document (stored JSON, decoded).
-	 * @param string       $color  Colour key.
+	 * @param array<mixed>     $design Design document (stored JSON, decoded).
+	 * @param string           $color  Colour key.
+	 * @param BaseProduct|null $base   Base product; null for every side.
 	 * @return list<string>
 	 */
-	public static function used_sides_of( array $design, string $color ): array {
-		return self::used_sides( ColorDesigns::part( $design, ColorDesigns::part_of( $design, $color ) ) );
+	public static function used_sides_of( array $design, string $color, ?BaseProduct $base = null ): array {
+		return self::on_color( self::used_sides( ColorDesigns::part( $design, ColorDesigns::part_of( $design, $color ) ) ), $color, $base );
+	}
+
+	/**
+	 * The sides of a list that belong to a colour; all of them without a base
+	 * product or on one whose sides belong to every colour (ADR-115).
+	 *
+	 * @phpstan-param list<string> $sides
+	 *
+	 * @param string[]         $sides Side keys.
+	 * @param string           $color Colour key.
+	 * @param BaseProduct|null $base  Base product.
+	 * @return list<string>
+	 */
+	public static function on_color( array $sides, string $color, ?BaseProduct $base ): array {
+		if ( null === $base || ! $base->colored() ) {
+			return $sides;
+		}
+
+		$off = array();
+
+		foreach ( $base->views as $view ) {
+			if ( ! $view->on_color( $color ) ) {
+				$off[] = $view->key;
+			}
+		}
+
+		return array_values( array_diff( $sides, $off ) );
 	}
 
 	/**
@@ -267,11 +298,13 @@ final class SubmissionFiles {
 	/**
 	 * Whether the files are exactly the ones a version needs: its stamp, one
 	 * print file per used side of every design the colours use (ADR-096),
-	 * and one mockup per colour and used side of its design.
+	 * and one mockup per colour and used side of its design that belongs to
+	 * the colour (ADR-115).
 	 *
 	 * @param array<string, mixed> $version Version row.
+	 * @param BaseProduct|null     $base    Its base product (sides of some colours).
 	 */
-	public static function complete( array $version ): bool {
+	public static function complete( array $version, ?BaseProduct $base = null ): bool {
 		$files  = self::decode( is_string( $version['files'] ?? null ) ? $version['files'] : null );
 		$design = json_decode( (string) ( $version['design'] ?? '' ), true );
 		$design = is_array( $design ) ? $design : array();
@@ -302,8 +335,10 @@ final class SubmissionFiles {
 				return false;
 			}
 
-			foreach ( $sides as $side ) {
-				$needed[ $side ] = array_merge( $needed[ $side ] ?? array(), $own );
+			foreach ( $own as $color ) {
+				foreach ( self::on_color( $sides, $color, $base ) as $side ) {
+					$needed[ $side ][] = $color;
+				}
 			}
 		}
 

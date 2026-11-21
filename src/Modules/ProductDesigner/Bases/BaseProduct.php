@@ -186,38 +186,71 @@ final readonly class BaseProduct {
 	}
 
 	/**
-	 * Whether a side belongs to only some of the sizes.
+	 * Whether a side belongs to only some of the sizes or colours (values of
+	 * the first axis, ADR-115).
 	 */
 	public function sized(): bool {
-		return array() !== array_filter( $this->views, static fn( BaseView $view ): bool => array() !== $view->sizes );
+		return array() !== array_filter( $this->views, static fn( BaseView $view ): bool => array() !== $view->sizes || array() !== $view->colors );
 	}
 
 	/**
-	 * The sides of a size, in the base product's order.
+	 * Whether a side belongs to only some of the colours (ADR-115).
+	 */
+	public function colored(): bool {
+		return array() !== array_filter( $this->views, static fn( BaseView $view ): bool => array() !== $view->colors );
+	}
+
+	/**
+	 * The sides of a size, and of a colour when one is named, in the base
+	 * product's order.
 	 *
-	 * @param string $size The size.
+	 * @param string      $size  The size.
+	 * @param string|null $color The colour key; null for any.
 	 * @return list<string>
 	 */
-	public function sides_of( string $size ): array {
-		return array_values( array_map( static fn( BaseView $view ): string => $view->key, array_filter( $this->views, static fn( BaseView $view ): bool => $view->on_size( $size ) ) ) );
+	public function sides_of( string $size, ?string $color = null ): array {
+		return array_values( array_map( static fn( BaseView $view ): string => $view->key, array_filter( $this->views, static fn( BaseView $view ): bool => $view->on_size( $size ) && ( null === $color || $view->on_color( $color ) ) ) ) );
 	}
 
 	/**
-	 * How many used design areas one product has: with sides per size, those
-	 * of the size with the most, so the company never gets less than it set.
+	 * Every chosen size with every chosen colour; the colour is null when no
+	 * side belongs to only some colours.
 	 *
-	 * @param string[]      $used  The used sides.
-	 * @param string[]|null $sizes The chosen sizes; null for all of them.
+	 * @param string[]|null $sizes  The chosen sizes; null for all of them.
+	 * @param string[]|null $colors The chosen colour keys; null for all of them.
+	 * @return list<array{0: string, 1: string|null}>
 	 */
-	public function areas( array $used, ?array $sizes = null ): int {
+	private function combinations( ?array $sizes, ?array $colors ): array {
+		$keys  = $this->colored() ? ( $colors ?? array_column( $this->colors, 'key' ) ) : array( null );
+		$pairs = array();
+
+		foreach ( $sizes ?? $this->sizes as $size ) {
+			foreach ( $keys as $color ) {
+				$pairs[] = array( (string) $size, null === $color ? null : (string) $color );
+			}
+		}
+
+		return $pairs;
+	}
+
+	/**
+	 * How many used design areas one product has: with sides per size or
+	 * colour, those of the combination with the most, so the company never
+	 * gets less than it set.
+	 *
+	 * @param string[]      $used   The used sides.
+	 * @param string[]|null $sizes  The chosen sizes; null for all of them.
+	 * @param string[]|null $colors The chosen colour keys; null for all of them.
+	 */
+	public function areas( array $used, ?array $sizes = null, ?array $colors = null ): int {
 		if ( ! $this->sized() ) {
 			return count( $used );
 		}
 
 		$most = 0;
 
-		foreach ( $sizes ?? $this->sizes as $size ) {
-			$most = max( $most, count( array_intersect( $used, $this->sides_of( $size ) ) ) );
+		foreach ( $this->combinations( $sizes, $colors ) as [ $size, $color ] ) {
+			$most = max( $most, count( array_intersect( $used, $this->sides_of( $size, $color ) ) ) );
 		}
 
 		return $most;
@@ -253,10 +286,11 @@ final readonly class BaseProduct {
 	 * With sides per size, the size that costs most, so the company never gets
 	 * less than it set (the owner's choice 2026-11-03).
 	 *
-	 * @param string[]      $used  The used sides.
-	 * @param string[]|null $sizes The chosen sizes; null for all of them.
+	 * @param string[]      $used   The used sides.
+	 * @param string[]|null $sizes  The chosen sizes; null for all of them.
+	 * @param string[]|null $colors The chosen colour keys; null for all of them.
 	 */
-	public function extra_amount( array $used, ?array $sizes = null ): int {
+	public function extra_amount( array $used, ?array $sizes = null, ?array $colors = null ): int {
 		$views = array();
 		$most  = 0;
 
@@ -264,14 +298,14 @@ final readonly class BaseProduct {
 			$views[ $view->key ] = $view;
 		}
 
-		foreach ( $this->sized() ? ( $sizes ?? $this->sizes ) : array( null ) as $size ) {
+		foreach ( $this->sized() ? $this->combinations( $sizes, $colors ) : array( array( null, null ) ) as [ $size, $color ] ) {
 			$prices = array();
 
 			foreach ( array_unique( $used ) as $key ) {
 				$view = $views[ $key ] ?? null;
 
 				// Without sides per size, a side the base product no longer has counts as a large area, as before.
-				if ( null === $size || ( null !== $view && $view->on_size( $size ) ) ) {
+				if ( null === $size || ( null !== $view && $view->on_size( $size ) && ( null === $color || $view->on_color( $color ) ) ) ) {
 					$prices[] = null === $view ? $this->extra_side_units : $this->extra_of( $view );
 				}
 			}
@@ -283,21 +317,23 @@ final readonly class BaseProduct {
 	}
 
 	/**
-	 * Whether a design fits the chosen sizes: with sides per size each chosen
-	 * size has a design, and no design lies on a size that is not chosen.
+	 * Whether a design fits the chosen sizes and colours: with sides per size
+	 * or colour each chosen combination has a design, and no design lies on
+	 * one that is not chosen (ADR-115: each orientation has its own design).
 	 *
-	 * @param string[] $used  The used sides.
-	 * @param string[] $sizes The chosen sizes.
+	 * @param string[]      $used   The used sides.
+	 * @param string[]      $sizes  The chosen sizes.
+	 * @param string[]|null $colors The chosen colour keys; null for all of them.
 	 */
-	public function covers( array $used, array $sizes ): bool {
+	public function covers( array $used, array $sizes, ?array $colors = null ): bool {
 		if ( ! $this->sized() ) {
 			return true;
 		}
 
 		$sold = array();
 
-		foreach ( $sizes as $size ) {
-			$own = array_intersect( $used, $this->sides_of( $size ) );
+		foreach ( $this->combinations( $sizes, $colors ) as [ $size, $color ] ) {
+			$own = array_intersect( $used, $this->sides_of( $size, $color ) );
 
 			if ( array() === $own ) {
 				return false;

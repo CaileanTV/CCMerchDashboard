@@ -585,7 +585,10 @@ class GelatoMockups {
 	}
 
 	/**
-	 * The sides Gelato's images are used for: those the browser does not stitch.
+	 * The sides Gelato's images are used for: those the browser does not
+	 * stitch and that are no format group's (ADR-115). A format group's side
+	 * shares its placement with the other groups and has its own template
+	 * variant; the browser's mockups on Gelato's own photo of the group stay.
 	 *
 	 * @phpstan-param list<string> $sides
 	 *
@@ -597,7 +600,7 @@ class GelatoMockups {
 		$stitched = array();
 
 		foreach ( $base->views as $view ) {
-			if ( $base->stitched( $view ) ) {
+			if ( $base->stitched( $view ) || array() !== $view->formats || array() !== $view->colors ) {
 				$stitched[] = $view->key;
 			}
 		}

@@ -64,6 +64,7 @@ import {
 	updateObject,
 	extraAreas,
 	extraTotal,
+	onColor,
 	usedSides,
 	withKnownThreads,
 	withObjects,
@@ -320,9 +321,41 @@ function Editor( props: EditorProps ) {
 	// A side whose threads could not be worked out is shown as it is.
 	const [ threadFailed, setThreadFailed ] = useState< string | null >( null );
 
+	// ADR-115: only the sides of the colour shown and of a chosen size; all of them when none is left.
+	const shownViews = useMemo( () => {
+		const own = base.views.filter(
+			( candidate ) =>
+				( candidate.colors.length === 0 ||
+					candidate.colors.includes( previewColor ) ) &&
+				( candidate.sizes.length === 0 ||
+					candidate.sizes.some( ( size ) => sizes.includes( size ) ) )
+		);
+
+		return own.length > 0 ? own : base.views;
+	}, [ base.views, previewColor, sizes ] );
 	const view =
-		base.views.find( ( candidate ) => candidate.key === side ) ??
+		shownViews.find( ( candidate ) => candidate.key === side ) ??
+		shownViews[ 0 ] ??
 		base.views[ 0 ];
+	// ADR-115: what every chosen size of the side keeps (its cut and bleed); null when nothing is cut.
+	const trim = useMemo( () => {
+		const own = Object.entries( view?.trims ?? {} )
+			.filter( ( [ size ] ) => sizes.includes( size ) )
+			.map( ( [ , cut ] ) => cut );
+
+		if ( own.length === 0 ) {
+			return null;
+		}
+
+		const left = Math.max( ...own.map( ( cut ) => cut.x ) );
+		const top = Math.max( ...own.map( ( cut ) => cut.y ) );
+		const right = Math.min( ...own.map( ( cut ) => cut.x + cut.width ) );
+		const bottom = Math.min( ...own.map( ( cut ) => cut.y + cut.height ) );
+
+		return right > left && bottom > top
+			? { left, top, width: right - left, height: bottom - top }
+			: null;
+	}, [ view, sizes ] );
 	// The whole document; the canvas edits the design of the colour shown (ADR-096).
 	const whole = history.value;
 	const activePart = partOf( whole, previewColor );
@@ -369,12 +402,15 @@ function Editor( props: EditorProps ) {
 		[ overview ]
 	);
 	const fonts = overview.fonts;
+	// Every colour, as the server prices a design (BaseProduct::extra_amount()).
+	const baseColorKeys = base.colors.map( ( color ) => color.key );
 	const extras = extraAreas(
 		base.views,
 		design,
 		sizes,
 		base.extraSidePrice,
-		base.smallSidePrice
+		base.smallSidePrice,
+		baseColorKeys
 	);
 	const feeText =
 		Number( overview.digitizationFee ) > 0
@@ -395,7 +431,8 @@ function Editor( props: EditorProps ) {
 				part,
 				sizes,
 				base.extraSidePrice,
-				base.smallSidePrice
+				base.smallSidePrice,
+				baseColorKeys
 			)
 		);
 
@@ -445,13 +482,16 @@ function Editor( props: EditorProps ) {
 			candidate.scene?.preview === true || hasStitches( candidate )
 	);
 	// The mockups the product's image can be: each chosen colour on the used sides of its design.
+	// A side of some colours only has images of those (ADR-115).
 	const imageChoices = colors.flatMap( ( color ) =>
-		usedSides( partDoc( whole, partOf( whole, color ) ) ).map(
-			( key ) => ( {
-				value: `${ key }:${ color }`,
-				label: `${ base.colors.find( ( item ) => item.key === color )?.name ?? color } – ${ base.views.find( ( item ) => item.key === key )?.name ?? key }`,
-			} )
-		)
+		onColor(
+			base.views,
+			usedSides( partDoc( whole, partOf( whole, color ) ) ),
+			color
+		).map( ( key ) => ( {
+			value: `${ key }:${ color }`,
+			label: `${ base.colors.find( ( item ) => item.key === color )?.name ?? color } – ${ base.views.find( ( item ) => item.key === key )?.name ?? key }`,
+		} ) )
 	);
 	const previewInput = {
 		product: product.id,
@@ -1683,7 +1723,7 @@ function Editor( props: EditorProps ) {
 						aria-label={ __( 'Sides', 'merchboard' ) }
 					>
 						<span className="merchboard-product-designer__segment">
-							{ base.views.map( ( candidate ) => (
+							{ shownViews.map( ( candidate ) => (
 								<button
 									key={ candidate.key }
 									type="button"
@@ -1694,6 +1734,15 @@ function Editor( props: EditorProps ) {
 									} }
 								>
 									{ candidate.name }
+									{ candidate.sizes.length > 0 ? (
+										<span className="merchboard-product-designer__side-sizes">
+											{ candidate.sizes
+												.filter( ( size ) =>
+													sizes.includes( size )
+												)
+												.join( ', ' ) }
+										</span>
+									) : null }
 								</button>
 							) ) }
 						</span>
@@ -1798,6 +1847,8 @@ function Editor( props: EditorProps ) {
 							<div
 								className="merchboard-product-designer__area"
 								style={ {
+									overflow:
+										trim === null ? undefined : 'hidden',
 									left:
 										( view.area.x / view.width ) *
 										displayWidth *
@@ -1815,7 +1866,19 @@ function Editor( props: EditorProps ) {
 										displayHeight *
 										zoom,
 								} }
-							/>
+							>
+								{ trim === null ? null : (
+									<div
+										className="merchboard-product-designer__trim"
+										style={ {
+											left: `${ trim.left * 100 }%`,
+											top: `${ trim.top * 100 }%`,
+											width: `${ trim.width * 100 }%`,
+											height: `${ trim.height * 100 }%`,
+										} }
+									/>
+								) }
+							</div>
 							{ measure === null ? null : (
 								<span
 									className="merchboard-product-designer__measure"
@@ -1844,6 +1907,14 @@ function Editor( props: EditorProps ) {
 							) }
 						</Alert>
 					) : null }
+					{ trim === null ? null : (
+						<p className="merchboard-product-designer__trim-note">
+							{ __(
+								'Everything outside the red line can be cut off.',
+								'merchboard'
+							) }
+						</p>
+					) }
 					<p className="merchboard-product-designer__hint">
 						{ selectedObject === null
 							? `${ __(
@@ -1949,7 +2020,8 @@ function Editor( props: EditorProps ) {
 									design,
 									[ size ],
 									base.extraSidePrice,
-									base.smallSidePrice
+									base.smallSidePrice,
+									baseColorKeys
 								)
 							)
 						}
@@ -2820,7 +2892,9 @@ export function ProductPanel( props: ProductPanelProps ) {
 			</p>
 			<fieldset className="merchboard-product-designer__options merchboard-product-designer__options--list">
 				<legend className="merchboard-field__label">
-					{ __( 'Colours', 'merchboard' ) }
+					{ base.colorLabel !== ''
+						? base.colorLabel
+						: __( 'Colours', 'merchboard' ) }
 				</legend>
 				{ base.colors.map( ( color ) => (
 					<Labelled

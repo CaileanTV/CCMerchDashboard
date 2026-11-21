@@ -207,20 +207,20 @@ class DesignerSubmissions {
 				$sizes  = json_decode( (string) $draft['sizes'], true );
 				$sizes  = is_array( $sizes ) ? array_values( array_filter( $sizes, 'is_string' ) ) : array();
 
-				// Every design the colours use must show something and cover the sizes (ADR-096).
-				foreach ( array_keys( ColorDesigns::parts( $design, $colors ) ) as $id ) {
+				// Every design the colours use must show something and cover the sizes, and with sides per colour its colours (ADR-096, ADR-115).
+				foreach ( ColorDesigns::parts( $design, $colors ) as $id => $part_colors ) {
 					$used = SubmissionFiles::used_sides( ColorDesigns::part( $design, (string) $id ) );
 
 					if ( array() === $used ) {
 						self::refuse( DesignerException::DESIGN_EMPTY );
 					}
 
-					if ( ! $base->covers( $used, $sizes ) ) {
+					if ( ! $base->covers( $used, $sizes, $part_colors ) ) {
 						self::refuse( DesignerException::DESIGN_SIZES );
 					}
 				}
 
-				if ( ! SubmissionFiles::complete( $draft ) ) {
+				if ( ! SubmissionFiles::complete( $draft, $base ) ) {
 					self::refuse( DesignerException::SUBMISSION_FILES );
 				}
 
@@ -369,7 +369,7 @@ class DesignerSubmissions {
 			$used  = $known && in_array( $parts[1], SubmissionFiles::used_sides( ColorDesigns::part( $design, $id ) ), true );
 		} else {
 			// A mockup of a chosen colour on a used side of its design.
-			$used = null !== $parts[2] && in_array( $parts[2], $colors, true ) && in_array( $parts[1], SubmissionFiles::used_sides_of( $design, $parts[2] ), true );
+			$used = null !== $parts[2] && in_array( $parts[2], $colors, true ) && in_array( $parts[1], SubmissionFiles::used_sides_of( $design, $parts[2], $base ), true );
 		}
 
 		if ( ! $used ) {

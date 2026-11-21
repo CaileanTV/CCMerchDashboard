@@ -600,9 +600,9 @@ final class MeDesignerController extends RestController {
 			self::ROUTE . '/products/{id}/preview',
 			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
 				try {
-					[ $draft, $previewer ] = $this->preview_draft( $creator, (int) $request->get_param( 'id' ) );
+					[ $draft, $previewer, $base ] = $this->preview_draft( $creator, (int) $request->get_param( 'id' ) );
 
-					if ( ! SubmissionFiles::complete( $draft ) ) {
+					if ( ! SubmissionFiles::complete( $draft, $base ) ) {
 						throw new DesignerException( DesignerException::SUBMISSION_FILES );
 					}
 
@@ -682,11 +682,11 @@ final class MeDesignerController extends RestController {
 	}
 
 	/**
-	 * The creator's draft of a product that can be previewed, and who previews it.
+	 * The creator's draft of a product that can be previewed, who previews it and its base product.
 	 *
 	 * @param Creator $creator The creator.
 	 * @param int     $id      Designer product.
-	 * @return array{0: array<string, mixed>, 1: PrintfulMockups|ProdigiMockups}
+	 * @return array{0: array<string, mixed>, 1: PrintfulMockups|ProdigiMockups, 2: BaseProduct}
 	 * @throws DesignerException When there is none or it cannot be previewed.
 	 */
 	private function preview_draft( Creator $creator, int $id ): array {
@@ -708,7 +708,7 @@ final class MeDesignerController extends RestController {
 			throw new DesignerException( DesignerException::PREVIEW_UNAVAILABLE );
 		}
 
-		return array( $draft, $previewer );
+		return array( $draft, $previewer, $base );
 	}
 
 	/**
@@ -1101,6 +1101,8 @@ final class MeDesignerController extends RestController {
 			'extra_side_price' => SalesAmount::format( $base->extra_side_units ),
 			'small_side_price' => SalesAmount::format( $base->small_side_units ),
 			'background_color' => $base->background_color,
+			// The first axis's name, e.g. "Orientation" (ADR-115); '' for colours.
+			'color_label'      => null === $base->id ? '' : ( $this->bases->provider( $base->id )['axes']['color'] ?? '' ),
 			'currency'         => $base->currency,
 			'colors'           => $base->colors,
 			'sizes'            => $base->sizes,
@@ -1134,6 +1136,9 @@ final class MeDesignerController extends RestController {
 			'dpi'          => $view->dpi,
 			'flat'         => $view->flat,
 			'sizes'        => $view->sizes,
+			// ADR-115: the values the side belongs to, and where each of its sizes is cut.
+			'colors'       => $view->colors,
+			'trims'        => (object) $view->trims(),
 			'small'        => $view->small,
 			'scene'        => $view->scene,
 			'embroidery'   => null === $pack ? null : array(

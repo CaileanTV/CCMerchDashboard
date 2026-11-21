@@ -243,6 +243,7 @@ final class BaseProductsPage {
 			'price_applied'                         => array( __( 'The new prices are set; products in the shop follow.', 'merchboard' ), 'success' ),
 			'price_not_planned'                     => array( __( 'Nothing was changed: no price increase is planned.', 'merchboard' ), 'warning' ),
 			'photo_moved'                           => array( __( 'The order of the mockups was saved. It is used for designs sent from now on.', 'merchboard' ), 'success' ),
+			'bleed_fetched'                         => array( __( 'The bleed was fetched from Gelato. Creators see where each size can be cut off.', 'merchboard' ), 'success' ),
 			'activated'                             => array( __( 'The base product is active: creators can design on it.', 'merchboard' ), 'success' ),
 			'deactivated'                           => array( __( 'The base product is a draft again: creators cannot start new designs on it. Products in the shop are not affected.', 'merchboard' ), 'success' ),
 			'deleted'                               => array( __( 'The base product was deleted.', 'merchboard' ), 'success' ),
@@ -1491,6 +1492,20 @@ final class BaseProductsPage {
 			if ( is_array( $data['skipped'] ?? null ) && array() !== $data['skipped'] ) {
 				/* translators: 1: names of sides, 2: Printful or Gelato. */
 				echo '<p>' . esc_html( sprintf( __( 'Left out because %2$s\'s photos do not show them: %1$s.', 'merchboard' ), implode( ', ', array_filter( $data['skipped'], 'is_string' ) ), $name ) ) . '</p>';
+			}
+
+			// ADR-115: the cutting line in the designer, also for a product imported before 2.3.0.
+			if ( GelatoCatalog::SOURCE === $base->source ) {
+				$bled = 0;
+
+				foreach ( $base->views as $view ) {
+					$bled += count( array_filter( $view->formats, static fn( array $format ): bool => isset( $format['bleed'] ) ) );
+				}
+
+				echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '"><input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="gelato_bleed"><input type="hidden" name="base_id" value="' . esc_attr( (string) $base->id ) . '">';
+				wp_nonce_field( BaseProductActions::ACTION );
+				/* translators: %d: how many sizes of the sides have a bleed. */
+				echo '<p><button type="submit" class="button">' . esc_html__( 'Fetch the bleed from Gelato', 'merchboard' ) . '</button> <span class="description">' . esc_html( sprintf( _n( '%d size of the sides has a bleed. Creators see a red line where the print can be cut off.', '%d sizes of the sides have a bleed. Creators see a red line where the print can be cut off.', $bled, 'merchboard' ), $bled ) ) . '</span></p></form>';
 			}
 
 			echo '</div>';

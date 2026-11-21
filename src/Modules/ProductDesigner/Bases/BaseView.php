@@ -258,6 +258,63 @@ final readonly class BaseView {
 	}
 
 	/**
+	 * The share of the print file a size keeps across and down: a format
+	 * group's file has the shape of its largest size and is cut in the middle
+	 * to the shape of each other size (ADR-115 pkt. 4); [1, 1] for a size
+	 * without a format or of the side's own shape.
+	 *
+	 * @param string $size The size.
+	 * @return array{0: float, 1: float}
+	 */
+	public function kept( string $size ): array {
+		$format = $this->formats[ $size ] ?? null;
+
+		if ( null === $format ) {
+			return array( 1.0, 1.0 );
+		}
+
+		$side = $this->width_mm / $this->height_mm;
+		$own  = $format['width_mm'] / $format['height_mm'];
+
+		if ( abs( $own / $side - 1 ) < 0.001 ) {
+			return array( 1.0, 1.0 );
+		}
+
+		return $own < $side ? array( $own / $side, 1.0 ) : array( 1.0, $side / $own );
+	}
+
+	/**
+	 * Where each size is cut, as shares of the print area: the part of the
+	 * print file a size keeps, without its bleed (ADR-115 pkt. 8). Only the
+	 * sizes that lose anything; the designer draws the line, never the file.
+	 *
+	 * @return array<string, array{x: float, y: float, width: float, height: float}>
+	 */
+	public function trims(): array {
+		$trims = array();
+
+		foreach ( $this->formats as $size => $format ) {
+			[ $across, $down ] = $this->kept( (string) $size );
+
+			$bleed_x = ( $format['bleed'][0] ?? 0.0 ) / $format['width_mm'] * $across;
+			$bleed_y = ( $format['bleed'][1] ?? 0.0 ) / $format['height_mm'] * $down;
+
+			if ( $across >= 1.0 && $down >= 1.0 && $bleed_x <= 0.0 && $bleed_y <= 0.0 ) {
+				continue;
+			}
+
+			$trims[ (string) $size ] = array(
+				'x'      => round( ( 1 - $across ) / 2 + $bleed_x, 5 ),
+				'y'      => round( ( 1 - $down ) / 2 + $bleed_y, 5 ),
+				'width'  => round( $across - 2 * $bleed_x, 5 ),
+				'height' => round( $down - 2 * $bleed_y, 5 ),
+			);
+		}
+
+		return $trims;
+	}
+
+	/**
 	 * The side as it is with other formats (a fetched bleed).
 	 *
 	 * @param array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}> $formats Print size and bleed by size.

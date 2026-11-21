@@ -63,11 +63,13 @@ use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Fees\DesignerFeeRepository;
 use MerchBoard\Modules\ProductDesigner\Fees\DesignerFees;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Files\PrintFileCrop;
 use MerchBoard\Modules\ProductDesigner\Files\PrintFileDpi;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulApi;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoApi;
+use MerchBoard\Modules\ProductDesigner\Providers\GelatoBleed;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
@@ -264,7 +266,7 @@ final class ProductDesignerModule implements Module {
 		);
 		$container->set( ClipartLibrary::class, static fn( Container $c ): ClipartLibrary => new ClipartLibrary( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( BaseProductsPage::class, static fn( Container $c ): BaseProductsPage => new BaseProductsPage( $c->get( BaseProductRepository::class ), $c->get( DesignerAssetRepository::class ), $c->get( PricingProductStore::class )->decimals(), get_woocommerce_currency(), dirname( __DIR__, 3 ) . '/', plugin_dir_url( dirname( __DIR__, 3 ) . '/merchboard.php' ), $c->get( PrintfulToken::class )->configured(), $c->get( GelatoAccount::class )->configured(), $c->get( CatalogImport::class ), $c->get( PrintfulCatalog::class ), $c->get( GelatoCatalog::class ), $c->get( ProdigiCatalog::class ), $c->get( ProdigiAccount::class )->configured(), $c->get( PrintifyCatalog::class ), $c->get( PrintifyAccount::class )->configured() ) );
-		$container->set( BaseProductActions::class, static fn( Container $c ): BaseProductActions => new BaseProductActions( $c->get( BaseProductService::class ), $c->get( ClipartLibrary::class ), $c->get( Logger::class ), $c->get( CatalogImport::class ), $c->get( BasePriceSchedule::class ) ) );
+		$container->set( BaseProductActions::class, static fn( Container $c ): BaseProductActions => new BaseProductActions( $c->get( BaseProductService::class ), $c->get( ClipartLibrary::class ), $c->get( Logger::class ), $c->get( CatalogImport::class ), $c->get( BasePriceSchedule::class ), new GelatoBleed( $c->get( GelatoApi::class ), $c->get( BaseProductRepository::class ), $c->get( BaseProductService::class ) ) ) );
 		$container->set( DesignerAssetDownload::class, static fn( Container $c ): DesignerAssetDownload => new DesignerAssetDownload( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ) ) );
 		// The creator's designer: drafts, uploads and `/me/designer` (step 30.8).
 		$container->set( DesignerProductRepository::class, static fn( Container $c ): DesignerProductRepository => new DesignerProductRepository( $c->get( wpdb::class ) ) );
@@ -421,7 +423,7 @@ final class ProductDesignerModule implements Module {
 				$container->get( DesignerReview::class )->release_waiting( $creator_id );
 			}
 		);
-		$container->set( DesignerVersionFiles::class, static fn( Container $c ): DesignerVersionFiles => new DesignerVersionFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerFiles::class ), new PrintFileDpi( $c->get( BaseProductRepository::class ) ) ) );
+		$container->set( DesignerVersionFiles::class, static fn( Container $c ): DesignerVersionFiles => new DesignerVersionFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerFiles::class ), new PrintFileDpi( $c->get( BaseProductRepository::class ) ), new PrintFileCrop( $c->get( DesignerFiles::class ) ) ) );
 		$container->set( DesignerOrderFiles::class, static fn( Container $c ): DesignerOrderFiles => new DesignerOrderFiles( $c->get( DesignerProductRepository::class ), $c->get( DesignerProductGuard::class ), $c->get( Logger::class ), $c->get( BaseProductRepository::class ) ) );
 		$container->set(
 			DesignerCreatorCleanup::class,

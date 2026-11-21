@@ -282,7 +282,7 @@ class DesignerApply {
 
 		foreach ( $base->sized() && is_array( $sizes ) ? array_filter( $sizes, 'is_string' ) : array() as $size ) {
 			foreach ( $colors as $color ) {
-				foreach ( $base->sides_of( $size ) as $side ) {
+				foreach ( $base->sides_of( $size, (string) $color['key'] ) as $side ) {
 					$attachment = $media[ SubmissionFiles::MOCKUP . ':' . $side . ':' . $color['key'] ] ?? null;
 
 					if ( null !== $attachment ) {
@@ -318,7 +318,9 @@ class DesignerApply {
 			// A colour's price is the one of its own design (ADR-096).
 			array_map( static fn( array $sizes ): array => array_map( static fn( DesignerPrice $size ): int => $size->price_units(), $sizes ), $this->color_prices( $version, $base ) ),
 			// The base product's product tags; tags set by hand stay (ADR-100).
-			$base->tag_ids
+			$base->tag_ids,
+			// A Gelato template's first axis, e.g. "Orientation" (ADR-115).
+			null === $base->id ? '' : ( $this->bases->provider( $base->id )['axes']['color'] ?? '' )
 		);
 	}
 
