@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-16T20:23:06+00:00\n"
+"PO-Revision-Date: 2026-11-21T13:11:02+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -157,9 +157,9 @@ msgstr "Du har desværre ikke adgang til at administrere creators."
 #: src/Modules/ProductDesigner/Admin/BaseProductActions.php:91
 #: src/Modules/ProductDesigner/Admin/CampaignActions.php:77
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:109
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:518
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:574
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:609
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:529
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:585
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:620
 #: src/Modules/ProductDesigner/Admin/DesignerNotificationActions.php:76
 #: src/Modules/ProductDesigner/Admin/DesignerReviewActions.php:79
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:103
@@ -3694,8 +3694,10 @@ msgid "The API key is missing, wrong or revoked."
 msgstr "API-nøglen mangler, er forkert eller er tilbagekaldt."
 
 #: src/Modules/Alerts/Api/AlertApiFeedController.php:116
-#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:87
-#: src/Modules/Alerts/Overlay/OverlayFeedController.php:91
+#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:86
+#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:94
+#: src/Modules/Alerts/Overlay/OverlayFeedController.php:90
+#: src/Modules/Alerts/Overlay/OverlayFeedController.php:99
 msgid "Too many requests. Please try again later."
 msgstr "For mange forespørgsler. Prøv igen senere."
 
@@ -3764,8 +3766,8 @@ msgstr "Billedet blev ikke slettet."
 msgid "The global overlay is not set up yet."
 msgstr "Det globale overlay er ikke oprettet endnu."
 
-#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:110
-#: src/Modules/Alerts/Overlay/OverlayFeedController.php:114
+#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:125
+#: src/Modules/Alerts/Overlay/OverlayFeedController.php:130
 msgid "This overlay does not exist."
 msgstr "Dette overlay findes ikke."
 
@@ -4529,23 +4531,24 @@ msgstr "Nogle felter i merch-reklamen mangler eller er ugyldige."
 msgid "Some fields of the !merch command are missing or invalid."
 msgstr "Nogle felter i !merch-kommandoen mangler eller er ugyldige."
 
-#: src/Modules/Community/Rest/MerchAdStatusController.php:81
-msgid "Too many requests."
-msgstr "For mange forespørgsler."
-
-#: src/Modules/Community/Rest/MerchAdStatusController.php:87
+#: src/Modules/Community/Rest/MerchAdStatusController.php:104
 #: src/Modules/Dashboard/Rest/MeController.php:245
 #: src/Modules/Dashboard/Rest/MeController.php:279
 #: src/Modules/Dashboard/Rest/MeController.php:311
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:280
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:460
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:962
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:283
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:463
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:970
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:147
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:182
 #: src/Modules/WooCommerce/Rest/MeProductsController.php:183
 #: src/Modules/WooCommerce/Rest/MeProductsController.php:190
 msgid "Not found."
 msgstr "Ikke fundet."
+
+#: src/Modules/Community/Rest/MerchAdStatusController.php:105
+#: src/Modules/Community/Rest/MerchAdStatusController.php:109
+msgid "Too many requests."
+msgstr "For mange forespørgsler."
 
 #: src/Modules/Community/Rest/MeTwitchExtensionController.php:103
 msgid "The Twitch Extension is not available."
@@ -8188,9 +8191,9 @@ msgstr "Til administratoren"
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:314
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:101
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:165
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:511
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:565
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:602
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:522
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:576
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:613
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:154
 #: src/Modules/ProductDesigner/Admin/DesignerReviewActions.php:72
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:97
@@ -9581,7 +9584,7 @@ msgid "Ended"
 msgstr "Afsluttet"
 
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:122
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:584
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:595
 #: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:198
 msgid "The file no longer exists."
 msgstr "Filen findes ikke længere."
@@ -10785,16 +10788,16 @@ msgid "Clear"
 msgstr "Klar"
 
 #. translators: %d: number of the product photo.
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1054
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1062
 #, php-format
 msgid "Product photo %d"
 msgstr "Produktfoto %d"
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1166
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1174
 msgid "The product designer is not available."
 msgstr "Produktdesigneren er ikke tilgængelig."
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1185
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1197
 msgid "The product designer refused the change."
 msgstr "Produktdesigneren afviste ændringen."
 
@@ -14443,7 +14446,7 @@ msgstr "I papirkurven"
 msgid "This gift card was issued as a creator payout. It can only be redeemed at checkout, not added to an order here."
 msgstr "Dette gavekort er udstedt som udbetaling til en creator. Det kan kun indløses i kassen, ikke tilføjes til en ordre her."
 
-#: src/Modules/WooCommerce/Payouts/Settlements/CvrLookup.php:237
+#: src/Modules/WooCommerce/Payouts/Settlements/CvrLookup.php:289
 #: build/dashboard.js:103
 msgid "Denmark"
 msgstr "Danmark"
@@ -19412,6 +19415,10 @@ msgstr "Slet %s permanent"
 #: build/dashboard.js:84
 msgid "Add something to your product first."
 msgstr "Tilføj først noget til dit produkt."
+
+#: build/dashboard.js:84
+msgid "You have made the most photos for today. Please try again tomorrow. You can still send your design."
+msgstr "Du har lavet dagens maksimale antal fotos. Prøv igen i morgen. Du kan stadig sende dit design."
 
 #: build/dashboard.js:84
 msgid "We can only make a limited number of photos a minute. Please try again in a minute."

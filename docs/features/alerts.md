@@ -136,7 +136,7 @@ WooCommerce-modulet (`ProductCreatorLink`, kategori-mapping, `JobQueue`/Action S
   - cursor og commit-rækkefølge: to checkouts i samme millisekund kan i teorien få en cursor til at springe en alert over;
   - test- og gensendelseskøen (transient) kan miste en hændelse, hvis en forespørgsel fejler midtvejs;
   - skifter administratoren chatbottens beskedform (linje/ordre), mens en ordre går fra processing til completed, kan beskeden blive sendt igen;
-  - kapacitet: hvert åbent overlay holder en PHP-worker i op til 8 sekunder (long-poll, som i MerchAlert).
+  - kapacitet: hvert åbent overlay holder en PHP-worker i op til 8 sekunder (long-poll, som i MerchAlert). Fra 2.2.1 (ADR-116) venter højst 2 forespørgsler pr. overlay-id samtidig, og hver besøgsadresse har højst 120 feed-forespørgsler i minuttet.
 
 ## Future improvements
 Selvhostede fonte og en retention-politik for alert-data. (Kanal-autorisation pr. creator med `channel:bot` blev bygget i 25.8, ADR-066.)

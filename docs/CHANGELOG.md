@@ -4,6 +4,20 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [2.2.1] - 2026-11-21
+
+Sikkerhedsrettelser efter sikkerhedstjekket af ccmerch.dk 2026-11-21 (ADR-116). Ingen schemaændring.
+
+### Security
+
+- **M1, overlay-feedet:** højst 2 samtidige long-polls pr. overlay-id (MySQL named lock); en tredje svarer straks uden at vente. Højst 120 feed-forespørgsler i minuttet pr. besøgsadresse på tværs af id'er. Gælder også det globale overlay.
+- **M2, merch-reklamens status:** id'et slås op før rate limit, så gættede id'er ikke skriver transients pr. id. Ukendte id'er tælles pr. besøgsadresse (højst 30 i minuttet, derefter 429).
+- **M3, kvoter pr. creator:** højst 100 forhåndsvisninger (mockup-kald hos leverandøren) pr. døgn med svaret 429 `preview_quota` og en tydelig besked i designeren. Upload-pladsen er sænket fra 1 GB til 500 MB. Selvoprettelsen er uændret (projektejerens valg).
+- **L1, CVR-opslag:** højst 4 pr. creator pr. døgn (før 10). Creators, der ikke er live, deler højst 20 af sitets 40, og tællingen er atomisk (named lock).
+- **L2, Twitch EventSub:** en chatbesked, Twitch leverer igen, kører ikke `merchboard_twitch_chat_message` igen.
+- **L4, overlay-feedet:** en cursor går aldrig længere tilbage end de nyeste 20 alerts, så historikken ikke kan bladres igennem.
+- **L5, klient-IP:** én fælles `ClientIp` til alle rate limits. `CF-Connecting-IP` bruges kun, når forespørgslen kommer fra Cloudflares IP-intervaller (filter `merchboard_trusted_proxy_ranges`); ellers `REMOTE_ADDR`. Bruges af tilmeldingsformularen, overlay-feedene og merch-reklamens status.
+
 ## [2.2.0] - 2026-11-15
 
 Fase 48 (ADR-111), fase 49 (ADR-112), fase 50 (ADR-113) og fase 51 (ADR-114): community features i shoppen, Twitch Extension-panelet, merch-reklamen med `!merch` og produktdesignerens billeder uden baggrund. Schemaændring 51 → 52. Opdateringen står i DEVELOPMENT.md ("Release 2.2.0").

@@ -249,6 +249,20 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 2.2.1: sikkerhedsrettelser (ADR-116)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-21** efter sikkerhedstjekket af ccmerch.dk. Ingen schemaændring. Tag efter projektejerens OK og grøn CI.
+
+1. **Opdatér** med ZIP'en. Overview skal vise version 2.2.1 og schema-version 52.
+2. **Overlay:** et åbent alert-overlay i OBS viser fortsat nye alerts med det samme. Et tredje vindue med samme overlay viser dem med op til 5 sekunders forsinkelse.
+3. **Merch-reklamen:** OBS-linket virker som før. Et ukendt id giver 404 og efter 30 forsøg i minuttet 429.
+4. **Designeren:** forhåndsvisning af det færdige produkt virker. En upload over 500 MB samlet giver beskeden om fuld upload-plads.
+5. **Stamdata:** "Udfyld fra CVR-nummer" virker; efter 4 opslag samme dag kommer beskeden om grænsen.
+6. **Twitch:** `!merch` og `!enter` svarer én gang pr. besked.
+7. **Bag Cloudflare:** tilmeldingsformularens grænse rammer kun den, der sender mange oprettelser, ikke alle besøgende.
+
+**Tilbagerulning:** installér 2.2.0-ZIP'en igen. Intet i databasen skal ændres.
+
 ## Release 2.2.0: community features i shoppen, Twitch Extension, merch-reklame og billeder uden baggrund (fase 48–51)
 
 **Versions-bump og CHANGELOG-sektion 2026-11-15** efter projektejerens beslutning (2.2.0 rummer fase 48, 49 og 50; fase 51 kom med samme dag). Testpakke på stg; tag efter projektejerens OK efter testen. Schemaændring 51 → 52 (`merchboard_gifts.order_unit`).

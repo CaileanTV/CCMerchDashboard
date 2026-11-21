@@ -2,14 +2,14 @@
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Merch Dashboard 2.2.0\n"
+"Project-Id-Version: Merch Dashboard 2.2.1\n"
 "Report-Msgid-Bugs-To: https://github.com/CaileanTV/CCMerchDashboard/issues\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-16T20:22:59+00:00\n"
+"POT-Creation-Date: 2026-11-21T13:10:54+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -157,9 +157,9 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/BaseProductActions.php:91
 #: src/Modules/ProductDesigner/Admin/CampaignActions.php:77
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:109
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:518
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:574
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:609
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:529
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:585
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:620
 #: src/Modules/ProductDesigner/Admin/DesignerNotificationActions.php:76
 #: src/Modules/ProductDesigner/Admin/DesignerReviewActions.php:79
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:103
@@ -3694,8 +3694,10 @@ msgid "The API key is missing, wrong or revoked."
 msgstr ""
 
 #: src/Modules/Alerts/Api/AlertApiFeedController.php:116
-#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:87
-#: src/Modules/Alerts/Overlay/OverlayFeedController.php:91
+#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:86
+#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:94
+#: src/Modules/Alerts/Overlay/OverlayFeedController.php:90
+#: src/Modules/Alerts/Overlay/OverlayFeedController.php:99
 msgid "Too many requests. Please try again later."
 msgstr ""
 
@@ -3764,8 +3766,8 @@ msgstr ""
 msgid "The global overlay is not set up yet."
 msgstr ""
 
-#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:110
-#: src/Modules/Alerts/Overlay/OverlayFeedController.php:114
+#: src/Modules/Alerts/GlobalOverlay/GlobalOverlayFeedController.php:125
+#: src/Modules/Alerts/Overlay/OverlayFeedController.php:130
 msgid "This overlay does not exist."
 msgstr ""
 
@@ -4529,22 +4531,23 @@ msgstr ""
 msgid "Some fields of the !merch command are missing or invalid."
 msgstr ""
 
-#: src/Modules/Community/Rest/MerchAdStatusController.php:81
-msgid "Too many requests."
-msgstr ""
-
-#: src/Modules/Community/Rest/MerchAdStatusController.php:87
+#: src/Modules/Community/Rest/MerchAdStatusController.php:104
 #: src/Modules/Dashboard/Rest/MeController.php:245
 #: src/Modules/Dashboard/Rest/MeController.php:279
 #: src/Modules/Dashboard/Rest/MeController.php:311
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:280
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:460
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:962
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:283
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:463
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:970
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:147
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:182
 #: src/Modules/WooCommerce/Rest/MeProductsController.php:183
 #: src/Modules/WooCommerce/Rest/MeProductsController.php:190
 msgid "Not found."
+msgstr ""
+
+#: src/Modules/Community/Rest/MerchAdStatusController.php:105
+#: src/Modules/Community/Rest/MerchAdStatusController.php:109
+msgid "Too many requests."
 msgstr ""
 
 #: src/Modules/Community/Rest/MeTwitchExtensionController.php:103
@@ -8188,9 +8191,9 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:314
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:101
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:165
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:511
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:565
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:602
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:522
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:576
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:613
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:154
 #: src/Modules/ProductDesigner/Admin/DesignerReviewActions.php:72
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsActions.php:97
@@ -9581,7 +9584,7 @@ msgid "Ended"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:122
-#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:584
+#: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:595
 #: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:198
 msgid "The file no longer exists."
 msgstr ""
@@ -10785,16 +10788,16 @@ msgid "Clear"
 msgstr ""
 
 #. translators: %d: number of the product photo.
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1054
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1062
 #, php-format
 msgid "Product photo %d"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1166
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1174
 msgid "The product designer is not available."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1185
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1197
 msgid "The product designer refused the change."
 msgstr ""
 
@@ -14443,7 +14446,7 @@ msgstr ""
 msgid "This gift card was issued as a creator payout. It can only be redeemed at checkout, not added to an order here."
 msgstr ""
 
-#: src/Modules/WooCommerce/Payouts/Settlements/CvrLookup.php:237
+#: src/Modules/WooCommerce/Payouts/Settlements/CvrLookup.php:289
 #: build/dashboard.js:103
 msgid "Denmark"
 msgstr ""
@@ -19411,6 +19414,10 @@ msgstr ""
 
 #: build/dashboard.js:84
 msgid "Add something to your product first."
+msgstr ""
+
+#: build/dashboard.js:84
+msgid "You have made the most photos for today. Please try again tomorrow. You can still send your design."
 msgstr ""
 
 #: build/dashboard.js:84

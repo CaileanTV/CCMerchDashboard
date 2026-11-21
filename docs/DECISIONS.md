@@ -5332,7 +5332,8 @@ Accepteret af projektejeren 2026-11-06 (fase 32). **Implementeret:** forhindring
 - En inaktiv creator kan ikke godkendes til at gå live.
 - **Kendte begrænsninger:**
   - "Se som creator" kan anmode om go-live på creatorens vegne. Det er bevidst, som andre handlinger i dashboardet; kun accepten af aftalen er spærret (ADR-092).
-  - Rate limit bruger `REMOTE_ADDR`. Bag en proxy uden korrekt videresendt adresse deler alle besøgende samme grænse.
+  - Rate limit bruger `REMOTE_ADDR`. Bag en proxy uden korrekt videresendt adresse deler alle besøgende samme grænse. **Løst i 2.2.1 (ADR-116):** rate limits tæller `ClientIp::address()`, som bruger `CF-Connecting-IP`, når forespørgslen kom fra Cloudflare.
+- **Statusnote 2026-11-21 (sikkerhedstjek, ADR-116):** projektejeren valgte at beholde selvoprettelsen uden ekstra godkendelse. I stedet gælder kvoter for alle creators: 100 forhåndsvisninger pr. døgn, 500 MB upload-plads og 4 CVR-opslag pr. døgn. Creators, der ikke er live, deler højst halvdelen af sitets CVR-opslag.
   - Sletter admin en selvoprettet creator, før e-mailen er bekræftet, bliver den rolleløse bruger liggende. Admin kan slette den under Brugere.
 
 ## Context
@@ -6132,7 +6133,7 @@ Creatoren udfylder selv stamdata (ADR-104). En registreret virksomhed skal angiv
 1. **Knappen** "Udfyld fra CVR-nummer" ved CVR-feltet i creatorens stamdata (kun "registreret virksomhed"). Den udfylder navn, adresse, postnummer, by og land i formularen; creatoren kan rette dem, og intet gemmes, før formularen sendes til bekræftelse som hidtil (ADR-104). En administrator bekræfter stadig. (Statusnote 2026-11-09: der er ingen bekræftelse længere, ADR-104 pkt. 11; intet gemmes, før creatoren gemmer formularen.)
 2. **Kun serveren kalder cvrapi.dk** (`GET /me/billing-details/cvr/{cvr}`, `/me`-scoped), aldrig browseren: kun HTTPS, timeout 5 sekunder, ingen redirects, kun CVR-nummeret (otte cifre) sendes.
 3. **User-Agent:** `<virksomhedsnavn> - Merch Dashboard - <kontakt-e-mail>` fra Indstillinger → Virksomhedsoplysninger (`company_name`, `company_email`). Mangler en af dem, er opslag ikke tilgængeligt, og knappen vises ikke.
-4. **Grænser:** svar caches i 24 timer pr. CVR-nr. (også "ikke fundet"); højst 40 opslag mod cvrapi.dk pr. døgn for hele sitet og 10 pr. creator, så grænsen på 50 aldrig nås. Ved `QUOTA_EXCEEDED` stoppes opslag resten af døgnet.
+4. **Grænser:** svar caches i 24 timer pr. CVR-nr. (også "ikke fundet"); højst 40 opslag mod cvrapi.dk pr. døgn for hele sitet og 10 pr. creator, så grænsen på 50 aldrig nås (fra 2.2.1, ADR-116: 4 pr. creator, højst 20 for creators, der ikke er live, og atomisk talt). Ved `QUOTA_EXCEEDED` stoppes opslag resten af døgnet.
 5. **Svaret valideres:** kun navn, adresse, postnummer og by læses som korte tekster (samme regler som stamdata); alt andet ignoreres. Et svar uden navn er "ikke fundet". Reklamebeskyttelse og ejere bruges ikke.
 6. **Fejl** vises som faste tekster (ikke fundet, ugyldigt nummer, for mange opslag, tjenesten svarer ikke); formularen kan altid udfyldes i hånden.
 7. **Logning:** kun fejlkoder, aldrig CVR-numre eller svar. Ingen audit for opslag (intet gemmes).
@@ -6962,3 +6963,71 @@ Lumise-addon'et "CCMerch Udbydere" 1.2.4–1.2.7 fik rettelser til Gelato-produk
 
 ## Related
 ADR-080, ADR-084, ADR-096, ADR-099, ADR-102, ADR-114
+
+# ADR-116: Sikkerhedsrettelser efter tjekket af ccmerch.dk (2.2.1)
+
+## Date
+2026-11-21
+
+## Status
+Accepteret af projektejeren 2026-11-21. Udgives som 2.2.1.
+
+**Projektejerens valg 2026-11-21:**
+- **Selvoprettelse:** forbliver som i dag (ADR-091 uændret), uden ekstra godkendelse.
+- **Mockups:** 100 forhåndsvisninger pr. creator pr. døgn.
+- **Uploads:** 500 MB upload-plads pr. creator.
+
+## Context
+Et sikkerhedstjek af koden på ccmerch.dk 2026-11-21 fandt otte svagheder (M1–M3, L1, L2, L4, L5). L3 var allerede lukket i nginx.
+- **M1:** long-polls på overlay-feedet kunne binde PHP-workers.
+- **M2:** merch-reklamens statuskald skrev en transient for hvert gættet id.
+- **M3:** selvoprettede creators kunne bruge uploads og mockup-kald uden grænse pr. døgn.
+- **L1:** CVR-kvoten kunne bruges op af få konti, og tællingen var ikke atomisk.
+- **L2:** Twitch-beskeder, der blev leveret igen, kørte handlingen igen.
+- **L4:** feedet kunne bladres helt tilbage i alert-historikken.
+- **L5:** rate limits talte `REMOTE_ADDR`, som bag Cloudflare uden real_ip er Cloudflares adresse.
+
+## Decision
+1. **Klient-IP (L5):** `Core\Http\ClientIp::address()` er den eneste kilde til besøgendes adresse i rate limits.
+   - `CF-Connecting-IP` bruges kun, når `REMOTE_ADDR` ligger i Cloudflares offentliggjorte intervaller (https://www.cloudflare.com/ips/, filteret `merchboard_trusted_proxy_ranges`).
+   - Ellers bruges `REMOTE_ADDR`. En forespørgsel direkte til origin kan ikke forfalske headeren.
+   - Kun gyldige IPv4- og IPv6-adresser tæller.
+   - Det ændrer ADR-091's "aldrig en videresendt header": headeren bruges kun fra Cloudflare.
+2. **Long-poll (M1)** for både creatorens og det globale overlay (`OverlayLongPoll`):
+   - Højst 2 forespørgsler pr. overlay-id venter samtidig, hver med en MySQL named lock (`merchboard_feed_<hash>_<n>`). Uden ledig plads svares straks som uden `wait`.
+   - Højst 120 feed-forespørgsler i minuttet pr. besøgsadresse på tværs af id'er, talt før id'et slås op.
+   - `WAIT_SECONDS` forbliver 8. Med pladserne er antallet af ventende workers pr. id begrænset, uanset ventetiden, og en kortere ventetid ville kun give flere forespørgsler.
+3. **Merch-reklamens status (M2):** id'et slås op først. Kun kendte id'er tælles pr. id. Ukendte tælles pr. besøgsadresse (højst 30 i minuttet, derefter 429).
+4. **Historik (L4):** feedet går aldrig længere tilbage end creatorens nyeste 20 alerts (for det globale overlay: de nyeste 20 i alt). `after=0` giver derfor ikke de ældste.
+5. **Twitch (L2):** en besked, der allerede er gemt (samme Twitch-besked-id), svarer 204 uden at køre `merchboard_twitch_chat_message`, som Kick-stien. HMAC og tidsstempel er uændrede.
+6. **CVR (L1):**
+   - højst 4 opslag pr. creator pr. døgn (før 10);
+   - creators, der ikke er live (ADR-091), deler højst 20 af sitets 40, så resten er forbeholdt live creators;
+   - tællerne læses og hæves under en named lock.
+7. **Kvoter (M3):**
+   - højst 100 forhåndsvisninger (mockup-opgaver hos leverandøren) pr. creator pr. døgn (dansk tid), talt atomisk. Overskrides den, svarer serveren 429 `preview_quota`, og designeren viser en tydelig besked;
+   - creatorens upload-plads er 500 MB (før 1 GB) og fortsat højst 200 filer. Eksisterende filer bliver liggende; nye afvises med `upload_quota`.
+8. **Selvoprettelse:** forbliver som i ADR-091 (projektejerens valg). Kvoterne gælder alle creators.
+
+## Alternatives considered
+- **Godkendelse af nye creators før dashboardet:** fravalgt af projektejeren 2026-11-21. Kvoterne begrænser misbrug i stedet.
+- **Kortere long-poll:** giver flere forespørgsler uden at begrænse antallet af workers; pladserne gør det.
+- **En atomisk tæller i en egen tabel:** kræver migration; named locks findes allerede i projektet.
+
+## Reason
+Hver offentlig eller creator-styret handling, der koster workers, databaserækker eller kvote hos andre tjenester, får en grænse, der ikke kan omgås ved at gætte id'er, skifte konto eller sende falske headere.
+
+## Security
+- **Ingen nye offentlige endpoints.** Grænserne skriver kun transients med hash af id eller adresse i navnet.
+- **Named locks** frigives ved forespørgslens slutning. Uden named locks (SQLite i Playground) venter ingen forespørgsel.
+
+## Migration/data implications
+- **Ingen schemaændring.**
+- **Gamle filer:** eksisterende uploads over 500 MB slettes ikke.
+
+## Consequences
+- **Ekstra overlay-vinduer:** et tredje åbent overlay-vindue med samme id får svar hvert 5. sekund i stedet for long-poll.
+- **Mange overlays fra samme adresse:** en meget stor stream-opsætning med mange overlays fra samme adresse kan ramme grænsen på 120 i minuttet.
+
+## Related
+ADR-065, ADR-091, ADR-105, ADR-113, ADR-080
