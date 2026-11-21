@@ -4,6 +4,24 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-11-22
+
+Fase 54 (ADR-118). Ingen schemaændring.
+
+### Added
+
+- **Fælles design på tværs af plakatformater (fase 54, ADR-118):**
+  - en plakats formater i samme retning deler ét design. Det tilpasses automatisk til hvert format, og creatoren vælger tilpasningen pr. format: smart, fyld formatet eller hele designet inden for;
+  - en ændring på et af formaterne gælder dem alle;
+  - et format kan få sit eget design og senere komme tilbage til det fælles;
+  - størrelserne vælges pr. format, med "hele formatet" på én gang;
+  - admin kan slå det fra pr. grundprodukt ("Fælles design på tværs af formater").
+
+### Fixed
+
+- **Designeren på mobil:** et langt produktnavn gjorde siden bredere end skærmen. Nu afkortes navnet.
+- **Test:** en billedtest kunne opbruge PHP's hukommelse (128 MB) i nogle testrækkefølger.
+
 ## [2.3.0] - 2026-11-21
 
 Fase 52 og 53 (ADR-115, ADR-117). Ingen schemaændring.

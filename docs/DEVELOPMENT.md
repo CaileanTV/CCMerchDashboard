@@ -249,6 +249,21 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 2.4.0: fælles design på tværs af plakatformater (fase 54, ADR-118)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-22.** Ingen schemaændring. 2.3.0 tagges for sig, når den er testet. Tag 2.4.0 efter projektejerens OK og grøn CI.
+
+1. **Opdatér** med ZIP'en. Overview skal vise version 2.4.0.
+2. **Grundproduktet (plakaten):** "Fælles design på tværs af formater" er sat til. Tag fluebenet af, gem, og se, at designeren designer hvert format for sig. Sæt det til igen.
+3. **Designeren:**
+   - **Størrelser:** de står grupperet pr. format, og "Lodret – format 1" vælger hele formatet;
+   - **Fælles design:** et billede eller en tekst på det ene format vises tilpasset på de andre lodrette formater ("Fælles med: …");
+   - **Tilpasning:** prøv "smart", "fyld formatet" og "hele designet inden for" på et format med en anden form;
+   - **Eget design:** giv et format eget design, ret det, og se, at de andre ikke følger med. "Fælles design" igen spørger først.
+4. **Indsendelse:** hver valgt formatside får sin egen printfil i sit eget mål. Gelatos miljøbilleder laves pr. side som i 2.3.0.
+
+**Tilbagerulning:** installér 2.3.0-ZIP'en. Den læser kopierne i `sides` som almindelige designs pr. format og ser bort fra `formats`.
+
 ## Release 2.3.0: Gelato-produkter med egne valg, formatgrupper og skærelinje (fase 52, ADR-115)
 
 **Versions-bump og CHANGELOG-sektion 2026-11-21.** Ingen schemaændring. Fase 52 og 53. Testpakke på stg: `merchboard-mvp-2.3.0.zip` fra b50ce3c, sha256 `6a57ca349f6f55f50cc66b7df441150a7817a818ae41096c3010c3ac5121041a`. Den erstatter alle tidligere 2.3.0-pakker. Tag efter projektejerens OK og grøn CI.
