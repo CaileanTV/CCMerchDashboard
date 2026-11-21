@@ -414,6 +414,36 @@ final class GelatoTest extends IntegrationTestCase {
 		self::assertCount( 58, array_filter( $this->calls, static fn( array $call ): bool => str_starts_with( $call[1], GelatoApi::PRODUCTS . '/v3/products/' ) ), 'The finished size of every format, once.' );
 	}
 
+	public function test_try_again_keeps_a_poster_s_format_groups(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$this->poster_answers();
+
+		$catalog = $this->catalog();
+		$id      = $catalog->create(
+			'gelato',
+			'tpl-poster',
+			array(
+				'colors'     => array( 'Vertical', 'Horizontal' ),
+				'sizes'      => array_column( $this->poster_rows(), 2 ),
+				'sides'      => array( '1 - sort kasse.png' ),
+				'base_price' => '199',
+			)
+		);
+		$import  = $this->bases->import( $id ) ?? self::fail( 'No import.' );
+
+		// The first try failed (stg 2026-11-21); "Try again" lost the groups and failed at once.
+		$this->bases->set_import( $id, CatalogImport::FAILED, (string) wp_json_encode( array_merge( $import['data'], array( 'error' => GelatoException::FAILED ) ) ) );
+		$catalog->retry( $id );
+
+		self::assertSame( $import['data']['groups'] ?? null, $this->bases->import( $id )['data']['groups'] ?? null );
+		self::assertSame( $import['data']['uids'] ?? null, $this->bases->import( $id )['data']['uids'] ?? null );
+
+		$this->drain_import( $catalog, 200 );
+
+		self::assertSame( 'ready', $this->bases->import( $id )['state'] ?? null, (string) wp_json_encode( $this->bases->import( $id ) ) );
+		self::assertCount( 16, ( $this->bases->find( $id ) ?? self::fail( 'No base product.' ) )->views );
+	}
+
 	public function test_the_bleed_is_fetched_again_from_gelato_for_a_base_product(): void {
 		$this->account->set( self::KEY, self::STORE );
 		$this->poster_answers();

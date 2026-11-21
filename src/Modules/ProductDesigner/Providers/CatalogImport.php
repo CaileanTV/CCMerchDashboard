@@ -405,7 +405,9 @@ class CatalogImport {
 			return;
 		}
 
-		$this->start( $id, array_intersect_key( $import['data'], array_flip( array( 'source', 'ref', 'sides', 'colors', 'measure_hex', 'flat', 'printed' ) ) ) );
+		// What create() started with; the format groups and their products too (ADR-115),
+		// or a poster would render all its sides at once and fail.
+		$this->start( $id, array_intersect_key( $import['data'], array_flip( array( 'source', 'ref', 'sides', 'colors', 'groups', 'uids', 'measure_hex', 'flat', 'printed' ) ) ) );
 	}
 
 	/**
