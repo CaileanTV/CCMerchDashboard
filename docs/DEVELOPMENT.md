@@ -251,7 +251,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 2.3.0: Gelato-produkter med egne valg, formatgrupper og skærelinje (fase 52, ADR-115)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-21.** Ingen schemaændring. Testpakke på stg: `merchboard-mvp-2.3.0.zip` fra 9f99818, sha256 `42a1a5e9a985de129e839633b18f81ede7e33d84590457769f7039879752d3e5`. Den erstatter pakkerne fra b14b161 og c77d4aa. Tag efter projektejerens OK og grøn CI.
+**Versions-bump og CHANGELOG-sektion 2026-11-21.** Ingen schemaændring. Testpakke på stg: `merchboard-mvp-2.3.0.zip` fra 418b320, sha256 `3e9adbd3436aac38eb582766927d0b504eb045ad1fecfef465a333a72b8858c1`. Den erstatter pakkerne fra b14b161, c77d4aa og 9f99818. Tag efter projektejerens OK og grøn CI.
 
 1. **Opdatér** med ZIP'en. Overview skal vise version 2.3.0 og schema-version 52.
 2. **Import af plakaten:**
