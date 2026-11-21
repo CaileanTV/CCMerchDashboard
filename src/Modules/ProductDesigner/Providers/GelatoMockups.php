@@ -13,6 +13,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\Designs\ColorDesigns;
@@ -53,6 +54,15 @@ defined( 'ABSPATH' ) || exit;
  *
  * Gelato's images of an embroidered side are flat, so the browser's stitched
  * images stay (ADR-085): a design with only such sides makes no product.
+ *
+ * A used format side of a poster (ADR-115) gets a task of its own (ADR-117):
+ * a product of one variant, its group's largest size in the side's
+ * orientation, with the side's print file. Its images at the positions the
+ * import found besides the side's own (`scenes`, e.g. the poster on a wall)
+ * are added as environment photos (`_scene-<n>` per colour); the browser's
+ * mockups stay. At most CREATES_PER_RUN products are made per round, and the
+ * version is `running` until every task is done; one that failed makes it
+ * `failed` and keeps what the others gave.
  */
 class GelatoMockups {
 
@@ -68,6 +78,11 @@ class GelatoMockups {
 	private const POLL_DELAY = 30;
 
 	private const MAX_POLLS = 40;
+
+	/**
+	 * Products made per round (ADR-117: up to 16 format sides).
+	 */
+	private const CREATES_PER_RUN = 4;
 
 	/**
 	 * Constructor.
@@ -107,11 +122,25 @@ class GelatoMockups {
 			$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
 			$base     = null === $version ? null : $this->bases->find( (int) $version['base_id'] );
 
-			if ( null === $version || null === $provider || null === $base || 'gelato' !== $provider['source'] || array() === self::photographed( self::sides( $version, $provider['placements'] ), $base ) ) {
+			if ( null === $version || null === $provider || null === $base || 'gelato' !== $provider['source'] ) {
 				return;
 			}
 
-			$this->tasks->create( $id, 'gelato', self::TASK_SIDE, '{}' );
+			$photographed = self::photographed( self::sides( $version, $provider['placements'] ), $base );
+			$scenes       = self::scene_sides( $version, $provider, $base );
+
+			if ( array() === $photographed && array() === $scenes ) {
+				return;
+			}
+
+			if ( array() !== $photographed ) {
+				$this->tasks->create( $id, 'gelato', self::TASK_SIDE, '{}' );
+			}
+
+			foreach ( $scenes as $side ) {
+				$this->tasks->create( $id, 'gelato', $side, '{}' );
+			}
+
 			$this->products->set_mockup_state( $id, PrintfulMockups::RUNNING );
 
 			if ( ! $this->schedule( $id, 0 ) ) {
@@ -196,33 +225,301 @@ class GelatoMockups {
 			return;
 		}
 
-		foreach ( $this->tasks->for_version( $id ) as $task ) {
-			if ( 'gelato' !== $task['provider'] ) {
-				continue;
-			}
+		$created = 0;
+		$tasks   = array_values( array_filter( $this->tasks->for_version( $id ), static fn( array $task ): bool => 'gelato' === $task['provider'] ) );
+
+		if ( array() === $tasks ) {
+			return;
+		}
+
+		foreach ( $tasks as $task ) {
+			$scene = self::TASK_SIDE !== (string) $task['side'];
 
 			if ( ProviderTaskRepository::QUEUED === $task['status'] ) {
-				$this->create( $id, $provider['ref'], $provider['placements'], $version, $base, $task, $provider['variants'] );
+				if ( $created >= self::CREATES_PER_RUN ) {
+					continue;
+				}
+
+				++$created;
+
+				if ( $scene ) {
+					$this->scene( $id, $task, fn() => $this->create_scene( $id, $provider, $version, $base, $task ) );
+				} else {
+					$this->create( $id, $provider['ref'], $provider['placements'], $version, $base, $task, $provider['variants'] );
+				}
 			} elseif ( ProviderTaskRepository::PENDING === $task['status'] ) {
-				$this->poll( $id, $provider['placements'], $version, $base, $task, $provider['slots'] );
+				if ( $scene ) {
+					$this->scene( $id, $task, fn() => $this->poll_scene( $id, $provider, $task ) );
+				} else {
+					$this->poll( $id, $provider['placements'], $version, $base, $task, $provider['slots'] );
+				}
+			}
+		}
+
+		$statuses = array_column( array_filter( $this->tasks->for_version( $id ), static fn( array $task ): bool => 'gelato' === $task['provider'] ), 'status' );
+
+		if ( array() !== array_intersect( $statuses, array( ProviderTaskRepository::QUEUED, ProviderTaskRepository::PENDING ) ) ) {
+			$this->schedule( $id, self::POLL_DELAY );
+		} elseif ( in_array( ProviderTaskRepository::FAILED, $statuses, true ) ) {
+			$this->failed( $id, 'task' );
+		} else {
+			$this->products->set_mockup_state( $id, PrintfulMockups::READY );
+		}
+	}
+
+	/**
+	 * Runs a step of a format side's task (ADR-117): Gelato refusing it fails
+	 * that task only; a 429 waits for the whole version.
+	 *
+	 * @param int                  $id   Version.
+	 * @param array<string, mixed> $task Task row.
+	 * @param callable(): void     $work The step.
+	 * @throws GelatoException When Gelato asks to wait.
+	 */
+	private function scene( int $id, array $task, callable $work ): void {
+		try {
+			$work();
+		} catch ( GelatoException $e ) {
+			if ( GelatoException::RATE_LIMITED === $e->reason() ) {
+				throw $e;
 			}
 
-			$status = '';
+			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'error' => $e->reason() ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		} catch ( DesignerException $e ) {
+			$this->logger->warning(
+				'An environment photo of a design was refused.',
+				array(
+					'version_id' => $id,
+					'reason'     => $e->reason(),
+				)
+			);
+			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'error' => 'image' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		}
+	}
 
-			foreach ( $this->tasks->for_version( $id ) as $current ) {
-				$status = (int) $current['id'] === (int) $task['id'] ? (string) $current['status'] : $status;
-			}
+	/**
+	 * Creates a format side's product (ADR-117): one variant, the group's
+	 * largest size in the side's orientation, with the side's print file.
+	 *
+	 * @param int                  $id       Version.
+	 * @param array<string, mixed> $provider The base product's provider data.
+	 * @param array<string, mixed> $version  Version.
+	 * @param BaseProduct          $base     Base product.
+	 * @param array<string, mixed> $task     Task row.
+	 * @throws GelatoException When Gelato refuses or fails.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	private function create_scene( int $id, array $provider, array $version, BaseProduct $base, array $task ): void {
+		$side    = (string) $task['side'];
+		$view    = self::view_of( $base, $side );
+		$chosen  = json_decode( (string) $version['colors'], true );
+		$colors  = null === $view ? array() : array_values( array_intersect( $view->colors, is_array( $chosen ) ? array_map( 'strval', $chosen ) : array() ) );
+		$color   = (string) ( $colors[0] ?? '' );
+		$variant = null === $view ? '' : (string) ( $provider['variants'][ $color ][ self::largest( $view ) ] ?? '' );
+		$part    = ColorDesigns::part_of( self::design_of( $version ), $color );
+		$name    = (string) ( $provider['placements'][ $side ] ?? '' );
 
-			if ( ProviderTaskRepository::FAILED === $status ) {
-				$this->failed( $id, 'task' );
-			} elseif ( ProviderTaskRepository::DONE === $status ) {
-				$this->products->set_mockup_state( $id, PrintfulMockups::READY );
-			} else {
-				$this->schedule( $id, self::POLL_DELAY );
-			}
+		if ( '' === $variant || '' === $name || ! in_array( $side, self::sides( $version, $provider['placements'], $part ), true ) ) {
+			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'error' => 'no_variant' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 			return;
 		}
+
+		$answer  = $this->api->create_from_template(
+			array(
+				'templateId'                => (string) $provider['ref'],
+				'title'                     => (string) $version['title'],
+				'description'               => '',
+				'isVisibleInTheOnlineStore' => false,
+				'variants'                  => array(
+					array(
+						'templateVariantId' => $variant,
+						'imagePlaceholders' => array(
+							array(
+								'name'      => $name,
+								'fileUrl'   => SignedPrintFiles::url( $id, $side, null, $part ),
+								'fitMethod' => 'meet',
+							),
+						),
+					),
+				),
+			)
+		);
+		$product = is_scalar( $answer['id'] ?? null ) ? (string) $answer['id'] : '';
+
+		if ( 1 !== preg_match( '/^[A-Za-z0-9-]{1,100}$/', $product ) ) {
+			self::fail( GelatoException::INVALID );
+		}
+
+		$this->tasks->update(
+			(int) $task['id'],
+			array(
+				'status'   => ProviderTaskRepository::PENDING,
+				'task_key' => $product,
+				'result'   => (string) wp_json_encode(
+					array(
+						'color'   => $color,
+						'variant' => $variant,
+					)
+				),
+			)
+		);
+	}
+
+	/**
+	 * Polls a format side's product and adds its environment photos once
+	 * Gelato has made them all; after MAX_POLLS it keeps those it has.
+	 *
+	 * @param int                  $id       Version.
+	 * @param array<string, mixed> $provider The base product's provider data.
+	 * @param array<string, mixed> $task     Task row.
+	 * @throws GelatoException When Gelato refuses or fails.
+	 * @throws DatabaseException When it cannot be stored.
+	 * @throws DesignerException When a photo is not a valid image.
+	 */
+	private function poll_scene( int $id, array $provider, array $task ): void {
+		$attempts = (int) $task['attempts'] + 1;
+		$answer   = $this->api->product( (string) $task['task_key'] );
+		$status   = is_string( $answer['status'] ?? null ) ? $answer['status'] : '';
+		$map      = json_decode( (string) $task['result'], true );
+		$color    = is_array( $map ) && is_string( $map['color'] ?? null ) ? $map['color'] : '';
+		$variant  = is_array( $map ) && is_string( $map['variant'] ?? null ) ? $map['variant'] : '';
+		$wanted   = $provider['scenes'][ (string) $task['side'] ] ?? array();
+		$wanted   = is_array( $wanted ) ? $wanted : array();
+
+		if ( 'publishing_error' === $status ) {
+			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'attempts' => $attempts, 'error' => 'publishing_error' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+			return;
+		}
+
+		$urls  = 'active' === $status && '' !== $color ? ( GelatoCatalog::variant_images( $answer, array( $color => $variant ) )[ $color ] ?? array() ) : array();
+		$found = array_values( array_intersect_key( $urls, array_flip( $wanted ) ) );
+
+		if ( count( $found ) < count( $wanted ) && $attempts < self::MAX_POLLS ) {
+			$this->tasks->update( (int) $task['id'], array( 'attempts' => $attempts ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+			return;
+		}
+
+		if ( array() === $found ) {
+			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'attempts' => $attempts, 'error' => 'timeout' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+			return;
+		}
+
+		$this->store_scenes( $id, $color, $found );
+		$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::DONE, 'attempts' => $attempts ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	}
+
+	/**
+	 * Downloads environment photos and adds them to the version's mockups as
+	 * `_scene-<n>` of a colour, numbered from the colour's next free one.
+	 *
+	 * @phpstan-param list<string> $urls
+	 *
+	 * @param int      $id    Version.
+	 * @param string   $color Colour key (a poster's orientation).
+	 * @param string[] $urls  Gelato's image URLs.
+	 * @throws GelatoException When an image cannot be downloaded.
+	 * @throws DatabaseException When it cannot be stored.
+	 * @throws DesignerException When an image is not valid.
+	 */
+	private function store_scenes( int $id, string $color, array $urls ): void {
+		$stored = array();
+		$done   = false;
+
+		try {
+			foreach ( $urls as $url ) {
+				$stored[] = $this->download( $url );
+			}
+			$done = true;
+		} finally {
+			// Files stored before a failure are never referenced: delete them.
+			if ( ! $done ) {
+				foreach ( array_filter( array_column( $stored, 'file' ), 'is_string' ) as $name ) {
+					$this->files->delete( $name );
+				}
+			}
+		}
+
+		$version = $this->products->version( $id );
+		$files   = SubmissionFiles::decode( is_string( $version['files'] ?? null ) ? $version['files'] : null );
+		$next    = 0;
+
+		foreach ( $stored as $file ) {
+			while ( isset( $files['mockups'][ SubmissionFiles::SCENE . $next ][ $color ] ) ) {
+				++$next;
+			}
+
+			$files['mockups'][ SubmissionFiles::SCENE . $next ][ $color ] = $file;
+		}
+
+		if ( ! $this->products->set_pending_files( $id, (string) wp_json_encode( $files ) ) ) {
+			foreach ( array_filter( array_column( $stored, 'file' ), 'is_string' ) as $name ) {
+				$this->files->delete( $name );
+			}
+		}
+	}
+
+	/**
+	 * The used format sides of a version that get Gelato's environment photos
+	 * (ADR-117): on a chosen colour, with positions found on import.
+	 *
+	 * @param array<string, mixed> $version  Version.
+	 * @param array<string, mixed> $provider The base product's provider data.
+	 * @param BaseProduct          $base     Base product.
+	 * @return list<string>
+	 */
+	private static function scene_sides( array $version, array $provider, BaseProduct $base ): array {
+		$chosen = json_decode( (string) $version['colors'], true );
+		$chosen = is_array( $chosen ) ? array_map( 'strval', $chosen ) : array();
+		$sides  = array();
+
+		foreach ( self::sides( $version, is_array( $provider['placements'] ?? null ) ? $provider['placements'] : array() ) as $side ) {
+			$view = self::view_of( $base, $side );
+
+			if ( null !== $view && array() !== $view->formats && array() !== array_intersect( $view->colors, $chosen ) && array() !== ( $provider['scenes'][ $side ] ?? array() ) ) {
+				$sides[] = $side;
+			}
+		}
+
+		return $sides;
+	}
+
+	/**
+	 * A side of the base product by its key.
+	 *
+	 * @param BaseProduct $base Base product.
+	 * @param string      $key  Side key.
+	 */
+	private static function view_of( BaseProduct $base, string $key ): ?BaseView {
+		foreach ( $base->views as $view ) {
+			if ( $view->key === $key ) {
+				return $view;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * A format side's largest size: its print file's (ADR-115).
+	 *
+	 * @param BaseView $view Side.
+	 */
+	private static function largest( BaseView $view ): string {
+		$largest = '';
+		$area    = -1.0;
+
+		foreach ( $view->formats as $size => $format ) {
+			if ( $format['width_mm'] * $format['height_mm'] > $area ) {
+				$largest = (string) $size;
+				$area    = $format['width_mm'] * $format['height_mm'];
+			}
+		}
+
+		return $largest;
 	}
 
 	/**

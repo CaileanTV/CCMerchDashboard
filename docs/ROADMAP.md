@@ -1538,6 +1538,29 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - stg 2026-11-21: på den importerede plakat lå designfeltet inden for plakatens kant, så en hvid stribe viste sig. Rettet: formatgruppers sider måles på markørens præcise kanter, og feltet dækker dem (`ImageProbe::cover()`).
   - **Mangler:** importen mod Gelato og en rigtig indsendelse sker på stg (testpakke 2.3.0), CI og tag efter projektejerens OK.
 
+## Fase 53 – Gelatos miljøbilleder på plakater 🔄 (projektejerens ønske og godkendelse 2026-11-21; version 2.3.0 sammen med fase 52; ADR-117)
+
+**Baggrund:** Fine Art Poster-skabelonen har to scener i Gelato: en stue med plakaten på væggen og den flade plakat. Formatgruppers sider får i dag kun browserens flade billeder.
+
+- **53.1 Docs:** ADR-117, statusnote på ADR-115, denne fase.
+- **53.2 Filerne:**
+  - `_scene-<n>` i versionens mockups;
+  - rækkefølge efter retningens sider;
+  - kan vælges som hovedbillede;
+  - vises på admin-siden;
+  - "Miljø n" i creatorens galleri;
+  - ikke til "Billeder uden baggrund".
+- **53.3 Gelato-jobbet:**
+  - én opgave og ét produkt med én variant pr. brugt formatside, højst 4 nye pr. kørsel;
+  - alle billeder undtagen det flade gemmes;
+  - `running` til alle er færdige.
+- **53.4 Shop og admin:** galleriet efter de flade billeder, admin-siden, danske tekster.
+- **53.5 Test og levering:** unit og integration (plakatsvar med 2 billeder, opgaver pr. side, godkendelse venter, delvis fejl, galleri og hovedbillede), CI og ny 2.3.0-testpakke på stg.
+- ✅ 53.1–53.5 bygget 2026-11-21:
+  - lint, unit og integration grønne;
+  - CI og runtime på stg mangler. Runtime kan kun ske på stg, for Gelato henter printfilen via URL;
+  - plakaten skal importeres igen for at få `scenes`.
+
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
 - **M1** long-poll-pladser og grænse pr. besøgsadresse på overlay-feedene. ✅

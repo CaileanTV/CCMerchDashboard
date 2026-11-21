@@ -6876,7 +6876,7 @@ Foreslået 2026-11-15. Projektejeren har valgt "design pr. formatgruppe, men all
 - **Formatgrupper:** en størrelse går i den gruppe, hvis største størrelse (printfilen) har den nærmeste form inden for 3 %. Fine Art Poster giver præcis 8 grupper pr. retning.
 - **Grupperingen gælder** også skabeloner uden farve.
 - **Farve og størrelse:** katalogets `gco_` og `gsi_` vinder fortsat over skabelonens egne navne, som før.
-- **Gelatos egne mockups** bruges ikke på formatgruppers sider. De deler placering, så browserens billeder på Gelatos gruppefoto bliver.
+- **Gelatos egne mockups** bruges ikke på formatgruppers sider. De deler placering, så browserens billeder på Gelatos gruppefoto bliver. **Statusnote 2026-11-21:** ADR-117 tilføjer Gelatos miljøbilleder pr. formatside som ekstra billeder. Browserens billeder bliver.
 - **Beskæringen af printfilen** sker i det signerede admin-download for ordrelinjens størrelse (`DesignerVersionFiles` med `size`), og beskæringen gemmes som egen fil.
 
 ## Context
@@ -7038,3 +7038,61 @@ Hver offentlig eller creator-styret handling, der koster workers, databaserække
 
 ## Related
 ADR-065, ADR-091, ADR-105, ADR-113, ADR-080
+
+# ADR-117: Gelatos miljøbilleder på plakater (formatgrupper)
+
+## Date
+2026-11-21
+
+## Status
+Accepteret af projektejeren 2026-11-21 (planen godkendt). Projektejerens valg:
+- Gelato laver billederne pr. design. Browseren sætter dem ikke sammen.
+- Billederne kommer i tillæg til det flade plakatbillede.
+
+Version 2.3.0 sammen med fase 52 (fase 53).
+
+## Context
+Projektejeren vil have Gelatos mockups med "miljøer" på plakaterne.
+
+**Diagnosen af Fine Art Poster på stg 2026-11-21:**
+- Skabelonen har to valgte scener (`previewScenes`).
+- Hvert Gelato-produkt med én variant giver ét billede pr. scene: billede 0 (primær scene) er en stue med plakaten frit på væggen, og billede 1 er den flade plakat.
+- Importen bruger det flade billede som skabelon til designfeltet (`slots[side] = "1"`).
+- **I dag** udelader `GelatoMockups::photographed()` formatgruppers sider (ADR-115), så plakater kun får browserens flade billeder.
+
+## Decision
+1. **Ét skjult Gelato-produkt pr. brugt formatside.**
+   - Siden skal have et design og ligge på en valgt retning.
+   - Produktet har én variant: gruppens største størrelse i sidens retning, fra den importerede variantliste.
+   - Variantens billedfelt får sidens printfil (signeret URL, farvedesignets del).
+   - Ét produkt med én variant giver alle scenernes billeder (det viste importens 32 renders). Ved flere varianter i ét produkt er det uvist, om scener uden variant-binding kommer med.
+   - Højst 4 produkter oprettes pr. kørsel. Resten oprettes og polles hvert 30. sekund.
+2. **Billederne:** alle produktets billeder undtagen sidens skabelonbillede (det flade).
+   - De gemmes i versionens `mockups` under reserverede nøgler `_scene-<n>` med retningen som farve, som `_photo-` og `_close-`.
+   - Browserens egne billeder erstattes aldrig.
+   - Flere scener i Gelato-skabelonen kommer med af sig selv.
+3. **Godkendelse:**
+   - Mens produkterne laves, er `mockup_state` `running`, og designet kan ikke godkendes (som i dag, inkl. `STALE_MOCKUPS`).
+   - `ready`, når alle sider er færdige.
+   - Fejler en side, bliver tilstanden `failed`:
+     - de miljøbilleder, der lykkedes, bliver;
+     - admin får den eksisterende mail;
+     - designet kan godkendes.
+4. **Shoppen:**
+   - Miljøbillederne kommer i galleriet efter retningens flade billeder.
+   - Variationsbillederne forbliver de flade.
+   - Et miljøbillede kan vælges som hovedbillede på et live produkt ("Miljø 1" …), men ikke ved indsendelsen, fordi det laves bagefter.
+   - Miljøbilleder tilbydes ikke til "Billeder uden baggrund".
+5. **Uændret:**
+   - andre Gelato-sider (én opgave `all` som før);
+   - Printful og Prodigi;
+   - legacy-produkter.
+6. **Navne:** creators og kunder ser "Miljø", aldrig leverandørens navn.
+
+## Consequences
+- **Gelato-butikken:** en indsendelse med alle størrelser i begge retninger giver 16 skjulte produkter. Gelato har intet kald til at slette dem.
+- **Ventetid:** godkendelsen venter typisk 2–6 minutter på billederne.
+- **Test:** kan kun køre på et site, Gelato kan nå (stg), fordi Gelato henter printfilen via URL.
+
+## Related
+ADR-082, ADR-096, ADR-098, ADR-114, ADR-115

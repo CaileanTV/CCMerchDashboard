@@ -192,11 +192,12 @@ class BaseProductRepository {
 	 * 30.15), the mockup styles the administrator chose (`photos`), the
 	 * stitch colours a creator can choose (`stitches`), what a flat product
 	 * adds and, from a Gelato template, the attribute names (`axes`) and each
-	 * variant's catalog product (`uids`, by colour key and size; ADR-115);
-	 * null for an own base product.
+	 * variant's catalog product (`uids`, by colour key and size; ADR-115)
+	 * and the positions of a format side's environment photos among its
+	 * render's images (`scenes`, ADR-117); null for an own base product.
 	 *
 	 * @param int $id Id.
-	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, photos: list<string>, stitches: list<string>, techniques: array<string, string>, options: array<mixed>, axes: array<string, string>, uids: array<string, array<string, string>>}|null
+	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, photos: list<string>, stitches: list<string>, techniques: array<string, string>, options: array<mixed>, axes: array<string, string>, uids: array<string, array<string, string>>, scenes: array<string, list<int>>}|null
 	 * @throws DatabaseException When it cannot be read.
 	 */
 	public function provider( int $id ): ?array {
@@ -242,7 +243,28 @@ class BaseProductRepository {
 			// The attribute names of a Gelato template's axes (ADR-115), e.g. "Orientation" and "Size".
 			'axes'       => array_filter( self::strings( $current && is_array( $decoded['axes'] ?? null ) ? $decoded['axes'] : array() ), static fn( string $name ): bool => '' !== $name ),
 			'uids'       => self::nested( $current && is_array( $decoded['uids'] ?? null ) ? $decoded['uids'] : array() ),
+			'scenes'     => self::positions( $current && is_array( $decoded['scenes'] ?? null ) ? $decoded['scenes'] : array() ),
 		);
+	}
+
+	/**
+	 * Image positions by side key: whole numbers from 0, each list without repeats.
+	 *
+	 * @param array<mixed> $value Decoded JSON.
+	 * @return array<string, list<int>>
+	 */
+	private static function positions( array $value ): array {
+		$positions = array();
+
+		foreach ( $value as $side => $list ) {
+			$list = is_array( $list ) ? array_values( array_unique( array_filter( $list, static fn( mixed $n ): bool => is_int( $n ) && $n >= 0 && $n < 100 ) ) ) : array();
+
+			if ( array() !== $list ) {
+				$positions[ (string) $side ] = $list;
+			}
+		}
+
+		return $positions;
 	}
 
 	/**

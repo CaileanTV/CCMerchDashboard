@@ -1058,8 +1058,13 @@ final class MeDesignerController extends RestController {
 				continue;
 			}
 
-			/* translators: %d: number of the product photo. */
-			$side = str_starts_with( $key, SubmissionFiles::PHOTO ) ? sprintf( __( 'Product photo %d', 'merchboard' ), ++$photo ) : ( $sides[ $key ] ?? $key );
+			if ( SubmissionFiles::is_scene( $key ) ) {
+				/* translators: %d: number of the environment photo, e.g. a poster on a wall. */
+				$side = sprintf( __( 'Environment %d', 'merchboard' ), (int) substr( $key, strlen( SubmissionFiles::SCENE ) ) + 1 );
+			} else {
+				/* translators: %d: number of the product photo. */
+				$side = str_starts_with( $key, SubmissionFiles::PHOTO ) ? sprintf( __( 'Product photo %d', 'merchboard' ), ++$photo ) : ( $sides[ $key ] ?? $key );
+			}
 
 			foreach ( $colors as $color ) {
 				$image = $key . ':' . $color;

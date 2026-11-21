@@ -1019,8 +1019,8 @@ class CatalogImport {
 			self::stop( DesignerException::NOT_AUTHORIZED );
 		}
 
-		$sides = is_array( $data['sides'] ?? null ) ? array_values( $data['sides'] ) : array();
-		$views = array_map(
+		$sides  = is_array( $data['sides'] ?? null ) ? array_values( $data['sides'] ) : array();
+		$views  = array_map(
 			static fn( BaseView $view ): array => array(
 				'key'    => $view->key,
 				'name'   => $view->name,
@@ -1028,8 +1028,9 @@ class CatalogImport {
 			),
 			$base->views
 		);
-		$slots = array();
-		$kept  = array();
+		$slots  = array();
+		$kept   = array();
+		$scenes = array();
 
 		if ( true === ( $data['flat'] ?? false ) ) {
 			foreach ( $sides as $side ) {
@@ -1075,9 +1076,10 @@ class CatalogImport {
 
 			// A format group's side (ADR-115): its sizes and values, and each size's print size and bleed.
 			if ( is_array( $side['formats'] ?? null ) && array() !== $side['formats'] ) {
-				$view['sizes']   = array_map( 'strval', is_array( $side['sizes'] ?? null ) ? $side['sizes'] : array() );
-				$view['colors']  = array_map( 'strval', is_array( $side['colors'] ?? null ) ? $side['colors'] : array() );
-				$view['formats'] = self::formats( $side, $data );
+				$view['sizes']                   = array_map( 'strval', is_array( $side['sizes'] ?? null ) ? $side['sizes'] : array() );
+				$view['colors']                  = array_map( 'strval', is_array( $side['colors'] ?? null ) ? $side['colors'] : array() );
+				$view['formats']                 = self::formats( $side, $data );
+				$scenes[ (string) $side['key'] ] = self::scenes( $data, (string) ( $side['group'] ?? '' ), (string) $chosen['slot'] );
 			}
 
 			$views[] = $view;
@@ -1130,6 +1132,7 @@ class CatalogImport {
 					'options'    => $provider['options'] ?? array(),
 					'axes'       => $provider['axes'] ?? array(),
 					'uids'       => $provider['uids'] ?? array(),
+					'scenes'     => array_filter( $scenes ),
 				)
 			)
 		);
@@ -1150,6 +1153,30 @@ class CatalogImport {
 				)
 			)
 		);
+	}
+
+	/**
+	 * The positions of a format group's environment photos among its
+	 * render's images (ADR-117): every image of the group but the one its
+	 * side is designed on (e.g. a poster on a wall beside the flat poster).
+	 *
+	 * @param array<string, mixed> $data  Import data.
+	 * @param string               $group The format group.
+	 * @param string               $slot  The side's own image.
+	 * @return list<int>
+	 */
+	private static function scenes( array $data, string $group, string $slot ): array {
+		$positions = array();
+
+		foreach ( is_array( $data['images']['blank'] ?? null ) ? $data['images']['blank'] : array() as $at => $urls ) {
+			if ( (string) $at !== $slot && is_numeric( $at ) && is_array( $urls ) && is_string( $urls[ $group ] ?? null ) ) {
+				$positions[] = (int) $at;
+			}
+		}
+
+		sort( $positions );
+
+		return $positions;
 	}
 
 	/**

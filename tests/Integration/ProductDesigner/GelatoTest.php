@@ -297,6 +297,7 @@ final class GelatoTest extends IntegrationTestCase {
 						'M' => 'apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_classic_gsi_m_gco_white',
 					),
 				),
+				'scenes'     => array(),
 			),
 			$this->bases->provider( $id )
 		);
@@ -412,6 +413,89 @@ final class GelatoTest extends IntegrationTestCase {
 		self::assertCount( 32, $creates, 'A marker and a blank product per format group.' );
 		self::assertContains( 'rp-43', $creates, 'Each group is rendered with its largest size (A0 vertical).' );
 		self::assertCount( 58, array_filter( $this->calls, static fn( array $call ): bool => str_starts_with( $call[1], GelatoApi::PRODUCTS . '/v3/products/' ) ), 'The finished size of every format, once.' );
+	}
+
+	public function test_a_poster_import_keeps_where_gelato_shows_each_side_in_a_room(): void {
+		$this->account->set( self::KEY, self::STORE );
+		$this->poster_answers( true );
+
+		$catalog = $this->catalog();
+		$id      = $catalog->create(
+			'gelato',
+			'tpl-poster',
+			array(
+				'colors'     => array( 'Vertical', 'Horizontal' ),
+				'sizes'      => array_column( $this->poster_rows(), 2 ),
+				'sides'      => array( '1 - sort kasse.png' ),
+				'base_price' => '199',
+			)
+		);
+
+		$this->drain_import( $catalog, 200 );
+
+		$provider = $this->bases->provider( $id ) ?? self::fail( 'No provider data.' );
+
+		self::assertSame( 'ready', $this->bases->import( $id )['state'] ?? null, (string) wp_json_encode( $this->bases->import( $id ) ) );
+		self::assertSame( '1', $provider['slots']['vertical-format-3'] ?? null, 'The side is designed on the flat poster.' );
+		self::assertSame( array( 0 ), $provider['scenes']['vertical-format-3'] ?? null, 'The room is an environment photo of the side (ADR-117).' );
+		self::assertCount( 16, $provider['scenes'] );
+	}
+
+	public function test_each_poster_side_gets_gelato_s_environment_photos_beside_the_browser_s(): void {
+		$this->account->set( self::KEY, self::STORE );
+		[ $version, $before ] = $this->poster_submitted();
+		$review               = new DesignerReview( $this->products, $this->bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->queue, 2, static function (): void {} );
+		$mockups              = $this->mockups();
+
+		$mockups->submitted( $version );
+
+		self::assertSame( 'running', $this->products->version( $version )['mockup_state'] ?? null );
+		self::assertSame( array( 'back', 'front' ), $this->task_sides( $version ), 'A task per format side, none for the whole product.' );
+
+		try {
+			$review->approve( $version );
+			self::fail( 'Not while Gelato makes the environment photos.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::MOCKUPS_PENDING, $e->reason() );
+		}
+
+		$this->drain( $mockups );
+
+		$bodies = array_map( static fn( array $call ): array => (array) json_decode( (string) ( $call[2]['body'] ?? '' ), true ), array_values( array_filter( $this->calls, static fn( array $call ): bool => 'POST' === $call[0] && str_ends_with( $call[1], 'products:create-from-template' ) && str_contains( (string) ( $call[2]['body'] ?? '' ), 'Poster' ) ) ) );
+
+		self::assertCount( 2, $bodies, 'One product per side.' );
+		self::assertSame( array( array( 'tv-b-m' ), array( 'tv-w-m' ) ), array_map( static fn( array $body ): array => array_column( $body['variants'] ?? array(), 'templateVariantId' ), $bodies ), 'One variant each: the largest size in the side colour.' );
+		self::assertStringContainsString( '/designer-print/' . $version . '/front', urldecode( (string) ( $bodies[0]['variants'][0]['imagePlaceholders'][0]['fileUrl'] ?? '' ) ) );
+		self::assertStringContainsString( '/designer-print/' . $version . '/back', urldecode( (string) ( $bodies[1]['variants'][0]['imagePlaceholders'][0]['fileUrl'] ?? '' ) ) );
+
+		$files = SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null )['mockups'];
+
+		self::assertSame( 'ready', $this->products->version( $version )['mockup_state'] ?? null );
+		self::assertSame( $before['front']['black']['file'], $files['front']['black']['file'] ?? null, 'The browser mockups stay.' );
+		self::assertSame( $before['back']['white']['file'], $files['back']['white']['file'] ?? null );
+		self::assertSame( array( 'black', 'white' ), array_keys( $files['_scene-0'] ?? array() ), 'The first environment photo.' );
+		self::assertSame( array( 330, 330 ), array( $files['_scene-0']['black']['width'] ?? 0, $files['_scene-0']['black']['height'] ?? 0 ), 'The room, not the flat poster.' );
+		self::assertArrayNotHasKey( '_scene-1', $files );
+		self::assertTrue( SubmissionFiles::complete( $this->products->version( $version ) ?? array(), $this->bases->find( (int) ( $this->products->version( $version )['base_id'] ?? 0 ) ) ), 'Still complete with the environment photos.' );
+
+		$review->approve( $version );
+		self::assertSame( 'approved', $this->products->version( $version )['status'] ?? null );
+	}
+
+	public function test_a_poster_side_gelato_fails_keeps_the_other_side_s_environment_photo(): void {
+		$this->account->set( self::KEY, self::STORE );
+		[ $version ] = $this->poster_submitted();
+		$this->answers[ self::STORE_API . '/products/gp-scene-2' ] = self::answer( 200, array( 'id' => 'gp-scene-2', 'status' => 'publishing_error' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+
+		$mockups = $this->mockups();
+		$mockups->submitted( $version );
+		$this->drain( $mockups );
+
+		$files = SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null )['mockups'];
+
+		self::assertSame( 'failed', $this->products->version( $version )['mockup_state'] ?? null );
+		self::assertSame( array( 'black' ), array_keys( $files['_scene-0'] ?? array() ) );
+		self::assertCount( 1, array_filter( $this->notified, static fn( array $n ): bool => DesignerNotifications::MOCKUPS_FAILED === $n[0] ) );
 	}
 
 	public function test_try_again_keeps_a_poster_s_format_groups(): void {
@@ -873,9 +957,13 @@ final class GelatoTest extends IntegrationTestCase {
 	/**
 	 * Gelato's Fine Art Poster template tpl-poster, the renders of its format
 	 * groups (a poster on a light wall, with the first marker on the marker
-	 * renders) and every format's finished size: 4 mm less per edge.
+	 * renders) and every format's finished size: 4 mm less per edge. With
+	 * `$scenes` each render has two images as on stg 2026-11-21: the poster
+	 * small on a wall (the template's main scene) and the flat poster.
+	 *
+	 * @param bool $scenes Whether each render has an environment photo first.
 	 */
-	private function poster_answers(): void {
+	private function poster_answers( bool $scenes = false ): void {
 		$variants = array();
 
 		foreach ( $this->poster_rows() as [ $id, $orientation, $size, $width, $height, $placeholder, $area, $uid ] ) {
@@ -947,11 +1035,17 @@ final class GelatoTest extends IntegrationTestCase {
 
 		foreach ( range( 1, 16 ) as $group ) {
 			foreach ( array( 'marker', 'blank' ) as $kind ) {
-				$this->answers[ self::STORE_API . '/products/gp-' . $kind . '-g' . $group ] = self::product( 'gp-' . $kind . '-g' . $group, 'https://cdn.example/poster-' . $kind . '.png' );
+				$id = 'gp-' . $kind . '-g' . $group;
+
+				$this->answers[ self::STORE_API . '/products/' . $id ] = $scenes ? self::images( $id, array( 'https://cdn.example/room-' . $kind . '.png', 'https://cdn.example/poster-' . $kind . '.png' ) ) : self::product( $id, 'https://cdn.example/poster-' . $kind . '.png' );
 			}
 		}
 
 		$poster = array( 50, 30, 100, 140, array( 250, 250, 250 ) );
+		$small  = array( 70, 40, 60, 84, array( 250, 250, 250 ) );
+
+		$this->answers['https://cdn.example/room-blank.png']  = self::file( Photo::png( 200, 200, array( 210, 205, 200 ), array( $small ) ) );
+		$this->answers['https://cdn.example/room-marker.png'] = self::file( Photo::png( 200, 200, array( 210, 205, 200 ), array( $small, array( 72, 42, 56, 80, array( 235, 15, 230 ) ) ) ) );
 
 		$this->answers['https://cdn.example/poster-blank.png']  = self::file( Photo::png( 200, 200, array( 200, 190, 180 ), array( $poster ) ) );
 		$this->answers['https://cdn.example/poster-marker.png'] = self::file( Photo::png( 200, 200, array( 200, 190, 180 ), array( $poster, array( 55, 35, 90, 130, array( 235, 15, 230 ) ) ) ) );
@@ -1052,6 +1146,173 @@ final class GelatoTest extends IntegrationTestCase {
 		$submissions->submit( $creator, $product );
 
 		return (int) ( $this->products->pending( $product )['id'] ?? 0 );
+	}
+
+	/**
+	 * A tee from tpl-1 made into a poster's format sides (ADR-115): the front
+	 * is black's only, the back white's (think Vertical and Horizontal), each
+	 * for S (30 × 40 mm) and M (31 × 40 mm), with Gelato's room photo as image
+	 * 0 beside the flat image 1 (ADR-117); and a submitted design on both.
+	 *
+	 * @return array{0: int, 1: array<string, array<string, array<string, mixed>>>} The pending version and its mockups.
+	 */
+	private function poster_submitted(): array {
+		$id    = $this->import();
+		$base  = $this->bases->find( $id ) ?? self::fail( 'No base product.' );
+		$front = $base->views[0];
+		// The import keeps the side Gelato's preview shows; the back is added like it.
+		$side = static fn( string $key, string $name, string $color, array $uploads ): array => array(
+			'key'       => $key,
+			'name'      => $name,
+			'x'         => (string) $front->area['x'],
+			'y'         => (string) $front->area['y'],
+			'width'     => (string) $front->area['width'],
+			'height'    => (string) $front->area['height'],
+			'width_mm'  => '31',
+			'height_mm' => '40',
+			'dpi'       => '100',
+			'remove'    => false,
+			'clear'     => array(),
+			'uploads'   => $uploads,
+			'colors'    => array( $color ),
+			'formats'   => array(
+				'S' => array(
+					'width_mm'  => 30,
+					'height_mm' => 40,
+				),
+				'M' => array(
+					'width_mm'  => 31,
+					'height_mm' => 40,
+				),
+			),
+		);
+
+		$this->base_service()->save(
+			$id,
+			array(
+				'name'        => $base->name,
+				'description' => '',
+				'base_price'  => '149,95',
+				'category_id' => '0',
+				'colors'      => implode( "\n", array_map( static fn( array $color ): string => $color['name'] . ' ' . $color['hex'], $base->colors ) ),
+				'sizes'       => 'S, M',
+			),
+			array(
+				$side( $front->key, $front->name, 'black', array() ),
+				$side( '', 'Back', 'white', array( 'background' => AlertImagesTest::upload( AlertImagesTest::png( $front->width, $front->height ), 'back.png' ) ) ),
+			)
+		);
+		$this->base_service()->set_active( $id, true );
+
+		$provider = $this->bases->provider( $id ) ?? self::fail( 'No provider data.' );
+		$this->bases->set_provider(
+			$id,
+			'gelato',
+			'tpl-1',
+			(string) wp_json_encode(
+				array(
+					'placements' => array_merge( $provider['placements'], array( 'back' => 'ImageBack' ) ),
+					'variants'   => $provider['variants'],
+					'slots'      => array(
+						'front' => '1',
+						'back'  => '1',
+					),
+					'scenes'     => array(
+						'front' => array( 0 ),
+						'back'  => array( 0 ),
+					),
+				)
+			)
+		);
+
+		// Each side's product: "gp-scene-1", "gp-scene-2" … with the room first and the flat image second.
+		$made = 0;
+
+		$this->answers[ self::STORE_API . '/products:create-from-template' ] = static function () use ( &$made ): array {
+			return self::answer(
+				200,
+				array(
+					'id'     => 'gp-scene-' . ( ++$made ),
+					'status' => 'created',
+				)
+			);
+		};
+
+		foreach ( array( 1, 2 ) as $n ) {
+			$this->answers[ self::STORE_API . '/products/gp-scene-' . $n ] = self::images( 'gp-scene-' . $n, array( 'https://cdn.example/room-' . $n . '.png', 'https://cdn.example/flat-' . $n . '.png' ) );
+			$this->answers[ 'https://cdn.example/room-' . $n . '.png' ]    = self::file( AlertImagesTest::png( 330, 330 ) );
+			$this->answers[ 'https://cdn.example/flat-' . $n . '.png' ]    = self::file( AlertImagesTest::png( 300, 300 ) );
+		}
+
+		$base        = $this->bases->find( $id ) ?? self::fail( 'No base product.' );
+		$user        = $this->create_user( 'poster-creator' );
+		$creator     = $this->service( CreatorService::class )->create( 'Nova', CreatorStatus::Active, $user );
+		$drafts      = new DesignerDrafts( $this->products, $this->bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2, $this->files );
+		$submissions = new DesignerSubmissions( $this->products, $this->bases, $this->files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2 );
+		$product     = $drafts->create( $creator, $id );
+		$rectangle   = array(
+			'type'        => 'rect',
+			'id'          => 'r1',
+			'x'           => 5,
+			'y'           => 5,
+			'width'       => 10,
+			'height'      => 10,
+			'angle'       => 0,
+			'scaleX'      => 1,
+			'scaleY'      => 1,
+			'opacity'     => 1,
+			'fill'        => '#00ff00',
+			'strokeWidth' => 0,
+			'radius'      => 0,
+		);
+
+		$drafts->save(
+			$creator,
+			$product,
+			array(
+				'title'        => 'Poster',
+				'description'  => '',
+				'colors'       => array( 'black', 'white' ),
+				'sizes'        => array( 'S', 'M' ),
+				'profit_kind'  => 'percent',
+				'profit_value' => '20',
+				'design'       => array(
+					'version' => 1,
+					'sides'   => array(
+						'front' => array( $rectangle ),
+						'back'  => array( $rectangle ),
+					),
+				),
+			),
+			new DesignValidator( static fn(): bool => false, array() )
+		);
+
+		foreach ( $base->views as $view ) {
+			[ $width, $height ]      = $view->print_pixels();
+			[ $mockup_w, $mockup_h ] = $view->mockup_size();
+			$color                   = $view->colors[0] ?? '';
+
+			$submissions->attach( $creator, $product, 'print:' . $view->key, AlertImagesTest::upload( AlertImagesTest::png( $width, $height ), 'print.png' ) );
+			$submissions->attach( $creator, $product, 'mockup:' . $view->key . ':' . $color, AlertImagesTest::upload( AlertImagesTest::png( $mockup_w, $mockup_h ), 'mockup.png' ) );
+		}
+
+		$submissions->submit( $creator, $product );
+		$version = (int) ( $this->products->pending( $product )['id'] ?? 0 );
+
+		return array( $version, SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null )['mockups'] );
+	}
+
+	/**
+	 * The sides of a version's Gelato tasks, sorted.
+	 *
+	 * @param int $version Version.
+	 * @return list<string>
+	 */
+	private function task_sides( int $version ): array {
+		$sides = array_map( static fn( array $task ): string => (string) $task['side'], ( new ProviderTaskRepository( $this->wpdb ) )->for_version( $version ) );
+		sort( $sides );
+
+		return $sides;
 	}
 
 	/**
@@ -1199,6 +1460,41 @@ final class GelatoTest extends IntegrationTestCase {
 				'status'        => 'active',
 				'previewUrl'    => $preview,
 				'productImages' => array(),
+				'variants'      => array(
+					array(
+						'id'    => 'v-' . $id,
+						'title' => 'Variant',
+					),
+				),
+			)
+		);
+	}
+
+	/**
+	 * An active product with its images in order, the first tied to its one variant.
+	 *
+	 * @phpstan-param list<string> $images
+	 *
+	 * @param string   $id     Product.
+	 * @param string[] $images Image URLs.
+	 * @return array<string, mixed>
+	 */
+	private static function images( string $id, array $images ): array {
+		return self::answer(
+			200,
+			array(
+				'id'            => $id,
+				'status'        => 'active',
+				'previewUrl'    => $images[0] ?? '',
+				'productImages' => array_map(
+					static fn( string $url, int $index ): array => array(
+						'fileUrl'           => $url,
+						'isPrimary'         => 0 === $index,
+						'productVariantIds' => 0 === $index ? array( 'v-' . $id ) : array(),
+					),
+					$images,
+					array_keys( $images )
+				),
 				'variants'      => array(
 					array(
 						'id'    => 'v-' . $id,

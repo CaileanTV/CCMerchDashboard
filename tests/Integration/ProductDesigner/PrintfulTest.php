@@ -292,6 +292,7 @@ final class PrintfulTest extends IntegrationTestCase {
 				'options'    => array(),
 				'axes'       => array(),
 				'uids'       => array(),
+				'scenes'     => array(),
 			),
 			$this->bases->provider( (int) $base->id )
 		);

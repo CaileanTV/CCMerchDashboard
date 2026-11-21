@@ -53,6 +53,14 @@ final class SubmissionFiles {
 	public const CLOSE = '_close-';
 
 	/**
+	 * What starts the key of a provider's environment photo of a design (a
+	 * poster on a wall, ADR-117), stored among the mockups beside the
+	 * browser's: `_scene-<n>`, with its colour. No side key can start like
+	 * this.
+	 */
+	public const SCENE = '_scene-';
+
+	/**
 	 * Width and height of a close-up.
 	 */
 	public const CLOSE_SIZE = 1200;
@@ -62,7 +70,7 @@ final class SubmissionFiles {
 	 * and the colours' sanitize_title() keys make them, a chosen photo or a
 	 * side's close-up).
 	 */
-	private const SLOT = '/^(?:print:([a-z0-9][a-z0-9-]{0,31})(?::(d[1-9][0-9]?))?|mockup:([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}|_close-[a-z0-9][a-z0-9-]{0,31}):([a-z0-9%_-]{1,32}))$/';
+	private const SLOT = '/^(?:print:([a-z0-9][a-z0-9-]{0,31})(?::(d[1-9][0-9]?))?|mockup:([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}|_close-[a-z0-9][a-z0-9-]{0,31}|_scene-[0-9]{1,3}):([a-z0-9%_-]{1,32}))$/';
 
 	/**
 	 * The stamp of a version's content (its stored columns).
@@ -184,6 +192,15 @@ final class SubmissionFiles {
 	 */
 	public static function is_close( string $key ): bool {
 		return str_starts_with( $key, self::CLOSE );
+	}
+
+	/**
+	 * Whether a key among the mockups is a provider's environment photo (ADR-117).
+	 *
+	 * @param string $key Key.
+	 */
+	public static function is_scene( string $key ): bool {
+		return str_starts_with( $key, self::SCENE );
 	}
 
 	/**
@@ -310,9 +327,9 @@ final class SubmissionFiles {
 		$design = is_array( $design ) ? $design : array();
 		$colors = json_decode( (string) ( $version['colors'] ?? '' ), true );
 		$colors = is_array( $colors ) ? array_values( array_map( 'strval', $colors ) ) : array();
-		// A chosen photo left from a withdrawn version is no file the browser
-		// sends, and a design without a close-up is complete.
-		$mockups = array_filter( $files['mockups'], static fn( int|string $side ): bool => ! str_starts_with( (string) $side, self::PHOTO ) && ! self::is_close( (string) $side ), ARRAY_FILTER_USE_KEY );
+		// A chosen photo or an environment photo left from a withdrawn version
+		// is no file the browser sends, and a design without a close-up is complete.
+		$mockups = array_filter( $files['mockups'], static fn( int|string $side ): bool => ! str_starts_with( (string) $side, self::PHOTO ) && ! self::is_close( (string) $side ) && ! self::is_scene( (string) $side ), ARRAY_FILTER_USE_KEY );
 
 		if ( self::stamp( $version ) !== $files['stamp'] || array() === $colors ) {
 			return false;

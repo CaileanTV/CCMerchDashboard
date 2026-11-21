@@ -1012,7 +1012,12 @@ class DesignerProductRepository {
 		// A mockup first (since ADR-114 it may be a PNG too), else a print file.
 		$json = is_string( $json ) ? $json : null;
 
-		foreach ( SubmissionFiles::decode( $json )['mockups'] as $colors ) {
+		foreach ( SubmissionFiles::decode( $json )['mockups'] as $side => $colors ) {
+			// An environment photo (ADR-117) shows the room more than the product.
+			if ( SubmissionFiles::is_scene( (string) $side ) ) {
+				continue;
+			}
+
 			foreach ( $colors as $file ) {
 				if ( is_string( $file['file'] ?? null ) ) {
 					return $file['file'];

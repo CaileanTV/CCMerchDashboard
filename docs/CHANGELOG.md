@@ -6,9 +6,14 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [2.3.0] - 2026-11-21
 
-Fase 52 (ADR-115). Ingen schemaændring.
+Fase 52 og 53 (ADR-115, ADR-117). Ingen schemaændring.
 
 ### Added
+
+- **Gelatos miljøbilleder på plakater (fase 53, ADR-117):**
+  - hver indsendt plakat får Gelatos billeder af skabelonens scener, fx plakaten på en væg, pr. brugt formatside og retning, i tillæg til de flade billeder;
+  - godkendelsen venter på dem;
+  - i shoppen står de efter de flade billeder og kan vælges som hovedbillede ("Miljø n").
 
 - **Gelato-produkter med egne valg (fase 52, ADR-115):**
   - akser fra skabelonens valg, fx Retning × Størrelse, med danske attributnavne;

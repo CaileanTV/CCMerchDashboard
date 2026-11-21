@@ -626,7 +626,8 @@ final class DesignerCutouts {
 			$side = (string) $side;
 			$view = $views[ $side ] ?? null;
 
-			if ( SubmissionFiles::is_close( $side ) ) {
+			// An environment photo (ADR-117) keeps its room around the product.
+			if ( SubmissionFiles::is_close( $side ) || SubmissionFiles::is_scene( $side ) ) {
 				continue;
 			}
 

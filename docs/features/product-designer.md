@@ -276,8 +276,26 @@ Gelato-skabeloner med andre valg end farve og størrelse, fx plakater med retnin
   - designeren viser en rød stiplet linje med hvid kant og grå nedtoning uden for, med teksten "Alt uden for den røde linje kan blive skåret af.";
   - linjen er en overlægning uden for lærredet og kommer aldrig med i design, printfil, mockups eller billeder;
   - knappen "Hent bleed fra Gelato" på et Gelato-grundprodukt henter bleed igen, også til produkter importeret før 2.3.0. Det giver ingen ny version.
-- **Gelatos egne mockups:** en formatgruppes side beholder browserens billeder på Gelatos foto af gruppen, for gruppesiderne deler placering.
+- **Gelatos egne mockups:** en formatgruppes side beholder browserens billeder på Gelatos foto af gruppen, for gruppesiderne deler placering. Fra fase 53 kommer Gelatos miljøbilleder i tillæg (se nedenfor).
 - **Kun Gelato:** Printful, Prodigi og Printify er uændrede.
+
+## Gelatos miljøbilleder på plakater (fase 53, ADR-117, 2026-11-21)
+
+Gelato-skabelonen kan have flere mockup-scener. Fine Art Poster har en stue med plakaten på væggen og den flade plakat, og Gelato laver ét billede pr. scene.
+- **Importen** gemmer for hver formatside, hvor i Gelatos billedliste de andre scener ligger (`scenes` i leverandørdata, fx `[0]`). Siden designes på det flade billede (`slots`). Plakater importeret før 2.3.0 (stg) skal importeres igen.
+- **Ved indsendelse:**
+  - hver brugt formatside på en valgt retning får sit eget skjulte Gelato-produkt med én variant (gruppens største størrelse i sidens retning) og sidens printfil;
+  - højst 4 produkter oprettes pr. kørsel. De polles hvert 30. sekund, højst 40 gange.
+- **Billederne:**
+  - Gelatos billeder på scenernes pladser gemmes som `_scene-<n>` pr. retning ved siden af browserens billeder, som aldrig erstattes;
+  - på admin-siden hedder de "Miljø 1 (Lodret)" osv.
+- **Godkendelse:** designet kan ikke godkendes, mens billederne laves (`running`). Fejler en side, bliver tilstanden `failed`, de andre siders miljøbilleder bliver, og admin får mailen. Designet kan så godkendes.
+- **Shoppen:**
+  - miljøbillederne står i galleriet efter de flade billeder;
+  - variationsbillederne er de flade;
+  - på et live produkt kan creatoren vælge "Miljø n" som hovedbillede;
+  - miljøbilleder tilbydes ikke til "Billeder uden baggrund".
+- **Gelato-butikken:** hvert produkt bliver liggende (Gelato har intet slettekald). En indsendelse med alle størrelser i begge retninger giver 16.
 
 ## Baggrundsfarve på AOP-produkter (fase 33, ADR-095, 2026-11-07)
 

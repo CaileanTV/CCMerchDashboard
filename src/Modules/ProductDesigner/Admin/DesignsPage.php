@@ -271,6 +271,13 @@ final class DesignsPage {
 		echo '<div style="display:flex;flex-wrap:wrap;gap:8px">';
 
 		foreach ( $slots['mockups'] as $label => $slot ) {
+			[ $key, $color ] = array_pad( explode( ':', (string) $label, 2 ), 2, '' );
+
+			if ( SubmissionFiles::is_scene( $key ) ) {
+				/* translators: 1: number of the environment photo (a poster on a wall), 2: the colour or orientation it shows. */
+				$label = sprintf( __( 'Environment %1$d (%2$s)', 'merchboard' ), (int) substr( $key, strlen( SubmissionFiles::SCENE ) ) + 1, $names[ $color ] ?? $color );
+			}
+
 			echo '<figure style="margin:0;text-align:center"><a href="' . esc_url( DesignerVersionFiles::url( $id, $slot ) ) . '" target="_blank" rel="noopener"><img src="' . esc_url( DesignerVersionFiles::url( $id, $slot ) ) . '" alt="" style="width:160px;height:160px;object-fit:contain;border:1px solid #dcdcde;background:#fff"></a><figcaption>' . esc_html( $label ) . '</figcaption></figure>';
 		}
 

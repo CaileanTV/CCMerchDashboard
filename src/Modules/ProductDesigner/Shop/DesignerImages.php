@@ -18,7 +18,8 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Which image is the product's and in which order the gallery follows: the
  * colours in the creator's order, each with its sides in the base product's
- * order (a chosen photo first, a close-up after its side). The image the
+ * order (a chosen photo first, a close-up after its side, a provider's
+ * environment photos after all sides, ADR-117). The image the
  * creator chose (ADR-096), `<side>:<colour>`, comes first; when a provider
  * replaced it with photos, that colour's first image does. Pure.
  */
@@ -39,8 +40,10 @@ final class DesignerImages {
 		$colors = array_values( array_intersect( $chosen, array_column( $base->colors, 'key' ) ) );
 		$order  = array_flip( array_map( static fn( BaseView $view ): string => $view->key, $base->views ) );
 		$sides  = array_map( 'strval', $sides );
+		// An environment photo comes after every side, in its own order.
+		$rank = static fn( string $key ): int => SubmissionFiles::is_scene( $key ) ? count( $order ) + (int) substr( $key, strlen( SubmissionFiles::SCENE ) ) : ( $order[ SubmissionFiles::side_of( $key ) ] ?? -1 );
 
-		usort( $sides, static fn( string $a, string $b ): int => ( $order[ SubmissionFiles::side_of( $a ) ] ?? -1 ) <=> ( $order[ SubmissionFiles::side_of( $b ) ] ?? -1 ) );
+		usort( $sides, static fn( string $a, string $b ): int => $rank( $a ) <=> $rank( $b ) );
 
 		$images = array();
 		$first  = array();
@@ -70,7 +73,8 @@ final class DesignerImages {
 
 	/**
 	 * Whether a choice names a mockup of the version: `<key>:<colour>` with a
-	 * chosen colour, the key a used side of that colour's design or a photo.
+	 * chosen colour, the key a used side of that colour's design, a photo or
+	 * an environment photo (ADR-117).
 	 *
 	 * @param mixed         $primary The choice.
 	 * @param array<mixed>  $design  The version's design.
@@ -78,11 +82,11 @@ final class DesignerImages {
 	 */
 	public static function valid( mixed $primary, array $design, array $colors ): bool {
 		// The column holds 64 characters (migration 47).
-		if ( ! is_string( $primary ) || strlen( $primary ) > 64 || 1 !== preg_match( '/^([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}):([a-z0-9%_-]{1,32})$/', $primary, $match ) ) {
+		if ( ! is_string( $primary ) || strlen( $primary ) > 64 || 1 !== preg_match( '/^([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}|_scene-[0-9]{1,3}):([a-z0-9%_-]{1,32})$/', $primary, $match ) ) {
 			return false;
 		}
 
-		return in_array( $match[2], $colors, true ) && ( str_starts_with( $match[1], SubmissionFiles::PHOTO ) || in_array( $match[1], SubmissionFiles::used_sides_of( $design, $match[2] ), true ) );
+		return in_array( $match[2], $colors, true ) && ( str_starts_with( $match[1], SubmissionFiles::PHOTO ) || SubmissionFiles::is_scene( $match[1] ) || in_array( $match[1], SubmissionFiles::used_sides_of( $design, $match[2] ), true ) );
 	}
 
 	/**
