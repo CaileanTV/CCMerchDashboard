@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Community\Rest;
 
+use MerchBoard\Core\Http\ClientIp;
 use MerchBoard\Core\Http\RestController;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
@@ -27,8 +28,25 @@ defined( 'ABSPATH' ) || exit;
  * every 10 seconds whether the ad changed (`version`) or "show now" was
  * pressed (`show_at`). The secret id is the credential; at most 60 calls a
  * minute per id. 404 for an unknown id or while the shop has it off.
+ *
+ * The id is looked up first (ADR-116, security review 2026-11-21): only a
+ * known id is counted, so guessing ids writes nothing per id. Unknown ids
+ * are counted per visitor address instead (ClientIp), at most MISSES a
+ * minute, then 429.
  */
 final class MerchAdStatusController extends RestController {
+
+	/**
+	 * Unknown ids a minute per visitor address.
+	 */
+	public const MISSES = 30;
+
+	/**
+	 * Unknown ids per visitor address.
+	 *
+	 * @var OverlayRateLimiter
+	 */
+	private OverlayRateLimiter $misses;
 
 	/**
 	 * The route.
@@ -38,13 +56,15 @@ final class MerchAdStatusController extends RestController {
 	/**
 	 * Constructor.
 	 *
-	 * @param MerchAdRepository  $settings The creators' ads.
-	 * @param MerchAdView        $view     What an ad shows.
-	 * @param OverlayRateLimiter $limiter  Calls per id.
-	 * @param Logger             $logger   Technical log.
+	 * @param MerchAdRepository       $settings The creators' ads.
+	 * @param MerchAdView             $view     What an ad shows.
+	 * @param OverlayRateLimiter      $limiter  Calls per id.
+	 * @param Logger                  $logger   Technical log.
+	 * @param OverlayRateLimiter|null $misses   Unknown ids per visitor address; null for the default.
 	 */
-	public function __construct( private MerchAdRepository $settings, private MerchAdView $view, private OverlayRateLimiter $limiter, Logger $logger ) {
+	public function __construct( private MerchAdRepository $settings, private MerchAdView $view, private OverlayRateLimiter $limiter, Logger $logger, ?OverlayRateLimiter $misses = null ) {
 		parent::__construct( $logger );
+		$this->misses = $misses ?? new OverlayRateLimiter( null, 'merchboard_merchad_miss_', self::MISSES );
 	}
 
 	/**
@@ -75,16 +95,18 @@ final class MerchAdStatusController extends RestController {
 		return $this->run(
 			'/merch-ad',
 			function () use ( $request ): WP_REST_Response|WP_Error {
-				$id = (string) $request->get_param( 'id' );
+				$id         = (string) $request->get_param( 'id' );
+				$creator_id = Settings::merch_ad_enabled() ? $this->settings->creator_for( $id ) : null;
+
+				// Only known ids are counted per id; unknown ones per visitor address.
+				if ( null === $creator_id ) {
+					return $this->misses->allow( 'address|' . ClientIp::address() )
+						? self::error( 'merchboard_not_found', __( 'Not found.', 'merchboard' ), 404 )
+						: self::error( 'merchboard_rate_limited', __( 'Too many requests.', 'merchboard' ), 429 );
+				}
 
 				if ( ! $this->limiter->allow( $id ) ) {
 					return self::error( 'merchboard_rate_limited', __( 'Too many requests.', 'merchboard' ), 429 );
-				}
-
-				$creator_id = Settings::merch_ad_enabled() ? $this->settings->creator_for( $id ) : null;
-
-				if ( null === $creator_id ) {
-					return self::error( 'merchboard_not_found', __( 'Not found.', 'merchboard' ), 404 );
 				}
 
 				$response = new WP_REST_Response(

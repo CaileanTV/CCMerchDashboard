@@ -206,6 +206,18 @@ final class MerchAdTest extends IntegrationTestCase {
 		self::assertSame( 'merchboard_rate_limited', $limited->get_error_code() );
 		delete_transient( 'merchboard_merchad_test_' . substr( hash( 'sha256', $id ), 0, 32 ) );
 
+		// An unknown id is looked up first: nothing is written per id, only per visitor address (security review 2026-11-21).
+		$guesses = new MerchAdStatusController( $this->settings, $this->view, new OverlayRateLimiter( null, 'merchboard_merchad_test_', 2 ), new RecordingLogger(), new OverlayRateLimiter( null, 'merchboard_merchad_miss_test_' . wp_generate_password( 6, false ) . '_', 2 ) );
+		$guess   = str_repeat( 'c', 32 );
+
+		foreach ( array( 404, 404, 429 ) as $expected ) {
+			$answer = $guesses->status( $this->json( 'GET', array(), array( 'id' => $guess ) ) );
+			self::assertInstanceOf( WP_Error::class, $answer );
+			self::assertSame( $expected, $answer->get_error_data()['status'] ?? null );
+		}
+
+		self::assertFalse( get_transient( 'merchboard_merchad_test_' . substr( hash( 'sha256', $guess ), 0, 32 ) ), 'No counter for an unknown id.' );
+
 		Settings::save( array_merge( Settings::all(), array( Settings::COMMUNITY_MERCH_AD_ENABLED => false ) ) );
 		self::assertInstanceOf( WP_Error::class, $controller->permission() );
 		$off = $status->status( $this->json( 'GET', array(), array( 'id' => str_repeat( 'b', 32 ) ) ) );
