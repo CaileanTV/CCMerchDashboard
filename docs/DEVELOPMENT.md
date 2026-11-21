@@ -251,7 +251,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 2.3.0: Gelato-produkter med egne valg, formatgrupper og skærelinje (fase 52, ADR-115)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-21.** Ingen schemaændring. Testpakke på stg: `merchboard-mvp-2.3.0.zip` fra 418b320, sha256 `3e9adbd3436aac38eb582766927d0b504eb045ad1fecfef465a333a72b8858c1`. Den erstatter pakkerne fra b14b161, c77d4aa og 9f99818. Tag efter projektejerens OK og grøn CI.
+**Versions-bump og CHANGELOG-sektion 2026-11-21.** Ingen schemaændring. Fase 52 og 53. Testpakke på stg: `merchboard-mvp-2.3.0.zip` fra b50ce3c, sha256 `6a57ca349f6f55f50cc66b7df441150a7817a818ae41096c3010c3ac5121041a`. Den erstatter alle tidligere 2.3.0-pakker. Tag efter projektejerens OK og grøn CI.
 
 1. **Opdatér** med ZIP'en. Overview skal vise version 2.3.0 og schema-version 52.
 2. **Import af plakaten:**
@@ -271,6 +271,12 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 5. **Butikken:** produktet har attributterne "Retning" og "Størrelse", og en lodret variant viser det lodrette billede.
 6. **Ordren:** printfil-linket på en ordrelinje i en størrelse med anden form (fx 21×29,7 i A-gruppen) giver en fil beskåret til størrelsens form.
 7. **Tøj fra Gelato:** importerer som før (farve × størrelse, én side pr. placering).
+8. **Miljøbilleder (fase 53, ADR-117):**
+   - importér plakaten igen, så den kender Gelatos scener;
+   - indsend en plakat i fx lodret A3 og vandret A3. Admin-siden siger, at mockups laves, og designet kan ikke godkendes imens;
+   - efter 2–6 minutter viser admin-siden "Miljø 1 (Lodret)" og "Miljø 1 (Vandret)" med designet på væggen, ved siden af de flade billeder;
+   - godkend. Shoppen viser miljøbillederne i galleriet efter de flade, og på det live produkt kan "Miljø 1" vælges som hovedbillede;
+   - Gelato-butikken får ét skjult produkt pr. brugt formatside.
 
 **Tilbagerulning:** installér 2.2.1-ZIP'en igen. Sider med `colors` og `formats` læses af 2.2.1 som almindelige sider pr. størrelse. Formatgrupperne har kun deres egne størrelser, så designs bliver ved med at virke.
 
