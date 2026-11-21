@@ -1561,7 +1561,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - CI og runtime på stg mangler. Runtime kan kun ske på stg, for Gelato henter printfilen via URL;
   - plakaten skal importeres igen for at få `scenes`.
 
-## Fase 54 – Fælles design på tværs af plakatformater 🔄 (projektejerens ønske og godkendelse 2026-11-21; version 2.4.0; ADR-118)
+## Fase 54 – Fælles design på tværs af plakatformater 🔄 (projektejerens ønske og godkendelse 2026-11-21; version 2.3.0 sammen med fase 52 og 53, projektejerens valg 2026-11-22; ADR-118)
 
 **Baggrund:** i dag skal creatoren designe hver formatside af en plakat for sig, og størrelserne vælges i én flad liste.
 
@@ -1572,7 +1572,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - API'et fortæller, hvilke sider der er formatsider.
 - **54.3 Editoren:** "Fælles design"/"Eget design" og tilpasning pr. fane, "Fælles med …", grupperet størrelsesliste, danske tekster.
 - **54.4 Serveren:** `DesignValidator` (`formats`), "Kopiér design" rydder links, tests.
-- **54.5 Test og levering:** Jest, PHP, runtime i Playground, CI og testpakke 2.4.0 på stg.
+- **54.5 Test og levering:** Jest, PHP, runtime i Playground, CI og testpakke 2.3.0 på stg.
 - **Toggle (projektejerens ønske under fasen):** fælles design kan slås til og fra pr. grundprodukt af admin. Det gemmes som `share_formats` i leverandørdata og er slået til, når intet er valgt.
 - ✅ 54.1–54.5 bygget 2026-11-22:
   - **Tests:** lint, PHP-unit og Jest er grønne.
@@ -1583,9 +1583,9 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
     - gem gemmer `formats`;
     - indsendelse gav en printfil og en mockup pr. format (submit 200).
   - **Fundet undervejs:** et langt produktnavn gjorde designeren bredere end mobilen (rettet). `/me/go-live` og andre kald gav tilfældigt 500 i Playground, der ikke har `GET_LOCK`; det har intet med fasen at gøre.
-  - **Mangler:** CI, og testpakke 2.4.0 på stg efter projektejerens test af 2.3.0.
+  - **Mangler:** projektejerens test af 2.3.0 (fase 52–54) på stg og tag efter OK.
 
-## Fase 55 – Creatoren anmoder om at få designs samlet (ccmerch-design-samling) 💡 (projektejerens idé 2026-11-22; version 2.5.0; tages op, når 2.3.0 er færdig; ikke planlagt)
+## Fase 55 – Creatoren anmoder om at få designs samlet (ccmerch-design-samling) 💡 (projektejerens idé 2026-11-22; version 2.4.0; tages op, når 2.3.0 er færdig; ikke planlagt)
 
 **Ønsket:** en creator kan anmode om, at nogle af sine designs samles med virksomhedens system "ccmerch-design-samling".
 

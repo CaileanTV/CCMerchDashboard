@@ -7107,7 +7107,7 @@ Accepteret af projektejeren 2026-11-21 (planen godkendt). Projektejerens valg:
 - creatoren vælger tilpasningen pr. format;
 - deling sker pr. retning.
 
-Version 2.4.0 (fase 54).
+Version 2.3.0 sammen med fase 52 og 53 (fase 54; projektejerens valg 2026-11-22).
 
 ## Context
 **I dag:** en plakat (ADR-115) har en formatside pr. formatgruppe og retning, fx "Lodret – format 1" (A-serien) og "Lodret – format 2" (kvadrat). Creatoren skal lave et design på hver side for sig, og størrelserne vælges i én flad liste.

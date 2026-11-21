@@ -4,9 +4,9 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
-## [2.4.0] - 2026-11-22
+## [2.3.0] - 2026-11-22
 
-Fase 54 (ADR-118). Ingen schemaændring.
+Fase 52, 53 og 54 (ADR-115, ADR-117, ADR-118). Ingen schemaændring.
 
 ### Added
 
@@ -16,17 +16,6 @@ Fase 54 (ADR-118). Ingen schemaændring.
   - et format kan få sit eget design og senere komme tilbage til det fælles;
   - størrelserne vælges pr. format, med "hele formatet" på én gang;
   - admin kan slå det fra pr. grundprodukt ("Fælles design på tværs af formater").
-
-### Fixed
-
-- **Designeren på mobil:** et langt produktnavn gjorde siden bredere end skærmen. Nu afkortes navnet.
-- **Test:** en billedtest kunne opbruge PHP's hukommelse (128 MB) i nogle testrækkefølger.
-
-## [2.3.0] - 2026-11-21
-
-Fase 52 og 53 (ADR-115, ADR-117). Ingen schemaændring.
-
-### Added
 
 - **Gelatos miljøbilleder på plakater (fase 53, ADR-117):**
   - hver indsendt plakat får Gelatos billeder af skabelonens scener, fx plakaten på en væg, pr. brugt formatside og retning, i tillæg til de flade billeder;
@@ -52,6 +41,8 @@ Fase 52 og 53 (ADR-115, ADR-117). Ingen schemaændring.
 
 ### Fixed
 
+- **Designeren på mobil:** et langt produktnavn gjorde siden bredere end skærmen. Nu afkortes navnet.
+- **Test:** en billedtest kunne opbruge PHP's hukommelse (128 MB) i nogle testrækkefølger.
 - **Designfeltet på plakater (formatgrupper) går helt ud til plakatens kant** (projektejerens test på stg 2026-11-21). Før lå der en hvid stribe af plakaten rundt om feltet:
   - målingen skar 1 % af markøren væk i hver kant mod løse pixels og så kun på hver 4. pixel;
   - feltet blev lagt inden i markøren.

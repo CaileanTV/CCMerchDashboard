@@ -249,24 +249,9 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
-## Release 2.4.0: fælles design på tværs af plakatformater (fase 54, ADR-118)
+## Release 2.3.0: Gelato-plakater med formater, miljøbilleder og fælles design (fase 52–54, ADR-115, ADR-117, ADR-118)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-22.** Ingen schemaændring. Testpakke: `merchboard-mvp-2.4.0.zip` fra 977104e (kode som 2e0a48f), sha256 `acd4156db950a59ac36e45984869d55794dbb1ea42c1ee9250adeab2336ada7f`. 2.3.0 tagges for sig på 7a90f1c, når den er testet. Tag 2.4.0 efter projektejerens OK og grøn CI.
-
-1. **Opdatér** med ZIP'en. Overview skal vise version 2.4.0.
-2. **Grundproduktet (plakaten):** "Fælles design på tværs af formater" er sat til. Tag fluebenet af, gem, og se, at designeren designer hvert format for sig. Sæt det til igen.
-3. **Designeren:**
-   - **Størrelser:** de står grupperet pr. format, og "Lodret – format 1" vælger hele formatet;
-   - **Fælles design:** et billede eller en tekst på det ene format vises tilpasset på de andre lodrette formater ("Fælles med: …");
-   - **Tilpasning:** prøv "smart", "fyld formatet" og "hele designet inden for" på et format med en anden form;
-   - **Eget design:** giv et format eget design, ret det, og se, at de andre ikke følger med. "Fælles design" igen spørger først.
-4. **Indsendelse:** hver valgt formatside får sin egen printfil i sit eget mål. Gelatos miljøbilleder laves pr. side som i 2.3.0.
-
-**Tilbagerulning:** installér 2.3.0-ZIP'en. Den læser kopierne i `sides` som almindelige designs pr. format og ser bort fra `formats`.
-
-## Release 2.3.0: Gelato-produkter med egne valg, formatgrupper og skærelinje (fase 52, ADR-115)
-
-**Versions-bump og CHANGELOG-sektion 2026-11-21.** Ingen schemaændring. Fase 52 og 53. Testpakke på stg: `merchboard-mvp-2.3.0.zip` fra b50ce3c, sha256 `6a57ca349f6f55f50cc66b7df441150a7817a818ae41096c3010c3ac5121041a`. Den erstatter alle tidligere 2.3.0-pakker. Tag efter projektejerens OK og grøn CI.
+**Versions-bump og CHANGELOG-sektion 2026-11-21, fase 54 med 2026-11-22** (projektejerens valg: alt til og med fase 54 er 2.3.0). Ingen schemaændring. Testpakke på stg: se ROADMAP fase 54. Den erstatter alle tidligere 2.3.0- og 2.4.0-pakker. Tag efter projektejerens OK og grøn CI.
 
 1. **Opdatér** med ZIP'en. Overview skal vise version 2.3.0 og schema-version 52.
 2. **Import af plakaten:**
@@ -292,8 +277,15 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
    - efter 2–6 minutter viser admin-siden "Miljø 1 (Lodret)" og "Miljø 1 (Vandret)" med designet på væggen, ved siden af de flade billeder;
    - godkend. Shoppen viser miljøbillederne i galleriet efter de flade, og på det live produkt kan "Miljø 1" vælges som hovedbillede;
    - Gelato-butikken får ét skjult produkt pr. brugt formatside.
+9. **Fælles design (fase 54, ADR-118), grundproduktet:** "Fælles design på tværs af formater" er sat til. Tag fluebenet af, gem, og se, at designeren designer hvert format for sig. Sæt det til igen.
+10. **Fælles design, designeren:**
+   - **Størrelser:** de står grupperet pr. format, og "Lodret – format 1" vælger hele formatet;
+   - **Fælles design:** et billede eller en tekst på det ene format vises tilpasset på de andre lodrette formater ("Fælles med: …");
+   - **Tilpasning:** prøv "smart", "fyld formatet" og "hele designet inden for" på et format med en anden form;
+   - **Eget design:** giv et format eget design, ret det, og se, at de andre ikke følger med. "Fælles design" igen spørger først.
+11. **Fælles design, indsendelse:** hver valgt formatside får sin egen printfil i sit eget mål og sine egne miljøbilleder fra Gelato.
 
-**Tilbagerulning:** installér 2.2.1-ZIP'en igen. Sider med `colors` og `formats` læses af 2.2.1 som almindelige sider pr. størrelse. Formatgrupperne har kun deres egne størrelser, så designs bliver ved med at virke.
+**Tilbagerulning:** installér 2.2.1-ZIP'en igen. Sider med `colors` og `formats` læses af 2.2.1 som almindelige sider pr. størrelse. Formatgrupperne har kun deres egne størrelser, så designs bliver ved med at virke. 2.2.1 ser bort fra `formats` (fase 54), og hvert formats kopi i `sides` bliver et almindeligt eget design.
 
 ## Release 2.2.1: sikkerhedsrettelser (ADR-116)
 
