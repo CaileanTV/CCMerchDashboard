@@ -251,7 +251,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 2.4.0: fælles design på tværs af plakatformater (fase 54, ADR-118)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-22.** Ingen schemaændring. 2.3.0 tagges for sig, når den er testet. Tag 2.4.0 efter projektejerens OK og grøn CI.
+**Versions-bump og CHANGELOG-sektion 2026-11-22.** Ingen schemaændring. Testpakke: `merchboard-mvp-2.4.0.zip` fra 977104e (kode som 2e0a48f), sha256 `acd4156db950a59ac36e45984869d55794dbb1ea42c1ee9250adeab2336ada7f`. 2.3.0 tagges for sig på 7a90f1c, når den er testet. Tag 2.4.0 efter projektejerens OK og grøn CI.
 
 1. **Opdatér** med ZIP'en. Overview skal vise version 2.4.0.
 2. **Grundproduktet (plakaten):** "Fælles design på tværs af formater" er sat til. Tag fluebenet af, gem, og se, at designeren designer hvert format for sig. Sæt det til igen.
