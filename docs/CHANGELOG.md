@@ -25,6 +25,11 @@ Fase 52 (ADR-115). Ingen schemaændring.
   - størrelserne sorteres;
   - printflade "1" hedder "Forside";
   - dubletter tælles og vises.
+- **Pris pr. størrelse på grundproduktet:** felterne står i en tabel med valuta, så mange størrelser (fx plakatens 29) står på række.
+
+### Fixed
+
+- **Pris pr. størrelse:** en størrelse med et almindeligt anførselstegn (fx plakatens `21x29.7 cm / 8x12"`) mistede sin pris ved gem, fordi formularen sendes som multipart, og der skrives `"` i et feltnavn som `%22`. Størrelsens navn sendes nu som værdi.
 
 ## [2.2.1] - 2026-11-21
 

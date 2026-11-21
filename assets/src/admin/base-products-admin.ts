@@ -487,22 +487,48 @@ function attachSizePrices(
 			return;
 		}
 
-		for ( const size of sizesOf( sizes.value ) ) {
-			const row = document.createElement( 'p' );
+		// One row per size, as a table so the fields line up with many sizes.
+		const table = document.createElement( 'table' );
+		const body = document.createElement( 'tbody' );
+
+		table.className = 'widefat striped';
+		table.style.maxWidth = '36em';
+		sizesOf( sizes.value ).forEach( ( size, index ) => {
+			const row = document.createElement( 'tr' );
+			const head = document.createElement( 'th' );
+			const cell = document.createElement( 'td' );
 			const label = document.createElement( 'label' );
+			const name = document.createElement( 'input' );
 			const input = document.createElement( 'input' );
 
+			head.scope = 'row';
+			// Tighter than the form table's own cells around it.
+			for ( const box of [ head, cell ] ) {
+				box.style.padding = '6px 10px';
+				box.style.verticalAlign = 'middle';
+			}
+			label.htmlFor = `merchboard-size-price-${ index }`;
+			label.textContent = size;
+			head.append( label );
+			// The size travels as a value: a multipart form escapes a quote
+			// in a field name, so "8x12\"" would lose its price.
+			name.type = 'hidden';
+			name.name = `size_price_names[${ index }]`;
+			name.value = size;
+			input.id = label.htmlFor;
 			input.type = 'text';
 			input.inputMode = 'decimal';
-			input.name = `size_prices[${ size }]`;
+			input.name = `size_prices[${ index }]`;
 			input.value = prices.get( size ) ?? '';
 			input.addEventListener( 'input', () =>
 				prices.set( size, input.value )
 			);
-			label.append( `${ size } `, input );
-			row.append( label );
-			holder.append( row );
-		}
+			cell.append( name, input, ` ${ holder.dataset.currency ?? '' }` );
+			row.append( head, cell );
+			body.append( row );
+		} );
+		table.append( body );
+		holder.append( table );
 	};
 
 	tick.addEventListener( 'change', draw );

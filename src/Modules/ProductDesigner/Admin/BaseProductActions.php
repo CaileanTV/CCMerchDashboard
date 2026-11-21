@@ -110,7 +110,7 @@ final class BaseProductActions {
 					$fields['background_color'] = '1' === $text( 'background_color' ) ? '1' : '0';
 					// The ticked product tags (ADR-100); none ticked removes them all.
 					$fields['tag_ids']     = (string) wp_json_encode( array_values( array_map( 'absint', is_array( $input['tag_ids'] ?? null ) ? $input['tag_ids'] : array() ) ) );
-					$fields['size_prices'] = (string) wp_json_encode( '1' === $text( 'size_priced' ) && is_array( $input['size_prices'] ?? null ) ? $input['size_prices'] : array() );
+					$fields['size_prices'] = (string) wp_json_encode( '1' === $text( 'size_priced' ) ? self::entered_size_prices( $input ) : array() );
 
 					$before = $id > 0 ? BasePriceSchedule::scheduled( $id ) : null;
 					$saved  = $this->bases->save( $id > 0 ? $id : null, $fields, self::views( $input, $files ) );
@@ -231,6 +231,34 @@ final class BaseProductActions {
 
 			return BaseProductsPage::url( 'error' );
 		}
+	}
+
+	/**
+	 * The entered prices by size. The form sends each size's name as a value
+	 * (`size_price_names[i]` beside `size_prices[i]`), because a multipart
+	 * form escapes a quote in a field name (`8x12"` arrives as `8x12%22`).
+	 * Without the names, `size_prices` is read as keyed by size.
+	 *
+	 * @param array<mixed> $input Request data.
+	 * @return array<mixed>
+	 */
+	public static function entered_size_prices( array $input ): array {
+		$prices = is_array( $input['size_prices'] ?? null ) ? $input['size_prices'] : array();
+		$names  = $input['size_price_names'] ?? null;
+
+		if ( ! is_array( $names ) ) {
+			return $prices;
+		}
+
+		$entered = array();
+
+		foreach ( $names as $index => $name ) {
+			if ( is_string( $name ) && is_scalar( $prices[ $index ] ?? null ) ) {
+				$entered[ $name ] = (string) $prices[ $index ];
+			}
+		}
+
+		return $entered;
 	}
 
 	/**

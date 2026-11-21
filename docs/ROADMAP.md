@@ -1533,6 +1533,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
     - den røde skærelinje og teksten om beskæring;
     - "Retning" over værdierne;
     - desktop og mobil, ingen konsolfejl.
+  - ✅ grundpris pr. størrelse på plakaten (projektejerens ønske 2026-11-21; fandtes fra fase 30): runtime i Playground med plakatens størrelsesnavne. Størrelsen `8x12"` mistede sin pris ved gem (rettet: navnet sendes som værdi), og felterne står nu i en tabel.
   - **Mangler:** importen mod Gelato og en rigtig indsendelse sker på stg (testpakke 2.3.0), CI og tag efter projektejerens OK.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
