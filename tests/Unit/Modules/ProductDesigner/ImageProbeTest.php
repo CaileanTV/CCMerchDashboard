@@ -64,28 +64,29 @@ final class ImageProbeTest extends TestCase {
 	}
 
 	public function test_a_poster_s_marker_has_its_exact_edges_beside_the_trimmed_box(): void {
+		// Large enough to be sampled every 2nd pixel, small enough for 128 MB in any test order.
 		$wall   = array( 200, 190, 180 );
 		$paper  = array( 250, 250, 250 );
-		$blank  = Photo::png( 2000, 1500, $wall, array( array( 301, 203, 1203, 1001, $paper ) ) );
+		$blank  = Photo::png( 1200, 900, $wall, array( array( 181, 123, 723, 601, $paper ) ) );
 		$marker = Photo::png(
-			2000,
-			1500,
+			1200,
+			900,
 			$wall,
 			array(
-				array( 301, 203, 1203, 1001, array( 255, 0, 255 ) ),
+				array( 181, 123, 723, 601, array( 255, 0, 255 ) ),
 				// A stray magenta speck elsewhere on the wall.
-				array( 1800, 1400, 3, 3, array( 255, 0, 255 ) ),
+				array( 1100, 850, 3, 3, array( 255, 0, 255 ) ),
 			)
 		);
 		$found = ImageProbe::markers( $blank, $marker, 1 )['found'][0];
 
-		self::assertGreaterThanOrEqual( 8, 301 + 1203 - ( $found['x'] + $found['width'] ), 'The trimmed box stops short of the right edge.' );
+		self::assertGreaterThanOrEqual( 4, 181 + 723 - ( $found['x'] + $found['width'] ), 'The trimmed box stops short of the right edge.' );
 		self::assertSame(
 			array(
-				'x'      => 300,
-				'y'      => 202,
-				'width'  => 1205,
-				'height' => 1003,
+				'x'      => 180,
+				'y'      => 122,
+				'width'  => 725,
+				'height' => 603,
 			),
 			$found['edge'],
 			'The exact edges, one pixel more on each side; the speck is left out.'
