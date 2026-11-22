@@ -109,6 +109,28 @@ final class DesignCollectionsTest extends TestCase {
 		return new DesignCollections( static fn(): bool => $active );
 	}
 
+	public function test_the_design_a_collections_page_shows_is_the_plugins_choice(): void {
+		$collection = new class() {
+			/**
+			 * The plugin's choice, as its product class answers.
+			 *
+			 * @return array{id: string}
+			 */
+			public function get_selected_member(): array {
+				return array( 'id' => '22' );
+			}
+		};
+		Functions\when( 'wc_get_product' )->justReturn( $collection );
+
+		self::assertSame( self::OTHER, $this->collections()->displayed( self::COLLECTION ) );
+		self::assertSame( self::DESIGN, $this->collections()->displayed( self::DESIGN ), 'A product is itself.' );
+		self::assertSame( self::COLLECTION, $this->collections( false )->displayed( self::COLLECTION ), 'Without the plugin nothing is chosen.' );
+
+		Functions\when( 'wc_get_product' )->justReturn( false );
+
+		self::assertSame( self::COLLECTION, $this->collections()->displayed( self::COLLECTION ) );
+	}
+
 	public function test_a_collection_is_known_by_its_type_also_without_designs(): void {
 		$this->product( 30, DesignCollections::TYPE );
 
