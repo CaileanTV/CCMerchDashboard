@@ -5,7 +5,8 @@
  * gift's query arguments; GiftPurchase::add() checks the nonce.
  *
  * On a design collection's page the buyer also chooses the design
- * (ADR-120): `designs` and `chosen`.
+ * (ADR-120): `designs` and `chosen`, and `free` when the collection can be
+ * given with free choice.
  *
  * Rendered by GiftPurchase::box(); every value is escaped here. The CSS
  * is scoped to `.merchboard-gift-box` and needs no JavaScript; the LIVE
@@ -96,6 +97,9 @@ wp_parse_str( (string) wp_parse_url( $merchboard_url, PHP_URL_QUERY ), $merchboa
 				<?php esc_html_e( 'Which design do you give?', 'merchboard' ); ?>
 				<select class="merchboard-gift-box__quantity" name="<?php echo esc_attr( $merchboard_text( 'query' ) ); ?>" required>
 					<option value=""><?php esc_html_e( 'Choose a design', 'merchboard' ); ?></option>
+					<?php if ( '' !== $merchboard_text( 'free' ) ) : ?>
+						<option value="<?php echo esc_attr( $merchboard_text( 'free' ) ); ?>"><?php esc_html_e( 'Free choice: the winner chooses the design', 'merchboard' ); ?></option>
+					<?php endif; ?>
 					<?php foreach ( $merchboard_designs as $merchboard_design ) : ?>
 						<?php if ( is_array( $merchboard_design ) && is_scalar( $merchboard_design['id'] ?? null ) && is_scalar( $merchboard_design['name'] ?? null ) ) : ?>
 							<option value="<?php echo esc_attr( (string) $merchboard_design['id'] ); ?>"<?php echo (string) $merchboard_design['id'] === $merchboard_text( 'chosen' ) ? ' selected' : ''; ?>><?php echo esc_html( (string) $merchboard_design['name'] ); ?></option>

@@ -41,9 +41,19 @@ final readonly class FreeChoiceLock {
 	}
 
 	/**
-	 * As it is stored.
+	 * As it is stored in a column.
 	 */
 	public function to_json(): string {
+		return (string) wp_json_encode( $this->to_array() );
+	}
+
+	/**
+	 * As it is stored on an order line: as values, which keep their
+	 * backslashes whether or not the store unslashes them.
+	 *
+	 * @return array{collection: int, name: string, designs: list<array{id: int, creator: int, variants: list<array{attributes: array<string, string>, price: int, base: int}>}>}
+	 */
+	public function to_array(): array {
 		$designs = array();
 
 		foreach ( $this->designs as $id => $design ) {
@@ -54,22 +64,20 @@ final readonly class FreeChoiceLock {
 			);
 		}
 
-		return (string) wp_json_encode(
-			array(
-				'collection' => $this->collection_id,
-				'name'       => $this->name,
-				'designs'    => $designs,
-			)
+		return array(
+			'collection' => $this->collection_id,
+			'name'       => $this->name,
+			'designs'    => $designs,
 		);
 	}
 
 	/**
 	 * A stored value, or null for none and for anything unreadable.
 	 *
-	 * @param mixed $stored The column's value.
+	 * @param mixed $stored The column's or the order line's value.
 	 */
 	public static function from_stored( mixed $stored ): ?self {
-		$data = is_string( $stored ) && '' !== $stored ? json_decode( $stored, true ) : null;
+		$data = is_string( $stored ) && '' !== $stored ? json_decode( $stored, true ) : $stored;
 
 		if ( ! is_array( $data ) || ! is_int( $data['collection'] ?? null ) || ! is_string( $data['name'] ?? null ) || ! is_array( $data['designs'] ?? null ) ) {
 			return null;

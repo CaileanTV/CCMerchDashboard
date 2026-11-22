@@ -539,7 +539,8 @@ final class CommunityModule implements Module {
 						'login' => (string) $channel->broadcaster_login,
 					) : null;
 				},
-				$c->get( DesignCollections::class )
+				$c->get( DesignCollections::class ),
+				$c->get( FreeChoiceDesigns::class )
 			)
 		);
 		$container->set(

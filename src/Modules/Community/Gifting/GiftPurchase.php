@@ -39,6 +39,10 @@ defined( 'ABSPATH' ) || exit;
  *   (incl. VAT) per gift.
  * - The buyer's optional name is the alerts' username field (with its
  *   checkbox in the block checkout); without one the gift is anonymous.
+ * - A collection whose designs cost the same can be given with free choice
+ *   (ADR-120): the cart holds the design the purchase is booked on, the
+ *   collection is never a line, and the designs and prices are locked on
+ *   the order line at the checkout.
  * - When the order is paid its gifts are recorded once per unit and handed
  *   to the draws; a cancelled or refunded order cancels the gifts that have
  *   no winner.
@@ -54,6 +58,16 @@ final class GiftPurchase {
 	 * Order line meta: the gift's creator.
 	 */
 	public const LINE_META = '_merchboard_gift';
+
+	/**
+	 * Cart item key: the collection given with free choice (ADR-120).
+	 */
+	public const FREE_KEY = 'merchboard_gift_free';
+
+	/**
+	 * Order line meta: what was locked with free choice.
+	 */
+	public const FREE_META = '_merchboard_gift_free';
 
 	/**
 	 * The gift shipping (incl. VAT).
@@ -132,8 +146,9 @@ final class GiftPurchase {
 	 * @param Logger                    $logger     Technical log.
 	 * @param Closure|null              $channel    A creator's name and Twitch login for the gift box; null shows no channel link.
 	 * @param DesignCollections         $collections The design collections (ADR-120).
+	 * @param FreeChoiceDesigns|null    $free        Free choice in a collection; null offers none.
 	 */
-	public function __construct( private GiftingSettingsRepository $settings, private GiftRepository $gifts, Closure $creator_of, Closure $live, Closure $on_paid, private Logger $logger, ?Closure $channel = null, private DesignCollections $collections = new DesignCollections() ) {
+	public function __construct( private GiftingSettingsRepository $settings, private GiftRepository $gifts, Closure $creator_of, Closure $live, Closure $on_paid, private Logger $logger, ?Closure $channel = null, private DesignCollections $collections = new DesignCollections(), private ?FreeChoiceDesigns $free = null ) {
 		$this->creator_of = $creator_of;
 		$this->live       = $live;
 		$this->on_paid    = $on_paid;
@@ -225,9 +240,15 @@ final class GiftPurchase {
 		$asked  = isset( $_GET['design'] ) ? absint( $_GET['design'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The plugin's read-only choice of design.
 		$choice = ( new GiftDesigns( $this->collections, $this->gift_of( ... ) ) )->choice( (int) $product->get_id(), $asked );
 
-		if ( null !== $choice ) {
-			$this->box( $choice['creator'], (int) $product->get_id(), $choice['designs'], $choice['chosen'] );
+		if ( null === $choice ) {
+			return;
 		}
+
+		// Read only here, where the creator is live: every design's prices are read.
+		$offer = null === $choice['creator'] ? null : $this->free?->offer( (int) $product->get_id() );
+		$free  = null !== $offer && $this->giftable( $offer['product_id'] ) === $choice['creator'];
+
+		$this->box( $choice['creator'], (int) $product->get_id(), $choice['designs'], $choice['chosen'], $free );
 	}
 
 	/**
@@ -260,14 +281,17 @@ final class GiftPurchase {
 	 * @param int      $product_id The page's product.
 	 * @param array[]  $designs    A collection's designs to choose from.
 	 * @param int      $chosen     The design the buyer chose, 0 for none.
+	 * @param bool     $free       Whether the collection can be given with free choice.
 	 */
-	private function box( ?int $creator_id, int $product_id, array $designs = array(), int $chosen = 0 ): void {
+	private function box( ?int $creator_id, int $product_id, array $designs = array(), int $chosen = 0, bool $free = false ): void {
 		$channel        = null === $this->channel || null === $creator_id ? null : ( $this->channel )( $creator_id );
 		$merchboard_box = array(
 			'action'   => self::permalink( $product_id ),
 			'product'  => $product_id,
 			'designs'  => $designs,
 			'chosen'   => $chosen,
+			// The collection's own id stands for free choice.
+			'free'     => $free ? $product_id : '',
 			'query'    => self::QUERY,
 			'quantity' => self::QUANTITY,
 			'nonce'    => wp_create_nonce( self::NONCE ),
@@ -303,12 +327,25 @@ final class GiftPurchase {
 			return;
 		}
 
-		$nonce   = isset( $_GET['_wpnonce'] ) ? sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ) : '';
-		$product = wc_get_product( $product_id );
-		$back    = $this->collections->design_url( $product_id );
-		$back    = '' === $back ? home_url( '/' ) : $back;
+		$nonce = isset( $_GET['_wpnonce'] ) ? sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+		$valid = false !== wp_verify_nonce( $nonce, self::NONCE );
+		$back  = $this->collections->design_url( $product_id );
+		$back  = '' === $back ? home_url( '/' ) : $back;
+		$data  = array( self::ITEM_KEY => true );
 
-		if ( false === wp_verify_nonce( $nonce, self::NONCE ) || ! $product instanceof WC_Product || null === $this->giftable( $product_id ) ) {
+		// A collection is free choice, and never the line: the design it is booked on is.
+		if ( $valid && $this->collections->is_collection( $product_id ) ) {
+			$offer = $this->free?->offer( $product_id );
+
+			if ( null !== $offer ) {
+				$data[ self::FREE_KEY ] = $product_id;
+				$product_id             = $offer['product_id'];
+			}
+		}
+
+		$product = $valid ? wc_get_product( $product_id ) : null;
+
+		if ( ! $product instanceof WC_Product || null === $this->giftable( $product_id ) ) {
 			wc_add_notice( __( 'The gift cannot be bought right now.', 'merchboard' ), 'error' );
 			wp_safe_redirect( $back );
 			exit;
@@ -323,7 +360,7 @@ final class GiftPurchase {
 		[ $variation_id, $attributes ] = self::cheapest( $product );
 		$quantity                      = isset( $_GET[ self::QUANTITY ] ) ? self::quantity( absint( $_GET[ self::QUANTITY ] ) ) : 1; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Verified above.
 
-		if ( false === WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $attributes, array( self::ITEM_KEY => true ) ) ) {
+		if ( false === WC()->cart->add_to_cart( $product_id, $quantity, $variation_id, $attributes, $data ) ) {
 			wc_add_notice( __( 'The gift cannot be bought right now.', 'merchboard' ), 'error' );
 			wp_safe_redirect( $back );
 			exit;
@@ -371,11 +408,45 @@ final class GiftPurchase {
 		}
 
 		$product    = $gift['data'] ?? null;
-		$creator_id = $product instanceof WC_Product ? ( $this->creator_of )( self::parent_of( $product ) ) : null;
+		$parent     = $product instanceof WC_Product ? self::parent_of( $product ) : 0;
+		$creator_id = $parent > 0 ? ( $this->creator_of )( $parent ) : null;
 
 		if ( null === $creator_id || ! Settings::twitch_gifting_enabled() || ! $this->settings->find( $creator_id )->open() ) {
 			wc_add_notice( __( 'Gifts cannot be bought for this stream right now. Please remove the gift from the cart.', 'merchboard' ), 'error' );
+
+			return;
 		}
+
+		$collection = self::free_of( $gift );
+
+		if ( $collection > 0 && null === $this->lock_now( $collection, $parent, $creator_id ) ) {
+			wc_add_notice( __( 'This collection can no longer be given with free choice. Please remove the gift from the cart and choose a design to give.', 'merchboard' ), 'error' );
+		}
+	}
+
+	/**
+	 * What free choice locks at this moment, or null when the cart's design
+	 * cannot be booked with free choice in that collection any more.
+	 *
+	 * @param int $collection_id The collection.
+	 * @param int $product_id    The design in the cart.
+	 * @param int $creator_id    Its creator.
+	 */
+	private function lock_now( int $collection_id, int $product_id, int $creator_id ): ?FreeChoiceLock {
+		$offer = $this->free?->offer( $collection_id );
+
+		return null !== $offer && $creator_id === $offer['creator'] && in_array( $product_id, $offer['lock']->product_ids(), true ) ? $offer['lock'] : null;
+	}
+
+	/**
+	 * The collection a cart item gives with free choice, or 0.
+	 *
+	 * @param array<mixed> $item Cart item.
+	 */
+	private static function free_of( array $item ): int {
+		$id = $item[ self::FREE_KEY ] ?? null;
+
+		return is_int( $id ) && $id > 0 ? $id : 0;
 	}
 
 	/**
@@ -437,6 +508,18 @@ final class GiftPurchase {
 	public function item_data( mixed $data, mixed $item ): mixed {
 		if ( ! is_array( $item ) || true !== ( $item[ self::ITEM_KEY ] ?? false ) ) {
 			return $data;
+		}
+
+		$collection = self::free_of( $item );
+
+		if ( $collection > 0 ) {
+			return array(
+				array(
+					'key'   => __( 'Free choice', 'merchboard' ),
+					/* translators: %s: the collection's name. */
+					'value' => sprintf( __( '%s: each gift is won by a viewer in the stream, who chooses design, size and colour.', 'merchboard' ), FreeChoiceDesigns::name( $collection ) ),
+				),
+			);
 		}
 
 		return array(
@@ -520,7 +603,8 @@ final class GiftPurchase {
 
 	/**
 	 * `woocommerce_checkout_create_order_line_item`: marks the gift line
-	 * with its creator.
+	 * with its creator, and with free choice with the collection's name and
+	 * what is locked now.
 	 *
 	 * @param mixed $item          The new order line.
 	 * @param mixed $cart_item_key Its cart item key.
@@ -533,11 +617,39 @@ final class GiftPurchase {
 			return;
 		}
 
-		$creator_id = ( $this->creator_of )( (int) $item->get_product_id() );
+		$product_id = (int) $item->get_product_id( 'edit' );
+		$creator_id = ( $this->creator_of )( $product_id );
 
-		if ( null !== $creator_id ) {
-			$item->update_meta_data( self::LINE_META, (string) $creator_id );
+		if ( null === $creator_id ) {
+			return;
 		}
+
+		$item->update_meta_data( self::LINE_META, (string) $creator_id );
+
+		$collection = self::free_of( $values );
+
+		if ( $collection < 1 ) {
+			return;
+		}
+
+		$lock = $this->lock_now( $collection, $product_id, $creator_id );
+
+		if ( null === $lock ) {
+			// check_cart() refuses it just before; changed in between, it is a gift of the one design.
+			$this->logger->warning(
+				'A gift with free choice could not be locked and is of one design.',
+				array(
+					'collection_id' => $collection,
+					'product_id'    => $product_id,
+				)
+			);
+
+			return;
+		}
+
+		$item->update_meta_data( self::FREE_META, $lock->to_array() );
+		// Shown to the buyer: the line itself is the design the purchase is booked on.
+		$item->update_meta_data( __( 'Free choice', 'merchboard' ), $lock->name );
 	}
 
 	/**
@@ -569,6 +681,14 @@ final class GiftPurchase {
 			return;
 		}
 
+		$product_id = (int) $line->get_product_id( 'edit' );
+		$lock       = FreeChoiceLock::from_stored( $line->get_meta( self::FREE_META, true, 'edit' ) );
+
+		// A lock counts only on the design it was bought with (a line can be edited).
+		if ( null !== $lock && ! in_array( $product_id, $lock->product_ids(), true ) ) {
+			$lock = null;
+		}
+
 		$name     = WooCommercePaidOrderReader::username( $order );
 		$shipping = ( (float) $order->get_shipping_total( 'edit' ) + (float) $order->get_shipping_tax( 'edit' ) ) / $units;
 		$new      = array();
@@ -579,12 +699,13 @@ final class GiftPurchase {
 				$gift = $this->gifts->create(
 					(int) $line->get_meta( self::LINE_META, true, 'edit' ),
 					(int) $order->get_id(),
-					(int) $line->get_product_id(),
+					$product_id,
 					number_format( $paid / $units, 4, '.', '' ),
 					number_format( min( (float) self::SHIPPING, $shipping ), 4, '.', '' ),
 					(string) $order->get_currency( 'edit' ),
 					'' === $name ? null : $name,
-					$unit
+					$unit,
+					$lock
 				);
 
 				if ( null !== $gift ) {

@@ -86,13 +86,20 @@ class FreeChoiceDesigns {
 			return null;
 		}
 
-		$name = html_entity_decode( wp_strip_all_tags( (string) get_post_field( 'post_title', $collection_id, 'raw' ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
-
 		return array(
-			'lock'       => new FreeChoiceLock( $collection_id, $name, $designs ),
+			'lock'       => new FreeChoiceLock( $collection_id, self::name( $collection_id ), $designs ),
 			'creator'    => $creator,
 			'product_id' => $booked,
 		);
+	}
+
+	/**
+	 * A collection's name as plain text.
+	 *
+	 * @param int $collection_id Collection.
+	 */
+	public static function name( int $collection_id ): string {
+		return html_entity_decode( wp_strip_all_tags( (string) get_post_field( 'post_title', $collection_id, 'raw' ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 	}
 
 	/**
