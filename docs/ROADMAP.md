@@ -1625,7 +1625,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **55.9a Reviewets fund** 🔄 (review af d93bf6a..1f16c43: 3 alvorlige, 10 mellemstore, 11 lave; projektejerens otte valg står i ADR-120's statusnote): rettes før runtime-test og testpakke. Alle 24 fund er behandlet: rettet, eller afgjort af projektejeren (16: intet slettes hos Meta, og spærringen gælder alle creator-produkter, ff6ac08; 23: "Se som creator" må sende). Testhullerne, reviewet pegede på, er lukket (fa23d09). Runtime-testen er udsat med 55.9.
 - **55.10 Projektejerens test på stg** med det rigtige plugin.
 
-## Fase 56 – Kliparts til udvalgte produkter med farver, creatoren vælger 💡 (projektejerens idé og svar 2026-11-22; version 2.5.0 foreslået, efter fase 55; planlægning begyndt 2026-11-22, ikke bygget)
+## Fase 56 – Kliparts til udvalgte produkter med farver, creatoren vælger 🔄 (projektejerens idé, svar og godkendte plan 2026-11-22; version 2.5.0 foreslået; ADR-121)
 
 **Ønsket:**
 - Kliparts kan tilføjes til bestemte produkter, fx et design til drikkedunke.
@@ -1653,7 +1653,8 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - delen, der farves, er laget `farvet lag`;
   - lagets ydre streg (Stroke, Outside) må ikke ændres;
   - lagets farveoverlejring (Color Overlay) eller gradientoverlejring (Gradient Overlay) må creatoren arbejde med.
-- **Placering:** fri, men admin kan låse den, fx til en dunk.
+- **Placering:** fri, men admin kan låse den, fx til en dunk. En låst klipart starter midt i feltet og fylder fra top til bund (er den for bred: feltets bredde). Creatoren kan kun flytte den til siderne.
+- **Kopiér design:** kopien beholder en fjernet klipart.
 - **Fjernet klipart:** design, der bruger den, beholder den. Nye design kan ikke vælge den. Sletning må derfor ikke fjerne filen som i dag.
 
 **PSD'en (undersøgt 2026-11-22, ikke bygget):**
@@ -1662,13 +1663,32 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **Vores PSD-import i dag:** skabelonimporten anvender ikke effekter, og sceneimporten udelader dem. De kan derfor ikke genbruges til dette uden videre.
 - **Filkrav:** PSD i RGB med 8 bit pr. kanal. Skabelonimportens grænse er 8000 × 8000 px. CMYK afvises af ag-psd.
 - **Kontrol mod Photoshop (2026-11-22, i hukommelsen, ikke bygget):** projektejerens fil er 1317 × 2066 px ved 300 ppi med hvid farveoverlejring og 20 px sort udvendig streg. En prototype ramte eksporten med 0,29/255 i gennemsnitlig fejl på hvid bund, og 0,004 % af pixels afveg mere end 128.
-- **Ikke afprøvet:** gradienten (slået fra i eksporten, syv farvestop, 45°, skala 75 %) og broderi. Lagnavnet skrives `Farvet lag` og skal derfor genkendes uanset store bogstaver.
+- **Gradienten (anden eksport, hvid til sort i 45°):** prototypen ramte den med 0,05/255 på sort bund og 0,35/255 på hvid. Reglen står i ADR-121.
+- **Ikke afprøvet:** en gradient mellem to kulører og broderi. Lagnavnet skrives `Farvet lag` og skal derfor genkendes uanset store bogstaver.
 
 **Afklaret af projektejeren 2026-11-22 (ved planlægningen):**
 - **Farve eller gradient:** creatoren vælger mellem én farve og en gradient med to farver og en vinkel. PSD'ens værdi er startværdien, og admins palet gælder begge.
 - **Flere farvedele:** alle lag, hvis navn begynder med `farvet lag`. Resten af navnet er delens navn hos creatoren.
 - **Broderi:** ingen gradient og én trådfarve pr. del. Stregen får den nærmeste tråd, vises for admin ved upload og kan ikke byttes af creatoren.
-- **Filen:** projektejeren sender stien til PSD'en og gerne en PNG-eksport fra Photoshop som facit. Filerne læses kun og lægges ikke i repoet.
+- **Filen:** projektejeren lagde PSD'en og to PNG-eksporter fra Photoshop i en mappe. Filerne læses kun og lægges ikke i repoet.
+- **Gradientens start:** filens første og sidste farvestop.
+
+**Trin (plan godkendt 2026-11-22, ADR-121):**
+- **56.1 ADR og plan** ✅: ADR-121, svar og målinger.
+- **56.2 Bagning:** rene funktioner fra PSD til masker, streg og faste lag, testet med syntetiske PSD'er.
+- **56.3 Farvning:** farve, gradient og låsens geometri som rene funktioner.
+- **56.4 Tegningens indgang:** karakteriseringstests af printfil og tråde, derefter resolveren uden ændret adfærd.
+- **56.5 Schema 55** alene på Local efter verificeret backup og tjek af cron og papirkurv.
+- **56.6 Definition og repository.**
+- **56.7 Regler for produkt og "beholder den"** ved gem, kopi og filadgang.
+- **56.8 Validering** af farvevalg og lås, og tjek ved indsendelse.
+- **56.9 Bevarede billeder** i API og editor.
+- **56.10 "Fjern" i stedet for "Slet"** med audit.
+- **56.11 Designeren:** bibliotek pr. produkt, farvevælger, lås, lagliste og fortryd.
+- **56.12 Broderi** med låste tråde.
+- **56.13 Admins upload:** produkter, palet, lås og advarsler. Er sidst, så intet kan oprettes, før resten virker.
+- **56.14 Admins liste** over kliparts på et indsendt design.
+- **56.15 Afslutning:** tekster, docs, review, runtime-test og testpakke 2.5.0.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 

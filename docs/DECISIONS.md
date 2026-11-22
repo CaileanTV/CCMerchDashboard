@@ -4594,6 +4594,8 @@ Pkt. 2, 6 og 10 er præciseret (fejl fundet i reviewet, rettet uden ændret adf�
   - "Se som creator" må fortsat uploade og slette billeder i creatorens bibliotek (projektejerens valg 2026-10-29); det auditeres med administratoren som aktør.
 - **Ordrelinjens version (runtime-test 30.15 på Local):** versionen gemmes nu også på en ordrelinje, der oprettes uden for checkout (en ordre, admin opretter, eller REST-API'et; `woocommerce_new_order_item`), så printfilen altid kan hentes på ordren.
 
+**Statusnote 2026-11-22 (ADR-121, fase 56):** kliparts kan begrænses til udvalgte grundprodukter og have farvedele. En klipart fjernes fremover i stedet for at slettes, så design, der bruger den, beholder den.
+
 ## Context
 I dag laver virksomheden designs og produkter for hver creator manuelt. Projektejeren vil automatisere det: creators designer selv deres produkter i dashboardet, og en administrator godkender dem.
 
@@ -7267,3 +7269,58 @@ Creators skal kunne bede om at få designs samlet med virksomhedens plugin "CCMe
 
 ## Related
 ADR-033, ADR-068, ADR-080, ADR-083, ADR-107, ADR-110, ADR-112, ADR-113
+
+---
+
+# ADR-121: Kliparts til udvalgte produkter med farvedele
+
+## Date
+2026-11-22
+
+## Status
+Accepteret af projektejeren 2026-11-22 (planen godkendt). Fase 56, version 2.5.0 foreslået. Udvider ADR-080 (kliparts), ADR-085 og ADR-086 (broderi), ADR-096 (farvedesigns) og ADR-118 (formatdesigns). Ikke bygget endnu.
+
+## Context
+Nogle grundprodukter, fx drikkedunke, skal have egne kliparts med dele i fast farve og dele, som creatoren farver. Før denne ADR gælder alle kliparts alle produkter og creators, en klipart er ét billede, og sletning fjerner filen, så design, der bruger den, afvises.
+
+Projektejerens første fil er en PSD med farvedelen som lag med en udvendig streg og en farve- eller gradientoverlejring. Den og to eksporter fra Photoshop er læst read-only og ligger ikke i repoet. En prototype i hukommelsen ramte eksporten med farve med 0,29/255 i gennemsnitlig fejl på hvid bund, og eksporten med gradient (hvid til sort, 45°) med 0,05/255 på sort og 0,35/255 på hvid.
+
+## Decision
+
+**Projektejerens valg (2026-11-22):**
+1. **Produkter:** vælges pr. grundprodukt. Kliparts fra før gælder fortsat alle. Et produkt, der fjernes fra listen, virker som en fjernet klipart for det produkt.
+2. **Farvedele:** alle lag, hvis navn begynder med `farvet lag` uanset store bogstaver. Resten af navnet er delens navn hos creatoren.
+3. **Farvevalg:** én farve eller en gradient med to farver og en vinkel. Admin vælger frit farvevalg eller en palet, som gælder begge. Startværdien er filens farve. En gradient starter i filens første og sidste farvestop.
+4. **Stregen** ændres aldrig.
+5. **Broderi:** ingen gradient og én tråd pr. del. Stregen får den nærmeste tråd, vises for admin og kan ikke byttes af creatoren.
+6. **Låst klipart:** starter midt i feltet og fylder fra top til bund. Størrelse og rotation er låst. Creatoren flytter den kun til siderne, og den forbliver hel i feltet. Er den for bred, tilpasses den bredden, og admin får besked ved upload.
+7. **Fjernet klipart:** bliver i design, der bruger den, og i kopier af dem. Den kan ikke vælges til nye design.
+
+**Udførelsen (godkendt med planen):**
+
+8. **Bagning i admins browser:** PSD'en uploades ikke. Der gemmes en forhåndsvisning og ét atlas med de faste lag og pr. del en maske til fyldet og en til stregen. Stregens farve gemmes som tal. Det, der ikke kan tegnes rigtigt, afvises med lagets navn.
+9. **Data:** schema 55 med de nullable kolonner `definition` og `retired_at` på `merchboard_designer_assets` og typen `artwork`, som ældre kode afviser. Dele, palet, lås og billeder er uforanderlige: en rettelse er "fjern" og en ny upload. Kun produktlisten kan redigeres.
+10. **Designet:** et billedobjekt får farvevalg pr. del, kun når kliparten har dele. Manglende farvevalg afvises og sættes aldrig til standard.
+11. **Serveren** håndhæver type, produkt, dele, palet og lås ved gem, kopi og indsendelse. Hvad et design "allerede bruger", læses af de gemte versioner og aldrig af forespørgslen. En låst kliparts størrelse og lodrette plads regnes af serveren. En kliparts fil kan kun hentes, når den tilbydes eller bruges i creatorens egne design.
+12. **Tegningen:** gradientens midte er lagets boks, og længden er linjen gennem midten i vinklen ganget med filens skala. Farverne blandes i CIELAB med udjævningen `u + (u²(3 − 2u) − u) · 0,55`, som er målt mod eksporten. Vinklen følger kliparten, når den roteres eller spejles.
+13. **Kliparts med dele** skaleres kun proportionalt og har fuld dækkevne.
+14. **Broderi:** faste dele låses til tråde som stregen, og paletten begrænser ikke broderede sider. Kræver kliparts alene flere tråde, end siden kan have, kan designet ikke sendes, og creatoren får årsagen.
+15. **Opløsning:** giver en klipart under sidens dpi, advares admin ved upload. Uploaden spærres ikke.
+
+## Alternatives considered
+- **Delfiler som egne assets:** de ville enten stå i creatorens klipartliste eller kræve opslag i forælderen ved hvert adgangstjek.
+- **Samme type `clipart` med begrænsning:** ældre kode ville tilbyde kliparten på alle produkter.
+- **SVG eller streg tegnet af Fabric:** giver ikke Photoshops streg, og SVG afvises af sikkerhedshensyn.
+- **Rendering på serveren:** fravalgt i ADR-080.
+
+## Reason
+Bagning én gang giver samme streg overalt. Browseren skal kun farve masker og stable lag, og det kan sammenlignes med Photoshop.
+
+## Consequences
+- Printfilen dannes i browseren, så serveren kan ikke se, om dens pixels passer til designet. Admins godkendelse er det sidste værn og får en liste over designets kliparts.
+- Design uden farvedele skal give pixel-ens printfiler som før, fordi broderigebyret følger filens SHA-256.
+- Skal en rettelse til 2.4.0 have en migration, tager 2.4.0 de to tomme kolonner med som schema 55, og rettelsen bliver 56.
+- En gradient mellem to kulører, broderi og udseendet i en browser er ikke sammenlignet med Photoshop eller et rigtigt tryk.
+
+## Related
+ADR-080, ADR-085, ADR-086, ADR-096, ADR-118
