@@ -24,6 +24,7 @@ use MerchBoard\Modules\Creators\Agreement\Agreement;
 use MerchBoard\Modules\Creators\GoLive\GoLiveShop;
 use MerchBoard\Modules\WooCommerce\GoLive\WooCommerceGoLiveShop;
 use MerchBoard\Modules\Creators\CreatorMetaStore;
+use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\WooCommerce\Admin\CategorySyncActions;
 use MerchBoard\Modules\WooCommerce\Admin\CategorySyncScreen;
@@ -97,6 +98,9 @@ use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsSection;
 use MerchBoard\Modules\WooCommerce\Cli\SalesBackfillCommand;
 use MerchBoard\Modules\WooCommerce\Cli\WpCliOutput;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionCartGuard;
+use MerchBoard\Modules\WooCommerce\Collections\CollectionRequestRepository;
+use MerchBoard\Modules\WooCommerce\Collections\CollectionRequests;
+use MerchBoard\Modules\WooCommerce\Collections\CollectionRequestsCleanup;
 use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
 use MerchBoard\Modules\WooCommerce\Dashboard\DashboardSectionRegistration;
@@ -379,12 +383,27 @@ final class WooCommerceModule implements Module {
 			)
 		);
 		$container->set( ProductRemovalsCleanup::class, static fn( Container $c ): ProductRemovalsCleanup => new ProductRemovalsCleanup( $c->get( ProductRemovalRepository::class ) ) );
+		$container->set( CollectionRequestRepository::class, static fn( Container $c ): CollectionRequestRepository => new CollectionRequestRepository( $c->get( wpdb::class ) ) );
+		$container->set(
+			CollectionRequests::class,
+			static fn( Container $c ): CollectionRequests => new CollectionRequests(
+				$c->get( CollectionRequestRepository::class ),
+				$c->get( DesignCollections::class ),
+				$c->get( CreatorProducts::class ),
+				$c->get( Transaction::class ),
+				$c->get( AuditTrail::class ),
+				new NamedLock( $c->get( wpdb::class ) ),
+				static fn( int $product ): ?int => $c->get( ProductCreatorLink::class )->creator_id( $product ),
+				static fn( int $creator ): ?Creator => $c->get( CreatorRepository::class )->find( $creator )
+			)
+		);
+		$container->set( CollectionRequestsCleanup::class, static fn( Container $c ): CollectionRequestsCleanup => new CollectionRequestsCleanup( $c->get( CollectionRequestRepository::class ) ) );
 		$container->set( ProductRemovalsPage::class, static fn( Container $c ): ProductRemovalsPage => new ProductRemovalsPage( $c->get( ProductRemovalRepository::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );
 		$container->set( ProductRemovalActions::class, static fn( Container $c ): ProductRemovalActions => new ProductRemovalActions( $c->get( ProductRemovals::class ), $c->get( Logger::class ) ) );
 		add_filter(
 			'merchboard_creator_data_cleaners',
 			static function ( mixed $cleaners ) use ( $container ): array {
-				return array_merge( is_array( $cleaners ) ? $cleaners : array(), array( $container->get( ProductRemovalsCleanup::class ) ) );
+				return array_merge( is_array( $cleaners ) ? $cleaners : array(), array( $container->get( ProductRemovalsCleanup::class ), $container->get( CollectionRequestsCleanup::class ) ) );
 			}
 		);
 		$container->set(

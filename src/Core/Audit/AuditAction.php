@@ -958,4 +958,28 @@ enum AuditAction: string {
 	 * (ADR-114). Context: design_product_id, version_id, images.
 	 */
 	case DesignerCutoutsReverted = 'designer_cutouts_reverted';
+
+	/**
+	 * A creator asked to have designs collected (ADR-120). Context:
+	 * collection_request_id, collection_id, product_ids.
+	 */
+	case CollectionRequested = 'collection_requested';
+
+	/**
+	 * An administrator approved a collection request (ADR-120). Context:
+	 * collection_request_id, collection_id, product_ids.
+	 */
+	case CollectionApproved = 'collection_approved';
+
+	/**
+	 * An administrator declined a collection request (ADR-120). Context:
+	 * collection_request_id, collection_id, product_ids, decision_note.
+	 */
+	case CollectionDeclined = 'collection_declined';
+
+	/**
+	 * A requested collection is in the shop (ADR-120). Context:
+	 * collection_request_id, collection_id, product_ids.
+	 */
+	case CollectionReady = 'collection_ready';
 }

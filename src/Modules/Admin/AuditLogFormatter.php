@@ -207,6 +207,10 @@ final class AuditLogFormatter {
 			AuditAction::DesignerPrimaryImageChanged => __( 'Creator chose another product image', 'merchboard' ),
 			AuditAction::DesignerCutoutsApproved     => __( 'Product images without background approved', 'merchboard' ),
 			AuditAction::DesignerCutoutsReverted     => __( 'Product images without background undone', 'merchboard' ),
+			AuditAction::CollectionRequested         => __( 'Creator asked to have designs collected', 'merchboard' ),
+			AuditAction::CollectionApproved          => __( 'Collection request approved', 'merchboard' ),
+			AuditAction::CollectionDeclined          => __( 'Collection request declined', 'merchboard' ),
+			AuditAction::CollectionReady             => __( 'Requested collection is in the shop', 'merchboard' ),
 			AuditAction::CreatorFrontGroupChanged => __( 'Front-page group changed', 'merchboard' ),
 			AuditAction::TwitchSubDiscountChanged => __( 'Twitch subscriber discount changed', 'merchboard' ),
 			AuditAction::TwitchGiftingChanged => __( 'Twitch gifting changed', 'merchboard' ),
@@ -393,6 +397,19 @@ final class AuditLogFormatter {
 			case 'removal_id':
 				/* translators: %s: removal request id. */
 				return self::text( __( 'Removal request: #%s', 'merchboard' ), self::scalar( $value ) );
+			case 'collection_request_id':
+				/* translators: %s: collection request id. */
+				return self::text( __( 'Collection request: #%s', 'merchboard' ), self::scalar( $value ) );
+			case 'collection_id':
+				if ( null === $value ) {
+					return esc_html__( 'A new collection', 'merchboard' );
+				}
+
+				/* translators: %s: collection product id. */
+				return self::text( __( 'Collection: #%s', 'merchboard' ), self::scalar( $value ) );
+			case 'product_ids':
+				/* translators: %s: product ids, comma-separated. */
+				return self::text( __( 'Products: %s', 'merchboard' ), is_array( $value ) ? implode( ', ', array_map( static fn( mixed $id ): string => self::scalar( $id ), $value ) ) : self::scalar( $value ) );
 			case 'proposal_id':
 				/* translators: %s: proposal id. */
 				return self::text( __( 'Proposal: #%s', 'merchboard' ), self::scalar( $value ) );

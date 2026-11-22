@@ -10,6 +10,7 @@ Fase 55 (ADR-120), under opbygning. Schema-version 53.
 - **Twitch-panelet og merch-reklamen** viser hvert design, også når en samling skjuler det.
 - **Gave og giveaway:** giveren vælger designet, og indløsningen åbner samlingen med det valgt. Giveaway-vælgeren har intet forvalg og viser alle produkter.
 - **Meta:** en samling med et designerprodukt synkroniseres ikke.
+- **Anmodninger om samlinger:** regler, lagring, audit og oprydning, når en creator slettes. Endnu uden ruter og sider.
 - **Database:** migration 53 med tabellerne til anmodninger om samlinger.
 
 ## [2.3.0] - 2026-11-22
