@@ -61,6 +61,8 @@ final class CreatorTypes {
 			self::product_linked(),
 			self::product_removal_completed(),
 			self::product_removal_declined(),
+			self::collection_ready(),
+			self::collection_declined(),
 			self::impersonation_started(),
 			self::news_published(),
 			self::chatbot_lost_access(),
@@ -888,6 +890,71 @@ final class CreatorTypes {
 				null,
 				null,
 				__( 'See your payouts', 'merchboard' ),
+				'',
+				self::closing()
+			)
+		);
+	}
+
+	/**
+	 * A requested collection is in the shop (ADR-120).
+	 */
+	private static function collection_ready(): NotificationType {
+		return self::type(
+			'collection_ready',
+			'account',
+			static fn(): string => __( 'Collection ready', 'merchboard' ),
+			static fn(): string => __( 'When a collection the creator asked for is in the shop.', 'merchboard' ),
+			true,
+			true,
+			false,
+			'products',
+			array( 'collection' => 'Nova Hoodie' ),
+			/* translators: %s: collection name. */
+			static fn( NotificationData $d ): string => sprintf( __( 'Your collection %s is in the shop.', 'merchboard' ), $d->text( 'collection' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: collection name. */
+				sprintf( __( 'Your collection %s is ready', 'merchboard' ), $d->text( 'collection' ) ),
+				__( 'Your collection is ready', 'merchboard' ),
+				array( __( 'Your designs are now sold from one page, where customers choose the design. Prices and your profit are unchanged.', 'merchboard' ) ),
+				array( array( __( 'Collection', 'merchboard' ), $d->text( 'collection' ) ) ),
+				null,
+				null,
+				__( 'See your products', 'merchboard' ),
+				'',
+				self::closing()
+			)
+		);
+	}
+
+	/**
+	 * A collection request was declined, with the note (ADR-120).
+	 */
+	private static function collection_declined(): NotificationType {
+		return self::type(
+			'collection_declined',
+			'account',
+			static fn(): string => __( 'Collection request declined', 'merchboard' ),
+			static fn(): string => __( 'When an administrator declines a collection request, with the note.', 'merchboard' ),
+			true,
+			true,
+			false,
+			'products',
+			array(
+				'collection' => 'Nova Hoodie',
+				'note'       => 'The designs are not the same kind of product.',
+			),
+			/* translators: %s: collection name. */
+			static fn( NotificationData $d ): string => sprintf( __( 'We could not make the collection %s.', 'merchboard' ), $d->text( 'collection' ) ),
+			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
+				/* translators: %s: collection name. */
+				sprintf( __( 'We could not make the collection %s', 'merchboard' ), $d->text( 'collection' ) ),
+				__( 'Your request was not approved', 'merchboard' ),
+				array( __( 'Your products are still sold as before. You are welcome to ask again.', 'merchboard' ) ),
+				array( array( __( 'Collection', 'merchboard' ), $d->text( 'collection' ) ) ),
+				null,
+				'' === $d->text( 'note' ) ? null : array( __( 'Note from us', 'merchboard' ), $d->text( 'note' ) ),
+				__( 'See your products', 'merchboard' ),
 				'',
 				self::closing()
 			)

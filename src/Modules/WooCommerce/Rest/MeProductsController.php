@@ -13,7 +13,9 @@ use MerchBoard\Core\Http\Pagination;
 use MerchBoard\Core\Http\RestController;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\Access\CreatorContext;
+use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
+use MerchBoard\Modules\WooCommerce\Dashboard\PlainText;
 use MerchBoard\Modules\WooCommerce\Dashboard\ProductDetails;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorProfits;
 use MerchBoard\Modules\WooCommerce\Pricing\ProfitSummary;
@@ -67,8 +69,9 @@ final class MeProductsController extends RestController {
 	 * @param CreatorProfits                $profits  Realized profit of the creator's ledger rows.
 	 * @param ProductRemovalRepository|null $requests Removal requests (null: no such data).
 	 * @param ProductRemovals|null          $removals Takes removal requests (null: no such route).
+	 * @param DesignCollections             $collections The collections that sell the products.
 	 */
-	public function __construct( private CreatorContext $context, private CreatorProducts $products, private ProductDetails $details, Logger $logger, private CreatorProfits $profits, private ?ProductRemovalRepository $requests = null, private ?ProductRemovals $removals = null ) {
+	public function __construct( private CreatorContext $context, private CreatorProducts $products, private ProductDetails $details, Logger $logger, private CreatorProfits $profits, private ?ProductRemovalRepository $requests = null, private ?ProductRemovals $removals = null, private DesignCollections $collections = new DesignCollections() ) {
 		parent::__construct( $logger );
 	}
 
@@ -152,6 +155,7 @@ final class MeProductsController extends RestController {
 								'profit'          => isset( $profits[ $product_id ] ) ? array_map( static fn( ProfitSummary $profit ): array => $profit->to_array(), $profits[ $product_id ] ) : null,
 								'designer'        => in_array( $product_id, $designer, true ),
 								'removal_pending' => in_array( $product_id, $pending, true ),
+								'collection'      => $this->collection( $product_id ),
 							);
 						}
 					}
@@ -193,6 +197,21 @@ final class MeProductsController extends RestController {
 
 				return new WP_REST_Response( array( 'removal_pending' => true ) );
 			}
+		);
+	}
+
+	/**
+	 * The collection that sells a product, or null (ADR-120).
+	 *
+	 * @param int $product_id Product.
+	 * @return array{id: int, name: string}|null
+	 */
+	private function collection( int $product_id ): ?array {
+		$id = $this->collections->collection_of( $product_id );
+
+		return null === $id ? null : array(
+			'id'   => $id,
+			'name' => PlainText::of( (string) get_post_field( 'post_title', $id, 'raw' ) ),
 		);
 	}
 
@@ -256,6 +275,20 @@ final class MeProductsController extends RestController {
 				'removal_pending' => array(
 					'type'     => 'boolean',
 					'readonly' => true,
+				),
+				'collection'      => array(
+					'type'       => array( 'object', 'null' ),
+					'readonly'   => true,
+					'properties' => array(
+						'id'   => array(
+							'type'     => 'integer',
+							'readonly' => true,
+						),
+						'name' => array(
+							'type'     => 'string',
+							'readonly' => true,
+						),
+					),
 				),
 				'image'           => array(
 					'type'       => array( 'object', 'null' ),

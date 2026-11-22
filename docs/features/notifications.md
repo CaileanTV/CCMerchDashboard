@@ -39,8 +39,11 @@ I gang (fase 29, version 1.4.0; plan godkendt 2026-10-27). 29.2 (kernen: katalog
 | Profil | Kategoriforslag afvist (med note) | administratorens afvisning | M+D | |
 | Konto | Sletteanmodning behandlet | administratoren lukker sagen (ADR-083) | M+D | |
 | Konto | Sletteanmodning afvist (med note) | administratorens afvisning (ADR-083) | M+D | |
+| Konto | Samling klar | den anmodede samling er udgivet med designs (ADR-120) | M+D | |
+| Konto | Anmodning om samling afvist (med note) | administratorens afvisning (ADR-120) | M+D | |
 | Admin | Stamdata ændret (`admin_billing_details_submitted`) | en creator udfylder eller ændrer stamdata til afregningsbilag; de gælder straks uden bekræftelse (ADR-104, statusnote 2026-11-09); aldrig værdierne | M | |
 | Admin | Ny sletteanmodning (`admin_product_removal_requested`) | en creator beder om at få slettet et legacy-produkt (ADR-083) | M+D | |
+| Admin | Ny anmodning om samling (`admin_collection_requested`) | en creator beder om at få designs samlet (ADR-120) | M+D | |
 | Rabatkode | Din rabatkode er oprettet (koden ses i dashboardet) | administratorens første kode | M+D | ✓ |
 | Rabatkode | Din rabatkode er nulstillet | ny kode (creatoren, "Se som creator" eller admin) | M+D | ✓ |
 | Rabatkode | Din rabatkode er afsluttet | administratorens afslutning | M+D | ✓ |

@@ -49,6 +49,8 @@ use MerchBoard\Modules\WooCommerce\Rest\MeDiscountCodeController;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryActions;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryEraser;
 use MerchBoard\Modules\WooCommerce\Admin\OrderHistoryPage;
+use MerchBoard\Modules\WooCommerce\Admin\CollectionRequestActions;
+use MerchBoard\Modules\WooCommerce\Admin\CollectionRequestsPage;
 use MerchBoard\Modules\WooCommerce\Admin\ProductRemovalActions;
 use MerchBoard\Modules\WooCommerce\Admin\ProductRemovalsPage;
 use MerchBoard\Modules\WooCommerce\Admin\OrderStatusLookup;
@@ -99,6 +101,8 @@ use MerchBoard\Modules\WooCommerce\Cli\SalesBackfillCommand;
 use MerchBoard\Modules\WooCommerce\Cli\WpCliOutput;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionCartGuard;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionFulfilment;
+use MerchBoard\Modules\WooCommerce\Collections\CollectionGiftWarnings;
+use MerchBoard\Modules\WooCommerce\Collections\CollectionOverview;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionRequestRepository;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionRequests;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionRequestsCleanup;
@@ -139,6 +143,7 @@ use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
 use MerchBoard\Modules\WooCommerce\ProductRemovals\ProductRemovalRepository;
 use MerchBoard\Modules\WooCommerce\ProductRemovals\ProductRemovals;
 use MerchBoard\Modules\WooCommerce\ProductRemovals\ProductRemovalsCleanup;
+use MerchBoard\Modules\WooCommerce\Rest\MeCollectionsController;
 use MerchBoard\Modules\WooCommerce\Rest\MeProductsController;
 use MerchBoard\Modules\WooCommerce\Rest\MeSalesController;
 use MerchBoard\Modules\WooCommerce\Sales\CountedOrderStatuses;
@@ -409,6 +414,20 @@ final class WooCommerceModule implements Module {
 				$container->get( CollectionWatcher::class )->register();
 			}
 		);
+		$container->set( CollectionOverview::class, static fn( Container $c ): CollectionOverview => new CollectionOverview( $c->get( DesignCollections::class ), $c->get( CollectionRequests::class ), $c->get( CollectionRequestRepository::class ), $c->get( CreatorProducts::class ) ) );
+		$container->set( MeCollectionsController::class, static fn( Container $c ): MeCollectionsController => new MeCollectionsController( $c->get( CreatorContext::class ), $c->get( CollectionRequests::class ), $c->get( CollectionOverview::class ), $c->get( Logger::class ) ) );
+		$container->set(
+			CollectionRequestsPage::class,
+			static fn( Container $c ): CollectionRequestsPage => new CollectionRequestsPage(
+				$c->get( CollectionRequestRepository::class ),
+				$c->get( DesignCollections::class ),
+				$c->get( CreatorProducts::class ),
+				$c->get( CreatorRepository::class ),
+				new CollectionGiftWarnings( $c->get( wpdb::class ), $c->get( DesignCollections::class ) ),
+				$c->get( Logger::class )
+			)
+		);
+		$container->set( CollectionRequestActions::class, static fn( Container $c ): CollectionRequestActions => new CollectionRequestActions( $c->get( CollectionRequests::class ), $c->get( CollectionFulfilment::class ), $c->get( CollectionWatcher::class ), $c->get( Logger::class ) ) );
 		$container->set( CollectionRequestsCleanup::class, static fn( Container $c ): CollectionRequestsCleanup => new CollectionRequestsCleanup( $c->get( CollectionRequestRepository::class ) ) );
 		$container->set( ProductRemovalsPage::class, static fn( Container $c ): ProductRemovalsPage => new ProductRemovalsPage( $c->get( ProductRemovalRepository::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );
 		$container->set( ProductRemovalActions::class, static fn( Container $c ): ProductRemovalActions => new ProductRemovalActions( $c->get( ProductRemovals::class ), $c->get( Logger::class ) ) );
@@ -975,7 +994,8 @@ final class WooCommerceModule implements Module {
 				$c->get( Logger::class ),
 				$c->get( CreatorProfits::class ),
 				$c->get( ProductRemovalRepository::class ),
-				$c->get( ProductRemovals::class )
+				$c->get( ProductRemovals::class ),
+				$c->get( DesignCollections::class )
 			)
 		);
 		$container->set(
@@ -1026,6 +1046,7 @@ final class WooCommerceModule implements Module {
 			'rest_api_init',
 			static function () use ( $container ): void {
 				$container->get( MeProductsController::class )->register_routes();
+				$container->get( MeCollectionsController::class )->register_routes();
 				$container->get( MeOrdersController::class )->register_routes();
 				$container->get( MeSalesController::class )->register_routes();
 				$container->get( MePayoutsController::class )->register_routes();
@@ -1066,7 +1087,7 @@ final class WooCommerceModule implements Module {
 		add_filter(
 			ApprovalsPage::FILTER,
 			static function ( mixed $tabs ) use ( $container ): array {
-				return array_merge( is_array( $tabs ) ? $tabs : array(), array( $container->get( ProductRemovalsPage::class )->approval_tab(), $container->get( PayoutsPage::class )->approval_tab() ) );
+				return array_merge( is_array( $tabs ) ? $tabs : array(), array( $container->get( ProductRemovalsPage::class )->approval_tab(), $container->get( CollectionRequestsPage::class )->approval_tab(), $container->get( PayoutsPage::class )->approval_tab() ) );
 			}
 		);
 		add_action(
@@ -1104,6 +1125,7 @@ final class WooCommerceModule implements Module {
 				$container->get( CreatorPricingSection::class )->register();
 				$container->get( CreatorCodeActions::class )->register();
 				$container->get( ProductRemovalActions::class )->register();
+				$container->get( CollectionRequestActions::class )->register();
 				$container->get( CreatorCodeSection::class )->register();
 				$container->get( CreatorSalesSection::class )->register();
 				$container->get( OrderHistoryActions::class )->register();

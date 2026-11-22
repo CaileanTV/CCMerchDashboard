@@ -265,6 +265,17 @@ class CollectionRequests {
 					}
 				);
 
+				do_action(
+					'merchboard_notify',
+					'collection_declined',
+					$request->creator_id,
+					array(
+						'collection' => $request->name,
+						'note'       => $note,
+					),
+					'collection:' . $request->id
+				);
+
 				return $this->read( $request->id );
 			}
 		);
@@ -363,6 +374,9 @@ class CollectionRequests {
 					return null;
 				}
 
+				// Told before it is closed: after a crash in between the next check tells again, and the key keeps that to one.
+				do_action( 'merchboard_notify', 'collection_ready', $request->creator_id, array( 'collection' => $request->name ), 'collection:' . $request->id );
+
 				$closed = $this->transaction->run(
 					function () use ( $request ): bool {
 						if ( ! $this->requests->close( $request, CollectionRequestStatus::Ready, null, self::user(), ( $this->clock )() ) ) {
@@ -450,7 +464,20 @@ class CollectionRequests {
 			throw $e;
 		}
 
-		return $this->read( $id );
+		$request = $this->read( $id );
+
+		do_action(
+			'merchboard_notify',
+			'admin_collection_requested',
+			$creator->id,
+			array(
+				'creator'    => $creator->display_name,
+				'collection' => $request->name,
+			),
+			'collection:' . $id
+		);
+
+		return $request;
 	}
 
 	/**

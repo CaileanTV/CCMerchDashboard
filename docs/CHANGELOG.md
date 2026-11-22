@@ -10,7 +10,7 @@ Fase 55 (ADR-120), under opbygning. Schema-version 53.
 - **Twitch-panelet og merch-reklamen** viser hvert design, også når en samling skjuler det.
 - **Gave og giveaway:** giveren vælger designet, og indløsningen åbner samlingen med det valgt. Giveaway-vælgeren har intet forvalg og viser alle produkter.
 - **Meta:** en samling med et designerprodukt synkroniseres ikke.
-- **Anmodninger om samlinger:** regler, lagring, audit og oprydning, når en creator slettes. Endnu uden ruter og sider.
+- **Anmodninger om samlinger:** `GET`/`POST /me/collections`, fanen "Samlinger" på "Forslag", audit, oprydning, når en creator slettes, og tre notifikationer (ny anmodning, klar, afvist).
 - **Kladde og udgivelse:** en godkendt anmodning bliver én kladde, også hvis den gentages. Tilføjelse til en udgivet samling kræver et andet klik, og en anmodning er klar, når samlingen er udgivet med designs.
 - **Database:** migration 53 med tabellerne til anmodninger om samlinger.
 

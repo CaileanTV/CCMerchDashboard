@@ -156,6 +156,7 @@ final class MeProductsEndpointTest extends IntegrationTestCase {
 				'profit'          => null,
 				'designer'        => false,
 				'removal_pending' => false,
+				'collection'      => null,
 			),
 			( (array) $response->get_data() )[0]
 		);

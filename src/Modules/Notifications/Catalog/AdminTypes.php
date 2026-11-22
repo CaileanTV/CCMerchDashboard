@@ -36,6 +36,7 @@ final class AdminTypes {
 			self::proposal_submitted(),
 			self::billing_details_submitted(),
 			self::product_removal_requested(),
+			self::collection_requested(),
 			self::creator_signed_up(),
 			self::go_live_requested(),
 			self::order_decision(),
@@ -212,7 +213,37 @@ final class AdminTypes {
 	}
 
 	/**
-	 * A creator asked to have a legacy product removed (ADR-083).
+	 * A creator asked to have designs collected (ADR-120).
+	 */
+	private static function collection_requested(): NotificationType {
+		return self::type(
+			'collection_requested',
+			static fn(): string => __( 'Collection requested', 'merchboard' ),
+			static fn(): string => __( 'When a creator asks to have designs collected on one product page.', 'merchboard' ),
+			true,
+			'merchboard-collections',
+			array(
+				'creator'    => 'Nova',
+				'collection' => 'Nova Hoodie',
+			),
+			/* translators: 1: creator name, 2: collection name. */
+			static fn( NotificationData $d ): string => sprintf( __( '%1$s asked for designs to be collected in %2$s.', 'merchboard' ), $d->text( 'creator' ), $d->text( 'collection' ) ),
+			static fn( NotificationData $d ): EmailMessage => self::message(
+				/* translators: %s: creator name. */
+				sprintf( __( 'Collection requested by %s', 'merchboard' ), $d->text( 'creator' ) ),
+				__( 'Collection requested', 'merchboard' ),
+				__( 'A creator asked to have designs collected. Nothing in the shop changes until you approve it.', 'merchboard' ),
+				array(
+					array( __( 'Creator', 'merchboard' ), $d->text( 'creator' ) ),
+					array( __( 'Collection', 'merchboard' ), $d->text( 'collection' ) ),
+				),
+				__( 'Open Collections', 'merchboard' )
+			)
+		);
+	}
+
+	/**
+	 * A creator asked to have a product removed (ADR-083).
 	 */
 	private static function product_removal_requested(): NotificationType {
 		return self::type(

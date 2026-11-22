@@ -167,6 +167,35 @@ class DesignCollections {
 	}
 
 	/**
+	 * Every collection outside the trash, by name.
+	 *
+	 * @return list<int>
+	 */
+	public function all(): array {
+		$found = get_posts(
+			array(
+				'post_type'        => 'product',
+				'post_status'      => array( 'publish', 'future', 'draft', 'pending', 'private' ),
+				'fields'           => 'ids',
+				'numberposts'      => -1,
+				'orderby'          => 'title',
+				'order'            => 'ASC',
+				'suppress_filters' => true,
+				'meta_key'         => self::MEMBERS_KEY, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Only collections carry the key.
+			)
+		);
+		$all   = array();
+
+		foreach ( $found as $id ) {
+			if ( $this->is_collection( (int) $id ) ) {
+				$all[] = (int) $id;
+			}
+		}
+
+		return $all;
+	}
+
+	/**
 	 * The design a product page shows: on a collection's page the one the
 	 * plugin has selected, otherwise the product itself.
 	 *
