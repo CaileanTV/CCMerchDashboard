@@ -4896,6 +4896,8 @@ ADR-016, ADR-080, ADR-081. Kilder: Gelatos guide "Creating Products From Templat
 ## Status
 Accepteret af projektejeren 2026-10-31 (plan godkendt). Eksperimentel: testet automatisk.
 
+**Statusnote 2026-11-22 (ADR-120, fase 55):** en samling af designs er ikke creatorens produkt og kan derfor ikke anmodes fjernet. Dens designs kan som før.
+
 ## Context
 Projektejeren vil give creatorne mulighed for at slippe af med et legacy-produkt, altså et produkt i creatorens bibliotek, der er lavet uden for produktdesigneren. Sådan et produkt kan ikke genskabes, og ADR-080 siger, at pluginet aldrig må berøre det. Indtil nu kunne creatoren intet gøre, for "Dine produkter" er skrivebeskyttet.
 
@@ -6298,6 +6300,8 @@ Accepteret af projektejeren 2026-11-10 (valgene i ROADMAP "Community Features" p
 
 **Statusnote 2026-11-11 (ADR-110):** giveaway-links genbruger lodtrækningen, gavesiden og koden. En gave-række kan derfor være uden ordre (`order_id` NULL) og høre til en giveaway (`giveaway_id`).
 
+**Statusnote 2026-11-22 (ADR-120, fase 55):** på en samlings side vælger køberen, hvilket design der gives. Gaven er altid designets produkt, aldrig samlingen, og indløsningen åbner samlingen med designet valgt.
+
 ## Context
 Hos Fourthwall kan en seer købe et produkt som gave, mens creatoren streamer. Botten trækker en vinder blandt dem, der skriver `!enter`, og vinderen henter gaven ved at logge ind med Twitch. Projektejeren vil have det samme gennem CCMerch-chatbotten, med en til/fra-knap og en pause pr. creator.
 
@@ -6488,6 +6492,8 @@ Accepteret af projektejeren 2026-11-11 (valgene i fase 47; Community Features pk
 
 **Statusnote 2026-11-12:** efter projektejerens ønske gennemføres en betalt giveaway-ordre (og en gave-ordre, ADR-107) automatisk (`completed`), da den kun betaler for en kode, der gives videre; vinderens ordre er den, der sendes (`PassOnOrders`). Kassen åbner i en ny fane fra MitCCMerch.
 
+**Statusnote 2026-11-22 (ADR-120, fase 55):** et samlet design kan gives væk. Creatoren vælger designet under samlingens navn, og samlingen selv kan ikke vælges.
+
 ## Context
 Creatoren vil kunne give sin egen merch væk til seere. Det skal ske enten med CCMerch-botten i Twitch-chatten (som Twitch-gifting) eller med creatorens eget giveaway-system, hvor creatoren selv sender en kode til vinderen. Creatoren betaler for giveawayen, men skal ikke betale sin egen andel af prisen.
 
@@ -6632,6 +6638,8 @@ ADR-106, ADR-107, ADR-108, ADR-110
 ## Status
 Accepteret af projektejeren 2026-11-15 (valgte "Udstilling uden link" og "Kun panel" efter afklaringen i trin 49.1). Udgives i 2.2.0 sammen med fase 48 og 50. Extensionen kan først bruges af alle creators, når Twitch har godkendt den.
 
+**Statusnote 2026-11-22 (ADR-120, fase 55):** panelet viser også et design, som en samling skjuler i shoppen, men aldrig samlingen eller et produkt, som en administrator har skjult.
+
 ## Context
 Projektejeren vil have en rigtig Twitch Extension, der viser creatorens produkter på kanalen, som "Design By Hümans Merch Store" og to andre extensions. Afklaringen (trin 49.1) læste Twitchs regler 2026-11-15:
 - **Guidelines 4.6.3:** links fra en extension må ikke føre til sider, hvis hovedformål er at sælge varer eller tjenester, medmindre linket går til Twitch eller Amazon.
@@ -6713,6 +6721,8 @@ Accepteret af projektejeren 2026-11-15 (afklaringen i trin 50.1). Udgives i 2.2.
 - **Reklamen bruger shoppens billede.** Et billede uden baggrund (`_merchboard_transparent`) står frit, andre ligger i en flise.
 - **Ruterne og felterne er væk.** `…/cutouts`-ruterne og indstillingen `cutouts` er fjernet.
 - **Gamle filer ryddes op.** Filer fra testene på stg ligger i `uploads/merchboard-merch-ad/` og fjernes stadig, når creatoren slettes, og ved afinstallation.
+
+**Statusnote 2026-11-22 (ADR-120, fase 55):** reklamen viser samlede designs efter samme regel som panelet (ADR-112).
 
 ## Context
 Projektejeren vil have to ting:
@@ -7194,3 +7204,47 @@ Projektejeren har opdateret plakaterne i Lumise-addon'et "CCMerch Udbydere" 1.7.
 
 ## Related
 ADR-082, ADR-115, ADR-117, ADR-118
+
+---
+
+# ADR-120: Creatoren anmoder om at få designs samlet (CCMerch Design-samling)
+
+## Date
+2026-11-22
+
+## Status
+Accepteret af projektejeren 2026-11-22 (planen godkendt). Fase 55, version 2.4.0. Udvider ADR-083, ADR-107, ADR-110, ADR-112 og ADR-113. Testet kun mod vores egen efterligning af pluginets data, indtil projektejeren har testet med pluginet på stg.
+
+## Context
+Creators skal kunne bede om at få designs samlet med virksomhedens plugin "CCMerch Design-samling" (1.0.2). Projektejeren gav 2026-11-22 lov til at læse netop den mappe (`CCMerch-Elementor/ccmerch-design-samling`, read-only). Intet er kopieret, kørt eller ændret.
+
+**Sådan virker pluginet:**
+- En samling er et produkt af typen `ccm_design_group`, der lister sine designs i `_ccmds_members`.
+- Kunden vælger et design og køber designets eget produkt. Pris, printfiler, lager og afregning er derfor designets.
+- Mens samlingen er udgivet, skjules designs i shoppen (`_ccmds_group`, `_ccmds_prev_visibility`), og købsknappen på deres egne sider erstattes som standard af et link til samlingen.
+- Pluginet har ingen API.
+
+## Decision
+1. **Anmodningen:**
+   - creatoren anmoder om en ny samling eller om at få designs lagt til en af sine egne;
+   - alle creatorens udgivne, synlige produkter kan vælges, både fra designeren og ældre. Produkter, en administrator har skjult, kan ikke;
+   - fjernelse og opløsning sker i pluginet.
+2. **Godkendelsen:**
+   - en ny samling oprettes som kladde. Admin udgiver, og først da skjules designs, og creatoren får besked;
+   - tilføjelse til en udgivet samling tager to klik: "Godkend" ændrer intet i shoppen, og "Tilføj og skjul nu" udfører den.
+3. **En samling er ikke et produkt, der købes eller gives:** den er ikke creatorens produkt, får ingen ny creator-tilknytning og afvises som varelinje, gave og giveaway. En samling er creatorens, når alle dens designs er det.
+4. **Eksisterende tilknytninger på samlinger fjernes ikke.** En ordrelinje uden historik i ledgeren får creator fra produktets nuværende tilknytning, så en fjernelse kunne ændre afregningen.
+5. **Twitch-panelet og merch-reklamen** viser hvert design, også når en samling skjuler det.
+6. **Gave og giveaway:** giveren vælger designet. Designets produkt gemmes, betales og trykkes. Koden gælder kun det, og vinderen vælger variant som før. Adressen til designet slås op, når linket bruges.
+7. **Pluginets data:** én læser (`DesignCollections`) og én skriver kender formatet. Læseren virker også, når pluginet er slået fra. Et enkelt produkt eller et produkt uden type, som stadig lister designs, regnes derfor som samling. En anden type gør ikke.
+8. **Meta:** en samling med et designerprodukt synkroniseres ikke (projektejerens beslutning 2026-11-09).
+9. **WooCommerce-gem** sker aldrig i vores transaktioner. Godkendelsen kan genoptages uden at lave to kladder.
+
+## Consequences
+- Schema 53 med to tabeller til anmodningerne.
+- Ændrer pluginet sit dataformat, skal læseren og skriveren rettes.
+- Samlinger lavet i hånden er omfattet af de samme regler.
+- Integrationssuiten indlæser hverken WooCommerce eller pluginet. Kurv, kasse, tema og rigtige produktgem prøves på stg.
+
+## Related
+ADR-033, ADR-068, ADR-080, ADR-083, ADR-107, ADR-110, ADR-112, ADR-113

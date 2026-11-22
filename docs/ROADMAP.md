@@ -1597,19 +1597,30 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
   - **Fundet undervejs:** et langt produktnavn gjorde designeren bredere end mobilen (rettet). `/me/go-live` og andre kald gav tilfældigt 500 i Playground, der ikke har `GET_LOCK`; det har intet med fasen at gøre.
   - **Mangler:** projektejerens test af 2.3.0 (fase 52–54) på stg og tag efter OK.
 
-## Fase 55 – Creatoren anmoder om at få designs samlet (ccmerch-design-samling) 💡 (projektejerens idé 2026-11-22; version 2.4.0; tages op, når 2.3.0 er færdig; ikke planlagt)
+## Fase 55 – Creatoren anmoder om at få designs samlet (ccmerch-design-samling) 🔄 (projektejerens idé og godkendte plan 2026-11-22; version 2.4.0; ADR-120)
 
 **Ønsket:** en creator kan anmode om, at nogle af sine designs samles med virksomhedens system "ccmerch-design-samling".
 
-**Afklares, før fasen planlægges:**
-- **Læseadgang:** projektejeren skal give lov til at læse pluginet `CCMerch-Elementor/ccmerch-design-samling` (read-only), som med Lumise-addon'et. Projektisolationen forbyder det ellers.
-- **Hvad en samling er:** et produkt med flere designs, en kollektion i shoppen eller noget tredje. Hvilke designs kan indgå: kun godkendte designs, også fra flere grundprodukter?
-- **Anmodningen:**
-  - hvor creatoren anmoder (fx under "Dine produkter");
-  - hvad admin godkender, og om det skal være en fane på "Forslag" (`merchboard_approval_tabs`);
-  - hvordan creatoren får svar (klokke og mail).
-- **Forbindelsen til ccmerch-design-samling:** hvad pluginet skal have at vide, og om det sker med en hook, en REST-kald eller manuelt.
-- **Pris og afregning:** hvordan et samlet produkt prissættes og afregnes med creatoren (ADR-080).
+**Besluttet af projektejeren 2026-11-22:**
+- **Læseadgang:** pluginets mappe må læses (read-only).
+- **En samling** er ét produkt, hvor kunden vælger design og køber designets eget produkt. Pris og afregning er derfor uændrede.
+- **Produkter:** alle creatorens egne udgivne produkter, dog ikke dem, en administrator har skjult.
+- **Omfang:** en ny samling eller tilføjelse til en af creatorens egne.
+- **Godkendelse:** opretter en kladde, som admin udgiver. Tilføjelse til en udgivet samling tager to klik.
+- **Twitch-panelet og merch-reklamen** viser hvert design.
+- **Gave og giveaway** virker på samlede produkter. Giveren vælger designet.
+
+**Trin:**
+- **55.1 ADR og læser** ✅: ADR-120 og `DesignCollections` med tests.
+- **55.2 Samlinger i de eksisterende funktioner:** lister, tilknytning, kurv, panel, reklame, Meta og Twitch-sub-linjen.
+- **55.3 Gave og giveaway:** valg af design, adresser og indløsning.
+- **55.4 Schema 53:** tabellerne til anmodninger.
+- **55.5 Anmodninger:** regler, audit, oprydning og afinstallation.
+- **55.6 Kladde og udgivelse:** oprettelse, tilføjelse og registrering af, at samlingen er klar.
+- **55.7 REST, fanen på "Forslag" og notifikationer.**
+- **55.8 Dashboard:** "Anmod om samling" og status under "Dine produkter".
+- **55.9 Afslutning:** oversættelser, docs, review og testpakke 2.4.0.
+- **55.10 Projektejerens test på stg** med det rigtige plugin.
 
 ## Fase 56 – Kliparts til udvalgte produkter med farver, creatoren vælger 💡 (projektejerens idé og svar 2026-11-22; version 2.5.0 foreslået, efter fase 55; ikke planlagt)
 
