@@ -1611,6 +1611,34 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **Forbindelsen til ccmerch-design-samling:** hvad pluginet skal have at vide, og om det sker med en hook, en REST-kald eller manuelt.
 - **Pris og afregning:** hvordan et samlet produkt prissættes og afregnes med creatoren (ADR-080).
 
+## Fase 56 – Kliparts til udvalgte produkter med farver, creatoren vælger 💡 (projektejerens idé 2026-11-22; version 2.5.0 foreslået, efter fase 55; ikke planlagt)
+
+**Ønsket:**
+- Kliparts kan tilføjes til bestemte produkter, fx et design til drikkedunke.
+- En klipart kan have dele med fast farve (fx sort) og dele, som creatoren vælger farver på.
+- En sådan klipart er kun tilgængelig på de produkter, den er valgt til.
+
+**I dag (koden læst 2026-11-22, ikke runtime-testet):**
+- **Biblioteket:** fanen Kliparts findes (trin 30.6, `ClipartLibrary`) med PNG, JPG og WebP. SVG afvises af sikkerhedshensyn.
+- **Adgang:** alle kliparts gælder alle produkter og creators, både i designerens liste (`describe()`), i filruten (`CreatorUploads::may_see()`) og i valideringen (`CreatorUploads::may_use()`).
+- **Farver:** en klipart er ét billede. Et billedobjekt gemmer kun asset-id'et, og `designer_assets` har ingen felter til produkter eller farvedele.
+- **Sletning:** slettes en klipart, afviser valideringen kladder og kopier, der bruger den.
+
+**Det skal fasen tage højde for:**
+- **Kun valgte produkter:** serveren skal håndhæve valget ved gem, "Kopiér design" og indsendelse. Det er ikke nok at skjule kliparten i designeren, og indsendelsen validerer ikke billederne igen i dag.
+- **Samme klipart i flere farver:** billeder og trådfarver slås op pr. asset-id (`fabric-stage.ts`, `threads.ts`). To eksemplarer i hver sin farve kræver opslag pr. objekt og farvevalg.
+- **Samme resultat overalt:** farverne skal være ens i designeren, printfilen, mockups og leverandørernes billeder, også med farvedesigns (ADR-096) og fælles formatdesigns (ADR-118).
+- **Data og beslutning:** fasen kræver en ADR og formentlig en migration.
+
+**Afklares, før fasen planlægges:**
+- **Produkter:** vælges kliparten pr. grundprodukt (antaget), pr. side eller pr. produktkategori?
+- **De nuværende kliparts:** skal de fortsat gælde alle produkter (anbefalet), eller skal de også tildeles?
+- **Farvedele:** én eller flere pr. klipart, hver med sin egen farve?
+- **Farvevalg:** frit, en palet fra admin eller kun farver, produktet kan trykkes i? Hvad gælder på broderede sider?
+- **Filerne:** hvordan markerer admin delene? Forslag: en gennemsigtig PNG pr. del med samme mål, eller en PSD med navngivne lag.
+- **Placering:** kan creatoren flytte og skalere kliparten frit, eller ligger den fast på produktet?
+- **Fjernet klipart:** hvad sker der med kladder, indsendte designs og produkter i shoppen, når en klipart slettes eller fravælges på et produkt?
+
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
 - **M1** long-poll-pladser og grænse pr. besøgsadresse på overlay-feedene. ✅
