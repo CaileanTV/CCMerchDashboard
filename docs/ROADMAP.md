@@ -1680,7 +1680,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **56.4 Tegningens indgang** ✅ (tests 1521124, resolver 3af8769): karakteriseringstests af printfil og tråde, derefter resolveren uden ændret adfærd.
 - **56.5 Schema 55** ✅ (c435a82; bekræftet på Local, 0 ændrede rækketal uden for Action Scheduler): alene på Local efter verificeret backup og tjek af cron og papirkurv.
 - **56.6 Definition og repository** ✅ (a924af5): endnu ikke i brug.
-- **56.7 Regler for produkt og "beholder den"** ved gem, kopi og filadgang.
+- **56.7 Regler for produkt og "beholder den"** ✅ (c60dc3b): ved gem, kopi og filadgang.
 - **56.8 Validering** af farvevalg og lås, og tjek ved indsendelse.
 - **56.9 Bevarede billeder** i API og editor.
 - **56.10 "Fjern" i stedet for "Slet"** med audit.
@@ -1689,6 +1689,9 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **56.13 Admins upload:** produkter, palet, lås og advarsler. Er sidst, så intet kan oprettes, før resten virker.
 - **56.14 Admins liste** over kliparts på et indsendt design.
 - **56.15 Afslutning:** tekster, docs, review, runtime-test og testpakke 2.5.0.
+
+**Fundet undervejs, ikke rettet (uden for fasen):**
+- `save_draft()` kræver én ændret række. At gemme en uændret kladde i samme sekund svarer derfor 500 (fundet af en integrationstest i 56.7).
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
