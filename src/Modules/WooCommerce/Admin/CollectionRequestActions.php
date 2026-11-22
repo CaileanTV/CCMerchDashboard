@@ -140,6 +140,9 @@ final class CollectionRequestActions {
 			default       => $this->fulfilment->retry( $id ),
 		};
 
+		// What was in the shop already closes now: no change of it will ask for a check.
+		$this->watcher->check();
+
 		if ( ! $done ) {
 			return 'approved_waiting';
 		}

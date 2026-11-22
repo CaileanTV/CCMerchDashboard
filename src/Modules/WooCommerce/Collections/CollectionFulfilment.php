@@ -63,7 +63,11 @@ final class CollectionFulfilment {
 	 * @throws DatabaseException When it cannot be read or stored.
 	 */
 	public function retry( int $id ): bool {
-		return $this->requests->carry_out( $id, fn( CollectionRequest $request ): bool => $this->write( $request, false ) );
+		return $this->requests->carry_out(
+			$id,
+			fn( CollectionRequest $request ): bool => $this->write( $request, false ),
+			fn( CollectionRequest $request ): bool => null !== $this->writer->existing( $request )
+		);
 	}
 
 	/**

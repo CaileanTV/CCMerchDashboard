@@ -292,6 +292,103 @@ final class CollectionFulfilmentTest extends IntegrationTestCase {
 		self::assertSame( CollectionRequestStatus::Ready, $this->repository->find( $id )?->status );
 	}
 
+	public function test_a_draft_published_before_it_was_recorded_is_still_found(): void {
+		$id          = $this->requests->request_new( $this->creator, 'Nova Tee', array( $this->red, $this->blue ) )->id;
+		$this->crash = true;
+
+		try {
+			$this->fulfilment->approve( $id );
+			self::fail( 'No crash.' );
+		} catch ( RuntimeException ) {
+			$this->crash = false;
+		}
+
+		wp_update_post(
+			array(
+				'ID'          => $this->drafts[0],
+				'post_status' => 'publish',
+			)
+		);
+		// The plugin has hidden the designs, so they can no longer be collected.
+		( $this->sync() )( $this->drafts[0] );
+
+		self::assertTrue( $this->fulfilment->retry( $id ) );
+
+		$this->watcher->check();
+
+		self::assertCount( 1, $this->drafts );
+		self::assertSame( CollectionRequestStatus::Ready, $this->repository->find( $id )?->status );
+	}
+
+	public function test_a_draft_whose_save_stopped_halfway_is_completed(): void {
+		$request = $this->requests->request_new( $this->creator, 'Nova Tee', array( $this->red, $this->blue ) );
+		$half    = $this->posts->add( 'Nova Tee', 'draft', array() );
+		$this->posts->meta( $half, CollectionWriter::TOKEN_KEY, $request->token );
+
+		self::assertTrue( $this->fulfilment->approve( $request->id ) );
+
+		self::assertSame( array(), $this->drafts, 'No second draft.' );
+		self::assertSame( $half, $this->repository->find( $request->id )?->collection_id );
+		self::assertSame( array( $this->red, $this->blue ), $this->members( $half ) );
+	}
+
+	public function test_a_draft_is_inserted_without_text_and_with_the_token(): void {
+		$data = CollectionWriter::insert_data(
+			array(
+				'post_title'   => 'Nova Tee',
+				'post_content' => 'The red design',
+				'post_excerpt' => 'Red',
+				'meta_input'   => array( 'other' => '1' ),
+			),
+			'abc'
+		);
+
+		self::assertSame( '', $data['post_content'], 'The description follows the design chosen.' );
+		self::assertSame( '', $data['post_excerpt'] );
+		self::assertSame( 'Nova Tee', $data['post_title'] );
+		self::assertSame(
+			array(
+				'other'                     => '1',
+				CollectionWriter::TOKEN_KEY => 'abc',
+			),
+			$data['meta_input']
+		);
+	}
+
+	public function test_a_design_put_in_by_hand_before_approval_does_not_block_it(): void {
+		$collection = $this->collection( 'draft' );
+		$id         = $this->requests->request_add( $this->creator, $collection, array( $this->blue, $this->green ) )->id;
+		$rows       = get_post_meta( $collection, DesignCollections::MEMBERS_KEY, true );
+		$rows[]     = array(
+			'id'    => $this->blue,
+			'label' => 'Blue',
+		);
+		update_post_meta( $collection, DesignCollections::MEMBERS_KEY, $rows );
+
+		self::assertTrue( $this->fulfilment->approve( $id ) );
+		self::assertSame( array( $this->red, $this->blue, $this->green ), $this->members( $collection ) );
+	}
+
+	public function test_a_design_deleted_for_good_does_not_disown_the_collection(): void {
+		$collection = $this->collection( 'draft' );
+		$rows       = get_post_meta( $collection, DesignCollections::MEMBERS_KEY, true );
+		$rows[]     = array(
+			'id'    => $this->green + 100000,
+			'label' => 'Deleted',
+		);
+		update_post_meta( $collection, DesignCollections::MEMBERS_KEY, $rows );
+
+		self::assertTrue( $this->requests->is_creators( $this->creator->id, $collection ) );
+
+		update_post_meta(
+			$collection,
+			DesignCollections::MEMBERS_KEY,
+			array( end( $rows ) )
+		);
+
+		self::assertFalse( $this->requests->is_creators( $this->creator->id, $collection ), 'At least one must exist.' );
+	}
+
 	/**
 	 * The double of WooCommerce' save with the plugin's class.
 	 *

@@ -101,31 +101,17 @@ class CollectionWriter {
 	 *
 	 * @param CollectionRequest $request An approved request of a new collection without a collection.
 	 * @return int The draft.
-	 * @throws CollectionRequestException When the plugin is inactive or several products carry the token.
 	 * @throws DatabaseException When the draft could not be made.
 	 */
 	public function draft( CollectionRequest $request ): int {
 		$this->assert_active();
 
-		$found = get_posts(
-			array(
-				'post_type'        => 'product',
-				'post_status'      => self::STATUSES,
-				'fields'           => 'ids',
-				'numberposts'      => 2,
-				'suppress_filters' => true,
-				'meta_key'         => self::TOKEN_KEY, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Once per approved collection.
-				'meta_value'       => $request->token, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Once per approved collection.
-			)
-		);
+		$found = $this->existing( $request );
 
-		if ( count( $found ) > 1 ) {
-			// A copy of the draft: which one is meant cannot be told.
-			throw new CollectionRequestException( CollectionRequestException::DRAFT_UNCLEAR );
-		}
+		if ( null !== $found ) {
+			$this->complete( $found, $request );
 
-		if ( 1 === count( $found ) ) {
-			return (int) $found[0];
+			return $found;
 		}
 
 		$ids     = $request->product_ids();
@@ -153,6 +139,95 @@ class CollectionWriter {
 		}
 
 		return $id;
+	}
+
+	/**
+	 * The product a request's draft became, whatever its status now, or null.
+	 *
+	 * @param CollectionRequest $request The request.
+	 * @throws CollectionRequestException When several products carry the token.
+	 */
+	public function existing( CollectionRequest $request ): ?int {
+		$found = get_posts(
+			array(
+				'post_type'        => 'product',
+				'post_status'      => self::STATUSES,
+				'fields'           => 'ids',
+				'numberposts'      => 2,
+				'suppress_filters' => true,
+				'meta_key'         => self::TOKEN_KEY, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Once per approved collection.
+				'meta_value'       => $request->token, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Once per approved collection.
+			)
+		);
+
+		if ( count( $found ) > 1 ) {
+			// A copy of the draft: which one is meant cannot be told.
+			throw new CollectionRequestException( CollectionRequestException::DRAFT_UNCLEAR );
+		}
+
+		return 1 === count( $found ) ? (int) $found[0] : null;
+	}
+
+	/**
+	 * What is inserted for a draft: no text, as the plugin's product class
+	 * answers with a design's own while the collection's is empty and
+	 * WooCommerce stores that answer; and the token from the first write, so
+	 * a save that stops halfway leaves a draft that is found again.
+	 *
+	 * @param array<mixed> $data  What WooCommerce would insert.
+	 * @param string       $token The request's token.
+	 * @return array<mixed>
+	 */
+	public static function insert_data( array $data, string $token ): array {
+		$meta = is_array( $data['meta_input'] ?? null ) ? $data['meta_input'] : array();
+
+		$data['post_content'] = '';
+		$data['post_excerpt'] = '';
+		$data['meta_input']   = array_merge( $meta, array( self::TOKEN_KEY => $token ) );
+
+		return $data;
+	}
+
+	/**
+	 * Finishes a draft whose save stopped halfway. One that lists designs is
+	 * the administrator's and is left as it is.
+	 *
+	 * @param int               $id      The draft.
+	 * @param CollectionRequest $request Its request.
+	 * @throws DatabaseException When it is still no collection.
+	 */
+	private function complete( int $id, CollectionRequest $request ): void {
+		wp_cache_delete( $id, 'post_meta' );
+
+		if ( array() === $this->collections->members( $id ) ) {
+			$ids = $request->product_ids();
+
+			update_post_meta( $id, DesignCollections::MEMBERS_KEY, wp_slash( array_map( self::member( ... ), $ids ) ) );
+
+			if ( taxonomy_exists( 'product_type' ) ) {
+				wp_set_object_terms( $id, DesignCollections::TYPE, 'product_type' );
+			}
+
+			foreach ( array( 'product_cat', 'product_tag' ) as $taxonomy ) {
+				$terms = self::terms( $ids, $taxonomy );
+
+				if ( array() !== $terms ) {
+					wp_set_object_terms( $id, $terms, $taxonomy );
+				}
+			}
+
+			$image = array() === $ids ? 0 : (int) get_post_thumbnail_id( $ids[0] );
+
+			if ( $image > 0 ) {
+				set_post_thumbnail( $id, $image );
+			}
+
+			wp_cache_delete( $id, 'post_meta' );
+		}
+
+		if ( ! $this->collections->is_collection( $id ) ) {
+			throw new DatabaseException( 'The collection draft was not stored.', array( 'product_id' => $id ) );
+		}
 	}
 
 	/**
@@ -333,7 +408,6 @@ class CollectionWriter {
 		$product->set_name( $draft['name'] );
 		$product->set_status( 'draft' );
 		$product->update_meta_data( DesignCollections::MEMBERS_KEY, $draft['members'] );
-		$product->update_meta_data( self::TOKEN_KEY, $draft['token'] );
 
 		if ( array() !== $draft['categories'] ) {
 			$product->set_category_ids( $draft['categories'] );
@@ -347,6 +421,14 @@ class CollectionWriter {
 			$product->set_image_id( $draft['image'] );
 		}
 
-		return (int) $product->save();
+		$insert = static fn( mixed $data ): array => self::insert_data( is_array( $data ) ? $data : array(), $draft['token'] );
+
+		add_filter( 'woocommerce_new_product_data', $insert, PHP_INT_MAX );
+
+		try {
+			return (int) $product->save();
+		} finally {
+			remove_filter( 'woocommerce_new_product_data', $insert, PHP_INT_MAX );
+		}
 	}
 }

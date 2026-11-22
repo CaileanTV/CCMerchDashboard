@@ -167,15 +167,22 @@ class CollectionRequests {
 			return false;
 		}
 
-		$members = $this->collections->members( $collection_id );
+		$existing = 0;
 
-		foreach ( $members as $member ) {
+		foreach ( $this->collections->members( $collection_id ) as $member ) {
+			// One deleted for good does not count (the owner's choice 2026-11-22).
+			if ( false === get_post_status( $member['id'] ) ) {
+				continue;
+			}
+
 			if ( ( $this->creator_of )( $member['id'] ) !== $creator_id ) {
 				return false;
 			}
+
+			++$existing;
 		}
 
-		return array() !== $members;
+		return $existing > 0;
 	}
 
 	/**
@@ -205,7 +212,8 @@ class CollectionRequests {
 					self::refuse( CollectionRequestException::COLLECTION_UNKNOWN );
 				}
 
-				$this->assert_usable( $creator->id, $request->product_ids(), $request->collection_id );
+				// One that was put in the collection by hand meanwhile needs no check: it is there.
+				$this->assert_usable( $creator->id, $this->missing( $request ), $request->collection_id );
 
 				$this->transaction->run(
 					function () use ( $request ): void {
@@ -287,24 +295,26 @@ class CollectionRequests {
 	 * again first: it can have changed since the approval.
 	 *
 	 * @template T
-	 * @param int                            $id   Request.
-	 * @param callable(CollectionRequest): T $work The work.
+	 * @param int                                      $id      Request.
+	 * @param callable(CollectionRequest): T           $work    The work.
+	 * @param (callable(CollectionRequest): bool)|null $drafted Whether a new collection's draft exists unrecorded.
 	 * @return T
 	 * @throws CollectionRequestException When it is refused.
 	 * @throws DatabaseException When it cannot be read or stored.
 	 */
-	public function carry_out( int $id, callable $work ): mixed {
+	public function carry_out( int $id, callable $work, ?callable $drafted = null ): mixed {
 		self::authorize();
 
 		return $this->locked(
 			$id,
-			function ( CollectionRequest $request ) use ( $work ): mixed {
+			function ( CollectionRequest $request ) use ( $work, $drafted ): mixed {
 				if ( CollectionRequestStatus::Approved !== $request->status ) {
 					self::refuse( CollectionRequestException::NOT_APPROVED );
 				}
 
-				// A recorded draft is the administrator's.
-				if ( CollectionRequestKind::NewCollection === $request->kind && null !== $request->collection_id ) {
+				// A draft is the administrator's, also one a crash left unrecorded: it may even be published by now,
+				// and its designs could then no longer be collected.
+				if ( CollectionRequestKind::NewCollection === $request->kind && ( null !== $request->collection_id || ( null !== $drafted && $drafted( $request ) ) ) ) {
 					return $work( $request );
 				}
 
@@ -314,11 +324,9 @@ class CollectionRequests {
 					self::refuse( CollectionRequestException::CREATOR_NOT_LIVE );
 				}
 
-				$ids = $request->product_ids();
+				$ids = $this->missing( $request );
 
 				if ( null !== $request->collection_id ) {
-					$ids = array_values( array_diff( $ids, array_column( $this->collections->members( $request->collection_id ), 'id' ) ) );
-
 					if ( array() !== $ids && ! $this->is_creators( $creator->id, $request->collection_id ) ) {
 						self::refuse( CollectionRequestException::COLLECTION_UNKNOWN );
 					}
@@ -346,7 +354,10 @@ class CollectionRequests {
 			return false;
 		}
 
-		$listed = array_intersect( $request->product_ids(), array_column( $this->collections->members( $id ), 'id' ) );
+		$listed = array_filter(
+			array_intersect( $request->product_ids(), array_column( $this->collections->members( $id ), 'id' ) ),
+			static fn( int $product_id ): bool => false !== get_post_status( $product_id )
+		);
 
 		foreach ( $listed as $product_id ) {
 			if ( $this->collections->collection_of( $product_id ) !== $id ) {
@@ -478,6 +489,18 @@ class CollectionRequests {
 		);
 
 		return $request;
+	}
+
+	/**
+	 * The request's designs that are not in its collection.
+	 *
+	 * @param CollectionRequest $request The request.
+	 * @return list<int>
+	 */
+	private function missing( CollectionRequest $request ): array {
+		return null === $request->collection_id
+			? $request->product_ids()
+			: array_values( array_diff( $request->product_ids(), array_column( $this->collections->members( $request->collection_id ), 'id' ) ) );
 	}
 
 	/**
