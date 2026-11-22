@@ -122,6 +122,11 @@ export function parseProduct( body: unknown ): Product | null {
 		profit,
 		designer: body.designer === true,
 		removalPending: body.removal_pending === true,
+		collection:
+			isRecord( body.collection ) &&
+			typeof body.collection.name === 'string'
+				? body.collection.name
+				: null,
 	};
 }
 

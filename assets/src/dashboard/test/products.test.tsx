@@ -30,6 +30,12 @@ jest.mock( '@wordpress/api-fetch', () => ( {
 	default: jest.fn(),
 } ) );
 
+// The card has its own test and its own request (collections.test.tsx).
+jest.mock( '../sections/products/CollectionsCard', () => ( {
+	__esModule: true,
+	CollectionsCard: () => null,
+} ) );
+
 const FIRST = '/merchboard/v1/me/products?page=1&per_page=20';
 const SECOND = '/merchboard/v1/me/products?page=2&per_page=20';
 
@@ -138,7 +144,12 @@ describe( 'parseProduct', () => {
 			],
 			designer: false,
 			removalPending: false,
+			collection: null,
 		} );
+		expect(
+			parseProduct( { ...TEE, collection: { id: 10, name: 'Tees' } } )
+				?.collection
+		).toBe( 'Tees' );
 		expect( parseProduct( CAP )?.price ).toBeNull();
 		expect(
 			parseProduct( { ...CAP, stock_status: null } )?.stockStatus

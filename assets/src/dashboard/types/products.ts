@@ -44,4 +44,6 @@ export interface Product {
 	readonly designer: boolean;
 	/** A request to remove it is waiting for us (ADR-083). */
 	readonly removalPending: boolean;
+	/** The name of the collection it is sold from, or null (ADR-120). */
+	readonly collection: string | null;
 }

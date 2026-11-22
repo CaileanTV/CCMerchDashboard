@@ -12,6 +12,7 @@ Fase 55 (ADR-120), under opbygning. Schema-version 53.
 - **Meta:** en samling med et designerprodukt synkroniseres ikke.
 - **Anmodninger om samlinger:** `GET`/`POST /me/collections`, fanen "Samlinger" på "Forslag", audit, oprydning, når en creator slettes, og tre notifikationer (ny anmodning, klar, afvist).
 - **Kladde og udgivelse:** en godkendt anmodning bliver én kladde, også hvis den gentages. Tilføjelse til en udgivet samling kræver et andet klik, og en anmodning er klar, når samlingen er udgivet med designs.
+- **"Dine produkter":** kortet "Samlinger" med "Anmod om samling" og status, og samlingens navn på samlede produkter.
 - **Database:** migration 53 med tabellerne til anmodninger om samlinger.
 
 ## [2.3.0] - 2026-11-22

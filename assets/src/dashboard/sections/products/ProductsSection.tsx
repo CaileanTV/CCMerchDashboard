@@ -12,6 +12,7 @@ import { Table } from '../../components/Table';
 import type { TableColumn } from '../../components/Table';
 import { usePagedApi } from '../../hooks/usePagedApi';
 import { ConfirmDelete } from '../designer/ConfirmDelete';
+import { CollectionsCard } from './CollectionsCard';
 import { DesignerProductsCard } from './DesignerProductsCard';
 import type {
 	Product,
@@ -85,7 +86,18 @@ function ProductCell( { product }: { readonly product: Product } ) {
 					loading="lazy"
 				/>
 			) }
-			<span className="merchboard-product__name">{ product.name }</span>
+			<span className="merchboard-product__name">
+				{ product.name }
+				{ product.collection === null ? null : (
+					<span className="merchboard-product__collection">
+						{ sprintf(
+							/* translators: %s: collection name. */
+							__( 'In the collection %s', 'merchboard' ),
+							product.collection
+						) }
+					</span>
+				) }
+			</span>
 		</span>
 	);
 }
@@ -293,6 +305,7 @@ export function ProductsSection() {
 					/>
 				) }
 			</Card>
+			<CollectionsCard />
 			<DesignerProductsCard />
 		</>
 	);

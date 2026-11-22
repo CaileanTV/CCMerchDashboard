@@ -15,6 +15,12 @@ jest.mock( '@wordpress/api-fetch', () => ( {
 	default: jest.fn(),
 } ) );
 
+// The card has its own test and its own request (collections.test.tsx).
+jest.mock( '../sections/products/CollectionsCard', () => ( {
+	__esModule: true,
+	CollectionsCard: () => null,
+} ) );
+
 const PRODUCTS = '/merchboard/v1/me/products?page=1&per_page=20';
 const DESIGNS = '/merchboard/v1/me/designer/products';
 
