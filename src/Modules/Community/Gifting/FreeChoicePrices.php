@@ -15,14 +15,18 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use WC_Product;
 use WC_Product_Variable;
+use WC_Tax;
 
 defined( 'ABSPATH' ) || exit;
 
 /**
  * The two prices FreeChoice compares, in the ledger's units and both with
- * VAT as GiveawayCost counts them: what the customer pays (so another tax
- * class is another price) and the base price, which is the rest after the
- * creator's profit.
+ * VAT: what the customer pays and the base price, which is the rest after
+ * the creator's profit.
+ *
+ * The VAT is the shop address's, never the visitor's as in WooCommerce's
+ * wc_get_price_including_tax(): the lock is read again when the winner
+ * shops, and a winner abroad would otherwise see every price changed.
  *
  * A variant sold out still counts: it costs what it costs. What a gift would
  * pay is the cheapest variant in stock, as GiftPurchase::cheapest().
@@ -105,7 +109,7 @@ final class FreeChoicePrices {
 					return null;
 				}
 
-				$gross = (float) wc_get_price_including_tax( $item, array( 'price' => $entered ) );
+				$gross = self::gross( $item, $entered );
 				$price = self::units( $gross );
 				$base  = self::units( $gross * max( 0.0, $entered - $profit ) / $entered );
 
@@ -148,6 +152,26 @@ final class FreeChoicePrices {
 		}
 
 		return $attributes;
+	}
+
+	/**
+	 * A price with VAT at the shop's address.
+	 *
+	 * @param WC_Product $item    Product or variation (which answers with its parent's tax class).
+	 * @param float      $entered The price as the shop enters it.
+	 */
+	private static function gross( WC_Product $item, float $entered ): float {
+		if ( ! wc_tax_enabled() || wc_prices_include_tax() || 'taxable' !== $item->get_tax_status() ) {
+			return $entered;
+		}
+
+		$percent = 0.0;
+
+		foreach ( WC_Tax::get_base_tax_rates( (string) $item->get_tax_class() ) as $rate ) {
+			$percent += is_numeric( $rate['rate'] ?? null ) ? (float) $rate['rate'] : 0.0;
+		}
+
+		return $entered * ( 1 + $percent / 100 );
 	}
 
 	/**
