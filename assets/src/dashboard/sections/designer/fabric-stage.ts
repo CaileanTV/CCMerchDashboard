@@ -19,7 +19,7 @@ import {
 } from 'fabric';
 import type { FabricObject } from 'fabric';
 
-import type { DesignObject, TextObject } from './design-model';
+import type { DesignObject, ImageObject, TextObject } from './design-model';
 
 export interface StageView {
 	/** Displayed template width and height in CSS pixels at zoom 1. */
@@ -68,6 +68,22 @@ export interface StagePaint {
 	readonly object: ( object: DesignObject ) => DesignObject;
 }
 
+/**
+ * Draws the images that are more than their file: cliparts with parts the
+ * creator colours (ADR-121). The raw files stay keyed by asset.
+ */
+export interface ImageResolver {
+	/** Changes when `image` shows something else. */
+	readonly key: string;
+	/**
+	 * The picture of an image object; undefined for one that is its file, null
+	 * when it cannot be drawn (a print file then fails rather than leave it out).
+	 */
+	readonly image: (
+		object: ImageObject
+	) => HTMLCanvasElement | null | undefined;
+}
+
 type Tagged = FabricObject & { mbId?: string };
 
 /**
@@ -83,6 +99,8 @@ export class FabricStage {
 	private imagesKey = '';
 
 	private paintKey = '';
+
+	private resolverKey = '';
 
 	private fonts = 0;
 
@@ -187,16 +205,19 @@ export class FabricStage {
 	 * @param selected   Selected object id.
 	 * @param threads    The threads of an embroidered side.
 	 * @param background The side's background colour, or null (ADR-095).
+	 * @param resolver   Draws what is more than its file, or null (ADR-121).
 	 */
 	public async render(
 		objects: readonly DesignObject[],
 		images: ReadonlyMap< number, string >,
 		selected: string | null,
 		threads: StagePaint | null = null,
-		background: string | null = null
+		background: string | null = null,
+		resolver: ImageResolver | null = null
 	): Promise< void > {
 		this.imagesKey = Array.from( images.keys() ).join( ',' );
 		this.paintKey = threads?.key ?? '';
+		this.resolverKey = resolver?.key ?? '';
 		this.background = background;
 
 		// A font that arrived after its texts were built: Fabric measured them in the fallback (30.15 runtime test).
@@ -223,7 +244,8 @@ export class FabricStage {
 			objects.map( ( object ) =>
 				build(
 					threads === null ? object : threads.object( object ),
-					images
+					images,
+					resolver
 				)
 			)
 		);
@@ -325,7 +347,7 @@ export class FabricStage {
 	 * @param objects Objects.
 	 */
 	private keyOf( objects: readonly DesignObject[] ): string {
-		return `${ JSON.stringify( objects ) }|${ this.imagesKey }|${ this.paintKey }|${ this.fonts }|${ this.background ?? '' }|${ this.print.width }x${ this.print.height }`;
+		return `${ JSON.stringify( objects ) }|${ this.imagesKey }|${ this.paintKey }|${ this.resolverKey }|${ this.fonts }|${ this.background ?? '' }|${ this.print.width }x${ this.print.height }`;
 	}
 }
 
@@ -338,14 +360,30 @@ export class FabricStage {
  * @param width      Print file width (px).
  * @param height     Print file height (px).
  * @param background The side's background colour over the whole file, or null (ADR-095).
+ * @param resolver   Draws what is more than its file, or null (ADR-121).
+ * @return The print file, or null when the resolver cannot draw one of its
+ *         images: it is never printed with something left out.
  */
 export async function renderPrintFile(
 	objects: readonly DesignObject[],
 	images: ReadonlyMap< number, string >,
 	width: number,
 	height: number,
-	background: string | null = null
-): Promise< HTMLCanvasElement > {
+	background: string | null = null,
+	resolver: ImageResolver | null = null
+): Promise< HTMLCanvasElement | null > {
+	const visible = objects.filter( ( object ) => ! object.hidden );
+
+	if (
+		resolver !== null &&
+		visible.some(
+			( object ) =>
+				object.type === 'image' && resolver.image( object ) === null
+		)
+	) {
+		return null;
+	}
+
 	const canvas = new StaticCanvas( undefined, {
 		width,
 		height,
@@ -355,9 +393,7 @@ export async function renderPrintFile(
 
 	try {
 		const built = await Promise.all(
-			objects
-				.filter( ( object ) => ! object.hidden )
-				.map( ( object ) => build( object, images ) )
+			visible.map( ( object ) => build( object, images, resolver ) )
 		);
 
 		if ( background !== null ) {
@@ -406,12 +442,14 @@ function common( object: DesignObject ): Record< string, unknown > {
 /**
  * The Fabric object of a design object.
  *
- * @param object The design object.
- * @param images `data:` URL by asset id.
+ * @param object   The design object.
+ * @param images   `data:` URL by asset id.
+ * @param resolver Draws what is more than its file, or null.
  */
 async function build(
 	object: DesignObject,
-	images: ReadonlyMap< number, string >
+	images: ReadonlyMap< number, string >,
+	resolver: ImageResolver | null
 ): Promise< Tagged | null > {
 	let shown: Tagged | null = null;
 
@@ -434,6 +472,17 @@ async function build(
 			} );
 			break;
 		case 'image': {
+			const drawn = resolver?.image( object );
+
+			if ( drawn === null ) {
+				return null;
+			}
+
+			if ( drawn !== undefined ) {
+				shown = new FabricImage( drawn, common( object ) );
+				break;
+			}
+
 			const url = images.get( object.asset );
 
 			if ( url === undefined ) {

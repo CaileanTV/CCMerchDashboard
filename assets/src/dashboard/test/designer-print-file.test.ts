@@ -290,3 +290,56 @@ describe( 'the print file of a design without coloured parts', () => {
 		expect( mockCalls ).not.toContainEqual( [ 'add', 'Rect' ] );
 	} );
 } );
+
+describe( 'an image that is more than its file', () => {
+	it( 'is the picture the resolver draws', async () => {
+		const picture = { picture: true } as unknown as HTMLCanvasElement;
+
+		await renderPrintFile( objects, images, 10, 20, null, {
+			key: 'one',
+			image: () => picture,
+		} );
+
+		expect( mockCalls ).toContainEqual( [
+			'FabricImage',
+			picture,
+			common,
+		] );
+		expect( mockCalls.some( ( [ name ] ) => name === 'fromURL' ) ).toBe(
+			false
+		);
+	} );
+
+	it( 'is its file when the resolver leaves it alone', async () => {
+		await renderPrintFile( objects, images, 2400, 3600, '#abcdef' );
+
+		const without = [ ...mockCalls ];
+
+		mockCalls.length = 0;
+		await renderPrintFile( objects, images, 2400, 3600, '#abcdef', {
+			key: 'one',
+			image: () => undefined,
+		} );
+
+		expect( mockCalls ).toEqual( without );
+	} );
+
+	it( 'fails the print file instead of being left out', async () => {
+		expect(
+			await renderPrintFile( objects, images, 10, 20, null, {
+				key: 'one',
+				image: () => null,
+			} )
+		).toBeNull();
+		expect( mockCalls ).toEqual( [] );
+	} );
+
+	it( 'does not fail it while hidden', async () => {
+		expect(
+			await renderPrintFile( objects, images, 10, 20, null, {
+				key: 'one',
+				image: ( object ) => ( object.asset === 8 ? null : undefined ),
+			} )
+		).toBe( 'print' );
+	} );
+} );

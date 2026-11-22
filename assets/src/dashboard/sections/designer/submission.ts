@@ -238,6 +238,10 @@ async function printOf(
 		view.embroidery === null ? backgroundOf( input.design, view.key ) : null
 	);
 
+	if ( print === null ) {
+		return null;
+	}
+
 	if ( threaded !== null ) {
 		threadCanvas( print, threaded.plan );
 	}
