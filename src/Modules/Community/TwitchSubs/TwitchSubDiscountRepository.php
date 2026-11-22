@@ -66,6 +66,13 @@ final class TwitchSubDiscountRepository {
 	private Closure $owns;
 
 	/**
+	 * A saved selection without collections (ADR-120).
+	 *
+	 * @var Closure(list<int>): list<int>
+	 */
+	private Closure $selection;
+
+	/**
 	 * Whether a creator's Twitch channel is connected.
 	 *
 	 * @var Closure(int): bool
@@ -84,6 +91,7 @@ final class TwitchSubDiscountRepository {
 	 * Constructor.
 	 *
 	 * @phpstan-param Closure(int, int): bool $owns
+	 * @phpstan-param (Closure(list<int>): list<int>)|null $selection
 	 * @phpstan-param Closure(int): bool $connected
 	 * @phpstan-param Closure(int, list<int>|null): array<int, int> $profit_percents
 	 *
@@ -93,8 +101,10 @@ final class TwitchSubDiscountRepository {
 	 * @param Closure          $owns            Whether a creator (1st) owns a parent product (2nd).
 	 * @param Closure          $connected       Whether a creator's Twitch channel is connected.
 	 * @param Closure          $profit_percents The creator's profit percent per product (the given ones, or all for null).
+	 * @param Closure|null     $selection       A saved selection without collections; as saved by default.
 	 */
-	public function __construct( private CreatorMetaStore $meta, private AuditTrail $audit, private Transaction $transaction, Closure $owns, Closure $connected, Closure $profit_percents ) {
+	public function __construct( private CreatorMetaStore $meta, private AuditTrail $audit, private Transaction $transaction, Closure $owns, Closure $connected, Closure $profit_percents, ?Closure $selection = null ) {
+		$this->selection       = $selection ?? static fn( array $ids ): array => array_values( array_filter( $ids, 'is_int' ) );
 		$this->owns            = $owns;
 		$this->connected       = $connected;
 		$this->profit_percents = $profit_percents;
@@ -107,7 +117,19 @@ final class TwitchSubDiscountRepository {
 	 */
 	public function find( int $creator_id ): TwitchSubDiscountSettings {
 		if ( ! isset( $this->cache[ $creator_id ] ) ) {
-			$this->cache[ $creator_id ] = TwitchSubDiscountSettings::from_stored( $this->meta->get( $creator_id, CreatorMetaStore::TWITCH_SUB_DISCOUNT ) );
+			$stored = $this->meta->get( $creator_id, CreatorMetaStore::TWITCH_SUB_DISCOUNT );
+
+			// A collection is never a cart line, so a discount on one never gave anything: it is left out.
+			if ( is_array( $stored ) && is_array( $stored['campaigns'] ?? null ) ) {
+				foreach ( $stored['campaigns'] as $index => $campaign ) {
+					if ( is_array( $campaign ) && is_array( $campaign['product_ids'] ?? null ) ) {
+						$campaign['product_ids']       = $this->without_collections( $campaign['product_ids'] );
+						$stored['campaigns'][ $index ] = $campaign;
+					}
+				}
+			}
+
+			$this->cache[ $creator_id ] = TwitchSubDiscountSettings::from_stored( $stored );
 		}
 
 		return $this->cache[ $creator_id ];
@@ -203,11 +225,19 @@ final class TwitchSubDiscountRepository {
 			throw new TwitchSubDiscountInvalid( $errors + array( 'campaigns' => 'too_many' ) );
 		}
 
-		$known     = array_map( static fn( TwitchSubCampaign $campaign ): string => $campaign->id, $previous->campaigns );
+		$known   = array_map( static fn( TwitchSubCampaign $campaign ): string => $campaign->id, $previous->campaigns );
+		$emptied = array();
+
+		// One left without products by that can still be saved, also to switch the discount off: it gives nothing.
+		foreach ( $previous->campaigns as $saved ) {
+			if ( TwitchSubCampaign::SELECTED === $saved->scope && array() === $saved->product_ids ) {
+				$emptied[] = $saved->id;
+			}
+		}
 		$campaigns = array();
 
 		foreach ( $input as $index => $campaign ) {
-			$read = $this->campaign( $creator_id, is_array( $campaign ) ? $campaign : array(), $known, $errors, 'campaigns.' . $index . '.' );
+			$read = $this->campaign( $creator_id, is_array( $campaign ) ? $campaign : array(), $known, $errors, 'campaigns.' . $index . '.', $emptied );
 
 			if ( null !== $read ) {
 				$campaigns[ $index ] = $read;
@@ -234,8 +264,9 @@ final class TwitchSubDiscountRepository {
 	 * @param string[]              $known      Ids in use (the saved campaigns' and those read before).
 	 * @param array<string, string> $errors     Errors so far.
 	 * @param string                $prefix     Field prefix (`campaigns.<n>.`).
+	 * @param string[]              $emptied    Saved campaigns without products.
 	 */
-	private function campaign( int $creator_id, array $values, array $known, array &$errors, string $prefix ): ?TwitchSubCampaign {
+	private function campaign( int $creator_id, array $values, array $known, array &$errors, string $prefix, array $emptied = array() ): ?TwitchSubCampaign {
 		$count   = count( $errors );
 		$id      = $values['id'] ?? '';
 		$name    = is_string( $values['name'] ?? null ) ? trim( $values['name'] ) : null;
@@ -279,6 +310,8 @@ final class TwitchSubDiscountRepository {
 		$products = array();
 
 		if ( TwitchSubCampaign::SELECTED === $scope ) {
+			$ids = is_array( $ids ) ? $this->without_collections( $ids ) : $ids;
+
 			if ( ! is_array( $ids ) ) {
 				$errors[ $prefix . 'product_ids' ] = 'invalid';
 			} elseif ( count( $ids ) > TwitchSubCampaign::MAX_PRODUCTS ) {
@@ -293,7 +326,7 @@ final class TwitchSubDiscountRepository {
 					$products[ $product ] = $product;
 				}
 
-				if ( ! isset( $errors[ $prefix . 'product_ids' ] ) && array() === $products ) {
+				if ( ! isset( $errors[ $prefix . 'product_ids' ] ) && array() === $products && ! in_array( $id, $emptied, true ) ) {
 					$errors[ $prefix . 'product_ids' ] = 'required';
 				}
 			}
@@ -348,6 +381,18 @@ final class TwitchSubDiscountRepository {
 			is_string( $starts ) ? $starts : null,
 			is_string( $ends ) ? $ends : null
 		);
+	}
+
+	/**
+	 * A selection without collections.
+	 *
+	 * @param array<mixed> $ids As saved or sent.
+	 * @return array<mixed> As it was when it is no list of ids.
+	 */
+	private function without_collections( array $ids ): array {
+		$whole = array_values( array_filter( $ids, 'is_int' ) );
+
+		return count( $whole ) === count( $ids ) && count( $ids ) <= TwitchSubCampaign::MAX_PRODUCTS ? ( $this->selection )( $whole ) : $ids;
 	}
 
 	/**

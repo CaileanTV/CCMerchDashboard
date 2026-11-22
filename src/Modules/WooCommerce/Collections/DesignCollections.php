@@ -167,6 +167,41 @@ class DesignCollections {
 	}
 
 	/**
+	 * A saved selection of products without collections (ADR-120, status note
+	 * 2026-11-22): a collection becomes the creator's designs in it, or
+	 * nothing without $owns. Everything else stays as it is, in its order.
+	 *
+	 * @phpstan-param list<int> $ids
+	 * @phpstan-param (Closure(int): bool)|null $owns
+	 *
+	 * @param int[]        $ids  Products.
+	 * @param Closure|null $owns Whether a design is the creator's; null leaves collections out.
+	 * @return list<int>
+	 */
+	public function as_designs( array $ids, ?Closure $owns = null ): array {
+		$products = array();
+
+		foreach ( $ids as $id ) {
+			if ( ! $this->is_collection( $id ) ) {
+				$products[ $id ] = $id;
+				continue;
+			}
+
+			if ( null === $owns ) {
+				continue;
+			}
+
+			foreach ( $this->members( $id ) as $member ) {
+				if ( $owns( $member['id'] ) ) {
+					$products[ $member['id'] ] = $member['id'];
+				}
+			}
+		}
+
+		return array_values( $products );
+	}
+
+	/**
 	 * Every collection outside the trash, by name.
 	 *
 	 * @return list<int>

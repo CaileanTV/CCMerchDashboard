@@ -42,17 +42,27 @@ final class MerchAdRepository {
 	private Closure $owns;
 
 	/**
+	 * A saved selection as the products that count (ADR-120).
+	 *
+	 * @var Closure(int, list<int>): list<int>
+	 */
+	private Closure $selection;
+
+	/**
 	 * Constructor.
 	 *
 	 * @phpstan-param Closure(int, int): bool $owns
+	 * @phpstan-param (Closure(int, list<int>): list<int>)|null $selection
 	 *
 	 * @param CreatorMetaStore $meta        Creator meta.
 	 * @param AuditTrail       $audit       Audit trail.
 	 * @param Transaction      $transaction Transactions.
 	 * @param Closure          $owns        Whether a product (2nd) is one of the creator's (1st).
+	 * @param Closure|null     $selection   A creator's (1st) saved selection (2nd) as the products that count; as saved by default.
 	 */
-	public function __construct( private CreatorMetaStore $meta, private AuditTrail $audit, private Transaction $transaction, Closure $owns ) {
-		$this->owns = $owns;
+	public function __construct( private CreatorMetaStore $meta, private AuditTrail $audit, private Transaction $transaction, Closure $owns, ?Closure $selection = null ) {
+		$this->owns      = $owns;
+		$this->selection = $selection ?? static fn( int $creator_id, array $ids ): array => array_values( array_filter( $ids, 'is_int' ) );
 	}
 
 	/**
@@ -62,7 +72,13 @@ final class MerchAdRepository {
 	 */
 	public function find( int $creator_id ): MerchAdSettings {
 		if ( ! isset( $this->cache[ $creator_id ] ) ) {
-			$this->cache[ $creator_id ] = MerchAdSettings::from_stored( $this->meta->get( $creator_id, CreatorMetaStore::MERCH_AD ) );
+			$stored = $this->meta->get( $creator_id, CreatorMetaStore::MERCH_AD );
+
+			if ( is_array( $stored ) && is_array( $stored['product_ids'] ?? null ) ) {
+				$stored['product_ids'] = $this->selected( $creator_id, $stored['product_ids'] );
+			}
+
+			$this->cache[ $creator_id ] = MerchAdSettings::from_stored( $stored );
 		}
 
 		return $this->cache[ $creator_id ];
@@ -140,6 +156,9 @@ final class MerchAdRepository {
 		if ( ! is_string( $accent ) || 1 !== preg_match( '/^#[0-9a-fA-F]{6}$/', $accent ) ) {
 			$errors['accent'] = 'invalid';
 		}
+
+		// A page opened before an update can still send a collection.
+		$ids = is_array( $ids ) ? $this->selected( $creator_id, $ids ) : $ids;
 
 		if ( ! is_array( $ids ) || ! array_is_list( $ids ) ) {
 			$errors['product_ids'] = 'invalid';
@@ -260,5 +279,21 @@ final class MerchAdRepository {
 	 */
 	private static function new_id(): string {
 		return bin2hex( random_bytes( 16 ) );
+	}
+
+	/**
+	 * A selection without collections, which count as their designs.
+	 *
+	 * @param int          $creator_id Creator.
+	 * @param array<mixed> $ids        As saved or sent.
+	 * @return array<mixed> As it was when it is no list of ids.
+	 */
+	private function selected( int $creator_id, array $ids ): array {
+		$whole = array_values( array_filter( $ids, 'is_int' ) );
+
+		// A malformed or too long list is left to the validation.
+		return count( $whole ) === count( $ids ) && array_is_list( $ids ) && count( $ids ) <= MerchAdSettings::MAX_PRODUCTS
+			? array_slice( ( $this->selection )( $creator_id, $whole ), 0, MerchAdSettings::MAX_PRODUCTS )
+			: $ids;
 	}
 }

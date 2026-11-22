@@ -234,6 +234,14 @@ final class DesignCollectionsTest extends TestCase {
 		self::assertFalse( $this->collections()->collectable( self::COLLECTION ) );
 	}
 
+	public function test_a_saved_selection_gets_a_collections_own_designs_in_its_place(): void {
+		$this->product( 80, 'simple' );
+		$owns = static fn( int $id ): bool => self::DESIGN === $id;
+
+		self::assertSame( array( self::DESIGN, 80 ), $this->collections()->as_designs( array( self::COLLECTION, 80, self::DESIGN ), $owns ), 'Never another creator' . chr( 39 ) . 's design, and each once.' );
+		self::assertSame( array( 80 ), $this->collections()->as_designs( array( self::COLLECTION, 80 ) ), 'A discount leaves the collection out.' );
+	}
+
 	public function test_a_collected_design_is_bought_on_the_collections_page(): void {
 		self::assertSame( 'https://shop.test/product/10/?design=21', $this->collections()->design_url( self::DESIGN ) );
 	}

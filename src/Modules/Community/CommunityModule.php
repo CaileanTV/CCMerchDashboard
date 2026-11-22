@@ -130,7 +130,8 @@ final class CommunityModule implements Module {
 				$c->get( Transaction::class ),
 				static fn( int $creator_id, int $product_id ): bool => $c->get( CreatorProducts::class )->owns( $creator_id, $product_id ),
 				static fn( int $creator_id ): bool => $c->get( ChatbotChannelRepository::class )->find( $creator_id, ChatPlatform::Twitch )->connected(),
-				static fn( int $creator_id, ?array $product_ids ): array => self::profit_percents( $c, $creator_id, $product_ids )
+				static fn( int $creator_id, ?array $product_ids ): array => self::profit_percents( $c, $creator_id, $product_ids ),
+				static fn( array $ids ): array => $c->get( DesignCollections::class )->as_designs( array_values( array_filter( $ids, 'is_int' ) ) )
 			)
 		);
 		$container->set(
@@ -276,7 +277,7 @@ final class CommunityModule implements Module {
 		$container->set( MerchAdFiles::class, static fn(): MerchAdFiles => new MerchAdFiles() );
 		$container->set(
 			MerchAdRepository::class,
-			static fn( Container $c ): MerchAdRepository => new MerchAdRepository( $c->get( CreatorMetaStore::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $owns( $c ) )
+			static fn( Container $c ): MerchAdRepository => new MerchAdRepository( $c->get( CreatorMetaStore::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $owns( $c ), self::selection( $c ) )
 		);
 		$container->set(
 			MerchAdView::class,
@@ -376,7 +377,8 @@ final class CommunityModule implements Module {
 				$c->get( CreatorMetaStore::class ),
 				$c->get( AuditTrail::class ),
 				$c->get( Transaction::class ),
-				static fn( int $creator_id, int $product_id ): bool => $c->get( CreatorProducts::class )->owns( $creator_id, $product_id )
+				static fn( int $creator_id, int $product_id ): bool => $c->get( CreatorProducts::class )->owns( $creator_id, $product_id ),
+				self::selection( $c )
 			)
 		);
 		$container->set(
@@ -710,6 +712,17 @@ final class CommunityModule implements Module {
 		$url = get_permalink( $product_id );
 
 		return is_string( $url ) && '' !== $url ? $url : home_url( '/' );
+	}
+
+	/**
+	 * A saved selection of the panel or the ad: a collection in it is the
+	 * creator's designs in that collection (ADR-120).
+	 *
+	 * @param Container $c Container.
+	 * @return \Closure(int, list<int>): list<int>
+	 */
+	private static function selection( Container $c ): \Closure {
+		return static fn( int $creator_id, array $ids ): array => $c->get( DesignCollections::class )->as_designs( array_values( array_filter( $ids, 'is_int' ) ), static fn( int $product_id ): bool => $c->get( CreatorProducts::class )->owns( $creator_id, $product_id ) );
 	}
 
 	/**
