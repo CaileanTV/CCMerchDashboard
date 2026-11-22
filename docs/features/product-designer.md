@@ -279,6 +279,33 @@ Gelato-skabeloner med andre valg end farve og størrelse, fx plakater med retnin
 - **Gelatos egne mockups:** en formatgruppes side beholder browserens billeder på Gelatos foto af gruppen, for gruppesiderne deler placering. Fra fase 53 kommer Gelatos miljøbilleder i tillæg (se nedenfor).
 - **Kun Gelato:** Printful, Prodigi og Printify er uændrede.
 
+## Plakater som i Gelato, det færdige produkt og valg af mockups (fase 54, ADR-119, 2026-11-22)
+
+Som Lumise-addon'et "CCMerch Udbydere" 1.7.0–1.8.7 (læst, ikke kopieret).
+
+- **Fladt ark:**
+  - en plakats formatside har et genereret ark som skabelon (`ImageProbe::sheet()`), ikke Gelatos foto. Det er 1000 × 1000 px og gennemsigtigt, med et hvidt ark i printfladens forhold inkl. bleed (lang side 940 px, centreret) og blød skygge;
+  - designfeltet er hele arket, og skærelinjen og bleed (`trims`) vises som før. Der er ingen hvide striber;
+  - gennemsigtigheden er omridset, så billeder uden baggrund virker af sig selv;
+  - importen henter ikke længere Gelatos foto af formatsiderne. Gengivelserne bruges til flade billeder, miljøer og miniaturer.
+- **Formgrupper:**
+  - størrelserne samles efter Gelatos færdige mål (`/v3/products/{uid}`, gemt 30 dage) inden for 1 %. Før var det printfladen inden for 3 %;
+  - en vandret plakats færdige mål drejes som printfladen;
+  - uden et færdigt mål bruges printfladen;
+  - Fine Art Poster: 11 former pr. retning, i alt 22 formatsider og 44 gengivelser ved import.
+- **Mockups fra Gelato** (grundproduktets side):
+  - importen gemmer en miniature pr. plads i Gelatos billedliste (`gelato_thumbs`, i højst 320 px). Den første gruppe eller farve bruges;
+  - admin sætter flueben (`gelato_photos`). Uden valg bruges alle;
+  - **plakater:** den valgte flade plakat erstatter browserens flade billede, og de valgte miljøer kommer som `_scene-n`;
+  - **andre Gelato-produkter:** en sides billede bruges kun, når det er valgt. Valgte ekstra billeder kommer som `_scene-n` pr. farve, hvis Gelato binder dem til farven;
+  - grundprodukter importeret før 2.3.0 har ingen miniaturer og beholder browserens flade billeder.
+- **"Se det færdige produkt"** (den eksisterende knap, rute og kvote på 100 pr. døgn):
+  - virker nu også for Gelato-grundprodukter;
+  - laver for kladdens første farve ét skjult produkt pr. brugt formatside (gruppens største størrelse), højst 4, eller ét produkt med de andre sider;
+  - billederne vises, når Gelato har lavet dem: de valgte, højst 6, som data-URL'er;
+  - efter 10 minutter gives der op;
+  - hvert klik efterlader skjulte produkter i Gelato-butikken.
+
 ## Fælles design på tværs af plakatformater (fase 54, ADR-118, 2026-11-22)
 
 - **Fælles design pr. retning:**

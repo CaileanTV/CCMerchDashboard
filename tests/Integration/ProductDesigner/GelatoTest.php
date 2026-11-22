@@ -264,10 +264,10 @@ final class GelatoTest extends IntegrationTestCase {
 
 		self::assertSame(
 			array(
-				'source'     => 'gelato',
-				'ref'        => 'tpl-1',
-				'placements' => array( 'front' => 'ImageFront' ),
-				'variants'   => array(
+				'source'        => 'gelato',
+				'ref'           => 'tpl-1',
+				'placements'    => array( 'front' => 'ImageFront' ),
+				'variants'      => array(
 					'black' => array(
 						'S' => 'tv-b-s',
 						'M' => 'tv-b-m',
@@ -277,17 +277,17 @@ final class GelatoTest extends IntegrationTestCase {
 						'M' => 'tv-w-m',
 					),
 				),
-				'slots'      => array( 'front' => '0' ),
-				'flat'       => false,
-				'photos'     => array(),
-				'stitches'   => array(),
-				'techniques' => array(),
-				'options'    => array(),
-				'axes'       => array(
+				'slots'         => array( 'front' => '0' ),
+				'flat'          => false,
+				'photos'        => array(),
+				'stitches'      => array(),
+				'techniques'    => array(),
+				'options'       => array(),
+				'axes'          => array(
 					'color' => 'Colour',
 					'size'  => 'Size',
 				),
-				'uids'       => array(
+				'uids'          => array(
 					'black' => array(
 						'S' => 'apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_classic_gsi_s_gco_black',
 						'M' => 'apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_classic_gsi_m_gco_black',
@@ -297,7 +297,11 @@ final class GelatoTest extends IntegrationTestCase {
 						'M' => 'apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_classic_gsi_m_gco_white',
 					),
 				),
-				'scenes'     => array(),
+				'scenes'        => array(),
+				'share_formats' => true,
+				// One thumbnail of the one image each render gives (ADR-119).
+				'gelato_thumbs' => array_slice( $this->bases->provider( $id )['gelato_thumbs'] ?? array(), 0, 1, true ),
+				'gelato_photos' => null,
 			),
 			$this->bases->provider( $id )
 		);
@@ -329,14 +333,15 @@ final class GelatoTest extends IntegrationTestCase {
 		self::assertTrue( $choice['grouped'] );
 		self::assertSame( 0, $choice['duplicates'] );
 		self::assertSame( 58, array_sum( array_map( 'count', $choice['variants'] ) ) );
-		self::assertCount( 16, $choice['sides'], 'Eight format groups per orientation.' );
+		self::assertCount( 22, $choice['sides'], 'Eleven format groups per orientation: the finished size within 1 % (ADR-119).' );
 
 		$first = $choice['sides'][0];
-		self::assertSame( array( 'Vertical – format 1', 'g1', array( 'Vertical' ), '1 - sort kasse.png', 758, 1008 ), array( $first['name'], $first['group'], $first['colors'], $first['placement'], $first['width_mm'], $first['height_mm'] ), 'Numbered by the smallest size; the print size of the largest.' );
-		self::assertSame( array( '13x18 cm / 5x7″', '15x20 cm / 6x8″', '30x40 cm / 12x16″', '45x60 cm / 18x24″', '60x80 cm / 24x32″', '75x100 cm / 30x40″' ), $first['sizes'], 'Each at most 3 % from the shape of the largest size.' );
+		self::assertSame( array( 'Vertical – format 1', 'g1', array( 'Vertical' ), '1 - sort kasse.png', 138, 188 ), array( $first['name'], $first['group'], $first['colors'], $first['placement'], $first['width_mm'], $first['height_mm'] ), 'Numbered by the smallest size; the print size of the largest.' );
+		self::assertSame( array( '13x18 cm / 5x7″' ), $first['sizes'], '13 × 18 has a shape of its own.' );
+		self::assertSame( array( '15x20 cm / 6x8″', '30x40 cm / 12x16″', '45x60 cm / 18x24″', '60x80 cm / 24x32″', '75x100 cm / 30x40″' ), $choice['sides'][1]['sizes'], 'Each within 1 % of the finished shape of the largest size.' );
 
 		$a_sizes = array_values( array_filter( $choice['sides'], static fn( array $side ): bool => in_array( 'A3 (29.7 x 42 cm)', $side['sizes'], true ) && array( 'Vertical' ) === $side['colors'] ) )[0] ?? self::fail( 'No A3.' );
-		self::assertSame( array( '21x29.7 cm / 8x12"', 'A3 (29.7 x 42 cm)', 'A2 (42 x 59.4 cm)', '50x70 cm / 20x28″', 'A1 (59.4 x 84.1 cm)', '70x100 cm / 28x40″', 'A0 (84.1 x 118.9 cm)' ), $a_sizes['sizes'], 'The A sizes, 21 × 29.7, 50 × 70 and 70 × 100 share one design.' );
+		self::assertSame( array( '21x29.7 cm / 8x12"', 'A3 (29.7 x 42 cm)', 'A2 (42 x 59.4 cm)', '50x70 cm / 20x28″', 'A1 (59.4 x 84.1 cm)', 'A0 (84.1 x 118.9 cm)' ), $a_sizes['sizes'], 'The A sizes, 21 × 29.7 and 50 × 70 share one design; 70 × 100 is more than 1 % off.' );
 		self::assertSame( array( 849, 1197, 'rp-43' ), array( $a_sizes['width_mm'], $a_sizes['height_mm'], $a_sizes['variant'] ), 'Rendered and printed in A0.' );
 		self::assertSame(
 			array(
@@ -380,10 +385,24 @@ final class GelatoTest extends IntegrationTestCase {
 		self::assertSame( 'ready', $this->bases->import( $id )['state'] ?? null, (string) wp_json_encode( $this->bases->import( $id ) ) );
 		self::assertSame( array( array( 'vertical', 'Vertical' ), array( 'horizontal', 'Horizontal' ) ), array_map( static fn( array $color ): array => array( $color['key'], $color['name'] ), $base->colors ) );
 		self::assertCount( 29, $base->sizes );
-		self::assertCount( 16, $base->views );
+		self::assertCount( 22, $base->views );
 
 		$view = array_values( array_filter( $base->views, static fn( $side ): bool => in_array( 'A3 (29.7 x 42 cm)', $side->sizes, true ) && $side->on_color( 'vertical' ) ) )[0] ?? self::fail( 'No A3.' );
-		self::assertSame( array( 'vertical-format-3', 'Vertical – format 3', array( 'vertical' ), 849, 1197 ), array( $view->key, $view->name, $view->colors, $view->width_mm, $view->height_mm ) );
+		self::assertSame( array( 'vertical-format-4', 'Vertical – format 4', array( 'vertical' ), 849, 1197 ), array( $view->key, $view->name, $view->colors, $view->width_mm, $view->height_mm ) );
+		self::assertSame(
+			array(
+				1000,
+				1000,
+				array(
+					'x'      => 166,
+					'y'      => 30,
+					'width'  => 667,
+					'height' => 940,
+				),
+			),
+			array( $view->width, $view->height, $view->area ),
+			'Designed on a flat sheet of the whole print area, as in Gelato\'s editor (ADR-119).'
+		);
 		self::assertSame( $view->sizes, array_keys( $view->formats ) );
 		self::assertSame(
 			array(
@@ -394,7 +413,7 @@ final class GelatoTest extends IntegrationTestCase {
 			$view->formats['21x29.7 cm / 8x12"'],
 			'4 mm bleed from the finished size Gelato names.'
 		);
-		self::assertSame( array( 'horizontal' ), $base->views[8]->colors, 'The horizontal groups follow the vertical ones.' );
+		self::assertSame( array( 'horizontal' ), $base->views[11]->colors, 'The horizontal groups follow the vertical ones.' );
 		self::assertTrue( $view->on_color( 'vertical' ) );
 		self::assertFalse( $view->on_color( 'horizontal' ) );
 
@@ -410,7 +429,7 @@ final class GelatoTest extends IntegrationTestCase {
 		self::assertSame( 'rp-13', $provider['variants']['vertical']['A3 (29.7 x 42 cm)'] ?? null );
 
 		$creates = array_map( static fn( array $call ): string => (string) ( json_decode( (string) ( $call[2]['body'] ?? '' ), true )['variants'][0]['templateVariantId'] ?? '' ), array_values( array_filter( $this->calls, static fn( array $call ): bool => 'POST' === $call[0] && str_ends_with( $call[1], 'products:create-from-template' ) ) ) );
-		self::assertCount( 32, $creates, 'A marker and a blank product per format group.' );
+		self::assertCount( 44, $creates, 'A marker and a blank product per format group.' );
 		self::assertContains( 'rp-43', $creates, 'Each group is rendered with its largest size (A0 vertical).' );
 		self::assertCount( 58, array_filter( $this->calls, static fn( array $call ): bool => str_starts_with( $call[1], GelatoApi::PRODUCTS . '/v3/products/' ) ), 'The finished size of every format, once.' );
 	}
@@ -436,9 +455,11 @@ final class GelatoTest extends IntegrationTestCase {
 		$provider = $this->bases->provider( $id ) ?? self::fail( 'No provider data.' );
 
 		self::assertSame( 'ready', $this->bases->import( $id )['state'] ?? null, (string) wp_json_encode( $this->bases->import( $id ) ) );
-		self::assertSame( '1', $provider['slots']['vertical-format-3'] ?? null, 'The side is designed on the flat poster.' );
-		self::assertSame( array( 0 ), $provider['scenes']['vertical-format-3'] ?? null, 'The room is an environment photo of the side (ADR-117).' );
-		self::assertCount( 16, $provider['scenes'] );
+		self::assertSame( '1', $provider['slots']['vertical-format-4'] ?? null, 'The flat poster is the side\'s own image.' );
+		self::assertSame( array( 0 ), $provider['scenes']['vertical-format-4'] ?? null, 'The room is an environment photo of the side (ADR-117).' );
+		self::assertCount( 22, $provider['scenes'] );
+		self::assertSame( array( '0', '1' ), array_map( 'strval', array_keys( $provider['gelato_thumbs'] ) ), 'A thumbnail of each of Gelato\'s images (ADR-119).' );
+		self::assertNull( $provider['gelato_photos'], 'Every image until the administrator chooses.' );
 	}
 
 	public function test_each_poster_side_gets_gelato_s_environment_photos_beside_the_browser_s(): void {
@@ -480,6 +501,77 @@ final class GelatoTest extends IntegrationTestCase {
 
 		$review->approve( $version );
 		self::assertSame( 'approved', $this->products->version( $version )['status'] ?? null );
+	}
+
+	public function test_gelato_s_flat_poster_replaces_the_browser_s_when_the_administrator_chose_it(): void {
+		$this->account->set( self::KEY, self::STORE );
+		// Imported with thumbnails of both images; no choice made: both are used (ADR-119).
+		[ $version, $before ] = $this->poster_submitted(
+			array(
+				'gelato_thumbs' => array(
+					'0' => 1,
+					'1' => 2,
+				),
+			)
+		);
+		$mockups              = $this->mockups();
+
+		$mockups->submitted( $version );
+		$this->drain( $mockups );
+
+		$files = SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null )['mockups'];
+
+		self::assertSame( 'ready', $this->products->version( $version )['mockup_state'] ?? null );
+		self::assertNotSame( $before['front']['black']['file'], $files['front']['black']['file'] ?? null, 'Gelato\'s flat poster in place of the browser\'s.' );
+		self::assertSame( array( 300, 300 ), array( $files['front']['black']['width'] ?? 0, $files['front']['black']['height'] ?? 0 ) );
+		self::assertNull( $this->files->path( $before['front']['black']['file'] ), 'The browser\'s is deleted.' );
+		self::assertSame( array( 330, 330 ), array( $files['_scene-0']['black']['width'] ?? 0, $files['_scene-0']['black']['height'] ?? 0 ), 'And the room.' );
+	}
+
+	public function test_only_the_images_the_administrator_chose_are_used(): void {
+		$this->account->set( self::KEY, self::STORE );
+		// Only the room: the browser's flat poster stays.
+		[ $version, $before ] = $this->poster_submitted(
+			array(
+				'gelato_thumbs' => array(
+					'0' => 1,
+					'1' => 2,
+				),
+				'gelato_photos' => array( 0 ),
+			)
+		);
+		$mockups              = $this->mockups();
+
+		$mockups->submitted( $version );
+		$this->drain( $mockups );
+
+		$files = SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null )['mockups'];
+
+		self::assertSame( $before['front']['black']['file'], $files['front']['black']['file'] ?? null );
+		self::assertArrayHasKey( '_scene-0', $files );
+	}
+
+	public function test_the_creator_sees_gelato_s_finished_poster_before_sending(): void {
+		$this->account->set( self::KEY, self::STORE );
+		[ $draft ] = $this->poster_submitted( array(), false );
+		$mockups   = $this->mockups();
+		$base      = $this->bases->find( (int) ( $this->products->version( $draft )['base_id'] ?? 0 ) ) ?? self::fail( 'No base product.' );
+
+		self::assertTrue( $mockups->can_preview( $base ) );
+		self::assertSame( 'none', $mockups->preview( $draft )['status'] );
+
+		$mockups->start_preview( $draft );
+
+		$bodies = array_map( static fn( array $call ): array => (array) json_decode( (string) ( $call[2]['body'] ?? '' ), true ), array_values( array_filter( $this->calls, static fn( array $call ): bool => 'POST' === $call[0] && str_ends_with( $call[1], 'products:create-from-template' ) && str_contains( (string) ( $call[2]['body'] ?? '' ), 'Poster' ) ) ) );
+
+		self::assertSame( array( array( 'tv-b-m' ) ), array_map( static fn( array $body ): array => array_column( $body['variants'] ?? array(), 'templateVariantId' ), $bodies ), 'The first colour\'s side only, in its largest size.' );
+		self::assertStringContainsString( '/designer-print/' . $draft . '/front', urldecode( (string) ( $bodies[0]['variants'][0]['imagePlaceholders'][0]['fileUrl'] ?? '' ) ), 'The draft\'s print file.' );
+
+		$preview = $mockups->preview( $draft );
+
+		self::assertSame( 'done', $preview['status'] );
+		self::assertCount( 2, $preview['images'], 'The room and the flat poster.' );
+		self::assertStringStartsWith( 'data:image/png;base64,', $preview['images'][0]['url'] );
 	}
 
 	public function test_a_poster_side_gelato_fails_keeps_the_other_side_s_environment_photo(): void {
@@ -525,7 +617,7 @@ final class GelatoTest extends IntegrationTestCase {
 		$this->drain_import( $catalog, 200 );
 
 		self::assertSame( 'ready', $this->bases->import( $id )['state'] ?? null, (string) wp_json_encode( $this->bases->import( $id ) ) );
-		self::assertCount( 16, ( $this->bases->find( $id ) ?? self::fail( 'No base product.' ) )->views );
+		self::assertCount( 22, ( $this->bases->find( $id ) ?? self::fail( 'No base product.' ) )->views );
 	}
 
 	public function test_the_bleed_is_fetched_again_from_gelato_for_a_base_product(): void {
@@ -1033,7 +1125,7 @@ final class GelatoTest extends IntegrationTestCase {
 			);
 		};
 
-		foreach ( range( 1, 16 ) as $group ) {
+		foreach ( range( 1, 22 ) as $group ) {
 			foreach ( array( 'marker', 'blank' ) as $kind ) {
 				$id = 'gp-' . $kind . '-g' . $group;
 
@@ -1154,9 +1246,11 @@ final class GelatoTest extends IntegrationTestCase {
 	 * for S (30 × 40 mm) and M (31 × 40 mm), with Gelato's room photo as image
 	 * 0 beside the flat image 1 (ADR-117); and a submitted design on both.
 	 *
-	 * @return array{0: int, 1: array<string, array<string, array<string, mixed>>>} The pending version and its mockups.
+	 * @param array<string, mixed> $extra Provider data besides, e.g. thumbnails and the choice of images (ADR-119).
+	 * @param bool                 $send  Whether the design is sent; else the draft is returned.
+	 * @return array{0: int, 1: array<string, array<string, array<string, mixed>>>} The pending version (or the draft) and its mockups.
 	 */
-	private function poster_submitted(): array {
+	private function poster_submitted( array $extra = array(), bool $send = true ): array {
 		$id    = $this->import();
 		$base  = $this->bases->find( $id ) ?? self::fail( 'No base product.' );
 		$front = $base->views[0];
@@ -1221,7 +1315,7 @@ final class GelatoTest extends IntegrationTestCase {
 						'front' => array( 0 ),
 						'back'  => array( 0 ),
 					),
-				)
+				) + $extra
 			)
 		);
 
@@ -1294,6 +1388,12 @@ final class GelatoTest extends IntegrationTestCase {
 
 			$submissions->attach( $creator, $product, 'print:' . $view->key, AlertImagesTest::upload( AlertImagesTest::png( $width, $height ), 'print.png' ) );
 			$submissions->attach( $creator, $product, 'mockup:' . $view->key . ':' . $color, AlertImagesTest::upload( AlertImagesTest::png( $mockup_w, $mockup_h ), 'mockup.png' ) );
+		}
+
+		if ( ! $send ) {
+			$draft = (int) ( $this->products->draft( $product )['id'] ?? 0 );
+
+			return array( $draft, SubmissionFiles::decode( $this->products->version( $draft )['files'] ?? null )['mockups'] );
 		}
 
 		$submissions->submit( $creator, $product );

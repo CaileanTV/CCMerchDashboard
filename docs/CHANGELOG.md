@@ -10,6 +10,12 @@ Fase 52, 53 og 54 (ADR-115, ADR-117, ADR-118). Ingen schemaændring.
 
 ### Added
 
+- **Plakater som i Gelato (fase 54, ADR-119):**
+  - plakater designes på et fladt hvidt ark i printfladens præcise form inkl. bleed, som i Gelatos editor;
+  - formgrupper efter Gelatos færdige mål inden for 1 % (Fine Art Poster: 11 pr. retning);
+  - "Se det færdige produkt" giver Gelatos eget billede af kladden;
+  - shoppens flade billede kommer fra Gelato;
+  - admin vælger, hvilke af Gelatos mockups og miljøer der bruges.
 - **Fælles design på tværs af plakatformater (fase 54, ADR-118):**
   - en plakats formater i samme retning deler ét design. Det tilpasses automatisk til hvert format, og creatoren vælger tilpasningen pr. format: smart, fyld formatet eller hele designet inden for;
   - en ændring på et af formaterne gælder dem alle;

@@ -85,6 +85,217 @@ class GelatoMockups {
 	private const CREATES_PER_RUN = 4;
 
 	/**
+	 * The transient of a draft's preview (ADR-119), by version.
+	 */
+	private const PREVIEW = 'merchboard_gelato_preview_';
+
+	/**
+	 * Products a preview makes at most, and images it shows at most.
+	 */
+	private const PREVIEW_PRODUCTS = 4;
+
+	private const PREVIEW_IMAGES = 6;
+
+	/**
+	 * Seconds a preview is waited for before it is given up.
+	 */
+	private const PREVIEW_WAIT = 600;
+
+	/**
+	 * Whether a base product's designs can be previewed with Gelato's own
+	 * images (ADR-119, "Se det færdige produkt"). Each preview leaves hidden
+	 * products in the store: Gelato has no call to delete them.
+	 *
+	 * @param BaseProduct $base Base product.
+	 */
+	public function can_preview( BaseProduct $base ): bool {
+		return 'gelato' === $base->source && $this->api->available();
+	}
+
+	/**
+	 * Starts a preview of a draft (ADR-119): in its first colour, a hidden
+	 * product per used format side of it (its group's largest size), or one
+	 * product with every used side for other products (the colour's first
+	 * chosen size), at most PREVIEW_PRODUCTS. The draft's print files reach
+	 * Gelato as signed URLs.
+	 *
+	 * @param int $id Draft version.
+	 * @throws GelatoException When Gelato refuses or fails.
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	public function start_preview( int $id ): void {
+		$version  = $this->products->version( $id );
+		$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
+		$base     = null === $version ? null : $this->bases->find( (int) $version['base_id'] );
+
+		if ( null === $version || null === $provider || null === $base ) {
+			self::fail( GelatoException::INVALID );
+		}
+
+		$colors = json_decode( (string) $version['colors'], true );
+		$color  = is_array( $colors ) && is_string( $colors[0] ?? null ) ? $colors[0] : '';
+		$part   = ColorDesigns::part_of( self::design_of( $version ), $color );
+		$used   = self::sides( $version, $provider['placements'], $part );
+		$items  = array();
+
+		foreach ( $used as $side ) {
+			$view = self::view_of( $base, $side );
+
+			if ( null === $view || array() === $view->formats || ! in_array( $color, $view->colors, true ) || count( $items ) >= self::PREVIEW_PRODUCTS ) {
+				continue;
+			}
+
+			$variant = (string) ( $provider['variants'][ $color ][ self::largest( $view ) ] ?? '' );
+
+			if ( '' !== $variant ) {
+				$items[] = array(
+					'variant' => $variant,
+					'images'  => array(
+						array(
+							'name'      => (string) $provider['placements'][ $side ],
+							'fileUrl'   => SignedPrintFiles::url( $id, $side, null, $part ),
+							'fitMethod' => 'meet',
+						),
+					),
+				);
+			}
+		}
+
+		$others = self::photographed( $used, $base );
+		$first  = array_search( $color, $this->variants( (string) $provider['ref'], $version, $base, $provider['variants'] ), true );
+
+		if ( array() !== $others && false !== $first && count( $items ) < self::PREVIEW_PRODUCTS ) {
+			$items[] = array(
+				'variant' => (string) $first,
+				'images'  => array_map(
+					static fn( string $side ): array => array(
+						'name'      => (string) $provider['placements'][ $side ],
+						'fileUrl'   => SignedPrintFiles::url( $id, $side, null, $part ),
+						'fitMethod' => 'meet',
+					),
+					$others
+				),
+			);
+		}
+
+		if ( array() === $items ) {
+			self::fail( GelatoException::INVALID );
+		}
+
+		$made = array();
+
+		foreach ( $items as $item ) {
+			$answer  = $this->api->create_from_template(
+				array(
+					'templateId'                => (string) $provider['ref'],
+					'title'                     => (string) $version['title'],
+					'description'               => '',
+					'isVisibleInTheOnlineStore' => false,
+					'variants'                  => array(
+						array(
+							'templateVariantId' => $item['variant'],
+							'imagePlaceholders' => $item['images'],
+						),
+					),
+				)
+			);
+			$product = is_scalar( $answer['id'] ?? null ) ? (string) $answer['id'] : '';
+
+			if ( 1 !== preg_match( '/^[A-Za-z0-9-]{1,100}$/', $product ) ) {
+				self::fail( GelatoException::INVALID );
+			}
+
+			$made[] = array(
+				'product' => $product,
+				'variant' => $item['variant'],
+			);
+		}
+
+		set_transient(
+			self::PREVIEW . $id,
+			array(
+				'items'   => $made,
+				'color'   => $color,
+				'started' => time(),
+			),
+			HOUR_IN_SECONDS
+		);
+	}
+
+	/**
+	 * A preview's state and, when Gelato has made every product's images,
+	 * those the administrator chose (all without a choice), at most
+	 * PREVIEW_IMAGES, as data URLs: the dashboard's CSP takes no other host.
+	 *
+	 * @param int $id Draft version.
+	 * @return array{status: string, images: list<array{side: string, color: string, url: string}>}
+	 * @throws GelatoException When Gelato refuses or fails.
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	public function preview( int $id ): array {
+		$map      = get_transient( self::PREVIEW . $id );
+		$version  = $this->products->version( $id );
+		$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
+
+		if ( ! is_array( $map ) || ! is_array( $map['items'] ?? null ) || null === $provider ) {
+			return array(
+				'status' => 'none',
+				'images' => array(),
+			);
+		}
+
+		$color = is_string( $map['color'] ?? null ) ? $map['color'] : '';
+		$late  = time() - (int) ( $map['started'] ?? 0 ) > self::PREVIEW_WAIT;
+		$urls  = array();
+
+		foreach ( $map['items'] as $item ) {
+			$answer = $this->api->product( (string) ( $item['product'] ?? '' ) );
+			$status = is_string( $answer['status'] ?? null ) ? $answer['status'] : '';
+			$list   = 'active' === $status ? ( GelatoCatalog::variant_images( $answer, array( $color => (string) ( $item['variant'] ?? '' ) ) )[ $color ] ?? array() ) : array();
+
+			if ( 'publishing_error' === $status ) {
+				return array(
+					'status' => 'failed',
+					'images' => array(),
+				);
+			}
+
+			if ( array() === $list ) {
+				return array(
+					'status' => $late ? 'failed' : 'pending',
+					'images' => array(),
+				);
+			}
+
+			foreach ( $list as $position => $url ) {
+				if ( array() === $provider['gelato_thumbs'] || self::picked( $provider, (int) $position ) ) {
+					$urls[] = $url;
+				}
+			}
+		}
+
+		$images = array();
+
+		foreach ( array_slice( $urls, 0, self::PREVIEW_IMAGES ) as $url ) {
+			$bytes = $this->api->download( $url );
+			$info  = getimagesizefromstring( $bytes );
+
+			if ( is_array( $info ) && in_array( $info['mime'], array( 'image/jpeg', 'image/png' ), true ) ) {
+				$images[] = array(
+					'side'  => self::TASK_SIDE,
+					'color' => $color,
+					'url'   => 'data:' . $info['mime'] . ';base64,' . base64_encode( $bytes ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- An image for the dashboard's CSP.
+				);
+			}
+		}
+
+		return array(
+			'status' => array() === $images ? 'failed' : 'done',
+			'images' => $images,
+		);
+	}
+
+	/**
 	 * Constructor.
 	 *
 	 * @param wpdb                      $wpdb     Database (the named lock).
@@ -251,7 +462,7 @@ class GelatoMockups {
 				if ( $scene ) {
 					$this->scene( $id, $task, fn() => $this->poll_scene( $id, $provider, $task ) );
 				} else {
-					$this->poll( $id, $provider['placements'], $version, $base, $task, $provider['slots'] );
+					$this->poll( $id, $provider['placements'], $version, $base, $task, $provider['slots'], $provider );
 				}
 			}
 		}
@@ -384,8 +595,11 @@ class GelatoMockups {
 		$map      = json_decode( (string) $task['result'], true );
 		$color    = is_array( $map ) && is_string( $map['color'] ?? null ) ? $map['color'] : '';
 		$variant  = is_array( $map ) && is_string( $map['variant'] ?? null ) ? $map['variant'] : '';
-		$wanted   = $provider['scenes'][ (string) $task['side'] ] ?? array();
-		$wanted   = is_array( $wanted ) ? $wanted : array();
+		$side     = (string) $task['side'];
+		// ADR-119: the rooms and the flat image the administrator chose.
+		$wanted = array_values( array_filter( $provider['scenes'][ $side ] ?? array(), static fn( mixed $position ): bool => is_int( $position ) && self::picked( $provider, $position ) ) );
+		$flat   = self::flat_of( $provider, $side );
+		$needed = null === $flat ? $wanted : array_merge( $wanted, array( $flat ) );
 
 		if ( 'publishing_error' === $status ) {
 			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'attempts' => $attempts, 'error' => 'publishing_error' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
@@ -395,20 +609,28 @@ class GelatoMockups {
 
 		$urls  = 'active' === $status && '' !== $color ? ( GelatoCatalog::variant_images( $answer, array( $color => $variant ) )[ $color ] ?? array() ) : array();
 		$found = array_values( array_intersect_key( $urls, array_flip( $wanted ) ) );
+		$have  = count( array_intersect_key( $urls, array_flip( $needed ) ) );
 
-		if ( count( $found ) < count( $wanted ) && $attempts < self::MAX_POLLS ) {
+		if ( $have < count( $needed ) && $attempts < self::MAX_POLLS ) {
 			$this->tasks->update( (int) $task['id'], array( 'attempts' => $attempts ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 			return;
 		}
 
-		if ( array() === $found ) {
+		if ( 0 === $have ) {
 			$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::FAILED, 'attempts' => $attempts, 'error' => 'timeout' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 			return;
 		}
 
-		$this->store_scenes( $id, $color, $found );
+		// ADR-119: Gelato's flat poster in place of the browser's.
+		if ( null !== $flat && isset( $urls[ $flat ] ) ) {
+			$this->store( $id, $side, array( $color => $urls[ $flat ] ) );
+		}
+
+		if ( array() !== $found ) {
+			$this->store_scenes( $id, $color, $found );
+		}
 		$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::DONE, 'attempts' => $attempts ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	}
 
@@ -463,8 +685,37 @@ class GelatoMockups {
 	}
 
 	/**
+	 * Whether the administrator chose an image of the template for mockups
+	 * (ADR-119): every one when no choice was made.
+	 *
+	 * @param array<string, mixed> $provider The base product's provider data.
+	 * @param int                  $position The image's place in Gelato's list.
+	 */
+	private static function picked( array $provider, int $position ): bool {
+		$photos = $provider['gelato_photos'] ?? null;
+
+		return ! is_array( $photos ) || in_array( $position, $photos, true );
+	}
+
+	/**
+	 * The place of a format side's own image (the flat poster) when the
+	 * administrator chose it, else null (ADR-119). Only a base product
+	 * imported with thumbnails has the choice; one before keeps the
+	 * browser's flat images.
+	 *
+	 * @param array<string, mixed> $provider The base product's provider data.
+	 * @param string               $side     Side key.
+	 */
+	private static function flat_of( array $provider, string $side ): ?int {
+		$slot = $provider['slots'][ $side ] ?? null;
+
+		return is_numeric( $slot ) && array() !== ( $provider['gelato_thumbs'] ?? array() ) && self::picked( $provider, (int) $slot ) ? (int) $slot : null;
+	}
+
+	/**
 	 * The used format sides of a version that get Gelato's environment photos
-	 * (ADR-117): on a chosen colour, with positions found on import.
+	 * (ADR-117) or its flat image (ADR-119): on a chosen colour, with images
+	 * found on import and chosen by the administrator.
 	 *
 	 * @param array<string, mixed> $version  Version.
 	 * @param array<string, mixed> $provider The base product's provider data.
@@ -479,7 +730,9 @@ class GelatoMockups {
 		foreach ( self::sides( $version, is_array( $provider['placements'] ?? null ) ? $provider['placements'] : array() ) as $side ) {
 			$view = self::view_of( $base, $side );
 
-			if ( null !== $view && array() !== $view->formats && array() !== array_intersect( $view->colors, $chosen ) && array() !== ( $provider['scenes'][ $side ] ?? array() ) ) {
+			$rooms = array_filter( $provider['scenes'][ $side ] ?? array(), static fn( mixed $position ): bool => is_int( $position ) && self::picked( $provider, $position ) );
+
+			if ( null !== $view && array() !== $view->formats && array() !== array_intersect( $view->colors, $chosen ) && ( array() !== $rooms || null !== self::flat_of( $provider, $side ) ) ) {
 				$sides[] = $side;
 			}
 		}
@@ -614,11 +867,12 @@ class GelatoMockups {
 	 * @param BaseProduct           $base         Base product.
 	 * @param array<string, mixed>  $task         Task row.
 	 * @param array<string, string> $slots        The image of each side among a variant's images (the catalog import).
+	 * @param array<string, mixed>  $provider     The base product's provider data (the administrator's choice of images, ADR-119).
 	 * @throws GelatoException When Gelato refuses or fails.
 	 * @throws DatabaseException When it cannot be stored.
 	 * @throws DesignerException When a mockup is not a valid image.
 	 */
-	private function poll( int $id, array $placeholders, array $version, BaseProduct $base, array $task, array $slots = array() ): void {
+	private function poll( int $id, array $placeholders, array $version, BaseProduct $base, array $task, array $slots = array(), array $provider = array() ): void {
 		$attempts = (int) $task['attempts'] + 1;
 		$answer   = $this->api->product( (string) $task['task_key'] );
 		$status   = is_string( $answer['status'] ?? null ) ? $answer['status'] : '';
@@ -630,7 +884,8 @@ class GelatoMockups {
 			$variants[ $color ] = is_array( $map['variants'] ?? null ) && is_scalar( $map['variants'][ $color ] ?? null ) ? (string) $map['variants'][ $color ] : '';
 		}
 
-		// Only an active product has its images; any other status is waited for (review 30.15).
+		// Only an active product has its images; any other status is waited for (review 30.15). ADR-119: a side's image only when chosen.
+		$slots  = array_filter( $slots, static fn( string $slot ): bool => ! is_numeric( $slot ) || self::picked( $provider, (int) $slot ) );
 		$images = 'active' === $status ? self::own_sides( $this->images( $answer, $variants, self::photographed( self::sides( $version, $placeholders ), $base ), $slots ), $version, $placeholders ) : array();
 
 		if ( 'publishing_error' === $status ) {
@@ -647,6 +902,17 @@ class GelatoMockups {
 
 		foreach ( $images as $side => $by_color ) {
 			$this->store( $id, $side, $by_color );
+		}
+
+		// ADR-119: the other images the administrator chose (rooms), per colour, beside the sides'.
+		$extra = array_diff( array_map( 'intval', array_keys( $provider['gelato_thumbs'] ?? array() ) ), array_map( 'intval', array_values( $provider['slots'] ?? array() ) ) );
+
+		foreach ( GelatoCatalog::variant_images( $answer, $variants ) as $color => $urls ) {
+			$rooms = array_values( array_intersect_key( $urls, array_flip( array_filter( $extra, static fn( int $position ): bool => self::picked( $provider, $position ) ) ) ) );
+
+			if ( array() !== $rooms ) {
+				$this->store_scenes( $id, (string) $color, $rooms );
+			}
 		}
 
 		$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::DONE, 'attempts' => $attempts ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound

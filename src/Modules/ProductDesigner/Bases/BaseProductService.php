@@ -324,6 +324,96 @@ class BaseProductService {
 	}
 
 	/**
+	 * A thumbnail of each of a Gelato template's images, by position, as
+	 * template assets (ADR-119); the import's earlier thumbnails go. Called
+	 * by the import as the administrator who started it.
+	 *
+	 * @param int                      $id     Base product.
+	 * @param array<int|string, mixed> $stored Stored file by position (DesignerFiles::store()).
+	 * @param array<string, int>       $old    The thumbnails before, by position.
+	 * @return array<string, int> Asset id by position.
+	 * @throws DesignerException When the user may not or the base product is unknown.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function thumbnails( int $id, array $stored, array $old ): array {
+		self::authorize();
+
+		$base = $this->existing( $id );
+		$ids  = array();
+
+		foreach ( $stored as $position => $file ) {
+			if ( is_array( $file ) && is_string( $file['file'] ?? null ) ) {
+				$ids[ (string) $position ] = $this->assets->insert(
+					DesignerAssetRepository::LAYER,
+					$base->name . ' – Gelato ' . ( (int) $position + 1 ),
+					array(
+						'file'   => $file['file'],
+						'mime'   => is_string( $file['mime'] ?? null ) ? $file['mime'] : 'image/png',
+						'width'  => is_numeric( $file['width'] ?? null ) ? (int) $file['width'] : 0,
+						'height' => is_numeric( $file['height'] ?? null ) ? (int) $file['height'] : 0,
+						'bytes'  => is_numeric( $file['bytes'] ?? null ) ? (int) $file['bytes'] : 0,
+					)
+				);
+			}
+		}
+
+		if ( array() !== $stored ) {
+			$this->forget_layers( array_values( array_diff( $old, $ids ) ) );
+		}
+
+		return array() === $stored ? $old : $ids;
+	}
+
+	/**
+	 * Which of a Gelato template's images make the mockups (ADR-119): the
+	 * positions the administrator ticked, among the thumbnails there are.
+	 * Nothing a design was made on changes: no new version.
+	 *
+	 * @phpstan-param list<int> $positions
+	 *
+	 * @param int   $id        Base product.
+	 * @param int[] $positions Ticked positions.
+	 * @throws DesignerException When the user may not or the base product is unknown.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_gelato_photos( int $id, array $positions ): void {
+		self::authorize();
+
+		$base     = $this->existing( $id );
+		$provider = $this->bases->provider( $id );
+
+		if ( null === $provider || array() === $provider['gelato_thumbs'] ) {
+			return;
+		}
+
+		$chosen = array_values( array_intersect( array_map( 'intval', array_keys( $provider['gelato_thumbs'] ) ), $positions ) );
+		sort( $chosen );
+
+		$before = $provider['gelato_photos'] ?? array_map( 'intval', array_keys( $provider['gelato_thumbs'] ) );
+
+		if ( $before === $chosen ) {
+			return;
+		}
+
+		$this->transaction->run(
+			function () use ( $id, $chosen, $base ): void {
+				$this->bases->set_gelato_photos( $id, $chosen );
+				$this->audit->record(
+					AuditAction::DesignerBaseChanged,
+					null,
+					array(
+						'base_id'        => $id,
+						'base_name'      => $base->name,
+						'version'        => $base->version,
+						'changed_fields' => array( 'gelato_photos' ),
+						'status'         => $base->status,
+					)
+				);
+			}
+		);
+	}
+
+	/**
 	 * Whether creators can share one design among a poster's formats
 	 * (ADR-118). Nothing a design was made on changes: no new version.
 	 *
@@ -629,6 +719,8 @@ class BaseProductService {
 		self::authorize();
 
 		$base = $this->existing( $id );
+		// ADR-119: the thumbnails of a Gelato template's images go with it.
+		$thumbs = array_values( $this->bases->provider( $id )['gelato_thumbs'] ?? array() );
 
 		$this->transaction->run(
 			function () use ( $id, $base ): void {
@@ -648,7 +740,7 @@ class BaseProductService {
 			}
 		);
 
-		$this->forget_layers( $base->layer_assets() );
+		$this->forget_layers( array_merge( $base->layer_assets(), $thumbs ) );
 	}
 
 	/**

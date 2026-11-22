@@ -283,6 +283,11 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
    - **Fælles design:** et billede eller en tekst på det ene format vises tilpasset på de andre lodrette formater ("Fælles med: …");
    - **Tilpasning:** prøv "smart", "fyld formatet" og "hele designet inden for" på et format med en anden form;
    - **Eget design:** giv et format eget design, ret det, og se, at de andre ikke følger med. "Fælles design" igen spørger først.
+12. **Plakater som i Gelato (ADR-119):**
+   - importér Fine Art Poster igen: 22 formatsider (11 pr. retning), hver vist som et fladt hvidt ark med skygge, rød linje og grå bleed. Ingen hvide striber;
+   - grundproduktets side viser "Mockups fra Gelato" med en miniature pr. billede (fx miljøet og den flade plakat) og flueben;
+   - i designeren giver "Se det færdige produkt" Gelatos billeder af kladden efter 1–3 minutter;
+   - indsend: shoppens flade billede og miljøet kommer fra Gelato. Med den flade plakat fravalgt bliver browserens.
 11. **Fælles design, indsendelse:** hver valgt formatside får sin egen printfil i sit eget mål og sine egne miljøbilleder fra Gelato.
 
 **Tilbagerulning:** installér 2.2.1-ZIP'en igen. Sider med `colors` og `formats` læses af 2.2.1 som almindelige sider pr. størrelse. Formatgrupperne har kun deres egne størrelser, så designs bliver ved med at virke. 2.2.1 ser bort fra `formats` (fase 54), og hvert formats kopi i `sides` bliver et almindeligt eget design.

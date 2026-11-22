@@ -6873,7 +6873,7 @@ ADR-080, ADR-096, ADR-099, ADR-112, ADR-113
 Foreslået 2026-11-15. Projektejeren har valgt "design pr. formatgruppe, men alle størrelser med, uanset målene" og "eget design pr. retning". Accepteret af projektejeren 2026-11-21 ("så derefter skal vi køre fase 52"). Version 2.3.0 (fase 52).
 
 **Gennemførelsen 2026-11-21:**
-- **Formatgrupper:** en størrelse går i den gruppe, hvis største størrelse (printfilen) har den nærmeste form inden for 3 %. Fine Art Poster giver præcis 8 grupper pr. retning.
+- **Formatgrupper:** en størrelse går i den gruppe, hvis største størrelse (printfilen) har den nærmeste form inden for 3 %. Fine Art Poster giver præcis 8 grupper pr. retning. **Statusnote 2026-11-22 (ADR-119):** grupperne samles nu efter Gelatos færdige mål inden for 1 %, så Fine Art Poster får 11 pr. retning. Formatsider får et fladt ark som skabelon i stedet for Gelatos foto.
 - **Grupperingen gælder** også skabeloner uden farve.
 - **Farve og størrelse:** katalogets `gco_` og `gsi_` vinder fortsat over skabelonens egne navne, som før.
 - **Gelatos egne mockups** bruges ikke på formatgruppers sider. De deler placering, så browserens billeder på Gelatos gruppefoto bliver. **Statusnote 2026-11-21:** ADR-117 tilføjer Gelatos miljøbilleder pr. formatside som ekstra billeder. Browserens billeder bliver.
@@ -7069,7 +7069,7 @@ Projektejeren vil have Gelatos mockups med "miljøer" på plakaterne.
    - Højst 4 produkter oprettes pr. kørsel. Resten oprettes og polles hvert 30. sekund.
 2. **Billederne:** alle produktets billeder undtagen sidens skabelonbillede (det flade).
    - De gemmes i versionens `mockups` under reserverede nøgler `_scene-<n>` med retningen som farve, som `_photo-` og `_close-`.
-   - Browserens egne billeder erstattes aldrig.
+   - Browserens egne billeder erstattes aldrig. **Statusnote 2026-11-22 (ADR-119):** Gelatos flade billede erstatter browserens, når admin har valgt det.
    - Flere scener i Gelato-skabelonen kommer med af sig selv.
 3. **Godkendelse:**
    - Mens produkterne laves, er `mockup_state` `running`, og designet kan ikke godkendes (som i dag, inkl. `STALE_MOCKUPS`).
@@ -7149,3 +7149,48 @@ Version 2.3.0 sammen med fase 52 og 53 (fase 54; projektejerens valg 2026-11-22)
 
 ## Related
 ADR-096, ADR-115, ADR-117
+
+# ADR-119: Plakater som i Gelato, det færdige produkt fra Gelato og valg af mockups
+
+## Date
+2026-11-22
+
+## Status
+Accepteret af projektejeren 2026-11-22 (planen godkendt). Den sidste del af fase 54, version 2.3.0. Ændrer ADR-115 (formgrupper) og ADR-117 pkt. 2 (browserens flade billeder).
+
+## Context
+Projektejeren har opdateret plakaterne i Lumise-addon'et "CCMerch Udbydere" 1.7.0–1.8.7 og vil have det samme i MitCCMerch. Addon'et er læst efter projektejerens tilladelse (read-only), ikke kopieret.
+
+**I dag:**
+- en formatside har Gelatos foto som skabelon;
+- feltet måles med markører;
+- de flade billeder i shoppen tegnes af browseren;
+- creatoren kan ikke se Gelatos eget resultat, før designet sendes;
+- admin kan ikke vælge, hvilke af Gelatos mockups der bruges.
+
+## Decision
+1. **Fladt ark:**
+   - **Skabelonen:** en formatside får et genereret ark som skabelon, `ImageProbe::sheet()`. Det er 1000 × 1000 px og gennemsigtigt, med et hvidt ark i printfladens forhold inkl. bleed (lang side 940 px, centreret) og blød skygge.
+   - **Designfeltet:** hele arket. Skærelinjen og bleed vises med `trims` som før.
+   - **Gelatos gengivelser** bruges stadig til flade billeder, miljøer og miniaturer.
+2. **Formgrupper:**
+   - Størrelser samles efter Gelatos færdige mål inden for 1 %. Før var det printfladen inden for 3 %.
+   - Målene kommer fra `/v3/products/{uid}` og gemmes 30 dage. Uden et færdigt mål bruges printfladen.
+3. **"Se det færdige produkt":**
+   - Knappen, ruten og kvoten (100 pr. døgn) findes allerede. Den bruges nu også til Gelato-grundprodukter.
+   - Pr. brugt side laves et skjult produkt med kladdens printfil. For en formatside er det gruppens største størrelse i den viste retning. For andre sider er det farvens første størrelse.
+   - Billederne returneres som data-URL'er, og admins valg af mockups gælder.
+4. **Gelatos billeder i shoppen:** på en formatside erstatter Gelatos billede på sidens egen plads browserens flade billede, når det er valgt. Fejler Gelato, står browserens billeder.
+5. **Valg af mockups:**
+   - Importen gemmer en miniature pr. plads i Gelatos billedliste.
+   - Admin vælger pladser på grundproduktets side (`gelato_photos` i leverandørdata). Alle er valgt fra start.
+   - Formatsider bruger de valgte pladser.
+   - Andre Gelato-produkter får de valgte ekstra pladser som miljøbilleder pr. farve, når Gelato binder dem til farvens variant.
+
+## Consequences
+- **Plakater importeret før** skal importeres igen (kun stg).
+- **Flere former:** Fine Art Poster har 11 former pr. retning. Det giver 44 gengivelser ved import og op til 22 skjulte produkter pr. indsendelse.
+- **Forhåndsvisninger:** hver forhåndsvisning efterlader skjulte produkter i Gelato-butikken, fordi API'et ikke kan slette dem.
+
+## Related
+ADR-082, ADR-115, ADR-117, ADR-118

@@ -119,6 +119,11 @@ final class BaseProductActions {
 					if ( '1' === $text( 'formats_shown' ) ) {
 						$this->bases->set_share_formats( $saved, '1' === $text( 'share_formats' ) );
 					}
+
+					// ADR-119: the Gelato images ticked for mockups.
+					if ( '1' === $text( 'gelato_photos_shown' ) ) {
+						$this->bases->set_gelato_photos( $saved, array_values( array_map( 'intval', array_filter( is_array( $input['gelato_photos'] ?? null ) ? $input['gelato_photos'] : array(), 'is_numeric' ) ) ) );
+					}
 					$after = BasePriceSchedule::scheduled( $saved );
 
 					return BaseProductsPage::edit_url( $saved, null !== $after && $after !== $before ? 'price_scheduled' : 'saved' );

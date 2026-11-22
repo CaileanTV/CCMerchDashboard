@@ -1573,6 +1573,17 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **54.3 Editoren:** "Fælles design"/"Eget design" og tilpasning pr. fane, "Fælles med …", grupperet størrelsesliste, danske tekster.
 - **54.4 Serveren:** `DesignValidator` (`formats`), "Kopiér design" rydder links, tests.
 - **54.5 Test og levering:** Jest, PHP, runtime i Playground, CI og testpakke 2.3.0 på stg.
+- **Sidste del (ADR-119, projektejerens ønske 2026-11-22, som Lumise-addon'et 1.7.0–1.8.7):**
+  - **54.6 Docs:** ADR-119 og statusnoter på ADR-115 og ADR-117.
+  - **54.7 Arket og grupperne:** fladt ark som skabelon på formatsider, og formgrupper efter Gelatos færdige mål inden for 1 %.
+  - **54.8 Mockups:** Gelatos flade billede i shoppen, miniaturer ved import og admins valg af mockups og miljøer.
+  - **54.9 "Se det færdige produkt"** for Gelato-grundprodukter.
+  - **54.10 Test og levering:** unit, integration, runtime, CI og testpakke 2.3.0 på stg.
+  - ✅ 54.6–54.9 bygget 2026-11-22:
+    - **Tests:**
+      - unit for arket;
+      - integration for import med ark og miniaturer (22 sider), det flade billede fra Gelato, admins valg og forhåndsvisning af en kladde.
+    - **Mangler:** det kan kun prøves mod Gelato på stg.
 - **Navne og billedformat (projektejerens ønske 2026-11-22):** størrelseslisten siger "Format 1 · 1:√2" uden retning, og fanerne viser billedformatet foran størrelserne.
 - **Toggle (projektejerens ønske under fasen):** fælles design kan slås til og fra pr. grundprodukt af admin. Det gemmes som `share_formats` i leverandørdata og er slået til, når intet er valgt.
 - ✅ 54.1–54.5 bygget 2026-11-22:

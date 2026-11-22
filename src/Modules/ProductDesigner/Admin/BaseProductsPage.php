@@ -473,6 +473,26 @@ final class BaseProductsPage {
 			echo '<tr><th scope="row">' . esc_html__( 'Shared design across formats', 'merchboard' ) . '</th><td><input type="hidden" name="formats_shown" value="1"><label><input type="checkbox" name="share_formats" value="1"' . checked( $share, true, false ) . '> ' . esc_html__( 'Creators can use one design for all formats', 'merchboard' ) . '</label><p class="description">' . esc_html__( 'The design is fitted to each format automatically, per orientation, and a creator can still give a format its own design. Without the tick, each format is designed on its own.', 'merchboard' ) . '</p></td></tr>';
 		}
 
+		// ADR-119: which of a Gelato template's images make the mockups.
+		$gelato = null !== $base && null !== $base->id ? $this->bases->provider( (int) $base->id ) : null;
+
+		if ( null !== $gelato && GelatoCatalog::SOURCE === $gelato['source'] && array() !== $gelato['gelato_thumbs'] ) {
+			$names = array_column( array_map( static fn( BaseView $view ): array => array( $view->key, array() !== $view->formats ), $base->views ), 1, 0 );
+
+			echo '<tr><th scope="row">' . esc_html__( 'Mockups from Gelato', 'merchboard' ) . '</th><td><input type="hidden" name="gelato_photos_shown" value="1"><div style="display:flex;flex-wrap:wrap;gap:12px">';
+
+			foreach ( $gelato['gelato_thumbs'] as $position => $asset ) {
+				$own   = array_keys( array_filter( $gelato['slots'], static fn( string $slot ): bool => (string) $position === $slot ) );
+				$label = array() === $own
+					? __( 'Environment or extra photo', 'merchboard' )
+					: ( true === ( $names[ $own[0] ] ?? false ) ? __( 'The flat poster', 'merchboard' ) : __( 'Photo of the side', 'merchboard' ) );
+
+				echo '<label style="display:grid;gap:4px;justify-items:center;max-width:160px;text-align:center"><img src="' . esc_url( DesignerAssetDownload::url( $asset ) ) . '" alt="" style="width:140px;height:140px;object-fit:contain;border:1px solid #dcdcde;background:#fff"><span><input type="checkbox" name="gelato_photos[]" value="' . esc_attr( (string) $position ) . '"' . checked( null === $gelato['gelato_photos'] || in_array( (int) $position, $gelato['gelato_photos'], true ), true, false ) . '> ' . esc_html( $label ) . '</span></label>';
+			}
+
+			echo '</div><p class="description">' . esc_html__( 'Ticked photos are made with each design and shown in the shop. Unticked, the side keeps the image drawn by the designer and the environment is left out. Change the scenes in the Gelato template and import again to get others.', 'merchboard' ) . '</p></td></tr>';
+		}
+
 		echo '<tr><th scope="row">' . esc_html__( 'Price per size', 'merchboard' ) . '</th><td><label><input type="checkbox" id="merchboard-base-size-priced" name="size_priced" value="1"' . checked( array() !== ( $base->size_prices ?? array() ), true, false ) . '> ' . esc_html__( 'Different base prices per size', 'merchboard' ) . '</label>';
 		echo '<div id="merchboard-base-size-prices" data-currency="' . esc_attr( $this->currency ) . '" data-prices="' . esc_attr( (string) wp_json_encode( array_map( array( $this, 'money' ), $base->size_prices ?? array() ) ) ) . '"></div>';
 		echo '<p class="description">' . esc_html__( 'Without the tick, every size has the base price above. With it, a size left empty has that price too. A creator\'s percent is taken of each size\'s price; a fixed profit is the same for every size.', 'merchboard' ) . '</p></td></tr>';

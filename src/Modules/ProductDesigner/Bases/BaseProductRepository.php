@@ -196,10 +196,13 @@ class BaseProductRepository {
 	 * and the positions of a format side's environment photos among its
 	 * render's images (`scenes`, ADR-117) and whether creators can share one
 	 * design among a poster's formats (`share_formats`, ADR-118; on unless
-	 * the administrator turned it off); null for an own base product.
+	 * the administrator turned it off), and from a Gelato template a thumbnail
+	 * of each of its images by position (`gelato_thumbs`, asset ids) and the
+	 * positions the administrator chose for mockups (`gelato_photos`; null
+	 * for all, ADR-119); null for an own base product.
 	 *
 	 * @param int $id Id.
-	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, photos: list<string>, stitches: list<string>, techniques: array<string, string>, options: array<mixed>, axes: array<string, string>, uids: array<string, array<string, string>>, scenes: array<string, list<int>>, share_formats: bool}|null
+	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, photos: list<string>, stitches: list<string>, techniques: array<string, string>, options: array<mixed>, axes: array<string, string>, uids: array<string, array<string, string>>, scenes: array<string, list<int>>, share_formats: bool, gelato_thumbs: array<string, int>, gelato_photos: list<int>|null}|null
 	 * @throws DatabaseException When it cannot be read.
 	 */
 	public function provider( int $id ): ?array {
@@ -247,6 +250,8 @@ class BaseProductRepository {
 			'uids'          => self::nested( $current && is_array( $decoded['uids'] ?? null ) ? $decoded['uids'] : array() ),
 			'scenes'        => self::positions( $current && is_array( $decoded['scenes'] ?? null ) ? $decoded['scenes'] : array() ),
 			'share_formats' => ! ( $current && false === ( $decoded['share_formats'] ?? true ) ),
+			'gelato_thumbs' => array_filter( array_map( static fn( mixed $id ): int => is_int( $id ) ? $id : 0, $current && is_array( $decoded['gelato_thumbs'] ?? null ) ? $decoded['gelato_thumbs'] : array() ) ),
+			'gelato_photos' => $current && is_array( $decoded['gelato_photos'] ?? null ) ? array_values( array_unique( array_filter( $decoded['gelato_photos'], static fn( mixed $n ): bool => is_int( $n ) && $n >= 0 && $n < 100 ) ) ) : null,
 		);
 	}
 
@@ -268,6 +273,19 @@ class BaseProductRepository {
 		}
 
 		return $positions;
+	}
+
+	/**
+	 * Stores the positions of a Gelato template's images the administrator chose for mockups (ADR-119).
+	 *
+	 * @phpstan-param list<int> $positions
+	 *
+	 * @param int   $id        Id.
+	 * @param int[] $positions Positions.
+	 * @throws DatabaseException When it cannot be read or stored.
+	 */
+	public function set_gelato_photos( int $id, array $positions ): void {
+		$this->set_template_field( $id, 'gelato_photos', $positions );
 	}
 
 	/**
@@ -310,11 +328,11 @@ class BaseProductRepository {
 	/**
 	 * Changes one field of a base product's provider data.
 	 *
-	 * @phpstan-param list<string>|bool $value
+	 * @phpstan-param list<string>|list<int>|bool $value
 	 *
-	 * @param int           $id    Id.
-	 * @param string        $field Field.
-	 * @param string[]|bool $value Value.
+	 * @param int                 $id    Id.
+	 * @param string              $field Field.
+	 * @param string[]|int[]|bool $value Value.
 	 * @throws DatabaseException When it cannot be read or stored.
 	 */
 	private function set_template_field( int $id, string $field, array|bool $value ): void {

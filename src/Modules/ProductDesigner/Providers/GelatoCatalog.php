@@ -92,9 +92,10 @@ class GelatoCatalog implements CatalogRenderer {
 
 	/**
 	 * The largest difference in shape (width ÷ height) between the sizes of
-	 * one format group (ADR-115 pkt. 2).
+	 * one format group: 1 % of Gelato's finished size (ADR-119; 3 % of the
+	 * print area before, ADR-115 pkt. 2).
 	 */
-	public const SHAPE_TOLERANCE = 0.03;
+	public const SHAPE_TOLERANCE = 0.01;
 
 	/**
 	 * The smallest and largest bleed in mm (ADR-115 pkt. 8).
@@ -185,7 +186,7 @@ class GelatoCatalog implements CatalogRenderer {
 		// Without a colour every size's print area can have its own shape, as with other options.
 		$grouped = array() !== $others || ! $tinted;
 		$first   = array() === $found ? null : reset( $found );
-		$sides   = $grouped ? self::groups( $found, $sizes ) : ( is_array( $first ) ? self::sides( (array) reset( $first ) ) : array() );
+		$sides   = $grouped ? self::groups( $found, $sizes, $this->finished( $uids ) ) : ( is_array( $first ) ? self::sides( (array) reset( $first ) ) : array() );
 
 		if ( array() === $colors || array() === $sides ) {
 			self::fail( GelatoException::INVALID );
@@ -306,18 +307,44 @@ class GelatoCatalog implements CatalogRenderer {
 	}
 
 	/**
+	 * Gelato's finished size of each variant (dimensions(), kept 30 days), by
+	 * value and size; null where Gelato names none or the call fails, so the
+	 * print area's shape is used.
+	 *
+	 * @param array<string, array<string, string>> $uids Catalog product by value and size.
+	 * @return array<string, array<string, array{0: float, 1: float}|null>>
+	 */
+	private function finished( array $uids ): array {
+		$finished = array();
+
+		foreach ( $uids as $color => $by_size ) {
+			foreach ( $by_size as $size => $uid ) {
+				try {
+					$finished[ $color ][ $size ] = '' === $uid ? null : $this->api->dimensions( $uid );
+				} catch ( GelatoException ) {
+					$finished[ $color ][ $size ] = null;
+				}
+			}
+		}
+
+		return $finished;
+	}
+
+	/**
 	 * The format groups of every value of the first axis: per value, its
 	 * sizes from the largest print area to the smallest, each joining the
 	 * group with the same print areas whose largest size (its print file) is
 	 * closest in shape, at most SHAPE_TOLERANCE apart, else starting one.
-	 * Each group's print area is a side with the print size of its largest
-	 * size; the groups are numbered by their smallest size.
+	 * The shape is Gelato's finished size where it names one (ADR-119), else
+	 * the print area's. Each group's print area is a side with the print size
+	 * of its largest size; the groups are numbered by their smallest size.
 	 *
-	 * @param array<string, array<string, array<mixed>>> $found Variant by value and size.
-	 * @param string[]                                   $sizes The sizes in order.
+	 * @param array<string, array<string, array<mixed>>>                   $found    Variant by value and size.
+	 * @param string[]                                                     $sizes    The sizes in order.
+	 * @param array<string, array<string, array{0: float, 1: float}|null>> $finished Finished size by value and size.
 	 * @return list<array<string, mixed>>
 	 */
-	private static function groups( array $found, array $sizes ): array {
+	private static function groups( array $found, array $sizes, array $finished = array() ): array {
 		$sides  = array();
 		$number = 0;
 
@@ -346,7 +373,7 @@ class GelatoCatalog implements CatalogRenderer {
 
 				// The group whose print file is closest in shape, within SHAPE_TOLERANCE.
 				foreach ( $groups as $index => $group ) {
-					$apart = $group['placements'] === $placements ? self::apart( $own[ $group['largest'] ], $own[ $size ] ) : INF;
+					$apart = $group['placements'] === $placements ? self::apart( $own[ $group['largest'] ], $own[ $size ], $finished[ $color ][ $group['largest'] ] ?? null, $finished[ $color ][ $size ] ?? null ) : INF;
 
 					if ( $apart <= self::SHAPE_TOLERANCE && $apart < $closest ) {
 						$best    = $index;
@@ -413,13 +440,21 @@ class GelatoCatalog implements CatalogRenderer {
 	}
 
 	/**
-	 * How far apart two variants' print areas are in shape: the largest
-	 * relative difference of width ÷ height over their sides.
+	 * How far apart two variants are in shape: with one side each and both
+	 * finished sizes known, their finished sizes' (turned like the print area,
+	 * ADR-119); else the largest relative difference of width ÷ height of
+	 * their print areas over their sides.
 	 *
-	 * @param list<array{mm: array{0: float, 1: float}}> $first One variant's sides.
-	 * @param list<array{mm: array{0: float, 1: float}}> $other The other's, in the same order.
+	 * @param list<array{mm: array{0: float, 1: float}}> $first          One variant's sides.
+	 * @param list<array{mm: array{0: float, 1: float}}> $other          The other's, in the same order.
+	 * @param array{0: float, 1: float}|null             $first_finished The first's finished size.
+	 * @param array{0: float, 1: float}|null             $other_finished The other's finished size.
 	 */
-	private static function apart( array $first, array $other ): float {
+	private static function apart( array $first, array $other, ?array $first_finished = null, ?array $other_finished = null ): float {
+		if ( 1 === count( $first ) && 1 === count( $other ) && null !== $first_finished && null !== $other_finished && min( $first_finished ) > 0 && min( $other_finished ) > 0 ) {
+			return abs( self::upright( $first_finished, $first[0]['mm'] ) / self::upright( $other_finished, $other[0]['mm'] ) - 1 );
+		}
+
 		$apart = 0.0;
 
 		foreach ( $first as $at => $side ) {
@@ -427,6 +462,19 @@ class GelatoCatalog implements CatalogRenderer {
 		}
 
 		return $apart;
+	}
+
+	/**
+	 * A finished size's width ÷ height, turned like the print area: Gelato
+	 * can name a horizontal poster's finished size upright.
+	 *
+	 * @param array{0: float, 1: float} $finished Finished size.
+	 * @param array{0: float, 1: float} $area     Print area in mm.
+	 */
+	private static function upright( array $finished, array $area ): float {
+		$ratio = $finished[0] / $finished[1];
+
+		return ( $ratio >= 1 ) === ( $area[0] >= $area[1] ) ? $ratio : 1 / $ratio;
 	}
 
 	/**

@@ -93,6 +93,32 @@ final class ImageProbeTest extends TestCase {
 		);
 	}
 
+	public function test_a_poster_is_a_white_sheet_of_its_print_area_with_a_soft_shadow(): void {
+		[ $png, $box ] = ImageProbe::sheet( 428, 602 );
+		$image         = imagecreatefromstring( $png );
+
+		self::assertNotFalse( $image );
+		self::assertSame( array( 1000, 1000 ), array( imagesx( $image ), imagesy( $image ) ) );
+		self::assertSame(
+			array(
+				'x'      => 166,
+				'y'      => 30,
+				'width'  => 668,
+				'height' => 940,
+			),
+			$box,
+			'The print area with its bleed, 940 px on its long side, in the middle.'
+		);
+
+		$alpha = static fn( int $x, int $y ): int => ( imagecolorat( $image, $x, $y ) >> 24 ) & 127;
+		$rgb   = static fn( int $x, int $y ): int => imagecolorat( $image, $x, $y ) & 0xffffff;
+
+		self::assertSame( array( 0, 0xffffff ), array( $alpha( 500, 500 ), $rgb( 500, 500 ) ), 'A white sheet.' );
+		self::assertSame( 127, $alpha( 5, 5 ), 'Transparent around it, so it is its own outline.' );
+		self::assertLessThan( 127, $alpha( 500, 30 + 940 + 4 ), 'A shadow below it.' );
+		self::assertSame( array( 940, 668 ), array( ImageProbe::sheet( 602, 428 )[1]['width'], ImageProbe::sheet( 602, 428 )[1]['height'] ) );
+	}
+
 	public function test_a_poster_s_print_area_covers_the_box_inside_the_photo(): void {
 		$box = array(
 			'x'      => 300,

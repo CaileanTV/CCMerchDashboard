@@ -111,6 +111,11 @@ class CatalogImport {
 	private const DOWNLOADS_PER_RUN = 8;
 
 	/**
+	 * The longest side of a thumbnail of a provider's image (ADR-119).
+	 */
+	private const THUMB = 320;
+
+	/**
 	 * Seconds before a round looks again while another holds the lock.
 	 */
 	private const BUSY_DELAY = 15;
@@ -891,12 +896,12 @@ class CatalogImport {
 		foreach ( is_array( $data['chosen'] ?? null ) ? $data['chosen'] : array() as $index => $chosen ) {
 			$key   = (string) ( $sides[ $index ]['key'] ?? '' );
 			$group = is_string( $sides[ $index ]['group'] ?? null ) ? $sides[ $index ]['group'] : '';
-			// A format group's side has the photo of its group's render, for its own values only.
-			$own = '' === $group ? $colors : ( is_array( $sides[ $index ]['colors'] ?? null ) ? $sides[ $index ]['colors'] : array() );
+			// A format group's side is designed on a sheet (ADR-119): no photo of it is needed.
+			$own = '' === $group ? $colors : array();
 
 			foreach ( $own as $color ) {
 				$color = (string) $color;
-				$url   = $blank[ $chosen['slot'] ][ '' === $group ? $color : $group ] ?? null;
+				$url   = $blank[ $chosen['slot'] ][ $color ] ?? null;
 
 				if ( isset( $data['files'][ $key ][ $color ] ) ) {
 					continue;
@@ -921,6 +926,36 @@ class CatalogImport {
 
 				$data['files'][ $key ][ $color ] = $this->store( $png );
 				// Stored at once: a failure later deletes the file.
+				$this->persist( $id, $data );
+			}
+		}
+
+		// ADR-119: a thumbnail of each of Gelato's images (a mockup or a room), of the first group or colour.
+		if ( GelatoCatalog::SOURCE === ( $data['source'] ?? '' ) ) {
+			$groups = array_map( 'strval', array_keys( is_array( $data['groups'] ?? null ) ? $data['groups'] : array() ) );
+			$first  = $groups[0] ?? (string) ( $colors[0] ?? '' );
+
+			foreach ( $blank as $slot => $urls ) {
+				$url = is_array( $urls ) ? ( $urls[ $first ] ?? null ) : null;
+
+				if ( ! is_numeric( $slot ) || ! is_string( $url ) || isset( $data['thumbs'][ (string) $slot ] ) ) {
+					continue;
+				}
+
+				if ( $count >= self::DOWNLOADS_PER_RUN ) {
+					return 0;
+				}
+
+				$bytes = $renderer->download( $url );
+				$size  = getimagesizefromstring( $bytes );
+				$wide  = is_array( $size ) && $size[0] > 0 ? (int) $size[0] : self::THUMB;
+				$high  = is_array( $size ) && $size[1] > 0 ? (int) $size[1] : self::THUMB;
+				$scale = min( 1, self::THUMB / max( $wide, $high ) );
+
+				[ $png ] = ImageProbe::png( $bytes, max( 1, (int) round( $wide * $scale ) ), max( 1, (int) round( $high * $scale ) ) );
+				++$count;
+
+				$data['thumbs'][ (string) $slot ] = $this->stored( $png );
 				$this->persist( $id, $data );
 			}
 		}
@@ -1044,18 +1079,28 @@ class CatalogImport {
 		}
 
 		foreach ( is_array( $data['chosen'] ?? null ) ? $data['chosen'] : array() as $index => $chosen ) {
-			$side    = $sides[ $index ] ?? null;
-			$uploads = $this->uploads( $base, is_array( $side ) ? ( $data['files'][ $side['key'] ] ?? array() ) : array() );
+			$side = $sides[ $index ] ?? null;
 
-			if ( ! is_array( $side ) || array() === $uploads ) {
+			if ( ! is_array( $side ) ) {
 				continue;
 			}
 
-			// A format group's photo shows the whole print (a poster): its print size stands, as each size's format follows it.
-			[ $width_mm, $height_mm ] = isset( $side['formats'] ) ? array( (int) $side['width_mm'], (int) $side['height_mm'] ) : ImageProbe::print_size( $chosen['box'], (int) $side['width_mm'], (int) $side['height_mm'] );
+			// ADR-119: a poster (a format group's side) is designed on a flat sheet of its whole print area, as in Gelato's editor.
+			if ( isset( $side['formats'] ) ) {
+				[ $width_mm, $height_mm ] = array( (int) $side['width_mm'], (int) $side['height_mm'] );
+				[ $sheet, $area ]         = ImageProbe::sheet( (float) $side['width_mm'], (float) $side['height_mm'] );
+				$uploads                  = array( 'background' => $this->sheet_upload( $sheet ) );
+			} else {
+				$uploads = $this->uploads( $base, $data['files'][ $side['key'] ] ?? array() );
 
-			// The print area covers a poster to its edge, so no blank strip of it shows beside the design.
-			$area                  = isset( $side['formats'] ) ? ImageProbe::cover( $chosen['box'], $width_mm, $height_mm, (int) $chosen['width'], (int) $chosen['height'] ) : ImageProbe::fit( $chosen['box'], $width_mm, $height_mm );
+				if ( array() === $uploads ) {
+					continue;
+				}
+
+				[ $width_mm, $height_mm ] = ImageProbe::print_size( $chosen['box'], (int) $side['width_mm'], (int) $side['height_mm'] );
+				$area                     = ImageProbe::fit( $chosen['box'], $width_mm, $height_mm );
+			}
+
 			$slots[ $side['key'] ] = (string) $chosen['slot'];
 			$kept[ $side['key'] ]  = (string) $side['placement'];
 			$view                  = array(
@@ -1115,6 +1160,9 @@ class CatalogImport {
 		}
 
 		$provider = $this->bases->provider( $id );
+		// ADR-119: the provider's images, one thumbnail each, for the administrator's choice of mockups.
+		$thumbs = $this->service->thumbnails( $id, is_array( $data['thumbs'] ?? null ) ? $data['thumbs'] : array(), $provider['gelato_thumbs'] ?? array() );
+		$photos = $provider['gelato_photos'] ?? null;
 
 		$this->bases->set_provider(
 			$id,
@@ -1134,6 +1182,9 @@ class CatalogImport {
 					'uids'          => $provider['uids'] ?? array(),
 					'scenes'        => array_filter( $scenes ),
 					'share_formats' => $provider['share_formats'] ?? true,
+					'gelato_thumbs' => $thumbs,
+					// A choice made before stays for the images there still are; none made is every image.
+					'gelato_photos' => null === $photos ? null : array_values( array_intersect( $photos, array_map( 'intval', array_keys( $thumbs ) ) ) ),
 				)
 			)
 		);
@@ -1178,6 +1229,29 @@ class CatalogImport {
 		sort( $positions );
 
 		return $positions;
+	}
+
+	/**
+	 * A sheet (ImageProbe::sheet()) as an upload the service stores.
+	 *
+	 * @param string $png PNG bytes.
+	 * @return array{name: string, type: string, tmp_name: string, error: int, size: int}
+	 * @throws DesignerException When it cannot be written.
+	 */
+	private function sheet_upload( string $png ): array {
+		$path = DesignerFiles::temporary_path( 'merchboard-sheet' );
+
+		if ( false === file_put_contents( $path, $png ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- A temporary file of the import.
+			self::stop( DesignerException::FILE_MISSING );
+		}
+
+		return array(
+			'name'     => 'background.png',
+			'type'     => 'image/png',
+			'tmp_name' => $path,
+			'error'    => UPLOAD_ERR_OK,
+			'size'     => strlen( $png ),
+		);
 	}
 
 	/**
@@ -1305,6 +1379,17 @@ class CatalogImport {
 	 * @throws DesignerException When it is refused.
 	 */
 	private function store( string $png ): string {
+		return $this->stored( $png )['file'];
+	}
+
+	/**
+	 * A PNG as a stored designer file, with its size.
+	 *
+	 * @param string $png PNG bytes.
+	 * @return array<string, mixed>
+	 * @throws DesignerException When it cannot be stored.
+	 */
+	private function stored( string $png ): array {
 		$path = DesignerFiles::temporary_path( 'merchboard-import' );
 
 		try {
@@ -1320,7 +1405,7 @@ class CatalogImport {
 					'size'     => strlen( $png ),
 				),
 				true
-			)['file'];
+			);
 		} finally {
 			if ( is_file( $path ) ) {
 				wp_delete_file( $path );
@@ -1354,8 +1439,14 @@ class CatalogImport {
 				}
 			}
 
+			foreach ( is_array( $data['thumbs'] ?? null ) ? $data['thumbs'] : array() as $thumb ) {
+				if ( is_array( $thumb ) && is_string( $thumb['file'] ?? null ) ) {
+					$this->files->delete( $thumb['file'] );
+				}
+			}
+
 			// The renders' images and measurements stay for the diagnosis; "Try again" starts without them.
-			unset( $data['files'], $data['chosen'], $data['hex'] );
+			unset( $data['files'], $data['chosen'], $data['hex'], $data['thumbs'] );
 
 			$data['error']  = $reason;
 			$data['call']   = $call;

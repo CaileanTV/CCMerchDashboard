@@ -289,7 +289,8 @@ final class ProductDesignerModule implements Module {
 				$c->get( DesignerShop::class ),
 				$c->get( PrintfulMockups::class ),
 				$c->get( ProdigiMockups::class ),
-				new PreviewQuota( new NamedLock( $c->get( wpdb::class ) ) )
+				new PreviewQuota( new NamedLock( $c->get( wpdb::class ) ) ),
+				$c->get( GelatoMockups::class )
 			)
 		);
 		// The approval queue and the designer's notifications (step 30.9).

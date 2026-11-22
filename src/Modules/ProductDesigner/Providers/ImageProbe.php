@@ -354,6 +354,75 @@ final class ImageProbe {
 	}
 
 	/**
+	 * The side of a poster's sheet template (ADR-119), square.
+	 */
+	public const SHEET_SIZE = 1000;
+
+	/**
+	 * The room around the sheet for its shadow.
+	 */
+	private const SHEET_MARGIN = 30;
+
+	/**
+	 * A poster as Gelato's editor shows it (ADR-119): a white sheet in the
+	 * shape of the print area with its bleed, its long side SHEET_SIZE less
+	 * twice SHEET_MARGIN, in the middle of a transparent square with a soft
+	 * shadow a little below. The design area is the whole sheet; the cut and
+	 * the bleed are drawn by the designer (trims).
+	 *
+	 * @param float $width_mm  Print width with bleed.
+	 * @param float $height_mm Print height with bleed.
+	 * @return array{0: string, 1: array{x: int, y: int, width: int, height: int}} PNG bytes and the sheet.
+	 * @throws InvalidArgumentException When it cannot be made.
+	 */
+	public static function sheet( float $width_mm, float $height_mm ): array {
+		if ( ! self::available() || $width_mm <= 0 || $height_mm <= 0 ) {
+			throw new InvalidArgumentException( 'The sheet cannot be made.' );
+		}
+
+		$long   = self::SHEET_SIZE - 2 * self::SHEET_MARGIN;
+		$width  = $width_mm >= $height_mm ? $long : max( 1, (int) round( $long * $width_mm / $height_mm ) );
+		$height = $width_mm >= $height_mm ? max( 1, (int) round( $long * $height_mm / $width_mm ) ) : $long;
+		$box    = array(
+			'x'      => intdiv( self::SHEET_SIZE - $width, 2 ),
+			'y'      => intdiv( self::SHEET_SIZE - $height, 2 ),
+			'width'  => $width,
+			'height' => $height,
+		);
+		$im     = imagecreatetruecolor( self::SHEET_SIZE, self::SHEET_SIZE );
+
+		if ( false === $im ) {
+			throw new InvalidArgumentException( 'The sheet cannot be made.' );
+		}
+
+		imagealphablending( $im, false );
+		imagesavealpha( $im, true );
+		imagefilledrectangle( $im, 0, 0, self::SHEET_SIZE - 1, self::SHEET_SIZE - 1, (int) imagecolorallocatealpha( $im, 0, 0, 0, 127 ) );
+		imagealphablending( $im, true );
+
+		// The shadow: twelve faint rectangles, wider and lighter outwards, 2 px down.
+		for ( $grow = 12; $grow >= 1; $grow-- ) {
+			$near  = ( 13 - $grow ) / 12;
+			$color = (int) imagecolorallocatealpha( $im, 0, 0, 0, max( 0, min( 127, 127 - (int) round( 26 * $near * $near ) ) ) );
+
+			imagefilledrectangle( $im, $box['x'] - $grow, $box['y'] - $grow + 2, $box['x'] + $width - 1 + $grow, $box['y'] + $height - 1 + $grow + 2, $color );
+		}
+
+		imagealphablending( $im, false );
+		imagefilledrectangle( $im, $box['x'], $box['y'], $box['x'] + $width - 1, $box['y'] + $height - 1, (int) imagecolorallocatealpha( $im, 255, 255, 255, 0 ) );
+
+		ob_start();
+		$written = imagepng( $im, null, 6 );
+		$bytes   = (string) ob_get_clean();
+
+		if ( ! $written || '' === $bytes ) {
+			throw new InvalidArgumentException( 'The sheet cannot be written.' );
+		}
+
+		return array( $bytes, $box );
+	}
+
+	/**
 	 * The print size of a measured box. A provider can show less of a layer
 	 * than its size says: a 132 × 84 mm layer on a beanie's cuff showed 484 ×
 	 * 170 px (2026-10-30), 132 × 46 mm. The side that fills the box sets the
