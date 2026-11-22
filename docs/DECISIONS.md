@@ -7222,6 +7222,7 @@ Accepteret af projektejeren 2026-11-22 (planen godkendt). Fase 55, version 2.4.0
 - **Samme pris gælder alle varianter:** en 2XL må koste mere end en M, men skal koste det samme i alle designs. Grundprisen skal være ens, fordi en gaves profit bogføres ved købet, og en giveaway koster creatoren grundprisen.
 - **Låst ved købet:** vinderen kan vælge mellem de designs, der var i samlingen ved købet, undtagen dem, der siden har fået en anden pris eller ikke sælges mere. Er ingen tilbage med samme pris, gælder koden designs fra købet, op til det betalte beløb, så vinderen aldrig står uden gave.
 - **Samlingen er stadig aldrig en varelinje:** købet bogføres på ét af designs' produkter, og de låste designs og priser gemmes med gaven.
+- **Teknisk udførelse (55.8a):** priserne sammenlignes med moms efter butikkens adresse, så en vinder i udlandet ikke ser dem som ændrede. En gave låses, når ordrelinjen oprettes i kassen, og en giveaway, når den oprettes. En ulæselig lås er en gave af det ene produkt.
 
 **Statusnote 2026-11-22 (projektejerens valg efter det uafhængige review):**
 - **Typeskift (pkt. 7):** et typeskift, mens samlings-pluginet er aktivt, er bevidst, og produktet er ikke længere en samling. For produkter skiftet før 2.4.0 viser fanen "Samlinger" knappen "Ikke længere en samling".

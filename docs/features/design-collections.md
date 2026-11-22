@@ -11,7 +11,12 @@ I gang (fase 55, version 2.4.0). Testet automatisk mod vores egen efterligning a
 - **En ny samling:** et navn og 2–50 af creatorens udgivne, synlige produkter.
 - **En tilføjelse:** 1–50 produkter til en samling, hvor alle designs er creatorens. Samlinger lavet i hånden tæller med.
 - **Besked:** når samlingen er klar, eller anmodningen er afvist (klokke og mail).
-- **Frit valg (trin 55.8a, under opbygning):** koster alle designs det samme (samme creator, kundepris og grundpris i alle varianter), kan giveren give hele samlingen, og vinderen vælger design.
+- **Frit valg:** koster alle designs det samme (samme creator, kundepris og grundpris i alle varianter), kan giveren give hele samlingen, og vinderen vælger design:
+  - gaveboksen og giveaway-vælgeren tilbyder det pr. samling, aldrig forvalgt;
+  - købet bogføres på det af designs, der koster mindst og er på lager. Kurv, ordre og admin viser samlingens navn;
+  - designs og priser låses, når gaven købes, eller giveawayen oprettes;
+  - koden gælder de designs fra købet, der stadig sælges til samme pris, og ellers dem alle, op til det betalte beløb;
+  - indløsningen åbner samlingen og viser de designs, der kan vælges, med links.
 - **Giveaway:** samlede designs står under samlingens navn. Intet er forvalgt.
 - **Kunden:**
   - en samlings gaveboks kræver valg af design;
@@ -51,6 +56,7 @@ Eksisterende creator-tilknytninger på samlinger fjernes og flyttes aldrig autom
 - `src/Modules/WooCommerce/Admin/CollectionRequestsPage.php`, `CollectionRequestActions.php`
 - `src/Modules/WooCommerce/Rest/MeCollectionsController.php`
 - `src/Modules/Community/Gifting/GiftDesigns.php`, `templates/community/gift-box.php`
+- `src/Modules/Community/Gifting/FreeChoice.php`, `FreeChoiceDesigns.php`, `FreeChoiceLock.php`, `FreeChoicePrices.php`
 - `assets/src/dashboard/sections/products/CollectionsCard.tsx`, `CollectionDialog.tsx`
 
 ## Database/data used
@@ -64,7 +70,8 @@ Eksisterende creator-tilknytninger på samlinger fjernes og flyttes aldrig autom
 
 ## API endpoints
 - `GET` og `POST /me/collections`
-- `collection` i `GET /me/products` og i giveaway-produkterne
+- `collection` i `GET /me/products` og i giveaway-produkterne (dér med `free_choice_cost`)
+- `collection_id` i `POST /me/community/giveaways` (frit valg)
 
 Se [API.md](../API.md).
 
@@ -77,12 +84,16 @@ CCMerch Design-samling (testet mod formatet i 1.0.2, læst i koden) og WooCommer
 
 ## Tests
 - Unit: `DesignCollectionsTest`, `CollectionCartGuardTest`, `GiftDesignsTest` og tests af tilknytning og Meta.
+- Frit valg: `FreeChoiceTest`, `FreeChoiceDesignsTest`, `FreeChoicePricesTest`, `FreeChoiceGiftTest`, `GiftPurchaseCollectionTest` og `GiveawaysTest`.
 - Integration: `CollectionRequestsTest`, `CollectionFulfilmentTest`, `MeCollectionsEndpointTest` og produktlistens SQL i `CreatorProductsTest`.
 - Jest: `collections.test.tsx` og giveaway-vælgeren.
 
 ## Known limitations
 - Integrationssuiten indlæser hverken WooCommerce eller pluginet, så rigtige produktgem, kurv, kasse og tema er ikke dækket.
 - Ændrer pluginet sit dataformat, skal læseren og skriveren rettes.
+- Frit valg sammenligner med moms efter butikkens adresse, ikke den besøgendes.
+- Skifter en pris netop mens ordren oprettes, bliver gaven af det ene design i stedet for frit valg (logges).
+- Salgsstatistikken viser en gave med frit valg på det design, købet er bogført på.
 - Er en samling ændret til et enkelt produkt før 2.4.0, regnes den som samling, til administratoren trykker "Ikke længere en samling" på fanen. Senere ændringer registreres, mens pluginet er aktivt (`_merchboard_not_collection`).
 
 ## Future improvements

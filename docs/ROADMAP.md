@@ -1620,7 +1620,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **55.6 Kladde og udgivelse** ✅ (849c499): oprettelse, tilføjelse og registrering af, at samlingen er klar.
 - **55.7 REST, fanen på "Forslag" og notifikationer** ✅ (6c40c81).
 - **55.8 Dashboard** ✅ (1f16c43): "Anmod om samling" og status under "Dine produkter".
-- **55.8a Frit valg på en samling** 🔄 (ønsket 2026-11-22; prisreglen 9be9c54; schema 54 bekræftet på Local efter verificeret backup): prisreglen, låsning ved købet (schema 54), gaveboks, giveaway-vælger, kode og indløsning.
+- **55.8a Frit valg på en samling** ✅ (ønsket 2026-11-22; prisreglen 9be9c54, vinderens side 0ed013a, gave 922d8b7, giveaway 9990ade; schema 54 bekræftet på Local efter verificeret backup; rigtig kurv og kasse prøves i 55.10): prisreglen, låsning ved købet (schema 54), gaveboks, giveaway-vælger, kode og indløsning.
 - **55.9 Afslutning** 🔄: oversættelser, docs, review og testpakke 2.4.0.
 - **55.9a Reviewets fund** 🔄 (review af d93bf6a..1f16c43: 3 alvorlige, 10 mellemstore, 11 lave; projektejerens otte valg står i ADR-120's statusnote): rettes før runtime-test og testpakke. Alle 24 fund er behandlet: rettet, eller afgjort af projektejeren (16: intet slettes hos Meta, og spærringen gælder alle creator-produkter, ff6ac08; 23: "Se som creator" må sende). Testhullerne, reviewet pegede på, og runtime-test udestår.
 - **55.10 Projektejerens test på stg** med det rigtige plugin.
