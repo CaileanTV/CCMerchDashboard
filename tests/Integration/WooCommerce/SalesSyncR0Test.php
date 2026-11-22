@@ -14,6 +14,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use MerchBoard\Core\Database\DatabaseErrno;
 use MerchBoard\Core\Database\Migrator;
+use MerchBoard\Core\Database\Schema;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Database\TransactionSupport;
@@ -281,7 +282,7 @@ final class SalesSyncR0Test extends IntegrationTestCase {
 		$this->order( self::ORDER, 'completed', array( self::line( 11, 2, '100' ) ) );
 		$second = $this->second();
 		$sales  = '`' . $this->table( Tables::SALES ) . '`';
-		$update = $this->version_update( $second, '53' );
+		$update = $this->version_update( $second, self::next_version() );
 		$result = null;
 		$errno  = null;
 
@@ -312,7 +313,7 @@ final class SalesSyncR0Test extends IntegrationTestCase {
 		$this->order( self::ORDER, 'completed', array( self::line( 11, 2, '100' ) ) );
 		$second = $this->second();
 		$second->query( 'START TRANSACTION' );
-		self::assertSame( 1, $second->query( $this->version_update( $second, '53' ) ) );
+		self::assertSame( 1, $second->query( $this->version_update( $second, self::next_version() ) ) );
 		$errno = $this->errno_before_rollback();
 		$this->wpdb->suppress_errors( true );
 
@@ -642,6 +643,14 @@ final class SalesSyncR0Test extends IntegrationTestCase {
 		$value = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT CONCAT('v', option_value) FROM %i WHERE option_name = %s", $this->wpdb->options, Migrator::VERSION_OPTION ) );
 
 		return null === $value ? null : substr( (string) $value, 1 );
+	}
+
+	/**
+	 * The version a migration after the installed ones would store: writing
+	 * the installed one again changes no row and takes no write.
+	 */
+	private static function next_version(): string {
+		return (string) ( max( 0, ...array_keys( Schema::migrations() ) ) + 1 );
 	}
 
 	/**
