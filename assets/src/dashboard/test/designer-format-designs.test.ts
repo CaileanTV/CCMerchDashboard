@@ -5,6 +5,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import {
 	adapted,
+	aspectRatio,
 	covers,
 	linked,
 	sharedWith,
@@ -304,5 +305,17 @@ describe( 'formats sharing a design', () => {
 				colors
 			).sides
 		).toEqual( edited.sides );
+	} );
+} );
+
+describe( 'the aspect ratio of a format', () => {
+	it( 'names the shapes of the poster formats the same in both orientations', () => {
+		expect( aspectRatio( 849, 1197 ) ).toBe( '1:√2' );
+		expect( aspectRatio( 1197, 849 ) ).toBe( '1:√2' );
+		expect( aspectRatio( 308, 308 ) ).toBe( '1:1' );
+		expect( aspectRatio( 408, 608 ) ).toBe( '2:3' );
+		expect( aspectRatio( 358, 458 ) ).toBe( '11:14' );
+		expect( aspectRatio( 258, 608 ) ).toBe( '5:12' );
+		expect( aspectRatio( 100, 173 ) ).toBe( '1:1.73' );
 	} );
 } );

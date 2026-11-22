@@ -1573,6 +1573,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **54.3 Editoren:** "Fælles design"/"Eget design" og tilpasning pr. fane, "Fælles med …", grupperet størrelsesliste, danske tekster.
 - **54.4 Serveren:** `DesignValidator` (`formats`), "Kopiér design" rydder links, tests.
 - **54.5 Test og levering:** Jest, PHP, runtime i Playground, CI og testpakke 2.3.0 på stg.
+- **Navne og billedformat (projektejerens ønske 2026-11-22):** størrelseslisten siger "Format 1 · 1:√2" uden retning, og fanerne viser billedformatet foran størrelserne.
 - **Toggle (projektejerens ønske under fasen):** fælles design kan slås til og fra pr. grundprodukt af admin. Det gemmes som `share_formats` i leverandørdata og er slået til, når intet er valgt.
 - ✅ 54.1–54.5 bygget 2026-11-22:
   - **Tests:** lint, PHP-unit og Jest er grønne.

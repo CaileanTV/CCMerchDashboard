@@ -279,7 +279,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
    - Gelato-butikken får ét skjult produkt pr. brugt formatside.
 9. **Fælles design (fase 54, ADR-118), grundproduktet:** "Fælles design på tværs af formater" er sat til. Tag fluebenet af, gem, og se, at designeren designer hvert format for sig. Sæt det til igen.
 10. **Fælles design, designeren:**
-   - **Størrelser:** de står grupperet pr. format, og "Lodret – format 1" vælger hele formatet;
+   - **Størrelser:** de står grupperet som "Format 1 · 1:√2", "Format 2 · 1:1" osv. uden retning, og "Format 1" vælger hele formatet. Fanerne viser billedformatet foran størrelserne;
    - **Fælles design:** et billede eller en tekst på det ene format vises tilpasset på de andre lodrette formater ("Fælles med: …");
    - **Tilpasning:** prøv "smart", "fyld formatet" og "hele designet inden for" på et format med en anden form;
    - **Eget design:** giv et format eget design, ret det, og se, at de andre ikke følger med. "Fælles design" igen spørger først.

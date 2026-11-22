@@ -294,7 +294,14 @@ Gelato-skabeloner med andre valg end farve og størrelse, fx plakater med retnin
   - en ændring på et tilknyttet format føres tilbage til masteren og ud til de andre formater;
   - "Eget design" tager formatets kopi med som udgangspunkt;
   - "Fælles design" spørger, før et eget design erstattes.
-- **Størrelser:** på plakater står de grupperet pr. format i den første valgte retning, med et flueben for hele formatet.
+- **Størrelser:** på plakater står de grupperet pr. format, fx "Format 1 · 1:√2" (projektejerens ønske 2026-11-22):
+  - uden retning i navnet, for størrelserne er de samme i begge retninger;
+  - nummereret i grundproduktets rækkefølge for den første valgte retning;
+  - med et flueben for hele formatet.
+- **Billedformat** (`shapeOf()`):
+  - formatets færdige mål, altså printfilen uden den største størrelses bleed, med kort side først;
+  - det nærmeste kendte billedformat inden for 3 % (1:1, 4:5, 11:14, 3:4, 5:7, 1:√2 for A-størrelserne, 2:3, 3:5, 1:2, 5:12, 2:5, 1:3), ellers `1:<lang side>`;
+  - det står også på fanerne foran størrelserne.
 - **Slå fra:** fluebenet "Fælles design på tværs af formater" på grundproduktet (`share_formats` i leverandørdata, til som standard). Er det fra, får hvert format sin kopi som eget design.
 - **Serveren:** `DesignValidator` beholder kun links fra formatsider til deres egen retning, tilpasningerne `fill` og `fit` (smart udelades) og fælles designs, som en side bruger.
 

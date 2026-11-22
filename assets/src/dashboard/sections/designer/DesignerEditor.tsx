@@ -91,6 +91,7 @@ import type {
 } from './design-model';
 import {
 	adaptOf,
+	shapeOf,
 	linkOf,
 	linked,
 	sharedWith,
@@ -1846,6 +1847,9 @@ function Editor( props: EditorProps ) {
 									{ candidate.name }
 									{ candidate.sizes.length > 0 ? (
 										<span className="merchboard-product-designer__side-sizes">
+											{ candidate.format
+												? `${ shapeOf( candidate ) } · `
+												: '' }
 											{ candidate.sizes
 												.filter( ( size ) =>
 													sizes.includes( size )
@@ -3262,7 +3266,7 @@ export function ProductPanel( props: ProductPanelProps ) {
 				{ groups.length === 0
 					? base.sizes.map( sizeBox )
 					: [
-							...groups.map( ( group ) => {
+							...groups.map( ( group, index ) => {
 								const own = base.sizes.filter( ( size ) =>
 									group.sizes.includes( size )
 								);
@@ -3280,8 +3284,19 @@ export function ProductPanel( props: ProductPanelProps ) {
 									>
 										<Labelled
 											className="merchboard-product-designer__option"
+											// The sizes are the same in both orientations: no orientation in the name.
 											label={
-												<strong>{ group.name }</strong>
+												<strong>
+													{ sprintf(
+														/* translators: 1: number of a poster format, 2: its aspect ratio, e.g. "2:3". */
+														__(
+															'Format %1$d · %2$s',
+															'merchboard'
+														),
+														index + 1,
+														shapeOf( group )
+													) }
+												</strong>
 											}
 										>
 											{ ( id ) => (

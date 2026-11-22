@@ -14,7 +14,7 @@ Fase 52, 53 og 54 (ADR-115, ADR-117, ADR-118). Ingen schemaændring.
   - en plakats formater i samme retning deler ét design. Det tilpasses automatisk til hvert format, og creatoren vælger tilpasningen pr. format: smart, fyld formatet eller hele designet inden for;
   - en ændring på et af formaterne gælder dem alle;
   - et format kan få sit eget design og senere komme tilbage til det fælles;
-  - størrelserne vælges pr. format, med "hele formatet" på én gang;
+  - størrelserne vælges pr. format ("Format 1 · 1:√2", med billedformat og uden retning), med "hele formatet" på én gang;
   - admin kan slå det fra pr. grundprodukt ("Fælles design på tværs af formater").
 
 - **Gelatos miljøbilleder på plakater (fase 53, ADR-117):**

@@ -715,3 +715,87 @@ export function unshared( design: DesignDocument ): DesignDocument {
 		design
 	);
 }
+
+/** Known shapes of posters, short side to long side. */
+const RATIOS: ReadonlyArray< readonly [ number, string ] > = [
+	[ 1, '1:1' ],
+	[ 4 / 5, '4:5' ],
+	[ 11 / 14, '11:14' ],
+	[ 3 / 4, '3:4' ],
+	[ 5 / 7, '5:7' ],
+	[ Math.SQRT1_2, '1:√2' ],
+	[ 2 / 3, '2:3' ],
+	[ 3 / 5, '3:5' ],
+	[ 1 / 2, '1:2' ],
+	[ 5 / 12, '5:12' ],
+	[ 2 / 5, '2:5' ],
+	[ 1 / 3, '1:3' ],
+];
+
+/**
+ * A format's shape as an aspect ratio, short side first, so it reads the
+ * same in both orientations: the nearest known one within 3 % (the format
+ * groups' tolerance, ADR-115; `1:√2` for the A sizes), else `1:<long>`.
+ *
+ * @param width  Width (any unit).
+ * @param height Height (same unit).
+ */
+export function aspectRatio( width: number, height: number ): string {
+	const short = Math.min( width, height );
+
+	if ( short <= 0 ) {
+		return '';
+	}
+
+	const long = Math.max( width, height );
+
+	const ratio = short / long;
+	let best = '';
+	let off = Infinity;
+
+	for ( const [ value, label ] of RATIOS ) {
+		const difference = Math.abs( ratio - value ) / value;
+
+		if ( difference < off ) {
+			best = label;
+			off = difference;
+		}
+	}
+
+	return off <= 0.03
+		? best
+		: `1:${ Math.round( ( long / short ) * 100 ) / 100 }`;
+}
+
+/**
+ * A format side's finished shape: its print file without the bleed of its
+ * largest size (the trim that keeps the most, ADR-115), else the print file.
+ *
+ * @param view             The side.
+ * @param view.printWidth  Print file width.
+ * @param view.printHeight Print file height.
+ * @param view.trims       What each size keeps of the print file.
+ */
+export function shapeOf( view: {
+	readonly printWidth: number;
+	readonly printHeight: number;
+	readonly trims?: Readonly<
+		Record< string, { readonly width: number; readonly height: number } >
+	>;
+} ): string {
+	const kept = Object.values( view.trims ?? {} ).reduce< {
+		readonly width: number;
+		readonly height: number;
+	} | null >(
+		( most, trim ) =>
+			most === null || trim.width * trim.height > most.width * most.height
+				? trim
+				: most,
+		null
+	);
+
+	return aspectRatio(
+		view.printWidth * ( kept?.width ?? 1 ),
+		view.printHeight * ( kept?.height ?? 1 )
+	);
+}
