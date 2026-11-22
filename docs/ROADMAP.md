@@ -1657,11 +1657,12 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **Fjernet klipart:** design, der bruger den, beholder den. Nye design kan ikke vælge den. Sletning må derfor ikke fjerne filen som i dag.
 
 **PSD'en (undersøgt 2026-11-22, ikke bygget):**
-- **Læsning:** ag-psd, som vi har i forvejen, læste lagnavn, fyldets dækkevne og de tre effekter tilbage fra en lille test-PSD, skrevet med ag-psd selv. En fil fra Photoshop er ikke afprøvet.
+- **Læsning:** ag-psd, som vi har i forvejen, læste lagnavn, fyldets dækkevne og de tre effekter tilbage fra en lille test-PSD, skrevet med ag-psd selv. Projektejerens fil fra Photoshop blev læst samme aften med lagtræ, pixels og effekter.
 - **Tegning:** lagets pixels er uden effekterne, og ag-psd tegner dem ikke. Fasen skal selv tegne streg, farve og gradient, ens i designeren og printfilen. Den ydre streg går ud over lagets kant og skal skaleres med kliparten.
 - **Vores PSD-import i dag:** skabelonimporten anvender ikke effekter, og sceneimporten udelader dem. De kan derfor ikke genbruges til dette uden videre.
 - **Filkrav:** PSD i RGB med 8 bit pr. kanal. Skabelonimportens grænse er 8000 × 8000 px. CMYK afvises af ag-psd.
-- **Kontrol:** udseendet kan først sammenlignes med Photoshop, når projektejerens fil foreligger.
+- **Kontrol mod Photoshop (2026-11-22, i hukommelsen, ikke bygget):** projektejerens fil er 1317 × 2066 px ved 300 ppi med hvid farveoverlejring og 20 px sort udvendig streg. En prototype ramte eksporten med 0,29/255 i gennemsnitlig fejl på hvid bund, og 0,004 % af pixels afveg mere end 128.
+- **Ikke afprøvet:** gradienten (slået fra i eksporten, syv farvestop, 45°, skala 75 %) og broderi. Lagnavnet skrives `Farvet lag` og skal derfor genkendes uanset store bogstaver.
 
 **Afklaret af projektejeren 2026-11-22 (ved planlægningen):**
 - **Farve eller gradient:** creatoren vælger mellem én farve og en gradient med to farver og en vinkel. PSD'ens værdi er startværdien, og admins palet gælder begge.
