@@ -755,6 +755,20 @@ class WC_Product extends WC_Data {
 	public function is_in_stock() {}
 
 	/**
+	 * A variation answers with its parent's in 'view'.
+	 *
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_tax_class( $context = 'view' ) {}
+
+	/**
+	 * @param string $context 'view' or 'edit'.
+	 * @return string
+	 */
+	public function get_tax_status( $context = 'view' ) {}
+
+	/**
 	 * @param string $context 'view' or 'edit'.
 	 * @return string
 	 */
