@@ -15,6 +15,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\WooCommercePaidOrderReader;
+use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use WC_Cart;
 use WC_Discounts;
 use WC_Order;
@@ -108,6 +109,14 @@ final class GiftPurchase {
 	private ?Closure $channel;
 
 	/**
+	 * Whether a collection's page is showing a design's form, whose gift box
+	 * the collection's own replaces.
+	 *
+	 * @var bool
+	 */
+	private bool $in_collection = false;
+
+	/**
 	 * Constructor.
 	 *
 	 * @phpstan-param Closure(int): ?int $creator_of
@@ -122,8 +131,9 @@ final class GiftPurchase {
 	 * @param Closure                   $on_paid    Called with a newly paid gift and its order's number of gifts (the draws).
 	 * @param Logger                    $logger     Technical log.
 	 * @param Closure|null              $channel    A creator's name and Twitch login for the gift box; null shows no channel link.
+	 * @param DesignCollections         $collections The design collections (ADR-120).
 	 */
-	public function __construct( private GiftingSettingsRepository $settings, private GiftRepository $gifts, Closure $creator_of, Closure $live, Closure $on_paid, private Logger $logger, ?Closure $channel = null ) {
+	public function __construct( private GiftingSettingsRepository $settings, private GiftRepository $gifts, Closure $creator_of, Closure $live, Closure $on_paid, private Logger $logger, ?Closure $channel = null, private DesignCollections $collections = new DesignCollections() ) {
 		$this->creator_of = $creator_of;
 		$this->live       = $live;
 		$this->on_paid    = $on_paid;
@@ -135,6 +145,9 @@ final class GiftPurchase {
 	 */
 	public function register(): void {
 		add_action( 'woocommerce_after_add_to_cart_form', array( $this, 'button' ) );
+		// A collection's page (ADR-120): around the plugin's own callback at 10.
+		add_action( 'woocommerce_' . DesignCollections::TYPE . '_add_to_cart', array( $this, 'collection_start' ), 1 );
+		add_action( 'woocommerce_' . DesignCollections::TYPE . '_add_to_cart', array( $this, 'collection_box' ), 20 );
 		add_action( 'template_redirect', array( $this, 'add' ) );
 		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'only_the_gift' ), 20 );
 		add_action( 'woocommerce_check_cart_items', array( $this, 'check_cart' ) );
@@ -178,16 +191,83 @@ final class GiftPurchase {
 	public function button(): void {
 		global $product;
 
-		$creator_id = $product instanceof WC_Product ? $this->giftable( (int) $product->get_id() ) : null;
+		// Inside a collection the design shown is only the plugin's preselection.
+		$creator_id = ! $this->in_collection && $product instanceof WC_Product ? $this->giftable( (int) $product->get_id() ) : null;
 
 		if ( ! $product instanceof WC_Product || null === $creator_id ) {
 			return;
 		}
 
-		$channel        = null === $this->channel ? null : ( $this->channel )( $creator_id );
+		$this->box( $creator_id, (int) $product->get_id() );
+	}
+
+	/**
+	 * Before the collection plugin's form: the form inside gets no gift box
+	 * of its own.
+	 */
+	public function collection_start(): void {
+		$this->in_collection = true;
+	}
+
+	/**
+	 * After the collection plugin's form: one gift box, where the buyer
+	 * chooses the design (ADR-120 pkt. 6).
+	 */
+	public function collection_box(): void {
+		global $product;
+
+		$this->in_collection = false;
+
+		if ( ! $product instanceof WC_Product || ! $this->collections->is_collection( (int) $product->get_id() ) ) {
+			return;
+		}
+
+		$asked  = isset( $_GET['design'] ) ? absint( $_GET['design'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- The plugin's read-only choice of design.
+		$choice = ( new GiftDesigns( $this->collections, $this->gift_of( ... ) ) )->choice( (int) $product->get_id(), $asked );
+
+		if ( null !== $choice ) {
+			$this->box( $choice['creator'], (int) $product->get_id(), $choice['designs'], $choice['chosen'] );
+		}
+	}
+
+	/**
+	 * A design's creator and name when it can be given now, or null.
+	 *
+	 * @param int $product_id Design.
+	 * @return array{creator: int, name: string}|null
+	 */
+	private function gift_of( int $product_id ): ?array {
+		$design = wc_get_product( $product_id );
+
+		if ( ! $design instanceof WC_Product || 'publish' !== $design->get_status() || ! $design->is_purchasable() || ! $design->is_in_stock() ) {
+			return null;
+		}
+
+		$creator_id = $this->giftable( $product_id );
+
+		return null === $creator_id ? null : array(
+			'creator' => $creator_id,
+			'name'    => wp_strip_all_tags( $design->get_name() ),
+		);
+	}
+
+	/**
+	 * The gift box.
+	 *
+	 * @phpstan-param list<array{id: int, name: string}> $designs
+	 *
+	 * @param int|null $creator_id The creator, null when a collection has several.
+	 * @param int      $product_id The page's product.
+	 * @param array[]  $designs    A collection's designs to choose from.
+	 * @param int      $chosen     The design the buyer chose, 0 for none.
+	 */
+	private function box( ?int $creator_id, int $product_id, array $designs = array(), int $chosen = 0 ): void {
+		$channel        = null === $this->channel || null === $creator_id ? null : ( $this->channel )( $creator_id );
 		$merchboard_box = array(
-			'action'   => self::permalink( (int) $product->get_id() ),
-			'product'  => (int) $product->get_id(),
+			'action'   => self::permalink( $product_id ),
+			'product'  => $product_id,
+			'designs'  => $designs,
+			'chosen'   => $chosen,
 			'query'    => self::QUERY,
 			'quantity' => self::QUANTITY,
 			'nonce'    => wp_create_nonce( self::NONCE ),
@@ -206,13 +286,27 @@ final class GiftPurchase {
 	public function add(): void {
 		$product_id = isset( $_GET[ self::QUERY ] ) ? absint( $_GET[ self::QUERY ] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Verified below.
 
-		if ( $product_id < 1 || ! function_exists( 'WC' ) || ! WC()->cart instanceof WC_Cart ) {
+		if ( ! function_exists( 'WC' ) || ! WC()->cart instanceof WC_Cart ) {
+			return;
+		}
+
+		if ( $product_id < 1 ) {
+			$page_id = isset( $_GET[ self::QUERY ] ) ? (int) get_queried_object_id() : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nothing is changed: only the reason is shown.
+
+			// The collection's box sent without a design.
+			if ( $page_id > 0 && $this->collections->is_collection( $page_id ) ) {
+				wc_add_notice( __( 'Choose which design you give.', 'merchboard' ), 'error' );
+				wp_safe_redirect( self::permalink( $page_id ) );
+				exit;
+			}
+
 			return;
 		}
 
 		$nonce   = isset( $_GET['_wpnonce'] ) ? sanitize_key( wp_unslash( $_GET['_wpnonce'] ) ) : '';
 		$product = wc_get_product( $product_id );
-		$back    = self::permalink( $product_id );
+		$back    = $this->collections->design_url( $product_id );
+		$back    = '' === $back ? home_url( '/' ) : $back;
 
 		if ( false === wp_verify_nonce( $nonce, self::NONCE ) || ! $product instanceof WC_Product || null === $this->giftable( $product_id ) ) {
 			wc_add_notice( __( 'The gift cannot be bought right now.', 'merchboard' ), 'error' );

@@ -276,18 +276,21 @@ final class GiftClaim {
 
 		self::session()?->set( self::SESSION_KEY, $code );
 
+		$product = ( $this->product )( $gift->product_id );
+
 		if ( function_exists( 'wc_add_notice' ) ) {
 			wc_add_notice(
 				sprintf(
-					/* translators: %s: the gift code. */
-					__( 'Congratulations! Choose size and colour and add the product to the cart; your gift code %s is used there. You pay only if you choose a dearer variant or shipping.', 'merchboard' ),
+					/* translators: 1: the product given, 2: the gift code. */
+					__( 'Congratulations! Your gift is %1$s. Choose size and colour and add it to the cart; your gift code %2$s is used there and is only for that design. You pay only if you choose a dearer variant or shipping.', 'merchboard' ),
+					esc_html( $product['name'] ),
 					$code
 				),
 				'success'
 			);
 		}
 
-		return ( $this->product )( $gift->product_id )['url'];
+		return $product['url'];
 	}
 
 	/**

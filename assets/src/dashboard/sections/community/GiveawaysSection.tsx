@@ -12,6 +12,7 @@ import {
 import type {
 	GiveawayFunding,
 	GiveawayMode,
+	GiveawayProduct,
 	GiveawayRow,
 	GiveawaysState,
 } from '../../api/giveaways';
@@ -156,6 +157,39 @@ function startedText( started: string | undefined ): string {
 }
 
 /**
+ * The collections among the products, each with its designs (ADR-120), in
+ * the list's order.
+ *
+ * @param products The products that can be given away.
+ */
+function collectionsOf( products: readonly GiveawayProduct[] ): Array< {
+	readonly collection: { readonly id: number; readonly name: string };
+	readonly designs: GiveawayProduct[];
+} > {
+	const groups = new Map<
+		number,
+		{
+			collection: { id: number; name: string };
+			designs: GiveawayProduct[];
+		}
+	>();
+
+	for ( const item of products ) {
+		if ( item.collection !== null ) {
+			const group = groups.get( item.collection.id ) ?? {
+				collection: item.collection,
+				designs: [] as GiveawayProduct[],
+			};
+
+			group.designs.push( item );
+			groups.set( item.collection.id, group );
+		}
+	}
+
+	return Array.from( groups.values() );
+}
+
+/**
  * Community Features → Giveaways (phase 47, ADR-110): the creator gives one
  * of the own products away to a viewer, drawn by the bot in the Twitch chat
  * or as a link the creator passes on from an own giveaway. The creator pays
@@ -180,7 +214,6 @@ export function GiveawaysSection() {
 		if ( state.status === 'success' ) {
 			setCurrent( state.data );
 			setSeconds( state.data.windowDefault );
-			setProductId( state.data.products[ 0 ]?.id ?? 0 );
 		}
 	}, [ state ] );
 
@@ -238,8 +271,22 @@ export function GiveawaysSection() {
 		product !== undefined &&
 		current.available !== null &&
 		Number( current.available ) >= Number( product.cost );
+	// Without a product nothing says how it is paid.
+	const paysInShop =
+		product !== undefined && ( ! covers || funding === 'shop' );
 	const errors = error?.fields ?? {};
 	const refused = error === null ? null : refusedText( error );
+
+	const option = ( item: GiveawayProduct ) => (
+		<option key={ item.id } value={ item.id }>
+			{ sprintf(
+				/* translators: 1: product name, 2: price. */
+				__( '%1$s – %2$s', 'merchboard' ),
+				item.name,
+				moneyText( item.cost, item.currency, locale )
+			) }
+		</option>
+	);
 
 	const done = ( result: GiveawaysState, message: string ) => {
 		setCurrent( result );
@@ -248,7 +295,12 @@ export function GiveawaysSection() {
 
 	const submit = async ( event: FormEvent ) => {
 		event.preventDefault();
-		const shop = ! covers || funding === 'shop';
+
+		if ( product === undefined ) {
+			return;
+		}
+
+		const shop = paysInShop;
 		// The checkout opens in a new tab, so the creator keeps this page. The tab is
 		// opened during the click (a browser blocks one opened after the request).
 		const tab = shop ? window.open( '', '_blank' ) : null;
@@ -524,20 +576,27 @@ export function GiveawaysSection() {
 									setProductId( Number( event.target.value ) )
 								}
 							>
-								{ current.products.map( ( item ) => (
-									<option key={ item.id } value={ item.id }>
-										{ sprintf(
-											/* translators: 1: product name, 2: price. */
-											__( '%1$s – %2$s', 'merchboard' ),
-											item.name,
-											moneyText(
-												item.cost,
-												item.currency,
-												locale
-											)
-										) }
-									</option>
-								) ) }
+								<option value={ 0 } disabled>
+									{ __(
+										'Choose a product or design',
+										'merchboard'
+									) }
+								</option>
+								{ current.products
+									.filter(
+										( item ) => item.collection === null
+									)
+									.map( option ) }
+								{ collectionsOf( current.products ).map(
+									( { collection, designs } ) => (
+										<optgroup
+											key={ collection.id }
+											label={ collection.name }
+										>
+											{ designs.map( option ) }
+										</optgroup>
+									)
+								) }
 							</select>
 							<p className="merchboard-field__help">
 								{ __(
@@ -725,13 +784,22 @@ export function GiveawaysSection() {
 								) }
 							</p>
 						</fieldset>
+						{ product === undefined ? null : (
+							<p className="merchboard-field__help merchboard-giveaway__chosen">
+								{ sprintf(
+									/* translators: %s: the product or design given away. */
+									__( 'You give away: %s', 'merchboard' ),
+									product.name
+								) }
+							</p>
+						) }
 						<div className="merchboard-community-form__actions">
 							<Button
 								type="submit"
 								isBusy={ busy === 'create' }
 								disabled={ product === undefined }
 							>
-								{ ! covers || funding === 'shop'
+								{ paysInShop
 									? __(
 											'Create and pay in the shop',
 											'merchboard'

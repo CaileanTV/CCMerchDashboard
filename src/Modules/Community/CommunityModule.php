@@ -521,7 +521,8 @@ final class CommunityModule implements Module {
 						'name'  => (string) $name,
 						'login' => (string) $channel->broadcaster_login,
 					) : null;
-				}
+				},
+				$c->get( DesignCollections::class )
 			)
 		);
 		$container->set(
@@ -554,7 +555,8 @@ final class CommunityModule implements Module {
 				$c->get( TwitchCustomerSession::class ),
 				static fn( int $product_id ): array => array(
 					'name'  => self::product_name( $product_id ),
-					'url'   => self::product_url( $product_id ),
+					// Looked up at the click: a design can join or leave a collection (ADR-120).
+					'url'   => self::design_url( $c->get( DesignCollections::class ), $product_id ),
 					'image' => (string) get_the_post_thumbnail_url( $product_id, 'medium' ),
 				),
 				self::notify( ... ),
@@ -631,36 +633,59 @@ final class CommunityModule implements Module {
 
 	/**
 	 * The creator's products that can be given away, with their price
-	 * (ADR-110), at most the first 200.
+	 * (ADR-110) and the collection that sells them (ADR-120): all of them, so
+	 * every design can be chosen.
 	 *
 	 * @param Container $c          Container.
 	 * @param int       $creator_id Creator.
-	 * @return list<array{id: int, name: string, image: string, cost: string, currency: string}>
+	 * @return list<array{id: int, name: string, image: string, cost: string, currency: string, collection: array{id: int, name: string}|null}>
 	 * @throws DatabaseException When the pricing data cannot be read.
 	 */
 	private static function giveaway_products( Container $c, int $creator_id ): array {
 		$products = array();
 		$ids      = array();
 
-		for ( $page = 1; $page <= 2; $page++ ) {
-			array_push( $ids, ...$c->get( CreatorProducts::class )->ids( $creator_id, new Pagination( $page, Pagination::MAX_PER_PAGE ) ) );
+		$all   = $c->get( CreatorProducts::class );
+		$pages = (int) ceil( $all->count( $creator_id ) / Pagination::MAX_PER_PAGE );
+
+		for ( $page = 1; $page <= $pages; $page++ ) {
+			array_push( $ids, ...$all->ids( $creator_id, new Pagination( $page, Pagination::MAX_PER_PAGE ) ) );
 		}
+
+		$collections = $c->get( DesignCollections::class );
 
 		foreach ( array_unique( $ids ) as $product_id ) {
 			$quote = $c->get( GiveawayCost::class )->quote( $product_id, $creator_id );
 
 			if ( null !== $quote ) {
 				$products[] = array(
-					'id'       => $product_id,
-					'name'     => self::product_name( $product_id ),
-					'image'    => (string) get_the_post_thumbnail_url( $product_id, 'thumbnail' ),
-					'cost'     => $quote['cost'],
-					'currency' => $quote['currency'],
+					'id'         => $product_id,
+					'name'       => self::product_name( $product_id ),
+					'image'      => (string) get_the_post_thumbnail_url( $product_id, 'thumbnail' ),
+					'cost'       => $quote['cost'],
+					'currency'   => $quote['currency'],
+					'collection' => self::collection_data( $collections, $product_id ),
 				);
 			}
 		}
 
 		return $products;
+	}
+
+	/**
+	 * The collection a design is sold from, with its name, or null.
+	 *
+	 * @param DesignCollections $collections The collections.
+	 * @param int               $product_id  Parent product.
+	 * @return array{id: int, name: string}|null
+	 */
+	private static function collection_data( DesignCollections $collections, int $product_id ): ?array {
+		$id = $collections->collection_of( $product_id );
+
+		return null === $id ? null : array(
+			'id'   => $id,
+			'name' => self::product_name( $id ),
+		);
 	}
 
 	/**
@@ -685,6 +710,19 @@ final class CommunityModule implements Module {
 		$url = get_permalink( $product_id );
 
 		return is_string( $url ) && '' !== $url ? $url : home_url( '/' );
+	}
+
+	/**
+	 * Where a product is bought now: a collected design on its collection's
+	 * page (ADR-120 pkt. 6).
+	 *
+	 * @param DesignCollections $collections The collections.
+	 * @param int               $product_id  Parent product.
+	 */
+	private static function design_url( DesignCollections $collections, int $product_id ): string {
+		$url = $collections->design_url( $product_id );
+
+		return '' === $url ? home_url( '/' ) : $url;
 	}
 
 	/**

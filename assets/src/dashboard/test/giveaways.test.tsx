@@ -61,6 +61,7 @@ const STATE = {
 			image: '',
 			cost: '199.0000',
 			currency: 'DKK',
+			collection: null,
 		},
 		{
 			id: 78,
@@ -68,6 +69,15 @@ const STATE = {
 			image: '',
 			cost: '900.0000',
 			currency: 'DKK',
+			collection: null,
+		},
+		{
+			id: 79,
+			name: 'Tee – Kill Steal',
+			image: '',
+			cost: '150.0000',
+			currency: 'DKK',
+			collection: { id: 90, name: 'Tee' },
 		},
 	],
 	available: '500.0000',
@@ -112,6 +122,18 @@ function button( container: HTMLElement, text: string ): Element | null {
 			( candidate ) => candidate.textContent === text
 		) ?? null
 	);
+}
+
+async function choose( container: HTMLElement, id: string ): Promise< void > {
+	const select = container.querySelector(
+		'#merchboard-giveaway-product'
+	) as HTMLSelectElement;
+
+	act( () => {
+		select.value = id;
+		select.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+	} );
+	await flush();
 }
 
 async function submit( container: HTMLElement ): Promise< void > {
@@ -209,6 +231,7 @@ describe( 'Giveaways (ADR-110)', () => {
 		).toBe( LINK );
 		expect( button( container, 'Create giveaway' ) ).not.toBeNull();
 
+		await choose( container, '77' );
 		await submit( container );
 
 		const created = requests.find(
@@ -270,6 +293,37 @@ describe( 'Giveaways (ADR-110)', () => {
 		open.mockRestore();
 	} );
 
+	it( 'has no product chosen and gives away the design chosen in a collection', async () => {
+		const { container, requests } = await show( {
+			[ 'GET ' + PATH ]: () => response( 200, STATE ),
+			[ 'POST ' + PATH ]: () => response( 201, { ...STATE, created: 8 } ),
+		} );
+		const select = container.querySelector(
+			'#merchboard-giveaway-product'
+		) as HTMLSelectElement;
+
+		expect( select.value ).toBe( '0' );
+		await submit( container );
+		expect(
+			requests.some( ( request ) => request.method === 'POST' )
+		).toBe( false );
+
+		const group = select.querySelector( 'optgroup' );
+		expect( group?.label ).toBe( 'Tee' );
+		expect( group?.querySelector( 'option' )?.value ).toBe( '79' );
+
+		await choose( container, '79' );
+		expect(
+			container.querySelector( '.merchboard-giveaway__chosen' )
+				?.textContent
+		).toBe( 'You give away: Tee – Kill Steal' );
+
+		await submit( container );
+		expect(
+			requests.find( ( request ) => request.method === 'POST' )?.data
+		).toMatchObject( { product_id: 79 } );
+	} );
+
 	it( 'starts a bot giveaway in the chat and cancels one', async () => {
 		const { container, requests } = await show( {
 			[ `GET ${ PATH }` ]: () => response( 200, STATE ),
@@ -326,6 +380,7 @@ describe( 'Giveaways (ADR-110)', () => {
 				} ),
 		} );
 
+		await choose( container, '77' );
 		click( container.querySelector( '#merchboard-giveaway-shop' ) );
 		await submit( container );
 

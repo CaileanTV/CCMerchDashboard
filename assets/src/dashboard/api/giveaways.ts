@@ -75,6 +75,8 @@ export interface GiveawayProduct {
 	/** Base price plus 50 kr. shipping (decimal). */
 	readonly cost: string;
 	readonly currency: string;
+	/** The collection that sells it, or null (ADR-120). */
+	readonly collection: { readonly id: number; readonly name: string } | null;
 }
 
 export interface GiveawaysState {
@@ -229,8 +231,25 @@ function parseProduct( body: unknown ): GiveawayProduct | null {
 		return null;
 	}
 
-	const id = whole( body.id );
 	const { name, image, cost, currency } = body;
+	let collection: GiveawayProduct[ 'collection' ] = null;
+
+	if ( body.collection !== null ) {
+		if ( ! isRecord( body.collection ) ) {
+			return null;
+		}
+
+		const collectionId = whole( body.collection.id );
+		const collectionName = body.collection.name;
+
+		if ( collectionId === null || typeof collectionName !== 'string' ) {
+			return null;
+		}
+
+		collection = { id: collectionId, name: collectionName };
+	}
+
+	const id = whole( body.id );
 
 	if (
 		id === null ||
@@ -243,7 +262,7 @@ function parseProduct( body: unknown ): GiveawayProduct | null {
 		return null;
 	}
 
-	return { id, name, image, cost, currency };
+	return { id, name, image, cost, currency, collection };
 }
 
 /**

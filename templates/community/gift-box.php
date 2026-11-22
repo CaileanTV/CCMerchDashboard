@@ -4,13 +4,16 @@
  * a number of gifts and the button. A GET form to the product page with the
  * gift's query arguments; GiftPurchase::add() checks the nonce.
  *
- * Rendered by GiftPurchase::button(); every value is escaped here. The CSS
+ * On a design collection's page the buyer also chooses the design
+ * (ADR-120): `designs` and `chosen`.
+ *
+ * Rendered by GiftPurchase::box(); every value is escaped here. The CSS
  * is scoped to `.merchboard-gift-box` and needs no JavaScript; the LIVE
  * badge pulses unless the visitor prefers reduced motion.
  *
  * @package MerchBoard
  *
- * @var array<string, mixed> $merchboard_box Box data from GiftPurchase::button().
+ * @var array<string, mixed> $merchboard_box Box data from GiftPurchase::box().
  */
 
 declare( strict_types=1 );
@@ -23,6 +26,8 @@ $merchboard_name  = $merchboard_text( 'name' );
 $merchboard_login = $merchboard_text( 'login' );
 $merchboard_url   = $merchboard_text( 'action' );
 $merchboard_query = array();
+
+$merchboard_designs = is_array( $merchboard_box['designs'] ?? null ) ? $merchboard_box['designs'] : array();
 
 // A plain permalink keeps its own query (e.g. ?product=hoodie): a GET form would drop it.
 wp_parse_str( (string) wp_parse_url( $merchboard_url, PHP_URL_QUERY ), $merchboard_query );
@@ -40,6 +45,8 @@ wp_parse_str( (string) wp_parse_url( $merchboard_url, PHP_URL_QUERY ), $merchboa
 .merchboard-gift-box__text a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .merchboard-gift-box__form{display:flex;flex-wrap:wrap;gap:.6rem;margin:0}
 .merchboard-gift-box__quantity{flex:0 0 auto;min-width:4.5rem;height:3rem;padding:0 .75rem;border:1px solid color-mix(in srgb,currentColor 30%,transparent);border-radius:8px;background:transparent;color:inherit;font:inherit}
+.merchboard-gift-box__design{display:flex;flex:1 1 100%;flex-direction:column;gap:.3rem;min-width:0;font-weight:600}
+.merchboard-gift-box__design select{width:100%;max-width:100%}
 .merchboard-gift-box__button{flex:1 1 12rem;height:3rem;padding:0 1.25rem;border:0;border-radius:999px;background:var(--mb-twitch);color:#fff;font:inherit;font-weight:700;cursor:pointer}
 .merchboard-gift-box__button:hover{background:var(--mb-twitch-dark)}
 .merchboard-gift-box__button:focus-visible,.merchboard-gift-box__quantity:focus-visible,.merchboard-gift-box__text a:focus-visible{outline:2px solid var(--mb-twitch);outline-offset:2px}
@@ -84,7 +91,21 @@ wp_parse_str( (string) wp_parse_url( $merchboard_url, PHP_URL_QUERY ), $merchboa
 				<input type="hidden" name="<?php echo esc_attr( (string) $merchboard_key ); ?>" value="<?php echo esc_attr( (string) $merchboard_value ); ?>">
 			<?php endif; ?>
 		<?php endforeach; ?>
-		<input type="hidden" name="<?php echo esc_attr( $merchboard_text( 'query' ) ); ?>" value="<?php echo esc_attr( $merchboard_text( 'product' ) ); ?>">
+		<?php if ( array() !== $merchboard_designs ) : ?>
+			<label class="merchboard-gift-box__design">
+				<?php esc_html_e( 'Which design do you give?', 'merchboard' ); ?>
+				<select class="merchboard-gift-box__quantity" name="<?php echo esc_attr( $merchboard_text( 'query' ) ); ?>" required>
+					<option value=""><?php esc_html_e( 'Choose a design', 'merchboard' ); ?></option>
+					<?php foreach ( $merchboard_designs as $merchboard_design ) : ?>
+						<?php if ( is_array( $merchboard_design ) && is_scalar( $merchboard_design['id'] ?? null ) && is_scalar( $merchboard_design['name'] ?? null ) ) : ?>
+							<option value="<?php echo esc_attr( (string) $merchboard_design['id'] ); ?>"<?php echo (string) $merchboard_design['id'] === $merchboard_text( 'chosen' ) ? ' selected' : ''; ?>><?php echo esc_html( (string) $merchboard_design['name'] ); ?></option>
+						<?php endif; ?>
+					<?php endforeach; ?>
+				</select>
+			</label>
+		<?php else : ?>
+			<input type="hidden" name="<?php echo esc_attr( $merchboard_text( 'query' ) ); ?>" value="<?php echo esc_attr( $merchboard_text( 'product' ) ); ?>">
+		<?php endif; ?>
 		<input type="hidden" name="_wpnonce" value="<?php echo esc_attr( $merchboard_text( 'nonce' ) ); ?>">
 		<label class="screen-reader-text" for="merchboard-gift-box-quantity"><?php esc_html_e( 'Number of gifts', 'merchboard' ); ?></label>
 		<select class="merchboard-gift-box__quantity" id="merchboard-gift-box-quantity" name="<?php echo esc_attr( $merchboard_text( 'quantity' ) ); ?>">
