@@ -1675,7 +1675,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 
 **Trin (plan godkendt 2026-11-22, ADR-121):**
 - **56.1 ADR og plan** ✅: ADR-121, svar og målinger.
-- **56.2 Bagning:** rene funktioner fra PSD til masker, streg og faste lag, testet med syntetiske PSD'er.
+- **56.2 Bagning** ✅ (1668675): rene funktioner fra PSD til masker, streg og faste lag, testet med syntetiske PSD'er.
 - **56.3 Farvning:** farve, gradient og låsens geometri som rene funktioner.
 - **56.4 Tegningens indgang:** karakteriseringstests af printfil og tråde, derefter resolveren uden ændret adfærd.
 - **56.5 Schema 55** alene på Local efter verificeret backup og tjek af cron og papirkurv.
