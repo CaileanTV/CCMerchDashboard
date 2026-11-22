@@ -189,14 +189,21 @@ final class MeGiveawaysController extends RestController {
 
 	/**
 	 * `GET /me/community/giveaways`.
+	 *
+	 * @phpstan-param WP_REST_Request<array<string, mixed>>|null $request
+	 *
+	 * @param WP_REST_Request|null $request Request; `products=0` leaves the products out.
 	 */
-	public function list(): WP_REST_Response|WP_Error {
+	public function list( ?WP_REST_Request $request = null ): WP_REST_Response|WP_Error {
 		return $this->run(
 			self::ROUTE,
-			function (): WP_REST_Response|WP_Error {
+			function () use ( $request ): WP_REST_Response|WP_Error {
 				$creator = $this->require_creator( $this->context );
 
-				return $creator instanceof WP_Error ? $creator : $this->answer( $creator->id );
+				// `products=0`: only what changes while the page is open, as quoting every product is slow.
+				$asked = $request?->get_param( 'products' );
+
+				return $creator instanceof WP_Error ? $creator : $this->answer( $creator->id, ! in_array( $asked, array( '0', 0 ), true ) );
 			}
 		);
 	}
@@ -254,7 +261,7 @@ final class MeGiveawaysController extends RestController {
 					return self::error( 'merchboard_giveaway_busy', __( 'Your balance is being updated. Please try again in a moment.', 'merchboard' ), 409 );
 				}
 
-				$response = $this->answer( $creator->id );
+				$response = $this->answer( $creator->id, false );
 				$response->set_data( array( 'created' => $giveaway->id ) + (array) $response->get_data() );
 				$response->set_status( 201 );
 
@@ -286,7 +293,7 @@ final class MeGiveawaysController extends RestController {
 					return self::refused( $e );
 				}
 
-				$response = $this->answer( $creator->id );
+				$response = $this->answer( $creator->id, false );
 				$response->set_data( array( 'started' => $started ) + (array) $response->get_data() );
 
 				return $response;
@@ -317,7 +324,7 @@ final class MeGiveawaysController extends RestController {
 					return self::refused( $e );
 				}
 
-				return $this->answer( $creator->id );
+				return $this->answer( $creator->id, false );
 			}
 		);
 	}
@@ -325,10 +332,11 @@ final class MeGiveawaysController extends RestController {
 	/**
 	 * The answer to the creator.
 	 *
-	 * @param int $creator_id Creator.
+	 * @param int  $creator_id Creator.
+	 * @param bool $products   Whether the products that can be given away are read; null in the answer without.
 	 * @throws \MerchBoard\Core\Database\DatabaseException When the giveaways cannot be read.
 	 */
-	private function answer( int $creator_id ): WP_REST_Response {
+	private function answer( int $creator_id, bool $products ): WP_REST_Response {
 		$login    = ( $this->channel )( $creator_id );
 		$names    = array();
 		$response = new WP_REST_Response(
@@ -355,7 +363,7 @@ final class MeGiveawaysController extends RestController {
 					},
 					$this->giveaways->latest( $creator_id )
 				),
-				'products'  => ( $this->products )( $creator_id ),
+				'products'  => $products ? ( $this->products )( $creator_id ) : null,
 				'available' => ( $this->available )( $creator_id ),
 				'limits'    => array(
 					'window_min'     => GiftingSettings::MIN_WINDOW,

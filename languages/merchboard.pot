@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-22T17:31:30+00:00\n"
+"POT-Creation-Date: 2026-11-22T17:36:52+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -4538,41 +4538,41 @@ msgid "Completed automatically: the gift is passed on as a code, and the winner'
 msgstr ""
 
 #: src/Modules/Community/Rest/MeGiveawaysController.php:182
-#: src/Modules/Community/Rest/MeGiveawaysController.php:402
+#: src/Modules/Community/Rest/MeGiveawaysController.php:408
 msgid "Giveaways are not available."
 msgstr ""
 
-#: src/Modules/Community/Rest/MeGiveawaysController.php:246
+#: src/Modules/Community/Rest/MeGiveawaysController.php:251
 msgid "Some fields of the giveaway are missing or invalid."
 msgstr ""
 
-#: src/Modules/Community/Rest/MeGiveawaysController.php:254
+#: src/Modules/Community/Rest/MeGiveawaysController.php:259
 msgid "Your balance is being updated. Please try again in a moment."
 msgstr ""
 
-#: src/Modules/Community/Rest/MeGiveawaysController.php:401
+#: src/Modules/Community/Rest/MeGiveawaysController.php:407
 msgid "The giveaway was not found."
 msgstr ""
 
-#: src/Modules/Community/Rest/MeGiveawaysController.php:403
+#: src/Modules/Community/Rest/MeGiveawaysController.php:409
 #: build/dashboard.js:65
 msgid "You have the most open giveaways allowed. Finish or cancel one first."
 msgstr ""
 
-#: src/Modules/Community/Rest/MeGiveawaysController.php:404
+#: src/Modules/Community/Rest/MeGiveawaysController.php:410
 #: build/dashboard.js:65
 msgid "This product cannot be given away."
 msgstr ""
 
-#: src/Modules/Community/Rest/MeGiveawaysController.php:405
+#: src/Modules/Community/Rest/MeGiveawaysController.php:411
 msgid "Your available balance does not cover the giveaway. Pay it in the shop instead."
 msgstr ""
 
-#: src/Modules/Community/Rest/MeGiveawaysController.php:406
+#: src/Modules/Community/Rest/MeGiveawaysController.php:412
 msgid "The giveaway cannot be cancelled any more."
 msgstr ""
 
-#: src/Modules/Community/Rest/MeGiveawaysController.php:407
+#: src/Modules/Community/Rest/MeGiveawaysController.php:413
 msgid "The giveaway cannot be changed right now."
 msgstr ""
 

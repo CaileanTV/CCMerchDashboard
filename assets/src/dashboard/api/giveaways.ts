@@ -82,6 +82,8 @@ export interface GiveawayProduct {
 export interface GiveawaysState {
 	readonly giveaways: readonly GiveawayRow[];
 	readonly products: readonly GiveawayProduct[];
+	/** False when the answer left the products out (a write, a refresh). */
+	readonly productsRead: boolean;
 	/** The available balance (decimal), or null when unknown. */
 	readonly available: string | null;
 	readonly windowMin: number;
@@ -275,7 +277,7 @@ export function parseGiveaways( body: unknown ): GiveawaysState | null {
 		! isRecord( body ) ||
 		! isRecord( body.limits ) ||
 		! Array.isArray( body.giveaways ) ||
-		! Array.isArray( body.products )
+		( body.products !== null && ! Array.isArray( body.products ) )
 	) {
 		return null;
 	}
@@ -286,7 +288,7 @@ export function parseGiveaways( body: unknown ): GiveawaysState | null {
 	const windowDefault = whole( body.limits.window_default );
 	const maxOpen = whole( body.limits.max_open );
 	const giveaways = body.giveaways.map( parseGiveaway );
-	const products = body.products.map( parseProduct );
+	const products = ( body.products ?? [] ).map( parseProduct );
 
 	if (
 		typeof twitch !== 'boolean' ||
@@ -312,6 +314,7 @@ export function parseGiveaways( body: unknown ): GiveawaysState | null {
 	return {
 		giveaways: giveaways as GiveawayRow[],
 		products: products as GiveawayProduct[],
+		productsRead: body.products !== null,
 		available,
 		windowMin,
 		windowMax,
@@ -340,6 +343,14 @@ export function getGiveaways(
 		{ path: PATH, ...( signal === undefined ? {} : { signal } ) },
 		parseGiveaways
 	);
+}
+
+/**
+ * What changes while the page is open: not the products, which are slow to
+ * read for a creator with many.
+ */
+export function refreshGiveaways(): Promise< ApiResult< GiveawaysState > > {
+	return request( { path: `${ PATH }?products=0` }, parseGiveaways );
 }
 
 /**

@@ -655,6 +655,7 @@ final class CommunityModule implements Module {
 		}
 
 		$collections = $c->get( DesignCollections::class );
+		_prime_post_caches( $ids, true, true );
 
 		foreach ( array_unique( $ids ) as $product_id ) {
 			$quote = $c->get( GiveawayCost::class )->quote( $product_id, $creator_id );

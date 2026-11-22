@@ -7,6 +7,7 @@ import {
 	cancelGiveaway,
 	createGiveaway,
 	getGiveaways,
+	refreshGiveaways,
 	startGiveaway,
 } from '../../api/giveaways';
 import type {
@@ -157,6 +158,21 @@ function startedText( started: string | undefined ): string {
 }
 
 /**
+ * An answer with the products already shown, when it left them out.
+ *
+ * @param next   The answer.
+ * @param before What is shown.
+ */
+function withProducts(
+	next: GiveawaysState,
+	before: GiveawaysState | null
+): GiveawaysState {
+	return next.productsRead || before === null
+		? next
+		: { ...next, products: before.products };
+}
+
+/**
  * The collections among the products, each with its designs (ADR-120), in
  * the list's order.
  *
@@ -225,9 +241,11 @@ export function GiveawaysSection() {
 				return;
 			}
 
-			void getGiveaways().then( ( result ) => {
+			void refreshGiveaways().then( ( result ) => {
 				if ( active && result.ok ) {
-					setCurrent( result.data );
+					setCurrent( ( before ) =>
+						withProducts( result.data, before )
+					);
 				}
 			} );
 		};
@@ -289,7 +307,7 @@ export function GiveawaysSection() {
 	);
 
 	const done = ( result: GiveawaysState, message: string ) => {
-		setCurrent( result );
+		setCurrent( ( before ) => withProducts( result, before ) );
 		setToast( message );
 	};
 
