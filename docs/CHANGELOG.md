@@ -4,7 +4,7 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
-Fase 55 (ADR-120), under opbygning. Schema-version 53.
+Fase 55 (ADR-120), under opbygning. Schema-version 54.
 
 - **Samlinger af designs:** en samling fra CCMerch Design-samling er ikke creatorens produkt, får ingen ny creator-tilknytning og er aldrig selv en varelinje, gave eller giveaway. Eksisterende tilknytninger røres ikke.
 - **Twitch-panelet og merch-reklamen** viser hvert design, også når en samling skjuler det.
@@ -16,6 +16,7 @@ Fase 55 (ADR-120), under opbygning. Schema-version 53.
 - **Gemte valg af en samling:** Twitch-panelet og merch-reklamen viser dens designs i stedet. Sub-rabatten ser bort fra den, og siden kan stadig gemmes.
 - **En samling ændret til et almindeligt produkt** kan sælges: ændringen registreres, og for ældre ændringer har fanen "Samlinger" knappen "Ikke længere en samling".
 - **Afvis og delvis tilføjelse:** "Afvis" rydder det op, som godkendelsen lagde i en ikke-udgivet samling. En tilføjelse er klar, når alle designs er inde, eller lukkes som delvist udført.
+- **Database:** migration 54 med kolonnen `free_choice` på gaver og giveaways (frit valg af design, under opbygning).
 - **Database:** migration 53 med tabellerne til anmodninger om samlinger.
 
 ## [2.3.0] - 2026-11-22

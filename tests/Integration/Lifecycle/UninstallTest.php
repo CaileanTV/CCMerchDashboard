@@ -459,7 +459,7 @@ final class UninstallTest extends IntegrationTestCase {
 
 		remove_filter( 'query', $fail );
 		self::assertTrue( Settings::delete_data_on_uninstall(), 'Opt-in kept for the retry.' );
-		self::assertSame( '53', $this->raw_option( Migrator::VERSION_OPTION ) );
+		self::assertSame( '54', $this->raw_option( Migrator::VERSION_OPTION ) );
 
 		$this->run_uninstall();
 

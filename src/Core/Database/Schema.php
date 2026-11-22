@@ -23,6 +23,7 @@ use MerchBoard\Core\Database\Migrations\AddDesignerPrimaryImage;
 use MerchBoard\Core\Database\Migrations\AddDesignerSmallSidePrice;
 use MerchBoard\Core\Database\Migrations\CreateDesignerFees;
 use MerchBoard\Core\Database\Migrations\AddDesignerShopPrice;
+use MerchBoard\Core\Database\Migrations\AddGiftFreeChoice;
 use MerchBoard\Core\Database\Migrations\AddGiftOrderUnits;
 use MerchBoard\Core\Database\Migrations\CreateAlertEventsTable;
 use MerchBoard\Core\Database\Migrations\CreateAlertChatbotTables;
@@ -133,6 +134,7 @@ final class Schema {
 			51 => new CreateGiveawaysTable(),
 			52 => new AddGiftOrderUnits(),
 			53 => new CreateCollectionRequestTables(),
+			54 => new AddGiftFreeChoice(),
 		);
 	}
 }
