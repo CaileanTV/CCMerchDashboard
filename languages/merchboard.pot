@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-22T17:05:22+00:00\n"
+"POT-Creation-Date: 2026-11-22T17:20:13+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -127,9 +127,9 @@ msgstr ""
 #: src/Modules/Creators/Admin/GoLivePage.php:316
 #: src/Modules/Creators/Admin/ProposalImageDownload.php:100
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:111
-#: src/Modules/WooCommerce/Admin/CollectionRequestActions.php:90
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:101
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:119
+#: src/Modules/WooCommerce/Admin/CollectionRequestActions.php:91
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:103
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:121
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:242
 #: src/Modules/WooCommerce/Admin/CreatorProductsActions.php:331
 #: src/Modules/WooCommerce/Admin/ProductRemovalActions.php:81
@@ -171,7 +171,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/PrintifyThumbnails.php:97
 #: src/Modules/Settings/Admin/SettingsActions.php:137
 #: src/Modules/WooCommerce/Admin/CategorySyncActions.php:117
-#: src/Modules/WooCommerce/Admin/CollectionRequestActions.php:98
+#: src/Modules/WooCommerce/Admin/CollectionRequestActions.php:99
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesActions.php:256
 #: src/Modules/WooCommerce/Admin/CreatorCodeActions.php:101
 #: src/Modules/WooCommerce/Admin/CreatorPricingActions.php:120
@@ -672,12 +672,12 @@ msgid "Creator asked to have a product removed"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:182
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:971
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:977
 msgid "Product removal request handled"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:183
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1003
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1009
 msgid "Product removal request declined"
 msgstr ""
 
@@ -758,7 +758,7 @@ msgid "Creator went live"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:203
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1455
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1461
 msgid "Request to go live declined"
 msgstr ""
 
@@ -795,7 +795,7 @@ msgid "Collection request approved"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:212
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:937
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:943
 msgid "Collection request declined"
 msgstr ""
 
@@ -1552,8 +1552,8 @@ msgstr ""
 #: src/Modules/ProductDesigner/DesignerNotifications.php:375
 #: src/Modules/ProductDesigner/DesignerNotifications.php:420
 #: src/Modules/ProductDesigner/DesignerNotifications.php:603
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:156
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:322
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:158
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:349
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:202
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:389
@@ -1635,17 +1635,17 @@ msgid "All events"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogPage.php:250
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1150
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1156
 #: src/Modules/ProductDesigner/DesignerNotifications.php:304
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:208
 #: build/dashboard.js:76
-#: build/dashboard.js:139
+#: build/dashboard.js:140
 msgid "From"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogPage.php:256
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:208
-#: build/dashboard.js:139
+#: build/dashboard.js:140
 msgid "To"
 msgstr ""
 
@@ -2283,7 +2283,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:205
 #: build/dashboard.js:60
 #: build/dashboard.js:80
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Name"
 msgstr ""
 
@@ -2331,7 +2331,7 @@ msgstr[1] ""
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:219
 #: build/dashboard.js:74
 #: build/dashboard.js:76
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Remove"
 msgstr ""
 
@@ -3493,7 +3493,7 @@ msgstr ""
 
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:178
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:328
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:234
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:236
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
 msgid "Approve"
 msgstr ""
@@ -4386,7 +4386,7 @@ msgid "Name in the announcement"
 msgstr ""
 
 #: src/Modules/Community/Gifting/GiftPrivacy.php:113
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1213
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1219
 #: build/dashboard.js:77
 msgid "Winner"
 msgstr ""
@@ -4415,8 +4415,8 @@ msgstr ""
 #: build/dashboard.js:104
 #: build/dashboard.js:107
 #: build/dashboard.js:121
-#: build/dashboard.js:127
-#: build/dashboard.js:131
+#: build/dashboard.js:128
+#: build/dashboard.js:132
 msgid "Status"
 msgstr ""
 
@@ -4806,7 +4806,7 @@ msgid "Published versions"
 msgstr ""
 
 #: src/Modules/Creators/Admin/AgreementSettingsSection.php:192
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "None yet."
 msgstr ""
 
@@ -4818,7 +4818,7 @@ msgstr ""
 #: src/Modules/Creators/Admin/AgreementSettingsSection.php:197
 #: src/Modules/News/Admin/NewsAdminPage.php:223
 #: src/Modules/News/Admin/NewsAdminPage.php:415
-#: build/dashboard.js:131
+#: build/dashboard.js:132
 msgid "Published"
 msgstr ""
 
@@ -4995,12 +4995,12 @@ msgstr ""
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:274
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:520
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Proposed"
 msgstr ""
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:275
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:322
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:349
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:166
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:194
 msgid "Decision"
@@ -5343,8 +5343,8 @@ msgstr ""
 #: build/dashboard.js:60
 #: build/dashboard.js:96
 #: build/dashboard.js:103
-#: build/dashboard.js:129
-#: build/dashboard.js:133
+#: build/dashboard.js:130
+#: build/dashboard.js:134
 msgid "Delete"
 msgstr ""
 
@@ -5371,13 +5371,13 @@ msgid "Creators who signed up themselves ask here to go live. Until you approve,
 msgstr ""
 
 #: src/Modules/Creators/Admin/GoLivePage.php:156
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:145
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:147
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:140
 msgid "The requests could not be read. Please try again later."
 msgstr ""
 
 #: src/Modules/Creators/Admin/GoLivePage.php:162
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:154
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:156
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:146
 msgid "No requests are waiting."
 msgstr ""
@@ -5437,13 +5437,13 @@ msgstr ""
 
 #: src/Modules/Creators/Admin/GoLivePage.php:221
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:300
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:261
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:267
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:176
 msgid "Note to the creator"
 msgstr ""
 
 #: src/Modules/Creators/Admin/GoLivePage.php:222
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:263
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:269
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:177
 msgid "Decline"
 msgstr ""
@@ -5451,8 +5451,8 @@ msgstr ""
 #: src/Modules/Creators/Admin/GoLivePage.php:246
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1514
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:212
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:237
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:253
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:239
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:259
 #: build/alerts-global-admin.js:1
 #: build/alerts-presets-admin.js:1
 #: build/dashboard.js:2
@@ -6099,7 +6099,7 @@ msgid "Preview"
 msgstr ""
 
 #: src/Modules/News/Admin/NewsAdminPage.php:329
-#: build/dashboard.js:135
+#: build/dashboard.js:136
 msgid "Withdraw"
 msgstr ""
 
@@ -6132,7 +6132,7 @@ msgstr ""
 #: src/Modules/News/Admin/NewsAdminPage.php:417
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1835
 #: build/dashboard.js:103
-#: build/dashboard.js:127
+#: build/dashboard.js:128
 msgid "Draft"
 msgstr ""
 
@@ -6246,7 +6246,7 @@ msgstr ""
 #: src/Modules/Notifications/Catalog/AdminTypes.php:382
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:424
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:503
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1469
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1475
 #: src/Modules/ProductDesigner/DesignerNotifications.php:377
 #: src/Modules/ProductDesigner/DesignerNotifications.php:422
 #: src/Modules/ProductDesigner/DesignerNotifications.php:463
@@ -6518,9 +6518,10 @@ msgid "A creator asked to have designs collected. Nothing in the shop changes un
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/AdminTypes.php:238
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:920
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:954
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:322
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:925
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:926
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:960
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:349
 #: build/dashboard.js:121
 msgid "Collection"
 msgstr ""
@@ -6558,12 +6559,12 @@ msgstr ""
 #: src/Modules/Notifications/Catalog/AdminTypes.php:513
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:181
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:819
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1020
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1149
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1212
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1249
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1283
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1317
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1026
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1155
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1218
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1255
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1289
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1323
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:210
 #: src/Modules/ProductDesigner/Admin/DesignerFeesSection.php:122
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:187
@@ -6592,8 +6593,8 @@ msgstr ""
 #: build/dashboard.js:96
 #: build/dashboard.js:104
 #: build/dashboard.js:117
-#: build/dashboard.js:127
-#: build/dashboard.js:131
+#: build/dashboard.js:128
+#: build/dashboard.js:132
 msgid "Product"
 msgstr ""
 
@@ -6943,7 +6944,7 @@ msgid "When we cannot approve a change you proposed, with the reason."
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:35
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1037
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1043
 msgid "New product in your shop"
 msgstr ""
 
@@ -7005,7 +7006,7 @@ msgid "When a platform stops your chatbot from reaching your channel. You get on
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:43
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1378
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1384
 msgid "Your webhook was paused"
 msgstr ""
 
@@ -7030,7 +7031,7 @@ msgid "When the winner of a Twitch gift in your stream claims it."
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:46
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1232
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1238
 msgid "Giveaway link ready"
 msgstr ""
 
@@ -7039,7 +7040,7 @@ msgid "When nobody in the chat claimed your giveaway after three draws, so you g
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:47
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1266
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1272
 msgid "Giveaway code used"
 msgstr ""
 
@@ -7048,7 +7049,7 @@ msgid "When the winner of your giveaway uses the code."
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:48
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1300
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1306
 msgid "Giveaway expired"
 msgstr ""
 
@@ -7057,7 +7058,7 @@ msgid "When your giveaway runs out without being used."
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorEmailTexts.php:49
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1397
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1403
 msgid "New YouTube terms"
 msgstr ""
 
@@ -7167,7 +7168,7 @@ msgid "Quantity"
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:181
-#: build/dashboard.js:128
+#: build/dashboard.js:129
 msgid "Price incl. VAT"
 msgstr ""
 
@@ -7510,8 +7511,8 @@ msgid "Your change was not approved, so nothing changed in the shop. You are wel
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:615
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:956
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1022
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:962
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1028
 msgid "Note from us"
 msgstr ""
 
@@ -7625,10 +7626,10 @@ msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:741
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:771
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1084
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1441
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1470
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1501
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1090
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1447
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1476
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1507
 msgid "Open your dashboard"
 msgstr ""
 
@@ -7719,11 +7720,11 @@ msgid "Before"
 msgstr ""
 
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:828
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:923
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:957
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:989
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1023
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1055
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:929
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:963
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:995
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1029
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1061
 msgid "See your products"
 msgstr ""
 
@@ -7780,528 +7781,538 @@ msgid "When a collection the creator asked for is in the shop."
 msgstr ""
 
 #. translators: %s: collection name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:914
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:916
 #, php-format
 msgid "Your collection %s is in the shop."
 msgstr ""
 
+#. translators: 1: collection name, 2: design names.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:918
+#, php-format
+msgid "Only some of the designs you asked for are in your collection %1$s: %2$s."
+msgstr ""
+
 #. translators: %s: collection name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:917
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:921
 #, php-format
 msgid "Your collection %s is ready"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:918
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:922
 msgid "Your collection is ready"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:919
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:923
 msgid "Your designs are now sold from one page, where customers choose the design. Prices and your profit are unchanged."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:938
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:926
+msgid "Designs that came in"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:944
 msgid "When an administrator declines a collection request, with the note."
 msgstr ""
 
 #. translators: %s: collection name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:948
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:954
 #, php-format
 msgid "We could not make the collection %s."
 msgstr ""
 
 #. translators: %s: collection name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:951
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:957
 #, php-format
 msgid "We could not make the collection %s"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:952
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1018
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:958
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1024
 msgid "Your request was not approved"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:953
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:959
 msgid "Your products are still sold as before. You are welcome to ask again."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:972
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:978
 msgid "When an administrator has handled a request to remove a product."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:979
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:985
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:991
 #, php-format
 msgid "We have handled your request to remove %s."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:982
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:988
 #, php-format
 msgid "Your request to remove %s is handled"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:983
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:989
 msgid "Your request is handled"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1004
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1010
 msgid "When an administrator declines a request to remove a product, with the note."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1014
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1020
 #, php-format
 msgid "We could not remove %s."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1017
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1023
 #, php-format
 msgid "We could not remove %s"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1019
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1025
 msgid "The product stays in the shop. You are welcome to ask again."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1038
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1044
 msgid "When a product is linked to the creator."
-msgstr ""
-
-#. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1045
-#, php-format
-msgid "%s is now one of your products."
-msgstr ""
-
-#. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1048
-#, php-format
-msgid "New product: %s"
-msgstr ""
-
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1049
-msgid "A new product in your shop"
 msgstr ""
 
 #. translators: %s: product name.
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:1051
 #, php-format
+msgid "%s is now one of your products."
+msgstr ""
+
+#. translators: %s: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1054
+#, php-format
+msgid "New product: %s"
+msgstr ""
+
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1055
+msgid "A new product in your shop"
+msgstr ""
+
+#. translators: %s: product name.
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1057
+#, php-format
 msgid "%s is now one of your products, and its sales count as yours."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1069
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1078
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1079
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1075
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1084
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1085
 msgid "An administrator viewed your dashboard"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1070
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1076
 msgid "When an administrator starts \"View as creator\" for the creator."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1076
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1082
 msgid "An administrator viewed your dashboard, e.g. to help you."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1080
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1086
 msgid "An administrator opened your dashboard as you see it, for example to help you. Changes made there are logged."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1098
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1104
 msgid "News from Merch Dashboard"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1099
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1105
 msgid "When an administrator publishes news."
 msgstr ""
 
 #. translators: %s: news title.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1106
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1109
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1112
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1115
 #, php-format
 msgid "News: %s"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1111
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1117
 msgid "There is news from Merch Dashboard. Read it in your dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1115
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1121
 msgid "Read the news"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1129
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1135
 msgid "Gift bought in the stream"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1130
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1136
 msgid "When a viewer buys one of the creator's products as a Twitch gift."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1143
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1149
 #, php-format
 msgid "A gift was bought in your stream: %s"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1144
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1150
 msgid "A gift for your chat"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1145
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1151
 msgid "A viewer bought one of your products as a gift for your chat. The bot draws a winner among those who type !enter. The sale counts for you as usual."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1157
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1217
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1163
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1223
 msgid "Open Twitch gifting"
 msgstr ""
 
 #. translators: 1: number of gifts, 2: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1175
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1181
 #, php-format
 msgid "Someone bought %1$d × %2$s as gifts in your stream."
 msgstr ""
 
 #. translators: 1: the buyer's chosen name, 2: number of gifts, 3: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1177
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1183
 #, php-format
 msgid "%1$s bought %2$d × %3$s as gifts in your stream."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1182
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1188
 #, php-format
 msgid "Someone bought %s as a gift in your stream."
 msgstr ""
 
 #. translators: 1: the buyer's chosen name, 2: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1184
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1190
 #, php-format
 msgid "%1$s bought %2$s as a gift in your stream."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1194
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1200
 msgid "Gift claimed by the winner"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1195
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1201
 msgid "When the winner of a Twitch gift in the creator's stream claims it."
 msgstr ""
 
 #. translators: 1: the winner's Twitch name, 2: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1205
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1211
 #, php-format
 msgid "%1$s claimed the gift %2$s."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1208
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1214
 #, php-format
 msgid "The gift %s was claimed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1209
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1215
 msgid "A gift was claimed"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1210
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1216
 msgid "The winner of a gift in your stream logged in with Twitch and got the gift code."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1233
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1239
 msgid "When nobody claimed the creator's giveaway after three draws in the chat, so the creator gets the link to pass on."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1243
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1249
 #, php-format
 msgid "Nobody claimed your giveaway %s after three draws. The link is ready on the Giveaways page."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1246
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1252
 #, php-format
 msgid "Your giveaway %s has a link for you"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1247
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1253
 msgid "Your giveaway link is ready"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1248
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1254
 msgid "Nobody in the chat claimed your giveaway after three draws. Pass the link on to a winner yourself; it can be redeemed for 30 days."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1252
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1286
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1320
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1258
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1292
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1326
 msgid "Open Giveaways"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1267
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1273
 msgid "When the winner of the creator's giveaway uses the code; a giveaway from the balance is charged then."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1277
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1283
 #, php-format
 msgid "The code of your giveaway %s was used."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1280
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1286
 #, php-format
 msgid "The code of your giveaway %s was used"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1281
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1287
 msgid "Your giveaway was used"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1282
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1288
 msgid "The winner has used the code of your giveaway. If you paid it from your balance, it is charged now."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1301
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1307
 msgid "When the creator's giveaway runs out without being used; nothing is charged."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1311
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1317
 #, php-format
 msgid "Your giveaway %s ran out without being used."
 msgstr ""
 
 #. translators: %s: product name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1314
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1320
 #, php-format
 msgid "Your giveaway %s ran out"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1315
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1321
 msgid "Your giveaway ran out"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1316
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1322
 msgid "Nobody used your giveaway within 30 days. Nothing is charged from your balance, and the money is no longer set aside."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1334
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1340
 msgid "Chatbot lost access"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1335
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1341
 msgid "When a platform refuses the chatbot's access to the creator's channel; once until it is connected again."
 msgstr ""
 
 #. translators: %s: platform, e.g. Twitch.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1342
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1348
 #, php-format
 msgid "The chatbot lost access to your %s channel. Connect it again under Alerts."
 msgstr ""
 
 #. translators: %s: platform.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1345
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1351
 #, php-format
 msgid "The chatbot lost access to your %s channel"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1346
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1352
 msgid "Your chatbot needs to be connected again"
 msgstr ""
 
 #. translators: %s: platform.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1348
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1354
 #, php-format
 msgid "%s no longer lets the chatbot write in your channel, so purchases are not announced in your chat. Connect the channel again under Alerts."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1352
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1358
 msgid "Connect again"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1366
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1372
 msgid "Webhook paused"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1367
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1373
 msgid "When one of the creator's webhooks is paused after 10 failed deliveries in a row."
 msgstr ""
 
 #. translators: %s: webhook name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1374
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1380
 #, php-format
 msgid "Your webhook \"%s\" was paused after 10 failed deliveries."
 msgstr ""
 
 #. translators: %s: webhook name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1377
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1383
 #, php-format
 msgid "Your webhook \"%s\" was paused"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1379
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1385
 msgid "The last 10 deliveries to your webhook failed, so we paused it. Check the receiver, then resume the webhook under Alerts."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1380
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1386
 msgid "Webhook"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1383
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1389
 msgid "See your webhooks"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1398
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1404
 msgid "When an administrator renews the YouTube chatbot's terms, which every creator must accept again."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1404
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1410
 msgid "Please accept the new terms of the YouTube chatbot under Alerts."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1406
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1412
 msgid "Please accept the new YouTube terms"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1407
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1413
 msgid "New terms for the YouTube chatbot"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1408
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1414
 msgid "The terms of the YouTube chatbot were updated. Until you accept them, the chatbot does not write in your YouTube chat."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1412
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1418
 msgid "Read and accept"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1426
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1432
 msgid "Live in the shop"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1427
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1433
 msgid "When an administrator approves that a creator who signed up goes live."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1433
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1439
 msgid "You are live in the shop! Your approved designs are on their way."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1435
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1441
 msgid "You are live in the shop"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1436
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1442
 msgid "You are live!"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1437
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1443
 msgid "We approved your request: your shop is live, and your approved designs are on their way to the shop. Share the link with your followers."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1456
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1462
 msgid "When an administrator declines a request to go live, with the reason."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1462
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1468
 msgid "Your request to go live was not approved yet. Read the reason in your dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1464
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1470
 msgid "Your request to go live"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1465
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1471
 msgid "Not live yet"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1466
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1472
 msgid "We could not approve your request to go live yet. You can change what is needed and ask again from your dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1486
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1496
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1492
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1502
 msgid "New version of the agreement"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1487
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1493
 msgid "When an administrator publishes a new version of the agreement for creators; sent to creators who signed up themselves."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1493
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1499
 msgid "Our agreement was changed. Please read and accept the new version."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1493
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1499
 msgid "Our agreement was updated. You can read the new version in your dashboard."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1495
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1501
 msgid "Please accept our new agreement"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1495
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1501
 msgid "Our agreement was updated"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1497
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1503
 msgid "We changed our agreement with you. Please read and accept the new version in your dashboard; until then you cannot request a payout."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1497
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1503
 msgid "We made a minor update to our agreement with you. You can read the new version in your dashboard; you do not need to do anything."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1515
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1521
 msgid "API key created or revoked"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1516
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1522
 msgid "When an API key is created for the creator, or an administrator revokes their keys (security message)."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1526
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1532
 msgid "An administrator revoked your API keys."
 msgstr ""
 
 #. translators: %s: key name.
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1528
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1534
 #, php-format
 msgid "A new API key \"%s\" was created."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1531
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1532
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1537
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1538
 msgid "Your API keys were revoked"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1533
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1539
 msgid "An administrator revoked your API keys, so they no longer work. Please contact us if you have questions."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1537
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1551
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1543
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1557
 msgid "See your API keys"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1542
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1543
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1548
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1549
 msgid "A new API key was created"
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1545
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1551
 msgid "A new API key was created for your account."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1546
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1552
 msgid "If you did not create it, revoke it under Alerts and contact us."
 msgstr ""
 
-#: src/Modules/Notifications/Catalog/CreatorTypes.php:1548
+#: src/Modules/Notifications/Catalog/CreatorTypes.php:1554
 msgid "Key"
 msgstr ""
 
@@ -8712,7 +8723,7 @@ msgid "Sides"
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:369
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:156
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:158
 #: build/alerts-global-admin.js:8
 #: build/alerts-global-admin.js:24
 #: build/alerts-presets-admin.js:8
@@ -8767,7 +8778,7 @@ msgid "Creators have designs on this base product. A new base price or template 
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:464
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Description"
 msgstr ""
 
@@ -9118,7 +9129,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:978
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1074
 #: build/dashboard.js:96
-#: build/dashboard.js:139
+#: build/dashboard.js:140
 msgid "Show"
 msgstr ""
 
@@ -9742,7 +9753,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:717
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:780
 #: build/dashboard.js:115
-#: build/dashboard.js:137
+#: build/dashboard.js:138
 msgid "Period"
 msgstr ""
 
@@ -9891,7 +9902,7 @@ msgid "Images without background are in the shop."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:251
-#: build/dashboard.js:130
+#: build/dashboard.js:131
 msgid "No image"
 msgstr ""
 
@@ -10542,7 +10553,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/DesignerNotifications.php:264
 #: src/Modules/ProductDesigner/DesignerNotifications.php:313
 #: src/Modules/ProductDesigner/DesignerNotifications.php:345
-#: build/dashboard.js:129
+#: build/dashboard.js:130
 msgid "Open the designer"
 msgstr ""
 
@@ -11505,78 +11516,86 @@ msgid "The requests are checked against the shop."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:86
-msgid "The product is no longer a collection and can be sold again."
+msgid "The request is closed. The creator is told which designs are in the collection."
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:87
+msgid "None of the designs are in the published collection yet, so it cannot be closed as partly done."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:88
+msgid "The product is no longer a collection and can be sold again."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:89
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:96
 msgid "The request is declined. The creator sees your note."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:88
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:90
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:97
 msgid "Write a note to the creator before you decline the request."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:89
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:91
 msgid "The creator is not active and live in the shop."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:90
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:92
 msgid "A design can no longer be collected: it is hidden, unpublished, in another collection or not the creator's. Decline the request with a note, or fix the product and try again."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:91
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:93
 msgid "The collection is gone or is no longer only this creator's."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:92
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:94
 msgid "CCMerch Design-samling is not active, so nothing in the shop was changed. Activate it and try again."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:93
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:95
 msgid "Several products look like this request's draft, so none was chosen. Delete the copy permanently and try again."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:94
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:96
 msgid "The collection is open in the editor, which would overwrite the change. Close the editor, wait up to three minutes and try again."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:95
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:97
 msgid "The request is being handled by someone else. Try again in a moment."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:96
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:98
 msgid "The designs are already in the published collection, so the request cannot be declined."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:100
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:102
 msgid "The request is no longer waiting for that."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:102
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:104
 msgid "A technical error occurred. Check the request and try again; nothing is made twice."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:111
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:126
-#: build/dashboard.js:124
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:113
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:128
+#: build/dashboard.js:125
 msgid "Collections"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:132
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:134
 msgid "Creators ask here to have designs sold from one product page. A new collection becomes a draft that you publish. Adding to a published collection takes a second click. Remove and dissolve collections in the collection plugin."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:135
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:137
 msgid "CCMerch Design-samling is not active. Creators cannot send requests, and nothing can be carried out until it is."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:156
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:158
 msgid "Request"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:156
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:158
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:295
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:363
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:525
@@ -11585,106 +11604,118 @@ msgstr ""
 msgid "Requested"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:156
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:158
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:402
 msgid "Next step"
 msgstr ""
 
 #. translators: %s: collection name.
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:177
-#: build/dashboard.js:125
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:179
+#: build/dashboard.js:126
 #, php-format,js-format
 msgid "Add to %s"
 msgstr ""
 
 #. translators: %s: collection name.
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:179
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:181
 #, php-format
 msgid "New collection: %s"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:186
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:188
 msgid "Open the collection"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:187
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:189
 msgid "The collection is in the trash or gone."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:209
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:211
 msgid "(gone)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:215
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:217
 msgid "(in the collection)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:219
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:221
 msgid "(not the creator's)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:222
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:224
 msgid "(hidden, unpublished or collected)"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:236
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:238
 msgid "Approved, but the draft is not made yet."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:244
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:246
+msgid "Close as partly done"
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:250
 msgid "Approved. The designs are not sold from the collection until you add them."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:247
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:253
 msgid "Add and hide now"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:249
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:255
 msgid "By hand: open the collection, add the designs on its \"Designs\" tab and update it. The request closes by itself."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:252
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:258
 msgid "Approved, but not all designs are in the collection yet."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:255
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:261
 msgid "Approved. Check the collection and publish it; the creator is told then."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:258
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:264
 msgid "Check again"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:278
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:287
+msgid "Declining takes the designs this request added out of the unpublished collection."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:288
+msgid "Declining puts the draft in the trash."
+msgstr ""
+
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:305
 msgid "These open gifts and giveaways point at a collection instead of a design, so they cannot be redeemed for a product. Nothing is changed by itself; decide what to do with each."
 msgstr ""
 
 #. translators: %d: giveaway id.
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:283
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:310
 #, php-format
 msgid "Giveaway #%d"
 msgstr ""
 
 #. translators: %d: gift id.
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:285
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:312
 #, php-format
 msgid "Gift #%d"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:303
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:330
 msgid "These products list designs but are not of the collection type, so they cannot be sold themselves. If you changed one into an ordinary product, say so here. If it lost its type while the collection plugin was off, give it the type back in WooCommerce instead: as an ordinary product it would be sold without a design and print files."
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:307
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:334
 msgid "No longer a collection"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:321
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:348
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:193
 msgid "Handled requests"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:322
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:349
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:363
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:526
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:194
@@ -11694,17 +11725,24 @@ msgid "Handled"
 msgstr ""
 
 #. translators: %s: the administrator's note.
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:327
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:354
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:199
 #, php-format
 msgid "Declined: %s"
 msgstr ""
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:328
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:356
 #: build/dashboard.js:103
 #: build/dashboard.js:123
-#: build/dashboard.js:126
+#: build/dashboard.js:127
 msgid "In the shop"
+msgstr ""
+
+#. translators: %s: design names.
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:358
+#: build/dashboard.js:124
+#, php-format,js-format
+msgid "Partly in the shop: %s"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:78
@@ -11878,7 +11916,7 @@ msgstr ""
 #: build/dashboard.js:90
 #: build/dashboard.js:96
 #: build/dashboard.js:121
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Cancel"
 msgstr ""
 
@@ -12639,8 +12677,8 @@ msgstr ""
 #. translators: 1: menu group, e.g. "Alerts", 2: page in the group.
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:161
 #: build/dashboard.js:62
-#: build/dashboard.js:137
-#: build/dashboard.js:140
+#: build/dashboard.js:138
+#: build/dashboard.js:141
 #, php-format,js-format
 msgid "%1$s: %2$s"
 msgstr ""
@@ -12785,7 +12823,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:145
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:163
 #: build/dashboard.js:105
-#: build/dashboard.js:137
+#: build/dashboard.js:138
 msgid "Units"
 msgstr ""
 
@@ -12794,29 +12832,29 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:665
 #: src/Modules/WooCommerce/Dashboard/DashboardSectionRegistration.php:62
 #: build/dashboard.js:105
-#: build/dashboard.js:137
+#: build/dashboard.js:138
 msgid "Orders"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Sales per day (incl. VAT)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:153
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Net sales per day"
 msgstr ""
 
 #. translators: %s: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:157
-#: build/dashboard.js:138
+#: build/dashboard.js:139
 #, php-format,js-format
 msgid "Sales, units and orders per period (%s)"
 msgstr ""
 
 #: src/Modules/WooCommerce/Admin/CreatorSalesSection.php:161
-#: build/dashboard.js:137
+#: build/dashboard.js:138
 msgid "Day"
 msgstr ""
 
@@ -13043,7 +13081,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:372
 #: build/dashboard.js:104
 #: build/dashboard.js:105
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Profit"
 msgstr ""
 
@@ -13062,7 +13100,7 @@ msgstr ""
 #: build/dashboard.js:104
 #: build/dashboard.js:112
 #: build/dashboard.js:118
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Unknown"
 msgstr ""
 
@@ -13613,7 +13651,7 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:1180
 #: build/dashboard.js:103
 #: build/dashboard.js:108
-#: build/dashboard.js:127
+#: build/dashboard.js:128
 msgid "Rejected"
 msgstr ""
 
@@ -14628,7 +14666,7 @@ msgstr ""
 #. translators: 1: amount, 2: currency code.
 #. translators: 1: price as stored in the shop, 2: currency code (e.g. DKK).
 #: src/Modules/WooCommerce/Admin/PricingLabels.php:52
-#: build/dashboard.js:132
+#: build/dashboard.js:133
 #, php-format,js-format
 msgid "%1$s %2$s"
 msgstr ""
@@ -15541,7 +15579,7 @@ msgid "Log out"
 msgstr ""
 
 #: templates/dashboard/shell.php:48
-#: build/dashboard.js:140
+#: build/dashboard.js:141
 msgid "Loading your dashboard…"
 msgstr ""
 
@@ -15813,7 +15851,7 @@ msgstr ""
 #: build/dashboard.js:32
 #: build/dashboard.js:45
 #: build/dashboard.js:96
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Uploading…"
 msgstr ""
 
@@ -16251,8 +16289,8 @@ msgstr ""
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
 #: build/dashboard.js:103
-#: build/dashboard.js:129
-#: build/dashboard.js:131
+#: build/dashboard.js:130
+#: build/dashboard.js:132
 #, js-format
 msgid "Delete %s"
 msgstr ""
@@ -18071,7 +18109,7 @@ msgid "This page could not be displayed."
 msgstr ""
 
 #: build/dashboard.js:2
-#: build/dashboard.js:140
+#: build/dashboard.js:141
 msgid "Please reload the page."
 msgstr ""
 
@@ -19057,7 +19095,7 @@ msgid "Your own giveaway (link)"
 msgstr ""
 
 #: build/dashboard.js:66
-#: build/dashboard.js:131
+#: build/dashboard.js:132
 msgid "Price"
 msgstr ""
 
@@ -19414,7 +19452,7 @@ msgid "Dark"
 msgstr ""
 
 #: build/dashboard.js:73
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Light"
 msgstr ""
 
@@ -19802,7 +19840,7 @@ msgid "%d chosen"
 msgstr ""
 
 #: build/dashboard.js:83
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "You have no products yet."
 msgstr ""
 
@@ -19862,8 +19900,8 @@ msgstr ""
 #: build/dashboard.js:96
 #: build/dashboard.js:102
 #: build/dashboard.js:103
-#: build/dashboard.js:129
-#: build/dashboard.js:131
+#: build/dashboard.js:130
+#: build/dashboard.js:132
 msgid "Delete product"
 msgstr ""
 
@@ -20230,7 +20268,7 @@ msgid "Your profit is %s. Customers pay only the price without profit, and you e
 msgstr ""
 
 #: build/dashboard.js:96
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Send for approval"
 msgstr ""
 
@@ -20740,7 +20778,7 @@ msgid "In the shop · change in progress"
 msgstr ""
 
 #: build/dashboard.js:103
-#: build/dashboard.js:126
+#: build/dashboard.js:127
 msgid "Not in the shop"
 msgstr ""
 
@@ -20749,12 +20787,12 @@ msgid "Waiting for approval"
 msgstr ""
 
 #: build/dashboard.js:103
-#: build/dashboard.js:127
+#: build/dashboard.js:128
 msgid "Approved · in the shop when you go live"
 msgstr ""
 
 #: build/dashboard.js:103
-#: build/dashboard.js:127
+#: build/dashboard.js:128
 msgid "Taken out of the shop"
 msgstr ""
 
@@ -20947,7 +20985,7 @@ msgid "Add a description and links to your channels."
 msgstr ""
 
 #: build/dashboard.js:106
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Loading your profile…"
 msgstr ""
 
@@ -21248,7 +21286,7 @@ msgid "Your payment details are encrypted, used only for this payout and deleted
 msgstr ""
 
 #: build/dashboard.js:110
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Sending…"
 msgstr ""
 
@@ -21379,7 +21417,7 @@ msgid "Payout request pages"
 msgstr ""
 
 #: build/dashboard.js:121
-#: build/dashboard.js:124
+#: build/dashboard.js:125
 msgid "Request a collection"
 msgstr ""
 
@@ -21435,70 +21473,70 @@ msgstr ""
 msgid "Approved, we are getting it ready"
 msgstr ""
 
-#: build/dashboard.js:123
+#: build/dashboard.js:124
 msgid "Not approved"
 msgstr ""
 
 #. translators: %s: our note.
-#: build/dashboard.js:124
+#: build/dashboard.js:125
 #, js-format
 msgid "Not approved: %s"
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:125
 msgid "Have several of your designs sold from one product page, where customers choose the design."
 msgstr ""
 
-#: build/dashboard.js:124
+#: build/dashboard.js:125
 msgid "You need at least two products in the shop that are not already in a collection or a request."
 msgstr ""
 
 #. translators: %s: date the change was sent.
-#: build/dashboard.js:126
+#: build/dashboard.js:127
 #, js-format
 msgid "In the shop · a change waits for approval (sent %s)"
 msgstr ""
 
-#: build/dashboard.js:126
+#: build/dashboard.js:127
 msgid "In the shop · your change was rejected"
 msgstr ""
 
 #. translators: %s: date the product was sent.
-#: build/dashboard.js:127
+#: build/dashboard.js:128
 #, js-format
 msgid "Waiting for approval (sent %s)"
 msgstr ""
 
-#: build/dashboard.js:127
+#: build/dashboard.js:128
 msgid "Your designs"
 msgstr ""
 
 #. translators: %s: the administrator's note.
-#: build/dashboard.js:128
+#: build/dashboard.js:129
 #, js-format
 msgid "Note: %s"
 msgstr ""
 
 #. translators: 1: price in the shop, 2: price after the change is approved.
-#: build/dashboard.js:129
+#: build/dashboard.js:130
 #, js-format
 msgid "%1$s (after approval %2$s)"
 msgstr ""
 
-#: build/dashboard.js:129
+#: build/dashboard.js:130
 msgid "Loading your designs…"
 msgstr ""
 
-#: build/dashboard.js:129
+#: build/dashboard.js:130
 msgid "No designs in the shop or waiting for approval yet."
 msgstr ""
 
-#: build/dashboard.js:129
+#: build/dashboard.js:130
 msgid "Design a product in the designer and send it for approval."
 msgstr ""
 
 #. translators: %d: number of drafts.
-#: build/dashboard.js:130
+#: build/dashboard.js:131
 #, js-format
 msgid "You have %d draft in the designer."
 msgid_plural "You have %d drafts in the designer."
@@ -21506,414 +21544,414 @@ msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %s: collection name.
-#: build/dashboard.js:131
+#: build/dashboard.js:132
 #, js-format
 msgid "In the collection %s"
 msgstr ""
 
-#: build/dashboard.js:131
+#: build/dashboard.js:132
 msgid "Deletion awaiting handling"
 msgstr ""
 
-#: build/dashboard.js:131
+#: build/dashboard.js:132
 msgid "No sales"
 msgstr ""
 
-#: build/dashboard.js:131
+#: build/dashboard.js:132
 msgid "Your products"
 msgstr ""
 
-#: build/dashboard.js:131
+#: build/dashboard.js:132
 msgid "Private"
 msgstr ""
 
-#: build/dashboard.js:131
+#: build/dashboard.js:132
 msgid "No price"
 msgstr ""
 
 #. translators: 1: lowest price, 2: highest price, 3: currency code (e.g. DKK).
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 #, js-format
 msgid "%1$s–%2$s %3$s"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Stock"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "In stock"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Out of stock"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "On backorder"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Loading products…"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "There are no products on this page."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Products linked to you in the shop will appear here."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Product pages"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Your discount code has already been replaced 3 times in the last 24 hours. Try again later."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Your discount code has been ended. Contact us if you need a new one."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Your discount code is being changed right now. Try again in a moment."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Your discount code was not reset. Nothing was changed; try again later."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Your discount code"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "With your own discount code you can buy your own merchandise without paying for your profit. Orders bought with your own discount code do not count in your sales and your profit."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Code:"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Your new discount code is ready. The old code no longer works."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Your new discount code is ready. The old code no longer works. Show the new code when no one else can see your screen."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Your discount code is ready."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Your discount code is ready. Show the code when no one else can see your screen."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Hide discount code"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Show discount code"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Reset and generate a new discount code"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "The old code stops working at once."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Reset discount code"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "E-mail notifications"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Loading e-mail notifications…"
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Choose which e-mails you want. E-mails about payouts, settlement documents, your discount code, security and your account are always sent. All notifications are also shown at the bell at the top of the dashboard."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Your creator profile has no login, so no e-mails are sent."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "There are no e-mails you can turn off right now."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "E-mail notifications saved."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Waiting for approval."
 msgstr ""
 
-#: build/dashboard.js:133
+#: build/dashboard.js:134
 msgid "Waiting for approval: remove the current one."
 msgstr ""
 
 #. translators: %s: the proposed text.
-#: build/dashboard.js:134
+#: build/dashboard.js:135
 #, js-format
 msgid "Waiting for approval: “%s”"
 msgstr ""
 
 #. translators: %s: field, e.g. "Description".
-#: build/dashboard.js:135
+#: build/dashboard.js:136
 #, js-format
 msgid "Withdraw the proposal for %s"
 msgstr ""
 
-#: build/dashboard.js:135
+#: build/dashboard.js:136
 msgid "Your last proposal was not approved."
 msgstr ""
 
 #. translators: %s: the administrator's note.
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 #, js-format
 msgid "Your last proposal was not approved: %s"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Approved – shown when your shop goes live."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Now: the shop’s standard banner with your logo."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Now in the shop."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Proposed image"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Upload new"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Dark black"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Dark green"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Dark blue"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Dark red"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Dark pink"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Theme saved."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Appearance"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Theme"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "System default follows the light or dark setting of your device."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "System default"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Logo (category image)"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Banner"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Banner on mobile"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Square, JPG, PNG or WebP, at least 300 × 300 pixels and at most 5 MB. Larger than 1000 × 1000 pixels is scaled down. Without an own banner it is shown in the middle of the shop’s standard banner."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "JPG, PNG or WebP, at least 1280 pixels wide and at most 5 MB, e.g. 2000 × 394 pixels. The banner is shown in full, without cropping. Remove it to show the standard banner again."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Optional, for screens below 768 pixels: JPG, PNG or WebP, at least 600 pixels wide and at most 5 MB. It is shown in full, without cropping."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Image sent for approval."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Sent for approval."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Proposal withdrawn."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "No changes to send."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Your changes are sent to the shop for approval. They are shown in the shop when an administrator has approved them."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "You do not have a product category in the shop yet. Your proposals are kept until you get one."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "About you"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Also the name of your category in the shop."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Logo and banner"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Link on the banner"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Optional, e.g. your Twitch or YouTube channel. Opens in a new tab."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Social media"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Shown as icons on your category page. Enter the full address or just your user name (e.g. @name)."
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Password"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Change your password"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Sales per week (incl. VAT)"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Sales per month (incl. VAT)"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Net sales per week"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "Net sales per month"
 msgstr ""
 
-#: build/dashboard.js:136
+#: build/dashboard.js:137
 msgid "(the table below has the same figures)"
 msgstr ""
 
-#: build/dashboard.js:137
+#: build/dashboard.js:138
 msgid "Week"
 msgstr ""
 
-#: build/dashboard.js:137
+#: build/dashboard.js:138
 msgid "Month"
 msgstr ""
 
-#: build/dashboard.js:137
+#: build/dashboard.js:138
 msgid "Your sales"
 msgstr ""
 
 #. translators: 1: first day, 2: last day (both included), 3: interval (Day, Week or Month).
-#: build/dashboard.js:139
+#: build/dashboard.js:140
 #, js-format
 msgid "Period: %1$s – %2$s · Interval: %3$s"
 msgstr ""
 
-#: build/dashboard.js:139
+#: build/dashboard.js:140
 msgid "No sales in this period."
 msgstr ""
 
-#: build/dashboard.js:139
+#: build/dashboard.js:140
 msgid "Choose another period, or check back after your next sale."
 msgstr ""
 
-#: build/dashboard.js:139
+#: build/dashboard.js:140
 msgid "Loading sales…"
 msgstr ""
 
-#: build/dashboard.js:139
+#: build/dashboard.js:140
 msgid "This period cannot be shown. Choose at most 366 days, weeks or months and at most five years."
 msgstr ""
 
-#: build/dashboard.js:139
+#: build/dashboard.js:140
 msgid "The end date must be on or after the start date."
 msgstr ""
 
-#: build/dashboard.js:139
+#: build/dashboard.js:140
 msgid "Choose period"
 msgstr ""
 
-#: build/dashboard.js:139
+#: build/dashboard.js:140
 msgid "Interval"
 msgstr ""
 
-#: build/dashboard.js:140
+#: build/dashboard.js:141
 msgid "This section is not available yet."
 msgstr ""
 
-#: build/dashboard.js:140
+#: build/dashboard.js:141
 msgid "Page not found"
 msgstr ""
 
-#: build/dashboard.js:140
+#: build/dashboard.js:141
 msgid "This page does not exist."
 msgstr ""
 
-#: build/dashboard.js:140
+#: build/dashboard.js:141
 msgid "Go to the start page"
 msgstr ""
 
-#: build/dashboard.js:140
+#: build/dashboard.js:141
 msgid "The dashboard could not be started."
 msgstr ""
 

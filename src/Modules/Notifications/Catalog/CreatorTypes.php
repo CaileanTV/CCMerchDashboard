@@ -911,13 +911,19 @@ final class CreatorTypes {
 			'products',
 			array( 'collection' => 'Nova Hoodie' ),
 			/* translators: %s: collection name. */
-			static fn( NotificationData $d ): string => sprintf( __( 'Your collection %s is in the shop.', 'merchboard' ), $d->text( 'collection' ) ),
+			static fn( NotificationData $d ): string => '' === $d->text( 'designs' )
+				/* translators: %s: collection name. */
+				? sprintf( __( 'Your collection %s is in the shop.', 'merchboard' ), $d->text( 'collection' ) )
+				/* translators: 1: collection name, 2: design names. */
+				: sprintf( __( 'Only some of the designs you asked for are in your collection %1$s: %2$s.', 'merchboard' ), $d->text( 'collection' ), $d->text( 'designs' ) ),
 			static fn( NotificationData $d ): EmailMessage => new EmailMessage(
 				/* translators: %s: collection name. */
 				sprintf( __( 'Your collection %s is ready', 'merchboard' ), $d->text( 'collection' ) ),
 				__( 'Your collection is ready', 'merchboard' ),
 				array( __( 'Your designs are now sold from one page, where customers choose the design. Prices and your profit are unchanged.', 'merchboard' ) ),
-				array( array( __( 'Collection', 'merchboard' ), $d->text( 'collection' ) ) ),
+				'' === $d->text( 'designs' )
+					? array( array( __( 'Collection', 'merchboard' ), $d->text( 'collection' ) ) )
+					: array( array( __( 'Collection', 'merchboard' ), $d->text( 'collection' ) ), array( __( 'Designs that came in', 'merchboard' ), $d->text( 'designs' ) ) ),
 				null,
 				null,
 				__( 'See your products', 'merchboard' ),

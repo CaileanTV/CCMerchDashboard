@@ -32,13 +32,14 @@ final class CollectionRequestActions {
 	public const CHECK   = 'merchboard_check_collection';
 	public const DECLINE = 'merchboard_decline_collection';
 	public const RELEASE = 'merchboard_release_collection';
+	public const PARTLY  = 'merchboard_close_collection_partly';
 
 	/**
 	 * The field with the note on a decline.
 	 */
 	public const NOTE_FIELD = 'note';
 
-	private const ACTIONS = array( self::APPROVE, self::RETRY, self::ADD_NOW, self::CHECK, self::DECLINE, self::RELEASE );
+	private const ACTIONS = array( self::APPROVE, self::RETRY, self::ADD_NOW, self::CHECK, self::DECLINE, self::RELEASE, self::PARTLY );
 
 	/**
 	 * Constructor.
@@ -127,9 +128,15 @@ final class CollectionRequestActions {
 	 */
 	private function step( string $action, int $id, string $note ): string {
 		if ( self::DECLINE === $action ) {
-			$this->requests->decline( $id, $note );
+			$this->fulfilment->decline( $id, $note );
 
 			return 'declined';
+		}
+
+		if ( self::PARTLY === $action ) {
+			$this->requests->close_partly( $id );
+
+			return 'closed_partly';
 		}
 
 		if ( self::RELEASE === $action ) {

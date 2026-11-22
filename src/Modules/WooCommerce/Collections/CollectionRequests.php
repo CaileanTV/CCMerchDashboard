@@ -235,12 +235,14 @@ class CollectionRequests {
 	 * are already sold from the published collection is done and cannot be
 	 * declined.
 	 *
-	 * @param int    $id   Request.
-	 * @param string $note Why.
+	 * @param int           $id      Request.
+	 * @param string        $note    Why.
+	 * @param callable|null $cleanup Takes out of the unpublished collection what the request put there, before it is closed.
+	 * @phpstan-param (callable(CollectionRequest): void)|null $cleanup
 	 * @throws CollectionRequestException When it is refused.
 	 * @throws DatabaseException When it cannot be read or stored (nothing is kept).
 	 */
-	public function decline( int $id, string $note ): CollectionRequest {
+	public function decline( int $id, string $note, ?callable $cleanup = null ): CollectionRequest {
 		self::authorize();
 
 		$note = mb_substr( trim( sanitize_text_field( $note ) ), 0, self::NOTE_MAX_LENGTH );
@@ -251,13 +253,20 @@ class CollectionRequests {
 
 		return $this->locked(
 			$id,
-			function ( CollectionRequest $request ) use ( $note ): CollectionRequest {
+			function ( CollectionRequest $request ) use ( $note, $cleanup ): CollectionRequest {
 				if ( ! $request->status->open() ) {
 					self::refuse( CollectionRequestException::NOT_OPEN );
 				}
 
-				if ( CollectionRequestStatus::Approved === $request->status && $this->is_done( $request ) ) {
-					self::refuse( CollectionRequestException::ALREADY_DONE );
+				if ( CollectionRequestStatus::Approved === $request->status ) {
+					// Never in a transaction. It leaves a published collection alone, which the check after it sees.
+					if ( null !== $cleanup ) {
+						$cleanup( $request );
+					}
+
+					if ( null !== $request->collection_id && 'publish' === get_post_status( $request->collection_id ) && array() !== $this->listed( $request ) ) {
+						self::refuse( CollectionRequestException::ALREADY_DONE );
+					}
 				}
 
 				$context                  = self::context( $request );
@@ -354,10 +363,12 @@ class CollectionRequests {
 			return false;
 		}
 
-		$listed = array_filter(
-			array_intersect( $request->product_ids(), array_column( $this->collections->members( $id ), 'id' ) ),
-			static fn( int $product_id ): bool => false !== get_post_status( $product_id )
-		);
+		$listed = $this->listed( $request );
+
+		// An addition waits for every design (the owner's choice 2026-11-22); in a new one the administrator may take some out.
+		if ( CollectionRequestKind::Add === $request->kind && count( $listed ) < count( self::existing( $request ) ) ) {
+			return false;
+		}
 
 		foreach ( $listed as $product_id ) {
 			if ( $this->collections->collection_of( $product_id ) !== $id ) {
@@ -366,6 +377,67 @@ class CollectionRequests {
 		}
 
 		return array() !== $listed;
+	}
+
+	/**
+	 * "Close as partly done": an addition to a published collection ends with
+	 * the designs that are in it, and the creator is told which.
+	 *
+	 * @param int $id Request.
+	 * @throws CollectionRequestException When it is refused.
+	 * @throws DatabaseException When it cannot be read or stored (nothing is kept).
+	 */
+	public function close_partly( int $id ): CollectionRequest {
+		self::authorize();
+
+		return $this->locked(
+			$id,
+			function ( CollectionRequest $request ): CollectionRequest {
+				if ( CollectionRequestStatus::Approved !== $request->status || CollectionRequestKind::Add !== $request->kind ) {
+					self::refuse( CollectionRequestException::NOT_APPROVED );
+				}
+
+				$names = array();
+
+				foreach ( $request->designs as $design ) {
+					if ( null !== $request->collection_id && $this->collections->collection_of( $design['id'] ) === $request->collection_id ) {
+						$names[] = $design['name'];
+					}
+				}
+
+				if ( array() === $names ) {
+					self::refuse( CollectionRequestException::NOTHING_IN );
+				}
+
+				$designs = mb_substr( implode( ', ', $names ), 0, self::NOTE_MAX_LENGTH );
+
+				do_action(
+					'merchboard_notify',
+					'collection_ready',
+					$request->creator_id,
+					array(
+						'collection' => $request->name,
+						'designs'    => $designs,
+					),
+					'collection:' . $request->id
+				);
+
+				$context                  = self::context( $request );
+				$context['decision_note'] = $designs;
+
+				$this->transaction->run(
+					function () use ( $request, $designs, $context ): void {
+						if ( ! $this->requests->close( $request, CollectionRequestStatus::Ready, $designs, self::user(), ( $this->clock )() ) ) {
+							self::refuse( CollectionRequestException::NOT_OPEN );
+						}
+
+						$this->audit->record( AuditAction::CollectionReady, $request->creator_id, $context );
+					}
+				);
+
+				return $this->read( $request->id );
+			}
+		);
 	}
 
 	/**
@@ -489,6 +561,28 @@ class CollectionRequests {
 		);
 
 		return $request;
+	}
+
+	/**
+	 * The request's designs that still exist.
+	 *
+	 * @param CollectionRequest $request The request.
+	 * @return list<int>
+	 */
+	private static function existing( CollectionRequest $request ): array {
+		return array_values( array_filter( $request->product_ids(), static fn( int $product_id ): bool => false !== get_post_status( $product_id ) ) );
+	}
+
+	/**
+	 * Those of them that its collection lists.
+	 *
+	 * @param CollectionRequest $request The request.
+	 * @return list<int>
+	 */
+	private function listed( CollectionRequest $request ): array {
+		return null === $request->collection_id
+			? array()
+			: array_values( array_intersect( self::existing( $request ), array_column( $this->collections->members( $request->collection_id ), 'id' ) ) );
 	}
 
 	/**

@@ -134,6 +134,12 @@ final class Uninstaller {
 	public const COLLECTION_RELEASED_META = '_merchboard_not_collection';
 
 	/**
+	 * The unprotected meta of a collection with the designs each request put
+	 * in it (ADR-120).
+	 */
+	public const COLLECTION_ADDED_META = '_merchboard_collection_added';
+
+	/**
 	 * The option of the creator's alert page setup (step 25.9.6), retired in
 	 * step 31.4 (ADR-088); a site that had it still loses it on uninstall.
 	 */
@@ -473,7 +479,7 @@ final class Uninstaller {
 	 * API. Idempotent: WordPress reports false when there was nothing to delete.
 	 */
 	private function remove_product_meta(): void {
-		foreach ( array_merge( ProtectedProductMeta::KEYS, array( self::DESIGNER_PENDING_META, self::COLLECTION_TOKEN_META, self::COLLECTION_RELEASED_META ) ) as $key ) {
+		foreach ( array_merge( ProtectedProductMeta::KEYS, array( self::DESIGNER_PENDING_META, self::COLLECTION_TOKEN_META, self::COLLECTION_RELEASED_META, self::COLLECTION_ADDED_META ) ) as $key ) {
 			delete_post_meta_by_key( $key );
 		}
 	}

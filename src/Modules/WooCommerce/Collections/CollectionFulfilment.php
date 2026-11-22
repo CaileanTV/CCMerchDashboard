@@ -83,6 +83,19 @@ final class CollectionFulfilment {
 	}
 
 	/**
+	 * Declines, and takes back what the approval put in an unpublished
+	 * collection.
+	 *
+	 * @param int    $id   Request.
+	 * @param string $note Note to the creator.
+	 * @throws CollectionRequestException When it is refused.
+	 * @throws DatabaseException When it cannot be read or stored.
+	 */
+	public function decline( int $id, string $note ): CollectionRequest {
+		return $this->requests->decline( $id, $note, fn( CollectionRequest $request ) => $this->writer->undo( $request ) );
+	}
+
+	/**
 	 * Writes one request in the shop (under its lock, outside any transaction).
 	 *
 	 * @param CollectionRequest $request An approved request.
@@ -91,7 +104,7 @@ final class CollectionFulfilment {
 	 */
 	private function write( CollectionRequest $request, bool $publish ): bool {
 		if ( CollectionRequestKind::Add === $request->kind ) {
-			return null !== $request->collection_id && $this->writer->add( $request->collection_id, $request->product_ids(), $publish );
+			return null !== $request->collection_id && $this->writer->add( $request->collection_id, $request->product_ids(), $publish, $request->id );
 		}
 
 		// A recorded draft is the administrator's from then on: what was taken out stays out.

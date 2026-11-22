@@ -29,7 +29,8 @@ Merch Dashboard → Forslag → **Samlinger**:
 | Samme, godkendt | Tilføj og skjul nu | Designs tilføjes og skjules |
 | Godkendt, fejlede undervejs | Prøv igen | Fortsætter uden at lave to kladder |
 | Godkendt | Tjek igen | Ingen. Lukker anmodningen, hvis shoppen er klar |
-| Åben | Afvis med begrundelse | Ingen. En kladde bliver liggende |
+| Godkendt tilføjelse, delvist inde | Luk som delvist udført | Ingen. Creatoren får at vide, hvilke designs der kom med |
+| Åben | Afvis med begrundelse | Anmodningens kladde i papirkurven, eller netop dens designs ud af en ikke-udgivet samling. En udgivet samling røres aldrig |
 
 Fanen viser også åbne gaver og giveaways, der peger på en samling i stedet for et design. De rettes aldrig automatisk.
 

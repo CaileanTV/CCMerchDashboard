@@ -83,6 +83,8 @@ final class CollectionRequestsPage {
 			'approved_waiting'                            => array( __( 'The request is approved. Nothing in the shop has changed: use "Add and hide now" when the designs may go into the published collection.', 'merchboard' ), 'success' ),
 			'added'                                       => array( __( 'The designs are added to the collection and no longer shown separately in the shop.', 'merchboard' ), 'success' ),
 			'checked'                                     => array( __( 'The requests are checked against the shop.', 'merchboard' ), 'success' ),
+			'closed_partly'                               => array( __( 'The request is closed. The creator is told which designs are in the collection.', 'merchboard' ), 'success' ),
+			CollectionRequestException::NOTHING_IN        => array( __( 'None of the designs are in the published collection yet, so it cannot be closed as partly done.', 'merchboard' ), 'warning' ),
 			'released'                                    => array( __( 'The product is no longer a collection and can be sold again.', 'merchboard' ), 'success' ),
 			'declined'                                    => array( __( 'The request is declined. The creator sees your note.', 'merchboard' ), 'success' ),
 			CollectionRequestException::NOTE_REQUIRED     => array( __( 'Write a note to the creator before you decline the request.', 'merchboard' ), 'error' ),
@@ -240,6 +242,10 @@ final class CollectionRequestsPage {
 			$published = 'publish' === get_post_status( $request->collection_id );
 			$adding    = CollectionRequestKind::Add === $request->kind;
 
+			if ( $adding && $published && count( $missing ) < count( $request->designs ) && array() !== $missing ) {
+				$html .= self::form( CollectionRequestActions::PARTLY, $request->id, __( 'Close as partly done', 'merchboard' ) );
+			}
+
 			if ( $adding && $published ) {
 				$html .= '<p>' . esc_html__( 'Approved. The designs are not sold from the collection until you add them.', 'merchboard' ) . '</p>';
 
@@ -260,7 +266,28 @@ final class CollectionRequestsPage {
 
 		$note = '<p><label>' . esc_html__( 'Note to the creator', 'merchboard' ) . '<br><input type="text" name="' . esc_attr( CollectionRequestActions::NOTE_FIELD ) . '" required maxlength="500" class="regular-text"></label></p>';
 
-		return $html . self::form( CollectionRequestActions::DECLINE, $request->id, __( 'Decline', 'merchboard' ), false, $note );
+		return $html . self::form( CollectionRequestActions::DECLINE, $request->id, __( 'Decline', 'merchboard' ), false, $this->decline_effect( $request ) . $note );
+	}
+
+	/**
+	 * What declining changes in the shop, said before the click, escaped.
+	 *
+	 * @param CollectionRequest $request The request.
+	 */
+	private function decline_effect( CollectionRequest $request ): string {
+		if ( CollectionRequestStatus::Approved !== $request->status || null === $request->collection_id ) {
+			return '';
+		}
+
+		if ( in_array( get_post_status( $request->collection_id ), array( false, 'publish', 'trash' ), true ) ) {
+			return '';
+		}
+
+		$effect = CollectionRequestKind::Add === $request->kind
+			? __( 'Declining takes the designs this request added out of the unpublished collection.', 'merchboard' )
+			: __( 'Declining puts the draft in the trash.', 'merchboard' );
+
+		return '<p class="description">' . esc_html( $effect ) . '</p>';
 	}
 
 	/**
@@ -325,7 +352,10 @@ final class CollectionRequestsPage {
 			$decision = CollectionRequestStatus::Declined === $request->status
 				/* translators: %s: the administrator's note. */
 				? sprintf( __( 'Declined: %s', 'merchboard' ), (string) $request->note )
-				: __( 'In the shop', 'merchboard' );
+				: ( null === $request->note
+					? __( 'In the shop', 'merchboard' )
+					/* translators: %s: design names. */
+					: sprintf( __( 'Partly in the shop: %s', 'merchboard' ), $request->note ) );
 
 			echo '<tr><td>' . esc_html( $this->creator_name( $request->creator_id ) ) . '</td><td>' . esc_html( $request->name ) . '</td><td>' . esc_html( $decision ) . '</td>';
 			echo '<td>' . esc_html( null === $request->closed_at ? '' : self::time( $request->closed_at ) ) . '</td></tr>';

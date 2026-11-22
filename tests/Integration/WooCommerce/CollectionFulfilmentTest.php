@@ -389,6 +389,70 @@ final class CollectionFulfilmentTest extends IntegrationTestCase {
 		self::assertFalse( $this->requests->is_creators( $this->creator->id, $collection ), 'At least one must exist.' );
 	}
 
+	public function test_declining_puts_the_draft_in_the_trash(): void {
+		$id = $this->requests->request_new( $this->creator, 'Nova Tee', array( $this->red, $this->blue ) )->id;
+		$this->fulfilment->approve( $id );
+
+		self::assertSame( CollectionRequestStatus::Declined, $this->fulfilment->decline( $id, 'Not now.' )->status );
+		self::assertSame( 'trash', get_post_status( $this->drafts[0] ) );
+	}
+
+	public function test_declining_takes_out_exactly_what_the_request_added(): void {
+		$collection = $this->collection( 'draft' );
+		$id         = $this->requests->request_add( $this->creator, $collection, array( $this->green ) )->id;
+		$this->fulfilment->approve( $id );
+		self::assertSame( array( $this->red, $this->green ), $this->members( $collection ) );
+
+		$this->fulfilment->decline( $id, 'Not now.' );
+
+		self::assertSame( array( $this->red ), $this->members( $collection ) );
+		self::assertSame( 'draft', get_post_status( $collection ), 'A collection there before is kept.' );
+	}
+
+	public function test_declining_keeps_what_was_put_in_by_hand(): void {
+		$collection = $this->collection( 'draft' );
+		$id         = $this->requests->request_add( $this->creator, $collection, array( $this->green ) )->id;
+		$rows       = get_post_meta( $collection, DesignCollections::MEMBERS_KEY, true );
+		$rows[]     = array(
+			'id'    => $this->green,
+			'label' => 'Green',
+		);
+		update_post_meta( $collection, DesignCollections::MEMBERS_KEY, $rows );
+		$this->fulfilment->approve( $id );
+
+		$this->fulfilment->decline( $id, 'Not now.' );
+
+		self::assertSame( array( $this->red, $this->green ), $this->members( $collection ) );
+	}
+
+	public function test_an_addition_is_ready_when_all_are_in_or_closed_as_partly_done(): void {
+		$collection = $this->collection( 'publish' );
+		$id         = $this->requests->request_add( $this->creator, $collection, array( $this->blue, $this->green ) )->id;
+		$this->fulfilment->approve( $id );
+
+		$this->expect_refusal( CollectionRequestException::NOTHING_IN, fn() => $this->requests->close_partly( $id ) );
+
+		// By hand: one of the two.
+		$rows   = get_post_meta( $collection, DesignCollections::MEMBERS_KEY, true );
+		$rows[] = array(
+			'id'    => $this->blue,
+			'label' => 'Blue',
+		);
+		update_post_meta( $collection, DesignCollections::MEMBERS_KEY, $rows );
+		( $this->sync() )( $collection );
+		$this->watcher->check();
+
+		self::assertSame( CollectionRequestStatus::Approved, $this->repository->find( $id )?->status, 'One of two is not ready.' );
+		$this->expect_refusal( CollectionRequestException::ALREADY_DONE, fn() => $this->fulfilment->decline( $id, 'No.' ) );
+		self::assertSame( array( $this->red, $this->blue ), $this->members( $collection ), 'A published collection is left alone.' );
+
+		$closed = $this->requests->close_partly( $id );
+
+		self::assertSame( CollectionRequestStatus::Ready, $closed->status );
+		self::assertSame( 'Tee Blue', $closed->note, 'The creator is told which came in.' );
+		self::assertSame( array(), $this->repository->requested_among( array( $this->green ) ), 'It can be asked for again.' );
+	}
+
 	/**
 	 * The double of WooCommerce' save with the plugin's class.
 	 *

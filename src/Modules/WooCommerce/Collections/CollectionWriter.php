@@ -40,6 +40,12 @@ class CollectionWriter {
 	private const SYNC = 'ccmds_sync_group';
 
 	/**
+	 * The unprotected meta of a collection: which designs each request put in
+	 * it, so declining takes out exactly those.
+	 */
+	public const ADDED_KEY = Uninstaller::COLLECTION_ADDED_META;
+
+	/**
 	 * Every status a draft can have been given since; 'any' leaves out the trash.
 	 */
 	private const STATUSES = array( 'publish', 'future', 'draft', 'pending', 'private', 'trash' );
@@ -250,17 +256,18 @@ class CollectionWriter {
 	 * @param int   $collection_id The collection.
 	 * @param int[] $product_ids   Products.
 	 * @param bool  $publish       Whether a published collection may be changed.
+	 * @param int   $request_id    The request, to record what it put in.
 	 * @return bool Whether the designs are in the collection now.
 	 * @throws CollectionRequestException When the plugin is inactive, the collection is being edited or busy.
 	 */
-	public function add( int $collection_id, array $product_ids, bool $publish ): bool {
+	public function add( int $collection_id, array $product_ids, bool $publish, int $request_id = 0 ): bool {
 		$this->assert_active();
 
 		// Boxed, as null is also how a lock that was not had answers.
 		$added = $this->lock->run(
 			'merchboard_collection_' . $collection_id,
 			self::LOCK_TIMEOUT,
-			fn(): array => array( $this->append( $collection_id, $product_ids, $publish ) )
+			fn(): array => array( $this->append( $collection_id, $product_ids, $publish, $request_id ) )
 		);
 
 		if ( null === $added ) {
@@ -278,10 +285,11 @@ class CollectionWriter {
 	 * @param int   $collection_id The collection.
 	 * @param int[] $product_ids   Products.
 	 * @param bool  $publish       Whether a published collection may be changed.
+	 * @param int   $request_id    The request.
 	 * @throws CollectionRequestException When it cannot be done.
 	 * @throws DatabaseException When the rows were not stored.
 	 */
-	private function append( int $collection_id, array $product_ids, bool $publish ): bool {
+	private function append( int $collection_id, array $product_ids, bool $publish, int $request_id ): bool {
 		clean_post_cache( $collection_id );
 		wp_cache_delete( $collection_id, 'post_meta' );
 
@@ -306,6 +314,16 @@ class CollectionWriter {
 			$stored = get_post_meta( $collection_id, DesignCollections::MEMBERS_KEY, true );
 			$rows   = array_merge( is_array( $stored ) ? array_values( $stored ) : array(), array_map( self::member( ... ), $missing ) );
 
+			// Recorded first: rows without a record could not be taken out again.
+			if ( $request_id > 0 ) {
+				$added                = get_post_meta( $collection_id, self::ADDED_KEY, true );
+				$added                = is_array( $added ) ? $added : array();
+				$before               = is_array( $added[ $request_id ] ?? null ) ? $added[ $request_id ] : array();
+				$added[ $request_id ] = array_values( array_unique( array_merge( $before, $missing ) ) );
+
+				update_post_meta( $collection_id, self::ADDED_KEY, $added );
+			}
+
 			update_post_meta( $collection_id, DesignCollections::MEMBERS_KEY, wp_slash( $rows ) );
 			wp_cache_delete( $collection_id, 'post_meta' );
 
@@ -318,6 +336,93 @@ class CollectionWriter {
 		if ( 'publish' === $status && ! ( $this->sync )( $collection_id ) ) {
 			throw new CollectionRequestException( CollectionRequestException::PLUGIN_INACTIVE );
 		}
+
+		return true;
+	}
+
+	/**
+	 * Takes back what an approved request put in the shop, as long as it is
+	 * not published (the owner's choice 2026-11-22): the draft made for it
+	 * goes to the trash, or exactly the designs it added are taken out. Also
+	 * while the plugin is off, as an unpublished collection hides nothing.
+	 *
+	 * @param CollectionRequest $request The request.
+	 * @throws CollectionRequestException When the collection is being edited or busy.
+	 */
+	public function undo( CollectionRequest $request ): void {
+		$new = CollectionRequestKind::NewCollection === $request->kind;
+		$id  = $request->collection_id ?? ( $new ? $this->existing( $request ) : null );
+
+		if ( null === $id ) {
+			return;
+		}
+
+		$done = $this->lock->run( 'merchboard_collection_' . $id, self::LOCK_TIMEOUT, fn(): array => array( $this->take_back( $id, $request, $new ) ) );
+
+		if ( null === $done ) {
+			throw new CollectionRequestException( CollectionRequestException::BUSY );
+		}
+	}
+
+	/**
+	 * Takes back under the collection's lock.
+	 *
+	 * @param int               $id      The collection.
+	 * @param CollectionRequest $request The request.
+	 * @param bool              $draft   Whether it is the request's own draft.
+	 * @return bool Whether anything changed.
+	 * @throws CollectionRequestException When it is being edited or could not be changed.
+	 */
+	private function take_back( int $id, CollectionRequest $request, bool $draft ): bool {
+		clean_post_cache( $id );
+		wp_cache_delete( $id, 'post_meta' );
+
+		if ( in_array( get_post_status( $id ), array( false, 'publish', 'trash' ), true ) ) {
+			return false;
+		}
+
+		$added = get_post_meta( $id, self::ADDED_KEY, true );
+		$added = is_array( $added ) ? $added : array();
+		$ids   = is_array( $added[ $request->id ] ?? null ) ? $added[ $request->id ] : array();
+
+		if ( ! $draft && array() === $ids ) {
+			return false;
+		}
+
+		if ( self::being_edited( $id ) ) {
+			throw new CollectionRequestException( CollectionRequestException::EDITING );
+		}
+
+		if ( $draft ) {
+			// Without a trash (EMPTY_TRASH_DAYS 0) wp_trash_post() would delete it for good.
+			$changed = EMPTY_TRASH_DAYS ? wp_trash_post( $id ) : wp_update_post(
+				array(
+					'ID'          => $id,
+					'post_status' => 'trash',
+				)
+			);
+
+			if ( ! $changed ) {
+				throw new CollectionRequestException( CollectionRequestException::BUSY );
+			}
+
+			return true;
+		}
+
+		$stored = get_post_meta( $id, DesignCollections::MEMBERS_KEY, true );
+		$rows   = array();
+
+		foreach ( is_array( $stored ) ? $stored : array() as $row ) {
+			if ( ! is_array( $row ) || ! is_numeric( $row['id'] ?? null ) || ! in_array( (int) $row['id'], $ids, true ) ) {
+				$rows[] = $row;
+			}
+		}
+
+		update_post_meta( $id, DesignCollections::MEMBERS_KEY, wp_slash( $rows ) );
+		wp_cache_delete( $id, 'post_meta' );
+
+		unset( $added[ $request->id ] );
+		update_post_meta( $id, self::ADDED_KEY, $added );
 
 		return true;
 	}

@@ -37,6 +37,7 @@ final class CollectionRequestException extends DomainException {
 	public const PLUGIN_INACTIVE    = 'plugin_inactive';
 	public const DRAFT_UNCLEAR      = 'draft_unclear';
 	public const EDITING            = 'editing';
+	public const NOTHING_IN         = 'nothing_in';
 
 	/**
 	 * Constructor.

@@ -28,7 +28,13 @@ function statusText( row: CollectionRequestRow ): string {
 		case 'approved':
 			return __( 'Approved, we are getting it ready', 'merchboard' );
 		case 'ready':
-			return __( 'In the shop', 'merchboard' );
+			return row.note === null || row.note === ''
+				? __( 'In the shop', 'merchboard' )
+				: sprintf(
+						/* translators: %s: design names. */
+						__( 'Partly in the shop: %s', 'merchboard' ),
+						row.note
+					);
 		default:
 			return row.note === null || row.note === ''
 				? __( 'Not approved', 'merchboard' )
