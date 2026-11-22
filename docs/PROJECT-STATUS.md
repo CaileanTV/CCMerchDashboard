@@ -448,7 +448,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 - [x] Trin 55.1–55.8: læser, regler i de eksisterende funktioner, gave og giveaway, schema 53, anmodninger, kladde og udgivelse, ruter, fane, notifikationer og dashboard.
 - [x] Trin 55.8a: frit valg på en samling (schema 54), som gave og giveaway.
-- [ ] Trin 55.9: uafhængigt review, runtime-test på Local og testpakke 2.4.0.
+- [ ] Trin 55.9 (udsat af projektejeren 2026-11-22): andet uafhængigt review, runtime-test på Local og testpakke 2.4.0. Rettelserne og frit valg er derfor ikke reviewet, og fasen er ikke runtime-testet.
 - [ ] Trin 55.10: projektejerens test på stg med det rigtige plugin. Kurv, kasse, tema og rigtige produktgem er ikke afprøvet før den.
 - `v2.3.0` (fase 52–54) er tagget 2026-11-22 på d93bf6a. Rettelser til 2.3.x laves fra tagget.
 

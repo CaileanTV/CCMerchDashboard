@@ -1621,11 +1621,11 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **55.7 REST, fanen på "Forslag" og notifikationer** ✅ (6c40c81).
 - **55.8 Dashboard** ✅ (1f16c43): "Anmod om samling" og status under "Dine produkter".
 - **55.8a Frit valg på en samling** ✅ (ønsket 2026-11-22; prisreglen 9be9c54, vinderens side 0ed013a, gave 922d8b7, giveaway 9990ade; schema 54 bekræftet på Local efter verificeret backup; rigtig kurv og kasse prøves i 55.10): prisreglen, låsning ved købet (schema 54), gaveboks, giveaway-vælger, kode og indløsning.
-- **55.9 Afslutning** 🔄: oversættelser, docs, review og testpakke 2.4.0.
-- **55.9a Reviewets fund** 🔄 (review af d93bf6a..1f16c43: 3 alvorlige, 10 mellemstore, 11 lave; projektejerens otte valg står i ADR-120's statusnote): rettes før runtime-test og testpakke. Alle 24 fund er behandlet: rettet, eller afgjort af projektejeren (16: intet slettes hos Meta, og spærringen gælder alle creator-produkter, ff6ac08; 23: "Se som creator" må sende). Testhullerne, reviewet pegede på, og runtime-test udestår.
+- **55.9 Afslutning** ⏸️ (udsat af projektejeren 2026-11-22): oversættelser og docs er lavet. Det andet review (startet og stoppet uden fund afleveret), runtime-test på Local og testpakke 2.4.0 venter. Fase 55 er hverken reviewet efter rettelserne eller runtime-testet. Fasens sidste kode-commit er fa23d09, som 2.4.0 bygges fra, så fase 56 ikke følger med.
+- **55.9a Reviewets fund** 🔄 (review af d93bf6a..1f16c43: 3 alvorlige, 10 mellemstore, 11 lave; projektejerens otte valg står i ADR-120's statusnote): rettes før runtime-test og testpakke. Alle 24 fund er behandlet: rettet, eller afgjort af projektejeren (16: intet slettes hos Meta, og spærringen gælder alle creator-produkter, ff6ac08; 23: "Se som creator" må sende). Testhullerne, reviewet pegede på, er lukket (fa23d09). Runtime-testen er udsat med 55.9.
 - **55.10 Projektejerens test på stg** med det rigtige plugin.
 
-## Fase 56 – Kliparts til udvalgte produkter med farver, creatoren vælger 💡 (projektejerens idé og svar 2026-11-22; version 2.5.0 foreslået, efter fase 55; ikke planlagt)
+## Fase 56 – Kliparts til udvalgte produkter med farver, creatoren vælger 💡 (projektejerens idé og svar 2026-11-22; version 2.5.0 foreslået, efter fase 55; planlægning begyndt 2026-11-22, ikke bygget)
 
 **Ønsket:**
 - Kliparts kan tilføjes til bestemte produkter, fx et design til drikkedunke.
