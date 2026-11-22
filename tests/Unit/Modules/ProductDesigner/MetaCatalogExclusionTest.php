@@ -15,6 +15,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
 use MerchBoard\Modules\ProductDesigner\Shop\GuardedProduct;
 use MerchBoard\Modules\ProductDesigner\Shop\MetaCatalogExclusion;
+use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use MerchBoard\Tests\Unit\Support\FakeJobQueue;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
@@ -46,6 +47,7 @@ final class MetaCatalogExclusionTest extends TestCase {
 		WcProductStorage::add( 20, array(), 'simple', 0, 'Legacy mug' );
 		$this->queue = new FakeJobQueue();
 		Functions\when( 'get_post_type' )->justReturn( false );
+		Functions\when( 'get_post_meta' )->justReturn( array() );
 	}
 
 	public function test_a_designer_product_and_its_variations_are_never_synced(): void {
@@ -120,6 +122,32 @@ final class MetaCatalogExclusionTest extends TestCase {
 	private function exclusion( DesignerProductGuard $guard ): MetaCatalogExclusion {
 		return new MetaCatalogExclusion( $this->createMock( DesignerProductRepository::class ), $guard, $this->queue, new RecordingLogger() );
 	}
+	public function test_no_creator_product_is_synced_and_neither_is_a_collection_of_one(): void {
+		$linked = array( 20, 40 );
+		Functions\when( 'get_post_meta' )->alias( static fn( int $id, string $key ): array => ProductCreatorLink::META_KEY === $key && in_array( $id, $linked, true ) ? array( '7' ) : array() );
+		WcProductStorage::add( 21, array(), 'variation', 20 );
+		WcProductStorage::add( 30, array(), 'simple', 0, 'Collection' );
+		WcProductStorage::add( 50, array(), 'simple', 0, 'The shop mug' );
+
+		$collections = $this->createStub( DesignCollections::class );
+		$collections->method( 'is_collection' )->willReturnCallback( static fn( int $id ): bool => 30 === $id );
+		$collections->method( 'members' )->willReturn(
+			array(
+				array(
+					'id'    => 40,
+					'label' => '',
+				),
+			)
+		);
+
+		$exclusion = new MetaCatalogExclusion( $this->createMock( DesignerProductRepository::class ), $this->createMock( DesignerProductGuard::class ), $this->queue, new RecordingLogger(), $collections );
+
+		self::assertFalse( $exclusion->should_sync( true, wc_get_product( 20 ) ), 'A legacy creator product.' );
+		self::assertFalse( $exclusion->should_sync( true, wc_get_product( 21 ) ), 'Its variation.' );
+		self::assertFalse( $exclusion->should_sync( true, wc_get_product( 30 ) ), 'A collection of a creator product.' );
+		self::assertTrue( $exclusion->should_sync( true, wc_get_product( 50 ) ), 'The shop' . chr( 39 ) . 's own product.' );
+	}
+
 	public function test_a_collection_with_a_designer_product_is_never_synced(): void {
 		$guard = $this->createMock( DesignerProductGuard::class );
 		$guard->method( 'guard' )->willReturnCallback( static fn( int $id ): ?GuardedProduct => 10 === $id ? new GuardedProduct( 3, 10, 7 ) : null );

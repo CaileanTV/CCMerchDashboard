@@ -4489,6 +4489,8 @@ ADR-007, ADR-029, ADR-049, ADR-062, ADR-068, ADR-072, ADR-075, ADR-077, ADR-078.
 ## Status
 Accepteret (fase 30, trin 30.1). Besluttet af projektejeren 2026-10-28; planen er godkendt samme dag. Ikke implementeret endnu. Undtagelse fra ADR-049 pkt. 1 (kun for designer-produkter). Supplerer ADR-007, ADR-034/035, ADR-047, ADR-062, ADR-064, ADR-067, ADR-068, ADR-077, ADR-078 og ADR-079. **Pkt. 10 ændret af ADR-094 (2026-11-06):** en prisstigning på et grundprodukt varsles 14 dage før og gælder først på datoen.
 
+**Statusnote 2026-11-22 (ADR-120, projektejerens beslutning):** reglen nedenfor gælder fra 2.4.0 alle creator-produkter, ikke kun designerens. For de øvrige slettes intet hos Meta.
+
 **Statusnote 2026-11-09 (1.7.7, projektejerens beslutning):** produkter fra produktdesigneren synkroniseres aldrig til Meta (Facebook og Instagram) af "Facebook for WooCommerce" (Meta for WooCommerce).
 - **Filteret:** pluginets eget filter `wc_facebook_should_sync_product` svarer nej for et designerprodukt og dets varianter. Hvad der er et designerprodukt, afgøres af `DesignerProductGuard`, så legacy-produkter fortsat følger pluginet. Kan det ikke afgøres, svares nej (lukket).
 - **Engangsjobbet:** efter opdateringen slår jobbet `merchboard_designer_meta_catalog` sync fra på de designerprodukter, der allerede ligger hos Meta, med pluginets egen `Products::disable_sync_for_products()`. Den sætter pluginets meta til "no" og sletter produkterne fra Meta-kataloget. Det er en afgrænset undtagelse fra pkt. 7 (kun writeren skriver designerprodukter), og den gælder kun pluginets egen sync-indstilling.
@@ -7226,7 +7228,7 @@ Accepteret af projektejeren 2026-11-22 (planen godkendt). Fase 55, version 2.4.0
 - **Gemte valg af en samling:** Twitch-panelet og merch-reklamen viser samlingens designs hver for sig. Sub-rabatten ser bort fra samlingen, så ingen får en rabat, de ikke fik før.
 - **Afvis efter godkendelse:** kladden, anmodningen oprettede, lægges i papirkurven, eller netop de designs, den lagde i en ikke-udgivet samling, tages ud. Fanen siger det før klikket. Udgivne samlinger røres ikke.
 - **Tilføjelse er klar, når alle designs er inde.** "Luk som delvist udført" lukker den tidligere, og creatoren får at vide, hvilke der kom med.
-- **Meta (pkt. 8):** samlinger med et designerprodukt, som allerede er hos Meta, fjernes med Meta-pluginets egen funktion, ved opdateringen og når en samling senere får et designerprodukt.
+- **Meta (erstatter pkt. 8 og udvider ADR-080's statusnote af 2026-11-09, projektejerens seneste valg 2026-11-22):** intet creator-produkt synkroniseres til Meta, heller ikke ældre, og heller ingen samling med et creator-design. Intet slettes hos Meta: der laves intet fjernelsesjob, heller ikke for samlinger. Engangsjobbet for designerprodukter fra 1.7.7 er uændret. Hvad Meta-pluginet selv gør ved et produkt, det ikke længere må synkronisere, er ikke afprøvet og skal ses på stg.
 - **Sletning af en creator er en undtagelse fra pkt. 4:** den fjerner tilknytningen, også på samlinger.
 - **"Se som creator"** må sende anmodninger om samlinger, som ved sletteanmodninger. Audit viser administratoren.
 - **Permanent slettede designs tæller ikke med,** hverken i om en samling er creatorens, eller om en anmodning er klar. Mindst ét design skal findes.

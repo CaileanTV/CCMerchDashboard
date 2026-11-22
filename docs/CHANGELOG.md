@@ -9,7 +9,7 @@ Fase 55 (ADR-120), under opbygning. Schema-version 53.
 - **Samlinger af designs:** en samling fra CCMerch Design-samling er ikke creatorens produkt, får ingen ny creator-tilknytning og er aldrig selv en varelinje, gave eller giveaway. Eksisterende tilknytninger røres ikke.
 - **Twitch-panelet og merch-reklamen** viser hvert design, også når en samling skjuler det.
 - **Gave og giveaway:** giveren vælger designet, og indløsningen åbner samlingen med det valgt. Giveaway-vælgeren har intet forvalg og viser alle produkter.
-- **Meta:** en samling med et designerprodukt synkroniseres ikke.
+- **Meta (ændret adfærd):** intet produkt med en creator synkroniseres længere til Meta, heller ikke ældre, og heller ingen samling med et creator-design. Intet slettes fra kataloget af os. Før gjaldt det kun designerens produkter.
 - **Anmodninger om samlinger:** `GET`/`POST /me/collections`, fanen "Samlinger" på "Forslag", audit, oprydning, når en creator slettes, og tre notifikationer (ny anmodning, klar, afvist).
 - **Kladde og udgivelse:** en godkendt anmodning bliver én kladde, også hvis den gentages. Tilføjelse til en udgivet samling kræver et andet klik, og en anmodning er klar, når samlingen er udgivet med designs.
 - **"Dine produkter":** kortet "Samlinger" med "Anmod om samling" og status, og samlingens navn på samlede produkter.

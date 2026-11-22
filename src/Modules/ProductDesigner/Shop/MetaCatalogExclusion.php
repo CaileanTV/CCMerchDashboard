@@ -13,6 +13,7 @@ use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use MerchBoard\Modules\WooCommerce\JobQueue;
+use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use Throwable;
 use WC_Product;
 
@@ -28,8 +29,11 @@ defined( 'ABSPATH' ) || exit;
  *   designer product and its variations. A designer product is only what
  *   DesignerProductGuard proves; every other product is left to the plugin.
  *   Should the designer's data be unreadable, the answer is false (closed),
- *   so a designer product never slips through. A design collection with a
- *   designer product is kept out as well (ADR-120 pkt. 8).
+ *   so a designer product never slips through.
+ * - **Every creator product** (the owner's decision 2026-11-22, ADR-120) is
+ *   kept out by the same filter: one with a creator link, also an unclear
+ *   one, and a collection with such a design or a designer product. Only
+ *   future syncs are refused: nothing of these is removed from Meta.
  * - **Once after the update:** the job `merchboard_designer_meta_catalog`
  *   goes through the products the designer made, 50 at a time, and switches
  *   their sync off with the plugin's own
@@ -99,17 +103,29 @@ class MetaCatalogExclusion {
 
 		$parent = $product->get_parent_id() > 0 ? $product->get_parent_id() : $product->get_id();
 
-		if ( $this->is_designer( $parent ) ) {
+		if ( self::has_creator( $parent ) || $this->is_designer( $parent ) ) {
 			return false;
 		}
 
 		foreach ( $this->collections->is_collection( $parent ) ? $this->collections->members( $parent ) : array() as $member ) {
-			if ( $this->is_designer( $member['id'] ) ) {
+			if ( self::has_creator( $member['id'] ) || $this->is_designer( $member['id'] ) ) {
 				return false;
 			}
 		}
 
 		return $sync;
+	}
+
+	/**
+	 * Whether a product has a creator link; any entry counts, so an invalid
+	 * or double link never lets a creator product slip through.
+	 *
+	 * @param int $product_id Parent product.
+	 */
+	private static function has_creator( int $product_id ): bool {
+		$links = get_post_meta( $product_id, ProductCreatorLink::META_KEY, false );
+
+		return is_array( $links ) && array() !== array_filter( $links );
 	}
 
 	/**
