@@ -418,6 +418,12 @@ final class UninstallerTest extends TestCase {
 					'settings'     => true,
 				),
 				array(
+					'key'          => Uninstaller::COLLECTION_TOKEN_META,
+					'opt_in_still' => true,
+					'tables_left'  => true,
+					'settings'     => true,
+				),
+				array(
 					'key'          => '_merchboard_ledger_failure',
 					'opt_in_still' => true,
 					'tables_left'  => true,

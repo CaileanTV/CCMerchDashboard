@@ -1615,8 +1615,8 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **55.2 Samlinger i de eksisterende funktioner** ✅ (f17e40c): lister, tilknytning, kurv, panel, reklame, Meta og Twitch-sub-linjen.
 - **55.3 Gave og giveaway** ✅ (2b6e388): valg af design, adresser og indløsning.
 - **55.4 Schema 53** ✅ (efa270f; bekræftet på Local efter verificeret backup): tabellerne til anmodninger.
-- **55.5 Anmodninger** ✅: regler, audit, oprydning og afinstallation.
-- **55.6 Kladde og udgivelse:** oprettelse, tilføjelse og registrering af, at samlingen er klar.
+- **55.5 Anmodninger** ✅ (0567a29): regler, audit, oprydning og afinstallation.
+- **55.6 Kladde og udgivelse** ✅: oprettelse, tilføjelse og registrering af, at samlingen er klar.
 - **55.7 REST, fanen på "Forslag" og notifikationer.**
 - **55.8 Dashboard:** "Anmod om samling" og status under "Dine produkter".
 - **55.9 Afslutning:** oversættelser, docs, review og testpakke 2.4.0.

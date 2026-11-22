@@ -271,6 +271,56 @@ class CollectionRequests {
 	}
 
 	/**
+	 * Runs what carries an approved request out in the shop, under its lock
+	 * and never in a transaction. What is not in the shop yet is checked
+	 * again first: it can have changed since the approval.
+	 *
+	 * @template T
+	 * @param int                            $id   Request.
+	 * @param callable(CollectionRequest): T $work The work.
+	 * @return T
+	 * @throws CollectionRequestException When it is refused.
+	 * @throws DatabaseException When it cannot be read or stored.
+	 */
+	public function carry_out( int $id, callable $work ): mixed {
+		self::authorize();
+
+		return $this->locked(
+			$id,
+			function ( CollectionRequest $request ) use ( $work ): mixed {
+				if ( CollectionRequestStatus::Approved !== $request->status ) {
+					self::refuse( CollectionRequestException::NOT_APPROVED );
+				}
+
+				// A recorded draft is the administrator's.
+				if ( CollectionRequestKind::NewCollection === $request->kind && null !== $request->collection_id ) {
+					return $work( $request );
+				}
+
+				$creator = ( $this->creator )( $request->creator_id );
+
+				if ( null === $creator || ! self::sells( $creator ) ) {
+					self::refuse( CollectionRequestException::CREATOR_NOT_LIVE );
+				}
+
+				$ids = $request->product_ids();
+
+				if ( null !== $request->collection_id ) {
+					$ids = array_values( array_diff( $ids, array_column( $this->collections->members( $request->collection_id ), 'id' ) ) );
+
+					if ( array() !== $ids && ! $this->is_creators( $creator->id, $request->collection_id ) ) {
+						self::refuse( CollectionRequestException::COLLECTION_UNKNOWN );
+					}
+				}
+
+				$this->assert_usable( $creator->id, $ids, $request->collection_id );
+
+				return $work( $request );
+			}
+		);
+	}
+
+	/**
 	 * Whether an approved request is carried out: the collection is published
 	 * and sells at least one of the designs, and every one of them that is
 	 * still listed in it. One the administrator took out does not block; one

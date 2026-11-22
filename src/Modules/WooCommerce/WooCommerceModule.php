@@ -98,9 +98,12 @@ use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsSection;
 use MerchBoard\Modules\WooCommerce\Cli\SalesBackfillCommand;
 use MerchBoard\Modules\WooCommerce\Cli\WpCliOutput;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionCartGuard;
+use MerchBoard\Modules\WooCommerce\Collections\CollectionFulfilment;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionRequestRepository;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionRequests;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionRequestsCleanup;
+use MerchBoard\Modules\WooCommerce\Collections\CollectionWatcher;
+use MerchBoard\Modules\WooCommerce\Collections\CollectionWriter;
 use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
 use MerchBoard\Modules\WooCommerce\Dashboard\DashboardSectionRegistration;
@@ -396,6 +399,15 @@ final class WooCommerceModule implements Module {
 				static fn( int $product ): ?int => $c->get( ProductCreatorLink::class )->creator_id( $product ),
 				static fn( int $creator ): ?Creator => $c->get( CreatorRepository::class )->find( $creator )
 			)
+		);
+		$container->set( CollectionWriter::class, static fn( Container $c ): CollectionWriter => new CollectionWriter( $c->get( DesignCollections::class ), new NamedLock( $c->get( wpdb::class ) ) ) );
+		$container->set( CollectionFulfilment::class, static fn( Container $c ): CollectionFulfilment => new CollectionFulfilment( $c->get( CollectionRequests::class ), $c->get( CollectionRequestRepository::class ), $c->get( CollectionWriter::class ) ) );
+		$container->set( CollectionWatcher::class, static fn( Container $c ): CollectionWatcher => new CollectionWatcher( $c->get( CollectionRequestRepository::class ), $c->get( CollectionRequests::class ), $c->get( Logger::class ) ) );
+		add_action(
+			'init',
+			static function () use ( $container ): void {
+				$container->get( CollectionWatcher::class )->register();
+			}
 		);
 		$container->set( CollectionRequestsCleanup::class, static fn( Container $c ): CollectionRequestsCleanup => new CollectionRequestsCleanup( $c->get( CollectionRequestRepository::class ) ) );
 		$container->set( ProductRemovalsPage::class, static fn( Container $c ): ProductRemovalsPage => new ProductRemovalsPage( $c->get( ProductRemovalRepository::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );

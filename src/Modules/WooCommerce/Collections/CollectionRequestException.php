@@ -33,6 +33,10 @@ final class CollectionRequestException extends DomainException {
 	public const ALREADY_DONE       = 'already_done';
 	public const NOTE_REQUIRED      = 'note_required';
 	public const BUSY               = 'busy';
+	public const NOT_APPROVED       = 'not_approved';
+	public const PLUGIN_INACTIVE    = 'plugin_inactive';
+	public const DRAFT_UNCLEAR      = 'draft_unclear';
+	public const EDITING            = 'editing';
 
 	/**
 	 * Constructor.

@@ -121,6 +121,13 @@ final class Uninstaller {
 	public const DESIGNER_PENDING_META = '_merchboard_designer_pending';
 
 	/**
+	 * The unprotected meta of a collection draft until its request has
+	 * recorded it (ADR-120); the collection plugin's own meta is never
+	 * removed.
+	 */
+	public const COLLECTION_TOKEN_META = '_merchboard_collection_token';
+
+	/**
 	 * The option of the creator's alert page setup (step 25.9.6), retired in
 	 * step 31.4 (ADR-088); a site that had it still loses it on uninstall.
 	 */
@@ -460,7 +467,7 @@ final class Uninstaller {
 	 * API. Idempotent: WordPress reports false when there was nothing to delete.
 	 */
 	private function remove_product_meta(): void {
-		foreach ( array_merge( ProtectedProductMeta::KEYS, array( self::DESIGNER_PENDING_META ) ) as $key ) {
+		foreach ( array_merge( ProtectedProductMeta::KEYS, array( self::DESIGNER_PENDING_META, self::COLLECTION_TOKEN_META ) ) as $key ) {
 			delete_post_meta_by_key( $key );
 		}
 	}
