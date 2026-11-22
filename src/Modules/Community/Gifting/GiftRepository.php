@@ -36,26 +36,28 @@ final class GiftRepository {
 	/**
 	 * Records a paid gift order (once per order).
 	 *
-	 * @param int         $creator_id      Creator.
-	 * @param int         $order_id        Gift order.
-	 * @param int         $product_id      Parent product.
-	 * @param string      $unit_price      Paid unit price incl. VAT.
-	 * @param string      $shipping_credit Shipping covered.
-	 * @param string      $currency        Currency.
-	 * @param string|null $buyer_name      Name to announce, null for anonymous.
-	 * @param int         $order_unit      Which of the order's gifts (1–10, ADR-111).
+	 * @param int                 $creator_id      Creator.
+	 * @param int                 $order_id        Gift order.
+	 * @param int                 $product_id      Parent product.
+	 * @param string              $unit_price      Paid unit price incl. VAT.
+	 * @param string              $shipping_credit Shipping covered.
+	 * @param string              $currency        Currency.
+	 * @param string|null         $buyer_name      Name to announce, null for anonymous.
+	 * @param int                 $order_unit      Which of the order's gifts (1–10, ADR-111).
+	 * @param FreeChoiceLock|null $free_choice     The collection given with free choice (ADR-120).
 	 * @return Gift|null The new gift; null when that gift of the order existed already.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function create( int $creator_id, int $order_id, int $product_id, string $unit_price, string $shipping_credit, string $currency, ?string $buyer_name, int $order_unit = 1 ): ?Gift {
+	public function create( int $creator_id, int $order_id, int $product_id, string $unit_price, string $shipping_credit, string $currency, ?string $buyer_name, int $order_unit = 1, ?FreeChoiceLock $free_choice = null ): ?Gift {
 		$now = self::now();
 		$sql = $this->wpdb->prepare(
-			"INSERT IGNORE INTO %i (creator_id, order_id, order_unit, product_id, unit_price, shipping_credit, currency, buyer_name, status, draws, created_at, updated_at) VALUES (%d, %d, %d, %d, %s, %s, %s, NULLIF(%s, ''), %s, 0, %s, %s)",
+			"INSERT IGNORE INTO %i (creator_id, order_id, order_unit, product_id, free_choice, unit_price, shipping_credit, currency, buyer_name, status, draws, created_at, updated_at) VALUES (%d, %d, %d, %d, NULLIF(%s, ''), %s, %s, %s, NULLIF(%s, ''), %s, 0, %s, %s)",
 			$this->table(),
 			$creator_id,
 			$order_id,
 			$order_unit,
 			$product_id,
+			$free_choice?->to_json() ?? '',
 			$unit_price,
 			$shipping_credit,
 			$currency,
@@ -90,25 +92,27 @@ final class GiftRepository {
 	 * open link (`manual`, won without a Twitch winner until the deadline).
 	 * Once per giveaway.
 	 *
-	 * @param int         $creator_id      Creator.
-	 * @param int         $giveaway_id     Giveaway.
-	 * @param int         $product_id      Parent product.
-	 * @param string      $unit_price      The price the code covers, incl. VAT.
-	 * @param string      $shipping_credit Shipping covered.
-	 * @param string      $currency        Currency.
-	 * @param string|null $link_deadline   UTC end of an open link; null to wait for a draw.
+	 * @param int                 $creator_id      Creator.
+	 * @param int                 $giveaway_id     Giveaway.
+	 * @param int                 $product_id      Parent product.
+	 * @param string              $unit_price      The price the code covers, incl. VAT.
+	 * @param string              $shipping_credit Shipping covered.
+	 * @param string              $currency        Currency.
+	 * @param string|null         $link_deadline   UTC end of an open link; null to wait for a draw.
+	 * @param FreeChoiceLock|null $free_choice     The collection given with free choice (ADR-120).
 	 * @return Gift The giveaway's gift (also when it existed already).
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function create_for_giveaway( int $creator_id, int $giveaway_id, int $product_id, string $unit_price, string $shipping_credit, string $currency, ?string $link_deadline ): Gift {
+	public function create_for_giveaway( int $creator_id, int $giveaway_id, int $product_id, string $unit_price, string $shipping_credit, string $currency, ?string $link_deadline, ?FreeChoiceLock $free_choice = null ): Gift {
 		$now  = self::now();
 		$link = null !== $link_deadline;
 		$sql  = $this->wpdb->prepare(
-			"INSERT IGNORE INTO %i (creator_id, order_id, giveaway_id, product_id, unit_price, shipping_credit, currency, buyer_name, status, draws, claim_deadline, claim_token, created_at, updated_at) VALUES (%d, NULL, %d, %d, %s, %s, %s, NULL, %s, 0, NULLIF(%s, ''), NULLIF(%s, ''), %s, %s)",
+			"INSERT IGNORE INTO %i (creator_id, order_id, giveaway_id, product_id, free_choice, unit_price, shipping_credit, currency, buyer_name, status, draws, claim_deadline, claim_token, created_at, updated_at) VALUES (%d, NULL, %d, %d, NULLIF(%s, ''), %s, %s, %s, NULL, %s, 0, NULLIF(%s, ''), NULLIF(%s, ''), %s, %s)",
 			$this->table(),
 			$creator_id,
 			$giveaway_id,
 			$product_id,
+			$free_choice?->to_json() ?? '',
 			$unit_price,
 			$shipping_credit,
 			$currency,

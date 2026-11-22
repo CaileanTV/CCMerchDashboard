@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\Community\Giveaways;
 
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Tables;
+use MerchBoard\Modules\Community\Gifting\FreeChoiceLock;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use Throwable;
 use wpdb;
@@ -34,19 +35,20 @@ final class GiveawayRepository {
 	/**
 	 * Stores a new giveaway.
 	 *
-	 * @param int    $creator_id      Creator.
-	 * @param int    $product_id      Parent product.
-	 * @param string $mode            `bot` or `manual`.
-	 * @param string $funding         `balance` or `shop`.
-	 * @param string $unit_price      The price the code covers (decimal).
-	 * @param string $shipping_credit Shipping covered (decimal).
-	 * @param string $cost            What the creator pays (decimal).
-	 * @param string $currency        Currency.
-	 * @param int    $window_seconds  Window of a bot giveaway.
+	 * @param int                 $creator_id      Creator.
+	 * @param int                 $product_id      Parent product.
+	 * @param string              $mode            `bot` or `manual`.
+	 * @param string              $funding         `balance` or `shop`.
+	 * @param string              $unit_price      The price the code covers (decimal).
+	 * @param string              $shipping_credit Shipping covered (decimal).
+	 * @param string              $cost            What the creator pays (decimal).
+	 * @param string              $currency        Currency.
+	 * @param int                 $window_seconds  Window of a bot giveaway.
+	 * @param FreeChoiceLock|null $free_choice     The collection given with free choice (ADR-120).
 	 * @return Giveaway The new giveaway.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function create( int $creator_id, int $product_id, string $mode, string $funding, string $unit_price, string $shipping_credit, string $cost, string $currency, int $window_seconds ): Giveaway {
+	public function create( int $creator_id, int $product_id, string $mode, string $funding, string $unit_price, string $shipping_credit, string $cost, string $currency, int $window_seconds, ?FreeChoiceLock $free_choice = null ): Giveaway {
 		$now      = self::now();
 		$inserted = $this->wpdb->insert(
 			$this->table(),
@@ -61,10 +63,11 @@ final class GiveawayRepository {
 				'cost'            => $cost,
 				'currency'        => $currency,
 				'window_seconds'  => $window_seconds,
+				'free_choice'     => $free_choice?->to_json(),
 				'created_at'      => $now,
 				'updated_at'      => $now,
 			),
-			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s' )
+			array( '%d', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s' )
 		);
 		$id       = (int) $this->wpdb->insert_id;
 

@@ -18,6 +18,7 @@ use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Settings\Settings;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
+use MerchBoard\Modules\Community\Gifting\FreeChoiceLock;
 use MerchBoard\Modules\Community\Gifting\Gift;
 use MerchBoard\Modules\Community\Gifting\GiftCodes;
 use MerchBoard\Modules\Community\Gifting\GiftDraws;
@@ -185,6 +186,30 @@ final class GiveawaysTest extends IntegrationTestCase {
 		$this->execute( 'DELETE FROM %i WHERE option_name LIKE %s', $this->wpdb->options, '%merchboard_gift_%' );
 		delete_option( Settings::OPTION );
 		parent::tearDown();
+	}
+
+	public function test_free_choice_is_stored_with_a_gift_and_a_giveaway_exactly_as_it_was_locked(): void {
+		$design = array(
+			'creator'  => $this->nova,
+			'variants' => array(
+				array(
+					'attributes' => array( 'pa_size' => "M 100% \"cotton\" it's \\ æøå" ),
+					'price'      => 2490000,
+					'base'       => 1490000,
+				),
+			),
+		);
+		$lock   = new FreeChoiceLock( 90, "Nova's 100% \"Tee\" %s \\ æøå 🎁", array( 77 => $design, 78 => $design ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+
+		$giveaway = $this->repository->create( $this->nova, 77, Giveaway::MANUAL, Giveaway::SHOP, '249.0000', '50.0000', '199.0000', 'DKK', 60, $lock );
+		$bought   = $this->gifts->create( $this->nova, 8801, 77, '249.0000', '50.0000', 'DKK', null, 1, $lock );
+		$given    = $this->gifts->create_for_giveaway( $this->nova, $giveaway->id, 77, '249.0000', '50.0000', 'DKK', null, $lock );
+
+		self::assertEquals( $lock, $giveaway->free_choice );
+		self::assertEquals( $lock, $bought?->free_choice );
+		self::assertEquals( $lock, $given->free_choice );
+		self::assertNull( $this->gifts->create( $this->nova, 8802, 77, '249.0000', '50.0000', 'DKK', null )?->free_choice, 'A gift of one product.' );
+		self::assertNull( $this->repository->create( $this->nova, 77, Giveaway::BOT, Giveaway::SHOP, '249.0000', '50.0000', '199.0000', 'DKK', 60 )->free_choice, 'A giveaway of one product.' );
 	}
 
 	public function test_a_giveaway_from_the_balance_is_set_aside_and_charged_once_when_its_code_is_used(): void {

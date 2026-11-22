@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Community\Giveaways;
 
+use MerchBoard\Modules\Community\Gifting\FreeChoiceLock;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -53,21 +55,22 @@ final readonly class Giveaway {
 	/**
 	 * Constructor.
 	 *
-	 * @param int      $id              Id.
-	 * @param int      $creator_id      Creator.
-	 * @param int      $product_id      Parent product.
-	 * @param string   $mode            `bot` or `manual`.
-	 * @param string   $funding         `balance` or `shop`.
-	 * @param string   $status          Status.
-	 * @param string   $unit_price      The price the code covers (the cheapest variant), incl. VAT (decimal).
-	 * @param string   $shipping_credit Shipping the code covers (decimal).
-	 * @param string   $cost            What the creator pays: the base price plus the shipping (decimal).
-	 * @param string   $currency        Currency.
-	 * @param int      $window_seconds  The `!enter` window of a bot giveaway.
-	 * @param int|null $order_id        The shop order that paid it.
-	 * @param int|null $gift_id         Its gift.
-	 * @param int|null $adjustment_id   The balance charge.
-	 * @param string   $created_at      UTC.
+	 * @param int                 $id              Id.
+	 * @param int                 $creator_id      Creator.
+	 * @param int                 $product_id      Parent product.
+	 * @param string              $mode            `bot` or `manual`.
+	 * @param string              $funding         `balance` or `shop`.
+	 * @param string              $status          Status.
+	 * @param string              $unit_price      The price the code covers (the cheapest variant), incl. VAT (decimal).
+	 * @param string              $shipping_credit Shipping the code covers (decimal).
+	 * @param string              $cost            What the creator pays: the base price plus the shipping (decimal).
+	 * @param string              $currency        Currency.
+	 * @param int                 $window_seconds  The `!enter` window of a bot giveaway.
+	 * @param int|null            $order_id        The shop order that paid it.
+	 * @param int|null            $gift_id         Its gift.
+	 * @param int|null            $adjustment_id   The balance charge.
+	 * @param string              $created_at      UTC.
+	 * @param FreeChoiceLock|null $free_choice     The collection it gives with free choice (ADR-120); the product is then the design it is booked on.
 	 */
 	public function __construct(
 		public int $id,
@@ -84,7 +87,8 @@ final readonly class Giveaway {
 		public ?int $order_id,
 		public ?int $gift_id,
 		public ?int $adjustment_id,
-		public string $created_at
+		public string $created_at,
+		public ?FreeChoiceLock $free_choice = null
 	) {
 	}
 
@@ -118,7 +122,8 @@ final readonly class Giveaway {
 			$id( $row['order_id'] ?? null ),
 			$id( $row['gift_id'] ?? null ),
 			$id( $row['adjustment_id'] ?? null ),
-			(string) ( $row['created_at'] ?? '' )
+			(string) ( $row['created_at'] ?? '' ),
+			FreeChoiceLock::from_stored( $row['free_choice'] ?? null )
 		);
 	}
 }
