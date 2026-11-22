@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+Fase 56 (ADR-121), under opbygning. Schema-version 55.
+
+- **Database:** migration 55 med kolonnerne `definition` og `retired_at` på designerens filer (kliparts til udvalgte produkter med farvedele, endnu ikke i brug).
+
 Fase 55 (ADR-120), under opbygning. Schema-version 54.
 
 - **Samlinger af designs:** en samling fra CCMerch Design-samling er ikke creatorens produkt, får ingen ny creator-tilknytning og er aldrig selv en varelinje, gave eller giveaway. Eksisterende tilknytninger røres ikke.

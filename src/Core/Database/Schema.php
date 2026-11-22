@@ -19,6 +19,7 @@ use MerchBoard\Core\Database\Migrations\AddDesignerExtraSidePrice;
 use MerchBoard\Core\Database\Migrations\AddDesignerSizePrices;
 use MerchBoard\Core\Database\Migrations\AddDesignerBaseBackgroundColor;
 use MerchBoard\Core\Database\Migrations\AddDesignerBaseTags;
+use MerchBoard\Core\Database\Migrations\AddDesignerClipartDefinition;
 use MerchBoard\Core\Database\Migrations\AddDesignerPrimaryImage;
 use MerchBoard\Core\Database\Migrations\AddDesignerSmallSidePrice;
 use MerchBoard\Core\Database\Migrations\CreateDesignerFees;
@@ -135,6 +136,7 @@ final class Schema {
 			52 => new AddGiftOrderUnits(),
 			53 => new CreateCollectionRequestTables(),
 			54 => new AddGiftFreeChoice(),
+			55 => new AddDesignerClipartDefinition(),
 		);
 	}
 }
