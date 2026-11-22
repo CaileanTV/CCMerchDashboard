@@ -105,6 +105,7 @@ final class CreatorProductsSection {
 			ProductCreatorLinkException::CREATOR_NOT_FOUND     => array( __( 'The creator does not exist.', 'merchboard' ), 'error' ),
 			ProductCreatorLinkException::CREATOR_INACTIVE      => array( __( 'Inactive creators cannot get new products. Activate the creator first.', 'merchboard' ), 'error' ),
 			ProductCreatorLinkException::CREATOR_NOT_LIVE      => array( __( 'The creator is not live in the shop yet, so no products can be linked. Approve going live first.', 'merchboard' ), 'error' ),
+			ProductCreatorLinkException::COLLECTION            => array( __( 'A design collection cannot be linked. Link its designs instead.', 'merchboard' ), 'error' ),
 			'error'                                            => array( __( 'A technical error occurred. The product may not have been changed; check it and try again later.', 'merchboard' ), 'error' ),
 			default                                            => null,
 		};

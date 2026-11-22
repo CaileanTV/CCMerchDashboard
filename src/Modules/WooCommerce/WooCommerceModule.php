@@ -96,6 +96,8 @@ use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsActions;
 use MerchBoard\Modules\WooCommerce\Admin\SalesLedgerSettingsSection;
 use MerchBoard\Modules\WooCommerce\Cli\SalesBackfillCommand;
 use MerchBoard\Modules\WooCommerce\Cli\WpCliOutput;
+use MerchBoard\Modules\WooCommerce\Collections\CollectionCartGuard;
+use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
 use MerchBoard\Modules\WooCommerce\Dashboard\DashboardSectionRegistration;
 use MerchBoard\Modules\WooCommerce\Dashboard\OrderLineEnricher;
@@ -183,9 +185,13 @@ final class WooCommerceModule implements Module {
 	 * @param Container $container Shared service container.
 	 */
 	public function register( Container $container ): void {
+		// The shop's design collections (ADR-120): one is never a cart line itself.
+		$container->set( DesignCollections::class, static fn(): DesignCollections => new DesignCollections() );
+		( new CollectionCartGuard( $container->get( DesignCollections::class ) ) )->register();
+
 		$container->set(
 			ProductStore::class,
-			static fn( Container $c ): ProductStore => new WooCommerceProductStore( $c->get( wpdb::class ) )
+			static fn( Container $c ): ProductStore => new WooCommerceProductStore( $c->get( wpdb::class ), $c->get( DesignCollections::class ) )
 		);
 
 		$container->set(

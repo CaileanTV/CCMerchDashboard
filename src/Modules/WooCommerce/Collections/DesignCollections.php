@@ -167,6 +167,24 @@ class DesignCollections {
 	}
 
 	/**
+	 * The design a product page shows: on a collection's page the one the
+	 * plugin has selected, otherwise the product itself.
+	 *
+	 * @param int $product_id The page's product.
+	 */
+	public function displayed( int $product_id ): int {
+		if ( ! $this->active() || ! $this->is_collection( $product_id ) ) {
+			return $product_id;
+		}
+
+		$collection = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
+		$select     = array( $collection, 'get_selected_member' );
+		$selected   = is_callable( $select ) ? $select() : null;
+
+		return is_array( $selected ) && is_numeric( $selected['id'] ?? null ) ? (int) $selected['id'] : $product_id;
+	}
+
+	/**
 	 * Whether a product can be asked to be collected: published, visible in
 	 * the shop and in no published collection.
 	 *

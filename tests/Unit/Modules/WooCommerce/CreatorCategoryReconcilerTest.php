@@ -486,4 +486,22 @@ final class CreatorCategoryReconcilerTest extends TestCase {
 	private function product_audit(): array {
 		return array_values( array_filter( $this->audit_rows(), static fn( array $row ): bool => str_starts_with( (string) $row['action'], 'product_' ) ) );
 	}
+	public function test_a_collection_in_a_creators_category_gets_no_link(): void {
+		$this->product( 10, array( self::ALPHA_CAT ) );
+		$this->products->make_collection( 10 );
+
+		self::assertSame( ReconciliationOutcome::Unchanged, $this->run_product( 10 ) );
+		self::assertSame( array(), $this->products->writes );
+	}
+
+	public function test_a_collections_existing_link_is_neither_moved_nor_removed(): void {
+		foreach ( array( array( self::GENERAL_CAT ), array( self::BETA_CAT ) ) as $categories ) {
+			$this->products->add_linked( 10, $this->alpha, 'category', $categories );
+			$this->products->make_collection( 10 );
+
+			self::assertSame( ReconciliationOutcome::Unchanged, $this->run_product( 10 ) );
+		}
+
+		self::assertSame( array(), $this->products->writes, 'An order line without history takes its creator from the link.' );
+	}
 }

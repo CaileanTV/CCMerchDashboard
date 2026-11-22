@@ -181,6 +181,12 @@ final class CreatorCategoryReconciler {
 			return ReconciliationPlan::keep( $product_id, ReconciliationOutcome::Unchanged );
 		}
 
+		// ADR-120 pkt. 3 and 4: a collection gets no link, and one it has is never moved or removed here,
+		// as an order line without history takes its creator from it.
+		if ( $product->is_collection ) {
+			return ReconciliationPlan::keep( $product->id, ReconciliationOutcome::Unchanged );
+		}
+
 		if ( $product->has_manual_link() ) {
 			return $diagnose ? $this->manual_plan( $product ) : ReconciliationPlan::keep( $product->id, ReconciliationOutcome::SkippedManual );
 		}

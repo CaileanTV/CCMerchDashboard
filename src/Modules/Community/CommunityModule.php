@@ -83,6 +83,7 @@ use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CouponCode;
 use MerchBoard\Modules\WooCommerce\CreatorCodes\CreatorCodeRepository;
+use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorProfitDiscount;
 use MerchBoard\Modules\WooCommerce\JobQueue;
@@ -185,7 +186,7 @@ final class CommunityModule implements Module {
 				// The Twitch login card in the cart and the checkout (its hooks only fire on the front end).
 				( new TwitchSubShopCard( $container->get( TwitchSubDiscount::class ), $container->get( TwitchCustomerLogin::class ), $container->get( TwitchCustomerSession::class ) ) )->register();
 				// The discount per tier under the product's price (ADR-111).
-				( new TwitchSubProductNote( $container->get( TwitchSubDiscount::class ) ) )->register();
+				( new TwitchSubProductNote( $container->get( TwitchSubDiscount::class ), $container->get( DesignCollections::class ) ) )->register();
 				// Gifting (ADR-107): the purchase, the draws in the chat and jobs, the code and the claim link.
 				$container->get( GiftPurchase::class )->register();
 				$container->get( GiftDraws::class )->register();
@@ -282,7 +283,7 @@ final class CommunityModule implements Module {
 			static fn( Container $c ): MerchAdView => new MerchAdView(
 				$c->get( MerchAdRepository::class ),
 				static fn( int $creator_id, int $limit ): array => $c->get( CreatorProducts::class )->newest( $creator_id, $limit ),
-				static fn( int $product_id ): ?array => self::panel_product( $product_id, 'woocommerce_single' )
+				static fn( int $product_id ): ?array => self::panel_product( $c->get( DesignCollections::class ), $product_id, 'woocommerce_single' )
 			)
 		);
 		$container->set(
@@ -389,7 +390,7 @@ final class CommunityModule implements Module {
 				},
 				static fn( int $creator_id ): string => $c->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '',
 				static fn( int $creator_id, int $limit ): array => $c->get( CreatorProducts::class )->newest( $creator_id, $limit ),
-				static fn( int $product_id ): ?array => self::panel_product( $product_id )
+				static fn( int $product_id ): ?array => self::panel_product( $c->get( DesignCollections::class ), $product_id )
 			)
 		);
 		$container->set(
@@ -416,16 +417,18 @@ final class CommunityModule implements Module {
 
 	/**
 	 * A product as the Twitch Extension panel shows it: name and image of a
-	 * published, visible parent product; null otherwise (ADR-112 pkt. 2).
+	 * published parent product that is visible, or hidden only by its
+	 * collection; null otherwise (ADR-112 pkt. 2, ADR-120 pkt. 5).
 	 *
-	 * @param int    $product_id Parent product.
-	 * @param string $size       Image size.
+	 * @param DesignCollections $collections The collections.
+	 * @param int               $product_id  Parent product.
+	 * @param string            $size        Image size.
 	 * @return array{name: string, image: string|null, transparent: bool}|null
 	 */
-	private static function panel_product( int $product_id, string $size = 'woocommerce_thumbnail' ): ?array {
+	private static function panel_product( DesignCollections $collections, int $product_id, string $size = 'woocommerce_thumbnail' ): ?array {
 		$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
 
-		if ( ! $product instanceof WC_Product || 'publish' !== $product->get_status() || 'hidden' === $product->get_catalog_visibility() || (int) $product->get_parent_id() > 0 ) {
+		if ( ! $product instanceof WC_Product || (int) $product->get_parent_id() > 0 || ! $collections->shown_in_channels( $product_id ) ) {
 			return null;
 		}
 
@@ -499,7 +502,7 @@ final class CommunityModule implements Module {
 			static fn( Container $c ): GiftPurchase => new GiftPurchase(
 				$c->get( GiftingSettingsRepository::class ),
 				$c->get( GiftRepository::class ),
-				static fn( int $product_id ): ?int => $c->get( ProductCreatorLink::class )->creator_id( $product_id ),
+				static fn( int $product_id ): ?int => $c->get( DesignCollections::class )->is_collection( $product_id ) ? null : $c->get( ProductCreatorLink::class )->creator_id( $product_id ),
 				static fn( int $creator_id ): ?bool => self::live( $c, $creator_id ),
 				static function ( Gift $gift, int $of ) use ( $c ): void {
 					$c->get( GiftDraws::class )->paid( $gift, $of );
@@ -567,7 +570,7 @@ final class CommunityModule implements Module {
 	 */
 	private static function register_giveaways( Container $container ): void {
 		$container->set( GiveawayRepository::class, static fn( Container $c ): GiveawayRepository => new GiveawayRepository( $c->get( wpdb::class ) ) );
-		$container->set( GiveawayCost::class, static fn( Container $c ): GiveawayCost => new GiveawayCost( $c->get( CreatorProfitDiscount::class ) ) );
+		$container->set( GiveawayCost::class, static fn( Container $c ): GiveawayCost => new GiveawayCost( $c->get( CreatorProfitDiscount::class ), $c->get( DesignCollections::class ) ) );
 		$container->set(
 			Giveaways::class,
 			static fn( Container $c ): Giveaways => new Giveaways(

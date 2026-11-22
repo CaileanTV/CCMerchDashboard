@@ -31,6 +31,7 @@ final class ProductCreatorLinkException extends DomainException {
 	public const MANUAL_LINK           = 'manual_link';
 	public const NOT_CATEGORY_MANAGED  = 'not_category_managed';
 	public const CATEGORY_MANAGED      = 'category_managed';
+	public const COLLECTION            = 'collection';
 
 	/**
 	 * Constructor.

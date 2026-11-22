@@ -15,6 +15,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
 use MerchBoard\Modules\ProductDesigner\Shop\GuardedProduct;
 use MerchBoard\Modules\ProductDesigner\Shop\MetaCatalogExclusion;
+use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use MerchBoard\Tests\Unit\Support\FakeJobQueue;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
 use MerchBoard\Tests\Unit\Support\WcProductStorage;
@@ -44,6 +45,7 @@ final class MetaCatalogExclusionTest extends TestCase {
 		WcProductStorage::add( 11, array(), 'variation', 10 );
 		WcProductStorage::add( 20, array(), 'simple', 0, 'Legacy mug' );
 		$this->queue = new FakeJobQueue();
+		Functions\when( 'get_post_type' )->justReturn( false );
 	}
 
 	public function test_a_designer_product_and_its_variations_are_never_synced(): void {
@@ -117,5 +119,25 @@ final class MetaCatalogExclusionTest extends TestCase {
 	 */
 	private function exclusion( DesignerProductGuard $guard ): MetaCatalogExclusion {
 		return new MetaCatalogExclusion( $this->createMock( DesignerProductRepository::class ), $guard, $this->queue, new RecordingLogger() );
+	}
+	public function test_a_collection_with_a_designer_product_is_never_synced(): void {
+		$guard = $this->createMock( DesignerProductGuard::class );
+		$guard->method( 'guard' )->willReturnCallback( static fn( int $id ): ?GuardedProduct => 10 === $id ? new GuardedProduct( 3, 10, 7 ) : null );
+		$collections = $this->createStub( DesignCollections::class );
+		$collections->method( 'is_collection' )->willReturnCallback( static fn( int $id ): bool => in_array( $id, array( 20, 30 ), true ) );
+		$collections->method( 'members' )->willReturnCallback(
+			static fn( int $id ): array => array(
+				array(
+					'id'    => 30 === $id ? 10 : 21,
+					'label' => '',
+				),
+			)
+		);
+		WcProductStorage::add( 30, array(), 'simple', 0, 'Collection' );
+
+		$exclusion = new MetaCatalogExclusion( $this->createMock( DesignerProductRepository::class ), $guard, $this->queue, new RecordingLogger(), $collections );
+
+		self::assertFalse( $exclusion->should_sync( true, wc_get_product( 30 ) ) );
+		self::assertTrue( $exclusion->should_sync( true, wc_get_product( 20 ) ), 'A collection of other products is the Meta plugin' . chr( 39 ) . 's.' );
 	}
 }

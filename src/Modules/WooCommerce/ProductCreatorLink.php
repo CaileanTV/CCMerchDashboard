@@ -160,6 +160,7 @@ final class ProductCreatorLink {
 			return array();
 		}
 
+		self::assert_no_collection( $product );
 		$creator = $this->active_creator( $creator_id );
 		$this->assert_replaceable( $product, $replace_existing );
 
@@ -312,6 +313,10 @@ final class ProductCreatorLink {
 			return array();
 		}
 
+		if ( null !== $creator_id ) {
+			self::assert_no_collection( $product );
+		}
+
 		$creator = null === $creator_id ? null : $this->active_creator( $creator_id );
 		$extra   = array( 'reason' => $reason ) + $context;
 
@@ -455,6 +460,19 @@ final class ProductCreatorLink {
 		}
 
 		return $product;
+	}
+
+	/**
+	 * Refuses a new link to a design collection (ADR-120 pkt. 3); one it has
+	 * already stays and may be removed.
+	 *
+	 * @param ProductRecord $product Product.
+	 * @throws ProductCreatorLinkException When it is a collection.
+	 */
+	private static function assert_no_collection( ProductRecord $product ): void {
+		if ( $product->is_collection ) {
+			throw new ProductCreatorLinkException( ProductCreatorLinkException::COLLECTION );
+		}
 	}
 
 	/**

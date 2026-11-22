@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\Community\TwitchSubs;
 
 use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use WP_Block;
 
 defined( 'ABSPATH' ) || exit;
@@ -45,9 +46,10 @@ final class TwitchSubProductNote {
 	/**
 	 * Constructor.
 	 *
-	 * @param TwitchSubDiscount $discount The campaigns on offer.
+	 * @param TwitchSubDiscount $discount    The campaigns on offer.
+	 * @param DesignCollections $collections On a collection's page the design shown counts (ADR-120).
 	 */
-	public function __construct( private TwitchSubDiscount $discount ) {
+	public function __construct( private TwitchSubDiscount $discount, private DesignCollections $collections = new DesignCollections() ) {
 	}
 
 	/**
@@ -104,7 +106,7 @@ final class TwitchSubProductNote {
 			return '';
 		}
 
-		$line = $this->line( (int) get_queried_object_id() );
+		$line = $this->line( $this->collections->displayed( (int) get_queried_object_id() ) );
 
 		if ( '' === $line ) {
 			return '';

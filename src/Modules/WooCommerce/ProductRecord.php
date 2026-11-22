@@ -35,6 +35,7 @@ final readonly class ProductRecord {
 	 * @param string                                  $sku          SKU, '' when none (for display).
 	 * @param list<array{key: string, value: string}> $source_entries Stored link origin entries.
 	 * @param int[]                                   $category_ids Direct `product_cat` term ids.
+	 * @param bool                                    $is_collection Whether it is a design collection (ADR-120).
 	 */
 	public function __construct(
 		public int $id,
@@ -45,7 +46,8 @@ final readonly class ProductRecord {
 		public string $name = '',
 		public string $sku = '',
 		public array $source_entries = array(),
-		public array $category_ids = array()
+		public array $category_ids = array(),
+		public bool $is_collection = false
 	) {
 	}
 

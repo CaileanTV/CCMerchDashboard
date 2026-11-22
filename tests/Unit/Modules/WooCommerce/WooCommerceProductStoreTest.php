@@ -11,6 +11,7 @@ namespace MerchBoard\Tests\Unit\Modules\WooCommerce;
 
 use Brain\Monkey\Functions;
 use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use MerchBoard\Modules\WooCommerce\ProductLinkSource;
 use MerchBoard\Modules\WooCommerce\ProductRecord;
@@ -50,6 +51,9 @@ final class WooCommerceProductStoreTest extends TestCase {
 		WcProductStorage::$categories         = array();
 
 		Functions\when( 'get_terms' )->alias( array( WcProductStorage::class, 'category_ids_like' ) );
+
+		// No design collection, unless a test says so.
+		Functions\when( 'get_post_type' )->justReturn( false );
 
 		$this->store = new WooCommerceProductStore( self::database() );
 	}
@@ -441,5 +445,13 @@ final class WooCommerceProductStoreTest extends TestCase {
 		Functions\when( 'wp_json_encode' )->alias( 'json_encode' );
 
 		return $db;
+	}
+	public function test_find_tells_a_collection(): void {
+		WcProductStorage::add( 10, array() );
+		$collections = $this->createStub( DesignCollections::class );
+		$collections->method( 'is_collection' )->willReturn( true );
+
+		self::assertTrue( ( new WooCommerceProductStore( self::database(), $collections ) )->find( 10 )?->is_collection );
+		self::assertFalse( $this->store->find( 10 )?->is_collection );
 	}
 }

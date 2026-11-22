@@ -1611,8 +1611,8 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **Gave og giveaway** virker på samlede produkter. Giveren vælger designet.
 
 **Trin:**
-- **55.1 ADR og læser** ✅: ADR-120 og `DesignCollections` med tests.
-- **55.2 Samlinger i de eksisterende funktioner:** lister, tilknytning, kurv, panel, reklame, Meta og Twitch-sub-linjen.
+- **55.1 ADR og læser** ✅ (bb38eb2): ADR-120 og `DesignCollections` med tests.
+- **55.2 Samlinger i de eksisterende funktioner** ✅: lister, tilknytning, kurv, panel, reklame, Meta og Twitch-sub-linjen.
 - **55.3 Gave og giveaway:** valg af design, adresser og indløsning.
 - **55.4 Schema 53:** tabellerne til anmodninger.
 - **55.5 Anmodninger:** regler, audit, oprydning og afinstallation.

@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\ProductDesigner\Shop;
 
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use MerchBoard\Modules\WooCommerce\JobQueue;
 use Throwable;
 use WC_Product;
@@ -27,7 +28,8 @@ defined( 'ABSPATH' ) || exit;
  *   designer product and its variations. A designer product is only what
  *   DesignerProductGuard proves; every other product is left to the plugin.
  *   Should the designer's data be unreadable, the answer is false (closed),
- *   so a designer product never slips through.
+ *   so a designer product never slips through. A design collection with a
+ *   designer product is kept out as well (ADR-120 pkt. 8).
  * - **Once after the update:** the job `merchboard_designer_meta_catalog`
  *   goes through the products the designer made, 50 at a time, and switches
  *   their sync off with the plugin's own
@@ -72,12 +74,14 @@ class MetaCatalogExclusion {
 	 * @param DesignerProductGuard      $guard    The legacy guard.
 	 * @param JobQueue                  $queue    Job queue.
 	 * @param Logger                    $logger   Technical log.
+	 * @param DesignCollections         $collections The collections.
 	 */
 	public function __construct(
 		private DesignerProductRepository $products,
 		private DesignerProductGuard $guard,
 		private JobQueue $queue,
-		private Logger $logger
+		private Logger $logger,
+		private DesignCollections $collections = new DesignCollections()
 	) {
 	}
 
@@ -95,7 +99,17 @@ class MetaCatalogExclusion {
 
 		$parent = $product->get_parent_id() > 0 ? $product->get_parent_id() : $product->get_id();
 
-		return $this->is_designer( $parent ) ? false : $sync;
+		if ( $this->is_designer( $parent ) ) {
+			return false;
+		}
+
+		foreach ( $this->collections->is_collection( $parent ) ? $this->collections->members( $parent ) : array() as $member ) {
+			if ( $this->is_designer( $member['id'] ) ) {
+				return false;
+			}
+		}
+
+		return $sync;
 	}
 
 	/**

@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\Community\Giveaways;
 
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Modules\Community\Gifting\GiftPurchase;
+use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use MerchBoard\Modules\WooCommerce\Pricing\CreatorProfitDiscount;
 use WC_Product;
 
@@ -27,9 +28,10 @@ final class GiveawayCost {
 	/**
 	 * Constructor.
 	 *
-	 * @param CreatorProfitDiscount $profit The creator's profit of a unit.
+	 * @param CreatorProfitDiscount $profit      The creator's profit of a unit.
+	 * @param DesignCollections     $collections A collection is never given away (ADR-120).
 	 */
-	public function __construct( private CreatorProfitDiscount $profit ) {
+	public function __construct( private CreatorProfitDiscount $profit, private DesignCollections $collections = new DesignCollections() ) {
 	}
 
 	/**
@@ -46,7 +48,7 @@ final class GiveawayCost {
 	public function quote( int $product_id, int $creator_id ): ?array {
 		$product = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
 
-		if ( ! $product instanceof WC_Product || 'publish' !== $product->get_status() || ! $product->is_purchasable() ) {
+		if ( ! $product instanceof WC_Product || 'publish' !== $product->get_status() || ! $product->is_purchasable() || $this->collections->is_collection( $product_id ) ) {
 			return null;
 		}
 

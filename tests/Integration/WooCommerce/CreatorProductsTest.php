@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Tests\Integration\WooCommerce;
 
 use MerchBoard\Core\Http\Pagination;
+use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\ProductPosts;
@@ -110,6 +111,84 @@ final class CreatorProductsTest extends IntegrationTestCase {
 		self::assertSame( array( $ids['E'] ), $this->page( 12, 3, 2 ) );
 		self::assertSame( array(), $this->page( 12, 4, 2 ) );
 		self::assertSame( 5, $this->products->count( 12 ) );
+	}
+
+	public function test_a_collection_is_never_a_creators_product(): void {
+		$design = $this->posts->add( 'Design', 'publish', array( '12' ) );
+		$this->posts->meta( $design, DesignCollections::GROUP_KEY, '999' );
+
+		$members = 'a:1:{i:0;a:2:{s:2:"id";i:21;s:5:"label";s:3:"Red";}}';
+		$typed   = $this->posts->add( 'Collection', 'publish', array( '12' ) );
+		$untyped = $this->posts->add( 'Collection without its type', 'publish', array( '12' ) );
+		$simple  = $this->posts->add( 'Collection saved as simple', 'publish', array( '12' ) );
+		$former  = $this->posts->add( 'Former collection', 'publish', array( '12' ) );
+		$empty   = $this->posts->add( 'No designs left', 'publish', array( '12' ) );
+
+		foreach ( array( $untyped, $simple, $former ) as $id ) {
+			$this->posts->meta( $id, DesignCollections::MEMBERS_KEY, $members );
+		}
+
+		$this->posts->meta( $empty, DesignCollections::MEMBERS_KEY, 'a:0:{}' );
+
+		$terms = array();
+
+		try {
+			$terms[] = $this->product_type( $typed, DesignCollections::TYPE );
+			$terms[] = $this->product_type( $simple, 'simple' );
+			$terms[] = $this->product_type( $former, 'variable' );
+
+			self::assertSame( array( $design, $former, $empty ), $this->page( 12 ) );
+			self::assertSame( 3, $this->products->count( 12 ) );
+			self::assertFalse( $this->products->owns( 12, $typed ) );
+			self::assertFalse( $this->products->owns( 12, $untyped ) );
+			self::assertNotContains( $simple, $this->products->newest( 12, 10 ) );
+			self::assertContains( $design, $this->products->newest( 12, 10 ) );
+		} finally {
+			foreach ( $terms as $term ) {
+				$this->wpdb->delete( $this->wpdb->term_relationships, array( 'term_taxonomy_id' => $term['taxonomy'] ), array( '%d' ) );
+				$this->wpdb->delete( $this->wpdb->term_taxonomy, array( 'term_taxonomy_id' => $term['taxonomy'] ), array( '%d' ) );
+				$this->wpdb->delete( $this->wpdb->terms, array( 'term_id' => $term['term'] ), array( '%d' ) );
+			}
+		}
+	}
+
+	/**
+	 * Gives a post a product type, as rows: WooCommerce is not loaded here.
+	 *
+	 * @param int    $post_id Post.
+	 * @param string $slug    Type.
+	 * @return array{term: int, taxonomy: int}
+	 */
+	private function product_type( int $post_id, string $slug ): array {
+		$wpdb = $this->wpdb;
+		$wpdb->insert(
+			$wpdb->terms,
+			array(
+				'name' => $slug,
+				'slug' => $slug,
+			)
+		);
+		$term = (int) $wpdb->insert_id;
+		$wpdb->insert(
+			$wpdb->term_taxonomy,
+			array(
+				'term_id'  => $term,
+				'taxonomy' => 'product_type',
+			)
+		);
+		$taxonomy = (int) $wpdb->insert_id;
+		$wpdb->insert(
+			$wpdb->term_relationships,
+			array(
+				'object_id'        => $post_id,
+				'term_taxonomy_id' => $taxonomy,
+			)
+		);
+
+		return array(
+			'term'     => $term,
+			'taxonomy' => $taxonomy,
+		);
 	}
 
 	/**

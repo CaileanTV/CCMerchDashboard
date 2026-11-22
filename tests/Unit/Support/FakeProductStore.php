@@ -97,6 +97,17 @@ final class FakeProductStore implements ProductStore {
 	}
 
 	/**
+	 * Makes a stored product a design collection (ADR-120).
+	 *
+	 * @param int $id Product id.
+	 */
+	public function make_collection( int $id ): void {
+		$p = $this->products[ $id ];
+
+		$this->products[ $id ] = new ProductRecord( $id, $p->parent_id, $p->is_variation, $p->status, $p->link_entries, $p->name, $p->sku, $p->source_entries, $p->category_ids, true );
+	}
+
+	/**
 	 * Adds a product linked to a creator with the exact key.
 	 *
 	 * @phpstan-param list<int> $categories

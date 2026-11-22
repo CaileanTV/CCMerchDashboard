@@ -734,4 +734,31 @@ final class ProductCreatorLinkTest extends TestCase {
 		self::assertCount( $audit_before, $this->db->rows( 'merchboard_audit_log' ) );
 		self::assertSame( $writes_before, $this->products->writes );
 	}
+	public function test_a_collection_gets_no_new_link(): void {
+		$this->products->add( 10 );
+		$this->products->make_collection( 10 );
+
+		foreach ( array(
+			fn(): array => $this->link->link( 10, $this->alpha, ProductLinkSource::Admin ),
+			fn(): array => $this->link->apply_category_link( 10, $this->alpha, 'category_added' ),
+		) as $operation ) {
+			try {
+				$operation();
+				self::fail( 'A collection was linked.' );
+			} catch ( ProductCreatorLinkException $e ) {
+				self::assertSame( ProductCreatorLinkException::COLLECTION, $e->reason() );
+			}
+		}
+
+		self::assertSame( array(), $this->products->writes );
+	}
+
+	public function test_a_link_a_collection_has_can_be_removed_by_hand(): void {
+		$this->products->add_linked( 10, $this->alpha, 'admin' );
+		$this->products->make_collection( 10 );
+
+		$this->link->unlink( 10, ProductLinkSource::Admin );
+
+		self::assertSame( array( '10:null' ), $this->products->writes );
+	}
 }

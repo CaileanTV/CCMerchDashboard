@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\WooCommerce;
 
 use MerchBoard\Core\Database\DatabaseException;
+use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use WC_Cache_Helper;
 use WC_Data_Store;
 use WC_Product;
@@ -37,9 +38,10 @@ final class WooCommerceProductStore implements ProductStore {
 	/**
 	 * Constructor.
 	 *
-	 * @param wpdb $wpdb WordPress database object (verification reads only).
+	 * @param wpdb              $wpdb        WordPress database object (verification reads only).
+	 * @param DesignCollections $collections Tells a design collection from a product.
 	 */
-	public function __construct( private wpdb $wpdb ) {
+	public function __construct( private wpdb $wpdb, private DesignCollections $collections = new DesignCollections() ) {
 	}
 
 	/**
@@ -81,7 +83,8 @@ final class WooCommerceProductStore implements ProductStore {
 			$product->get_name( 'edit' ),
 			$product->get_sku( 'edit' ),
 			$sources,
-			array_values( array_map( 'intval', $product->get_category_ids( 'edit' ) ) )
+			array_values( array_map( 'intval', $product->get_category_ids( 'edit' ) ) ),
+			! $product->is_type( 'variation' ) && $this->collections->is_collection( $product->get_id() )
 		);
 	}
 

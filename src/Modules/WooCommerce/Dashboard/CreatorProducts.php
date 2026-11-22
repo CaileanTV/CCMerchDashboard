@@ -11,6 +11,7 @@ namespace MerchBoard\Modules\WooCommerce\Dashboard;
 
 use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Http\Pagination;
+use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
 use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 use wpdb;
 
@@ -35,8 +36,11 @@ defined( 'ABSPATH' ) || exit;
 final class CreatorProducts {
 
 	/**
-	 * The selection shared by count() and ids(). Placeholders: posts table,
-	 * postmeta table, link key, postmeta table, link key, creator id.
+	 * The selection shared by every query here. Placeholders: posts table,
+	 * postmeta table, link key, postmeta table, link key, creator id; then the
+	 * collections, which are never a creator's products (ADR-120, the rule of
+	 * DesignCollections::is_collection()): the type's three term tables and
+	 * slug, postmeta table, members key, the three term tables again.
 	 */
 	private const FROM_WHERE = "FROM %i p
 		WHERE p.post_type = 'product'
@@ -45,6 +49,24 @@ final class CreatorProducts {
 		AND EXISTS (
 			SELECT 1 FROM %i lm
 			WHERE lm.post_id = p.ID AND lm.meta_key = %s AND CAST( lm.meta_value AS BINARY ) = CAST( %s AS BINARY )
+		)
+		AND NOT EXISTS (
+			SELECT 1 FROM %i tr
+			JOIN %i tt ON tt.term_taxonomy_id = tr.term_taxonomy_id
+			JOIN %i t ON t.term_id = tt.term_id
+			WHERE tr.object_id = p.ID AND tt.taxonomy = 'product_type' AND t.slug = %s
+		)
+		AND NOT (
+			EXISTS (
+				SELECT 1 FROM %i cm
+				WHERE cm.post_id = p.ID AND cm.meta_key = %s AND cm.meta_value NOT IN ('', 'a:0:{}')
+			)
+			AND NOT EXISTS (
+				SELECT 1 FROM %i tr2
+				JOIN %i tt2 ON tt2.term_taxonomy_id = tr2.term_taxonomy_id
+				JOIN %i t2 ON t2.term_id = tt2.term_id
+				WHERE tr2.object_id = p.ID AND tt2.taxonomy = 'product_type' AND t2.slug <> 'simple'
+			)
 		)";
 
 	/**
@@ -94,7 +116,7 @@ final class CreatorProducts {
 
 		$wpdb = $this->wpdb;
 		$ids  = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read model of the creator's products; no caching in phase 19 (ADR-039 P12).
-			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- FROM_WHERE's six placeholders come from selection_args(), then LIMIT and OFFSET.
+			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- FROM_WHERE's placeholders come from selection_args(), then LIMIT and OFFSET.
 				'SELECT p.ID ' . self::FROM_WHERE . ' ORDER BY p.post_title ASC, p.ID ASC LIMIT %d OFFSET %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- FROM_WHERE is a constant with placeholders only.
 				...array_merge( $this->selection_args( $creator_id ), array( $pagination->per_page, $pagination->offset() ) )
 			)
@@ -123,7 +145,7 @@ final class CreatorProducts {
 
 		$wpdb = $this->wpdb;
 		$ids  = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read model of the creator's products; the panel caches its answer.
-			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- FROM_WHERE's six placeholders come from selection_args(), then LIMIT.
+			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- FROM_WHERE's placeholders come from selection_args(), then LIMIT.
 				'SELECT p.ID ' . self::FROM_WHERE . " AND p.post_status = 'publish' ORDER BY p.post_date DESC, p.ID DESC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- FROM_WHERE is a constant with placeholders only.
 				...array_merge( $this->selection_args( $creator_id ), array( $limit ) )
 			)
@@ -150,7 +172,7 @@ final class CreatorProducts {
 
 		$wpdb  = $this->wpdb;
 		$found = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Read model of the creator's products; no caching in phase 19 (ADR-039 P12).
-			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- FROM_WHERE's six placeholders come from selection_args(), then the product.
+			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- FROM_WHERE's placeholders come from selection_args(), then the product.
 				'SELECT p.ID ' . self::FROM_WHERE . ' AND p.ID = %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- FROM_WHERE is a constant with placeholders only.
 				...array_merge( $this->selection_args( $creator_id ), array( $product_id ) )
 			)
@@ -177,6 +199,15 @@ final class CreatorProducts {
 			$this->wpdb->postmeta,
 			ProductCreatorLink::META_KEY,
 			(string) $creator_id,
+			$this->wpdb->term_relationships,
+			$this->wpdb->term_taxonomy,
+			$this->wpdb->terms,
+			DesignCollections::TYPE,
+			$this->wpdb->postmeta,
+			DesignCollections::MEMBERS_KEY,
+			$this->wpdb->term_relationships,
+			$this->wpdb->term_taxonomy,
+			$this->wpdb->terms,
 		);
 	}
 }
