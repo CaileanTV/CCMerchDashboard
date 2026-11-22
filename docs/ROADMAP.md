@@ -1611,7 +1611,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **Forbindelsen til ccmerch-design-samling:** hvad pluginet skal have at vide, og om det sker med en hook, en REST-kald eller manuelt.
 - **Pris og afregning:** hvordan et samlet produkt prissættes og afregnes med creatoren (ADR-080).
 
-## Fase 56 – Kliparts til udvalgte produkter med farver, creatoren vælger 💡 (projektejerens idé 2026-11-22; version 2.5.0 foreslået, efter fase 55; ikke planlagt)
+## Fase 56 – Kliparts til udvalgte produkter med farver, creatoren vælger 💡 (projektejerens idé og svar 2026-11-22; version 2.5.0 foreslået, efter fase 55; ikke planlagt)
 
 **Ønsket:**
 - Kliparts kan tilføjes til bestemte produkter, fx et design til drikkedunke.
@@ -1630,14 +1630,30 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **Samme resultat overalt:** farverne skal være ens i designeren, printfilen, mockups og leverandørernes billeder, også med farvedesigns (ADR-096) og fælles formatdesigns (ADR-118).
 - **Data og beslutning:** fasen kræver en ADR og formentlig en migration.
 
-**Afklares, før fasen planlægges:**
-- **Produkter:** vælges kliparten pr. grundprodukt (antaget), pr. side eller pr. produktkategori?
-- **De nuværende kliparts:** skal de fortsat gælde alle produkter (anbefalet), eller skal de også tildeles?
-- **Farvedele:** én eller flere pr. klipart, hver med sin egen farve?
-- **Farvevalg:** frit, en palet fra admin eller kun farver, produktet kan trykkes i? Hvad gælder på broderede sider?
-- **Filerne:** hvordan markerer admin delene? Forslag: en gennemsigtig PNG pr. del med samme mål, eller en PSD med navngivne lag.
-- **Placering:** kan creatoren flytte og skalere kliparten frit, eller ligger den fast på produktet?
-- **Fjernet klipart:** hvad sker der med kladder, indsendte designs og produkter i shoppen, når en klipart slettes eller fravælges på et produkt?
+**Besluttet af projektejeren 2026-11-22:**
+- **Produkter:** kliparten vælges pr. grundprodukt.
+- **De nuværende kliparts:** de gælder fortsat alle produkter. Kun nye kan begrænses.
+- **Farvedele:** en klipart kan have flere, hver med sin egen farve.
+- **Farvevalg:** admin vælger pr. klipart mellem frit farvevalg og en palet. På broderede sider bruges kun trådfarverne.
+- **Filen:** den første klipart leveres som PSD:
+  - delen, der farves, er laget `farvet lag`;
+  - lagets ydre streg (Stroke, Outside) må ikke ændres;
+  - lagets farveoverlejring (Color Overlay) eller gradientoverlejring (Gradient Overlay) må creatoren arbejde med.
+- **Placering:** fri, men admin kan låse den, fx til en dunk.
+- **Fjernet klipart:** design, der bruger den, beholder den. Nye design kan ikke vælge den. Sletning må derfor ikke fjerne filen som i dag.
+
+**PSD'en (undersøgt 2026-11-22, ikke bygget):**
+- **Læsning:** ag-psd, som vi har i forvejen, læste lagnavn, fyldets dækkevne og de tre effekter tilbage fra en lille test-PSD, skrevet med ag-psd selv. En fil fra Photoshop er ikke afprøvet.
+- **Tegning:** lagets pixels er uden effekterne, og ag-psd tegner dem ikke. Fasen skal selv tegne streg, farve og gradient, ens i designeren og printfilen. Den ydre streg går ud over lagets kant og skal skaleres med kliparten.
+- **Vores PSD-import i dag:** skabelonimporten anvender ikke effekter, og sceneimporten udelader dem. De kan derfor ikke genbruges til dette uden videre.
+- **Filkrav:** PSD i RGB med 8 bit pr. kanal. Skabelonimportens grænse er 8000 × 8000 px. CMYK afvises af ag-psd.
+- **Kontrol:** udseendet kan først sammenlignes med Photoshop, når projektejerens fil foreligger.
+
+**Afklares ved planlægningen:**
+- **Farve eller gradient:** vælger creatoren mellem dem (foreslået), eller følger typen filen?
+- **Gradientens indstillinger:** forslag: to farver og en vinkel.
+- **Flere farvedele:** lagnavnet er kun givet for én. Forslag: alle lag, hvis navn begynder med `farvet lag`.
+- **Broderi:** forslag: ingen gradient, kun én trådfarve pr. del. Det skal også afklares, hvad der sker, når den låste stregs farve ikke er en trådfarve.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
