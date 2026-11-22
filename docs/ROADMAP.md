@@ -1618,8 +1618,8 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **55.5 Anmodninger** ✅ (0567a29): regler, audit, oprydning og afinstallation.
 - **55.6 Kladde og udgivelse** ✅ (849c499): oprettelse, tilføjelse og registrering af, at samlingen er klar.
 - **55.7 REST, fanen på "Forslag" og notifikationer** ✅ (6c40c81).
-- **55.8 Dashboard** ✅: "Anmod om samling" og status under "Dine produkter".
-- **55.9 Afslutning:** oversættelser, docs, review og testpakke 2.4.0.
+- **55.8 Dashboard** ✅ (1f16c43): "Anmod om samling" og status under "Dine produkter".
+- **55.9 Afslutning** 🔄: oversættelser, docs, review og testpakke 2.4.0.
 - **55.10 Projektejerens test på stg** med det rigtige plugin.
 
 ## Fase 56 – Kliparts til udvalgte produkter med farver, creatoren vælger 💡 (projektejerens idé og svar 2026-11-22; version 2.5.0 foreslået, efter fase 55; ikke planlagt)
