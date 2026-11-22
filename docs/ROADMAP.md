@@ -1663,11 +1663,11 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **Filkrav:** PSD i RGB med 8 bit pr. kanal. Skabelonimportens grænse er 8000 × 8000 px. CMYK afvises af ag-psd.
 - **Kontrol:** udseendet kan først sammenlignes med Photoshop, når projektejerens fil foreligger.
 
-**Afklares ved planlægningen:**
-- **Farve eller gradient:** vælger creatoren mellem dem (foreslået), eller følger typen filen?
-- **Gradientens indstillinger:** forslag: to farver og en vinkel.
-- **Flere farvedele:** lagnavnet er kun givet for én. Forslag: alle lag, hvis navn begynder med `farvet lag`.
-- **Broderi:** forslag: ingen gradient, kun én trådfarve pr. del. Det skal også afklares, hvad der sker, når den låste stregs farve ikke er en trådfarve.
+**Afklaret af projektejeren 2026-11-22 (ved planlægningen):**
+- **Farve eller gradient:** creatoren vælger mellem én farve og en gradient med to farver og en vinkel. PSD'ens værdi er startværdien, og admins palet gælder begge.
+- **Flere farvedele:** alle lag, hvis navn begynder med `farvet lag`. Resten af navnet er delens navn hos creatoren.
+- **Broderi:** ingen gradient og én trådfarve pr. del. Stregen får den nærmeste tråd, vises for admin ved upload og kan ikke byttes af creatoren.
+- **Filen:** projektejeren sender stien til PSD'en og gerne en PNG-eksport fra Photoshop som facit. Filerne læses kun og lægges ikke i repoet.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
