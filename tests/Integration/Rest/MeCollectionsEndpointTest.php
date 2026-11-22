@@ -182,10 +182,11 @@ final class MeCollectionsEndpointTest extends IntegrationTestCase {
 		self::assertSame(
 			array(
 				array(
-					'id'        => $mine,
-					'name'      => 'Collection',
-					'published' => true,
-					'designs'   => 1,
+					'id'          => $mine,
+					'name'        => 'Collection',
+					'published'   => true,
+					'designs'     => 1,
+					'product_ids' => array( $this->red ),
 				),
 			),
 			$data['collections']

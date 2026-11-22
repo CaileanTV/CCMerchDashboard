@@ -30,6 +30,8 @@ export interface OwnCollection {
 	readonly published: boolean;
 	/** The number of designs in it. */
 	readonly designs: number;
+	/** The products in it, which cannot be added again. */
+	readonly productIds: readonly number[];
 }
 
 export interface CollectionRequestRow {
@@ -82,10 +84,19 @@ function parseOwn( body: unknown ): OwnCollection | null {
 
 	const id = whole( body.id );
 	const designs = whole( body.designs );
+	const productIds = Array.isArray( body.product_ids )
+		? body.product_ids.map( whole )
+		: [ null ];
 
-	return id === null || designs === null
+	return id === null || designs === null || productIds.includes( null )
 		? null
-		: { id, name: body.name, published: body.published, designs };
+		: {
+				id,
+				name: body.name,
+				published: body.published,
+				designs,
+				productIds: productIds as number[],
+			};
 }
 
 function parseRow( body: unknown ): CollectionRequestRow | null {

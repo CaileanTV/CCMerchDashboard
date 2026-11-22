@@ -22,7 +22,15 @@ const STATE = {
 		{ id: 21, name: 'Tee Red' },
 		{ id: 22, name: 'Tee Blue' },
 	],
-	collections: [ { id: 10, name: 'Tee', published: true, designs: 3 } ],
+	collections: [
+		{
+			id: 10,
+			name: 'Tee',
+			published: true,
+			designs: 3,
+			product_ids: [ 1, 2, 3 ],
+		},
+	],
 	requests: [
 		{
 			id: 4,

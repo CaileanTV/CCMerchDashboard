@@ -15,6 +15,7 @@ use MerchBoard\Core\Http\Pagination;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
 use MerchBoard\Modules\WooCommerce\Dashboard\PlainText;
+use MerchBoard\Modules\WooCommerce\ProductCreatorLink;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -46,7 +47,7 @@ final class CollectionOverview {
 	 * The creator's collections, requests and the products that can be chosen.
 	 *
 	 * @param Creator $creator Creator from CreatorContext.
-	 * @return array{available: bool, products: list<array{id: int, name: string}>, collections: list<array{id: int, name: string, published: bool, designs: int}>, requests: list<array<string, mixed>>}
+	 * @return array{available: bool, products: list<array{id: int, name: string}>, collections: list<array{id: int, name: string, published: bool, designs: int, product_ids: list<int>}>, requests: list<array<string, mixed>>}
 	 * @throws DatabaseException When it cannot be read.
 	 */
 	public function for_creator( Creator $creator ): array {
@@ -75,6 +76,20 @@ final class CollectionOverview {
 			array_push( $ids, ...$this->products->ids( $creator_id, new Pagination( $page, Pagination::MAX_PER_PAGE ) ) );
 		}
 
+		// Read in batches: one query per product would be thousands in a large shop.
+		_prime_post_caches( $ids, true, true );
+		$groups = array();
+
+		foreach ( $ids as $id ) {
+			$group = get_post_meta( $id, DesignCollections::GROUP_KEY, true );
+
+			if ( is_numeric( $group ) && (int) $group > 0 ) {
+				$groups[ (int) $group ] = (int) $group;
+			}
+		}
+
+		_prime_post_caches( array_values( $groups ), true, true );
+
 		$requested = $this->repository->requested_among( $ids );
 		$products  = array();
 
@@ -94,23 +109,52 @@ final class CollectionOverview {
 	 * The collections that are the creator's.
 	 *
 	 * @param int $creator_id Creator.
-	 * @return list<array{id: int, name: string, published: bool, designs: int}>
+	 * @return list<array{id: int, name: string, published: bool, designs: int, product_ids: list<int>}>
 	 */
 	private function own( int $creator_id ): array {
-		$own = array();
+		$own     = array();
+		$all     = $this->collections->all();
+		$members = array();
 
-		foreach ( $this->collections->all() as $id ) {
-			if ( $this->requests->is_creators( $creator_id, $id ) ) {
+		foreach ( $all as $id ) {
+			$members[ $id ] = array_column( $this->collections->members( $id ), 'id' );
+		}
+
+		$designs = array_values( array_unique( array_merge( array(), ...array_values( $members ) ) ) );
+		_prime_post_caches( $designs, false, true );
+
+		foreach ( $all as $id ) {
+			// The cheap read first: the full rule loads each design's product.
+			if ( self::has_design_of( $creator_id, $members[ $id ] ) && $this->requests->is_creators( $creator_id, $id ) ) {
 				$own[] = array(
-					'id'        => $id,
-					'name'      => self::name( $id ),
-					'published' => 'publish' === get_post_status( $id ),
-					'designs'   => count( $this->collections->members( $id ) ),
+					'id'          => $id,
+					'name'        => self::name( $id ),
+					'published'   => 'publish' === get_post_status( $id ),
+					'designs'     => count( $members[ $id ] ),
+					'product_ids' => $members[ $id ],
 				);
 			}
 		}
 
 		return $own;
+	}
+
+	/**
+	 * Whether any of the designs has the creator's link in its meta.
+	 *
+	 * @phpstan-param list<int> $designs
+	 *
+	 * @param int   $creator_id Creator.
+	 * @param int[] $designs    Products.
+	 */
+	private static function has_design_of( int $creator_id, array $designs ): bool {
+		foreach ( $designs as $id ) {
+			if ( get_post_meta( $id, ProductCreatorLink::META_KEY, true ) === (string) $creator_id ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

@@ -2,7 +2,7 @@
  * "Collections" under "Your products" (ADR-120): the creator's requests with
  * their state, and the button that sends one.
  */
-import { useEffect, useState } from '@wordpress/element';
+import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
 
 import { getCollections } from '../../api/collections';
@@ -13,6 +13,7 @@ import type {
 import { ApiErrorState } from '../../components/ApiErrorState';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { Toast } from '../../components/Toast';
 import { useApi } from '../../hooks/useApi';
 import { CollectionDialog } from './CollectionDialog';
 
@@ -54,6 +55,24 @@ export function CollectionsCard() {
 	const { state, retry } = useApi( getCollections );
 	const [ current, setCurrent ] = useState< CollectionsState | null >( null );
 	const [ open, setOpen ] = useState( false );
+	const [ sent, setSent ] = useState< string | null >( null );
+	const dismiss = useCallback( () => setSent( null ), [] );
+	const intro = useRef< HTMLParagraphElement >( null );
+
+	// The button that opened the dialog can be gone by then.
+	useEffect( () => {
+		if ( sent !== null ) {
+			intro.current?.focus();
+		}
+	}, [ sent ] );
+
+	const refresh = () => {
+		void getCollections().then( ( result ) => {
+			if ( result.ok ) {
+				setCurrent( result.data );
+			}
+		} );
+	};
 
 	useEffect( () => {
 		if ( state.status === 'success' ) {
@@ -88,13 +107,19 @@ export function CollectionsCard() {
 			title={ title }
 			actions={
 				possible ? (
-					<Button size="sm" onClick={ () => setOpen( true ) }>
+					<Button
+						size="sm"
+						onClick={ () => {
+							setOpen( true );
+							refresh();
+						} }
+					>
 						{ __( 'Request a collection', 'merchboard' ) }
 					</Button>
 				) : undefined
 			}
 		>
-			<p className="merchboard-field__help">
+			<p ref={ intro } tabIndex={ -1 } className="merchboard-field__help">
 				{ __(
 					'Have several of your designs sold from one product page, where customers choose the design.',
 					'merchboard'
@@ -135,12 +160,15 @@ export function CollectionsCard() {
 				<CollectionDialog
 					state={ current }
 					onClose={ () => setOpen( false ) }
+					onRefresh={ refresh }
 					onSent={ ( next ) => {
 						setCurrent( next );
 						setOpen( false );
+						setSent( __( 'Your request is sent.', 'merchboard' ) );
 					} }
 				/>
 			) : null }
+			<Toast message={ sent } onDismiss={ dismiss } />
 		</Card>
 	);
 }

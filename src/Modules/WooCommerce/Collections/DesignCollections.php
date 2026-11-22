@@ -251,6 +251,8 @@ class DesignCollections {
 		);
 		$all   = array();
 
+		_prime_post_caches( array_map( 'intval', $found ), true, true );
+
 		foreach ( $found as $id ) {
 			if ( $this->is_collection( (int) $id ) ) {
 				$all[] = (int) $id;

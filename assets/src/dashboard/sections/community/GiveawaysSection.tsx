@@ -772,7 +772,8 @@ export function GiveawaysSection() {
 									id="merchboard-giveaway-shop"
 									type="radio"
 									name="merchboard-giveaway-funding"
-									checked={ ! covers || funding === 'shop' }
+									checked={ paysInShop }
+									disabled={ product === undefined }
 									onChange={ () => setFunding( 'shop' ) }
 								/>{ ' ' }
 								{ __( 'Pay now in the shop', 'merchboard' ) }

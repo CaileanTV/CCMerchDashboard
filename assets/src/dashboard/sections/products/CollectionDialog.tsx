@@ -24,9 +24,21 @@ const MAX_DESIGNS = 50;
  */
 function refusedText( reason: string | undefined ): string {
 	switch ( reason ) {
+		case 'name_required':
+			return __( 'Give the collection a name.', 'merchboard' );
+		case 'creator_not_live':
+			return __(
+				'You can request collections when you are live in the shop.',
+				'merchboard'
+			);
+		case 'merchboard_collections_unavailable':
+			return __(
+				'Collections cannot be requested right now.',
+				'merchboard'
+			);
 		case 'product_not_usable':
 			return __(
-				'One of the products can no longer be collected. Close this window and try again.',
+				'One of the products can no longer be collected. The list is updated: check your choice and send again.',
 				'merchboard'
 			);
 		case 'product_requested':
@@ -36,7 +48,7 @@ function refusedText( reason: string | undefined ): string {
 			);
 		case 'collection_unknown':
 			return __(
-				'The collection can no longer be changed here. Close this window and try again.',
+				'The collection can no longer be changed here. The list is updated: choose again.',
 				'merchboard'
 			);
 		default:
@@ -51,20 +63,24 @@ export interface CollectionDialogProps {
 	readonly state: CollectionsState;
 	/** Called with the new state when the request is sent. */
 	readonly onSent: ( state: CollectionsState ) => void;
+	/** Reads what can be chosen again. */
+	readonly onRefresh: () => void;
 	readonly onClose: () => void;
 }
 
 /**
  * The dialog.
  *
- * @param props         Props.
- * @param props.state   What can be chosen.
- * @param props.onSent  Takes the new state.
- * @param props.onClose Closes the dialog.
+ * @param props           Props.
+ * @param props.state     What can be chosen.
+ * @param props.onSent    Takes the new state.
+ * @param props.onRefresh Reads the state again.
+ * @param props.onClose   Closes the dialog.
  */
 export function CollectionDialog( {
 	state,
 	onSent,
+	onRefresh,
 	onClose,
 }: CollectionDialogProps ) {
 	// With too few products for a new one only an addition is possible.
@@ -78,11 +94,22 @@ export function CollectionDialog( {
 	const [ failed, setFailed ] = useState< string | null >( null );
 	const id = useId();
 
+	const target = adding
+		? state.collections.find( ( item ) => item.id === collectionId )
+		: undefined;
+	// Not what the collection has already; a choice that left the list no longer counts.
+	const choices = state.products.filter(
+		( product ) => target?.productIds.includes( product.id ) !== true
+	);
+	const selected = chosen.filter( ( productId ) =>
+		choices.some( ( product ) => product.id === productId )
+	);
+	const tooMany = selected.length > MAX_DESIGNS;
 	const ready =
-		chosen.length <= MAX_DESIGNS &&
+		! tooMany &&
 		( adding
-			? collectionId > 0 && chosen.length > 0
-			: name.trim() !== '' && chosen.length >= MIN_NEW );
+			? target !== undefined && selected.length > 0
+			: name.trim() !== '' && selected.length >= MIN_NEW );
 
 	const toggle = ( productId: number ) =>
 		setChosen( ( current ) =>
@@ -92,13 +119,17 @@ export function CollectionDialog( {
 		);
 
 	const send = async () => {
+		if ( busy ) {
+			return;
+		}
+
 		setBusy( true );
 		setFailed( null );
 
 		const result = await requestCollection(
 			adding
-				? { collectionId, productIds: chosen }
-				: { name: name.trim(), productIds: chosen }
+				? { collectionId, productIds: selected }
+				: { name: name.trim(), productIds: selected }
 		);
 
 		setBusy( false );
@@ -106,7 +137,12 @@ export function CollectionDialog( {
 		if ( result.ok ) {
 			onSent( result.data );
 		} else {
-			setFailed( refusedText( result.error.reason ) );
+			setFailed(
+				refusedText(
+					result.error.reason ?? result.error.code ?? undefined
+				)
+			);
+			onRefresh();
 		}
 	};
 
@@ -118,8 +154,9 @@ export function CollectionDialog( {
 			actions={
 				<Button
 					onClick={ () => void send() }
-					isBusy={ busy }
-					disabled={ ! ready || busy }
+					// Not disabled while it sends: the focus would leave the dialog.
+					aria-disabled={ busy || undefined }
+					disabled={ ! ready }
 				>
 					{ __( 'Send request', 'merchboard' ) }
 				</Button>
@@ -211,7 +248,7 @@ export function CollectionDialog( {
 					{ __( 'Designs', 'merchboard' ) }
 				</legend>
 				<ul className="merchboard-collection__designs">
-					{ state.products.map( ( product ) => (
+					{ choices.map( ( product ) => (
 						<li key={ product.id }>
 							<label htmlFor={ `${ id }-${ product.id }` }>
 								<input
@@ -246,6 +283,15 @@ export function CollectionDialog( {
 								MAX_DESIGNS
 							) }
 				</p>
+				{ tooMany ? (
+					<Alert tone="warning">
+						{ sprintf(
+							/* translators: %d: the most designs. */
+							__( 'Choose at most %d designs.', 'merchboard' ),
+							MAX_DESIGNS
+						) }
+					</Alert>
+				) : null }
 			</fieldset>
 		</Dialog>
 	);
