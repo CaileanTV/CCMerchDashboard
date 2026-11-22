@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace MerchBoard\Modules\WooCommerce\Collections;
 
 use Closure;
+use MerchBoard\Core\Lifecycle\Uninstaller;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -22,7 +23,8 @@ defined( 'ABSPATH' ) || exit;
  * Only WordPress' own data is read, so the answers are the same while that
  * plugin is inactive. WooCommerce then loads a collection as a simple product
  * with a price, and saving it can make it one; a simple or untyped product
- * that still lists designs therefore counts as a collection. A product of
+ * that still lists designs therefore counts as a collection, unless it was
+ * changed on purpose (RELEASED_KEY, CollectionTypeChanges). A product of
  * another type with designs left over from before is none.
  */
 class DesignCollections {
@@ -51,6 +53,11 @@ class DesignCollections {
 	 * A hidden design's visibility from before it was collected.
 	 */
 	public const PREVIOUS_VISIBILITY_KEY = '_ccmds_prev_visibility';
+
+	/**
+	 * Our mark on a product that is no longer a collection on purpose.
+	 */
+	public const RELEASED_KEY = Uninstaller::COLLECTION_RELEASED_META;
 
 	/**
 	 * The types a collection can have when it has lost its own.
@@ -100,7 +107,30 @@ class DesignCollections {
 
 		$type = self::slugs( $product_id, 'product_type' )[0] ?? '';
 
-		return self::TYPE === $type || ( in_array( $type, self::UNTYPED, true ) && array() !== $this->members( $product_id ) );
+		return self::TYPE === $type || (
+			in_array( $type, self::UNTYPED, true )
+			&& array() !== $this->members( $product_id )
+			&& '1' !== get_post_meta( $product_id, self::RELEASED_KEY, true )
+		);
+	}
+
+	/**
+	 * The collections without the collection type: they lost it, or were
+	 * changed on purpose before that was recorded, and only the
+	 * administrator knows which.
+	 *
+	 * @return list<int>
+	 */
+	public function untyped(): array {
+		$untyped = array();
+
+		foreach ( $this->all() as $id ) {
+			if ( self::TYPE !== ( self::slugs( $id, 'product_type' )[0] ?? '' ) ) {
+				$untyped[] = $id;
+			}
+		}
+
+		return $untyped;
 	}
 
 	/**

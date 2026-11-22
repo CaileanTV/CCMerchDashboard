@@ -14,6 +14,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionFulfilment;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionRequestException;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionRequests;
+use MerchBoard\Modules\WooCommerce\Collections\CollectionTypeChanges;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionWatcher;
 use Throwable;
 
@@ -30,23 +31,25 @@ final class CollectionRequestActions {
 	public const ADD_NOW = 'merchboard_add_to_collection_now';
 	public const CHECK   = 'merchboard_check_collection';
 	public const DECLINE = 'merchboard_decline_collection';
+	public const RELEASE = 'merchboard_release_collection';
 
 	/**
 	 * The field with the note on a decline.
 	 */
 	public const NOTE_FIELD = 'note';
 
-	private const ACTIONS = array( self::APPROVE, self::RETRY, self::ADD_NOW, self::CHECK, self::DECLINE );
+	private const ACTIONS = array( self::APPROVE, self::RETRY, self::ADD_NOW, self::CHECK, self::DECLINE, self::RELEASE );
 
 	/**
 	 * Constructor.
 	 *
-	 * @param CollectionRequests   $requests   The rules.
-	 * @param CollectionFulfilment $fulfilment Carries out in the shop.
-	 * @param CollectionWatcher    $watcher    Sees what is ready.
-	 * @param Logger               $logger     Technical log.
+	 * @param CollectionRequests         $requests   The rules.
+	 * @param CollectionFulfilment       $fulfilment Carries out in the shop.
+	 * @param CollectionWatcher          $watcher    Sees what is ready.
+	 * @param Logger                     $logger     Technical log.
+	 * @param CollectionTypeChanges|null $types Releases a product that is no longer a collection.
 	 */
-	public function __construct( private CollectionRequests $requests, private CollectionFulfilment $fulfilment, private CollectionWatcher $watcher, private Logger $logger ) {
+	public function __construct( private CollectionRequests $requests, private CollectionFulfilment $fulfilment, private CollectionWatcher $watcher, private Logger $logger, private ?CollectionTypeChanges $types = null ) {
 	}
 
 	/**
@@ -120,12 +123,24 @@ final class CollectionRequestActions {
 	 * @param int    $id     Request.
 	 * @param string $note   Note to the creator.
 	 * @return string Outcome code.
+	 * @throws CollectionRequestException When it is refused.
 	 */
 	private function step( string $action, int $id, string $note ): string {
 		if ( self::DECLINE === $action ) {
 			$this->requests->decline( $id, $note );
 
 			return 'declined';
+		}
+
+		if ( self::RELEASE === $action ) {
+			if ( null === $this->types ) {
+				throw new CollectionRequestException( CollectionRequestException::NOT_FOUND );
+			}
+
+			// The form's id is the product's.
+			$this->types->release( $id );
+
+			return 'released';
 		}
 
 		if ( self::CHECK === $action ) {

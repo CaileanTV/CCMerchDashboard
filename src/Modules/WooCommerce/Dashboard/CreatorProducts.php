@@ -40,7 +40,8 @@ final class CreatorProducts {
 	 * postmeta table, link key, postmeta table, link key, creator id; then the
 	 * collections, which are never a creator's products (ADR-120, the rule of
 	 * DesignCollections::is_collection()): the type's three term tables and
-	 * slug, postmeta table, members key, the three term tables again.
+	 * slug, postmeta table, members key, the three term tables again, postmeta
+	 * table and the mark of one changed on purpose.
 	 */
 	private const FROM_WHERE = "FROM %i p
 		WHERE p.post_type = 'product'
@@ -66,6 +67,10 @@ final class CreatorProducts {
 				JOIN %i tt2 ON tt2.term_taxonomy_id = tr2.term_taxonomy_id
 				JOIN %i t2 ON t2.term_id = tt2.term_id
 				WHERE tr2.object_id = p.ID AND tt2.taxonomy = 'product_type' AND t2.slug <> 'simple'
+			)
+			AND NOT EXISTS (
+				SELECT 1 FROM %i rm
+				WHERE rm.post_id = p.ID AND rm.meta_key = %s AND rm.meta_value = '1'
 			)
 		)";
 
@@ -208,6 +213,8 @@ final class CreatorProducts {
 			$this->wpdb->term_relationships,
 			$this->wpdb->term_taxonomy,
 			$this->wpdb->terms,
+			$this->wpdb->postmeta,
+			DesignCollections::RELEASED_KEY,
 		);
 	}
 }

@@ -130,6 +130,10 @@ final class CreatorProductsTest extends IntegrationTestCase {
 
 		$this->posts->meta( $empty, DesignCollections::MEMBERS_KEY, 'a:0:{}' );
 
+		$released = $this->posts->add( 'Released on purpose', 'publish', array( '12' ) );
+		$this->posts->meta( $released, DesignCollections::MEMBERS_KEY, $members );
+		$this->posts->meta( $released, DesignCollections::RELEASED_KEY, '1' );
+
 		$terms = array();
 
 		try {
@@ -137,8 +141,8 @@ final class CreatorProductsTest extends IntegrationTestCase {
 			$terms[] = $this->product_type( $simple, 'simple' );
 			$terms[] = $this->product_type( $former, 'variable' );
 
-			self::assertSame( array( $design, $former, $empty ), $this->page( 12 ) );
-			self::assertSame( 3, $this->products->count( 12 ) );
+			self::assertSame( array( $design, $former, $empty, $released ), $this->page( 12 ) );
+			self::assertSame( 4, $this->products->count( 12 ) );
 			self::assertFalse( $this->products->owns( 12, $typed ) );
 			self::assertFalse( $this->products->owns( 12, $untyped ) );
 			self::assertNotContains( $simple, $this->products->newest( 12, 10 ) );

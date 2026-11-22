@@ -982,4 +982,10 @@ enum AuditAction: string {
 	 * collection_request_id, collection_id, product_ids.
 	 */
 	case CollectionReady = 'collection_ready';
+
+	/**
+	 * An administrator said a product is no longer a collection (ADR-120).
+	 * Context: product_id.
+	 */
+	case CollectionReleased = 'collection_released';
 }

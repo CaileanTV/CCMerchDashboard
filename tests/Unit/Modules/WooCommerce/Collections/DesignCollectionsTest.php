@@ -127,6 +127,20 @@ final class DesignCollectionsTest extends TestCase {
 		}
 	}
 
+	public function test_a_product_changed_on_purpose_is_no_collection(): void {
+		$meta = $this->products[ self::COLLECTION ]['meta'];
+
+		$meta[ DesignCollections::RELEASED_KEY ] = '1';
+
+		$this->product( self::COLLECTION, 'simple', array(), $meta );
+
+		self::assertFalse( $this->collections()->is_collection( self::COLLECTION ) );
+
+		$this->product( self::COLLECTION, DesignCollections::TYPE, array(), $meta );
+
+		self::assertTrue( $this->collections()->is_collection( self::COLLECTION ), 'The type counts over the mark.' );
+	}
+
 	public function test_designs_left_over_on_another_type_make_no_collection(): void {
 		$this->products[ self::COLLECTION ]['type'] = 'variable';
 

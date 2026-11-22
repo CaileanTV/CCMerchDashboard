@@ -211,6 +211,7 @@ final class AuditLogFormatter {
 			AuditAction::CollectionApproved          => __( 'Collection request approved', 'merchboard' ),
 			AuditAction::CollectionDeclined          => __( 'Collection request declined', 'merchboard' ),
 			AuditAction::CollectionReady             => __( 'Requested collection is in the shop', 'merchboard' ),
+			AuditAction::CollectionReleased          => __( 'Product is no longer a collection', 'merchboard' ),
 			AuditAction::CreatorFrontGroupChanged => __( 'Front-page group changed', 'merchboard' ),
 			AuditAction::TwitchSubDiscountChanged => __( 'Twitch subscriber discount changed', 'merchboard' ),
 			AuditAction::TwitchGiftingChanged => __( 'Twitch gifting changed', 'merchboard' ),

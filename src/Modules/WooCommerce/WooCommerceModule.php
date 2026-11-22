@@ -106,6 +106,7 @@ use MerchBoard\Modules\WooCommerce\Collections\CollectionOverview;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionRequestRepository;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionRequests;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionRequestsCleanup;
+use MerchBoard\Modules\WooCommerce\Collections\CollectionTypeChanges;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionWatcher;
 use MerchBoard\Modules\WooCommerce\Collections\CollectionWriter;
 use MerchBoard\Modules\WooCommerce\Collections\DesignCollections;
@@ -405,6 +406,7 @@ final class WooCommerceModule implements Module {
 				static fn( int $creator ): ?Creator => $c->get( CreatorRepository::class )->find( $creator )
 			)
 		);
+		$container->set( CollectionTypeChanges::class, static fn( Container $c ): CollectionTypeChanges => new CollectionTypeChanges( $c->get( DesignCollections::class ), $c->get( AuditTrail::class ), $c->get( Logger::class ) ) );
 		$container->set( CollectionWriter::class, static fn( Container $c ): CollectionWriter => new CollectionWriter( $c->get( DesignCollections::class ), new NamedLock( $c->get( wpdb::class ) ) ) );
 		$container->set( CollectionFulfilment::class, static fn( Container $c ): CollectionFulfilment => new CollectionFulfilment( $c->get( CollectionRequests::class ), $c->get( CollectionRequestRepository::class ), $c->get( CollectionWriter::class ) ) );
 		$container->set( CollectionWatcher::class, static fn( Container $c ): CollectionWatcher => new CollectionWatcher( $c->get( CollectionRequestRepository::class ), $c->get( CollectionRequests::class ), $c->get( Logger::class ) ) );
@@ -412,6 +414,7 @@ final class WooCommerceModule implements Module {
 			'init',
 			static function () use ( $container ): void {
 				$container->get( CollectionWatcher::class )->register();
+				$container->get( CollectionTypeChanges::class )->register();
 			}
 		);
 		$container->set( CollectionOverview::class, static fn( Container $c ): CollectionOverview => new CollectionOverview( $c->get( DesignCollections::class ), $c->get( CollectionRequests::class ), $c->get( CollectionRequestRepository::class ), $c->get( CreatorProducts::class ) ) );
@@ -427,7 +430,7 @@ final class WooCommerceModule implements Module {
 				$c->get( Logger::class )
 			)
 		);
-		$container->set( CollectionRequestActions::class, static fn( Container $c ): CollectionRequestActions => new CollectionRequestActions( $c->get( CollectionRequests::class ), $c->get( CollectionFulfilment::class ), $c->get( CollectionWatcher::class ), $c->get( Logger::class ) ) );
+		$container->set( CollectionRequestActions::class, static fn( Container $c ): CollectionRequestActions => new CollectionRequestActions( $c->get( CollectionRequests::class ), $c->get( CollectionFulfilment::class ), $c->get( CollectionWatcher::class ), $c->get( Logger::class ), $c->get( CollectionTypeChanges::class ) ) );
 		$container->set( CollectionRequestsCleanup::class, static fn( Container $c ): CollectionRequestsCleanup => new CollectionRequestsCleanup( $c->get( CollectionRequestRepository::class ) ) );
 		$container->set( ProductRemovalsPage::class, static fn( Container $c ): ProductRemovalsPage => new ProductRemovalsPage( $c->get( ProductRemovalRepository::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );
 		$container->set( ProductRemovalActions::class, static fn( Container $c ): ProductRemovalActions => new ProductRemovalActions( $c->get( ProductRemovals::class ), $c->get( Logger::class ) ) );

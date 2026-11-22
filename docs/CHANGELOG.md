@@ -14,6 +14,7 @@ Fase 55 (ADR-120), under opbygning. Schema-version 53.
 - **Kladde og udgivelse:** en godkendt anmodning bliver én kladde, også hvis den gentages. Tilføjelse til en udgivet samling kræver et andet klik, og en anmodning er klar, når samlingen er udgivet med designs.
 - **"Dine produkter":** kortet "Samlinger" med "Anmod om samling" og status, og samlingens navn på samlede produkter.
 - **Gemte valg af en samling:** Twitch-panelet og merch-reklamen viser dens designs i stedet. Sub-rabatten ser bort fra den, og siden kan stadig gemmes.
+- **En samling ændret til et almindeligt produkt** kan sælges: ændringen registreres, og for ældre ændringer har fanen "Samlinger" knappen "Ikke længere en samling".
 - **Database:** migration 53 med tabellerne til anmodninger om samlinger.
 
 ## [2.3.0] - 2026-11-22

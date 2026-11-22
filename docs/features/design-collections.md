@@ -82,7 +82,7 @@ CCMerch Design-samling (testet mod formatet i 1.0.2, læst i koden) og WooCommer
 ## Known limitations
 - Integrationssuiten indlæser hverken WooCommerce eller pluginet, så rigtige produktgem, kurv, kasse og tema er ikke dækket.
 - Ændrer pluginet sit dataformat, skal læseren og skriveren rettes.
-- Er et produkt skiftet fra samling til enkelt produkt med designlisten i behold, regnes det stadig som samling.
+- Er en samling ændret til et enkelt produkt før 2.4.0, regnes den som samling, til administratoren trykker "Ikke længere en samling" på fanen. Senere ændringer registreres, mens pluginet er aktivt (`_merchboard_not_collection`).
 
 ## Future improvements
 Anmodning om fjernelse og opløsning. Det er fravalgt i fase 55.

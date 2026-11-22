@@ -83,6 +83,7 @@ final class CollectionRequestsPage {
 			'approved_waiting'                            => array( __( 'The request is approved. Nothing in the shop has changed: use "Add and hide now" when the designs may go into the published collection.', 'merchboard' ), 'success' ),
 			'added'                                       => array( __( 'The designs are added to the collection and no longer shown separately in the shop.', 'merchboard' ), 'success' ),
 			'checked'                                     => array( __( 'The requests are checked against the shop.', 'merchboard' ), 'success' ),
+			'released'                                    => array( __( 'The product is no longer a collection and can be sold again.', 'merchboard' ), 'success' ),
 			'declined'                                    => array( __( 'The request is declined. The creator sees your note.', 'merchboard' ), 'success' ),
 			CollectionRequestException::NOTE_REQUIRED     => array( __( 'Write a note to the creator before you decline the request.', 'merchboard' ), 'error' ),
 			CollectionRequestException::CREATOR_NOT_LIVE  => array( __( 'The creator is not active and live in the shop.', 'merchboard' ), 'error' ),
@@ -147,6 +148,7 @@ final class CollectionRequestsPage {
 		}
 
 		$this->render_warnings( $warnings );
+		$this->render_untyped();
 
 		if ( array() === $rows ) {
 			echo '<p>' . esc_html__( 'No requests are waiting.', 'merchboard' ) . '</p>';
@@ -286,6 +288,26 @@ final class CollectionRequestsPage {
 		}
 
 		echo '</ul></div>';
+	}
+
+	/**
+	 * Products that count as collections without having the type.
+	 */
+	private function render_untyped(): void {
+		$untyped = $this->collections->untyped();
+
+		if ( array() === $untyped ) {
+			return;
+		}
+
+		echo '<div class="notice notice-warning inline"><p>' . esc_html__( 'These products list designs but are not of the collection type, so they cannot be sold themselves. If you changed one into an ordinary product, say so here. If it lost its type while the collection plugin was off, give it the type back in WooCommerce instead: as an ordinary product it would be sold without a design and print files.', 'merchboard' ) . '</p>';
+
+		foreach ( $untyped as $id ) {
+			echo '<p>' . self::edit_link( $id, (string) get_post_field( 'post_title', $id, 'raw' ) ) . '</p>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- edit_link() escapes.
+			echo self::form( CollectionRequestActions::RELEASE, $id, __( 'No longer a collection', 'merchboard' ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- form() escapes.
+		}
+
+		echo '</div>';
 	}
 
 	/**
