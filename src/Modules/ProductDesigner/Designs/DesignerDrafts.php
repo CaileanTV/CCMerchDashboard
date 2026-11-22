@@ -19,6 +19,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
+use MerchBoard\Modules\ProductDesigner\Files\ClipartRules;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerImages;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
@@ -145,7 +146,7 @@ class DesignerDrafts {
 			array() === $sizes ? $base->sizes : $sizes,
 			$kind,
 			$this->profit_units( $version['profit_value'] ),
-			$validator->validate( self::known_sides( is_array( $design ) ? $design : array(), $base ), $base, $this->bases->provider( (int) $base->id )['stitches'] ?? array(), $colors )
+			$validator->validate( self::known_sides( is_array( $design ) ? $design : array(), $base ), $base, $this->bases->provider( (int) $base->id )['stitches'] ?? array(), $colors, ClipartRules::used( $version['design'] ) )
 		);
 
 		$fields['primary_image'] = DesignerImages::valid( $version['primary_image'] ?? null, $fields['design'], $colors ) ? $version['primary_image'] : null;
@@ -202,6 +203,8 @@ class DesignerDrafts {
 			self::refuse( DesignerException::DESIGN_PROFIT );
 		}
 
+		// What the saved draft and the live version have, stays (ADR-121 pkt. 7).
+		$kept   = ClipartRules::used( $draft['design'] ?? null, $this->products->live( $product )['design'] ?? null );
 		$colors = self::in_chosen_order( $input['colors'] ?? null, array_column( $base->colors, 'key' ) );
 		$fields = $this->fields(
 			$base,
@@ -211,7 +214,7 @@ class DesignerDrafts {
 			self::subset( $input['sizes'] ?? null, $base->sizes ),
 			$kind,
 			$value,
-			$validator->validate( $input['design'] ?? null, $base, $this->bases->provider( (int) $row['base_id'] )['stitches'] ?? array(), $colors )
+			$validator->validate( $input['design'] ?? null, $base, $this->bases->provider( (int) $row['base_id'] )['stitches'] ?? array(), $colors, $kept )
 		);
 
 		// The image the creator chose, kept only while it names a mockup of the design (ADR-096).

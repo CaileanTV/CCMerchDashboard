@@ -2696,6 +2696,11 @@ function saveError( reason: string | undefined ): string {
 				'A product with this name already exists. Add something to the name to tell them apart.',
 				'merchboard'
 			);
+		case 'design_clipart':
+			return __(
+				'A clipart in the design can no longer be chosen for this product. Remove it and try again.',
+				'merchboard'
+			);
 		case 'design_invalid':
 			return __(
 				'The design contains something that cannot be used (an unknown font, a removed image or too many elements).',

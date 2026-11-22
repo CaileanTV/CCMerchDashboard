@@ -79,12 +79,26 @@ final class DesignValidator {
 	public const MAX_DESIGNS = 8;
 
 	/**
+	 * The base product of the design being checked.
+	 *
+	 * @var int
+	 */
+	private int $base_id = 0;
+
+	/**
+	 * The images the stored design already has (ADR-121 pkt. 11).
+	 *
+	 * @var list<int>
+	 */
+	private array $kept = array();
+
+	/**
 	 * Constructor.
 	 *
-	 * @phpstan-param Closure(int): bool $asset_allowed
+	 * @phpstan-param Closure(int, int, list<int>): bool $asset_allowed
 	 * @phpstan-param list<string> $fonts
 	 *
-	 * @param Closure  $asset_allowed Whether the creator may use an asset (own upload or clipart).
+	 * @param Closure  $asset_allowed Whether the creator may use an asset (own upload or clipart): asset, base product, the images the stored design has.
 	 * @param string[] $fonts         Approved font families.
 	 */
 	public function __construct( private Closure $asset_allowed, private array $fonts ) {
@@ -95,15 +109,20 @@ final class DesignValidator {
 	 *
 	 * @phpstan-param list<string> $stitches
 	 * @phpstan-param list<string>|null $colors
+	 * @phpstan-param list<int> $kept
 	 *
 	 * @param mixed         $design   Decoded design.
 	 * @param BaseProduct   $base     The base product it is designed on.
 	 * @param string[]      $stitches The stitch colours the base product has; the first without a choice.
 	 * @param string[]|null $colors   The chosen colours (null: every colour of the base product).
+	 * @param int[]         $kept     The images the stored design already has; never taken from the request.
 	 * @return array{version: int, sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>, formats?: array{shared: array<string, array{width: int, height: int, objects: list<array<string, mixed>>, background?: string}>, links: array<string, string>, fit: array<string, string>}, stitch?: string, designs?: list<array{id: string, colors: list<string>, sides: array<string, list<array<string, mixed>>>, background?: array<string, string>, threads?: array<string, array<string, string>>, formats?: array{shared: array<string, array{width: int, height: int, objects: list<array<string, mixed>>, background?: string}>, links: array<string, string>, fit: array<string, string>}}>}
 	 * @throws DesignerException When the design is invalid (DESIGN_INVALID).
 	 */
-	public function validate( mixed $design, BaseProduct $base, array $stitches = array(), ?array $colors = null ): array {
+	public function validate( mixed $design, BaseProduct $base, array $stitches = array(), ?array $colors = null, array $kept = array() ): array {
+		$this->base_id = (int) $base->id;
+		$this->kept    = $kept;
+
 		if ( ! is_array( $design ) || self::VERSION !== ( $design['version'] ?? null ) ) {
 			self::refuse();
 		}
@@ -477,7 +496,7 @@ final class DesignValidator {
 	private function image( array $item ): array {
 		$asset = $item['asset'] ?? null;
 
-		if ( ! is_int( $asset ) || $asset < 1 || ! ( $this->asset_allowed )( $asset ) ) {
+		if ( ! is_int( $asset ) || $asset < 1 || ! ( $this->asset_allowed )( $asset, $this->base_id, $this->kept ) ) {
 			self::refuse();
 		}
 

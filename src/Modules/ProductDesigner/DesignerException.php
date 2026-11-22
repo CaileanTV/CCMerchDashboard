@@ -82,6 +82,8 @@ final class DesignerException extends RuntimeException {
 
 	public const DESIGN_INVALID = 'design_invalid';
 
+	public const DESIGN_CLIPART = 'design_clipart';
+
 	public const DESIGN_UNKNOWN = 'design_unknown';
 
 	public const DESIGN_NOT_DRAFT = 'design_not_draft';

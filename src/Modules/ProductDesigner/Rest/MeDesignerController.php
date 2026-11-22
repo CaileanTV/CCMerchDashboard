@@ -31,6 +31,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerImages;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
+use MerchBoard\Modules\ProductDesigner\Files\ClipartRules;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
@@ -280,7 +281,7 @@ final class MeDesignerController extends RestController {
 			self::ROUTE . '/assets/{id}',
 			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
 				$asset = $this->assets->find( (int) $request->get_param( 'id' ) );
-				$path  = null === $asset || ! CreatorUploads::may_see( $creator->id, $asset ) || ! $this->layer_visible( $creator, $asset ) ? null : $this->files->path( $asset['file'] );
+				$path  = null === $asset || ! $this->visible( $creator, $asset ) ? null : $this->files->path( $asset['file'] );
 				$body  = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A local file of at most 25 MB.
 
 				if ( null === $asset || false === $body ) {
@@ -300,6 +301,42 @@ final class MeDesignerController extends RestController {
 				return $response;
 			}
 		);
+	}
+
+	/**
+	 * Whether the creator may fetch an asset. A clipart (ADR-121 pkt. 11) while
+	 * it is offered on an active base product or is in one of the creator's
+	 * own designs.
+	 *
+	 * @param Creator                                            $creator The creator.
+	 * @param array{id: int, kind: string, creator_id: int|null} $asset   Asset record.
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	private function visible( Creator $creator, array $asset ): bool {
+		if ( ! ClipartRules::is_clipart( $asset ) ) {
+			return CreatorUploads::may_see( $creator->id, $asset ) && $this->layer_visible( $creator, $asset );
+		}
+
+		$clipart = $this->assets->find_clipart( $asset['id'] );
+
+		if ( null === $clipart || ! $clipart->readable() ) {
+			return false;
+		}
+
+		if ( null === $clipart->retired_at ) {
+			// A clipart from before is offered on every base product.
+			if ( DesignerAssetRepository::CLIPART === $clipart->kind ) {
+				return true;
+			}
+
+			foreach ( $this->bases->all() as $base ) {
+				if ( BaseProduct::ACTIVE === $base->status && $clipart->offered_on( (int) $base->id ) ) {
+					return true;
+				}
+			}
+		}
+
+		return in_array( $clipart->id, ClipartRules::used( ...$this->products->designs_naming( $creator->id, $clipart->id ) ), true );
 	}
 
 	/**
@@ -821,10 +858,21 @@ final class MeDesignerController extends RestController {
 	 */
 	private function validator( Creator $creator ): DesignValidator {
 		return new DesignValidator(
-			function ( int $asset_id ) use ( $creator ): bool {
+			function ( int $asset_id, int $base_id, array $kept ) use ( $creator ): bool {
 				$asset = $this->assets->find( $asset_id );
 
-				return null !== $asset && CreatorUploads::may_use( $creator->id, $asset );
+				if ( null === $asset || ! ClipartRules::is_clipart( $asset ) ) {
+					return null !== $asset && CreatorUploads::may_use( $creator->id, $asset );
+				}
+
+				$clipart = $this->assets->find_clipart( $asset_id );
+
+				if ( null === $clipart || ! ClipartRules::may_use( $clipart, $base_id, $kept ) ) {
+					// Its own reason: the image is there, it is only not to be chosen here.
+					throw new DesignerException( DesignerException::DESIGN_CLIPART );
+				}
+
+				return true;
 			},
 			array_values( array_map( static fn( AlertFont $font ): string => $font->family, $this->fonts->approved() ) )
 		);

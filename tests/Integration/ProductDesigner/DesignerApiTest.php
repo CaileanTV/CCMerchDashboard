@@ -30,6 +30,8 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
+use MerchBoardModulesProductDesignerFilesClipartDefinition;
+use MerchBoard\Modules\ProductDesigner\Files\ClipartDefinition;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartLibrary;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
@@ -707,6 +709,135 @@ final class DesignerApiTest extends IntegrationTestCase {
 	 */
 	private function refusal( WP_REST_Response $response ): array {
 		return array( $response->get_status(), $response->get_data()['data']['reason'] ?? null );
+	}
+
+	public function test_a_removed_clipart_stays_in_designs_that_have_it_and_in_their_copies(): void {
+		wp_set_current_user( $this->user );
+		$product = $this->product_with( $this->clipart );
+		$route   = '/merchboard/v1/me/designer/products/' . $product;
+		$file    = '/merchboard/v1/me/designer/assets/' . $this->clipart;
+
+		self::assertTrue( ( new DesignerAssetRepository( $this->wpdb ) )->retire( $this->clipart ) );
+
+		self::assertSame( 200, $this->call( 'PUT', $route, $this->draft( array( self::image( $this->clipart ), self::rect() ) ) )->get_status(), 'The design keeps it.' );
+		self::assertSame( 200, $this->call( 'GET', $file )->get_status(), 'It is in the creator\'s own design.' );
+
+		$copied = $this->call( 'POST', $route . '/copy' );
+		self::assertSame( 201, $copied->get_status(), 'A copy keeps it.' );
+
+		$copy = '/merchboard/v1/me/designer/products/' . (int) $copied->get_data()['id'];
+		self::assertSame( 200, $this->call( 'PUT', $copy, $this->titled( 'Copied tee', $this->clipart ) )->get_status() );
+
+		$new = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		self::assertSame( array( 400, 'design_clipart' ), $this->refusal( $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $new, $this->titled( 'New tee', $this->clipart ) ) ), 'Not for a new design, whatever the request says.' );
+
+		self::assertSame( 200, $this->call( 'PUT', $route, $this->draft( array( self::rect() ) ) )->get_status() );
+		self::assertSame( array( 400, 'design_clipart' ), $this->refusal( $this->call( 'PUT', $route, $this->draft( array( self::image( $this->clipart ) ) ) ) ), 'Taken out and saved, it does not come back.' );
+
+		wp_set_current_user( $this->other );
+		self::assertSame( 404, $this->call( 'GET', $file )->get_status(), 'Not offered and not in this creator\'s designs.' );
+	}
+
+	public function test_an_artwork_is_only_for_its_base_products_and_designs_that_have_it_keep_it(): void {
+		$assets  = new DesignerAssetRepository( $this->wpdb );
+		$artwork = $this->artwork( array( $this->base ) );
+		$foreign = $this->artwork( array( $this->base + 100 ) );
+
+		wp_set_current_user( $this->user );
+		$product = $this->product_with( $artwork );
+		$route   = '/merchboard/v1/me/designer/products/' . $product;
+
+		self::assertSame( array( 400, 'design_clipart' ), $this->refusal( $this->call( 'PUT', $route, $this->draft( array( self::image( $artwork ), self::image( $foreign ) ) ) ) ), 'Not chosen for this base product.' );
+		self::assertSame( 200, $this->call( 'GET', '/merchboard/v1/me/designer/assets/' . $artwork )->get_status() );
+		self::assertSame( 404, $this->call( 'GET', '/merchboard/v1/me/designer/assets/' . $foreign )->get_status(), 'Offered on no active base product.' );
+
+		$read = $assets->find_clipart( $artwork );
+		self::assertNotNull( $read );
+		$assets->set_bases( $read, array() );
+
+		self::assertSame( 200, $this->call( 'PUT', $route, $this->draft( array( self::image( $artwork ), self::rect() ) ) )->get_status(), 'Taken off the list, it works as removed.' );
+		self::assertSame( 201, $this->call( 'POST', $route . '/copy' )->get_status() );
+
+		wp_set_current_user( $this->other );
+		$new = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		self::assertSame( array( 400, 'design_clipart' ), $this->refusal( $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $new, $this->titled( 'Other tee', $artwork ) ) ), 'One creator\'s design does not keep it for another.' );
+	}
+
+	public function test_what_the_live_version_has_is_kept_and_only_cliparts_are(): void {
+		wp_set_current_user( $this->user );
+		$with    = $this->product_with( $this->clipart );
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		$route   = '/merchboard/v1/me/designer/products/' . $product;
+
+		( new DesignerAssetRepository( $this->wpdb ) )->retire( $this->clipart );
+		self::assertSame( array( 400, 'design_clipart' ), $this->refusal( $this->call( 'PUT', $route, $this->titled( 'Live tee', $this->clipart ) ) ) );
+
+		// The other product's version stands in for an approved one.
+		$products = new DesignerProductRepository( $this->wpdb );
+		$version  = (int) ( $products->draft( $with )['id'] ?? 0 );
+		$this->wpdb->update( $this->table( Tables::DESIGNER_PRODUCTS ), array( 'live_version_id' => $version ), array( 'id' => $product ) );
+		self::assertSame( 200, $this->call( 'PUT', $route, $this->titled( 'Live tee', $this->clipart ) )->get_status(), 'The live version has it.' );
+
+		// A template layer is never kept, also when a stored design names it.
+		$layer = (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT id FROM %i WHERE kind = %s', $this->table( Tables::DESIGNER_ASSETS ), 'layer' ) );
+		$named = (string) wp_json_encode( $this->draft( array( self::image( $layer ) ) )['design'] );
+		$this->wpdb->update( $this->table( Tables::DESIGNER_VERSIONS ), array( 'design' => $named ), array( 'id' => (int) ( $products->draft( $product )['id'] ?? 0 ) ) );
+		self::assertSame( array( 400, 'design_invalid' ), $this->refusal( $this->call( 'PUT', $route, $this->titled( 'Live tee', $layer ) ) ) );
+	}
+
+	/**
+	 * A draft of the current creator with one image.
+	 *
+	 * @param int $asset The image.
+	 * @return int The product.
+	 */
+	private function product_with( int $asset ): int {
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		self::assertSame( 200, $this->call( 'PUT', '/merchboard/v1/me/designer/products/' . $product, $this->draft( array( self::image( $asset ) ) ) )->get_status() );
+
+		return $product;
+	}
+
+	/**
+	 * A draft body with one image and a name of its own.
+	 *
+	 * @param string $title The creator's addition to the name.
+	 * @param int    $asset The image.
+	 * @return array<string, mixed>
+	 */
+	private function titled( string $title, int $asset ): array {
+		$body          = $this->draft( array( self::image( $asset ) ) );
+		$body['title'] = $title;
+
+		return $body;
+	}
+
+	/**
+	 * A flat artwork with the file of the test's clipart.
+	 *
+	 * @phpstan-param list<int> $bases
+	 *
+	 * @param int[] $bases The base products it is for.
+	 * @return int The asset.
+	 */
+	private function artwork( array $bases ): int {
+		$assets = new DesignerAssetRepository( $this->wpdb );
+		$stored = $assets->find( $this->clipart );
+		self::assertNotNull( $stored );
+
+		$definition = ClipartDefinition::from_data(
+			array(
+				'bases'  => $bases,
+				'parts'  => array(),
+				'steps'  => array(),
+				'locked' => false,
+			),
+			$stored['width'],
+			$stored['height']
+		);
+		self::assertNotNull( $definition );
+
+		return $assets->insert_artwork( 'Bottle', $stored, $definition );
 	}
 
 	/**

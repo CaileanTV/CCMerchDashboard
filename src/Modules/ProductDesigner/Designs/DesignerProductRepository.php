@@ -427,6 +427,27 @@ class DesignerProductRepository {
 	}
 
 	/**
+	 * The designs of a creator that name an asset, in any version of a product
+	 * not deleted: the search is by text, so the caller reads each.
+	 *
+	 * @param int $creator_id Creator.
+	 * @param int $asset_id   Asset.
+	 * @return list<string>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	public function designs_naming( int $creator_id, int $asset_id ): array {
+		$wpdb = $this->wpdb;
+		$like = '%' . $wpdb->esc_like( '"asset":' . $asset_id ) . '%';
+		$rows = $wpdb->get_col( $wpdb->prepare( 'SELECT v.design FROM %i v JOIN %i p ON p.id = v.design_product_id WHERE p.creator_id = %d AND p.status NOT IN ( %s, %s ) AND v.design LIKE %s', $this->table( Tables::DESIGNER_VERSIONS ), $this->table( Tables::DESIGNER_PRODUCTS ), $creator_id, self::DELETED, self::PURGED, $like ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- The designer's own tables; only for a clipart that is not a library one for all.
+
+		if ( '' !== $wpdb->last_error ) {
+			throw new DatabaseException( 'Could not read the designs that use a file.' );
+		}
+
+		return array_values( array_filter( $rows, 'is_string' ) );
+	}
+
+	/**
 	 * The live version of the designer product behind a WooCommerce product, or null.
 	 *
 	 * @param int $wc_product_id WooCommerce product.
