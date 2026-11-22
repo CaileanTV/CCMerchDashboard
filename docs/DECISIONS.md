@@ -7215,6 +7215,12 @@ ADR-082, ADR-115, ADR-117, ADR-118
 ## Status
 Accepteret af projektejeren 2026-11-22 (planen godkendt). Fase 55, version 2.4.0. Udvider ADR-083, ADR-107, ADR-110, ADR-112 og ADR-113. Testet kun mod vores egen efterligning af pluginets data, indtil projektejeren har testet med pluginet på stg.
 
+**Statusnote 2026-11-22 (projektejerens valg; udvider pkt. 6 og ændrer "gaven gælder ét produkt" i ADR-107 og ADR-110 for samlinger):**
+- **Frit valg:** har alle samlingens designs samme creator og samme kundepris og grundpris, kan giveren give frit valg på hele samlingen, både som gave og som giveaway. Så vælger vinderen design. Ellers vælger giveren ét design.
+- **Samme pris gælder alle varianter:** en 2XL må koste mere end en M, men skal koste det samme i alle designs. Grundprisen skal være ens, fordi en gaves profit bogføres ved købet, og en giveaway koster creatoren grundprisen.
+- **Låst ved købet:** vinderen kan vælge mellem de designs, der var i samlingen ved købet, undtagen dem, der siden har fået en anden pris eller ikke sælges mere. Er ingen tilbage med samme pris, gælder koden designs fra købet, op til det betalte beløb, så vinderen aldrig står uden gave.
+- **Samlingen er stadig aldrig en varelinje:** købet bogføres på ét af designs' produkter, og de låste designs og priser gemmes med gaven.
+
 ## Context
 Creators skal kunne bede om at få designs samlet med virksomhedens plugin "CCMerch Design-samling" (1.0.2). Projektejeren gav 2026-11-22 lov til at læse netop den mappe (`CCMerch-Elementor/ccmerch-design-samling`, read-only). Intet er kopieret, kørt eller ændret.
 

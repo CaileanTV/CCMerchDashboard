@@ -1609,6 +1609,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **Godkendelse:** opretter en kladde, som admin udgiver. Tilføjelse til en udgivet samling tager to klik.
 - **Twitch-panelet og merch-reklamen** viser hvert design.
 - **Gave og giveaway** virker på samlede produkter. Giveren vælger designet.
+- **Frit valg:** har alle designs samme creator, kundepris og grundpris i alle varianter, kan giveren give frit valg på hele samlingen. Vinderen vælger så mellem de designs, der var i den ved købet.
 
 **Trin:**
 - **55.1 ADR og læser** ✅ (bb38eb2): ADR-120 og `DesignCollections` med tests.
@@ -1619,6 +1620,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **55.6 Kladde og udgivelse** ✅ (849c499): oprettelse, tilføjelse og registrering af, at samlingen er klar.
 - **55.7 REST, fanen på "Forslag" og notifikationer** ✅ (6c40c81).
 - **55.8 Dashboard** ✅ (1f16c43): "Anmod om samling" og status under "Dine produkter".
+- **55.8a Frit valg på en samling** 🔄 (ønsket 2026-11-22): prisreglen, låsning ved købet (schema 54), gaveboks, giveaway-vælger, kode og indløsning.
 - **55.9 Afslutning** 🔄: oversættelser, docs, review og testpakke 2.4.0.
 - **55.10 Projektejerens test på stg** med det rigtige plugin.
 

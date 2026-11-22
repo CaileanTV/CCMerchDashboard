@@ -11,6 +11,7 @@ I gang (fase 55, version 2.4.0). Testet automatisk mod vores egen efterligning a
 - **En ny samling:** et navn og 2–50 af creatorens udgivne, synlige produkter.
 - **En tilføjelse:** 1–50 produkter til en samling, hvor alle designs er creatorens. Samlinger lavet i hånden tæller med.
 - **Besked:** når samlingen er klar, eller anmodningen er afvist (klokke og mail).
+- **Frit valg (trin 55.8a, under opbygning):** koster alle designs det samme (samme creator, kundepris og grundpris i alle varianter), kan giveren give hele samlingen, og vinderen vælger design.
 - **Giveaway:** samlede designs står under samlingens navn. Intet er forvalgt.
 - **Kunden:**
   - en samlings gaveboks kræver valg af design;
