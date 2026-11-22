@@ -209,8 +209,9 @@ final class MeGiveawaysController extends RestController {
 	}
 
 	/**
-	 * `POST /me/community/giveaways`: `product_id`, `mode` (`bot`|`manual`),
-	 * `funding` (`balance`|`shop`), `window` (bot).
+	 * `POST /me/community/giveaways`: `product_id`, or `collection_id` for
+	 * free choice (ADR-120), never both; `mode` (`bot`|`manual`), `funding`
+	 * (`balance`|`shop`), `window` (bot).
 	 *
 	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
 	 *
@@ -228,13 +229,18 @@ final class MeGiveawaysController extends RestController {
 
 				$body    = (array) $request->get_json_params();
 				$product = $body['product_id'] ?? null;
+				$free    = $body['collection_id'] ?? null;
 				$mode    = $body['mode'] ?? null;
 				$funding = $body['funding'] ?? null;
 				$window  = $body['window'] ?? GiftingSettings::DEFAULT_WINDOW;
 				$fields  = array();
 
-				if ( ! is_int( $product ) || $product < 1 ) {
-					$fields['product_id'] = 'required';
+				if ( null === $free ) {
+					if ( ! is_int( $product ) || $product < 1 ) {
+						$fields['product_id'] = 'required';
+					}
+				} elseif ( null !== $product || ! is_int( $free ) || $free < 1 ) {
+					$fields['collection_id'] = 'invalid';
 				}
 
 				if ( ! in_array( $mode, array( Giveaway::BOT, Giveaway::MANUAL ), true ) ) {
@@ -254,7 +260,7 @@ final class MeGiveawaysController extends RestController {
 				}
 
 				try {
-					$giveaway = $this->giveaways->create( $creator->id, (int) $product, (string) $mode, (string) $funding, (int) $window );
+					$giveaway = $this->giveaways->create( $creator->id, (int) $product, (string) $mode, (string) $funding, (int) $window, null === $free ? null : (int) $free );
 				} catch ( GiveawayException $e ) {
 					return self::refused( $e );
 				} catch ( PayoutException ) {

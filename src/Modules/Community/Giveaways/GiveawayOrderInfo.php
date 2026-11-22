@@ -62,6 +62,11 @@ final class GiveawayOrderInfo {
 		echo esc_html( sprintf( __( 'Giveaway #%d: the creator pays the base price and 50 kr. shipping for a product to give away. Not a Twitch gift from a viewer; the sale gives the creator no profit.', 'merchboard' ), $id ) );
 
 		if ( null !== $giveaway ) {
+			if ( null !== $giveaway->free_choice ) {
+				/* translators: %s: the collection's name. */
+				echo '<br>' . esc_html( sprintf( __( 'Free choice in %s: the winner chooses the design. The order line is the design the purchase is booked on.', 'merchboard' ), $giveaway->free_choice->name ) );
+			}
+
 			echo '<br>' . esc_html( self::status( $giveaway ) );
 		}
 

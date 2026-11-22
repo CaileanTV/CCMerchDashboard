@@ -17,6 +17,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Community\Gifting\FreeChoiceDesigns;
 use MerchBoard\Modules\Community\Gifting\Gift;
 use MerchBoard\Modules\Community\Gifting\GiftCodes;
 use MerchBoard\Modules\Community\Gifting\GiftDraws;
@@ -43,6 +44,9 @@ defined( 'ABSPATH' ) || exit;
  *   cancelled giveaway costs nothing.
  * - **In the shop:** paid at once in a checkout of the base price
  *   (GiveawayCheckout); the giveaway is ready when the order is paid.
+ * - **Free choice (ADR-120):** a collection whose designs cost the same is
+ *   given with its designs and prices locked when it is created; the
+ *   giveaway's product is the design it is booked on.
  * - **Ready:** its gift (a row of `merchboard_gifts`) waits for "Start in
  *   the chat" (bot), or is an open link for 30 days (manual).
  *
@@ -132,6 +136,7 @@ final class Giveaways {
 	 * @param Closure                    $product_name A product's name.
 	 * @param Closure                    $language     A creator's chat language.
 	 * @param Logger                     $logger       Technical log.
+	 * @param FreeChoiceDesigns|null     $free         Free choice in a collection (ADR-120); null offers none.
 	 */
 	public function __construct(
 		private GiveawayRepository $giveaways,
@@ -148,7 +153,8 @@ final class Giveaways {
 		Closure $creator_name,
 		Closure $product_name,
 		Closure $language,
-		private Logger $logger
+		private Logger $logger,
+		private ?FreeChoiceDesigns $free = null
 	) {
 		$this->enqueue      = $enqueue;
 		$this->clock        = $clock;
@@ -173,22 +179,36 @@ final class Giveaways {
 	 * Creates a giveaway: from the balance (set aside now) or to be paid in
 	 * the shop.
 	 *
-	 * @param int    $creator_id Creator.
-	 * @param int    $product_id Parent product.
-	 * @param string $mode       `bot` or `manual`.
-	 * @param string $funding    `balance` or `shop`.
-	 * @param int    $window     The `!enter` window of a bot giveaway, in seconds.
+	 * @param int      $creator_id    Creator.
+	 * @param int      $product_id    Parent product; not read with a collection.
+	 * @param string   $mode          `bot` or `manual`.
+	 * @param string   $funding       `balance` or `shop`.
+	 * @param int      $window        The `!enter` window of a bot giveaway, in seconds.
+	 * @param int|null $collection_id The collection to give with free choice (ADR-120).
 	 * @throws GiveawayException When it is refused.
 	 * @throws PayoutException When the creator's payout lock is busy or the creator is gone.
 	 * @throws DatabaseException When it cannot be read or stored.
 	 */
-	public function create( int $creator_id, int $product_id, string $mode, string $funding, int $window ): Giveaway {
+	public function create( int $creator_id, int $product_id, string $mode, string $funding, int $window, ?int $collection_id = null ): Giveaway {
 		if ( ! Settings::giveaways_enabled() ) {
 			self::refuse( GiveawayException::DISABLED );
 		}
 
 		if ( $this->giveaways->count_open( $creator_id ) >= self::MAX_OPEN ) {
 			self::refuse( GiveawayException::LIMIT );
+		}
+
+		$lock = null;
+
+		if ( null !== $collection_id ) {
+			$offer = $this->free?->offer( $collection_id );
+
+			if ( null === $offer || $creator_id !== $offer['creator'] ) {
+				self::refuse( GiveawayException::PRODUCT );
+			}
+
+			$lock       = $offer['lock'];
+			$product_id = $offer['product_id'];
 		}
 
 		$quote = ( $this->quote )( $product_id, $creator_id );
@@ -202,7 +222,7 @@ final class Giveaways {
 		$window   = max( GiftingSettings::MIN_WINDOW, min( GiftingSettings::MAX_WINDOW, $window ) );
 		$giveaway = $this->payouts->with_creator_lock(
 			$creator_id,
-			function () use ( $creator_id, $product_id, $mode, $funding, $window, $quote ): Giveaway {
+			function () use ( $creator_id, $product_id, $mode, $funding, $window, $quote, $lock ): Giveaway {
 				// Under the lock, so two giveaways or a payout request cannot use the same money.
 				if ( Giveaway::BALANCE === $funding ) {
 					$available = $this->balances->in_currency( $creator_id, $quote['currency'] )->available_units();
@@ -212,7 +232,7 @@ final class Giveaways {
 					}
 				}
 
-				return $this->giveaways->create( $creator_id, $product_id, $mode, $funding, $quote['unit_price'], $quote['shipping'], $quote['cost'], $quote['currency'], $window );
+				return $this->giveaways->create( $creator_id, $product_id, $mode, $funding, $quote['unit_price'], $quote['shipping'], $quote['cost'], $quote['currency'], $window, $lock );
 			}
 		);
 
@@ -226,7 +246,7 @@ final class Giveaways {
 				'funding'     => $funding,
 				'cost'        => $giveaway->cost,
 				'currency'    => $giveaway->currency,
-			)
+			) + ( null === $lock ? array() : array( 'collection_id' => $lock->collection_id ) )
 		);
 
 		return $this->activate( $giveaway );
@@ -253,7 +273,8 @@ final class Giveaways {
 			$giveaway->unit_price,
 			$giveaway->shipping_credit,
 			$giveaway->currency,
-			$manual ? gmdate( 'Y-m-d H:i:s', time() + GiftCodes::GIVEAWAY_DAYS * DAY_IN_SECONDS ) : null
+			$manual ? gmdate( 'Y-m-d H:i:s', time() + GiftCodes::GIVEAWAY_DAYS * DAY_IN_SECONDS ) : null,
+			$giveaway->free_choice
 		);
 
 		$this->giveaways->attach( $giveaway->id, array( 'gift_id' => $gift->id ) );

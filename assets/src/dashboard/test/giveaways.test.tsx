@@ -77,7 +77,7 @@ const STATE = {
 			image: '',
 			cost: '150.0000',
 			currency: 'DKK',
-			collection: { id: 90, name: 'Tee' },
+			collection: { id: 90, name: 'Tee', free_choice_cost: null },
 		},
 	],
 	available: '500.0000',
@@ -322,6 +322,47 @@ describe( 'Giveaways (ADR-110)', () => {
 		expect(
 			requests.find( ( request ) => request.method === 'POST' )?.data
 		).toMatchObject( { product_id: 79 } );
+	} );
+
+	it( 'gives a collection away with free choice as the collection, not as a product', async () => {
+		const state = {
+			...STATE,
+			products: STATE.products.map( ( item ) =>
+				item.collection === null
+					? item
+					: {
+							...item,
+							collection: {
+								...item.collection,
+								free_choice_cost: '150.0000',
+							},
+						}
+			),
+		};
+		const { container, requests } = await show( {
+			[ 'GET ' + PATH ]: () => response( 200, state ),
+			[ 'POST ' + PATH ]: () => response( 201, { ...state, created: 8 } ),
+		} );
+		const group = container.querySelector( 'optgroup' );
+
+		expect( group?.querySelector( 'option' )?.value ).toBe( '90' );
+		expect(
+			( container.querySelector( 'select' ) as HTMLSelectElement ).value
+		).toBe( '0' );
+
+		await choose( container, '90' );
+		expect(
+			container.querySelector( '.merchboard-giveaway__chosen' )
+				?.textContent
+		).toBe( 'You give away: Tee (free choice of design)' );
+
+		await submit( container );
+		const data = requests.find(
+			( request ) => request.method === 'POST'
+		)?.data;
+
+		expect( data ).toMatchObject( { collection_id: 90 } );
+		expect( data ).not.toHaveProperty( 'product_id' );
 	} );
 
 	it( 'starts a bot giveaway in the chat and cancels one', async () => {

@@ -16,8 +16,10 @@ use MerchBoard\Core\Audit\AuditTrail;
 use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Access\CreatorContext;
 use MerchBoard\Modules\Alerts\Chatbot\ChatbotChannelRepository;
 use MerchBoard\Modules\Alerts\Chatbot\ChatPlatform;
+use MerchBoard\Modules\Community\Gifting\FreeChoiceDesigns;
 use MerchBoard\Modules\Community\Gifting\FreeChoiceLock;
 use MerchBoard\Modules\Community\Gifting\Gift;
 use MerchBoard\Modules\Community\Gifting\GiftCodes;
@@ -28,8 +30,10 @@ use MerchBoard\Modules\Community\Giveaways\Giveaway;
 use MerchBoard\Modules\Community\Giveaways\GiveawayException;
 use MerchBoard\Modules\Community\Giveaways\GiveawayRepository;
 use MerchBoard\Modules\Community\Giveaways\Giveaways;
+use MerchBoard\Modules\Community\Rest\MeGiveawaysController;
 use MerchBoard\Modules\Creators\CreatorMetaStore;
 use MerchBoard\Modules\Creators\CreatorRepository;
+use MerchBoard\Modules\Creators\CreatorService;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutBalances;
 use MerchBoard\Modules\WooCommerce\Payouts\PayoutRepository;
@@ -38,6 +42,8 @@ use MerchBoard\Modules\WooCommerce\Pricing\LedgerCreatorPayouts;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Unit\Support\RecordingLogger;
+use WP_Error;
+use WP_REST_Request;
 
 /**
  * The price is a fixed quote (WooCommerce is not loaded here): a product
@@ -142,7 +148,16 @@ final class GiveawaysTest extends IntegrationTestCase {
 			},
 			new RecordingLogger()
 		);
-		$this->giveaways   = new Giveaways(
+		// Collection 90 can be given with free choice; it is booked on product 77.
+		$free = $this->createStub( FreeChoiceDesigns::class );
+		$free->method( 'offer' )->willReturnCallback(
+			fn( int $collection_id ): ?array => 90 === $collection_id ? array(
+				'lock'       => $this->lock(),
+				'creator'    => $this->nova,
+				'product_id' => 77,
+			) : null
+		);
+		$this->giveaways = new Giveaways(
 			$this->repository,
 			$this->gifts,
 			$this->draws,
@@ -164,7 +179,8 @@ final class GiveawaysTest extends IntegrationTestCase {
 			static fn(): string => 'Nova',
 			static fn(): string => 'Stream tee',
 			static fn(): string => 'da',
-			new RecordingLogger()
+			new RecordingLogger(),
+			$free
 		);
 		$this->giveaways->register();
 		$this->listener = function ( string $type, int $creator_id ): void {
@@ -188,7 +204,74 @@ final class GiveawaysTest extends IntegrationTestCase {
 		parent::tearDown();
 	}
 
-	public function test_free_choice_is_stored_with_a_gift_and_a_giveaway_exactly_as_it_was_locked(): void {
+	public function test_a_giveaway_with_free_choice_is_paid_like_its_design_and_passes_the_lock_to_its_gift(): void {
+		$giveaway = $this->giveaways->create( $this->nova, 0, Giveaway::MANUAL, Giveaway::BALANCE, 60, 90 );
+
+		self::assertSame( array( 77, '199.0000', '249.0000' ), array( $giveaway->product_id, $giveaway->cost, $giveaway->unit_price ), 'Booked on the design, never the collection.' );
+		self::assertEquals( $this->lock(), $giveaway->free_choice );
+		self::assertEquals( $this->lock(), $this->gifts->find_by_giveaway( $giveaway->id )?->free_choice );
+		self::assertSame( SalesAmount::parse( '301' ), $this->available() );
+
+		// Paid in the shop: the gift made when the order is paid has the same lock.
+		$bought = $this->giveaways->create( $this->nova, 0, Giveaway::BOT, Giveaway::SHOP, 60, 90 );
+		$this->giveaways->paid( $bought->id, 8803 );
+
+		self::assertEquals( $this->lock(), $this->gifts->find_by_giveaway( $bought->id )?->free_choice );
+	}
+
+	public function test_free_choice_is_refused_without_an_offer_and_to_another_creator(): void {
+		foreach ( array( array( $this->nova, 91 ), array( $this->orion, 90 ) ) as list( $creator, $collection ) ) {
+			try {
+				// A product that could be given does not stand in for the collection.
+				$this->giveaways->create( $creator, 77, Giveaway::MANUAL, Giveaway::SHOP, 60, $collection );
+				self::fail( 'It cannot be given with free choice.' );
+			} catch ( GiveawayException $e ) {
+				self::assertSame( GiveawayException::PRODUCT, $e->getMessage() );
+			}
+		}
+
+		self::assertSame( 0, $this->repository->count_open( $this->nova ) + $this->repository->count_open( $this->orion ) );
+	}
+
+	public function test_the_api_takes_a_product_or_a_collection_and_never_both(): void {
+		$user = $this->create_user( 'lyra' );
+		wp_set_current_user( 1 );
+		$this->service( CreatorService::class )->create( 'Lyra', CreatorStatus::Active, $user );
+		wp_set_current_user( $user );
+
+		$controller = new MeGiveawaysController(
+			$this->service( CreatorContext::class ),
+			$this->giveaways,
+			static fn(): array => array(),
+			static fn(): ?string => null,
+			static fn(): ?string => null,
+			static fn(): bool => false,
+			static fn(): ?bool => null,
+			static fn(): string => 'Stream tee',
+			static fn( string $token ): string => $token,
+			new RecordingLogger()
+		);
+		$post       = static function ( array $body ) use ( $controller ): WP_Error {
+			$request = new WP_REST_Request( 'POST', '/merchboard/v1' . MeGiveawaysController::ROUTE );
+			$request->set_header( 'Content-Type', 'application/json' );
+			$request->set_body( (string) wp_json_encode( $body + array( 'mode' => 'manual', 'funding' => 'shop' ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+			$answer = $controller->create( $request );
+			self::assertInstanceOf( WP_Error::class, $answer );
+
+			return $answer;
+		};
+
+		foreach ( array( array( 'product_id' => 77, 'collection_id' => 90 ), array( 'collection_id' => '90' ), array( 'collection_id' => 0 ) ) as $body ) { // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+			self::assertSame( 'invalid', $post( $body )->get_error_data()['fields']['collection_id'] ?? null );
+		}
+
+		self::assertSame( 'merchboard_giveaway_product', $post( array( 'collection_id' => 90 ) )->get_error_code(), 'Another creator\'s collection.' );
+	}
+
+	/**
+	 * A lock with text that SQL and JSON must keep.
+	 */
+	private function lock(): FreeChoiceLock {
 		$design = array(
 			'creator'  => $this->nova,
 			'variants' => array(
@@ -199,8 +282,11 @@ final class GiveawaysTest extends IntegrationTestCase {
 				),
 			),
 		);
-		$lock   = new FreeChoiceLock( 90, "Nova's 100% \"Tee\" %s \\ æøå 🎁", array( 77 => $design, 78 => $design ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		return new FreeChoiceLock( 90, "Nova's 100% \"Tee\" %s \\ æøå 🎁", array( 77 => $design, 78 => $design ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+	}
 
+	public function test_free_choice_is_stored_with_a_gift_and_a_giveaway_exactly_as_it_was_locked(): void {
+		$lock     = $this->lock();
 		$giveaway = $this->repository->create( $this->nova, 77, Giveaway::MANUAL, Giveaway::SHOP, '249.0000', '50.0000', '199.0000', 'DKK', 60, $lock );
 		$bought   = $this->gifts->create( $this->nova, 8801, 77, '249.0000', '50.0000', 'DKK', null, 1, $lock );
 		$given    = $this->gifts->create_for_giveaway( $this->nova, $giveaway->id, 77, '249.0000', '50.0000', 'DKK', null, $lock );

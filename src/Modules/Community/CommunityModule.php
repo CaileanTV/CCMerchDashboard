@@ -609,7 +609,8 @@ final class CommunityModule implements Module {
 				static fn( int $creator_id ): string => $c->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '',
 				self::product_name( ... ),
 				static fn( int $creator_id ): string => $c->get( GiftingSettingsRepository::class )->find( $creator_id )->language,
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				$c->get( FreeChoiceDesigns::class )
 			)
 		);
 		$container->set(
@@ -653,11 +654,12 @@ final class CommunityModule implements Module {
 	/**
 	 * The creator's products that can be given away, with their price
 	 * (ADR-110) and the collection that sells them (ADR-120): all of them, so
-	 * every design can be chosen.
+	 * every design can be chosen. A collection that can be given with free
+	 * choice also has what that costs.
 	 *
 	 * @param Container $c          Container.
 	 * @param int       $creator_id Creator.
-	 * @return list<array{id: int, name: string, image: string, cost: string, currency: string, collection: array{id: int, name: string}|null}>
+	 * @return list<array{id: int, name: string, image: string, cost: string, currency: string, collection: array{id: int, name: string, free_choice_cost: string|null}|null}>
 	 * @throws DatabaseException When the pricing data cannot be read.
 	 */
 	private static function giveaway_products( Container $c, int $creator_id ): array {
@@ -672,24 +674,55 @@ final class CommunityModule implements Module {
 		}
 
 		$collections = $c->get( DesignCollections::class );
+		$free        = array();
 		_prime_post_caches( $ids, true, true );
 
 		foreach ( array_unique( $ids ) as $product_id ) {
 			$quote = $c->get( GiveawayCost::class )->quote( $product_id, $creator_id );
 
 			if ( null !== $quote ) {
+				$collection = self::collection_data( $collections, $product_id );
+
+				if ( null !== $collection ) {
+					// Once per collection: every design's prices are read.
+					if ( ! array_key_exists( $collection['id'], $free ) ) {
+						$free[ $collection['id'] ] = self::free_choice_cost( $c, $collection['id'], $creator_id );
+					}
+
+					$collection['free_choice_cost'] = $free[ $collection['id'] ];
+				}
+
 				$products[] = array(
 					'id'         => $product_id,
 					'name'       => self::product_name( $product_id ),
 					'image'      => (string) get_the_post_thumbnail_url( $product_id, 'thumbnail' ),
 					'cost'       => $quote['cost'],
 					'currency'   => $quote['currency'],
-					'collection' => self::collection_data( $collections, $product_id ),
+					'collection' => $collection,
 				);
 			}
 		}
 
 		return $products;
+	}
+
+	/**
+	 * What giving a collection away with free choice costs its creator, or
+	 * null when it cannot be given so (ADR-120).
+	 *
+	 * @param Container $c             Container.
+	 * @param int       $collection_id Collection.
+	 * @param int       $creator_id    Creator.
+	 * @throws DatabaseException When the pricing data cannot be read.
+	 */
+	private static function free_choice_cost( Container $c, int $collection_id, int $creator_id ): ?string {
+		$offer = $c->get( FreeChoiceDesigns::class )->offer( $collection_id );
+
+		if ( null === $offer || $creator_id !== $offer['creator'] ) {
+			return null;
+		}
+
+		return $c->get( GiveawayCost::class )->quote( $offer['product_id'], $creator_id )['cost'] ?? null;
 	}
 
 	/**

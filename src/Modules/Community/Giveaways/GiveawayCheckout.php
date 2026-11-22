@@ -288,10 +288,19 @@ final class GiveawayCheckout {
 			return $data;
 		}
 
+		try {
+			$lock = $this->giveaways->find( $item[ self::ITEM_KEY ] )?->free_choice;
+		} catch ( DatabaseException ) {
+			$lock = null;
+		}
+
 		return array(
 			array(
 				'key'   => __( 'Giveaway', 'merchboard' ),
-				'value' => __( 'Your own giveaway: you pay the base price and 50 kr. shipping. The winner chooses size and colour.', 'merchboard' ),
+				'value' => null === $lock
+					? __( 'Your own giveaway: you pay the base price and 50 kr. shipping. The winner chooses size and colour.', 'merchboard' )
+					/* translators: %s: the collection's name. */
+					: sprintf( __( 'Your own giveaway with free choice in %s: you pay the base price and 50 kr. shipping. The winner chooses design, size and colour.', 'merchboard' ), $lock->name ),
 			),
 		);
 	}
@@ -372,6 +381,11 @@ final class GiveawayCheckout {
 		if ( null !== $giveaway ) {
 			$discount = max( 0.0, (float) $giveaway->unit_price - self::base_gross( $giveaway ) );
 			$item->update_meta_data( SubDiscountMeta::LINE_DISCOUNT, number_format( $discount, 4, '.', '' ) );
+
+			if ( null !== $giveaway->free_choice ) {
+				// Shown: the line itself is the design the purchase is booked on.
+				$item->update_meta_data( __( 'Free choice', 'merchboard' ), $giveaway->free_choice->name );
+			}
 		}
 	}
 

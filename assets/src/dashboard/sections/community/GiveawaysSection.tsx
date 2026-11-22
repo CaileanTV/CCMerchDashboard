@@ -11,6 +11,7 @@ import {
 	startGiveaway,
 } from '../../api/giveaways';
 import type {
+	GiveawayCollection,
 	GiveawayFunding,
 	GiveawayMode,
 	GiveawayProduct,
@@ -179,13 +180,13 @@ function withProducts(
  * @param products The products that can be given away.
  */
 function collectionsOf( products: readonly GiveawayProduct[] ): Array< {
-	readonly collection: { readonly id: number; readonly name: string };
+	readonly collection: GiveawayCollection;
 	readonly designs: GiveawayProduct[];
 } > {
 	const groups = new Map<
 		number,
 		{
-			collection: { id: number; name: string };
+			collection: GiveawayCollection;
 			designs: GiveawayProduct[];
 		}
 	>();
@@ -284,7 +285,24 @@ export function GiveawaysSection() {
 		);
 	}
 
-	const product = current.products.find( ( item ) => item.id === productId );
+	const groups = collectionsOf( current.products );
+	// A collection's id stands for free choice in it: it is never a product here.
+	const free = groups.find(
+		( { collection } ) =>
+			collection.id === productId && collection.freeChoiceCost !== null
+	);
+	const product:
+		Pick< GiveawayProduct, 'name' | 'cost' | 'currency' > | undefined = free
+		? {
+				name: sprintf(
+					/* translators: %s: the collection's name. */
+					__( '%s (free choice of design)', 'merchboard' ),
+					free.collection.name
+				),
+				cost: free.collection.freeChoiceCost ?? '0',
+				currency: free.designs[ 0 ]?.currency ?? 'DKK',
+			}
+		: current.products.find( ( item ) => item.id === productId );
 	const covers =
 		product !== undefined &&
 		current.available !== null &&
@@ -331,6 +349,7 @@ export function GiveawaysSection() {
 		setError( null );
 		const result = await createGiveaway( {
 			productId,
+			freeChoice: free !== undefined,
 			mode,
 			funding: shop ? 'shop' : 'balance',
 			window: seconds,
@@ -605,16 +624,32 @@ export function GiveawaysSection() {
 										( item ) => item.collection === null
 									)
 									.map( option ) }
-								{ collectionsOf( current.products ).map(
-									( { collection, designs } ) => (
-										<optgroup
-											key={ collection.id }
-											label={ collection.name }
-										>
-											{ designs.map( option ) }
-										</optgroup>
-									)
-								) }
+								{ groups.map( ( { collection, designs } ) => (
+									<optgroup
+										key={ collection.id }
+										label={ collection.name }
+									>
+										{ collection.freeChoiceCost ===
+										null ? null : (
+											<option value={ collection.id }>
+												{ sprintf(
+													/* translators: %s: price. */
+													__(
+														'Free choice: the winner chooses the design – %s',
+														'merchboard'
+													),
+													moneyText(
+														collection.freeChoiceCost,
+														designs[ 0 ]
+															?.currency ?? 'DKK',
+														locale
+													)
+												) }
+											</option>
+										) }
+										{ designs.map( option ) }
+									</optgroup>
+								) ) }
 							</select>
 							<p className="merchboard-field__help">
 								{ __(

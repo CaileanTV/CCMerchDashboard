@@ -67,6 +67,13 @@ export interface GiveawayRow {
 	readonly gift: GiveawayGift | null;
 }
 
+export interface GiveawayCollection {
+	readonly id: number;
+	readonly name: string;
+	/** What free choice in it costs, or null when it cannot be given so. */
+	readonly freeChoiceCost: string | null;
+}
+
 export interface GiveawayProduct {
 	readonly id: number;
 	readonly name: string;
@@ -76,7 +83,7 @@ export interface GiveawayProduct {
 	readonly cost: string;
 	readonly currency: string;
 	/** The collection that sells it, or null (ADR-120). */
-	readonly collection: { readonly id: number; readonly name: string } | null;
+	readonly collection: GiveawayCollection | null;
 }
 
 export interface GiveawaysState {
@@ -103,7 +110,10 @@ export interface GiveawaysState {
 }
 
 export interface NewGiveaway {
+	/** The product, or the collection with free choice. */
 	readonly productId: number;
+	/** Whether a collection is given with free choice (ADR-120). */
+	readonly freeChoice: boolean;
 	readonly mode: GiveawayMode;
 	readonly funding: GiveawayFunding;
 	readonly window: number;
@@ -243,12 +253,22 @@ function parseProduct( body: unknown ): GiveawayProduct | null {
 
 		const collectionId = whole( body.collection.id );
 		const collectionName = body.collection.name;
+		const freeChoiceCost = optional( body.collection.free_choice_cost );
 
-		if ( collectionId === null || typeof collectionName !== 'string' ) {
+		if (
+			collectionId === null ||
+			typeof collectionName !== 'string' ||
+			freeChoiceCost === undefined ||
+			( freeChoiceCost !== null && ! AMOUNT.test( freeChoiceCost ) )
+		) {
 			return null;
 		}
 
-		collection = { id: collectionId, name: collectionName };
+		collection = {
+			id: collectionId,
+			name: collectionName,
+			freeChoiceCost,
+		};
 	}
 
 	const id = whole( body.id );
@@ -366,7 +386,9 @@ export function createGiveaway(
 			path: PATH,
 			method: 'POST',
 			data: {
-				product_id: values.productId,
+				...( values.freeChoice
+					? { collection_id: values.productId }
+					: { product_id: values.productId } ),
 				mode: values.mode,
 				funding: values.funding,
 				window: values.window,
