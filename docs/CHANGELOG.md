@@ -4,6 +4,14 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+Fase 55 (ADR-120), under opbygning. Schema-version 53.
+
+- **Samlinger af designs:** en samling fra CCMerch Design-samling er ikke creatorens produkt, får ingen ny creator-tilknytning og er aldrig selv en varelinje, gave eller giveaway. Eksisterende tilknytninger røres ikke.
+- **Twitch-panelet og merch-reklamen** viser hvert design, også når en samling skjuler det.
+- **Gave og giveaway:** giveren vælger designet, og indløsningen åbner samlingen med det valgt. Giveaway-vælgeren har intet forvalg og viser alle produkter.
+- **Meta:** en samling med et designerprodukt synkroniseres ikke.
+- **Database:** migration 53 med tabellerne til anmodninger om samlinger.
+
 ## [2.3.0] - 2026-11-22
 
 Fase 52, 53 og 54 (ADR-115, ADR-117, ADR-118). Ingen schemaændring.

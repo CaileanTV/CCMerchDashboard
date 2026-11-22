@@ -334,6 +334,16 @@ final class Tables {
 	public const GIVEAWAYS = 'merchboard_giveaways';
 
 	/**
+	 * The creators' requests to have designs collected (schema 53, ADR-120).
+	 */
+	public const COLLECTION_REQUESTS = 'merchboard_collection_requests';
+
+	/**
+	 * The designs of those requests (schema 53, ADR-120).
+	 */
+	public const COLLECTION_REQUEST_ITEMS = 'merchboard_collection_request_items';
+
+	/**
 	 * All tables owned by the plugin.
 	 */
 	private const ALL = array(
@@ -391,6 +401,8 @@ final class Tables {
 		self::GO_LIVE_REQUESTS,
 		self::GIFTS,
 		self::GIVEAWAYS,
+		self::COLLECTION_REQUESTS,
+		self::COLLECTION_REQUEST_ITEMS,
 	);
 
 	/**
