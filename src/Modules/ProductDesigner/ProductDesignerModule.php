@@ -271,7 +271,7 @@ final class ProductDesignerModule implements Module {
 		// The creator's designer: drafts, uploads and `/me/designer` (step 30.8).
 		$container->set( DesignerProductRepository::class, static fn( Container $c ): DesignerProductRepository => new DesignerProductRepository( $c->get( wpdb::class ) ) );
 		$container->set( DesignerDrafts::class, static fn( Container $c ): DesignerDrafts => new DesignerDrafts( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), $c->get( DesignerFiles::class ) ) );
-		$container->set( DesignerSubmissions::class, static fn( Container $c ): DesignerSubmissions => new DesignerSubmissions( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), $c->get( DesignerFees::class ) ) );
+		$container->set( DesignerSubmissions::class, static fn( Container $c ): DesignerSubmissions => new DesignerSubmissions( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( DesignerFiles::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( PricingProductStore::class )->decimals(), $c->get( DesignerFees::class ), $c->get( DesignerAssetRepository::class ) ) );
 		$container->set( CreatorUploads::class, static fn( Container $c ): CreatorUploads => new CreatorUploads( $c->get( DesignerAssetRepository::class ), $c->get( DesignerFiles::class ) ) );
 		$container->set(
 			MeDesignerController::class,

@@ -31,6 +31,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerImages;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
+use MerchBoard\Modules\ProductDesigner\Files\Clipart;
 use MerchBoard\Modules\ProductDesigner\Files\ClipartRules;
 use MerchBoard\Modules\ProductDesigner\Files\CreatorUploads;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
@@ -858,7 +859,7 @@ final class MeDesignerController extends RestController {
 	 */
 	private function validator( Creator $creator ): DesignValidator {
 		return new DesignValidator(
-			function ( int $asset_id, int $base_id, array $kept ) use ( $creator ): bool {
+			function ( int $asset_id, int $base_id, array $kept ) use ( $creator ): bool|Clipart {
 				$asset = $this->assets->find( $asset_id );
 
 				if ( null === $asset || ! ClipartRules::is_clipart( $asset ) ) {
@@ -872,7 +873,7 @@ final class MeDesignerController extends RestController {
 					throw new DesignerException( DesignerException::DESIGN_CLIPART );
 				}
 
-				return true;
+				return $clipart;
 			},
 			array_values( array_map( static fn( AlertFont $font ): string => $font->family, $this->fonts->approved() ) )
 		);

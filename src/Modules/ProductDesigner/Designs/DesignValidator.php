@@ -12,6 +12,7 @@ namespace MerchBoard\Modules\ProductDesigner\Designs;
 use Closure;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProduct;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
+use MerchBoard\Modules\ProductDesigner\Files\Clipart;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 
 defined( 'ABSPATH' ) || exit;
@@ -50,6 +51,11 @@ defined( 'ABSPATH' ) || exit;
  * side, and a shared design only while a side uses it; its objects are
  * checked like a side's. Each linked side's fitted copy is in `sides`, and
  * that copy is what is printed. Without a link the key is left out.
+ *
+ * ADR-121: an image of a clipart with parts has `paints`, one per part, and
+ * a clipart with a definition has its own size and, locked, the server's
+ * placement (ClipartObjects). Without parts the key is left out, so a
+ * design from before keeps its stamp.
  */
 final class DesignValidator {
 
@@ -95,10 +101,10 @@ final class DesignValidator {
 	/**
 	 * Constructor.
 	 *
-	 * @phpstan-param Closure(int, int, list<int>): bool $asset_allowed
+	 * @phpstan-param Closure(int, int, list<int>): (bool|Clipart) $asset_allowed
 	 * @phpstan-param list<string> $fonts
 	 *
-	 * @param Closure  $asset_allowed Whether the creator may use an asset (own upload or clipart): asset, base product, the images the stored design has.
+	 * @param Closure  $asset_allowed Whether the creator may use an asset (asset, base product, the images the stored design has): false, true for an upload, or the clipart it is.
 	 * @param string[] $fonts         Approved font families.
 	 */
 	public function __construct( private Closure $asset_allowed, private array $fonts ) {
@@ -232,14 +238,23 @@ final class DesignValidator {
 		}
 
 		$sides = array();
-		$keys  = array_map( static fn( $view ): string => $view->key, $base->views );
+		$views = array();
+
+		foreach ( $base->views as $view ) {
+			$views[ $view->key ] = $view;
+		}
 
 		foreach ( $design['sides'] as $key => $items ) {
-			if ( ! is_string( $key ) || ! in_array( $key, $keys, true ) || ! is_array( $items ) || ! array_is_list( $items ) || count( $items ) > self::MAX_OBJECTS ) {
+			$view = is_string( $key ) ? ( $views[ $key ] ?? null ) : null;
+
+			if ( null === $view || ! is_array( $items ) || ! array_is_list( $items ) || count( $items ) > self::MAX_OBJECTS ) {
 				self::refuse();
 			}
 
-			$sides[ $key ] = array_map( fn( mixed $item ): array => $this->object( $item ), $items );
+			list( $width, $height ) = $view->print_pixels();
+
+			$embroidered   = ClipartObjects::embroidered( $view );
+			$sides[ $key ] = array_map( fn( mixed $item ): array => $this->object( $item, $width, $height, $embroidered ), $items );
 		}
 
 		$background = self::background( $design['background'] ?? array(), $base );
@@ -311,10 +326,13 @@ final class DesignValidator {
 				self::refuse();
 			}
 
+			$width  = (int) $item['width'];
+			$height = (int) $item['height'];
+
 			$shared[ $value ] = array(
 				'width'   => $item['width'],
 				'height'  => $item['height'],
-				'objects' => array_map( fn( mixed $item ): array => $this->object( $item ), $objects ),
+				'objects' => array_map( fn( mixed $item ): array => $this->object( $item, $width, $height, false ), $objects ),
 			);
 
 			$background = $item['background'] ?? null;
@@ -407,11 +425,14 @@ final class DesignValidator {
 	/**
 	 * One object.
 	 *
-	 * @param mixed $item Object.
+	 * @param mixed $item        Object.
+	 * @param int   $width       Print width of the side or master it is on.
+	 * @param int   $height      Print height of the side or master it is on.
+	 * @param bool  $embroidered Whether the side is embroidered.
 	 * @return array<string, mixed>
 	 * @throws DesignerException When it is invalid.
 	 */
-	private function object( mixed $item ): array {
+	private function object( mixed $item, int $width, int $height, bool $embroidered ): array {
 		if ( ! is_array( $item ) || ! in_array( $item['type'] ?? null, self::TYPES, true ) ) {
 			self::refuse();
 		}
@@ -439,14 +460,11 @@ final class DesignValidator {
 			'hidden'  => self::flag( $item, 'hidden' ),
 		);
 
-		return array_merge(
-			$common,
-			match ( $item['type'] ) {
-				'text'  => $this->text( $item ),
-				'image' => $this->image( $item ),
-				default => self::shape( $item ),
-			}
-		);
+		return match ( $item['type'] ) {
+			'text'  => array_merge( $common, $this->text( $item ) ),
+			'image' => $this->image( $item, $common, $width, $height, $embroidered ),
+			default => array_merge( $common, self::shape( $item ) ),
+		};
 	}
 
 	/**
@@ -487,20 +505,34 @@ final class DesignValidator {
 	}
 
 	/**
-	 * The fields of an image.
+	 * An image, with a clipart's own rules (ADR-121).
 	 *
-	 * @param array<mixed> $item Object.
-	 * @return array{asset: int}
-	 * @throws DesignerException When the asset may not be used.
+	 * @param array<mixed>         $item        Object.
+	 * @param array<string, mixed> $common      Its common fields, checked.
+	 * @param int                  $width       Print width.
+	 * @param int                  $height      Print height.
+	 * @param bool                 $embroidered Whether the side is embroidered.
+	 * @return array<string, mixed>
+	 * @throws DesignerException When the asset may not be used or a clipart's rules refuse it.
 	 */
-	private function image( array $item ): array {
+	private function image( array $item, array $common, int $width, int $height, bool $embroidered ): array {
 		$asset = $item['asset'] ?? null;
 
-		if ( ! is_int( $asset ) || $asset < 1 || ! ( $this->asset_allowed )( $asset, $this->base_id, $this->kept ) ) {
+		if ( ! is_int( $asset ) || $asset < 1 ) {
 			self::refuse();
 		}
 
-		return array( 'asset' => $asset );
+		$allowed = ( $this->asset_allowed )( $asset, $this->base_id, $this->kept );
+
+		if ( false === $allowed ) {
+			self::refuse();
+		}
+
+		$image = array_merge( $common, array( 'asset' => $asset ) );
+
+		return $allowed instanceof Clipart
+			? ClipartObjects::normalized( $image, $item['paints'] ?? null, $allowed, $width, $height, $embroidered ) ?? self::refuse()
+			: $image;
 	}
 
 	/**

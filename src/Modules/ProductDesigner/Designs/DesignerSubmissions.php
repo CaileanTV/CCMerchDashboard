@@ -22,6 +22,9 @@ use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\ProductDesigner\Fees\DesignerFees;
+use MerchBoard\Modules\ProductDesigner\Files\Clipart;
+use MerchBoard\Modules\ProductDesigner\Files\ClipartRules;
+use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
@@ -40,8 +43,9 @@ defined( 'ABSPATH' ) || exit;
  *    chosen colour in the template's exact size (SubmissionFiles). A file of
  *    an earlier state of the draft is replaced.
  * 2. submit(): the draft waits for approval (`pending`) when its base product
- *    is active and unchanged, its design shows something and its files are
- *    complete. The price is computed again from the base price now. At most
+ *    is active and unchanged, its design shows something, its cliparts are
+ *    as a save stores them (ADR-121 pkt. 11) and its files are complete.
+ *    The price is computed again from the base price now. At most
  *    one version per product waits (`pending_key`). The administrator gets
  *    "new product" or "change" (when a version is in the shop) and the
  *    creator a receipt, after the commit.
@@ -56,13 +60,14 @@ class DesignerSubmissions {
 	/**
 	 * Constructor.
 	 *
-	 * @param DesignerProductRepository $products    Designer products.
-	 * @param BaseProductRepository     $bases       Base products.
-	 * @param DesignerFiles             $files       Files.
-	 * @param AuditTrail                $audit       Audit trail.
-	 * @param Transaction               $transaction Transaction.
-	 * @param int                       $decimals    Store price decimals.
-	 * @param DesignerFees|null         $fees        The digitization fee (ADR-086).
+	 * @param DesignerProductRepository    $products    Designer products.
+	 * @param BaseProductRepository        $bases       Base products.
+	 * @param DesignerFiles                $files       Files.
+	 * @param AuditTrail                   $audit       Audit trail.
+	 * @param Transaction                  $transaction Transaction.
+	 * @param int                          $decimals    Store price decimals.
+	 * @param DesignerFees|null            $fees        The digitization fee (ADR-086).
+	 * @param DesignerAssetRepository|null $assets      The cliparts checked at submission (ADR-121).
 	 */
 	public function __construct(
 		private DesignerProductRepository $products,
@@ -71,8 +76,22 @@ class DesignerSubmissions {
 		private AuditTrail $audit,
 		private Transaction $transaction,
 		private int $decimals,
-		private ?DesignerFees $fees = null
+		private ?DesignerFees $fees = null,
+		private ?DesignerAssetRepository $assets = null
 	) {
+	}
+
+	/**
+	 * A clipart by asset, or null for any other asset. Only the administrator's
+	 * cliparts are checked at submission: uploads are as before.
+	 *
+	 * @param int $asset_id Asset.
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	private function clipart( int $asset_id ): ?Clipart {
+		$asset = $this->assets?->find( $asset_id );
+
+		return null === $asset || ! ClipartRules::is_clipart( $asset ) ? null : $this->assets->find_clipart( $asset_id );
 	}
 
 	/**
@@ -218,6 +237,11 @@ class DesignerSubmissions {
 					if ( ! $base->covers( $used, $sizes, $part_colors ) ) {
 						self::refuse( DesignerException::DESIGN_SIZES );
 					}
+				}
+
+				// The files are drawn from the saved cliparts: those must be as a save stores them now.
+				if ( null !== $this->assets && ! ClipartObjects::as_saved( $design, $base, $this->clipart( ... ) ) ) {
+					self::refuse( DesignerException::DESIGN_STALE );
 				}
 
 				if ( ! SubmissionFiles::complete( $draft, $base ) ) {

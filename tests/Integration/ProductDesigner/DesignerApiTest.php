@@ -139,7 +139,7 @@ final class DesignerApiTest extends IntegrationTestCase {
 			$bases,
 			$products,
 			$drafts,
-			new DesignerSubmissions( $products, $bases, $files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2 ),
+			new DesignerSubmissions( $products, $bases, $files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2, null, $assets ),
 			$assets,
 			$files,
 			new CreatorUploads( $assets, $files ),
@@ -783,6 +783,51 @@ final class DesignerApiTest extends IntegrationTestCase {
 		$named = (string) wp_json_encode( $this->draft( array( self::image( $layer ) ) )['design'] );
 		$this->wpdb->update( $this->table( Tables::DESIGNER_VERSIONS ), array( 'design' => $named ), array( 'id' => (int) ( $products->draft( $product )['id'] ?? 0 ) ) );
 		self::assertSame( array( 400, 'design_invalid' ), $this->refusal( $this->call( 'PUT', $route, $this->titled( 'Live tee', $layer ) ) ) );
+	}
+
+	public function test_a_coloured_clipart_needs_its_paints_and_is_checked_at_submission(): void {
+		$assets = new DesignerAssetRepository( $this->wpdb );
+		$stored = $assets->find( $this->clipart );
+		self::assertNotNull( $stored );
+
+		$rect = array( 'x' => 0, 'y' => 0, 'width' => 8, 'height' => 8 ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		$red  = array( 'type' => 'solid', 'color' => '#ff0000' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+
+		$definition = ClipartDefinition::from_data(
+			array(
+				'bases'   => array( $this->base ),
+				'parts'   => array( array( 'label' => '', 'box' => $rect, 'stroke' => null, 'scale' => 1, 'paint' => $red, 'gradient' => array( 'type' => 'gradient', 'from' => '#ffffff', 'to' => '#000000', 'angle' => 45 ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+				'steps'   => array( array( 'type' => 'part', 'part' => 0, 'rect' => $rect, 'fill' => array( 'x' => 0, 'y' => 0 ), 'grown' => null ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+				'atlas'   => array( 'file' => str_repeat( 'a', 32 ) . '.png', 'width' => 8, 'height' => 8 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+				'palette' => null,
+				'locked'  => true,
+			),
+			$stored['width'],
+			$stored['height']
+		);
+		self::assertNotNull( $definition );
+
+		$artwork = $assets->insert_artwork( 'Bottle', $stored, $definition );
+
+		wp_set_current_user( $this->user );
+		$product = (int) $this->call( 'POST', '/merchboard/v1/me/designer/products', array( 'base_id' => $this->base ) )->get_data()['id'];
+		$route   = '/merchboard/v1/me/designer/products/' . $product;
+
+		self::assertSame( array( 400, 'design_invalid' ), $this->refusal( $this->call( 'PUT', $route, $this->draft( array( self::image( $artwork ) ) ) ) ), 'No paints are filled in.' );
+
+		$image           = self::image( $artwork );
+		$image['paints'] = array( $red );
+		self::assertSame( 200, $this->call( 'PUT', $route, $this->draft( array( $image ) ) )->get_status() );
+
+		$saved = $this->call( 'GET', $route )->get_data()['draft']['design']['sides']['front'][0];
+		// The print area is 118 × 157 px and the clipart 32 × 32: as wide as the area, in its middle.
+		self::assertEquals( array( 59, 78.5, 3.6875, 32, array( $red ) ), array( $saved['x'], $saved['y'], $saved['scaleX'], $saved['width'], $saved['paints'] ) );
+		self::assertSame( 'submission_files', $this->refusal( $this->call( 'POST', $route . '/submit' ) )[1], 'As saved, only the files are missing.' );
+
+		$saved['y'] = 5;
+		$changed    = (string) wp_json_encode( $this->draft( array( $saved ) )['design'] );
+		$this->wpdb->update( $this->table( Tables::DESIGNER_VERSIONS ), array( 'design' => $changed ), array( 'design_product_id' => $product ) );
+		self::assertSame( 'design_stale', $this->refusal( $this->call( 'POST', $route . '/submit' ) )[1], 'Not as a save stores it.' );
 	}
 
 	/**
