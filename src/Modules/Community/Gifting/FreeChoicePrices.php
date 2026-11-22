@@ -76,7 +76,13 @@ final class FreeChoicePrices {
 			return null;
 		}
 
-		$creator = ( $this->creator_of )( $product_id );
+		try {
+			$creator = ( $this->creator_of )( $product_id );
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'A design\'s creator could not be read for free choice.', array( 'product_id' => $product_id ) + $e->context() );
+
+			return null;
+		}
 
 		if ( null === $creator ) {
 			return null;

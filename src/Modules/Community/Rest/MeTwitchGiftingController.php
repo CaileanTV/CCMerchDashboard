@@ -333,7 +333,7 @@ final class MeTwitchGiftingController extends RestController {
 						return array(
 							'id'             => $gift->id,
 							'status'         => $gift->status,
-							'product'        => $names[ $gift->product_id ],
+							'product'        => $gift->free_choice->name ?? $names[ $gift->product_id ],
 							'buyer'          => $gift->buyer_name,
 							'winner'         => $gift->winner_login,
 							'draws'          => $gift->draws,

@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Community\Gifting;
 
+use Closure;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -96,6 +98,18 @@ final readonly class Gift {
 	 */
 	public function giveaway(): bool {
 		return null !== $this->giveaway_id;
+	}
+
+	/**
+	 * What the gift is called: the collection given with free choice, else
+	 * its product.
+	 *
+	 * @phpstan-param Closure(int): string $product_name
+	 *
+	 * @param Closure $product_name A product's name.
+	 */
+	public function name( Closure $product_name ): string {
+		return $this->free_choice->name ?? $product_name( $this->product_id );
 	}
 
 	/**

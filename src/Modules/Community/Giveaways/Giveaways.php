@@ -305,7 +305,7 @@ final class Giveaways {
 			return 'not_waiting';
 		}
 
-		$text = GiftTexts::giveaway( ( $this->language )( $creator_id ), ( $this->creator_name )( $creator_id ), ( $this->product_name )( $giveaway->product_id ), $giveaway->window_seconds );
+		$text = GiftTexts::giveaway( ( $this->language )( $creator_id ), ( $this->creator_name )( $creator_id ), $giveaway->name( $this->product_name ), $giveaway->window_seconds );
 
 		return $this->draws->start_giveaway( $gift, $giveaway->window_seconds, $text );
 	}
@@ -669,7 +669,7 @@ final class Giveaways {
 			$type,
 			$giveaway->creator_id,
 			array(
-				'product' => ( $this->product_name )( $giveaway->product_id ),
+				'product' => $giveaway->name( $this->product_name ),
 				'amount'  => $giveaway->cost,
 			),
 			'giveaway:' . $giveaway->id . ':' . $type

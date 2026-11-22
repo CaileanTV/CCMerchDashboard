@@ -105,7 +105,7 @@ final class GiftNotices {
 
 		$data = is_array( $data ) ? $data : array();
 		$of   = null === $this->units || $gift->order_id < 1 ? 1 : max( 1, ( $this->units )( $gift->order_id ) );
-		$name = ( $this->product_name )( $gift->product_id );
+		$name = $gift->name( $this->product_name );
 		// "Hoodie (gift 2 of 3)" in the buyer's mails and notes when the purchase has several gifts (ADR-111).
 		/* translators: 1: product name, 2: which gift, 3: number of gifts. */
 		$product = $of > 1 ? sprintf( __( '%1$s (gift %2$d of %3$d)', 'merchboard' ), $name, $gift->order_unit, $of ) : $name;
@@ -197,10 +197,13 @@ final class GiftNotices {
 					array(
 						/* translators: %s: product name. */
 						sprintf( __( 'Nobody claimed the %s you gave after three draws, so the gift comes back to you.', 'merchboard' ), $product ),
-						/* translators: %s: the gift code. */
-						sprintf( __( 'Use the code %s in the shop: it covers the product, in the size and colour you choose, and up to 50 kr. of the shipping. You pay only if you choose a dearer variant or shipping. The code can be used once.', 'merchboard' ), $code ),
+						null === $gift->free_choice
+							/* translators: %s: the gift code. */
+							? sprintf( __( 'Use the code %s in the shop: it covers the product, in the size and colour you choose, and up to 50 kr. of the shipping. You pay only if you choose a dearer variant or shipping. The code can be used once.', 'merchboard' ), $code )
+							/* translators: 1: the gift code, 2: the collection's name. */
+							: sprintf( __( 'Use the code %1$s in the shop: it covers one design of your choice from those %2$s had when you gave it and that still cost the same, in the size and colour you choose, and up to 50 kr. of the shipping. You pay only if you choose a dearer variant or shipping. The code can be used once.', 'merchboard' ), $code, $gift->free_choice->name ),
 					),
-					( $this->product_url )( $gift->product_id )
+					( $this->product_url )( null !== $gift->free_choice && 'publish' === get_post_status( $gift->free_choice->collection_id ) ? $gift->free_choice->collection_id : $gift->product_id )
 				);
 				break;
 		}

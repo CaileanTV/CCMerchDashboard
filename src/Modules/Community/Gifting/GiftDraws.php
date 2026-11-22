@@ -480,7 +480,7 @@ final class GiftDraws {
 
 			set_transient( self::remind_key( $gift->id ), $rest, HOUR_IN_SECONDS );
 			$language = $this->settings->find( $gift->creator_id )->language;
-			( $this->send )( $gift->creator_id, GiftTexts::reminder( $language, $left, ( $this->product_name )( $gift->product_id ) ) );
+			( $this->send )( $gift->creator_id, GiftTexts::reminder( $language, $left, $gift->name( $this->product_name ) ) );
 		} finally {
 			$this->gifts->unlock( $gift->id );
 		}
@@ -553,7 +553,7 @@ final class GiftDraws {
 				continue;
 			}
 
-			$product = ( $this->product_name )( $gift->product_id ) . $this->unit_label( $gift, $settings->language );
+			$product = $gift->name( $this->product_name ) . $this->unit_label( $gift, $settings->language );
 
 			if ( ! $this->open( $gift, $settings->window, GiftTexts::announce( $settings->language, $gift->buyer_name, $product, $settings->window ) ) ) {
 				// Another request opened a window just now: one at a time.
@@ -691,7 +691,7 @@ final class GiftDraws {
 			$deadline = gmdate( 'Y-m-d H:i:s', time() + Gift::CLAIM_HOURS * HOUR_IN_SECONDS );
 
 			if ( $this->gifts->win( $gift->id, $winner, $login, $deadline, $token ) ) {
-				( $this->send )( $gift->creator_id, GiftTexts::winner( $language, $login, ( $this->product_name )( $gift->product_id ), ( $this->claim_url )( $token ) ) );
+				( $this->send )( $gift->creator_id, GiftTexts::winner( $language, $login, $gift->name( $this->product_name ), ( $this->claim_url )( $token ) ) );
 				( $this->enqueue )( self::EXPIRE_HOOK, array( $gift->id ), Gift::CLAIM_HOURS * HOUR_IN_SECONDS + 5 );
 				( $this->notify )( 'won', $gift, array( 'winner' => $login ) );
 			}
@@ -722,7 +722,7 @@ final class GiftDraws {
 
 			set_transient( self::reveal_key( $gift->id ), time() + self::REVEAL_SECONDS, HOUR_IN_SECONDS );
 			$settings = $this->settings->find( $gift->creator_id );
-			( $this->send )( $gift->creator_id, GiftTexts::closed( $settings->language, ( $this->product_name )( $gift->product_id ), self::REVEAL_SECONDS ) );
+			( $this->send )( $gift->creator_id, GiftTexts::closed( $settings->language, $gift->name( $this->product_name ), self::REVEAL_SECONDS ) );
 			( $this->enqueue )( self::DRAW_HOOK, array( $gift->id ), self::REVEAL_SECONDS + 1 );
 		} finally {
 			$this->gifts->unlock( $gift->id );
@@ -874,7 +874,7 @@ final class GiftDraws {
 			}
 
 			if ( $now || time() >= $state['next'] ) {
-				( $this->send )( $gift->creator_id, GiftTexts::entered( $settings->language, ( $this->product_name )( $gift->product_id ), $new, $later ) );
+				( $this->send )( $gift->creator_id, GiftTexts::entered( $settings->language, $gift->name( $this->product_name ), $new, $later ) );
 				$state = array(
 					'done'  => count( $entrants ),
 					'again' => array(),

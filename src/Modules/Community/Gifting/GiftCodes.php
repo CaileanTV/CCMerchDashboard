@@ -23,7 +23,8 @@ defined( 'ABSPATH' ) || exit;
 
 /**
  * ADR-107 pkt. 6: a single-use WooCommerce coupon of its own type, valid
- * only for the gift's product (every variant), covering one unit up to the
+ * only for the gift's product (every variant), or with free choice for the
+ * designs a winner may choose (ADR-120), covering one unit up to the
  * gift's paid price, plus a negative fee of up to the gift's shipping credit
  * (50 incl. VAT). A dearer variant or shipping is paid by the winner. The
  * line's amount after the code is what the ledger sees, so only what the
@@ -62,12 +63,20 @@ class GiftCodes {
 	private array $by_coupon = array();
 
 	/**
+	 * The designs of gifts with free choice read in this request, by gift id.
+	 *
+	 * @var array<int, list<int>>
+	 */
+	private array $chosen_from = array();
+
+	/**
 	 * Constructor.
 	 *
-	 * @param GiftRepository $gifts  Gifts.
-	 * @param Logger         $logger Technical log.
+	 * @param GiftRepository         $gifts   Gifts.
+	 * @param Logger                 $logger  Technical log.
+	 * @param FreeChoiceDesigns|null $designs What a winner may choose (ADR-120); without it a code is for its one product.
 	 */
-	public function __construct( private GiftRepository $gifts, private Logger $logger ) {
+	public function __construct( private GiftRepository $gifts, private Logger $logger, private ?FreeChoiceDesigns $designs = null ) {
 	}
 
 	/**
@@ -111,6 +120,11 @@ class GiftCodes {
 				$coupon->set_date_expires( time() + self::GIVEAWAY_DAYS * DAY_IN_SECONDS );
 				/* translators: %d: giveaway id. */
 				$coupon->set_description( sprintf( __( 'Merch Dashboard: the code of giveaway #%d. Valid once, only for the product given away; managed by Merch Dashboard.', 'merchboard' ), (int) $gift->giveaway_id ) );
+			}
+
+			if ( null !== $gift->free_choice ) {
+				/* translators: 1: gift id, 2: the collection's name. */
+				$coupon->set_description( sprintf( __( 'Merch Dashboard: the code of gift #%1$d with free choice in %2$s. Valid once, for one of the designs the collection had when it was given; managed by Merch Dashboard.', 'merchboard' ), $gift->id, $gift->free_choice->name ) );
 			}
 
 			$id = (int) $coupon->save();
@@ -168,7 +182,8 @@ class GiftCodes {
 	}
 
 	/**
-	 * `woocommerce_coupon_is_valid_for_product`: only the gift's product.
+	 * `woocommerce_coupon_is_valid_for_product`: only the gift's product, or
+	 * the designs of its free choice.
 	 *
 	 * @param mixed $valid   WooCommerce' verdict.
 	 * @param mixed $product Product.
@@ -181,7 +196,21 @@ class GiftCodes {
 
 		$gift = $this->gift( $coupon );
 
-		return null !== $gift && $product instanceof WC_Product && self::parent_id( $product ) === $gift->product_id;
+		return null !== $gift && $product instanceof WC_Product && in_array( self::parent_id( $product ), $this->given( $gift ), true );
+	}
+
+	/**
+	 * The products a gift's code is for.
+	 *
+	 * @param Gift $gift The gift.
+	 * @return list<int>
+	 */
+	private function given( Gift $gift ): array {
+		if ( null === $gift->free_choice || null === $this->designs ) {
+			return array( $gift->product_id );
+		}
+
+		return $this->chosen_from[ $gift->id ] ??= $this->designs->allowed( $gift->free_choice );
 	}
 
 	/**

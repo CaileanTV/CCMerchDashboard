@@ -114,4 +114,24 @@ class FreeChoiceDesigns {
 
 		return FreeChoice::allowed( $lock->designs, $current );
 	}
+
+	/**
+	 * The designs to show a winner: those that count and can be opened. When
+	 * all from the purchase count, some of them may be gone.
+	 *
+	 * @param FreeChoiceLock $lock What was locked at the purchase.
+	 * @return list<int>
+	 */
+	public function to_choose( FreeChoiceLock $lock ): array {
+		return array_values( array_filter( $this->allowed( $lock ), static fn( int $id ): bool => 'publish' === get_post_status( $id ) ) );
+	}
+
+	/**
+	 * Whether the design can still be chosen on the collection's own page.
+	 *
+	 * @param FreeChoiceLock $lock What was locked at the purchase.
+	 */
+	public function has_page( FreeChoiceLock $lock ): bool {
+		return $this->collections->active() && 'publish' === get_post_status( $lock->collection_id ) && $this->collections->is_collection( $lock->collection_id );
+	}
 }

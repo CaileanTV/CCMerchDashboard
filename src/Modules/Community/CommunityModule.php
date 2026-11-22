@@ -30,6 +30,8 @@ use MerchBoard\Modules\Alerts\Rest\ShopTwitchController;
 use MerchBoard\Modules\Community\Admin\CommunitySettingsSection;
 use MerchBoard\Modules\Community\Admin\GiftingTestModeSection;
 use MerchBoard\Modules\Community\Dashboard\CommunityDashboardSection;
+use MerchBoard\Modules\Community\Gifting\FreeChoiceDesigns;
+use MerchBoard\Modules\Community\Gifting\FreeChoicePrices;
 use MerchBoard\Modules\Community\Gifting\Gift;
 use MerchBoard\Modules\Community\Gifting\GiftClaim;
 use MerchBoard\Modules\Community\Gifting\GiftCodes;
@@ -461,7 +463,20 @@ final class CommunityModule implements Module {
 				static fn( int $creator_id ): bool => null !== self::broadcaster( $c, $creator_id )
 			)
 		);
-		$container->set( GiftCodes::class, static fn( Container $c ): GiftCodes => new GiftCodes( $c->get( GiftRepository::class ), $c->get( Logger::class ) ) );
+		// Free choice in a collection (ADR-120): what can be given and what a winner may choose.
+		$container->set(
+			FreeChoiceDesigns::class,
+			static function ( Container $c ): FreeChoiceDesigns {
+				$prices = new FreeChoicePrices(
+					static fn( int $product_id ): ?int => $c->get( ProductCreatorLink::class )->creator_id( $product_id ),
+					static fn( int $product_id, int $creator_id, float $price, int $variation_id ): ?float => $c->get( CreatorProfitDiscount::class )->per_unit( $product_id, $creator_id, $price, $variation_id ),
+					$c->get( Logger::class )
+				);
+
+				return new FreeChoiceDesigns( $c->get( DesignCollections::class ), $prices->read( ... ) );
+			}
+		);
+		$container->set( GiftCodes::class, static fn( Container $c ): GiftCodes => new GiftCodes( $c->get( GiftRepository::class ), $c->get( Logger::class ), $c->get( FreeChoiceDesigns::class ) ) );
 		$container->set(
 			GiftDraws::class,
 			static fn( Container $c ): GiftDraws => new GiftDraws(
@@ -562,7 +577,8 @@ final class CommunityModule implements Module {
 					'image' => (string) get_the_post_thumbnail_url( $product_id, 'medium' ),
 				),
 				self::notify( ... ),
-				$c->get( Logger::class )
+				$c->get( Logger::class ),
+				$c->get( FreeChoiceDesigns::class )
 			)
 		);
 	}

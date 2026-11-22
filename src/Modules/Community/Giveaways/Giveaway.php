@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace MerchBoard\Modules\Community\Giveaways;
 
+use Closure;
 use MerchBoard\Modules\Community\Gifting\FreeChoiceLock;
 
 defined( 'ABSPATH' ) || exit;
@@ -97,6 +98,18 @@ final readonly class Giveaway {
 	 */
 	public function open(): bool {
 		return in_array( $this->status, array( self::AWAITING_PAYMENT, self::READY ), true );
+	}
+
+	/**
+	 * What the giveaway is called: the collection given with free choice,
+	 * else its product.
+	 *
+	 * @phpstan-param Closure(int): string $product_name
+	 *
+	 * @param Closure $product_name A product's name.
+	 */
+	public function name( Closure $product_name ): string {
+		return $this->free_choice->name ?? $product_name( $this->product_id );
 	}
 
 	/**

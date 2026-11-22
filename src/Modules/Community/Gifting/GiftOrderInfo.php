@@ -59,7 +59,13 @@ final class GiftOrderInfo {
 			echo '<p>' . esc_html__( 'Not paid yet: the gift is recorded when the order is paid.', 'merchboard' ) . '</p>';
 		}
 
+		$lock  = array() === $gifts ? null : reset( $gifts )->free_choice;
 		$drawn = false;
+
+		if ( null !== $lock ) {
+			/* translators: %s: the collection's name. */
+			echo '<p>' . esc_html( sprintf( __( 'Free choice in %s: the winner chooses the design. The order line is the design the purchase is booked on.', 'merchboard' ), $lock->name ) ) . '</p>';
+		}
 
 		// One paragraph per gift of the purchase (ADR-111).
 		foreach ( $gifts as $gift ) {

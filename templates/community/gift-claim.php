@@ -23,6 +23,7 @@ $merchboard_image    = $merchboard_text( 'image' );
 $merchboard_winner   = $merchboard_text( 'winner' );
 $merchboard_deadline = $merchboard_text( 'deadline' );
 $merchboard_claimed  = true === ( $merchboard_view['claimed'] ?? false );
+$merchboard_free     = true === ( $merchboard_view['free'] ?? false );
 $merchboard_title    = in_array( $merchboard_state, array( 'login', 'redeem', 'other', 'link' ), true ) ? __( 'You won a gift!', 'merchboard' ) : __( 'Twitch gift', 'merchboard' );
 ?>
 <!DOCTYPE html>
@@ -62,6 +63,9 @@ h1{font-size:1.5rem;line-height:1.3;margin:0 0 .5rem;text-wrap:balance}
 			<img class="merchboard-gift__image" src="<?php echo esc_url( $merchboard_image ); ?>" alt="<?php echo esc_attr( $merchboard_product ); ?>">
 		<?php endif; ?>
 		<p class="merchboard-gift__product"><?php echo esc_html( $merchboard_product ); ?></p>
+		<?php if ( $merchboard_free ) : ?>
+			<p class="merchboard-gift__meta"><?php esc_html_e( 'Free choice: you also choose the design.', 'merchboard' ); ?></p>
+		<?php endif; ?>
 		<?php if ( 'link' !== $merchboard_state ) : ?>
 			<p class="merchboard-gift__meta">
 				<?php

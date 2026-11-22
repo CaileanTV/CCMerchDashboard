@@ -58,14 +58,15 @@ final class GiftClaim {
 	 * @phpstan-param Closure(int): array{name: string, url: string, image: string} $product
 	 * @phpstan-param Closure(string, Gift, array<string, string>): void $notify
 	 *
-	 * @param GiftRepository        $gifts   Gifts.
-	 * @param GiftCodes             $codes   Gift codes.
-	 * @param TwitchCustomerSession $session The customer's Twitch login.
-	 * @param Closure               $product A product's name, page and image.
-	 * @param Closure               $notify  Tells the creator and the buyer.
-	 * @param Logger                $logger  Technical log.
+	 * @param GiftRepository         $gifts   Gifts.
+	 * @param GiftCodes              $codes   Gift codes.
+	 * @param TwitchCustomerSession  $session The customer's Twitch login.
+	 * @param Closure                $product A product's name, page and image.
+	 * @param Closure                $notify  Tells the creator and the buyer.
+	 * @param Logger                 $logger  Technical log.
+	 * @param FreeChoiceDesigns|null $designs What a winner may choose with free choice (ADR-120).
 	 */
-	public function __construct( private GiftRepository $gifts, private GiftCodes $codes, private TwitchCustomerSession $session, Closure $product, Closure $notify, private Logger $logger ) {
+	public function __construct( private GiftRepository $gifts, private GiftCodes $codes, private TwitchCustomerSession $session, Closure $product, Closure $notify, private Logger $logger, private ?FreeChoiceDesigns $designs = null ) {
 		$this->product = $product;
 		$this->notify  = $notify;
 	}
@@ -172,10 +173,13 @@ final class GiftClaim {
 			return array( 'state' => 'invalid' ) + $base;
 		}
 
+		$lock    = $gift->free_choice;
 		$product = ( $this->product )( $gift->product_id );
+		$image   = null === $lock ? '' : ( $this->product )( $lock->collection_id )['image'];
 		$view    = array(
-			'product'  => $product['name'],
-			'image'    => $product['image'],
+			'product'  => $lock->name ?? $product['name'],
+			'image'    => '' === $image ? $product['image'] : $image,
+			'free'     => null !== $lock,
 			'winner'   => (string) $gift->winner_login,
 			'claimed'  => self::claimed( $gift ),
 			'deadline' => null === $gift->claim_deadline ? '' : (string) wp_date( (string) get_option( 'date_format' ) . ' ' . (string) get_option( 'time_format' ), (int) strtotime( $gift->claim_deadline . ' UTC' ) ),
@@ -276,6 +280,10 @@ final class GiftClaim {
 
 		self::session()?->set( self::SESSION_KEY, $code );
 
+		if ( null !== $gift->free_choice && null !== $this->designs ) {
+			return $this->to_choice( $gift, $gift->free_choice, $this->designs, $code );
+		}
+
 		$product = ( $this->product )( $gift->product_id );
 
 		if ( function_exists( 'wc_add_notice' ) ) {
@@ -291,6 +299,47 @@ final class GiftClaim {
 		}
 
 		return $product['url'];
+	}
+
+	/**
+	 * Free choice (ADR-120): the winner hears which designs the code is for,
+	 * each with its link, and is sent to the collection, or to the first of
+	 * them when the collection's page is gone.
+	 *
+	 * @param Gift              $gift    The gift.
+	 * @param FreeChoiceLock    $lock    What was locked at the purchase.
+	 * @param FreeChoiceDesigns $designs What a winner may choose.
+	 * @param string            $code    The gift code.
+	 * @return string Where the winner is sent.
+	 */
+	private function to_choice( Gift $gift, FreeChoiceLock $lock, FreeChoiceDesigns $designs, string $code ): string {
+		$links = array();
+		$url   = null;
+
+		foreach ( $designs->to_choose( $lock ) as $id ) {
+			$design  = ( $this->product )( $id );
+			$url   ??= $design['url'];
+			$links[] = '<a href="' . esc_url( $design['url'] ) . '">' . esc_html( $design['name'] ) . '</a>';
+		}
+
+		if ( function_exists( 'wc_add_notice' ) ) {
+			wc_add_notice(
+				sprintf(
+					/* translators: 1: the collection's name, 2: the designs' names as links, 3: the gift code. */
+					__( 'Congratulations! Your gift is free choice in %1$s. You can choose between: %2$s. Choose design, size and colour and add it to the cart; your gift code %3$s is used there and is only for these designs. You pay only if you choose a dearer variant or shipping.', 'merchboard' ),
+					esc_html( $lock->name ),
+					implode( ', ', $links ),
+					$code
+				),
+				'success'
+			);
+		}
+
+		if ( $designs->has_page( $lock ) ) {
+			$url = ( $this->product )( $lock->collection_id )['url'];
+		}
+
+		return $url ?? ( $this->product )( $gift->product_id )['url'];
 	}
 
 	/**

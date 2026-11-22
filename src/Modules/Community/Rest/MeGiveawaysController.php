@@ -352,7 +352,7 @@ final class MeGiveawaysController extends RestController {
 							'status'     => $giveaway->status,
 							'mode'       => $giveaway->mode,
 							'funding'    => $giveaway->funding,
-							'product'    => $names[ $giveaway->product_id ],
+							'product'    => $giveaway->free_choice->name ?? $names[ $giveaway->product_id ],
 							'cost'       => $giveaway->cost,
 							'currency'   => $giveaway->currency,
 							'window'     => $giveaway->window_seconds,
