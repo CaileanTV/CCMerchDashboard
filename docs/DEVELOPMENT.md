@@ -251,7 +251,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 2.3.0: Gelato-plakater med formater, miljøbilleder og fælles design (fase 52–54, ADR-115, ADR-117, ADR-118)
 
-**Versions-bump og CHANGELOG-sektion 2026-11-21, fase 54 med 2026-11-22** (projektejerens valg: alt til og med fase 54 er 2.3.0). Ingen schemaændring. Testpakke på stg: `merchboard-mvp-2.3.0.zip` fra 52bd8e4, sha256 `1dc18de14309ab55ec550b90b1ab542a0f7f0a86b4f1cf08d7a2e472571c8da0`. Den erstatter alle tidligere 2.3.0- og 2.4.0-pakker. Tag efter projektejerens OK og grøn CI.
+**Versions-bump og CHANGELOG-sektion 2026-11-21, fase 54 med 2026-11-22** (projektejerens valg: alt til og med fase 54 er 2.3.0). Ingen schemaændring. Testpakke på stg: `merchboard-mvp-2.3.0.zip` fra 6593ae6, sha256 `ec88bbaf892654cf7b808f28d41c7ebdb9692f8e83a2bed44a511fac962891d0`. Den erstatter alle tidligere 2.3.0- og 2.4.0-pakker. Tag efter projektejerens OK og grøn CI.
 
 1. **Opdatér** med ZIP'en. Overview skal vise version 2.3.0 og schema-version 52.
 2. **Import af plakaten:**
