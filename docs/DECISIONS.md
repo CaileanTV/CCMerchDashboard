@@ -7221,6 +7221,16 @@ Accepteret af projektejeren 2026-11-22 (planen godkendt). Fase 55, version 2.4.0
 - **Låst ved købet:** vinderen kan vælge mellem de designs, der var i samlingen ved købet, undtagen dem, der siden har fået en anden pris eller ikke sælges mere. Er ingen tilbage med samme pris, gælder koden designs fra købet, op til det betalte beløb, så vinderen aldrig står uden gave.
 - **Samlingen er stadig aldrig en varelinje:** købet bogføres på ét af designs' produkter, og de låste designs og priser gemmes med gaven.
 
+**Statusnote 2026-11-22 (projektejerens valg efter det uafhængige review):**
+- **Typeskift (pkt. 7):** et typeskift, mens samlings-pluginet er aktivt, er bevidst, og produktet er ikke længere en samling. For produkter skiftet før 2.4.0 viser fanen "Samlinger" knappen "Ikke længere en samling".
+- **Gemte valg af en samling:** Twitch-panelet og merch-reklamen viser samlingens designs hver for sig. Sub-rabatten ser bort fra samlingen, så ingen får en rabat, de ikke fik før.
+- **Afvis efter godkendelse:** kladden, anmodningen oprettede, lægges i papirkurven, eller netop de designs, den lagde i en ikke-udgivet samling, tages ud. Fanen siger det før klikket. Udgivne samlinger røres ikke.
+- **Tilføjelse er klar, når alle designs er inde.** "Luk som delvist udført" lukker den tidligere, og creatoren får at vide, hvilke der kom med.
+- **Meta (pkt. 8):** samlinger med et designerprodukt, som allerede er hos Meta, fjernes med Meta-pluginets egen funktion, ved opdateringen og når en samling senere får et designerprodukt.
+- **Sletning af en creator er en undtagelse fra pkt. 4:** den fjerner tilknytningen, også på samlinger.
+- **"Se som creator"** må sende anmodninger om samlinger, som ved sletteanmodninger. Audit viser administratoren.
+- **Permanent slettede designs tæller ikke med,** hverken i om en samling er creatorens, eller om en anmodning er klar. Mindst ét design skal findes.
+
 ## Context
 Creators skal kunne bede om at få designs samlet med virksomhedens plugin "CCMerch Design-samling" (1.0.2). Projektejeren gav 2026-11-22 lov til at læse netop den mappe (`CCMerch-Elementor/ccmerch-design-samling`, read-only). Intet er kopieret, kørt eller ændret.
 
