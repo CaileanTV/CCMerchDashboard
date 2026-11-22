@@ -1622,7 +1622,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **55.8 Dashboard** ✅ (1f16c43): "Anmod om samling" og status under "Dine produkter".
 - **55.8a Frit valg på en samling** 🔄 (ønsket 2026-11-22): prisreglen, låsning ved købet (schema 54), gaveboks, giveaway-vælger, kode og indløsning.
 - **55.9 Afslutning** 🔄: oversættelser, docs, review og testpakke 2.4.0.
-- **55.9a Reviewets fund** 🔄 (review af d93bf6a..1f16c43: 3 alvorlige, 10 mellemstore, 11 lave; projektejerens otte valg står i ADR-120's statusnote): rettes før runtime-test og testpakke. Rettet indtil nu: fund 1, 2, 3, 4, 5, 6, 7, 9 og 10 samt Meta-reglen (ff6ac08, udvidet til alle creator-produkter).
+- **55.9a Reviewets fund** 🔄 (review af d93bf6a..1f16c43: 3 alvorlige, 10 mellemstore, 11 lave; projektejerens otte valg står i ADR-120's statusnote): rettes før runtime-test og testpakke. Rettet indtil nu: fund 1–10, 14, 15, 17, 18, 20, 21 og 22 samt Meta-reglen (ff6ac08, udvidet til alle creator-produkter).
 - **55.10 Projektejerens test på stg** med det rigtige plugin.
 
 ## Fase 56 – Kliparts til udvalgte produkter med farver, creatoren vælger 💡 (projektejerens idé og svar 2026-11-22; version 2.5.0 foreslået, efter fase 55; ikke planlagt)

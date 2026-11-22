@@ -207,7 +207,11 @@ final class CreatorProductsSection {
 					self::render_keep_form( $creator, $product );
 				}
 
-				echo '<p class="description">' . esc_html__( 'Managed by the product category: remove the product from the category, or keep the link as manual first to remove it here.', 'merchboard' ) . '</p></td></tr>';
+				$managed = $product->is_collection
+					? __( 'A design collection keeps its link when its categories change. Keep the link as manual first to remove it here.', 'merchboard' )
+					: __( 'Managed by the product category: remove the product from the category, or keep the link as manual first to remove it here.', 'merchboard' );
+
+				echo '<p class="description">' . esc_html( $managed ) . '</p></td></tr>';
 				continue;
 			}
 

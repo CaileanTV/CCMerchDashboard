@@ -214,7 +214,12 @@ final class CollectionRequestsPage {
 		$html = self::edit_link( $product_id, $name );
 
 		if ( null !== $request->collection_id && in_array( $product_id, array_column( $this->collections->members( $request->collection_id ), 'id' ), true ) ) {
-			return $html . ' ' . esc_html__( '(in the collection)', 'merchboard' );
+			$html .= ' ' . esc_html__( '(in the collection)', 'merchboard' );
+
+			// In an unpublished one the warnings still count: publishing would put it on sale.
+			if ( 'publish' === get_post_status( $request->collection_id ) ) {
+				return $html;
+			}
 		}
 
 		if ( ! $this->products->owns( $request->creator_id, $product_id ) ) {
@@ -252,13 +257,15 @@ final class CollectionRequestsPage {
 				if ( $this->collections->active() ) {
 					$html .= self::form( CollectionRequestActions::ADD_NOW, $request->id, __( 'Add and hide now', 'merchboard' ), true );
 				} else {
-					$html .= '<p>' . esc_html__( 'By hand: open the collection, add the designs on its "Designs" tab and update it. The request closes by itself.', 'merchboard' ) . '</p>';
+					$html .= '<p>' . esc_html__( 'Activate CCMerch Design-samling to add them.', 'merchboard' ) . '</p>';
 				}
 			} elseif ( $adding && array() !== $missing ) {
 				$html .= '<p>' . esc_html__( 'Approved, but not all designs are in the collection yet.', 'merchboard' ) . '</p>';
 				$html .= self::form( CollectionRequestActions::RETRY, $request->id, __( 'Try again', 'merchboard' ), true );
 			} elseif ( ! $published ) {
 				$html .= '<p>' . esc_html__( 'Approved. Check the collection and publish it; the creator is told then.', 'merchboard' ) . '</p>';
+			} elseif ( ! $adding ) {
+				$html .= '<p>' . esc_html__( 'The collection is published, but not all its requested designs are hidden by it, or none is left in it. Open it, check the designs and update it.', 'merchboard' ) . '</p>';
 			}
 
 			$html .= self::form( CollectionRequestActions::CHECK, $request->id, __( 'Check again', 'merchboard' ) );
@@ -406,7 +413,13 @@ final class CollectionRequestsPage {
 	 * @param int $creator_id Creator.
 	 */
 	private function creator_name( int $creator_id ): string {
-		return $this->creators->find( $creator_id )->display_name ?? '#' . $creator_id;
+		try {
+			return $this->creators->find( $creator_id )->display_name ?? '#' . $creator_id;
+		} catch ( DatabaseException $e ) {
+			$this->logger->error( 'Reading a creator for the collection requests failed.', $e->context() );
+
+			return '#' . $creator_id;
+		}
 	}
 
 	/**

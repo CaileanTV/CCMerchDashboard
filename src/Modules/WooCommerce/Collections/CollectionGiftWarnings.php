@@ -46,7 +46,7 @@ final class CollectionGiftWarnings {
 	public function affected(): array {
 		$wpdb = $this->wpdb;
 
-		$gifts     = $this->rows( $wpdb->prepare( 'SELECT id, product_id FROM %i WHERE status IN ( %s, %s, %s, %s ) AND claimed_order_id IS NULL', Tables::name( $wpdb, Tables::GIFTS ), Gift::WAITING, Gift::ENTERING, Gift::WON, Gift::CLAIMED ) );
+		$gifts     = $this->rows( $wpdb->prepare( 'SELECT id, product_id FROM %i WHERE status IN ( %s, %s, %s, %s, %s ) AND claimed_order_id IS NULL', Tables::name( $wpdb, Tables::GIFTS ), Gift::WAITING, Gift::ENTERING, Gift::WON, Gift::CLAIMED, Gift::RETURNED ) );
 		$giveaways = $this->rows( $wpdb->prepare( 'SELECT id, product_id FROM %i WHERE status = %s', Tables::name( $wpdb, Tables::GIVEAWAYS ), Giveaway::AWAITING_PAYMENT ) );
 
 		$affected = array();

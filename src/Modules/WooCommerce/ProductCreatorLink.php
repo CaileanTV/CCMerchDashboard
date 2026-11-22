@@ -377,6 +377,7 @@ final class ProductCreatorLink {
 			self::refuse_link( ProductCreatorLinkException::ALREADY_LINKED );
 		}
 
+		self::assert_no_collection( $product );
 		$creator = $this->active_creator( $creator_id );
 
 		return $this->write(

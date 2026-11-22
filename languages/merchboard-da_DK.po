@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-22T17:20:20+00:00\n"
+"PO-Revision-Date: 2026-11-22T17:25:16+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -1353,7 +1353,7 @@ msgstr "Uændret"
 #: src/Modules/Admin/AuditLogFormatter.php:632
 #: src/Modules/Admin/AuditLogFormatter.php:784
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:242
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:246
 msgid "Manual"
 msgstr "Manuel"
 
@@ -1392,7 +1392,7 @@ msgstr "Creator #%d (ikke fundet)"
 #: src/Modules/Admin/AuditLogFormatter.php:748
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:589
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:423
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:427
 #, php-format
 msgid "%1$s (#%2$d)"
 msgstr "%1$s (#%2$d)"
@@ -1401,7 +1401,7 @@ msgstr "%1$s (#%2$d)"
 #: src/Modules/Admin/AuditLogFormatter.php:748
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:586
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:420
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:424
 msgid "(no name)"
 msgstr "(intet navn)"
 
@@ -1468,7 +1468,7 @@ msgstr "administratoren så som en anden creator"
 #: src/Modules/Admin/AuditLogFormatter.php:785
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:128
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:312
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:245
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:249
 msgid "Product category"
 msgstr "Produktkategori"
 
@@ -1553,7 +1553,7 @@ msgstr "Hændelse"
 #: src/Modules/ProductDesigner/DesignerNotifications.php:420
 #: src/Modules/ProductDesigner/DesignerNotifications.php:603
 #: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:158
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:349
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:356
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:202
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:302
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:389
@@ -1941,7 +1941,7 @@ msgstr "Gem adgang"
 #: src/Modules/Alerts/Admin/AlertApiTab.php:202
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:368
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:406
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:384
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:388
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:664
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
@@ -2328,7 +2328,7 @@ msgstr[1] "%d sekunder"
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:601
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1429
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:205
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:219
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:223
 #: build/dashboard.js:74
 #: build/dashboard.js:76
 #: build/dashboard.js:137
@@ -3493,7 +3493,7 @@ msgstr "Godkendt"
 
 #: src/Modules/Alerts/Admin/FontsSettingsSection.php:178
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:328
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:236
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:241
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:406
 msgid "Approve"
 msgstr "Godkend"
@@ -4403,7 +4403,7 @@ msgstr "Vinder"
 #: src/Modules/ProductDesigner/Admin/DesignerFeesSection.php:122
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:187
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:329
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:333
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:633
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:172
 #: src/Modules/WooCommerce/Admin/PayoutRecalculationsPage.php:208
@@ -5000,7 +5000,7 @@ msgid "Proposed"
 msgstr "Foreslået"
 
 #: src/Modules/Creators/Admin/CategoryProposalsPage.php:275
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:349
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:356
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:166
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:194
 msgid "Decision"
@@ -5437,13 +5437,13 @@ msgstr "Godkend og gå live"
 
 #: src/Modules/Creators/Admin/GoLivePage.php:221
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:300
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:267
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:274
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:176
 msgid "Note to the creator"
 msgstr "Note til creatoren"
 
 #: src/Modules/Creators/Admin/GoLivePage.php:222
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:269
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:276
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:177
 msgid "Decline"
 msgstr "Afvis"
@@ -5451,8 +5451,8 @@ msgstr "Afvis"
 #: src/Modules/Creators/Admin/GoLivePage.php:246
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1514
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:212
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:239
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:259
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:244
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:264
 #: build/alerts-global-admin.js:1
 #: build/alerts-presets-admin.js:1
 #: build/dashboard.js:2
@@ -6521,7 +6521,7 @@ msgstr "En creator har bedt om at få designs samlet. Intet i shoppen ændres, f
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:925
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:926
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:960
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:349
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:356
 #: build/dashboard.js:121
 msgid "Collection"
 msgstr "Samling"
@@ -6582,7 +6582,7 @@ msgstr "En creator har bedt om at få et produkt slettet. Der sker intet med pro
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:250
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:401
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:184
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:327
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:331
 #: src/Modules/WooCommerce/Admin/OrderHistoryPage.php:477
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:166
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:194
@@ -9150,7 +9150,7 @@ msgstr[1] "%d produkter."
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:851
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:983
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1084
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:315
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:319
 msgid "No products found."
 msgstr "Ingen produkter fundet."
 
@@ -11409,7 +11409,7 @@ msgstr "Årsag"
 
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:231
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:281
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:330
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:334
 msgid "Current creator"
 msgstr "Nuværende creator"
 
@@ -11427,7 +11427,7 @@ msgstr "%1$s → %2$s"
 #. translators: %d: term id of a deleted product category.
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:244
 #: src/Modules/WooCommerce/Admin/CreatorListCategories.php:160
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:253
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:257
 #, php-format
 msgid "Deleted category (#%d)"
 msgstr "Slettet kategori (#%d)"
@@ -11436,7 +11436,7 @@ msgstr "Slettet kategori (#%d)"
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:261
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:298
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:417
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:227
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:231
 #, php-format
 msgid "Only the first %d products are shown."
 msgstr "Kun de første %d produkter vises."
@@ -11466,7 +11466,7 @@ msgid "Start the reconciliation"
 msgstr "Start afstemningen"
 
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:353
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:373
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:377
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:222
 msgid "Invalid link"
 msgstr "Ugyldig tilknytning"
@@ -11638,84 +11638,88 @@ msgstr "(væk)"
 msgid "(in the collection)"
 msgstr "(i samlingen)"
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:221
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:226
 msgid "(not the creator's)"
 msgstr "(ikke creatorens)"
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:224
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:229
 msgid "(hidden, unpublished or collected)"
 msgstr "(skjult, afpubliceret eller samlet)"
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:238
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:243
 msgid "Approved, but the draft is not made yet."
 msgstr "Godkendt, men kladden er ikke lavet endnu."
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:246
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:251
 msgid "Close as partly done"
 msgstr "Luk som delvist udført"
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:250
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:255
 msgid "Approved. The designs are not sold from the collection until you add them."
 msgstr "Godkendt. Designs sælges ikke fra samlingen, før du tilføjer dem."
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:253
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:258
 msgid "Add and hide now"
 msgstr "Tilføj og skjul nu"
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:255
-msgid "By hand: open the collection, add the designs on its \"Designs\" tab and update it. The request closes by itself."
-msgstr "I hånden: åbn samlingen, tilføj designs på fanen \"Designs\", og opdatér den. Anmodningen lukker selv."
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:260
+msgid "Activate CCMerch Design-samling to add them."
+msgstr "Aktivér CCMerch Design-samling for at tilføje dem."
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:258
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:263
 msgid "Approved, but not all designs are in the collection yet."
 msgstr "Godkendt, men ikke alle designs er i samlingen endnu."
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:261
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:266
 msgid "Approved. Check the collection and publish it; the creator is told then."
 msgstr "Godkendt. Se samlingen efter, og udgiv den. Så får creatoren besked."
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:264
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:268
+msgid "The collection is published, but not all its requested designs are hidden by it, or none is left in it. Open it, check the designs and update it."
+msgstr "Samlingen er udgivet, men skjuler ikke alle de ønskede designs, eller ingen af dem er tilbage i den. Åbn den, se designs efter, og opdatér den."
+
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:271
 msgid "Check again"
 msgstr "Tjek igen"
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:287
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:294
 msgid "Declining takes the designs this request added out of the unpublished collection."
 msgstr "Afvisning tager de designs, som anmodningen tilføjede, ud af den ikke-udgivne samling."
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:288
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:295
 msgid "Declining puts the draft in the trash."
 msgstr "Afvisning lægger kladden i papirkurven."
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:305
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:312
 msgid "These open gifts and giveaways point at a collection instead of a design, so they cannot be redeemed for a product. Nothing is changed by itself; decide what to do with each."
 msgstr "Disse åbne gaver og giveaways peger på en samling i stedet for et design, så de kan ikke indløses til et produkt. Intet ændres af sig selv. Tag stilling til hver."
 
 #. translators: %d: giveaway id.
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:310
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:317
 #, php-format
 msgid "Giveaway #%d"
 msgstr "Giveaway nr. %d"
 
 #. translators: %d: gift id.
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:312
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:319
 #, php-format
 msgid "Gift #%d"
 msgstr "Gave nr. %d"
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:330
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:337
 msgid "These products list designs but are not of the collection type, so they cannot be sold themselves. If you changed one into an ordinary product, say so here. If it lost its type while the collection plugin was off, give it the type back in WooCommerce instead: as an ordinary product it would be sold without a design and print files."
 msgstr "Disse produkter har en liste af designs, men ikke typen samling, så de kan ikke sælges i sig selv. Har du ændret et af dem til et almindeligt produkt, så angiv det her. Har det mistet typen, mens samlings-pluginet var slået fra, så giv det typen tilbage i WooCommerce i stedet: som almindeligt produkt sælges det uden design og printfiler."
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:334
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:341
 msgid "No longer a collection"
 msgstr "Ikke længere en samling"
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:348
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:355
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:193
 msgid "Handled requests"
 msgstr "Behandlede anmodninger"
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:349
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:356
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:363
 #: src/Modules/WooCommerce/Admin/PayoutsPage.php:526
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:194
@@ -11725,13 +11729,13 @@ msgid "Handled"
 msgstr "Behandlet"
 
 #. translators: %s: the administrator's note.
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:354
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:361
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:199
 #, php-format
 msgid "Declined: %s"
 msgstr "Afvist: %s"
 
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:356
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:363
 #: build/dashboard.js:103
 #: build/dashboard.js:123
 #: build/dashboard.js:127
@@ -11739,7 +11743,7 @@ msgid "In the shop"
 msgstr "I butikken"
 
 #. translators: %s: design names.
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:358
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:365
 #: build/dashboard.js:124
 #, php-format,js-format
 msgid "Partly in the shop: %s"
@@ -12688,7 +12692,7 @@ msgid "Linked products"
 msgstr "Tilknyttede produkter"
 
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:185
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:328
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:332
 msgid "SKU"
 msgstr "Varenummer"
 
@@ -12700,82 +12704,86 @@ msgstr "Oprindelse"
 msgid "The stored link is invalid. Link the product again (with \"Take over\") to repair it, or remove it."
 msgstr "Den gemte tilknytning er ugyldig. Tilknyt produktet igen (med \"Overtag\") for at rette den, eller fjern den."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:210
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:211
+msgid "A design collection keeps its link when its categories change. Keep the link as manual first to remove it here."
+msgstr "En design-samling beholder sin tilknytning, når dens kategorier ændres. Behold tilknytningen som manuel først for at fjerne den her."
+
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:212
 msgid "Managed by the product category: remove the product from the category, or keep the link as manual first to remove it here."
 msgstr "Styres af produktkategorien: fjern produktet fra kategorien, eller behold tilknytningen som manuel først for at kunne fjerne den her."
 
 #. translators: %s: comma-separated category names.
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:259
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:263
 #, php-format
 msgid "Via: %s"
 msgstr "Via: %s"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:263
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:267
 msgid "No mapped category justifies this link any more; the reconciliation will remove it."
 msgstr "Ingen mappet kategori begrunder længere denne tilknytning; afstemningen vil fjerne den."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:264
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:268
 msgid "The product is in categories of several creators; the reconciliation will remove this link."
 msgstr "Produktet ligger i kategorier fra flere creators; afstemningen vil fjerne denne tilknytning."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:265
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:269
 msgid "The product's categories are now mapped to another creator; the reconciliation will move this link."
 msgstr "Produktets kategorier er nu mappet til en anden creator; afstemningen vil flytte denne tilknytning."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:266
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:270
 msgid "The category state could not be evaluated."
 msgstr "Kategoritilstanden kunne ikke vurderes."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:286
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:290
 msgid "Keep the product with this creator as a manual link. Product categories will no longer change it; only an administrator can remove it."
 msgstr "Behold produktet hos denne creator som en manuel tilknytning. Produktkategorier ændrer den ikke længere; kun en administrator kan fjerne den."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:287
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:291
 msgid "Keep as manual"
 msgstr "Behold som manuel"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:298
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:302
 msgid "Add products"
 msgstr "Tilføj produkter"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:303
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:307
 msgid "Search by product name, SKU or category"
 msgstr "Søg på produktnavn, varenummer eller kategori"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:305
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:309
 msgid "Search products"
 msgstr "Søg produkter"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:326
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:330
 msgid "Select"
 msgstr "Vælg"
 
 #. translators: %d: number of results shown.
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:341
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:345
 #, php-format
 msgid "Only the first %d results are shown. Refine the search to find other products."
 msgstr "Kun de første %d resultater vises. Præcisér søgningen for at finde andre produkter."
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:344
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:348
 msgid "Link selected products"
 msgstr "Tilknyt valgte produkter"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:368
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:372
 msgid "Already linked to this creator"
 msgstr "Allerede tilknyttet denne creator"
 
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:374
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:378
 msgid "Take over: replace the invalid link"
 msgstr "Overtag: erstat den ugyldige tilknytning"
 
 #. translators: %s: creator name.
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:377
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:381
 #, php-format
 msgid "Linked to %s"
 msgstr "Tilknyttet %s"
 
 #. translators: %s: creator name.
-#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:379
+#: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:383
 #, php-format
 msgid "Take over the product from %s"
 msgstr "Overtag produktet fra %s"

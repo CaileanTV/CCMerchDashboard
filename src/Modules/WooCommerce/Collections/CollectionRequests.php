@@ -21,6 +21,7 @@ use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\WooCommerce\Dashboard\CreatorProducts;
+use MerchBoard\Modules\WooCommerce\Dashboard\PlainText;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -679,7 +680,7 @@ class CollectionRequests {
 	 * @param int $product_id Product.
 	 */
 	private static function title( int $product_id ): string {
-		return mb_substr( sanitize_text_field( (string) get_post_field( 'post_title', $product_id, 'raw' ) ), 0, self::NAME_MAX_LENGTH );
+		return mb_substr( PlainText::of( sanitize_text_field( (string) get_post_field( 'post_title', $product_id, 'raw' ) ) ), 0, self::NAME_MAX_LENGTH );
 	}
 
 	/**

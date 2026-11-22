@@ -285,7 +285,21 @@ class DesignCollections {
 	 * @param int $product_id Parent product.
 	 */
 	public function collectable( int $product_id ): bool {
-		return $this->published_design( $product_id ) && ! self::hidden( $product_id ) && null === $this->collection_of( $product_id );
+		return $this->published_design( $product_id ) && ! self::hidden( $product_id ) && ! self::held( $product_id );
+	}
+
+	/**
+	 * Whether the plugin would refuse to put it in another collection: its
+	 * mark names a published product, listed there or not (a copy of a
+	 * collected design carries the mark too).
+	 *
+	 * @param int $product_id Product.
+	 */
+	private static function held( int $product_id ): bool {
+		$marked = get_post_meta( $product_id, self::GROUP_KEY, true );
+		$id     = is_numeric( $marked ) ? (int) $marked : 0;
+
+		return $id > 0 && 'publish' === get_post_status( $id );
 	}
 
 	/**

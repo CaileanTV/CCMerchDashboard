@@ -118,6 +118,7 @@ final class CollectionWatcher {
 		}
 
 		$this->waiting = true;
-		add_action( 'shutdown', array( $this, 'check' ) );
+		// Before the notifications' own shutdown work at 10, which this can add to.
+		add_action( 'shutdown', array( $this, 'check' ), 5 );
 	}
 }

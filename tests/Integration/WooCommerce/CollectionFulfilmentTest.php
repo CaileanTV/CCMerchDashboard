@@ -148,7 +148,7 @@ final class CollectionFulfilmentTest extends IntegrationTestCase {
 	}
 
 	protected function tearDown(): void {
-		remove_action( 'shutdown', array( $this->watcher, 'check' ) );
+		remove_action( 'shutdown', array( $this->watcher, 'check' ), 5 );
 		$this->posts->remove_all();
 		parent::tearDown();
 	}

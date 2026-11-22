@@ -243,7 +243,7 @@ final class DesignCollectionsTest extends TestCase {
 
 		self::assertTrue( $this->collections()->collectable( 70 ) );
 		self::assertFalse( $this->collections()->collectable( 71 ) );
-		self::assertTrue( $this->collections()->collectable( 72 ), 'A stale mark does not block.' );
+		self::assertFalse( $this->collections()->collectable( 72 ), 'The plugin would refuse to hide a copy that carries a published mark.' );
 		self::assertFalse( $this->collections()->collectable( self::DESIGN ) );
 		self::assertFalse( $this->collections()->collectable( self::COLLECTION ) );
 	}
