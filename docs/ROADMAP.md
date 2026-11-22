@@ -1677,7 +1677,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **56.1 ADR og plan** ✅: ADR-121, svar og målinger.
 - **56.2 Bagning** ✅ (1668675): rene funktioner fra PSD til masker, streg og faste lag, testet med syntetiske PSD'er.
 - **56.3 Farvning** ✅ (6d3b236; mod projektejerens eksporter 0,29/255 med farve og 0,34/255 med gradient på hvid): farve, gradient og låsens geometri som rene funktioner.
-- **56.4 Tegningens indgang:** karakteriseringstests af printfil og tråde, derefter resolveren uden ændret adfærd.
+- **56.4 Tegningens indgang** ✅ (tests 1521124, resolver 3af8769): karakteriseringstests af printfil og tråde, derefter resolveren uden ændret adfærd.
 - **56.5 Schema 55** alene på Local efter verificeret backup og tjek af cron og papirkurv.
 - **56.6 Definition og repository.**
 - **56.7 Regler for produkt og "beholder den"** ved gem, kopi og filadgang.
