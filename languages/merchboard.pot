@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-23T17:55:33+00:00\n"
+"POT-Creation-Date: 2026-11-23T20:42:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -1506,7 +1506,7 @@ msgstr ""
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1994
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1999
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:218
 #: build/dashboard.js:108
 #: build/dashboard.js:109
@@ -2286,12 +2286,12 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:374
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:468
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:551
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1748
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1896
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1753
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1901
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:161
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:199
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:203
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:205
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:204
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:206
 #: build/dashboard.js:60
 #: build/dashboard.js:82
 #: build/dashboard.js:140
@@ -2338,8 +2338,8 @@ msgstr[1] ""
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:580
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:606
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1434
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1784
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:205
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1789
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:206
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:223
 #: build/dashboard.js:76
 #: build/dashboard.js:78
@@ -2513,8 +2513,8 @@ msgid "Create the key in Google Cloud with only the Text-to-Speech API allowed."
 msgstr ""
 
 #: src/Modules/Alerts/Admin/AlertsSettingsSection.php:180
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:253
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:287
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:259
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:293
 msgid "Remove the stored key"
 msgstr ""
 
@@ -4435,7 +4435,7 @@ msgstr ""
 #: src/Modules/News/Admin/NewsAdminPage.php:334
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:208
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:374
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1625
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1630
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:161
 #: src/Modules/ProductDesigner/Admin/DesignerFeesSection.php:122
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:191
@@ -6188,7 +6188,7 @@ msgid "Withdrawn"
 msgstr ""
 
 #: src/Modules/News/Admin/NewsAdminPage.php:417
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1996
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2001
 #: build/dashboard.js:105
 #: build/dashboard.js:131
 msgid "Draft"
@@ -8779,7 +8779,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:374
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:510
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1308
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1900
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1905
 #: build/dashboard.js:104
 msgid "Colours"
 msgstr ""
@@ -8965,7 +8965,7 @@ msgid "Used for a creator without their own product category."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:509
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1947
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1952
 msgid "Product tags"
 msgstr ""
 
@@ -9606,133 +9606,137 @@ msgstr ""
 msgid "Imported from %s: one photo per colour and a measured print area per side. Check each print area before you activate the base product."
 msgstr ""
 
-#. translators: 1: names of sides, 2: Printful or Gelato.
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1526
+msgid "Photos and print areas come from Printify by themselves when a Printify shop for photos is chosen under Settings → Product designer, and the print areas of the sizes have one shape. Delete this base product and import it again to get them."
+msgstr ""
+
+#. translators: 1: names of sides, 2: Printful or Gelato.
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1531
 #, php-format
 msgid "Left out because %2$s's photos do not show them: %1$s."
 msgstr ""
 
 #. translators: %d: how many sizes of the sides have a bleed.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1540
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1545
 msgid "Fetch the bleed from Gelato"
 msgstr ""
 
 #. translators: %d: how many sizes of the sides have a bleed.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1540
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1545
 #, php-format
 msgid "%d size of the sides has a bleed. Creators see a red line where the print can be cut off."
 msgid_plural "%d sizes of the sides have a bleed. Creators see a red line where the print can be cut off."
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1553
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1558
 msgid "Show the provider's answer"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1567
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1572
 msgid "The provider's answer (no keys)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1607
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1612
 msgid "The provider renders the product"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1608
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1613
 msgid "The print areas are measured"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1609
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1614
 msgid "The photos are downloaded"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1610
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1615
 msgid "The sides are saved"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1625
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1630
 msgid "Render"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1625
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1630
 msgid "The provider says"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1625
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1630
 msgid "Picture"
 msgstr ""
 
 #. translators: %d: minutes.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1640
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1645
 #, php-format
 msgid "The background job has not run for %d minutes. Check that WP-Cron or Action Scheduler runs on this site."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1644
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1649
 msgid "Start the import over"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1660
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1665
 msgid "Product with markers"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1660
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1665
 msgid "Blank product"
 msgstr ""
 
 #. translators: 1: looks so far, 2: most looks.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1671
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1676
 #: build/dashboard.js:63
 msgid "Ready"
 msgstr ""
 
 #. translators: 1: looks so far, 2: most looks.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1671
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1676
 #, php-format
 msgid "Waiting (look %1$d of %2$d)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1711
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1716
 msgid "importing…"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1712
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1717
 msgid "import failed"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1743
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1748
 msgid "Image for all products"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1744
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1749
 msgid "Images every creator can use in the designer. PNG, JPG or WebP; use PNG for transparency."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1750
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1907
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1755
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1912
 msgid "Add clipart"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1758
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1763
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:192
 #: build/dashboard.js:98
 msgid "Cliparts"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1763
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1768
 #: build/dashboard.js:98
 msgid "No cliparts yet."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1819
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1824
 msgid "All products"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1819
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1824
 msgid "No current products"
 msgstr ""
 
 #. translators: %d: number of parts the creator colours.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1821
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1826
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:348
 #, php-format
 msgid "%d part"
@@ -9740,57 +9744,57 @@ msgid_plural "%d parts"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1825
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1830
 msgid "Palette"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1829
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1834
 msgid "Locked"
 msgstr ""
 
 #. translators: %s: clipart name.
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1846
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1851
 #, php-format
 msgid "Products of %s"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1851
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1856
 msgid "Save products"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1890
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1895
 msgid "Clipart with parts from a PSD"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1891
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1896
 msgid "Layers whose name begins with \"farvet lag\" become parts the creator colours; the rest of the name is the part's name. Their stroke and the other layers never change. The PSD stays on your computer: only the clipart is saved, and nothing of it can be changed later except its products."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1897
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1902
 msgid "PSD file"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1901
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1906
 msgid "Any colour"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1902
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1907
 msgid "Only these colours, also for gradients:"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1903
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1908
 msgid "Colours as #rrggbb. The file's own colours are always included. Embroidered sides use their threads instead."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1904
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1909
 msgid "Locked: the clipart fills the print area from top to bottom in the middle, and the creator can only move it sideways"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1906
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1911
 msgid "Save even though the clipart differs from the PSD"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1918
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1923
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:181
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:400
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:124
@@ -9798,27 +9802,27 @@ msgstr ""
 msgid "Products"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1919
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1924
 msgid "All base products, also new ones"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1920
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1925
 msgid "Only these base products:"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1944
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1949
 msgid "There are no product tags in WooCommerce yet."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1969
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1974
 msgid "— None —"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1995
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2000
 msgid "Retired"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2007
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2012
 #: build/alerts-global-admin.js:18
 #: build/alerts-presets-admin.js:18
 #: build/dashboard.js:47
@@ -9826,23 +9830,23 @@ msgstr ""
 msgid "Background"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2008
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2013
 msgid "Colour mask"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2009
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2014
 msgid "Shading"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2010
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2015
 msgid "Cutout (e.g. strings on a hoodie)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2011
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2016
 msgid "Silhouette (images without background)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2012
+#: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2017
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
@@ -10208,7 +10212,7 @@ msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:90
 #: src/Modules/ProductDesigner/Admin/DesignerMenu.php:162
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:90
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:91
 #: src/Modules/ProductDesigner/DesignerDashboardSection.php:44
 #: src/Modules/ProductDesigner/Shop/DesignerOrderFiles.php:170
 msgid "Product designer"
@@ -10251,154 +10255,158 @@ msgid "The Printify token was not saved: paste the whole access token as Printif
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:59
-msgid "The embroidery pack was not saved: it needs a name and at least one thread, each thread a unique code, a name and a colour, and a limit between 1 and the number of threads."
+msgid "The Printify shop was not saved: use the digits of the shop's id from its address in Printify."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:60
-msgid "A base product uses this embroidery pack, so it cannot be deleted."
+msgid "The embroidery pack was not saved: it needs a name and at least one thread, each thread a unique code, a name and a colour, and a limit between 1 and the number of threads."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:61
-msgid "The embroidery pack was deleted."
+msgid "A base product uses this embroidery pack, so it cannot be deleted."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:62
+msgid "The embroidery pack was deleted."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:63
 msgid "A technical error occurred. The product designer settings were not changed."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:91
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:92
 msgid "Creators can design their own products"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:92
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:93
 msgid "Off by default. New products and changes always wait for an administrator's approval. Products that were not made in the designer are never changed by it."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:96
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:97
 msgid "Printful"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:97
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:98
 msgid "Use Printful for base products and mockups"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:98
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:99
 msgid "Off by default. Only the catalog and the mockup generator are used; orders are not sent to Printful."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:102
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:103
 msgid "Gelato"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:103
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:104
 msgid "Use Gelato for base products and mockups"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:104
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:105
 msgid "Off by default. Only the catalog and mockups from your Gelato templates are used; orders are not sent to Gelato."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:108
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:109
 msgid "Prodigi"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:109
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:110
 msgid "Use Prodigi for base products and mockups"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:110
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:111
 msgid "Off by default. Only the catalogue and mockups are used; orders are not sent to Prodigi."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:114
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:115
 msgid "Printify"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:115
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:116
 msgid "Use Printify's catalog for base products"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:116
-msgid "Off by default. Only the catalog is read: products with their colours, sizes and print areas. Nothing is sent to Printify, and it makes neither mockups nor orders."
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:117
+msgid "Off by default. The catalog gives products with their colours, sizes and print areas. With a shop for photos, an import makes a temporary product there for the photos and deletes it again. Nothing is published and no orders are made."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:137
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:138
 msgid "Printful API token"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:139
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:233
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:140
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:234
 msgid "A token is stored."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:139
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:233
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:140
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:234
 msgid "No token yet."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:142
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:236
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:143
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:237
 msgid "Remove the stored token"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:145
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:146
 msgid "A private token from the Printful Developer Portal with as few scopes as possible (the catalog and the mockup generator need no store access). It is stored encrypted and never shown again; leave the field empty to keep the stored one."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:146
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:147
 msgid "How to set up Printful"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:150
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:151
 msgid "Create an account at printful.com and a store of the type \"Manual order platform / API\" that is not connected to a web shop, so nothing is published or sold through Printful."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:151
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:152
 msgid "In Printful's Developer Portal (developers.printful.com), create a private token with access to that one store and as few scopes as possible. Do not choose orders, sync products or webhooks: Merch Dashboard never creates orders or products at Printful."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:152
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:153
 msgid "Paste the token above, switch Printful on and save."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:153
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:154
 msgid "Import catalog products under Merch Dashboard → Product designer → Base products (\"Import from Printful\"), check them, set the base price and activate them."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:154
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:155
 msgid "Printful fetches print files from a short-lived link on this site, so mockups from Printful only work on a site Printful can reach (not on a local test site)."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:166
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:167
 msgid "Save product designer settings"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:180
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:181
 msgid "A pack holds the thread colours creators may use and the most of them on one embroidered side. Choose a pack on each embroidered side of a base product. A change counts from the next time a design is saved; products in the shop and sent designs do not change."
 msgstr ""
 
 #. translators: 1: pack name, 2: number of threads.
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:197
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:198
 msgid "New embroidery pack"
 msgstr ""
 
 #. translators: 1: pack name, 2: number of threads.
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:197
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:198
 #, php-format
 msgid "%1$s (%2$d threads)"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:204
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:205
 msgid "Most threads on one side"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:205
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:206
 #: src/Modules/WooCommerce/Admin/CreatorCodeSection.php:208
 #: build/dashboard.js:109
 msgid "Code"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:205
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:206
 #: src/Modules/ProductDesigner/Providers/GelatoCatalog.php:195
 #: src/Modules/ProductDesigner/Providers/GelatoCatalog.php:211
 #: src/Modules/ProductDesigner/Shop/WooCommerceDesignerWriter.php:558
@@ -10410,97 +10418,105 @@ msgstr ""
 msgid "Colour"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:216
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:217
 msgid "Save embroidery pack"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:219
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:220
 msgid "Delete embroidery pack"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:231
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:232
 msgid "Printify access token"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:239
-msgid "A personal access token from Printify (My Profile → Connections) with the scopes catalog.read and print_providers.read. It is stored encrypted and never shown again; leave the field empty to keep the stored one. A token is valid for one year."
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:240
+msgid "A personal access token from Printify (My Profile → Connections) with the scopes catalog.read and print_providers.read, and for photos also products.read, products.write, uploads.read and uploads.write. It is stored encrypted and never shown again; leave the field empty to keep the stored one. A token is valid for one year."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:248
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:243
+msgid "Printify shop for photos"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:245
+msgid "The id of an empty shop in Printify, from its address (printify.com/app/store/<id>/…). An import then makes a temporary product there, takes one photo per colour and side and measures the print areas, and deletes the product again; it is never published. Use a shop that is not connected to a store. Without a shop, an import gives white sheets for your own photos."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:254
 msgid "Prodigi API key"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:250
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:284
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:256
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:290
 msgid "A key is stored."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:250
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:284
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:256
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:290
 msgid "No key yet."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:256
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:262
 msgid "The API key from Prodigi's dashboard. It is stored encrypted and never shown again; leave the field empty to keep the stored one."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:257
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:263
 msgid "How to set up Prodigi"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:261
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:267
 msgid "Create an account at prodigi.com and an API key under API settings in its dashboard (dashboard.prodigi.com). Paste it as it is shown; a key from the sandbox dashboard needs sandbox_ before it."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:262
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:268
 msgid "Paste the key above, switch Prodigi on and save."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:263
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:269
 msgid "Import a product under Merch Dashboard → Product designer → Base products. Prodigi's catalogue has no photos or colour codes: creators design on a white sheet, and you correct the colours on the base product."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:264
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:270
 msgid "Prodigi fetches print files from a short-lived link on this site, so mockups from Prodigi only work on a site Prodigi can reach (not on a local test site)."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:265
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:271
 msgid "This connection has not been tried against Prodigi yet. Test it on the staging site first."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:282
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:288
 msgid "Gelato API key"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:290
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:296
 msgid "An API key from Gelato's dashboard. It is stored encrypted and never shown again; leave the field empty to keep the stored one."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:291
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:297
 msgid "Gelato store id"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:293
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:299
 msgid "How to set up Gelato"
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:297
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:303
 msgid "Create an account at gelato.com and a store that is only used through the API and is not connected to a web shop or sales channel, so nothing is published or sold through Gelato. Products made for mockups stay in that store."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:298
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:304
 msgid "Create an API key in Gelato's dashboard (Developer → API keys) and copy the store id from the store's address."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:299
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:305
 msgid "Paste the key and the store id above, switch Gelato on and save."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:300
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:306
 msgid "In Gelato's dashboard, make a template per product: the product, the colours and sizes creators may choose, and one image placeholder per side. Import it under Merch Dashboard → Product designer → Base products (\"Import from Gelato\") with its template id, check it, set the base price and activate it."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:301
+#: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:307
 msgid "Gelato fetches print files from a short-lived link on this site, so mockups from Gelato only work on a site Gelato can reach (not on a local test site)."
 msgstr ""
 
