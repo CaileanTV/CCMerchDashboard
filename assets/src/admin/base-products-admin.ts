@@ -9,6 +9,7 @@
 import { __, sprintf } from '@wordpress/i18n';
 
 import { attachAreaPicker } from './area-picker';
+import { attachClipartUpload } from './clipart-upload';
 import { attachColorPhotos } from './color-photos';
 import { readScene } from './psd-scene';
 import { attachSilhouette } from './silhouette';
@@ -688,6 +689,11 @@ document
 document
 	.querySelectorAll< HTMLInputElement >( 'input[data-merchboard-scene]' )
 	.forEach( attachScene );
+
+// A clipart with parts from a PSD (ADR-121).
+document
+	.querySelectorAll< HTMLFormElement >( 'form[data-merchboard-clipart-form]' )
+	.forEach( attachClipartUpload );
 
 // "Make it from the background" for the silhouette (ADR-114).
 document

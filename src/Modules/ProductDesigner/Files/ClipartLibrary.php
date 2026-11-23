@@ -88,6 +88,128 @@ class ClipartLibrary {
 	}
 
 	/**
+	 * Adds a clipart baked in the administrator's browser from a PSD
+	 * (ADR-121): its preview, the atlas of its parts and its definition. The
+	 * definition is checked whole; the atlas' file is the one stored here.
+	 *
+	 * @param string       $name       Name shown in the designer.
+	 * @param array<mixed> $preview    Upload of the preview (PNG).
+	 * @param array<mixed> $atlas      Upload of the atlas (PNG); empty for a clipart without parts.
+	 * @param string       $definition The definition as JSON.
+	 * @return int The asset id.
+	 * @throws DesignerException When the user may not, or the name, a file or the definition is refused.
+	 * @throws DatabaseException When it cannot be stored (the files are deleted again).
+	 */
+	public function add_artwork( string $name, array $preview, array $atlas, string $definition ): int {
+		self::authorize();
+
+		$name = trim( sanitize_text_field( $name ) );
+
+		if ( '' === $name || mb_strlen( $name ) > 100 ) {
+			self::reject( DesignerException::CLIPART_NAME );
+		}
+
+		$data = json_decode( $definition, true );
+
+		if ( ! is_array( $data ) ) {
+			self::reject( DesignerException::CLIPART_DEFINITION );
+		}
+
+		$parts  = is_array( $data['parts'] ?? null ) && array() !== $data['parts'];
+		$stored = array();
+		$id     = null;
+
+		try {
+			$shown    = $this->files->store( $preview );
+			$stored[] = $shown['file'];
+			$packed   = $parts ? $this->files->store( $atlas ) : null;
+
+			if ( null !== $packed ) {
+				$stored[] = $packed['file'];
+			}
+
+			$wanted = is_array( $data['atlas'] ?? null ) ? $data['atlas'] : array();
+
+			// Transparent PNGs only; the atlas as large as the definition says.
+			if ( 'image/png' !== $shown['mime'] || ( null !== $packed && ( 'image/png' !== $packed['mime'] || ( $wanted['width'] ?? null ) !== $packed['width'] || ( $wanted['height'] ?? null ) !== $packed['height'] ) ) ) {
+				self::reject( DesignerException::CLIPART_DEFINITION );
+			}
+
+			$data['atlas'] = null === $packed ? null : array(
+				'file'   => $packed['file'],
+				'width'  => $packed['width'],
+				'height' => $packed['height'],
+			);
+			$read          = ClipartDefinition::from_data( $data, $shown['width'], $shown['height'] ) ?? self::reject( DesignerException::CLIPART_DEFINITION );
+
+			$id = $this->transaction->run(
+				function () use ( $name, $shown, $read ): int {
+					$id = $this->assets->insert_artwork( $name, $shown, $read );
+					$this->audit->record(
+						AuditAction::DesignerClipartAdded,
+						null,
+						array(
+							'asset_id'   => $id,
+							'asset_name' => $name,
+						)
+					);
+
+					return $id;
+				}
+			);
+		} finally {
+			// A refused or failed change keeps no file.
+			if ( null === $id ) {
+				foreach ( $stored as $file ) {
+					$this->files->delete( $file );
+				}
+			}
+		}
+
+		return $id;
+	}
+
+	/**
+	 * Changes the base products a clipart with a definition is offered on;
+	 * nothing else of it can change (ADR-121 pkt. 2).
+	 *
+	 * @param int        $id    Asset id.
+	 * @param int[]|null $bases Base product ids; null for all.
+	 * @throws DesignerException When the user may not, or it is no clipart of the library with a definition.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_bases( int $id, ?array $bases ): void {
+		self::authorize();
+
+		$clipart = $this->assets->find_clipart( $id );
+
+		if ( null === $clipart || null !== $clipart->retired_at || null === $clipart->definition ) {
+			self::reject( DesignerException::CLIPART_UNKNOWN );
+		}
+
+		$ids = null === $bases ? null : array_values( array_unique( array_filter( array_map( 'intval', $bases ), static fn( int $base ): bool => $base > 0 ) ) );
+
+		if ( array() === $ids ) {
+			self::reject( DesignerException::CLIPART_DEFINITION );
+		}
+
+		$this->transaction->run(
+			function () use ( $clipart, $ids ): void {
+				$this->assets->set_bases( $clipart, $ids );
+				$this->audit->record(
+					AuditAction::DesignerClipartChanged,
+					null,
+					array(
+						'asset_id'   => $clipart->id,
+						'asset_name' => $clipart->name,
+						'bases'      => $ids,
+					)
+				);
+			}
+		);
+	}
+
+	/**
 	 * Removes a clipart from new designs. Its row and files stay.
 	 *
 	 * @param int $id Asset id.

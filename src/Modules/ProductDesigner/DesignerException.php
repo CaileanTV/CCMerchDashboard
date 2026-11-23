@@ -78,6 +78,11 @@ final class DesignerException extends RuntimeException {
 
 	public const CLIPART_UNKNOWN = 'clipart_unknown';
 
+	/**
+	 * A clipart's definition, preview or atlas does not read (ADR-121).
+	 */
+	public const CLIPART_DEFINITION = 'clipart_definition';
+
 	public const DESIGNER_DISABLED = 'designer_disabled';
 
 	public const DESIGN_INVALID = 'design_invalid';

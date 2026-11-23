@@ -86,6 +86,9 @@ const REQUIRED = [
 	'build/merch-ad.js',
 	'build/merch-ad.css',
 	'build/merch-ad.asset.php',
+	// The PSD import of base products and cliparts (ADR-080, ADR-121).
+	'build/base-products-admin.js',
+	'build/base-products-admin.asset.php',
 	// The admin's images without background (ADR-114).
 	'build/designer-cutouts-admin.js',
 	'build/designer-cutouts-admin.asset.php',

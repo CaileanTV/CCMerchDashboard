@@ -701,6 +701,12 @@ enum AuditAction: string {
 	case DesignerClipartRetired = 'designer_clipart_retired';
 
 	/**
+	 * An administrator changed the base products a clipart is offered on
+	 * (ADR-121 pkt. 2). Context: asset_id, asset_name, bases (null for all).
+	 */
+	case DesignerClipartChanged = 'designer_clipart_changed';
+
+	/**
 	 * A creator started a designer product (ADR-080 pkt. 3). Context: design_product_id, base_id.
 	 */
 	case DesignerProductCreated = 'designer_product_created';

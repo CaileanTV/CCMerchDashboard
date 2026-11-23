@@ -190,6 +190,7 @@ final class AuditLogFormatter {
 			AuditAction::DesignerClipartAdded => __( 'Clipart added', 'merchboard' ),
 			AuditAction::DesignerClipartDeleted => __( 'Clipart deleted', 'merchboard' ),
 			AuditAction::DesignerClipartRetired => __( 'Clipart removed', 'merchboard' ),
+			AuditAction::DesignerClipartChanged => __( 'Clipart products changed', 'merchboard' ),
 			AuditAction::DesignerFeeChanged => __( 'Digitization fee changed', 'merchboard' ),
 			AuditAction::DesignerFeeCharged => __( 'Digitization fee charged', 'merchboard' ),
 			AuditAction::DesignerFeeCancelled => __( 'Digitization fee cancelled', 'merchboard' ),

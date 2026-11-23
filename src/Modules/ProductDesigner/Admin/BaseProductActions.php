@@ -61,6 +61,34 @@ final class BaseProductActions {
 	 */
 	public function register(): void {
 		add_action( 'admin_post_' . self::ACTION, array( $this, 'handle_request' ) );
+		add_action( 'admin_post', array( $this, 'handle_too_large' ) );
+	}
+
+	/**
+	 * A request larger than post_max_size reaches admin-post.php without its
+	 * fields, so without its action (ADR-121): an upload of a clipart from the
+	 * cliparts tab goes back there with the reason, not "the link expired".
+	 * Nothing is changed, so no nonce is needed.
+	 */
+	public function handle_too_large(): void {
+		$length = isset( $_SERVER['CONTENT_LENGTH'] ) ? absint( $_SERVER['CONTENT_LENGTH'] ) : 0;
+		$from   = (string) wp_get_referer();
+		$limit  = self::post_limit();
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Only whether fields arrived is read.
+		if ( array() !== $_POST || $limit < 1 || $length <= $limit || ! current_user_can( Capabilities::MANAGE_DESIGNER ) || ! str_contains( $from, 'view=cliparts' ) ) {
+			return;
+		}
+
+		wp_safe_redirect( BaseProductsPage::cliparts_url( 'clipart_too_large' ) );
+		exit;
+	}
+
+	/**
+	 * The largest request PHP takes, in bytes; 0 for no limit.
+	 */
+	public static function post_limit(): int {
+		return (int) wp_convert_hr_to_bytes( (string) ini_get( 'post_max_size' ) );
 	}
 
 	/**
@@ -218,6 +246,22 @@ final class BaseProductActions {
 
 					return BaseProductsPage::cliparts_url( 'clipart_added' );
 				// The old name: a page opened before 2.5.0 still sends it.
+				case 'clipart_artwork':
+					$this->cliparts->add_artwork(
+						$text( 'clipart_name' ),
+						is_array( $files['clipart_preview'] ?? null ) ? $files['clipart_preview'] : array(),
+						is_array( $files['clipart_atlas'] ?? null ) ? $files['clipart_atlas'] : array(),
+						$text( 'clipart_definition' )
+					);
+
+					return BaseProductsPage::cliparts_url( 'clipart_added' );
+				case 'clipart_bases':
+					$this->cliparts->set_bases(
+						absint( $text( 'asset_id' ) ),
+						'all' === $text( 'clipart_scope' ) ? null : array_map( 'intval', array_filter( is_array( $input['clipart_bases'] ?? null ) ? $input['clipart_bases'] : array(), 'is_numeric' ) )
+					);
+
+					return BaseProductsPage::cliparts_url( 'clipart_changed' );
 				case 'clipart_delete':
 				case 'clipart_retire':
 					$this->cliparts->retire( absint( $text( 'asset_id' ) ) );

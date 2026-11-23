@@ -552,6 +552,95 @@ final class BaseProductsTest extends IntegrationTestCase {
 		self::assertSame( 403, $download->response( array( 'asset' => (string) $id, '_wpnonce' => $nonce ) )['status'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	}
 
+	public function test_a_clipart_from_a_psd_keeps_its_atlas_and_only_its_products_change(): void {
+		$library = new ClipartLibrary( $this->assets, $this->files, $this->service( AuditTrail::class ), $this->service( Transaction::class ) );
+		$rect    = array(
+			'x'      => 0,
+			'y'      => 0,
+			'width'  => 10,
+			'height' => 10,
+		);
+		$data    = array(
+			'bases'   => array( 4 ),
+			'locked'  => false,
+			'parts'   => array(
+				array(
+					'label'    => 'Låg',
+					'box'      => $rect,
+					'stroke'   => null,
+					'scale'    => 1,
+					'paint'    => array( 'type' => 'solid', 'color' => '#ffffff' ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+					'gradient' => array( 'type' => 'gradient', 'from' => '#ffffff', 'to' => '#000000', 'angle' => 0 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+				),
+			),
+			'steps'   => array(
+				array(
+					'type'  => 'part',
+					'part'  => 0,
+					'rect'  => $rect,
+					'fill'  => array( 'x' => 0, 'y' => 0 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+					'grown' => null,
+				),
+			),
+			// The browser knows the atlas' size; its file is named here.
+			'atlas'   => array( 'width' => 10, 'height' => 10 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+			'palette' => null,
+		);
+		$files   = static fn(): int => count( (array) glob( DesignerFiles::directory() . '/*.png' ) );
+		$before  = $files();
+		$id      = $library->add_artwork( 'Bottle', AlertImagesTest::upload( AlertImagesTest::png( 20, 30 ), 'clipart.png' ), AlertImagesTest::upload( AlertImagesTest::png( 10, 10 ), 'atlas.png' ), (string) wp_json_encode( $data ) );
+		$clipart = $this->assets->find_clipart( $id );
+		$atlas   = $clipart->definition->atlas['file'] ?? '';
+
+		self::assertSame( array( DesignerAssetRepository::ARTWORK, 20, 30, array( 4 ) ), array( $clipart?->kind, $clipart?->width, $clipart?->height, $clipart?->definition?->bases ) );
+		self::assertMatchesRegularExpression( '/^[a-f0-9]{32}\.png\z/', $atlas );
+		self::assertNotNull( $this->files->path( $atlas ), 'The atlas is stored.' );
+		self::assertSame( $before + 2, $files() );
+		self::assertSame( 'designer_clipart_added', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT action FROM %i ORDER BY id DESC LIMIT 1', $this->wpdb->prefix . Tables::AUDIT_LOG ) ) );
+
+		// An atlas of another size, a broken definition or a JPEG is refused and keeps no file.
+		$refused = array(
+			array( AlertImagesTest::png( 12, 10 ), (string) wp_json_encode( $data ) ),
+			array( AlertImagesTest::png( 10, 10 ), (string) wp_json_encode( array_merge( $data, array( 'parts' => array( array( 'label' => 'x' ) ) ) ) ) ),
+			array( AlertImagesTest::png( 10, 10 ), '{' ),
+		);
+
+		foreach ( $refused as list( $packed, $json ) ) {
+			try {
+				$library->add_artwork( 'Bottle', AlertImagesTest::upload( AlertImagesTest::png( 20, 30 ), 'clipart.png' ), AlertImagesTest::upload( $packed, 'atlas.png' ), $json );
+				self::fail( 'Refused.' );
+			} catch ( DesignerException $e ) {
+				self::assertSame( DesignerException::CLIPART_DEFINITION, $e->reason() );
+			}
+		}
+
+		self::assertSame( $before + 2, $files(), 'A refused clipart keeps no file.' );
+
+		// Only the products change, and each change is audited.
+		$library->set_bases( $id, null );
+		self::assertNull( $this->assets->find_clipart( $id )?->definition?->bases );
+		self::assertSame( 'designer_clipart_changed', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT action FROM %i ORDER BY id DESC LIMIT 1', $this->wpdb->prefix . Tables::AUDIT_LOG ) ) );
+		$library->set_bases( $id, array( 7, 7, 3 ) );
+		self::assertSame( array( 3, 7 ), $this->assets->find_clipart( $id )?->definition?->bases );
+		self::assertSame( $atlas, $this->assets->find_clipart( $id )?->definition?->atlas['file'] ?? '' );
+
+		try {
+			$library->set_bases( $id, array() );
+			self::fail( 'No products is not a choice.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::CLIPART_DEFINITION, $e->reason() );
+		}
+
+		$plain = $library->add( 'Star', AlertImagesTest::upload( AlertImagesTest::png( 64, 64 ), 'star.png' ) );
+
+		try {
+			$library->set_bases( $plain, array( 4 ) );
+			self::fail( 'A clipart from before is for every product.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::CLIPART_UNKNOWN, $e->reason() );
+		}
+	}
+
 	public function test_a_higher_price_of_a_base_product_creators_design_on_waits_14_days(): void {
 		$id       = $this->service->save( null, self::fields(), array() );
 		$now      = new DateTimeImmutable( '2026-11-06 12:00:00', new DateTimeZone( 'UTC' ) );

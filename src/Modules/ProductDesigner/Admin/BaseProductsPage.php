@@ -282,6 +282,8 @@ final class BaseProductsPage {
 			'retire_unconfirmed'                    => array( __( 'Tick the confirmation to retire the base product.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_RETIRED         => array( __( 'The base product is retired and cannot be changed.', 'merchboard' ), 'error' ),
 			'clipart_added'                         => array( __( 'The clipart was added.', 'merchboard' ), 'success' ),
+			'clipart_changed'                       => array( __( 'The products of the clipart were saved.', 'merchboard' ), 'success' ),
+			'clipart_too_large'                     => array( __( 'The upload was larger than the server takes. Make the PSD smaller, or ask your host to raise post_max_size.', 'merchboard' ), 'error' ),
 			'clipart_retired'                       => array( __( 'The clipart was removed. Designs that use it keep it, and new designs cannot choose it.', 'merchboard' ), 'success' ),
 			DesignerException::BASE_NAME            => array( __( 'Enter a name of at most 191 characters.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_PRICE           => array( __( 'Enter a base price above 0 with at most the store\'s decimals.', 'merchboard' ), 'error' ),
@@ -297,6 +299,7 @@ final class BaseProductsPage {
 			DesignerException::BASE_IN_USE          => array( __( 'The base product has designs and cannot be deleted.', 'merchboard' ), 'error' ),
 			DesignerException::THREAD_PACK          => array( __( 'The embroidery pack does not exist.', 'merchboard' ), 'error' ),
 			DesignerException::CLIPART_NAME         => array( __( 'Enter a name of at most 100 characters for the clipart.', 'merchboard' ), 'error' ),
+			DesignerException::CLIPART_DEFINITION   => array( __( 'The clipart could not be read. Read the PSD again and save once more.', 'merchboard' ), 'error' ),
 			DesignerException::CLIPART_UNKNOWN      => array( __( 'The clipart no longer exists.', 'merchboard' ), 'error' ),
 			DesignerException::FILE_MISSING         => array( __( 'The file could not be uploaded. Please try again.', 'merchboard' ), 'error' ),
 			/* translators: %s: largest file size, e.g. "25 MB". */
@@ -1736,6 +1739,7 @@ final class BaseProductsPage {
 	 * @throws DatabaseException When the cliparts cannot be read.
 	 */
 	private function render_cliparts(): void {
+		echo '<h2>' . esc_html__( 'Image for all products', 'merchboard' ) . '</h2>';
 		echo '<p>' . esc_html__( 'Images every creator can use in the designer. PNG, JPG or WebP; use PNG for transparency.', 'merchboard' ) . '</p>';
 		echo '<form method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="clipart_add">';
@@ -1743,6 +1747,14 @@ final class BaseProductsPage {
 		echo '<p><label>' . esc_html__( 'Name', 'merchboard' ) . ' <input type="text" name="clipart_name" maxlength="100" required></label> ';
 		echo '<input type="file" name="clipart" accept="image/png,image/jpeg,image/webp" required> ';
 		echo '<button type="submit" class="button button-primary">' . esc_html__( 'Add clipart', 'merchboard' ) . '</button></p></form>';
+
+		$bases = array_values( array_filter( $this->bases->all(), static fn( BaseProduct $base ): bool => BaseProduct::RETIRED !== $base->status ) );
+
+		if ( $this->enqueue_psd_import() ) {
+			$this->render_artwork_form( $bases );
+		}
+
+		echo '<h2>' . esc_html__( 'Cliparts', 'merchboard' ) . '</h2>';
 
 		$cliparts = array_values( array_filter( $this->assets->cliparts(), static fn( Clipart $clipart ): bool => null === $clipart->retired_at ) );
 
@@ -1755,15 +1767,162 @@ final class BaseProductsPage {
 		echo '<div style="display:flex;flex-wrap:wrap;gap:1em">';
 
 		foreach ( $cliparts as $clipart ) {
-			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="card" style="margin:0;width:10rem;text-align:center">';
+			$wide = null === $clipart->definition ? '10rem' : '16rem';
+
+			echo '<div class="card" style="margin:0;width:' . esc_attr( $wide ) . ';text-align:center">';
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
 			echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="clipart_retire"><input type="hidden" name="asset_id" value="' . esc_attr( (string) $clipart->id ) . '">';
 			wp_nonce_field( BaseProductActions::ACTION );
 			echo '<img src="' . esc_url( DesignerAssetDownload::url( $clipart->id ) ) . '" alt="" style="max-width:100%;max-height:8rem;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0 0/16px 16px">';
-			echo '<p>' . esc_html( $clipart->name ) . '<br><span class="description">' . esc_html( $clipart->width . ' × ' . $clipart->height . ' px' ) . '</span></p>';
-			echo '<p><button type="submit" class="button-link button-link-delete">' . esc_html__( 'Remove', 'merchboard' ) . '</button></p></form>';
+			echo '<p>' . esc_html( $clipart->name ) . '<br><span class="description">' . esc_html( $clipart->width . ' × ' . $clipart->height . ' px' ) . '</span>';
+
+			if ( null !== $clipart->definition ) {
+				echo '<br><span class="description">' . esc_html( self::clipart_summary( $clipart, $bases ) ) . '</span>';
+			}
+
+			echo '</p><p><button type="submit" class="button-link button-link-delete">' . esc_html__( 'Remove', 'merchboard' ) . '</button></p></form>';
+
+			if ( null !== $clipart->definition ) {
+				$this->render_clipart_bases( $clipart, $bases );
+			}
+
+			echo '</div>';
 		}
 
 		echo '</div>';
+	}
+
+	/**
+	 * What a clipart with a definition is: its products, parts and lock.
+	 *
+	 * @param Clipart       $clipart The clipart.
+	 * @param BaseProduct[] $bases   The base products that are not retired.
+	 */
+	private static function clipart_summary( Clipart $clipart, array $bases ): string {
+		$definition = $clipart->definition;
+
+		if ( null === $definition ) {
+			return '';
+		}
+
+		$names = array();
+
+		foreach ( $bases as $base ) {
+			if ( in_array( (int) $base->id, $definition->bases ?? array(), true ) ) {
+				$names[] = $base->name;
+			}
+		}
+
+		$count = count( $definition->parts );
+		$parts = array(
+			null === $definition->bases ? __( 'All products', 'merchboard' ) : ( array() === $names ? __( 'No current products', 'merchboard' ) : implode( ', ', $names ) ),
+			/* translators: %d: number of parts the creator colours. */
+			sprintf( _n( '%d part', '%d parts', $count, 'merchboard' ), $count ),
+		);
+
+		if ( null !== $definition->palette ) {
+			$parts[] = __( 'Palette', 'merchboard' );
+		}
+
+		if ( $definition->locked ) {
+			$parts[] = __( 'Locked', 'merchboard' );
+		}
+
+		return implode( ' · ', $parts );
+	}
+
+	/**
+	 * The choice of base products for a clipart with a definition: the only
+	 * thing of it that can change (ADR-121 pkt. 2).
+	 *
+	 * @param Clipart       $clipart The clipart.
+	 * @param BaseProduct[] $bases   The base products that are not retired.
+	 */
+	private function render_clipart_bases( Clipart $clipart, array $bases ): void {
+		$chosen = $clipart->definition->bases ?? null;
+
+		/* translators: %s: clipart name. */
+		echo '<details style="text-align:left"><summary>' . esc_html( sprintf( __( 'Products of %s', 'merchboard' ), $clipart->name ) ) . '</summary>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="clipart_bases"><input type="hidden" name="asset_id" value="' . esc_attr( (string) $clipart->id ) . '">';
+		wp_nonce_field( BaseProductActions::ACTION );
+		echo self::bases_choice( $bases, $chosen ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in bases_choice().
+		echo '<p><button type="submit" class="button">' . esc_html__( 'Save products', 'merchboard' ) . '</button></p></form></details>';
+	}
+
+	/**
+	 * The upload of a clipart from a PSD (ADR-121): the browser reads and
+	 * bakes the PSD, which is never sent, and fills the preview, the atlas
+	 * and the definition. It knows the sides of the base products for its
+	 * warnings: the dpi of a locked clipart and the threads of embroidery.
+	 *
+	 * @param BaseProduct[] $bases The base products that are not retired.
+	 */
+	private function render_artwork_form( array $bases ): void {
+		$sides = array();
+
+		foreach ( $bases as $base ) {
+			$views = array();
+
+			foreach ( $base->views as $view ) {
+				$pack    = '' === $view->thread_pack ? null : ThreadPacks::find( $view->thread_pack );
+				$size    = $view->print_pixels();
+				$views[] = array(
+					'name'   => $view->name,
+					'width'  => $size[0],
+					'height' => $size[1],
+					'dpi'    => $view->dpi,
+					'pack'   => null === $pack ? null : array(
+						'max'     => $pack['max'],
+						'threads' => $pack['threads'],
+					),
+				);
+			}
+
+			$sides[] = array(
+				'id'    => (int) $base->id,
+				'name'  => $base->name,
+				'views' => $views,
+			);
+		}
+
+		echo '<h2>' . esc_html__( 'Clipart with parts from a PSD', 'merchboard' ) . '</h2>';
+		echo '<p>' . esc_html__( 'Layers whose name begins with "farvet lag" become parts the creator colours; the rest of the name is the part\'s name. Their stroke and the other layers never change. The PSD stays on your computer: only the clipart is saved, and nothing of it can be changed later except its products.', 'merchboard' ) . '</p>';
+		echo '<form method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-merchboard-clipart-form="' . esc_attr( (string) wp_json_encode( $sides ) ) . '" data-merchboard-post-max="' . esc_attr( (string) BaseProductActions::post_limit() ) . '">';
+		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="clipart_artwork">';
+		wp_nonce_field( BaseProductActions::ACTION );
+		echo '<input type="file" name="clipart_preview" accept="image/png" hidden><input type="file" name="clipart_atlas" accept="image/png" hidden><input type="hidden" name="clipart_definition" value="">';
+		echo '<p><label>' . esc_html__( 'Name', 'merchboard' ) . ' <input type="text" name="clipart_name" maxlength="100" required></label></p>';
+		echo '<p><label>' . esc_html__( 'PSD file', 'merchboard' ) . ' <input type="file" accept=".psd,image/vnd.adobe.photoshop" data-merchboard-clipart></label></p>';
+		echo '<div data-merchboard-clipart-result aria-live="polite"></div>';
+		echo self::bases_choice( $bases, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in bases_choice().
+		echo '<fieldset><legend>' . esc_html__( 'Colours', 'merchboard' ) . '</legend>';
+		echo '<p><label><input type="radio" name="clipart_colors" value="free" checked> ' . esc_html__( 'Any colour', 'merchboard' ) . '</label><br>';
+		echo '<label><input type="radio" name="clipart_colors" value="palette"> ' . esc_html__( 'Only these colours, also for gradients:', 'merchboard' ) . '</label><br>';
+		echo '<textarea name="clipart_palette" rows="2" cols="60" placeholder="#ffffff #000000"></textarea><br><span class="description">' . esc_html__( 'Colours as #rrggbb. The file\'s own colours are always included. Embroidered sides use their threads instead.', 'merchboard' ) . '</span></p></fieldset>';
+		echo '<p><label><input type="checkbox" name="clipart_locked" value="1"> ' . esc_html__( 'Locked: the clipart fills the print area from top to bottom in the middle, and the creator can only move it sideways', 'merchboard' ) . '</label></p>';
+		echo '<p data-merchboard-clipart-warnings aria-live="polite"></p>';
+		echo '<p><label hidden data-merchboard-clipart-confirm><input type="checkbox"> ' . esc_html__( 'Save even though the clipart differs from the PSD', 'merchboard' ) . '</label></p>';
+		echo '<p><button type="submit" class="button button-primary" disabled>' . esc_html__( 'Add clipart', 'merchboard' ) . '</button></p></form>';
+	}
+
+	/**
+	 * The choice between all base products and chosen ones.
+	 *
+	 * @param BaseProduct[]   $bases  The base products that are not retired.
+	 * @param int[]|null|bool $chosen The chosen ids; null for all; false for a new clipart.
+	 */
+	private static function bases_choice( array $bases, array|null|bool $chosen ): string {
+		$all   = null === $chosen;
+		$html  = '<fieldset><legend>' . esc_html__( 'Products', 'merchboard' ) . '</legend>';
+		$html .= '<p><label><input type="radio" name="clipart_scope" value="all"' . checked( $all, true, false ) . '> ' . esc_html__( 'All base products, also new ones', 'merchboard' ) . '</label><br>';
+		$html .= '<label><input type="radio" name="clipart_scope" value="chosen"' . checked( $all, false, false ) . '> ' . esc_html__( 'Only these base products:', 'merchboard' ) . '</label></p><p>';
+
+		foreach ( $bases as $base ) {
+			$html .= '<label style="display:inline-block;margin-right:1em"><input type="checkbox" name="clipart_bases[]" value="' . esc_attr( (string) $base->id ) . '"' . checked( is_array( $chosen ) && in_array( (int) $base->id, $chosen, true ), true, false ) . '> ' . esc_html( $base->name ) . '</label>';
+		}
+
+		return $html . '</p></fieldset>';
 	}
 
 	/**
