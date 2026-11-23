@@ -1733,7 +1733,14 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
   - sidens egen visning erstatter browserens mockup, og de andre valgte visninger bliver miljøbilleder;
   - godkendelsen venter, til fotoene er hentet;
   - produktet slettes, og uploads arkiveres, også ved fejl.
-- **57.13 Tekster, docs, review, runtime-test på stg og ny testpakke 2.5.1** 🔄: tekster og docs ✅. Intet tag før projektejerens OK.
+- **57.13 Tekster, docs, review, runtime-test på stg og ny testpakke 2.5.1** 🔄. Intet tag før projektejerens OK.
+  - Tekster (acd0b0b) og docs (c11607b) ✅.
+  - Uafhængigt review uden sikkerhedsfund. Rettet:
+    - en ubrugt sides tomme foto blev vist som miljøbillede;
+    - uploads kunne blive glemt efter en 429, så de aldrig blev arkiveret;
+    - et rundt print blev genkendt for let (nu først, når mindst en fjerdedel er skjult);
+    - længere ventetid for upload fra URL; oprydning kun én gang; intet produkt, når ingen visninger er valgt (2ef31c4).
+  - Accepteret: fejler Printify midt i hentningen, beholder de farver, der allerede er hentet, Printifys fotos.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
