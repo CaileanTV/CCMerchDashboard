@@ -385,7 +385,7 @@ Nye dokumenter følger denne regel.
 2026-09-24
 
 ## Status
-Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069) og YouTube Data API v3 (ADR-070), kun til alert-chatbotten. **Statusnote 2026-10-28:** og Printful (ADR-081, kun katalog og mockups) og Gelato (ADR-082, katalog og mockups via Gelato-skabeloner), kun til produktdesigneren (ADR-080). **Statusnote 2026-10-31:** og Prodigi (ADR-084, katalog og mockups, kun til produktdesigneren). **Statusnote 2026-11-01:** og Printify (ADR-087), kun læsning af kataloget til grundprodukter.
+Accepteret. **Statusnote 2026-10-18:** godkendte eksterne services efter denne ADR er Twitch (ADR-066) og Google Fonts (ADR-067), begge kun til alert-funktionen (ADR-065). **Statusnote 2026-10-20:** og Kick (ADR-069) og YouTube Data API v3 (ADR-070), kun til alert-chatbotten. **Statusnote 2026-10-28:** og Printful (ADR-081, kun katalog og mockups) og Gelato (ADR-082, katalog og mockups via Gelato-skabeloner), kun til produktdesigneren (ADR-080). **Statusnote 2026-10-31:** og Prodigi (ADR-084, katalog og mockups, kun til produktdesigneren). **Statusnote 2026-11-01:** og Printify (ADR-087), kun læsning af kataloget til grundprodukter. **Statusnote 2026-11-23:** og Printifys midlertidige produkter til fotos og printfelter (ADR-122).
 
 ## Context
 Udviklingsmiljøet kan have connectors til eksterne tjenester (fx Dinero og Google Drive). Hvis de er tilgængelige, er der risiko for, at de bliver brugt som datakilde, lager eller backup, uden at det er en del af projektets arkitektur. Roadmappets "Integrations"-område er bevidst formuleret generisk.
@@ -5087,6 +5087,8 @@ ADR-054, ADR-060, ADR-063, ADR-068, ADR-080, ADR-085
 ## Status
 Accepteret af projektejeren 2026-11-01 som endnu en tjeneste ved siden af Printful, Gelato og Prodigi, ikke som erstatning. **Eksperimentel: kataloget er afprøvet med projektejerens nøgle, og koden er testet med falsk HTTP ud fra de rigtige svar. Pluginets eget kald er ikke kørt mod Printify.**
 
+**Statusnote 2026-11-23:** punkt 2 og 5 er ændret af ADR-122. Med en valgt butik henter importen fotos og printfelter via et midlertidigt produkt, og fravalget af "Mockups fra Printify" er omgjort.
+
 **Statusnote 2026-11-02:** størrelser, hvis printfelter har en anden form (fx en plakat stående og liggende), får hver deres sider på ét grundprodukt. Tøjets størrelser deler form og har stadig én side med det mindste mål. Størrelser i tommer omregnes til hele cm ved import, medmindre tommer vælges (projektejerens valg).
 
 **Statusnote 2026-11-01:** afprøvningen er gennemført. 85 producenter og 3.019 produkter, heraf 14 producenter med adresse i EU. Projektejeren har bestemt, at Printify kun skal bruges til at hente produkter ind med deres printområder, og at hele kataloget skal kunne findes, også uden for EU. Beslutningen nedenfor er rettet til det.
@@ -7324,3 +7326,52 @@ Bagning én gang giver samme streg overalt. Browseren skal kun farve masker og s
 
 ## Related
 ADR-080, ADR-085, ADR-086, ADR-096, ADR-118
+
+# ADR-122: Fotos og printfelter fra Printify via et midlertidigt produkt
+
+## Date
+2026-11-23
+
+## Status
+Accepteret af projektejeren 2026-11-23 (version 2.5.1). Ændrer ADR-087 punkt 2 og 5. **Eksperimentel, indtil trin 57.2 har afprøvet kaldene med en rigtig nøgle.**
+
+## Context
+En import fra Printify gav kun navn, farver, størrelser og printmål. Hver side var et hvidt ark, hvor admin selv lagde fotos og tegnede printfeltet. Projektejeren vil have opsætningen helt automatisk, som hos Gelato og Printful.
+
+Katalogets billeder (`/catalog/blueprints/{id}.json`) er en liste med 1–428 URL'er pr. produkt. Listen siger ikke, hvilken farve eller side et billede viser, og ikke hvor printfeltet ligger. Billeder pr. farve og side findes kun på et produkt, der er oprettet i en butik. Her står hvert billede med `position` og `variant_ids`.
+
+## Decision
+1. **Midlertidigt produkt.** Importen opretter produktet i den butik, admin har valgt, og tegner det to gange som hos Gelato (`CatalogImport`, `ImageProbe`):
+   - én gang med en gennemsigtig fil i alle valgte farver;
+   - én gang med en markørfarve pr. side i den første farve.
+   
+   Printfeltet måles ud fra markørerne, og farvekoderne måles på fotoene. Produktet udgives aldrig.
+2. **Oprydning.** Produkt-id'erne gemmes i importdata. Når importen er færdig, fejler eller startes forfra, slettes produkterne og uploads arkiveres. Det sker også efter en fejl undervejs.
+3. **Tilladte kald** ud over ADR-087:
+   - `GET /shops.json`;
+   - `POST /uploads/images.json` og `POST /uploads/{id}/archive.json`;
+   - `POST`, `GET` og `DELETE` på `/shops/{id}/products…`;
+   - mockup-fotos fra `https://images.printify.com`.
+   
+   Stadig ingen udgivelse, ordrer eller webhooks.
+4. **Nøgle og butik.** Nøglen skal også have `shops.read`, `products.read`, `products.write`, `uploads.read` og `uploads.write`. Butikken vælges på siden "Printify" og gemmes i `merchboard_designer_printify_shop` uden autoload. Uden valgt butik importeres som før med hvide ark.
+5. **Sider uden foto.** En side, som Printifys fotos ikke viser (fx et ærme), springes over med den samme besked som hos de andre tjenester.
+6. **Navnet.** Fotoene bliver baggrunde, som creators og kunder ser. Filnavne og tekster nævner aldrig Printify for dem.
+
+## Alternatives considered
+- **Kun katalogets billeder, valgt af admin:** kræver ingen skriveadgang, men printfeltet skal stadig tegnes i hånden. Fravalgt af projektejeren 2026-11-23.
+- **Egne fotos (ADR-087 punkt 5):** kræver manuelt arbejde pr. produkt. Afløst.
+
+## Reason
+Importens runder for at tegne, måle og hente er bygget og afprøvet med Gelato. Printify skal kun levere de to tegninger og rydde op efter sig.
+
+## Security
+Nøglen kan nu oprette og slette produkter og uploads i kontoens butikker, men stadig ikke ordrer. Den krypteres som før og er aldrig i chat, commits eller ZIP'er. Kun `merchboard_manage_designer` kan starte en import og vælge butik.
+
+## Consequences
+- **Vilkår L.3:** Printify ejer sine mockups. Projektejeren har accepteret risikoen ved at bruge dem som produktfotos (2026-11-23). ADR-087's fravalg af "Mockups fra Printify" er omgjort.
+- Produkterne kan ses kort i Printify-butikken, mens importen kører.
+- Printifys grænse for at oprette produkter (200 pr. 30 minutter) rækker til mange imports.
+
+## Related
+ADR-080, ADR-082, ADR-087

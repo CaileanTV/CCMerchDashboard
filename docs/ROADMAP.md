@@ -1693,6 +1693,21 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 **Fundet undervejs, ikke rettet (uden for fasen):**
 - `save_draft()` kræver én ændret række. At gemme en uændret kladde i samme sekund svarer derfor 500 (fundet af en integrationstest i 56.7).
 
+## Fase 57 – Fotos og printfelter fra Printify 🔄 (projektejerens ønske og godkendte plan 2026-11-23; version 2.5.1; ADR-122)
+
+En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede printfeltet. Nu opretter importen et midlertidigt produkt i en valgt Printify-butik, som hos Gelato. Det tegnes med og uden markører, printfeltet og farvekoderne måles, og produktet slettes bagefter.
+
+**Projektejeren:** en ny nøgle med `shops.read`, `catalog.read`, `print_providers.read`, `products.read`, `products.write`, `uploads.read` og `uploads.write`, samt en butik til de midlertidige produkter.
+
+- **57.1 ADR-122 og ROADMAP** ✅.
+- **57.2 Afprøvning med den rigtige nøgle:** upload, gennemsigtig fil, én variant pr. farve, fotoenes form, sletning og oprydning. Venter på nøglen.
+- **57.3 API:** butikker, upload, opret, læs og slet produkt, arkivér upload.
+- **57.4 Butiksvalg** på siden "Printify".
+- **57.5 Printify som renderer** i importen, med målte printfelter og farvekoder.
+- **57.6 Oprydning:** midlertidige produkter slettes efter færdig, fejlet og ny import.
+- **57.7 Admin og tekster.**
+- **57.8 Review, runtime-test på stg og testpakke 2.5.1.** Intet tag før projektejerens OK.
+
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
 - **M1** long-poll-pladser og grænse pr. besøgsadresse på overlay-feedene. ✅
