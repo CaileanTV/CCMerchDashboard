@@ -1710,7 +1710,13 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
 - **57.5 Printify som renderer** ✅ (3de0e46): i importen, med målte printfelter og farvekoder. Kun produkter med én form af printfelt.
 - **57.6 Oprydning** ✅ (3de0e46): midlertidige produkter slettes efter færdig, fejlet og ny import.
 - **57.7 Admin, tekster og docs** ✅ (ec2e84d og docs).
-- **57.8 Review, runtime-test på stg og testpakke 2.5.1.** Intet tag før projektejerens OK.
+- **57.8 Review, runtime-test på stg og testpakke 2.5.1** 🔄. Intet tag før projektejerens OK.
+  - Uafhængigt review uden fejl, der giver forkerte resultater, og uden sikkerhedsfund. Rettet i 789c703:
+    - et produkt, Printify ikke ville slette, prøves igen ved næste import;
+    - fotos parres også på deres egen variantliste;
+    - id-mønstre afviser et linjeskift til sidst.
+  - Accepteret: markøren viser den første valgte størrelses printfelt, mens siden får det mindste mål.
+  - Runtime-test på stg venter på projektejerens butiks-id og nøgle på stg.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
