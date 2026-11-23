@@ -249,6 +249,26 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 2.5.1: fotos og printfelter fra Printify (fase 57, ADR-122)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-23** (projektejerens ønske: Printify-importen skal sættes op automatisk, som 2.5.1). Ingen schemaændring; bygger oven på 2.5.0. Projektejeren installerer testpakken på stg selv. Intet tag før projektejerens OK og grøn CI.
+
+1. **Opdatér** med ZIP'en. Overview skal vise version 2.5.1 og schema-version 55.
+2. **Indstillinger → Produktdesigner:**
+   - indsæt den nye Printify-nøgle med de 7 scopes;
+   - skriv `29877825` i "Printify-butik til fotos" og gem;
+   - et forkert id (fx bogstaver) afvises med en besked.
+3. **Import:**
+   - "Nyt grundprodukt" → "Fra Printifys katalog": vælg fx "Unisex Heavy Cotton Tee" og en producent, 2 farver, forside og bagside;
+   - mens importen kører, viser grundproduktet status. Det tager et par minutter;
+   - bagefter har hver side et foto pr. farve med printfeltet på trøjen og farvekoder fra fotoene. Beskeden lyder "ét foto pr. farve og et målt printfelt pr. side".
+4. **Printify-butikken:** efter importen er butik 29877825 tom igen, og intet produkt er udgivet.
+5. **Designeren:** et design på det nye grundprodukt kan gemmes og sendes til godkendelse, og mockupperne viser Printifys fotos.
+6. **Plakat:** fx "Matte Vertical Posters" giver et foto med målt printfelt. Et produkt, hvis størrelser har printfelter med forskellig form, giver hvide ark og en forklaring.
+7. **Uden butik:** tøm feltet, og en ny import giver hvide ark som i 2.5.0, med en besked om, hvordan man får fotos.
+
+**Tilbagerulning:** installér 2.5.0-ZIP'en igen. Butiks-id'et bliver liggende uden at blive brugt, og grundprodukter importeret i 2.5.1 beholder deres fotos.
+
 ## Release 2.5.0: samlinger af designs og kliparts med farvedele (fase 55 og 56, ADR-120, ADR-121)
 
 **Versions-bump og CHANGELOG-sektion 2026-11-23** (projektejerens valg: review, runtime-test og testpakke nu, også med fase 55). Schema-version 55 (migration 53, 54 og 55). Fase 56 er reviewet og runtime-testet på Local. Fase 55's andet review og runtime-test er udsat, og den udgives ikke særskilt som 2.4.0. Intet tag før projektejerens OK og grøn CI.

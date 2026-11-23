@@ -4,10 +4,15 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-11-23
+
+Fase 57 (ADR-122). Ingen schemaændring. Reviewet; runtime-testen sker på stg.
+
 ### Fase 57: fotos og printfelter fra Printify (ADR-122)
 
 - **Automatisk opsætning:** med en Printify-butik til fotos henter en import ét foto pr. farve og side og måler printfelter og farvekoder. Det sker via et midlertidigt produkt, som slettes igen og aldrig udgives.
 - **Indstilling:** feltet "Printify-butik til fotos" (audit `printify_shop`). Uden butik giver importen hvide ark som før.
+- **Oprydning:** et midlertidigt produkt, Printify ikke ville slette, prøves igen ved næste import.
 
 ## [2.5.0] - 2026-11-23
 
