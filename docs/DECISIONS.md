@@ -7360,6 +7360,7 @@ Katalogets billeder (`/catalog/blueprints/{id}.json`) er en liste med 1–428 UR
 5. **Sider uden foto.** En side, som Printifys fotos ikke viser (fx et ærme), springes over med den samme besked som hos de andre tjenester.
 6. **Navnet.** Fotoene bliver baggrunde, som creators og kunder ser. Filnavne og tekster nævner aldrig Printify for dem.
 7. **Én form.** Én tegning viser én størrelse. Har størrelsernes printfelter forskellig form (ADR-087, statusnote 2026-11-02), giver importen derfor hvide ark som før.
+8. **Parring.** Fotoene parres på kameraets navn (`camera_label`). Kamera-id'et skifter pr. farve på nogle produkter (Sky Water Bottle, stg 2026-11-23).
 
 ## Alternatives considered
 - **Kun katalogets billeder, valgt af admin:** kræver ingen skriveadgang, men printfeltet skal stadig tegnes i hånden. Fravalgt af projektejeren 2026-11-23.

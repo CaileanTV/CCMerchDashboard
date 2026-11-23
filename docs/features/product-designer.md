@@ -119,7 +119,7 @@ Med en butik i `merchboard_designer_printify_shop` giver `PrintifyCatalog::choic
 - `render( 'marker' )` opretter et produkt i den første farve med en markørfarve pr. side.
 - `render( 'blank' )` opretter et produkt i alle farver med den gennemsigtige fil. Filerne er kvadratiske PNG'er på 1000 px, lavet med GD, og skaleres med `max(1, h/b)`, så de dækker feltet. Ens bytes giver samme upload-id hos Printify, så uploads gemmes og arkiveres ikke.
 - Nøglen til en render er `<butik>:<produkt>`.
-- `check()` læser produktets `images` og parrer dem på kamera-id'et i `/mockup/<produkt>/<variant>/<kamera>/…`. Kamera-id'et er det samme for begge produkter og i alle farver (afprøvet 2026-11-23). Fotos med en `position` kommer først, derefter resten, højst 16. Et størrelsesskema (`camera_label=size-chart`) springes over.
+- `check()` læser produktets `images` og parrer dem på kameraets navn (`camera_label`, fx `front` eller `context-1`), som er det samme for begge produkter og i alle farver. Kamera-id'et i `/mockup/<produkt>/<variant>/<kamera>/…` er det kun på nogle produkter: Sky Water Bottle har et nyt id pr. farve (stg 2026-11-23). Fotos med en `position` kommer først, derefter resten, højst 16 navne. Et størrelsesskema (`size-chart`) springes over.
 - Farvekoderne måles på fotoene (`measure_hex`).
 - `CatalogCleanup::forget()` sletter produkterne, når importen er færdig, fejler eller startes forfra. Det, der ikke kan slettes, logges.
 

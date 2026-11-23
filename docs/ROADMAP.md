@@ -1703,7 +1703,7 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
 - **57.2 Afprøvning med den rigtige nøgle** ✅ (MerchBoard-r2-runtime/runs/2026-11-23-printify-fotos):
   - projektejerens nye butik 29877825; 6 produkter oprettet og alle slettet igen;
   - en gennemsigtig fil virker, men et produkt uden fil afvises;
-  - fotoene ligger på `images-api.printify.com`, og kamera-id'et er det samme på tværs af produkter og farver;
+  - fotoene ligger på `images-api.printify.com`, og på T-shirten er kamera-id'et det samme på tværs af produkter og farver;
   - markørerne dækker hele printfeltet.
 - **57.3 API** ✅ (8914520): upload, opret, læs og slet produkt. Uploads gemmes, fordi ens filer får samme id.
 - **57.4 Butiksvalg** ✅ (8914520): et felt til butikkens id under Indstillinger → Produktdesigner, som Gelatos butik, med audit.
@@ -1716,7 +1716,10 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - fotos parres også på deres egen variantliste;
     - id-mønstre afviser et linjeskift til sidst.
   - Accepteret: markøren viser den første valgte størrelses printfelt, mens siden får det mindste mål.
-  - Runtime-test på stg venter på projektejerens butiks-id og nøgle på stg.
+  - Runtime-test på stg 2026-11-23 (projektejeren), import af Sky Water Bottle:
+    - første forsøg fejlede med "ingen fotos af samme side", fordi kamera-id'et skifter pr. farve, og grænsen på 16 fotos skar den første farve væk;
+    - rettet: fotos parres på kameraets navn, og grænsen tæller navne;
+    - de midlertidige produkter blev slettet, og butikken var tom.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
