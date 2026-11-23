@@ -7,6 +7,9 @@
  * canvas (Fabric) is never part of the stored format.
  */
 
+import { parsePaint } from '../../api/clipart';
+import type { ClipartPaint } from './clipart-model';
+
 export const DESIGN_VERSION = 1;
 
 export type ShapeType = 'rect' | 'ellipse' | 'triangle';
@@ -48,6 +51,11 @@ export interface TextObject extends BaseObject {
 export interface ImageObject extends BaseObject {
 	readonly type: 'image';
 	readonly asset: number;
+	/**
+	 * A paint per part of a clipart with parts (ADR-121), in the parts' order;
+	 * left out for every other image.
+	 */
+	readonly paints?: readonly ClipartPaint[];
 }
 
 export interface ShapeObject extends BaseObject {
@@ -240,9 +248,28 @@ function parseObject( value: unknown ): DesignObject | null {
 	}
 
 	if ( value.type === 'image' ) {
-		return isNumber( value.asset )
-			? { ...base, type: 'image', asset: value.asset }
+		if ( ! isNumber( value.asset ) ) {
+			return null;
+		}
+
+		if ( value.paints === undefined ) {
+			return { ...base, type: 'image', asset: value.asset };
+		}
+
+		const paints = Array.isArray( value.paints )
+			? value.paints.map( parsePaint )
 			: null;
+
+		return paints === null ||
+			paints.length === 0 ||
+			paints.some( ( paint ) => paint === null )
+			? null
+			: {
+					...base,
+					type: 'image',
+					asset: value.asset,
+					paints: paints as ClipartPaint[],
+				};
 	}
 
 	if (

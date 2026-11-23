@@ -3821,3 +3821,24 @@ html:has(.merchboard-alert-editor) {
 		font-size: var(--merchboard-text-sm);
 	}
 }
+
+/* The paints of a clipart's parts (ADR-121). */
+.merchboard-product-designer__parts {
+	display: grid;
+	gap: var(--merchboard-space-2);
+}
+
+.merchboard-product-designer__part {
+	display: grid;
+	gap: var(--merchboard-space-2);
+	min-width: 0;
+	padding: var(--merchboard-space-2);
+	margin: 0;
+	border: 1px solid var(--merchboard-border);
+	border-radius: var(--merchboard-radius-sm);
+
+	legend {
+		padding: 0 var(--merchboard-space-1);
+		font-weight: 600;
+	}
+}

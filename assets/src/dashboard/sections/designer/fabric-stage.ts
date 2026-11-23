@@ -82,6 +82,13 @@ export interface ImageResolver {
 	readonly image: (
 		object: ImageObject
 	) => HTMLCanvasElement | null | undefined;
+	/**
+	 * How an image may be changed on the canvas: only sideways (a locked
+	 * clipart) or only evenly (one with parts); null for any way.
+	 */
+	readonly handling?: (
+		object: ImageObject
+	) => 'sideways' | 'uniform' | null;
 }
 
 type Tagged = FabricObject & { mbId?: string };
@@ -267,11 +274,19 @@ export class FabricStage {
 			);
 		}
 
-		for ( const object of built ) {
-			if ( object !== null ) {
-				this.canvas.add( object );
+		built.forEach( ( shown, index ) => {
+			const object = objects[ index ];
+
+			if ( shown === null || object === undefined ) {
+				return;
 			}
-		}
+
+			if ( object.type === 'image' && resolver?.handling !== undefined ) {
+				handle( shown, resolver.handling( object ) );
+			}
+
+			this.canvas.add( shown );
+		} );
 
 		this.select( selected );
 		this.canvas.requestRenderAll();
@@ -412,6 +427,44 @@ export async function renderPrintFile(
 	} finally {
 		void canvas.dispose();
 	}
+}
+
+/**
+ * Limits how an image is changed on the canvas (ADR-121): a locked clipart
+ * only moves sideways, one with parts only scales evenly. The design's rules
+ * set the rest straight again.
+ *
+ * @param shown    Its Fabric object.
+ * @param handling How it may be changed; null for any way.
+ */
+function handle(
+	shown: FabricObject,
+	handling: 'sideways' | 'uniform' | null
+): void {
+	if ( handling === null ) {
+		return;
+	}
+
+	shown.set( { lockSkewingX: true, lockSkewingY: true } );
+
+	if ( handling === 'sideways' ) {
+		shown.set( {
+			lockMovementY: true,
+			lockRotation: true,
+			lockScalingX: true,
+			lockScalingY: true,
+			hasControls: false,
+		} );
+
+		return;
+	}
+
+	shown.setControlsVisibility( {
+		ml: false,
+		mr: false,
+		mt: false,
+		mb: false,
+	} );
 }
 
 /**

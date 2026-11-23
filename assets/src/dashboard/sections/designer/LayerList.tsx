@@ -129,14 +129,21 @@ export function IconButton( props: {
 /**
  * An object's name in the list.
  *
- * @param object The object.
+ * @param object    The object.
+ * @param imageName An image's name, or undefined.
  */
-function layerName( object: DesignObject ): string {
+function layerName(
+	object: DesignObject,
+	imageName?: ( asset: number ) => string | undefined
+): string {
 	switch ( object.type ) {
 		case 'text':
 			return object.text.slice( 0, 30 );
 		case 'image':
-			return __( 'Image', 'merchboard' );
+			return (
+				imageName?.( object.asset )?.slice( 0, 30 ) ??
+				__( 'Image', 'merchboard' )
+			);
 		case 'rect':
 			return __( 'Rectangle', 'merchboard' );
 		case 'ellipse':
@@ -157,6 +164,7 @@ function layerName( object: DesignObject ): string {
  * @param props.onMove      Moves an object.
  * @param props.onDuplicate Copies an object.
  * @param props.onRemove    Removes an object.
+ * @param props.imageName   An image's name by asset.
  */
 export function LayerList( props: {
 	readonly objects: readonly DesignObject[];
@@ -166,6 +174,8 @@ export function LayerList( props: {
 	readonly onMove: ( id: string, direction: 1 | -1 ) => void;
 	readonly onDuplicate: ( id: string ) => void;
 	readonly onRemove: ( id: string ) => void;
+	/** An image's name by asset (a clipart's), or undefined. */
+	readonly imageName?: ( asset: number ) => string | undefined;
 } ) {
 	const front = [ ...props.objects ].reverse();
 
@@ -195,7 +205,9 @@ export function LayerList( props: {
 								onClick={ () => props.onSelect( object.id ) }
 							>
 								<Icon name={ object.type } />
-								<span>{ layerName( object ) }</span>
+								<span>
+									{ layerName( object, props.imageName ) }
+								</span>
 							</button>
 							<IconButton
 								icon="up"

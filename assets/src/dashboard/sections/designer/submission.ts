@@ -35,6 +35,8 @@ import {
 	flatJpegOf,
 	pngOf,
 } from './mockup';
+import type { AssetLookup, ClipartPictures } from './clipart-objects';
+import { ruledObjects } from './clipart-objects';
 import { withDpi } from './dpi';
 import { threadCanvas, threadSide } from './threads';
 
@@ -50,6 +52,14 @@ export interface SubmissionInput {
 	readonly image: ( id: number ) => Promise< string | null >;
 	/** Resolves when the design's fonts are ready to draw. */
 	readonly fonts: () => Promise< void >;
+	/**
+	 * The cliparts with a definition (ADR-121): their rules and pictures.
+	 * Without, every image is drawn as its file.
+	 */
+	readonly cliparts?: {
+		readonly lookup: AssetLookup;
+		readonly pictures: ClipartPictures;
+	};
 }
 
 export type SubmissionResult =
@@ -205,7 +215,27 @@ async function printOf(
 	view: DesignerView
 ): Promise< HTMLCanvasElement | null > {
 	const { renderPrintFile } = await import( './fabric-stage' );
-	const objects = objectsOf( input.design, view.key );
+	const kit = input.cliparts;
+	const embroidered = view.embroidery !== null;
+	// As the server stores it, whatever edit made it (ADR-121).
+	const objects =
+		kit === undefined
+			? objectsOf( input.design, view.key )
+			: ruledObjects(
+					objectsOf( input.design, view.key ),
+					kit.lookup,
+					view.printWidth,
+					view.printHeight,
+					embroidered
+				);
+
+	if (
+		kit !== undefined &&
+		! ( await kit.pictures.ready( objects, kit.lookup ) )
+	) {
+		return null;
+	}
+
 	const images = new Map< number, string >();
 
 	for ( const object of objects ) {
@@ -235,7 +265,12 @@ async function printOf(
 		view.printWidth,
 		view.printHeight,
 		// An embroidered side has no background (ADR-095).
-		view.embroidery === null ? backgroundOf( input.design, view.key ) : null
+		view.embroidery === null
+			? backgroundOf( input.design, view.key )
+			: null,
+		kit === undefined
+			? null
+			: kit.pictures.resolver( kit.lookup, embroidered )
 	);
 
 	if ( print === null ) {

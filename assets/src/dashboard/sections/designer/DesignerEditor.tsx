@@ -25,6 +25,7 @@ import type { ChangeEvent, KeyboardEvent, ReactNode } from 'react';
 import {
 	copyDesignerProduct,
 	deleteDesignerImage,
+	clipartAtlasUrl,
 	designerAssetUrl,
 	discardChange,
 	saveDesignerDraft,
@@ -55,7 +56,6 @@ import {
 	withKnownBackground,
 	moveObject,
 	fitted,
-	newImage,
 	newShape,
 	newText,
 	objectsOf,
@@ -124,6 +124,16 @@ import {
 import { ImagePicker } from './ImagePicker';
 import { SubmitDialog } from './SubmitDialog';
 import { LayerList } from './LayerList';
+import { ClipartPaints } from './ClipartPaints';
+import {
+	artOf,
+	ClipartPictures,
+	handlingOf,
+	newAssetImage,
+	pixelsOfUrl,
+	ruledObjects,
+} from './clipart-objects';
+import type { AssetLookup } from './clipart-objects';
 import { TemplateLayers } from './TemplateLayers';
 import { threadObject, threadSide } from './threads';
 import type { ThreadedSide, ThreadPlan } from './threads';
@@ -399,9 +409,17 @@ function Editor( props: EditorProps ) {
 	const formatRef = useRef( { sizes, colors: partColors } );
 	formatRef.current = { sizes, colors: partColors };
 
-	/** Changes the design of the colour shown (ADR-096); every colour with that design follows. */
-	const editPart = ( change: ( part: DesignDocument ) => DesignDocument ) =>
-		history.set( ( full ) => {
+	/**
+	 * Changes the design of the colour shown (ADR-096); every colour with that design follows.
+	 *
+	 * @param change The change.
+	 * @param live   Without a step of its own: a change still going on (between checkpoint and settle).
+	 */
+	const editPart = (
+		change: ( part: DesignDocument ) => DesignDocument,
+		live = false
+	) =>
+		( live ? history.live : history.set )( ( full ) => {
 			const id = partOf( full, previewRef.current );
 
 			return withPart( full, id, change( partDoc( full, id ) ) );
@@ -414,20 +432,6 @@ function Editor( props: EditorProps ) {
 	const fullName = [ `${ overview.creator } ${ base.name }`.trim(), addition ]
 		.filter( ( part ) => part !== '' )
 		.join( ' - ' );
-	const objects = view === undefined ? [] : objectsOf( design, view.key );
-	const embroidery = view?.embroidery ?? null;
-	const swaps = view === undefined ? undefined : design.threads?.[ view.key ];
-	const plan =
-		threaded?.side === view?.key ? ( threaded?.plan ?? null ) : null;
-	const selectedObject =
-		objects.find( ( object ) => object.id === selected ) ?? null;
-	const hex =
-		base.colors.find( ( color ) => color.key === previewColor )?.hex ??
-		'#ffffff';
-	const displayHeight =
-		view === undefined
-			? 0
-			: Math.round( ( displayWidth * view.height ) / view.width );
 	// The draft's own cliparts too: one removed from the library stays in it (ADR-121).
 	const allAssets = useMemo( () => {
 		const known = new Map(
@@ -445,6 +449,58 @@ function Editor( props: EditorProps ) {
 
 		return Array.from( known.values() );
 	}, [ overview, product.assets ] );
+	// The library of this base product: a clipart for chosen products only on those (ADR-121).
+	const library = useMemo(
+		() =>
+			overview.cliparts.filter(
+				( asset ) =>
+					( asset.clipart?.bases ?? null ) === null ||
+					( asset.clipart?.bases ?? [] ).includes( base.id )
+			),
+		[ overview.cliparts, base.id ]
+	);
+	const assetLookup = useMemo( (): AssetLookup => {
+		const byId = new Map(
+			allAssets.map( ( asset ) => [ asset.id, asset ] )
+		);
+
+		return ( id ) => byId.get( id );
+	}, [ allAssets ] );
+	// The cliparts' atlases and pictures in the creator's paints (ADR-121).
+	const [ pictures ] = useState(
+		() =>
+			new ClipartPictures( async ( id ) => {
+				const url = await clipartAtlasUrl( id );
+
+				return url === null ? null : pixelsOfUrl( url );
+			} )
+	);
+	const [ atlasTick, setAtlasTick ] = useState( 0 );
+	const clipartKit = { lookup: assetLookup, pictures };
+	// As the server stores them: a clipart's rules hold whatever edit made them (ADR-121).
+	const objects =
+		view === undefined
+			? []
+			: ruledObjects(
+					objectsOf( design, view.key ),
+					assetLookup,
+					view.printWidth,
+					view.printHeight,
+					view.embroidery !== null
+				);
+	const embroidery = view?.embroidery ?? null;
+	const swaps = view === undefined ? undefined : design.threads?.[ view.key ];
+	const plan =
+		threaded?.side === view?.key ? ( threaded?.plan ?? null ) : null;
+	const selectedObject =
+		objects.find( ( object ) => object.id === selected ) ?? null;
+	const hex =
+		base.colors.find( ( color ) => color.key === previewColor )?.hex ??
+		'#ffffff';
+	const displayHeight =
+		view === undefined
+			? 0
+			: Math.round( ( displayWidth * view.height ) / view.width );
 	const fonts = overview.fonts;
 	// Every colour, as the server prices a design (BaseProduct::extra_amount()).
 	const baseColorKeys = base.colors.map( ( color ) => color.key );
@@ -545,6 +601,7 @@ function Editor( props: EditorProps ) {
 		sizes,
 		image: ( id: number ) => imageOf( id ),
 		fonts: () => fontsOf( whole ),
+		cliparts: clipartKit,
 	};
 
 	/** A choice of the product image drawn as the shop will show it (ADR-096). */
@@ -622,11 +679,11 @@ function Editor( props: EditorProps ) {
 	// The thumbnails of the open library.
 	useEffect( () => {
 		if ( tab === 'cliparts' ) {
-			ensureImages( overview.cliparts );
+			ensureImages( library );
 		} else if ( tab === 'uploads' ) {
 			ensureImages( overview.uploads );
 		}
-	}, [ tab, overview, ensureImages ] );
+	}, [ tab, overview, library, ensureImages ] );
 
 	// The fonts of the design's texts.
 	useEffect( () => {
@@ -740,6 +797,35 @@ function Editor( props: EditorProps ) {
 		}
 	}, [ stageReady, view, zoom, displayWidth, displayHeight ] );
 
+	// The pictures of the cliparts shown; a new key when an atlas arrives (ADR-121).
+	const clipartResolver = useMemo(
+		() => pictures.resolver( assetLookup, embroidery !== null ),
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- atlasTick marks the atlases loaded.
+		[ pictures, assetLookup, embroidery, atlasTick ]
+	);
+
+	// The atlases of every clipart in the design.
+	useEffect( () => {
+		let cancelled = false;
+		const before = pictures.resolver( assetLookup ).key;
+		const all = allPartDocs( whole )
+			.flatMap( ( part ) => Object.values( part.sides ) )
+			.flat();
+
+		void pictures.ready( all, assetLookup ).then( () => {
+			if (
+				! cancelled &&
+				pictures.resolver( assetLookup ).key !== before
+			) {
+				setAtlasTick( ( tick ) => tick + 1 );
+			}
+		} );
+
+		return () => {
+			cancelled = true;
+		};
+	}, [ whole, assetLookup, pictures ] );
+
 	// An embroidered side is shown in its threads.
 	useEffect( () => {
 		if ( view === undefined || embroidery === null ) {
@@ -794,7 +880,8 @@ function Editor( props: EditorProps ) {
 					},
 			view === undefined || embroidery !== null || ! base.backgroundColor
 				? null
-				: backgroundOf( design, view.key )
+				: backgroundOf( design, view.key ),
+			clipartResolver
 		);
 		// Fonts arriving re-render the texts.
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- objects is derived from design and side.
@@ -807,19 +894,30 @@ function Editor( props: EditorProps ) {
 		threadFailed,
 		selected,
 		fontsReady,
+		clipartResolver,
 	] );
 
-	const setObjects = ( next: readonly DesignObject[] ) => {
+	const setObjects = ( next: readonly DesignObject[], live = false ) => {
 		if ( view !== undefined ) {
-			editPart( ( present ) =>
-				withSideObjects(
-					present,
-					base.views,
-					view.key,
-					next,
-					sizes,
-					partColors
-				)
+			const ruled = ruledObjects(
+				next,
+				assetLookup,
+				view.printWidth,
+				view.printHeight,
+				view.embroidery !== null
+			);
+
+			editPart(
+				( present ) =>
+					withSideObjects(
+						present,
+						base.views,
+						view.key,
+						ruled,
+						sizes,
+						partColors
+					),
+				live
 			);
 		}
 	};
@@ -895,9 +993,12 @@ function Editor( props: EditorProps ) {
 		setSelected( object.id );
 	};
 
-	const change = ( fields: Partial< DesignObject > ) => {
+	const change = ( fields: Partial< DesignObject >, live = false ) => {
 		if ( selectedObject !== null ) {
-			setObjects( updateObject( objects, selectedObject.id, fields ) );
+			setObjects(
+				updateObject( objects, selectedObject.id, fields ),
+				live
+			);
 		}
 	};
 
@@ -1025,15 +1126,7 @@ function Editor( props: EditorProps ) {
 	const addImage = ( asset: DesignerAsset ) => {
 		if ( view !== undefined ) {
 			ensureImages( [ asset ] );
-			add(
-				newImage(
-					asset.id,
-					asset.width,
-					asset.height,
-					view.printWidth,
-					view.printHeight
-				)
-			);
+			add( newAssetImage( asset, view.printWidth, view.printHeight ) );
 		}
 	};
 
@@ -1291,6 +1384,7 @@ function Editor( props: EditorProps ) {
 				sizes: storedDraft.sizes,
 				image: imageOf,
 				fonts: () => fontsOf( storedDraft.design ),
+				cliparts: clipartKit,
 			},
 			( done, total ) =>
 				setMessage( {
@@ -1337,6 +1431,7 @@ function Editor( props: EditorProps ) {
 				sizes: storedDraft.sizes,
 				image: imageOf,
 				fonts: () => fontsOf( storedDraft.design ),
+				cliparts: clipartKit,
 			},
 			() => undefined
 		);
@@ -1354,6 +1449,7 @@ function Editor( props: EditorProps ) {
 			sizes,
 			image: imageOf,
 			fonts: () => fontsOf( whole ),
+			cliparts: clipartKit,
 		} );
 
 	const onKeyDown = ( event: KeyboardEvent< HTMLDivElement > ) => {
@@ -1755,7 +1851,7 @@ function Editor( props: EditorProps ) {
 							) : null }
 							{ tab === 'cliparts' ? (
 								<AssetGrid
-									assets={ overview.cliparts }
+									assets={ library }
 									images={ images }
 									empty={ __(
 										'No cliparts yet.',
@@ -1828,6 +1924,7 @@ function Editor( props: EditorProps ) {
 					</div>
 					<LayerList
 						objects={ objects }
+						imageName={ ( id ) => assetLookup( id )?.name }
 						selected={ selected }
 						onSelect={ setSelected }
 						onChange={ ( id, fields ) =>
@@ -2201,6 +2298,13 @@ function Editor( props: EditorProps ) {
 							</p>
 							<Properties
 								object={ selectedObject }
+								asset={
+									selectedObject.type === 'image'
+										? assetLookup( selectedObject.asset )
+										: undefined
+								}
+								onBegin={ history.checkpoint }
+								onEnd={ history.settle }
 								fonts={ fonts }
 								threads={ embroidery?.threads ?? null }
 								plan={ plan }
@@ -3450,20 +3554,32 @@ function AssetGrid( props: {
  * @param props.onFit    Sizes an image to the print area (ADR-102).
  * @param props.onRemove Removes it.
  * @param props.onMove   Moves it.
+ * @param props.asset    An image's asset.
+ * @param props.onBegin  A change that goes on starts (one undo step).
+ * @param props.onEnd    It ends.
  */
 function Properties( props: {
 	readonly object: DesignObject;
+	readonly asset: DesignerAsset | undefined;
+	readonly onBegin: () => void;
+	readonly onEnd: () => void;
 	readonly fonts: DesignerOverview[ 'fonts' ];
 	readonly threads: readonly DesignerThread[] | null;
 	readonly plan: ThreadPlan | null;
 	readonly onThread: ( thread: DesignerThread ) => void;
-	readonly onChange: ( change: Partial< DesignObject > ) => void;
+	readonly onChange: (
+		change: Partial< DesignObject >,
+		live?: boolean
+	) => void;
 	/** Sizes an image to the print area (ADR-102). */
 	readonly onFit: ( mode: FitMode ) => void;
 	readonly onRemove: () => void;
 	readonly onMove: ( direction: 1 | -1 ) => void;
 } ) {
 	const { object, onChange, threads } = props;
+	// A clipart with parts is never faded; a locked one is placed for the creator (ADR-121).
+	const handling = handlingOf( props.asset );
+	const art = artOf( props.asset );
 	const text = object.type === 'text' ? ( object as TextObject ) : null;
 	const shape =
 		object.type === 'rect' ||
@@ -3660,7 +3776,34 @@ function Properties( props: {
 					</Labelled>
 				</>
 			) }
-			{ threads !== null ? null : (
+			{ object.type === 'image' &&
+			art !== null &&
+			art.parts.length > 0 ? (
+				<ClipartPaints
+					art={ art }
+					palette={
+						threads === null
+							? ( props.asset?.clipart?.art?.palette ?? null )
+							: null
+					}
+					paints={ object.paints ?? [] }
+					gradients={ threads === null }
+					onChange={ ( paints, live ) =>
+						onChange( { paints } as Partial< DesignObject >, live )
+					}
+					onBegin={ props.onBegin }
+					onEnd={ props.onEnd }
+				/>
+			) : null }
+			{ object.type === 'image' && handling === 'sideways' ? (
+				<p className="merchboard-product-designer__hint">
+					{ __(
+						'This clipart is placed for you: its size cannot change. You can move it sideways.',
+						'merchboard'
+					) }
+				</p>
+			) : null }
+			{ threads !== null || handling !== null ? null : (
 				<Labelled
 					className="merchboard-product-designer__option"
 					before
@@ -3688,7 +3831,7 @@ function Properties( props: {
 					<Button
 						variant="secondary"
 						size="sm"
-						disabled={ object.locked }
+						disabled={ object.locked || handling === 'sideways' }
 						onClick={ () => props.onFit( 'fill' ) }
 					>
 						{ __( 'Fill the print area', 'merchboard' ) }
@@ -3696,7 +3839,7 @@ function Properties( props: {
 					<Button
 						variant="secondary"
 						size="sm"
-						disabled={ object.locked }
+						disabled={ object.locked || handling === 'sideways' }
 						onClick={ () => props.onFit( 'fit' ) }
 					>
 						{ __( 'Fit in the print area', 'merchboard' ) }
