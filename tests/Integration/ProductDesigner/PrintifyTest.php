@@ -113,6 +113,7 @@ final class PrintifyTest extends IntegrationTestCase {
 	protected function tearDown(): void {
 		delete_option( PrintifyAccount::TOKEN_OPTION );
 		delete_option( PrintifyAccount::SHOP_OPTION );
+		delete_option( PrintifyCatalog::LEFTOVERS );
 		delete_transient( PrintifyCatalog::BLUEPRINTS );
 		delete_transient( PrintifyCatalog::PRODUCERS );
 		delete_transient( PrintifyCatalog::PRODUCER_PRODUCTS . '26' );
@@ -497,6 +498,27 @@ final class PrintifyTest extends IntegrationTestCase {
 
 		self::assertSame( 'failed', $this->bases->import( $id )['state'] ?? null );
 		self::assertCount( 2, array_filter( $this->calls, static fn( array $call ): bool => 'DELETE' === $call[0] ), 'Nothing stays in the shop.' );
+	}
+
+	public function test_a_product_printify_would_not_delete_is_deleted_by_the_next_clean_up(): void {
+		$this->printify_shop();
+		$this->account->set_shop( self::SHOP );
+
+		$catalog = new PrintifyCatalog( $this->api, null, null, 3.0, $this->account );
+		$marker  = self::API . '/shops/' . self::SHOP . '/products/' . self::MARKER . '.json';
+		$working = $this->answers[ $marker ];
+
+		$this->answers[ $marker ] = self::answer( array( 'message' => 'Busy' ), 503 );
+
+		self::assertSame( array( self::SHOP . ':' . self::MARKER ), $catalog->forget( array( 'renders' => array( 'marker' => array( 'key' => self::SHOP . ':' . self::MARKER ) ) ) ) );
+		self::assertSame( array( self::SHOP . ':' . self::MARKER ), get_option( PrintifyCatalog::LEFTOVERS ) );
+
+		$this->answers[ $marker ] = $working;
+		$this->calls              = array();
+
+		self::assertSame( array(), $catalog->forget( array( 'renders' => array( 'blank' => array( 'key' => self::SHOP . ':' . self::BLANK ) ) ) ) );
+		self::assertSame( array( 'DELETE ' . $marker, 'DELETE ' . self::API . '/shops/' . self::SHOP . '/products/' . self::BLANK . '.json' ), array_map( static fn( array $call ): string => $call[0] . ' ' . $call[1], $this->calls ), 'The leftover first, then this import\'s.' );
+		self::assertFalse( get_option( PrintifyCatalog::LEFTOVERS ) );
 	}
 
 	public function test_without_a_shop_or_with_sizes_of_other_shapes_an_import_gives_white_sheets(): void {

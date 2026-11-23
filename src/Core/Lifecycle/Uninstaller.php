@@ -18,6 +18,7 @@ use MerchBoard\Modules\Creators\Signup\SignupSettings;
 use MerchBoard\Modules\Notifications\NotificationSettings;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyAccount;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintifyCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 use MerchBoard\Modules\ProductDesigner\Bases\BasePriceSchedule;
@@ -314,6 +315,7 @@ final class Uninstaller {
 		delete_option( BrandingDesign::OPTION );
 		delete_option( PrintifyAccount::TOKEN_OPTION );
 		delete_option( PrintifyAccount::SHOP_OPTION );
+		delete_option( PrintifyCatalog::LEFTOVERS );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );
 		delete_transient( Installer::FAILURE_TRANSIENT );

@@ -138,6 +138,17 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 	private const SIZE_CHART = 'size-chart';
 
 	/**
+	 * Temporary products that could not be deleted yet (`<shop>:<product>`),
+	 * tried again by the next import's clean-up (ADR-122).
+	 */
+	public const LEFTOVERS = 'merchboard_designer_printify_leftovers';
+
+	/**
+	 * Most leftovers kept.
+	 */
+	private const MAX_LEFTOVERS = 50;
+
+	/**
 	 * The cached product list and producers, which change rarely.
 	 */
 	public const BLUEPRINTS = 'merchboard_printify_blueprints';
@@ -560,7 +571,12 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 				continue;
 			}
 
+			// The variant in the URL; else the image's own list (Printify could name another variant of the colour).
 			$color = $colors[ $match[1] ] ?? null;
+
+			foreach ( null === $color && is_array( $image['variant_ids'] ?? null ) ? $image['variant_ids'] : array() as $variant ) {
+				$color ??= is_scalar( $variant ) ? ( $colors[ (string) $variant ] ?? null ) : null;
+			}
 
 			if ( null === $color ) {
 				continue;
@@ -628,15 +644,22 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 	 * @return list<string> The renders' keys that could not be deleted.
 	 */
 	public function forget( array $import ): array {
-		$left = array();
+		$keys = array();
 
 		foreach ( is_array( $import['renders'] ?? null ) ? $import['renders'] : array() as $render ) {
 			$key = is_array( $render ) && is_string( $render['key'] ?? null ) ? $render['key'] : '';
 
-			if ( '' === $key ) {
-				continue;
+			if ( '' !== $key ) {
+				$keys[] = $key;
 			}
+		}
 
+		// What an earlier import could not delete (a 429, Printify down) is tried again with it.
+		$stored = get_option( self::LEFTOVERS, array() );
+		$keys   = array_values( array_unique( array_merge( is_array( $stored ) ? array_filter( $stored, 'is_string' ) : array(), $keys ) ) );
+		$left   = array();
+
+		foreach ( $keys as $key ) {
 			try {
 				[ $shop, $id ] = self::key_of( $key );
 
@@ -644,6 +667,14 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 			} catch ( PrintifyException ) {
 				$left[] = $key;
 			}
+		}
+
+		$left = array_slice( $left, -self::MAX_LEFTOVERS );
+
+		if ( array() === $left ) {
+			delete_option( self::LEFTOVERS );
+		} else {
+			update_option( self::LEFTOVERS, $left, false );
 		}
 
 		return $left;

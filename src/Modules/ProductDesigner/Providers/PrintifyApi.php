@@ -57,17 +57,17 @@ class PrintifyApi {
 	/**
 	 * The address of a product's picture.
 	 */
-	public const IMAGES = '#^https://images(?:-api)?\.printify\.com/[A-Za-z0-9/_.-]{1,200}(?:\?[A-Za-z0-9=&_.%-]{1,200})?$#';
+	public const IMAGES = '#^https://images(?:-api)?\.printify\.com/[A-Za-z0-9/_.-]{1,200}(?:\?[A-Za-z0-9=&_.%-]{1,200})?$#D';
 
 	/**
 	 * A shop's id.
 	 */
-	public const SHOP = '/^\d{1,12}$/';
+	public const SHOP = '/^\d{1,12}$/D';
 
 	/**
 	 * A product's or an upload's id.
 	 */
-	private const ID = '/^[0-9a-f]{24}$/';
+	private const ID = '/^[0-9a-f]{24}$/D';
 
 	/**
 	 * The largest file uploaded (a marker is a few kB).
