@@ -51,16 +51,8 @@ final class ClipartRules {
 		$used = array();
 
 		foreach ( $stored as $json ) {
-			$design = is_string( $json ) ? json_decode( $json, true ) : null;
-
-			if ( ! is_array( $design ) ) {
-				continue;
-			}
-
-			$used += self::images( $design );
-
-			foreach ( is_array( $design['designs'] ?? null ) ? $design['designs'] : array() as $part ) {
-				$used += is_array( $part ) ? self::images( $part ) : array();
+			foreach ( self::image_objects( $json ) as $object ) {
+				$used[ $object['asset'] ] = $object['asset'];
 			}
 		}
 
@@ -68,10 +60,58 @@ final class ClipartRules {
 	}
 
 	/**
-	 * The images of one design.
+	 * The colours chosen for the parts of a stored design's cliparts, by
+	 * asset (ADR-121): what the administrator checks before approving.
+	 *
+	 * @param mixed $stored The design as stored (JSON).
+	 * @return array<int, list<string>>
+	 */
+	public static function colors( mixed $stored ): array {
+		$colors = array();
+
+		foreach ( self::image_objects( $stored ) as $object ) {
+			foreach ( is_array( $object['paints'] ) ? $object['paints'] : array() as $paint ) {
+				foreach ( array( 'color', 'from', 'to' ) as $key ) {
+					$color = is_array( $paint ) && is_string( $paint[ $key ] ?? null ) ? $paint[ $key ] : null;
+
+					if ( null !== $color && ! in_array( $color, $colors[ $object['asset'] ] ?? array(), true ) ) {
+						$colors[ $object['asset'] ][] = $color;
+					}
+				}
+			}
+		}
+
+		return $colors;
+	}
+
+	/**
+	 * The image objects of a stored design: its sides, shared formats and
+	 * colour designs. A hidden one counts too.
+	 *
+	 * @param mixed $stored The design as stored (JSON); anything else has none.
+	 * @return list<array{asset: int, paints: mixed}>
+	 */
+	private static function image_objects( mixed $stored ): array {
+		$design = is_string( $stored ) ? json_decode( $stored, true ) : null;
+
+		if ( ! is_array( $design ) ) {
+			return array();
+		}
+
+		$objects = self::images( $design );
+
+		foreach ( is_array( $design['designs'] ?? null ) ? $design['designs'] : array() as $part ) {
+			$objects = array_merge( $objects, is_array( $part ) ? self::images( $part ) : array() );
+		}
+
+		return $objects;
+	}
+
+	/**
+	 * The image objects of one design.
 	 *
 	 * @param array<mixed> $part The design or a colour design.
-	 * @return array<int, int> The ids by id.
+	 * @return list<array{asset: int, paints: mixed}>
 	 */
 	private static function images( array $part ): array {
 		$lists   = is_array( $part['sides'] ?? null ) ? array_values( $part['sides'] ) : array();
@@ -86,7 +126,10 @@ final class ClipartRules {
 		foreach ( $lists as $objects ) {
 			foreach ( is_array( $objects ) ? $objects : array() as $object ) {
 				if ( is_array( $object ) && 'image' === ( $object['type'] ?? null ) && is_int( $object['asset'] ?? null ) ) {
-					$images[ $object['asset'] ] = $object['asset'];
+					$images[] = array(
+						'asset'  => $object['asset'],
+						'paints' => $object['paints'] ?? null,
+					);
 				}
 			}
 		}

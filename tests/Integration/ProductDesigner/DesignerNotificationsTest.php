@@ -33,6 +33,7 @@ use MerchBoard\Modules\ProductDesigner\Admin\DesignsPage;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Integration\Support\RecordingMailer;
 use MerchBoard\Tests\Unit\Support\FakeJobQueue;
@@ -153,22 +154,40 @@ final class DesignerNotificationsTest extends IntegrationTestCase {
 	}
 
 	public function test_the_designs_page_lists_the_waiting_designs_and_the_designer_s_notifications(): void {
-		$page = new DesignsPage( new DesignerProductRepository( $this->wpdb ), new BaseProductRepository( $this->wpdb ), $this->service( CreatorRepository::class ), $this->types, new NotificationSwitches( $this->settings(), $this->sender() ), 2 );
+		$page = new DesignsPage( new DesignerProductRepository( $this->wpdb ), new BaseProductRepository( $this->wpdb ), $this->service( CreatorRepository::class ), $this->types, new NotificationSwitches( $this->settings(), $this->sender() ), 2, new DesignerAssetRepository( $this->wpdb ) );
 
 		self::assertStringContainsString( 'No designs are waiting for approval.', $this->render( $page ) );
+
+		// A removed clipart in the design is listed with the colours chosen (ADR-121).
+		$assets = new DesignerAssetRepository( $this->wpdb );
+		$star   = $assets->insert(
+			DesignerAssetRepository::CLIPART,
+			'Star',
+			array(
+				'file'   => str_repeat( 'b', 32 ) . '.png',
+				'mime'   => 'image/png',
+				'width'  => 10,
+				'height' => 10,
+				'bytes'  => 100,
+			)
+		);
+		$assets->retire( $star );
+		$design = (string) wp_json_encode( array( 'sides' => array( 'front' => array( array( 'type' => 'image', 'asset' => $star, 'paints' => array( array( 'type' => 'solid', 'color' => '#ff0000' ) ) ) ) ) ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
 
 		$user    = $this->create_user( 'nova' );
 		$creator = $this->service( CreatorService::class )->create( 'Nova', CreatorStatus::Active, $user )->id;
 		$now     = gmdate( 'Y-m-d H:i:s' );
 		$this->wpdb->insert( $this->table( Tables::DESIGNER_PRODUCTS ), array( 'creator_id' => $creator, 'base_id' => 3, 'creation_token' => str_repeat( 'a', 32 ), 'status' => 'draft', 'created_at' => $now, 'updated_at' => $now ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 		$product = (int) $this->wpdb->insert_id;
-		$this->wpdb->insert( $this->table( Tables::DESIGNER_VERSIONS ), array( 'design_product_id' => $product, 'creator_id' => $creator, 'number' => 1, 'status' => 'pending', 'pending_key' => (string) $product, 'base_version' => 1, 'title' => 'Stream <tee>', 'description' => '', 'colors' => '[]', 'sizes' => '[]', 'sides' => '[]', 'design' => '{}', 'quoted_price' => '179.9400', 'created_at' => $now, 'updated_at' => $now, 'submitted_at' => $now ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		$this->wpdb->insert( $this->table( Tables::DESIGNER_VERSIONS ), array( 'design_product_id' => $product, 'creator_id' => $creator, 'number' => 1, 'status' => 'pending', 'pending_key' => (string) $product, 'base_version' => 1, 'title' => 'Stream <tee>', 'description' => '', 'colors' => '[]', 'sizes' => '[]', 'sides' => '[]', 'design' => $design, 'quoted_price' => '179.9400', 'created_at' => $now, 'updated_at' => $now, 'submitted_at' => $now ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 
 		$queue = $this->render( $page );
 		self::assertStringContainsString( 'Stream &lt;tee&gt;', $queue );
 		self::assertStringContainsString( 'Nova', $queue );
 		self::assertStringContainsString( '179.94', $queue );
 		self::assertStringContainsString( 'A new product.', $queue );
+		self::assertStringContainsString( 'Star</a> (removed from the library)', $queue );
+		self::assertStringContainsString( 'title="#ff0000"', $queue );
 
 		$_GET['view'] = 'notifications';
 		$tab          = $this->render( $page );

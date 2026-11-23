@@ -31,6 +31,13 @@ final class ClipartRulesTest extends TestCase {
 		self::assertSame( array( 1, 2, 3, 4, 5, 6 ), ClipartRules::used( $design, null, '{"sides": {"front": [{"type": "image", "asset": 6}, {"type": "image", "asset": 1}]}}' ) );
 	}
 
+	public function test_the_colours_chosen_for_parts_are_listed_by_clipart(): void {
+		$design = '{"sides": {"front": [{"type": "image", "asset": 3, "paints": [{"type": "solid", "color": "#ff0000"}, {"type": "gradient", "from": "#00ff00", "to": "#ff0000", "angle": 4}]}, {"type": "image", "asset": 5}]}, "designs": [{"sides": {"back": [{"type": "image", "asset": 3, "paints": [{"type": "solid", "color": "#0000ff"}, 7]}]}}]}';
+
+		self::assertSame( array( 3 => array( '#ff0000', '#00ff00', '#0000ff' ) ), ClipartRules::colors( $design ) );
+		self::assertSame( array(), ClipartRules::colors( '{' ) );
+	}
+
 	public function test_anything_unreadable_keeps_nothing(): void {
 		self::assertSame( array(), ClipartRules::used() );
 		self::assertSame( array(), ClipartRules::used( null, '', '{', '3', '{"sides": "x"}', '{"sides": {"front": [{"type": "image", "asset": "7"}]}}', array( 'sides' => array() ) ) );

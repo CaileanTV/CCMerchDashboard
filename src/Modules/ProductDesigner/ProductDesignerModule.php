@@ -294,7 +294,7 @@ final class ProductDesignerModule implements Module {
 			)
 		);
 		// The approval queue and the designer's notifications (step 30.9).
-		$container->set( DesignsPage::class, static fn( Container $c ): DesignsPage => new DesignsPage( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( CreatorRepository::class ), $c->get( NotificationTypes::class ), $c->get( NotificationSwitches::class ), $c->get( PricingProductStore::class )->decimals() ) );
+		$container->set( DesignsPage::class, static fn( Container $c ): DesignsPage => new DesignsPage( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( CreatorRepository::class ), $c->get( NotificationTypes::class ), $c->get( NotificationSwitches::class ), $c->get( PricingProductStore::class )->decimals(), $c->get( DesignerAssetRepository::class ) ) );
 		$container->set( DesignerNotificationActions::class, static fn( Container $c ): DesignerNotificationActions => new DesignerNotificationActions( $c->get( NotificationSettings::class ), $c->get( NotificationTypes::class ), $c->get( NotificationSender::class ), $c->get( Logger::class ) ) );
 		// Approval and the apply pipeline into WooCommerce (step 30.10).
 		$container->set( DesignerMedia::class, static fn( Container $c ): DesignerMedia => new DesignerMedia( $c->get( DesignerFiles::class ) ) );

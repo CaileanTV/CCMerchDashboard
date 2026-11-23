@@ -25,6 +25,8 @@ use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
 use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
+use MerchBoard\Modules\ProductDesigner\Files\ClipartRules;
+use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
@@ -57,6 +59,7 @@ final class DesignsPage {
 	 * @param NotificationTypes         $types    Notification catalog.
 	 * @param NotificationSwitches      $switches Switches and examples.
 	 * @param int                       $decimals Store price decimals.
+	 * @param DesignerAssetRepository   $assets   Designer files, for the list of cliparts (ADR-121).
 	 */
 	public function __construct(
 		private DesignerProductRepository $products,
@@ -64,7 +67,8 @@ final class DesignsPage {
 		private CreatorRepository $creators,
 		private NotificationTypes $types,
 		private NotificationSwitches $switches,
-		private int $decimals
+		private int $decimals,
+		private ?DesignerAssetRepository $assets = null
 	) {
 	}
 
@@ -289,7 +293,9 @@ final class DesignsPage {
 		}
 
 		echo implode( ', ', $links ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
-		echo '</p><div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">';
+		echo '</p>';
+		$this->render_cliparts( (string) $row['design'], (int) $row['base_id'] );
+		echo '<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">';
 		$this->review_form( $id, 'approve', __( 'Approve and put in the shop', 'merchboard' ), 'primary' );
 
 		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
@@ -301,6 +307,63 @@ final class DesignsPage {
 		echo '<textarea id="merchboard-note-' . esc_attr( (string) $id ) . '" name="note" rows="2" cols="50" maxlength="2000" required placeholder="' . esc_attr__( 'Note to the creator: why, and what to change', 'merchboard' ) . '"></textarea><br>';
 		submit_button( __( 'Reject', 'merchboard' ), 'secondary', 'submit', false );
 		echo '</form></div></div>';
+	}
+
+	/**
+	 * The cliparts of a design (ADR-121): what each is, whether it is still
+	 * offered on the base product, and the colours chosen for its parts. The
+	 * server cannot see whether a print file's pixels fit the design, so this
+	 * is the approval's own check.
+	 *
+	 * @param string $design  The design as stored.
+	 * @param int    $base_id Its base product.
+	 * @throws DatabaseException When a clipart cannot be read.
+	 */
+	private function render_cliparts( string $design, int $base_id ): void {
+		if ( null === $this->assets ) {
+			return;
+		}
+
+		$colors = ClipartRules::colors( $design );
+		$items  = array();
+
+		foreach ( ClipartRules::used( $design ) as $id ) {
+			$clipart = $this->assets->find_clipart( $id );
+
+			if ( null === $clipart ) {
+				continue;
+			}
+
+			$notes = array();
+
+			if ( null !== $clipart->retired_at ) {
+				$notes[] = __( 'removed from the library', 'merchboard' );
+			} elseif ( ! $clipart->offered_on( $base_id ) ) {
+				$notes[] = __( 'no longer offered on this product', 'merchboard' );
+			}
+
+			if ( null !== $clipart->definition ) {
+				$count = count( $clipart->definition->parts );
+				/* translators: %d: number of parts the creator colours. */
+				$notes[] = sprintf( _n( '%d part', '%d parts', $count, 'merchboard' ), $count );
+			}
+
+			if ( true === $clipart->definition?->locked ) {
+				$notes[] = __( 'locked', 'merchboard' );
+			}
+
+			$swatches = '';
+
+			foreach ( $colors[ $id ] ?? array() as $color ) {
+				$swatches .= ' <span title="' . esc_attr( $color ) . '" style="display:inline-block;width:12px;height:12px;border:1px solid #8c8f94;vertical-align:middle;background:' . esc_attr( $color ) . '"></span>';
+			}
+
+			$items[] = '<li><a href="' . esc_url( DesignerAssetDownload::url( $id ) ) . '" target="_blank" rel="noopener">' . esc_html( $clipart->name ) . '</a>' . ( array() === $notes ? '' : ' (' . esc_html( implode( ', ', $notes ) ) . ')' ) . $swatches . '</li>';
+		}
+
+		if ( array() !== $items ) {
+			echo '<p><strong>' . esc_html__( 'Cliparts:', 'merchboard' ) . '</strong></p><ul style="list-style:disc;margin-left:2em">' . implode( '', $items ) . '</ul>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above.
+		}
 	}
 
 	/**
