@@ -123,6 +123,15 @@ Med en butik i `merchboard_designer_printify_shop` giver `PrintifyCatalog::choic
 - Farvekoderne måles på fotoene (`measure_hex`).
 - `CatalogCleanup::forget()` sletter produkterne, når importen er færdig, fejler eller startes forfra. Det, der ikke kan slettes, logges.
 
+## Rundt print og Printifys mockups (ADR-122, statusnote 2026-11-23)
+- **Rundt print:** `CatalogImport::finish()` giver en Printify-side et ark (`ImageProbe::sheet`) med hele printfeltet, når `ImageProbe::print_size()` ville skære printfeltet ned til det, fotoet viser. Fotoene, der kun blev hentet for farvekoderne, slettes.
+- **Visninger:** `collect()` gemmer et lille billede pr. kameranavn i første farve (`printify_thumbs`, asset-id pr. navn). Admins valg ligger i `printify_photos` (`null` = alle) og sættes med `BaseProductService::set_printify_photos()`.
+- **`PrintifyMockups`** (hook `merchboard_designer_printify`, opgave `all` i `ProviderTaskRepository`):
+  - opretter produktet med `print_areas` pr. farvedesign (ADR-096) og printfiler uploadet med `url`;
+  - henter fotos via `PrintifyCatalog::photos()`, to farver pr. runde;
+  - sidens visning er `slots[side]`;
+  - til sidst `PrintifyCatalog::forget()` og `archive_upload()`.
+
 ## Farvefotos i portioner (2026-11-01, eksperimentel)
 En side kan have en baggrund pr. farve, og en side med 23 farver er flere filer, end PHP normalt tager i én anmodning (`max_file_uploads`, 20 som standard). Overskydende filer forsvinder uden fejl. Derfor sender browseren først formularen med første foto som baggrund og derefter fotoene i portioner til `do=color_photos`, højst 10 filer og 80 % af `wp_max_upload_size()` pr. portion. Siden findes på nøgle eller navn, fordi en ny side ikke har en nøgle i browseren, og farven findes på navnet uanset store og små bogstaver. Alle fotos skal have samme størrelse som skabelonen. En portion gemmes helt eller slet ikke, og et erstattet foto slettes. Filer fra Affinity skal først eksporteres eller udtrækkes til PNG uden creators' designs: pluginet tager kun imod PNG og kan ikke kende et design på et foto, så administratoren tjekker miniaturerne.
 

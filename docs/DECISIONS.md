@@ -7362,6 +7362,16 @@ Katalogets billeder (`/catalog/blueprints/{id}.json`) er en liste med 1–428 UR
 7. **Én form.** Én tegning viser én størrelse. Har størrelsernes printfelter forskellig form (ADR-087, statusnote 2026-11-02), giver importen derfor hvide ark som før.
 8. **Parring.** Fotoene parres på kameraets navn (`camera_label`). Kamera-id'et skifter pr. farve på nogle produkter (Sky Water Bottle, stg 2026-11-23).
 
+**Statusnote 2026-11-23 (projektejerens svar efter stg-testen af Sky Water Bottle):**
+- **Rundt print:** viser markøren kun en del af printfeltet (flaske, krus), designes siden på et ark med hele printfeltet som ADR-119's plakater. Ellers designes der fortsat på fotoet.
+- **Mockups af indsendte designs fra Printify (`PrintifyMockups`):**
+  - creatorens printfiler sendes som signerede URL'er (`SignedPrintFiles`) til et midlertidigt produkt i den valgte butik;
+  - de visninger, admin har krydset af på grundproduktet ("Mockups fra Printify", `printify_photos`), hentes i hver valgt farve. Sidens egen visning erstatter browserens mockup, og de andre bliver miljøbilleder (`_scene-N`);
+  - produktet slettes, og uploads arkiveres (`POST /uploads/{id}/archive.json`), også ved fejl;
+  - godkendelsen venter, mens det sker. Fejler Printify, bliver browserens mockups stående, og admin får besked.
+- **Omgjort:** ADR-087's fravalg af mockups fra Printify. Printify modtager nu creatorernes printfiler, men kun på produkter, der aldrig udgives.
+- **Afprøvning 3:** et stribet ark på flasken viste, at hele arket ligger rundt om flasken, og at upload med URL fra stg virker. Butikken var tom bagefter.
+
 ## Alternatives considered
 - **Kun katalogets billeder, valgt af admin:** kræver ingen skriveadgang, men printfeltet skal stadig tegnes i hånden. Fravalgt af projektejeren 2026-11-23.
 - **Egne fotos (ADR-087 punkt 5):** kræver manuelt arbejde pr. produkt. Afløst.

@@ -13,6 +13,9 @@ Fase 57 (ADR-122). Ingen schemaændring. Reviewet; runtime-testen sker på stg.
 - **Automatisk opsætning:** med en Printify-butik til fotos henter en import ét foto pr. farve og side og måler printfelter og farvekoder. Det sker via et midlertidigt produkt, som slettes igen og aldrig udgives.
 - **Indstilling:** feltet "Printify-butik til fotos" (audit `printify_shop`). Uden butik giver importen hvide ark som før.
 - **Oprydning:** et midlertidigt produkt, Printify ikke ville slette, prøves igen ved næste import.
+- **Rundt print:** en flaske eller et krus designes på et ark med hele printfeltet, ikke kun det, forsidefotoet viser.
+- **Mockups fra Printify:** admin vælger visninger (Front, Back, Context 1 …) på grundproduktet. Printify laver dem af hvert indsendt design i hver valgt farve, og godkendelsen venter imens.
+- **Rettet:** fotos fra Printify parres på kameraets navn, fordi kamera-id'et skifter pr. farve på nogle varer.
 
 ## [2.5.0] - 2026-11-23
 

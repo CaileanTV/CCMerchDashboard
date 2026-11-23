@@ -95,6 +95,15 @@ Sæt flueben i "Lad creators se denne mockup", hvis creators skal kunne se mocku
 
 Med en butik opretter importen et midlertidigt produkt dér og henter ét foto pr. farve og side. Printfelterne og farvekoderne måles på fotoene, og produktet slettes igen. Det udgives aldrig. Ligesom hos Gelato springes en side over, når Printifys fotos ikke viser den. Sådan en side kan du tilføje med egne fotos. Uden butik, eller når størrelsernes printfelter har forskellig form (fx en plakat stående og liggende), giver importen hvide ark som før.
 
+Et print, der går rundt om varen (flaske, krus), designes på et ark med hele printfeltet. Hvert af Printifys fotos viser kun en del af det.
+
+Efter importen viser grundproduktet "Mockups fra Printify" med et lille billede af hver visning (Front, Back, Left side, Context 1 …). Når et design sendes ind, laver Printify de afkrydsede visninger i hver valgt farve:
+- sidens egen visning erstatter billedet fra designeren;
+- de andre vises efter det i butikken;
+- er intet krydset af, bruges alle visninger.
+
+Godkendelsen venter, til fotoene er hentet, typisk et par minutter. Det midlertidige produkt slettes bagefter.
+
 **Farvefotos, fra 2026-11-01 (eksperimentel):** feltet "Farvefotos" på en side tager alle sidens PNG-fotos på én gang. Et foto, der hedder det samme som en farve, fx `Sort.png`, bliver farvens baggrund, og en ny farve kommer selv på farvelisten med en målt farvekode. En ny side får første foto som baggrund, så printfeltet kan tegnes med musen, før noget sendes. Miniaturerne viser præcis, hvad der uploades, når der gemmes: tjek dem, for mockup-filer indeholder ofte creators' designs. Fotos sendes i små portioner, og hver portion gemmes helt eller slet ikke. Stopper en portion, står årsagen på siden, og de portioner, der allerede er sendt, er gemt. Hver portion hæver grundproduktets version. **Fra 1.6.0:** et foto, der er op til 1 % fra sidens størrelse, tilpasses (centreret), og feltet skriver hvilke. Et foto længere fra udelades med navn, og resten uploades. Står sidens navn sidst i filnavnet (`Aske Forside.png` på siden "Forside", også "Højre Side" og "Venstre Side"), er farven navnet uden siden.
 
 **Sidernes rækkefølge, fra 2026-11-01:** op- og ned-pile på hver gemt side på grundproduktet. Rækkefølgen gemmes med formularen og giver ikke en ny version. Den styrer fanerne i designeren og billederne på designs, der godkendes herefter. En side beholder sine størrelser, når den flyttes.

@@ -350,7 +350,12 @@ Creator-ændringer registreres i `merchboard_audit_log` med server-side actor, U
 - **Altid afvist** (403 `merchboard_impersonation_blocked`): udbetalinger, gavekortkoder, chatbot-forbindelse og YouTube-vilkår, nye API-nøgler og webhook-hemmeligheder og (fra trin 29.4) creatorens e-mailvalg og (fra trin 30.9) indsendelse af et design og dets filer. En ændring af et produkt i butikken kan startes (det er en kladde). OBS-URL'en sendes aldrig. Klokkens notifikationer markeres ikke som læst under en session.
 - **Sporbarhed:** start og slut auditeres; ændringer under en session har administratoren som aktør og `impersonating` i konteksten.
 
-**Printify (ADR-087, ADR-122):** token'en krypteres med sodium (nøgledomænet `designer-printify`) og vises, logges og auditeres aldrig. Den kan oprette og slette produkter og uploads i kontoens butikker, men ikke ordrer. Pluginet kalder kun katalogets `GET`-endpoints, upload af markørfiler og oprettelse, læsning og sletning af midlertidige produkter i den valgte butik. Produkterne udgives aldrig. Fotos hentes uden token og kun fra Printifys billedværter. Butikkens id er ikke hemmeligt og auditeres.
+**Printify (ADR-087, ADR-122):** token'en krypteres med sodium (nøgledomænet `designer-printify`) og vises, logges og auditeres aldrig. Den kan oprette og slette produkter og uploads i kontoens butikker, men ikke ordrer. Pluginet kalder kun:
+- katalogets `GET`-endpoints;
+- upload og arkivering af markørfiler og creatorernes printfiler;
+- oprettelse, læsning og sletning af midlertidige produkter i den valgte butik.
+
+Printfilerne sendes som signerede URL'er, der udløber efter højst en time, og arkiveres bagefter. Produkterne udgives aldrig. Fotos hentes uden token og kun fra Printifys billedværter. Butikkens id er ikke hemmeligt og auditeres.
 
 **Printful (trin 30.12, ADR-081):** token'en krypteres med sodium (nøgledomænet `designer-printful`) og vises, logges og auditeres aldrig. Kun de godkendte endpoints kaldes, med `wp_safe_remote_*`, 15 s og uden redirects. Den eneste offentlige rute, `GET /merchboard/v1/designer-print/{version}/{side}`, kræver en HMAC-signatur med eget domæne, der udløber efter højst 1 time, og giver kun printfilen af en ventende eller godkendt version (`no-store`, `nosniff`; alt andet er 404). Hentede filer valideres som uploads.
 
