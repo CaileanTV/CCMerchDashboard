@@ -1683,7 +1683,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **56.7 Regler for produkt og "beholder den"** ✅ (c60dc3b): ved gem, kopi og filadgang.
 - **56.8 Validering** ✅ (5ff649b): af farvevalg og lås, og tjek ved indsendelse.
 - **56.9 Bevarede billeder** ✅ (109d15b): i API og editor, og biblioteket uden fjernede.
-- **56.10 "Fjern" i stedet for "Slet"** med audit.
+- **56.10 "Fjern" i stedet for "Slet"** ✅ (b05df5e): med audit.
 - **56.11 Designeren:** bibliotek pr. produkt, farvevælger, lås, lagliste og fortryd.
 - **56.12 Broderi** med låste tråde.
 - **56.13 Admins upload:** produkter, palet, lås og advarsler. Er sidst, så intet kan oprettes, før resten virker.
