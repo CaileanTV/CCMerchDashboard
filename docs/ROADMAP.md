@@ -1687,7 +1687,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **56.11 Designeren** ✅ (0c50dfe): bibliotek pr. produkt, farvevælger, lås, lagliste og fortryd. Lærredet og printfilen bruger serverens regler og tegner delene fra atlasset. Broderede sider følger i 56.12.
 - **56.12 Broderi** ✅ (57f0b70): med låste tråde. Delene får en tråd hver, stregen og de faste pixels den nærmeste. Trådene beholdes altid, kan ikke byttes og slås aldrig sammen. Kræver kliparts alene flere tråde, end siden kan have, sendes designet ikke.
 - **56.13 Admins upload** ✅ (c1a6061): produkter, palet, lås og advarsler. PSD'en bages i browseren og sammenlignes med dens eget billede. Admin advares om bredde, dpi og broderiets låste tråde. Kun produktlisten kan rettes bagefter. For store uploads stoppes i browseren og ved modtagelsen.
-- **56.14 Admins liste** over kliparts på et indsendt design.
+- **56.14 Admins liste** ✅ (a003113): over kliparts på et indsendt design, med fjernet/ikke længere tilbudt, dele, lås og de valgte farver. Undervejs rettet: godkendelseskøen hentede ikke designet, så printfiler for farvedesigns fik id i stedet for farvenavne (6af2374).
 - **56.15 Afslutning:** tekster, docs, review, runtime-test og testpakke 2.5.0.
 
 **Fundet undervejs, ikke rettet (uden for fasen):**
