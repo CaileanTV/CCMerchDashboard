@@ -584,6 +584,79 @@ describe( 'DesignerSection', () => {
 		);
 	} );
 
+	it( 'loads a clipart the draft kept after it left the library, by its own type', async () => {
+		const requests = mockApi( {
+			'GET /merchboard/v1/me/designer': () => response( 200, OVERVIEW ),
+			'POST /merchboard/v1/me/designer/products/5/copy': () =>
+				response( 201, {
+					id: 9,
+					base_id: 3,
+					in_shop: false,
+					draft: {
+						number: 1,
+						title: 'Organic tee Tee (copy)',
+						description: '',
+						colors: [ 'black' ],
+						sizes: [ 'S' ],
+						design: {
+							version: 1,
+							sides: {
+								front: [
+									{
+										...newImage( 11, 40, 30, 3543, 4724 ),
+										id: 'kept',
+									},
+								],
+							},
+						},
+						profit_kind: 'fixed',
+						profit_value: '0.0000',
+						price: '149.9500',
+						base_version: 2,
+						updated_at: '2026-11-07T10:00:00+00:00',
+					},
+					assets: [
+						{
+							id: 11,
+							name: 'Old star',
+							width: 40,
+							height: 30,
+							mime: 'image/jpeg',
+						},
+					],
+				} ),
+			'GET /merchboard/v1/me/designer/assets/11': () => ( {
+				...response( 200, {}, { 'Content-Type': 'image/jpeg' } ),
+				blob: () =>
+					Promise.resolve(
+						new Blob( [ 'jpg' ], { type: 'image/jpeg' } )
+					),
+			} ),
+		} );
+
+		rendered = render(
+			<ConfigContext.Provider value={ CONFIG }>
+				<DesignerSection />
+			</ConfigContext.Provider>
+		);
+		await flush();
+
+		click(
+			rendered.container.querySelector< HTMLElement >(
+				'[aria-label="Copy Tee as a new design"]'
+			)
+		);
+		await flush();
+		await flush();
+
+		expect(
+			requests.some(
+				( request ) =>
+					request.path === '/merchboard/v1/me/designer/assets/11'
+			)
+		).toBe( true );
+	} );
+
 	it( 'copies a design as a new draft and opens it', async () => {
 		const requests = mockApi( {
 			'GET /merchboard/v1/me/designer': () => response( 200, OVERVIEW ),

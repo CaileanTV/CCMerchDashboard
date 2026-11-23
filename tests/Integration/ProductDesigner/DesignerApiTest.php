@@ -830,6 +830,52 @@ final class DesignerApiTest extends IntegrationTestCase {
 		self::assertSame( 'design_stale', $this->refusal( $this->call( 'POST', $route . '/submit' ) )[1], 'Not as a save stores it.' );
 	}
 
+	public function test_the_library_the_kept_cliparts_and_the_atlas(): void {
+		$assets = new DesignerAssetRepository( $this->wpdb );
+		$stored = $assets->find( $this->clipart );
+		self::assertNotNull( $stored );
+
+		$atlas = str_repeat( 'b', 32 ) . '.png';
+		file_put_contents( DesignerFiles::directory() . '/' . $atlas, AlertImagesTest::png( 8, 8 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Test file.
+
+		$rect       = array( 'x' => 0, 'y' => 0, 'width' => 8, 'height' => 8 ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		$definition = ClipartDefinition::from_data(
+			array(
+				'bases'   => array( $this->base ),
+				'parts'   => array( array( 'label' => '', 'box' => $rect, 'stroke' => null, 'scale' => 1, 'paint' => array( 'type' => 'solid', 'color' => '#ff0000' ), 'gradient' => array( 'type' => 'gradient', 'from' => '#ffffff', 'to' => '#000000', 'angle' => 45 ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+				'steps'   => array( array( 'type' => 'part', 'part' => 0, 'rect' => $rect, 'fill' => array( 'x' => 0, 'y' => 0 ), 'grown' => null ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+				'atlas'   => array( 'file' => $atlas, 'width' => 8, 'height' => 8 ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+				'palette' => null,
+				'locked'  => false,
+			),
+			$stored['width'],
+			$stored['height']
+		);
+		self::assertNotNull( $definition );
+
+		$artwork = $assets->insert_artwork( 'Bottle', $stored, $definition );
+		$foreign = $this->artwork( array( $this->base + 100 ) );
+
+		wp_set_current_user( $this->user );
+		$product = $this->product_with( $this->clipart );
+		$assets->retire( $this->clipart );
+
+		$library = $this->data( $this->call( 'GET', '/merchboard/v1/me/designer' ) )['cliparts'];
+		self::assertSame( array( $artwork ), array_column( $library, 'id' ), 'Neither the removed one nor one for another base product.' );
+		self::assertSame( array( array( $this->base ), false, array( 'width' => 8, 'height' => 8 ) ), array( $library[0]['bases'], $library[0]['locked'], $library[0]['art']['atlas'] ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact expectation.
+		self::assertArrayNotHasKey( 'file', $library[0]['art']['atlas'], 'The file is only fetched by the route.' );
+
+		$kept = $this->data( $this->call( 'GET', '/merchboard/v1/me/designer/products/' . $product ) )['assets'];
+		self::assertSame( array( $this->clipart ), array_column( $kept, 'id' ), 'The draft still has the removed one.' );
+		self::assertArrayNotHasKey( 'art', $kept[0], 'A clipart from before is as it was.' );
+
+		$served = $this->call( 'GET', '/merchboard/v1/me/designer/assets/' . $artwork, array(), array( 'atlas' => '1' ) );
+		self::assertSame( array( 200, 'image/png' ), array( $served->get_status(), $served->get_headers()['Content-Type'] ?? null ) );
+		self::assertSame( AlertImagesTest::png( 8, 8 ), $served->get_data() );
+		self::assertSame( 404, $this->call( 'GET', '/merchboard/v1/me/designer/assets/' . $this->clipart, array(), array( 'atlas' => '1' ) )->get_status(), 'No atlas without parts.' );
+		self::assertSame( 404, $this->call( 'GET', '/merchboard/v1/me/designer/assets/' . $foreign, array(), array( 'atlas' => '1' ) )->get_status() );
+	}
+
 	/**
 	 * A draft of the current creator with one image.
 	 *
@@ -1004,9 +1050,11 @@ final class DesignerApiTest extends IntegrationTestCase {
 	 * @param string               $method Method.
 	 * @param string               $route  Route.
 	 * @param array<string, mixed> $body   JSON body.
+	 * @param array<string, mixed> $query  Query parameters.
 	 */
-	private function call( string $method, string $route, array $body = array() ): WP_REST_Response {
+	private function call( string $method, string $route, array $body = array(), array $query = array() ): WP_REST_Response {
 		$request = new WP_REST_Request( $method, $route );
+		$request->set_query_params( $query );
 
 		if ( array() !== $body ) {
 			$request->set_header( 'Content-Type', 'application/json' );

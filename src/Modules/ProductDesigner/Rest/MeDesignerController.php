@@ -272,7 +272,8 @@ final class MeDesignerController extends RestController {
 	}
 
 	/**
-	 * `GET /me/designer/assets/{id}`: the file, sent by serve_file().
+	 * `GET /me/designer/assets/{id}`: the file, sent by serve_file(). With
+	 * `atlas=1` a clipart's parts and fixed layers (ADR-121), always a PNG.
 	 *
 	 * @param WP_REST_Request $request Request.
 	 * @phpstan-param WP_REST_Request<array<string, mixed>> $request
@@ -282,8 +283,17 @@ final class MeDesignerController extends RestController {
 			self::ROUTE . '/assets/{id}',
 			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
 				$asset = $this->assets->find( (int) $request->get_param( 'id' ) );
-				$path  = null === $asset || ! $this->visible( $creator, $asset ) ? null : $this->files->path( $asset['file'] );
-				$body  = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A local file of at most 25 MB.
+				$file  = null === $asset ? null : $asset['file'];
+
+				if ( null !== $asset && '1' === (string) $request->get_param( 'atlas' ) ) {
+					$atlas = ClipartRules::is_clipart( $asset ) ? $this->assets->find_clipart( $asset['id'] )?->definition?->atlas : null;
+					$file  = $atlas['file'] ?? null;
+
+					$asset['mime'] = 'image/png';
+				}
+
+				$path = null === $asset || null === $file || ! $this->visible( $creator, $asset ) ? null : $this->files->path( $file );
+				$body = null === $path ? false : file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A local file of at most 25 MB.
 
 				if ( null === $asset || false === $body ) {
 					return self::error( 'merchboard_not_found', __( 'Not found.', 'merchboard' ), 404 );
@@ -892,7 +902,7 @@ final class MeDesignerController extends RestController {
 		return array(
 			'creator'  => $creator->display_name,
 			'bases'    => array_map( $this->base_data( ... ), $bases ),
-			'cliparts' => array_map( self::asset_data( ... ), $this->assets->shared( DesignerAssetRepository::CLIPART ) ),
+			'cliparts' => array_values( array_map( self::clipart_data( ... ), array_filter( $this->assets->cliparts(), static fn( Clipart $clipart ): bool => self::in_library( $clipart, $bases ) ) ) ),
 			'uploads'  => array_map( self::asset_data( ... ), $this->assets->owned( $creator->id, CreatorUploads::UPLOAD ) ),
 			'fonts'    => array_values( array_map( static fn( AlertFont $font ): array => $font->to_array(), $this->fonts->approved() ) ),
 			'products' => array_map(
@@ -1073,9 +1083,94 @@ final class MeDesignerController extends RestController {
 					'note'       => (string) $refusal['note'],
 					'decided_at' => mysql_to_rfc3339( (string) $refusal['decided_at'] ),
 				),
+				// The draft's cliparts, also those no longer in the library (ADR-121 pkt. 7).
+				'assets'    => null === $draft ? array() : $this->kept_cliparts( $draft['design'] ),
 			),
 			$status
 		);
+	}
+
+	/**
+	 * The readable cliparts of a stored design.
+	 *
+	 * @param mixed $design The design as stored.
+	 * @return list<array<string, mixed>>
+	 * @throws DatabaseException When they cannot be read.
+	 */
+	private function kept_cliparts( mixed $design ): array {
+		$found = array();
+
+		foreach ( ClipartRules::used( $design ) as $id ) {
+			$asset   = $this->assets->find( $id );
+			$clipart = null !== $asset && ClipartRules::is_clipart( $asset ) ? $this->assets->find_clipart( $id ) : null;
+
+			if ( null !== $clipart && $clipart->readable() ) {
+				$found[] = self::clipart_data( $clipart );
+			}
+		}
+
+		return $found;
+	}
+
+	/**
+	 * Whether a clipart is in the library: not removed, and a clipart from
+	 * before or one offered on an active base product.
+	 *
+	 * @param Clipart       $clipart The clipart.
+	 * @param BaseProduct[] $bases   The active base products.
+	 */
+	private static function in_library( Clipart $clipart, array $bases ): bool {
+		if ( null !== $clipart->retired_at || ! $clipart->readable() ) {
+			return false;
+		}
+
+		foreach ( $bases as $base ) {
+			if ( $clipart->offered_on( (int) $base->id ) ) {
+				return true;
+			}
+		}
+
+		return DesignerAssetRepository::CLIPART === $clipart->kind;
+	}
+
+	/**
+	 * A clipart for the designer. One with a definition also has its base
+	 * products and, with parts, how it is drawn; the atlas' file is fetched
+	 * by the asset route.
+	 *
+	 * @param Clipart $clipart The clipart.
+	 * @return array<string, mixed>
+	 */
+	private static function clipart_data( Clipart $clipart ): array {
+		$data       = array(
+			'id'     => $clipart->id,
+			'name'   => $clipart->name,
+			'width'  => $clipart->width,
+			'height' => $clipart->height,
+			'mime'   => $clipart->mime,
+		);
+		$definition = $clipart->definition;
+
+		if ( null === $definition ) {
+			return $data;
+		}
+
+		$data['bases']  = $definition->bases;
+		$data['locked'] = $definition->locked;
+
+		if ( null !== $definition->atlas ) {
+			$data['art'] = array(
+				'parts'   => $definition->parts,
+				'steps'   => $definition->steps,
+				'atlas'   => array(
+					'width'  => $definition->atlas['width'],
+					'height' => $definition->atlas['height'],
+				),
+				'palette' => $definition->palette,
+			);
+		}
+
+		return $data;
 	}
 
 	/**

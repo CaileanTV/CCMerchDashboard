@@ -428,10 +428,23 @@ function Editor( props: EditorProps ) {
 		view === undefined
 			? 0
 			: Math.round( ( displayWidth * view.height ) / view.width );
-	const allAssets = useMemo(
-		() => [ ...overview.uploads, ...overview.cliparts ],
-		[ overview ]
-	);
+	// The draft's own cliparts too: one removed from the library stays in it (ADR-121).
+	const allAssets = useMemo( () => {
+		const known = new Map(
+			[ ...overview.uploads, ...overview.cliparts ].map( ( asset ) => [
+				asset.id,
+				asset,
+			] )
+		);
+
+		for ( const asset of product.assets ) {
+			if ( ! known.has( asset.id ) ) {
+				known.set( asset.id, asset );
+			}
+		}
+
+		return Array.from( known.values() );
+	}, [ overview, product.assets ] );
 	const fonts = overview.fonts;
 	// Every colour, as the server prices a design (BaseProduct::extra_amount()).
 	const baseColorKeys = base.colors.map( ( color ) => color.key );
@@ -1291,7 +1304,8 @@ function Editor( props: EditorProps ) {
 						total
 					),
 				} )
-		);
+			// An image that cannot be drawn must not leave the button busy.
+		).catch( () => ( { ok: false as const, reason: 'render' } ) );
 		setSending( false );
 
 		if ( ! result.ok ) {

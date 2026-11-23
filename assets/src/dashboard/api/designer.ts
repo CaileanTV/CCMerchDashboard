@@ -5,6 +5,8 @@
  * answer is validated; files are fetched with the session and shown as
  * `data:` URLs (the dashboard's CSP allows only `img-src 'self' data:`).
  */
+import { parseClipartFields } from './clipart';
+import type { DesignerClipartFields } from './clipart';
 import { request, requestFile } from './client';
 import type { ApiResult } from './client';
 import { isRecord, readSameOriginUrl } from './validate';
@@ -140,6 +142,8 @@ export interface DesignerAsset {
 	readonly width: number;
 	readonly height: number;
 	readonly mime: string;
+	/** A clipart for chosen base products, maybe with parts (ADR-121). */
+	readonly clipart?: DesignerClipartFields;
 }
 
 export interface DesignerFont {
@@ -276,6 +280,8 @@ export interface DesignerProduct {
 	readonly pending: DesignerPending | null;
 	readonly live: DesignerLive | null;
 	readonly rejection: DesignerRejection | null;
+	/** The draft's cliparts, also those no longer in the library (ADR-121). */
+	readonly assets: readonly DesignerAsset[];
 }
 
 const isInt = ( value: unknown, min = 0 ): value is number =>
@@ -330,21 +336,32 @@ function strings( value: unknown ): string[] | null {
  * @param value Value.
  */
 export function parseAsset( value: unknown ): DesignerAsset | null {
-	return isRecord( value ) &&
-		isInt( value.id, 1 ) &&
-		isString( value.name ) &&
-		isInt( value.width, 1 ) &&
-		isInt( value.height, 1 ) &&
-		isString( value.mime ) &&
-		value.mime.startsWith( 'image/' )
-		? {
-				id: value.id,
-				name: value.name,
-				width: value.width,
-				height: value.height,
-				mime: value.mime,
-			}
-		: null;
+	if (
+		! isRecord( value ) ||
+		! isInt( value.id, 1 ) ||
+		! isString( value.name ) ||
+		! isInt( value.width, 1 ) ||
+		! isInt( value.height, 1 ) ||
+		! isString( value.mime ) ||
+		! value.mime.startsWith( 'image/' )
+	) {
+		return null;
+	}
+
+	const clipart = parseClipartFields( value, value.width, value.height );
+
+	if ( clipart === null ) {
+		return null;
+	}
+
+	return {
+		id: value.id,
+		name: value.name,
+		width: value.width,
+		height: value.height,
+		mime: value.mime,
+		...( clipart === undefined ? {} : { clipart } ),
+	};
 }
 
 /**
@@ -683,11 +700,15 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 	const pending = parsePending( body.pending );
 	const live = parseLive( body.live );
 	const rejection = parseRejection( body.rejection );
+	// An answer from before phase 56 has none.
+	const assets =
+		body.assets === undefined ? [] : list( body.assets, parseAsset );
 
 	if (
 		pending === undefined ||
 		live === undefined ||
-		rejection === undefined
+		rejection === undefined ||
+		assets === null
 	) {
 		return null;
 	}
@@ -702,6 +723,7 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 			pending,
 			live,
 			rejection,
+			assets,
 		};
 	}
 
@@ -754,6 +776,7 @@ export function parseProduct( body: unknown ): DesignerProduct | null {
 		pending,
 		live,
 		rejection,
+		assets,
 	};
 }
 
@@ -1325,6 +1348,19 @@ export function designerAssetUrl(
 	signal?: AbortSignal
 ): Promise< string | null > {
 	return fileUrl( `${ PATH }/assets/${ asset.id }`, asset.mime, signal );
+}
+
+/**
+ * A clipart's atlas (ADR-121) as a `data:` URL, or null.
+ *
+ * @param id     Asset id.
+ * @param signal Abort signal.
+ */
+export function clipartAtlasUrl(
+	id: number,
+	signal?: AbortSignal
+): Promise< string | null > {
+	return fileUrl( `${ PATH }/assets/${ id }?atlas=1`, 'image/png', signal );
 }
 
 /**
