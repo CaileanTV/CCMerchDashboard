@@ -873,7 +873,7 @@ class BaseProductService {
 	 * @param string[]                                                                     $colors   Colour keys of the base product (a colour's own background).
 	 * @param string[]                                                                     $sizes   The base product's sizes (a side keeps to them).
 	 * @param-out list<array{file: string, mime: string, width: int, height: int, bytes: int}> $stored
-	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool, colors: list<string>, formats: array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>}>
+	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool, colors: list<string>, formats: array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>, guides: list<array{x: float, label: string, figure: int}>}>
 	 * @throws DesignerException When a side or file is refused.
 	 */
 	private function plan_views( ?BaseProduct $existing, array $views, array &$stored, array $colors = array(), array $sizes = array() ): array {
@@ -989,6 +989,8 @@ class BaseProductService {
 				'small'   => is_scalar( $input['small'] ?? null ) ? '1' === (string) $input['small'] : true === $old?->small,
 				'colors'  => $values,
 				'formats' => $formats,
+				// ADR-122: the views around the product, entered (the import), else kept.
+				'guides'  => array_key_exists( 'guides', $input ) ? BaseView::guides_of( $input['guides'] ) : ( $old->guides ?? array() ),
 			);
 		}
 
@@ -1032,8 +1034,8 @@ class BaseProductService {
 	/**
 	 * A side from its plan.
 	 *
-	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool, colors: list<string>, formats: array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>} $plan   Plan.
-	 * @param array<string, int>                                                                                                                                                                                                                                                                                                                                                     $layers Asset id by layer.
+	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool, colors: list<string>, formats: array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>, guides: list<array{x: float, label: string, figure: int}>} $plan   Plan.
+	 * @param array<string, int>                                                                                                                                                                                                                                                                                                                                                                                                                $layers Asset id by layer.
 	 * @throws DesignerException When the side is invalid.
 	 */
 	private function view( array $plan, array $layers ): BaseView {
@@ -1075,7 +1077,8 @@ class BaseProductService {
 				$plan['sizes'],
 				$plan['small'],
 				$plan['colors'],
-				$plan['formats']
+				$plan['formats'],
+				$plan['guides']
 			);
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_VIEW );

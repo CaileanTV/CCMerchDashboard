@@ -132,6 +132,12 @@ class CatalogImport {
 	private const WRAPPED = 0.75;
 
 	/**
+	 * Printify's camera names of the product's own views around it (ADR-122):
+	 * its `position` names the print, not the view, so a room's photo is told by name.
+	 */
+	private const GUIDE_VIEWS = '/^(front|back|left|right)(-|$)/D';
+
+	/**
 	 * The width of a flat side without a pattern.
 	 */
 	private const FLAT_WIDTH = 1000;
@@ -602,6 +608,7 @@ class CatalogImport {
 			'flat'     => $this->flatten( $id, $renderer, $data ),
 			'measure'  => $this->measure( $renderer, $data ),
 			'download' => $this->collect( $id, $renderer, $data ),
+			'guides'   => $this->guides( $renderer, $data ),
 			'bleed'    => $this->trims( $renderer, $data ),
 			default    => $this->render( $id, $renderer, $data ),
 		};
@@ -728,7 +735,7 @@ class CatalogImport {
 			}
 
 			if ( 'done' === $state['status'] ) {
-				$group = str_starts_with( (string) $kind, 'marker' ) ? 'marker' : 'blank';
+				$group = str_starts_with( (string) $kind, 'marker' ) ? 'marker' : ( 'stripes' === $kind ? 'stripes' : 'blank' );
 
 				$renders[ $kind ]['status'] = 'done';
 
@@ -974,9 +981,118 @@ class CatalogImport {
 			}
 		}
 
+		// ADR-122: where the views of a print around the product face, when the striped sheet was rendered.
+		$data['phase'] = array() !== ( $data['images']['stripes'] ?? array() ) ? 'guides' : 'bleed';
+
+		return 0;
+	}
+
+	/**
+	 * Measures where each product view of a print around the product faces
+	 * on its sheet (ADR-122): per view named in GUIDE_VIEWS, the blank and
+	 * the striped photo of the first colour (ImageProbe::stripe_centre()),
+	 * a few per round. A view whose stripes do not show is left out.
+	 *
+	 * @param CatalogRenderer      $renderer Provider.
+	 * @param array<string, mixed> $data     Import data.
+	 * @return int Seconds to the next round.
+	 * @throws PrintifyException When Printify refuses or fails.
+	 * @throws InvalidArgumentException When a photo cannot be read.
+	 */
+	private function guides( CatalogRenderer $renderer, array &$data ): int {
+		$stripes = is_array( $data['images']['stripes'] ?? null ) ? $data['images']['stripes'] : array();
+		$blank   = is_array( $data['images']['blank'] ?? null ) ? $data['images']['blank'] : array();
+		$first   = (string) array_key_first( is_array( $data['colors'] ?? null ) ? $data['colors'] : array() );
+		$sides   = is_array( $data['sides'] ?? null ) ? array_values( $data['sides'] ) : array();
+		$done    = 0;
+
+		foreach ( is_array( $data['chosen'] ?? null ) ? $data['chosen'] : array() as $index => $chosen ) {
+			$side = $sides[ $index ] ?? null;
+
+			if ( ! is_array( $side ) || ! is_array( $chosen ) || ! self::wrapped( $data, $side, $chosen ) ) {
+				continue;
+			}
+
+			$key = (string) ( $side['key'] ?? '' );
+
+			foreach ( $stripes as $slot => $urls ) {
+				$slot = (string) $slot;
+
+				if ( 1 !== preg_match( self::GUIDE_VIEWS, $slot ) || isset( $data['centres'][ $key ][ $slot ] ) || ! is_array( $urls ) || ! is_string( $urls[ $first ] ?? null ) || ! is_string( $blank[ $slot ][ $first ] ?? null ) ) {
+					continue;
+				}
+
+				if ( $done >= self::MEASURES_PER_RUN ) {
+					return 0;
+				}
+
+				$centre = ImageProbe::stripe_centre( $renderer->download( $blank[ $slot ][ $first ] ), $renderer->download( $urls[ $first ] ) );
+
+				$data['centres'][ $key ][ $slot ] = $centre ?? -1;
+				++$done;
+			}
+		}
+
 		$data['phase'] = 'bleed';
 
 		return 0;
+	}
+
+	/**
+	 * Whether a Printify side's print goes around the product (ADR-122): its
+	 * marker shows less than WRAPPED of its print area on the chosen photo.
+	 *
+	 * @param array<string, mixed> $data   Import data.
+	 * @param array<mixed>         $side   Import side.
+	 * @param array<mixed>         $chosen The side's chosen photo and box.
+	 */
+	private static function wrapped( array $data, array $side, array $chosen ): bool {
+		$box = $chosen['box'] ?? null;
+
+		if ( PrintifyCatalog::SOURCE !== ( $data['source'] ?? '' ) || ! is_array( $box ) ) {
+			return false;
+		}
+
+		$width  = (int) ( $side['width_mm'] ?? 0 );
+		$height = (int) ( $side['height_mm'] ?? 0 );
+		$shown  = ImageProbe::print_size(
+			array(
+				'x'      => (int) ( $box['x'] ?? 0 ),
+				'y'      => (int) ( $box['y'] ?? 0 ),
+				'width'  => max( 1, (int) ( $box['width'] ?? 1 ) ),
+				'height' => max( 1, (int) ( $box['height'] ?? 1 ) ),
+			),
+			$width,
+			$height
+		);
+
+		return $shown[0] * $shown[1] < self::WRAPPED * $width * $height;
+	}
+
+	/**
+	 * The guides of a side from its views' measured centres, in order along
+	 * the sheet (ADR-122); a view not found is left out.
+	 *
+	 * @param array<mixed>       $centres Share of the sheet by camera name; -1 when not found.
+	 * @param array<string, int> $thumbs  Thumbnail asset by camera name.
+	 * @return list<array{x: float, label: string, figure: int}>
+	 */
+	private static function guide_list( array $centres, array $thumbs ): array {
+		$guides = array();
+
+		foreach ( $centres as $name => $centre ) {
+			if ( is_numeric( $centre ) && (float) $centre >= 0 && (float) $centre <= 1 ) {
+				$guides[] = array(
+					'x'      => round( (float) $centre, 4 ),
+					'label'  => (string) $name,
+					'figure' => (int) ( $thumbs[ (string) $name ] ?? 0 ),
+				);
+			}
+		}
+
+		usort( $guides, static fn( array $a, array $b ): int => $a['x'] <=> $b['x'] );
+
+		return array_slice( $guides, 0, BaseView::MAX_GUIDES );
 	}
 
 	/**
@@ -1068,8 +1184,8 @@ class CatalogImport {
 			self::stop( DesignerException::NOT_AUTHORIZED );
 		}
 
-		$sides  = is_array( $data['sides'] ?? null ) ? array_values( $data['sides'] ) : array();
-		$views  = array_map(
+		$sides    = is_array( $data['sides'] ?? null ) ? array_values( $data['sides'] ) : array();
+		$views    = array_map(
 			static fn( BaseView $view ): array => array(
 				'key'    => $view->key,
 				'name'   => $view->name,
@@ -1077,9 +1193,24 @@ class CatalogImport {
 			),
 			$base->views
 		);
-		$slots  = array();
-		$kept   = array();
-		$scenes = array();
+		$slots    = array();
+		$kept     = array();
+		$scenes   = array();
+		$provider = $this->bases->provider( $id );
+		$printify = PrintifyCatalog::SOURCE === ( $data['source'] ?? '' );
+		$photos   = $provider['gelato_photos'] ?? null;
+		$names    = $provider['printify_photos'] ?? null;
+		$before   = get_current_user_id();
+
+		// ADR-119: the provider's images, one thumbnail each, for the administrator's choice of mockups
+		// (ADR-122: Printify's by camera name, also the figures under the guides of a print around the product).
+		wp_set_current_user( $user );
+
+		try {
+			$thumbs = $this->service->thumbnails( $id, is_array( $data['thumbs'] ?? null ) ? $data['thumbs'] : array(), $provider[ $printify ? 'printify_thumbs' : 'gelato_thumbs' ] ?? array(), $printify ? 'view' : 'Gelato' );
+		} finally {
+			wp_set_current_user( $before );
+		}
 
 		if ( true === ( $data['flat'] ?? false ) ) {
 			foreach ( $sides as $side ) {
@@ -1100,9 +1231,7 @@ class CatalogImport {
 			}
 
 			// ADR-122: a print around the product (a bottle, a mug) shows only in part on each of Printify's photos.
-			// Only when much of it is hidden (a quarter or more): a collar or a sleeve cutting a marker's edge is no print around the product.
-			$shown   = ImageProbe::print_size( $chosen['box'], (int) $side['width_mm'], (int) $side['height_mm'] );
-			$wrapped = PrintifyCatalog::SOURCE === ( $data['source'] ?? '' ) && $shown[0] * $shown[1] < self::WRAPPED * (int) $side['width_mm'] * (int) $side['height_mm'];
+			$wrapped = self::wrapped( $data, $side, $chosen );
 
 			// ADR-119: a poster (a format group's side) is designed on a flat sheet of its whole print area, as in Gelato's editor;
 			// so is a print around the product: Printify's mockups show it after the submission.
@@ -1146,6 +1275,11 @@ class CatalogImport {
 				'uploads'     => $uploads,
 			);
 
+			// ADR-122: where the product's views face on a print around it, with their photos as figures.
+			if ( $wrapped ) {
+				$view['guides'] = self::guide_list( is_array( $data['centres'][ $side['key'] ] ?? null ) ? $data['centres'][ $side['key'] ] : array(), $thumbs );
+			}
+
 			// A format group's side (ADR-115): its sizes and values, and each size's print size and bleed.
 			if ( is_array( $side['formats'] ?? null ) && array() !== $side['formats'] ) {
 				$view['sizes']                   = array_map( 'strval', is_array( $side['sizes'] ?? null ) ? $side['sizes'] : array() );
@@ -1185,13 +1319,6 @@ class CatalogImport {
 		} finally {
 			wp_set_current_user( $previous );
 		}
-
-		$provider = $this->bases->provider( $id );
-		$printify = PrintifyCatalog::SOURCE === ( $data['source'] ?? '' );
-		// ADR-119: the provider's images, one thumbnail each, for the administrator's choice of mockups (ADR-122: Printify's by camera name).
-		$thumbs = $this->service->thumbnails( $id, is_array( $data['thumbs'] ?? null ) ? $data['thumbs'] : array(), $provider[ $printify ? 'printify_thumbs' : 'gelato_thumbs' ] ?? array(), $printify ? 'view' : 'Gelato' );
-		$photos = $provider['gelato_photos'] ?? null;
-		$names  = $provider['printify_photos'] ?? null;
 
 		$this->bases->set_provider(
 			$id,

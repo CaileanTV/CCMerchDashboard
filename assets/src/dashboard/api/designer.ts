@@ -97,6 +97,20 @@ export interface DesignerView {
 	readonly format: boolean;
 	/** A small design area: as an extra area it costs `smallSidePrice`. */
 	readonly small: boolean;
+	/**
+	 * Where the product's views face on a print around it (ADR-122), in
+	 * order along the print area; empty for other sides.
+	 */
+	readonly guides: readonly DesignerGuide[];
+}
+
+/** A view of a print around the product: where it faces and its photo. */
+export interface DesignerGuide {
+	/** A share of the print area's width, 0 to 1. */
+	readonly x: number;
+	readonly label: string;
+	/** The view's photo (an asset), 0 for none. */
+	readonly figure: number;
 }
 
 /** A share of a print area: x, y, width and height between 0 and 1. */
@@ -492,7 +506,36 @@ export function parseView( value: unknown ): DesignerView | null {
 		trims: parseTrims( value.trims ),
 		format: value.format === true,
 		small: value.small === true,
+		guides: parseGuides( value.guides ),
 	};
+}
+
+/**
+ * A side's guides; an entry that is no share of the area is left out.
+ *
+ * @param value Value.
+ */
+function parseGuides( value: unknown ): DesignerGuide[] {
+	if ( ! Array.isArray( value ) ) {
+		return [];
+	}
+
+	return value
+		.filter(
+			( guide ): guide is UnknownRecord =>
+				isRecord( guide ) &&
+				typeof guide.x === 'number' &&
+				guide.x >= 0 &&
+				guide.x <= 1 &&
+				isString( guide.label ) &&
+				guide.label !== ''
+		)
+		.map( ( guide ) => ( {
+			x: guide.x as number,
+			label: guide.label as string,
+			figure: isInt( guide.figure, 1 ) ? ( guide.figure as number ) : 0,
+		} ) )
+		.sort( ( a, b ) => a.x - b.x );
 }
 
 /**

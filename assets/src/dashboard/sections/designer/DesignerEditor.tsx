@@ -134,6 +134,7 @@ import {
 	ruledObjects,
 } from './clipart-objects';
 import type { AssetLookup } from './clipart-objects';
+import { guideLines } from './guides';
 import { TemplateLayers } from './TemplateLayers';
 import { threadObject, threadSide } from './threads';
 import type { ThreadedSide, ThreadPlan } from './threads';
@@ -659,6 +660,10 @@ function Editor( props: EditorProps ) {
 				[
 					...Object.values( view.layers ),
 					...Object.values( view.backgrounds ),
+					// ADR-122: the views' photos under the guides.
+					...view.guides
+						.map( ( guide ) => guide.figure )
+						.filter( ( id ) => id > 0 ),
 				].map( ( id ) => ( {
 					id,
 					mime: 'image/png',
@@ -2204,6 +2209,14 @@ function Editor( props: EditorProps ) {
 										zoom,
 								} }
 							>
+								{ guideLines( view.guides ).map( ( x ) => (
+									<span
+										key={ x }
+										className="merchboard-product-designer__guide"
+										style={ { left: `${ x * 100 }%` } }
+										aria-hidden="true"
+									/>
+								) ) }
 								{ trim === null ? null : (
 									<div
 										className="merchboard-product-designer__trim"
@@ -2216,6 +2229,50 @@ function Editor( props: EditorProps ) {
 									/>
 								) }
 							</div>
+							{ view.guides.length === 0 ? null : (
+								<ul
+									className="merchboard-product-designer__views"
+									aria-label={ __(
+										'Where the design sits on the product',
+										'merchboard'
+									) }
+									style={ {
+										left:
+											( view.area.x / view.width ) *
+											displayWidth *
+											zoom,
+										top:
+											( ( view.area.y +
+												view.area.height ) /
+												view.height ) *
+											displayHeight *
+											zoom,
+										width:
+											( view.area.width / view.width ) *
+											displayWidth *
+											zoom,
+									} }
+								>
+									{ view.guides.map( ( guide ) => (
+										<li
+											key={ guide.label }
+											style={ {
+												left: `${ guide.x * 100 }%`,
+											} }
+										>
+											{ images.has( guide.figure ) ? (
+												<img
+													src={ images.get(
+														guide.figure
+													) }
+													alt=""
+												/>
+											) : null }
+											<span>{ guide.label }</span>
+										</li>
+									) ) }
+								</ul>
+							) }
 							{ measure === null ? null : (
 								<span
 									className="merchboard-product-designer__measure"

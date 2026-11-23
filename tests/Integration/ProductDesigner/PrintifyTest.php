@@ -66,6 +66,10 @@ final class PrintifyTest extends IntegrationTestCase {
 
 	private const BLANK = '6b04a15673224287ac0ff35a';
 
+	private const STRIPES = '6b04c273624ae11c2302adc6';
+
+	private const STRIPES_UPLOAD = '6b04c2725a3212d31f5a8b60';
+
 	/**
 	 * Calls made: [method, url, args].
 	 *
@@ -490,13 +494,14 @@ final class PrintifyTest extends IntegrationTestCase {
 		$creates = array_values( array_filter( $this->calls, static fn( array $call ): bool => 'POST' === $call[0] && str_ends_with( $call[1], '/products.json' ) ) );
 		$bodies  = array_map( static fn( array $call ): array => (array) json_decode( (string) $call[2]['body'], true ), $creates );
 
-		self::assertSame( array( array( 32870 ), array( 32870, 32880 ) ), array_map( static fn( array $body ): array => $body['print_areas'][0]['variant_ids'] ?? array(), $bodies ), 'The markers in the first colour, then every colour.' );
+		self::assertSame( array( array( 32870 ), array( 32870, 32880 ), array( 32870 ) ), array_map( static fn( array $body ): array => $body['print_areas'][0]['variant_ids'] ?? array(), $bodies ), 'The markers in the first colour, then every colour, then the stripes in the first colour.' );
 		self::assertSame( array( 'front', 'back' ), array_column( $bodies[0]['print_areas'][0]['placeholders'] ?? array(), 'position' ) );
 		self::assertGreaterThanOrEqual( 1, $bodies[0]['print_areas'][0]['placeholders'][1]['images'][0]['scale'] ?? 0, 'The file covers the print area.' );
 
 		$deleted = array_values( array_filter( $this->calls, static fn( array $call ): bool => 'DELETE' === $call[0] ) );
 
-		self::assertSame( array( self::API . '/shops/' . self::SHOP . '/products/' . self::MARKER . '.json', self::API . '/shops/' . self::SHOP . '/products/' . self::BLANK . '.json' ), array_column( $deleted, 1 ), 'Both temporary products are deleted.' );
+		self::assertSame( array( self::API . '/shops/' . self::SHOP . '/products/' . self::MARKER . '.json', self::API . '/shops/' . self::SHOP . '/products/' . self::BLANK . '.json', self::API . '/shops/' . self::SHOP . '/products/' . self::STRIPES . '.json' ), array_column( $deleted, 1 ), 'Every temporary product is deleted.' );
+		self::assertSame( array(), $base->views[0]->guides, 'A T-shirt\'s side has no guides.' );
 		self::assertSame( array(), array_filter( $this->calls, static fn( array $call ): bool => str_contains( $call[1], 'publish' ) || str_contains( $call[1], 'orders' ) ), 'Nothing is published or ordered.' );
 
 		foreach ( $this->calls as $call ) {
@@ -524,6 +529,18 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertSame( array( 'background' ), array_keys( $base->views[0]->layers ), 'A sheet, not a photo per colour.' );
 		self::assertSame( array( 'background', 'background:black' ), array_keys( $base->views[1]->layers ), 'The back shows in whole: designed on the photos.' );
 		self::assertSame( array( 'front', 'back', 'context-1' ), array_keys( $provider['printify_thumbs'] ), 'A view per camera name; no size chart.' );
+
+		// Where the views face on the sheet (step 57.15), with their photos as figures; no room.
+		$guides = $base->views[0]->guides;
+
+		$by_name = array_column( $guides, null, 'label' );
+
+		self::assertEqualsCanonicalizing( array( 'back', 'front' ), array_keys( $by_name ), 'The front and the back; no room.' );
+		self::assertEqualsWithDelta( 0.5, $by_name['front']['x'] ?? -1, 0.03 );
+		// The back faces the sheet's ends: just after 0 or just before 1.
+		self::assertLessThan( 0.03, min( $by_name['back']['x'] ?? 0.5, 1 - ( $by_name['back']['x'] ?? 0.5 ) ) );
+		self::assertSame( array( $provider['printify_thumbs']['front'], $provider['printify_thumbs']['back'] ), array( $by_name['front']['figure'] ?? 0, $by_name['back']['figure'] ?? 0 ) );
+		self::assertSame( array(), $base->views[1]->guides, 'The back shows whole: no guides.' );
 		self::assertSame( array( 'front', 'back' ), array_values( $provider['slots'] ) );
 		self::assertNull( $provider['printify_photos'], 'Every view until the administrator chooses.' );
 
@@ -784,7 +801,7 @@ final class PrintifyTest extends IntegrationTestCase {
 		$id = $this->import( shop: true );
 
 		self::assertSame( 'failed', $this->bases->import( $id )['state'] ?? null );
-		self::assertCount( 2, array_filter( $this->calls, static fn( array $call ): bool => 'DELETE' === $call[0] ), 'Nothing stays in the shop.' );
+		self::assertCount( 3, array_filter( $this->calls, static fn( array $call ): bool => 'DELETE' === $call[0] ), 'Nothing stays in the shop.' );
 	}
 
 	public function test_a_product_printify_would_not_delete_is_deleted_by_the_next_clean_up(): void {
@@ -861,17 +878,27 @@ final class PrintifyTest extends IntegrationTestCase {
 			)
 		);
 
-		$this->answers[ self::API . '/uploads/images.json' ] = self::answer( array( 'id' => '6b04a1527e91123b90c950e1' ) );
-		$this->answers[ $products . '.json' ]                = fn( string $method, array $args ): array => self::answer(
-			array(
-				'id'     => 2 === count( (array) ( json_decode( (string) ( $args['body'] ?? '' ), true )['variants'] ?? array() ) ) ? self::BLANK : self::MARKER,
-				'images' => array(),
-			)
-		);
+		// The striped sheet gets its own upload id, so its product is told apart.
+		$this->answers[ self::API . '/uploads/images.json' ] = static fn( string $method, array $args ): array => self::answer( array( 'id' => str_starts_with( (string) ( json_decode( (string) ( $args['body'] ?? '' ), true )['file_name'] ?? '' ), 'merch-stripes' ) ? self::STRIPES_UPLOAD : '6b04a1527e91123b90c950e1' ) );
+		$this->answers[ $products . '.json' ]                = static function ( string $method, array $args ): array {
+			$body = (array) json_decode( (string) ( $args['body'] ?? '' ), true );
+
+			if ( self::STRIPES_UPLOAD === ( $body['print_areas'][0]['placeholders'][0]['images'][0]['id'] ?? null ) ) {
+				return self::answer( array( 'id' => self::STRIPES ) );
+			}
+
+			return self::answer(
+				array(
+					'id'     => 2 === count( (array) ( $body['variants'] ?? array() ) ) ? self::BLANK : self::MARKER,
+					'images' => array(),
+				)
+			);
+		};
 
 		foreach ( array(
-			self::MARKER => array( 32870 ),
-			self::BLANK  => array( 32870, 32880 ),
+			self::MARKER  => array( 32870 ),
+			self::BLANK   => array( 32870, 32880 ),
+			self::STRIPES => array( 32870 ),
 		) as $product => $variants ) {
 			$this->answers[ $products . '/' . $product . '.json' ] = static fn( string $method ): array => 'DELETE' === $method ? array(
 				'response' => array( 'code' => 200 ),
@@ -891,9 +918,39 @@ final class PrintifyTest extends IntegrationTestCase {
 		$this->answers[ self::photo( self::BLANK, 32880, 102, 'back' ) ]   = self::shirt( $black );
 
 		// A photo of the product in a room: no side's marker shows on it.
-		foreach ( array( array( self::MARKER, 32870, $ash ), array( self::BLANK, 32870, $ash ), array( self::BLANK, 32880, $black ) ) as [ $product, $variant, $color ] ) {
+		foreach ( array( array( self::MARKER, 32870, $ash ), array( self::BLANK, 32870, $ash ), array( self::BLANK, 32880, $black ), array( self::STRIPES, 32870, $ash ) ) as [ $product, $variant, $color ] ) {
 			$this->answers[ self::photo( $product, $variant, 104, 'context-1' ) ] = self::shirt( $color );
 		}
+
+		// The striped sheet (ImageProbe::stripes(), 30° apart): the front shows stripes 4–7, the middle of the
+		// sheet; the back stripes 10, 11, 0 and 1, across its ends.
+		$band = static fn( array $stripes ): array => array_map( static fn( int $i, int $stripe ): array => array( 60 + 20 * $i, 60, 20, 70, self::hue( $stripe ) ), array_keys( $stripes ), $stripes );
+
+		$this->answers[ self::photo( self::STRIPES, 32870, 101, 'front' ) ] = self::shirt( $ash, $band( array( 4, 5, 6, 7 ) ) );
+		$this->answers[ self::photo( self::STRIPES, 32870, 102, 'back' ) ]  = self::shirt( $ash, $band( array( 10, 11, 0, 1 ) ) );
+	}
+
+	/**
+	 * A stripe's colour on the striped sheet (ImageProbe::stripes()).
+	 *
+	 * @param int $stripe Stripe, 0–11.
+	 * @return array{0: int, 1: int, 2: int}
+	 */
+	private static function hue( int $stripe ): array {
+		return array(
+			array( 255, 0, 0 ),
+			array( 255, 128, 0 ),
+			array( 255, 255, 0 ),
+			array( 128, 255, 0 ),
+			array( 0, 255, 0 ),
+			array( 0, 255, 128 ),
+			array( 0, 255, 255 ),
+			array( 0, 128, 255 ),
+			array( 0, 0, 255 ),
+			array( 128, 0, 255 ),
+			array( 255, 0, 255 ),
+			array( 255, 0, 128 ),
+		)[ $stripe ];
 	}
 
 	/**

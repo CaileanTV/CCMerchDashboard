@@ -2249,6 +2249,46 @@ input:disabled + .merchboard-sounds__upload {
 		0 0 0 9999px var(--merchboard-trim-shade);
 }
 
+/*
+ * ADR-122: the lines between the views of a print around the product,
+ * and the views below it.
+ */
+.merchboard-product-designer__guide {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 0;
+	pointer-events: none;
+	border-left: 1px dotted var(--merchboard-text-muted);
+}
+
+.merchboard-product-designer__views {
+	position: absolute;
+	height: 0;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	pointer-events: none;
+
+	li {
+		position: absolute;
+		top: var(--merchboard-space-1);
+		display: grid;
+		justify-items: center;
+		gap: 2px;
+		transform: translateX(-50%);
+		font-size: var(--merchboard-text-xs, 0.75rem);
+		color: var(--merchboard-text-muted);
+		white-space: nowrap;
+	}
+
+	img {
+		width: 44px;
+		height: 44px;
+		object-fit: contain;
+	}
+}
+
 .merchboard-product-designer__trim-note {
 	margin: var(--merchboard-space-1) 0 0;
 	font-size: var(--merchboard-text-sm);

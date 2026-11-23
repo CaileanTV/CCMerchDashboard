@@ -33,6 +33,7 @@ use MerchBoard\Modules\ProductDesigner\Providers\ProdigiCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
+use MerchBoard\Modules\ProductDesigner\Rest\MeDesignerController;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
 use MerchBoard\Modules\WooCommerce\Pricing\PricingMath;
 use MerchBoard\Modules\WooCommerce\Sales\SalesAmount;
@@ -675,6 +676,14 @@ final class BaseProductsPage {
 			// An import's sides per size are set by the provider's print sizes.
 			/* translators: %s: sizes. */
 			echo '</p><p class="description">' . esc_html( sprintf( __( 'Only for these sizes: %s', 'merchboard' ), implode( ', ', $view->sizes ) ) ) . '</p><p>';
+		}
+
+		// ADR-122: where the views of a print around the product face, measured by the import.
+		if ( null !== $view && array() !== $view->guides ) {
+			$faces = array_map( static fn( array $guide ): string => MeDesignerController::view_name( $guide['label'] ) . ' ' . (string) round( $guide['x'] * 100 ) . ' %', $view->guides );
+
+			/* translators: %s: views with where they face, e.g. "Back 0 %, Front 50 %". */
+			echo '</p><p class="description">' . esc_html( sprintf( __( 'Guides for creators (the print goes around the product): %s', 'merchboard' ), implode( ', ', $faces ) ) ) . '</p><p>';
 		}
 
 		if ( null !== $view ) {

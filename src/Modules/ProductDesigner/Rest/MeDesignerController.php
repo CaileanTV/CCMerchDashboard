@@ -367,7 +367,7 @@ final class MeDesignerController extends RestController {
 		$own = array_flip( array_map( static fn( array $row ): int => (int) $row['base_id'], $this->products->for_creator( $creator->id ) ) );
 
 		foreach ( $this->bases->all() as $base ) {
-			if ( ( BaseProduct::ACTIVE === $base->status || isset( $own[ (int) $base->id ] ) ) && in_array( $asset['id'], $base->layer_assets(), true ) ) {
+			if ( ( BaseProduct::ACTIVE === $base->status || isset( $own[ (int) $base->id ] ) ) && in_array( $asset['id'], array_merge( $base->layer_assets(), $base->guide_figures() ), true ) ) {
 				return true;
 			}
 		}
@@ -1299,6 +1299,15 @@ final class MeDesignerController extends RestController {
 			'format'       => array() !== $view->formats,
 			'small'        => $view->small,
 			'scene'        => $view->scene,
+			// ADR-122: where the views of a print around the product face, with their names and photos.
+			'guides'       => array_map(
+				static fn( array $guide ): array => array(
+					'x'      => $guide['x'],
+					'label'  => self::view_name( $guide['label'] ),
+					'figure' => $guide['figure'],
+				),
+				$view->guides
+			),
 			'embroidery'   => null === $pack ? null : array(
 				'max'      => $pack['max'],
 				'threads'  => $pack['threads'],
@@ -1306,6 +1315,23 @@ final class MeDesignerController extends RestController {
 			),
 		);
 	}
+
+	/**
+	 * A provider's camera name as creators read it (ADR-122): the known views
+	 * in their language, any other with spaces and a capital.
+	 *
+	 * @param string $camera Camera name, e.g. `left-side`.
+	 */
+	public static function view_name( string $camera ): string {
+		return match ( $camera ) {
+			'front'      => __( 'Front', 'merchboard' ),
+			'back'       => __( 'Back', 'merchboard' ),
+			'left', 'left-side' => __( 'Left side', 'merchboard' ),
+			'right', 'right-side' => __( 'Right side', 'merchboard' ),
+			default      => ucfirst( str_replace( array( '-', '_' ), ' ', $camera ) ),
+		};
+	}
+
 
 	/**
 	 * An asset for the designer.

@@ -253,6 +253,220 @@ final class ImageProbe {
 	}
 
 	/**
+	 * The stripes of a sheet around a product (ADR-122): STRIPES columns of
+	 * full hues, 360 / STRIPES degrees apart, the first red.
+	 */
+	public const STRIPES = 12;
+
+	/**
+	 * A PNG of the striped sheet in a print area's proportions.
+	 *
+	 * @param int $width  Width in pixels.
+	 * @param int $height Height in pixels.
+	 * @throws InvalidArgumentException When GD cannot make it.
+	 */
+	public static function stripes( int $width, int $height ): string {
+		$image = imagecreatetruecolor( max( 1, $width ), max( 1, $height ) );
+
+		if ( false === $image ) {
+			throw new InvalidArgumentException( 'The stripes cannot be made.' );
+		}
+
+		for ( $i = 0; $i < self::STRIPES; $i++ ) {
+			[ $red, $green, $blue ] = self::hue( $i * 360 / self::STRIPES );
+
+			$color = imagecolorallocate( $image, $red, $green, $blue );
+			$left  = intdiv( $i * $width, self::STRIPES );
+			$right = intdiv( ( $i + 1 ) * $width, self::STRIPES ) - 1;
+
+			imagefilledrectangle( $image, $left, 0, $right, $height - 1, false === $color ? 0 : $color );
+		}
+
+		ob_start();
+		imagepng( $image, null, 9 );
+
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * Where on a striped sheet around a product a photo's middle is, as a
+	 * share of the sheet's width from its left edge (ADR-122), or null when
+	 * the stripes do not show. The product's axis is the middle of what
+	 * differs from the blank photo along the row where the print shows most;
+	 * the place on the sheet is interpolated between the stripes' edges on
+	 * each side of the axis.
+	 *
+	 * @param string $blank   The blank photo (bytes).
+	 * @param string $stripes The photo with the striped sheet (bytes).
+	 * @throws InvalidArgumentException When a photo cannot be read.
+	 */
+	public static function stripe_centre( string $blank, string $stripes ): ?float {
+		$a      = self::image( $blank );
+		$b      = self::image( $stripes );
+		$width  = imagesx( $a );
+		$height = imagesy( $a );
+
+		if ( imagesx( $b ) !== $width || imagesy( $b ) !== $height ) {
+			$scaled = imagescale( $b, $width, $height );
+
+			if ( false === $scaled ) {
+				throw new InvalidArgumentException( 'The stripes render cannot be scaled.' );
+			}
+
+			$b = $scaled;
+		}
+
+		// The row where most of the print shows.
+		$best = array( -1, 0 );
+
+		for ( $y = 0; $y < $height; $y += max( 1, intdiv( $height, 100 ) ) ) {
+			$count = 0;
+
+			for ( $x = 0; $x < $width; $x += 4 ) {
+				$count += null === self::stripe_at( $a, $b, $x, $y ) ? 0 : 1;
+			}
+
+			$best = $count > $best[1] ? array( $y, $count ) : $best;
+		}
+
+		if ( $best[0] < 0 ) {
+			return null;
+		}
+
+		// The stripe of each column along that row.
+		$row = array();
+
+		for ( $x = 0; $x < $width; $x++ ) {
+			$stripe = self::stripe_at( $a, $b, $x, $best[0] );
+
+			if ( null !== $stripe ) {
+				$row[ $x ] = $stripe;
+			}
+		}
+
+		if ( count( $row ) < 2 ) {
+			return null;
+		}
+
+		$columns = array_keys( $row );
+		$axis    = ( min( $columns ) + max( $columns ) ) / 2;
+		// Edges between neighbouring stripes, the sheet unwrapped: column => place on the sheet in stripes.
+		$edges   = array();
+		$shown   = null;
+		$current = 0;
+		$sign    = 0;
+
+		foreach ( $row as $x => $stripe ) {
+			if ( null === $shown ) {
+				$shown   = $stripe;
+				$current = $stripe;
+				continue;
+			}
+
+			if ( $stripe === $shown ) {
+				continue;
+			}
+
+			$step = ( ( $stripe - $shown ) % self::STRIPES + self::STRIPES ) % self::STRIPES;
+			$turn = 1 === $step ? 1 : ( self::STRIPES - 1 === $step ? -1 : 0 );
+
+			// Only the next stripe the same way round: anything else is a blend at an edge or noise.
+			if ( 0 === $turn || ( 0 !== $sign && $turn !== $sign ) ) {
+				continue;
+			}
+
+			$sign        = $turn;
+			$edges[ $x ] = 1 === $turn ? $current + 1 : $current;
+			$current    += $turn;
+			$shown       = $stripe;
+		}
+
+		if ( array() === $edges ) {
+			// One stripe only: its middle.
+			return ( ( (int) reset( $row ) ) + 0.5 ) / self::STRIPES;
+		}
+
+		$left  = null;
+		$right = null;
+
+		foreach ( $edges as $x => $position ) {
+			if ( $x <= $axis ) {
+				$left = array( $x, $position );
+			} elseif ( null === $right ) {
+				$right = array( $x, $position );
+			}
+		}
+
+		if ( null !== $left && null !== $right ) {
+			$position = $left[1] + ( $axis - $left[0] ) / max( 1, $right[0] - $left[0] ) * ( $right[1] - $left[1] );
+		} elseif ( null !== $right ) {
+			// The axis lies outside the edges: half a stripe beyond the nearest one.
+			$position = $right[1] - 0.5 * $sign;
+		} elseif ( null !== $left ) {
+			$position = $left[1] + 0.5 * $sign;
+		} else {
+			return null;
+		}
+
+		$share = fmod( $position / self::STRIPES, 1.0 );
+
+		return $share < 0 ? $share + 1 : $share;
+	}
+
+	/**
+	 * The stripe a pixel of the striped photo shows, or null where it
+	 * shows the product or is too dull to tell.
+	 *
+	 * @param GdImage $a Blank photo.
+	 * @param GdImage $b Striped photo.
+	 * @param int     $x Column.
+	 * @param int     $y Row.
+	 */
+	private static function stripe_at( GdImage $a, GdImage $b, int $x, int $y ): ?int {
+		$p     = imagecolorat( $a, $x, $y );
+		$q     = imagecolorat( $b, $x, $y );
+		$red   = ( $q >> 16 ) & 255;
+		$green = ( $q >> 8 ) & 255;
+		$blue  = $q & 255;
+		$max   = max( $red, $green, $blue );
+		$min   = min( $red, $green, $blue );
+
+		if ( abs( ( ( $p >> 16 ) & 255 ) - $red ) + abs( ( ( $p >> 8 ) & 255 ) - $green ) + abs( ( $p & 255 ) - $blue ) < self::MIN_DIFFERENCE || $max < self::MIN_BRIGHTNESS || ( $max - $min ) < 0.35 * $max ) {
+			return null;
+		}
+
+		$delta = $max - $min;
+		$hue   = match ( $max ) {
+			$red    => fmod( ( $green - $blue ) / $delta + 6, 6 ),
+			$green  => ( $blue - $red ) / $delta + 2,
+			default => ( $red - $green ) / $delta + 4,
+		};
+
+		return (int) round( $hue * 60 / ( 360 / self::STRIPES ) ) % self::STRIPES;
+	}
+
+	/**
+	 * A full colour of a hue.
+	 *
+	 * @param float $degrees Hue.
+	 * @return array{0: int<0, 255>, 1: int<0, 255>, 2: int<0, 255>}
+	 */
+	private static function hue( float $degrees ): array {
+		$h = fmod( $degrees, 360 ) / 60;
+		$x = (int) round( 255 * ( 1 - abs( fmod( $h, 2 ) - 1 ) ) );
+		$x = max( 0, min( 255, $x ) );
+
+		return match ( (int) floor( $h ) ) {
+			0       => array( 255, $x, 0 ),
+			1       => array( $x, 255, 0 ),
+			2       => array( 0, 255, $x ),
+			3       => array( 0, $x, 255 ),
+			4       => array( $x, 0, 255 ),
+			default => array( 255, 0, $x ),
+		};
+	}
+
+	/**
 	 * The colour in the middle of an area (the median of a grid over its
 	 * middle half), as `#rrggbb`.
 	 *

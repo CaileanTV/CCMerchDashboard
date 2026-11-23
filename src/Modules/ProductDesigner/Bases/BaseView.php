@@ -157,6 +157,11 @@ final readonly class BaseView {
 	public const MAX_MM = 2000;
 
 	/**
+	 * Most guides on a side (ADR-122).
+	 */
+	public const MAX_GUIDES = 12;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string                                                                                     $key         Stable key (a-z, 0-9, -), unique per base product.
@@ -175,6 +180,7 @@ final readonly class BaseView {
 	 * @param bool                                                                                       $small       Whether the side is a small design area, with the price of small extra areas.
 	 * @param string[]                                                                                   $colors      The colour keys the side belongs to; empty for every colour.
 	 * @param array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}> $formats Print size and bleed by size.
+	 * @param list<array{x: float, label: string, figure: int}>                                          $guides  Where the views of a print around the product face (ADR-122): a share of the print area's width, the view's name and its photo (an asset, 0 for none).
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -193,7 +199,8 @@ final readonly class BaseView {
 		public array $sizes = array(),
 		public bool $small = false,
 		public array $colors = array(),
-		public array $formats = array()
+		public array $formats = array(),
+		public array $guides = array()
 	) {
 		if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9-]{0,31}$/', $key ) || '' === $name || mb_strlen( $name ) > 60 ) {
 			throw new InvalidArgumentException( 'Invalid side.' );
@@ -244,6 +251,16 @@ final readonly class BaseView {
 
 			if ( '' === (string) $size || $format['width_mm'] <= 0 || $format['height_mm'] <= 0 || $format['width_mm'] > self::MAX_MM || $format['height_mm'] > self::MAX_MM || $bleed[0] < 0 || $bleed[1] < 0 || 2 * $bleed[0] >= $format['width_mm'] || 2 * $bleed[1] >= $format['height_mm'] ) {
 				throw new InvalidArgumentException( 'Invalid format of a side.' );
+			}
+		}
+
+		if ( count( $guides ) > self::MAX_GUIDES ) {
+			throw new InvalidArgumentException( 'Too many guides.' );
+		}
+
+		foreach ( $guides as $guide ) {
+			if ( $guide['x'] < 0 || $guide['x'] > 1 || '' === $guide['label'] || mb_strlen( $guide['label'] ) > 40 || $guide['figure'] < 0 ) {
+				throw new InvalidArgumentException( 'Invalid guide of a side.' );
 			}
 		}
 	}
@@ -321,7 +338,7 @@ final readonly class BaseView {
 	 * @throws InvalidArgumentException When a format is invalid.
 	 */
 	public function with_formats( array $formats ): self {
-		return new self( $this->key, $this->name, $this->width, $this->height, $this->layers, $this->area, $this->width_mm, $this->height_mm, $this->dpi, $this->thread_pack, $this->flat, $this->scene, $this->sizes, $this->small, $this->colors, $formats );
+		return new self( $this->key, $this->name, $this->width, $this->height, $this->layers, $this->area, $this->width_mm, $this->height_mm, $this->dpi, $this->thread_pack, $this->flat, $this->scene, $this->sizes, $this->small, $this->colors, $formats, $this->guides );
 	}
 
 	/**
@@ -331,7 +348,7 @@ final readonly class BaseView {
 	 * @throws InvalidArgumentException When a layer is invalid.
 	 */
 	public function with_layers( array $layers ): self {
-		return new self( $this->key, $this->name, $this->width, $this->height, $layers, $this->area, $this->width_mm, $this->height_mm, $this->dpi, $this->thread_pack, $this->flat, $this->scene, $this->sizes, $this->small, $this->colors, $this->formats );
+		return new self( $this->key, $this->name, $this->width, $this->height, $layers, $this->area, $this->width_mm, $this->height_mm, $this->dpi, $this->thread_pack, $this->flat, $this->scene, $this->sizes, $this->small, $this->colors, $this->formats, $this->guides );
 	}
 
 	/**
@@ -465,6 +482,10 @@ final readonly class BaseView {
 			$side['formats'] = $this->formats;
 		}
 
+		if ( array() !== $this->guides ) {
+			$side['guides'] = $this->guides;
+		}
+
 		return $side;
 	}
 
@@ -507,8 +528,34 @@ final readonly class BaseView {
 			is_array( $data['sizes'] ?? null ) ? array_values( array_filter( $data['sizes'], 'is_string' ) ) : array(),
 			true === ( $data['small'] ?? false ),
 			is_array( $data['colors'] ?? null ) ? array_values( array_filter( $data['colors'], 'is_string' ) ) : array(),
-			self::formats_of( $data['formats'] ?? null )
+			self::formats_of( $data['formats'] ?? null ),
+			self::guides_of( $data['guides'] ?? null )
 		);
+	}
+
+	/**
+	 * Guides from their stored or entered form (ADR-122); an invalid entry is left out.
+	 *
+	 * @param mixed $data Decoded guides.
+	 * @return list<array{x: float, label: string, figure: int}>
+	 */
+	public static function guides_of( mixed $data ): array {
+		$guides = array();
+
+		foreach ( is_array( $data ) ? $data : array() as $guide ) {
+			$x     = is_array( $guide ) && is_numeric( $guide['x'] ?? null ) ? (float) $guide['x'] : -1.0;
+			$label = is_array( $guide ) && is_string( $guide['label'] ?? null ) ? mb_substr( trim( sanitize_text_field( $guide['label'] ) ), 0, 40 ) : '';
+
+			if ( $x >= 0 && $x <= 1 && '' !== $label && count( $guides ) < self::MAX_GUIDES ) {
+				$guides[] = array(
+					'x'      => round( $x, 4 ),
+					'label'  => $label,
+					'figure' => is_int( $guide['figure'] ?? null ) && $guide['figure'] > 0 ? $guide['figure'] : 0,
+				);
+			}
+		}
+
+		return $guides;
 	}
 
 	/**

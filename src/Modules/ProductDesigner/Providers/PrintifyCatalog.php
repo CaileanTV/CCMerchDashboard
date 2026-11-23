@@ -122,6 +122,11 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 	private const MARKER_SIDE = 1000;
 
 	/**
+	 * The width of the striped sheet uploaded (ADR-122).
+	 */
+	private const STRIPES_WIDTH = 1200;
+
+	/**
 	 * Most photos of a render compared (each needs two downloads): the ones
 	 * of a placement first, then the others in Printify's order.
 	 */
@@ -458,15 +463,18 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 			return array();
 		}
 
-		return 'done' === ( $import['renders']['marker']['status'] ?? null ) ? array( 'marker', 'blank' ) : array( 'marker' );
+		// ADR-122: the striped sheet shows where each view of a print around the product faces.
+		return 'done' === ( $import['renders']['marker']['status'] ?? null ) ? array( 'marker', 'blank', 'stripes' ) : array( 'marker' );
 	}
 
 	/**
 	 * Creates a temporary product (ADR-122): `marker` in the first colour with
 	 * a marker colour per side, `blank` in every colour with the transparent
-	 * file. Each file is scaled to cover its print area.
+	 * file, `stripes` in the first colour with the striped sheet of each side
+	 * (ImageProbe::stripes(), in the print area's proportions). A marker or
+	 * the transparent file is scaled to cover its print area.
 	 *
-	 * @param string               $kind   `marker` or `blank`.
+	 * @param string               $kind   `marker`, `blank` or `stripes`.
 	 * @param array<string, mixed> $import Import data.
 	 * @return string `<shop>:<product>`.
 	 * @throws PrintifyException When Printify refuses or fails, or no shop is chosen.
@@ -481,7 +489,7 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 		[ $blueprint, $producer ] = self::ref_of( is_string( $import['ref'] ?? null ) ? $import['ref'] : '' );
 
 		$variants = array_values( array_map( 'intval', array_filter( is_array( $import['colors'] ?? null ) ? $import['colors'] : array(), 'is_numeric' ) ) );
-		$variants = 'marker' === $kind ? array_slice( $variants, 0, 1 ) : $variants;
+		$variants = 'blank' !== $kind ? array_slice( $variants, 0, 1 ) : $variants;
 		$sides    = array_values( array_filter( is_array( $import['sides'] ?? null ) ? $import['sides'] : array(), 'is_array' ) );
 		$places   = array();
 
@@ -496,9 +504,12 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 				break;
 			}
 
-			$width  = max( 1, (int) ( $side['width'] ?? 1 ) );
-			$height = max( 1, (int) ( $side['height'] ?? 1 ) );
-			$upload = $this->api->upload( null === $marker ? 'merch-clear.png' : 'merch-marker-' . ( $index + 1 ) . '.png', self::solid( $marker ) );
+			$width   = max( 1, (int) ( $side['width'] ?? 1 ) );
+			$height  = max( 1, (int) ( $side['height'] ?? 1 ) );
+			$striped = 'stripes' === $kind;
+			$upload  = $striped
+				? $this->api->upload( 'merch-stripes-' . ( $index + 1 ) . '.png', ImageProbe::stripes( self::STRIPES_WIDTH, max( 1, (int) round( self::STRIPES_WIDTH * $height / $width ) ) ) )
+				: $this->api->upload( null === $marker ? 'merch-clear.png' : 'merch-marker-' . ( $index + 1 ) . '.png', self::solid( $marker ) );
 
 			$places[] = array(
 				'position' => (string) ( $side['placement'] ?? '' ),
@@ -507,8 +518,8 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 						'id'    => $upload,
 						'x'     => 0.5,
 						'y'     => 0.5,
-						// A square file covers the area: scale is relative to its width.
-						'scale' => round( max( 1, $height / $width ), 4 ),
+						// A square file covers the area: scale is relative to its width. The stripes have the area's proportions.
+						'scale' => $striped ? 1 : round( max( 1, $height / $width ), 4 ),
 						'angle' => 0,
 					),
 				),

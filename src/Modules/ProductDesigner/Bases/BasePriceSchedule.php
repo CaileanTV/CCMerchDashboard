@@ -329,7 +329,7 @@ class BasePriceSchedule {
 		}
 
 		$views = array_map(
-			static fn( BaseView $view ): BaseView => new BaseView( $view->key, $view->name, $view->width, $view->height, $view->layers, $view->area, $view->width_mm, $view->height_mm, $view->dpi, $view->thread_pack, $view->flat, $view->scene, $view->sizes, $view->small && ! in_array( $view->key, $entry['large_sides'], true ), $view->colors, $view->formats ),
+			static fn( BaseView $view ): BaseView => new BaseView( $view->key, $view->name, $view->width, $view->height, $view->layers, $view->area, $view->width_mm, $view->height_mm, $view->dpi, $view->thread_pack, $view->flat, $view->scene, $view->sizes, $view->small && ! in_array( $view->key, $entry['large_sides'], true ), $view->colors, $view->formats, $view->guides ),
 			$base->views
 		);
 		$sizes = array_merge( $base->size_prices, array_intersect_key( $entry['sizes'], array_flip( $base->sizes ) ) );
