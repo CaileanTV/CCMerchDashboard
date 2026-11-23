@@ -7,13 +7,14 @@
  * The rules are applied to what is shown and printed, so a print file is
  * always of the design the server stores, whatever edit made it.
  */
-import type { DesignerAsset } from '../../api/designer';
+import type { DesignerAsset, DesignerThread } from '../../api/designer';
 import type { ClipartArt, ClipartPaint } from './clipart-model';
 import { drawClipart, lockedPlacement } from './clipart-paint';
 import type { ClipartPixels } from './clipart-paint';
 import type { DesignObject, ImageObject } from './design-model';
 import { newImage } from './design-model';
 import type { ImageResolver } from './fabric-stage';
+import { nearestThread, paintPixels } from './threads';
 
 /** An asset by id; undefined for one not known. */
 export type AssetLookup = ( asset: number ) => DesignerAsset | undefined;
@@ -224,6 +225,19 @@ export function atlasesOf(
 }
 
 /**
+ * What a pack's threads are, for the keys of drawings.
+ *
+ * @param threads The threads, or null.
+ */
+function packKey( threads: readonly DesignerThread[] | null ): string {
+	return threads === null
+		? ''
+		: threads
+				.map( ( thread ) => `${ thread.code }=${ thread.hex }` )
+				.join( ',' );
+}
+
+/**
  * Whether two images are alike.
  *
  * @param one   An image.
@@ -309,7 +323,13 @@ export class ClipartPictures {
 		Promise< ClipartPixels | null >
 	>();
 
-	private readonly drawn = new Map< string, HTMLCanvasElement | null >();
+	private readonly drawn = new Map<
+		string,
+		{
+			readonly pixels: ClipartPixels | null;
+			canvas?: HTMLCanvasElement | null;
+		}
+	>();
 
 	/**
 	 * Constructor.
@@ -347,36 +367,94 @@ export class ClipartPictures {
 	/**
 	 * The pictures as the canvas and the print file draw them.
 	 *
-	 * @param lookup Assets by id.
-	 * @param hard   Embroidery: every pixel wholly one colour or empty.
+	 * @param lookup  Assets by id.
+	 * @param hard    Embroidery: every pixel wholly one colour or empty.
+	 * @param threads Embroidery: the pack's threads, each pixel in its nearest.
 	 */
-	public resolver( lookup: AssetLookup, hard = false ): ImageResolver {
+	public resolver(
+		lookup: AssetLookup,
+		hard = false,
+		threads: readonly DesignerThread[] | null = null
+	): ImageResolver {
 		const loaded = Array.from( this.atlases.entries() )
 			.filter( ( [ , pixels ] ) => pixels !== null )
 			.map( ( [ asset ] ) => asset )
 			.sort( ( one, other ) => one - other )
 			.join( ',' );
+		const pack = packKey( threads );
 
 		return {
-			key: `${ hard ? 'hard' : 'soft' }:${ loaded }`,
-			image: ( object ) => this.picture( object, lookup, hard ),
+			key: `${ hard ? 'hard' : 'soft' }:${ pack }:${ loaded }`,
+			image: ( object ) => this.picture( object, lookup, hard, threads ),
 			handling: ( object ) => handlingOf( lookup( object.asset ) ),
 		};
 	}
 
 	/**
-	 * An image's picture: undefined for one that is its file, null when it
-	 * cannot be drawn.
+	 * An image's pixels with its paints: undefined for one that is its file,
+	 * null when it cannot be drawn.
 	 *
-	 * @param object The image.
-	 * @param lookup Assets by id.
-	 * @param hard   Embroidery.
+	 * @param object  The image.
+	 * @param lookup  Assets by id.
+	 * @param hard    Embroidery.
+	 * @param threads Embroidery: the pack's threads; null for none.
+	 */
+	public pixels(
+		object: ImageObject,
+		lookup: AssetLookup,
+		hard = false,
+		threads: readonly DesignerThread[] | null = null
+	): ClipartPixels | null | undefined {
+		return this.entry( object, lookup, hard, threads )?.pixels;
+	}
+
+	/**
+	 * An image's picture as a canvas.
+	 *
+	 * @param object  The image.
+	 * @param lookup  Assets by id.
+	 * @param hard    Embroidery.
+	 * @param threads The pack's threads, or null.
 	 */
 	private picture(
 		object: ImageObject,
 		lookup: AssetLookup,
-		hard: boolean
+		hard: boolean,
+		threads: readonly DesignerThread[] | null
 	): HTMLCanvasElement | null | undefined {
+		const entry = this.entry( object, lookup, hard, threads );
+
+		if ( entry === undefined ) {
+			return undefined;
+		}
+
+		if ( entry.canvas === undefined ) {
+			entry.canvas =
+				entry.pixels === null ? null : this.toCanvas( entry.pixels );
+		}
+
+		return entry.canvas;
+	}
+
+	/**
+	 * An image's drawing, made once per paint.
+	 *
+	 * @param object  The image.
+	 * @param lookup  Assets by id.
+	 * @param hard    Embroidery.
+	 * @param threads The pack's threads, or null.
+	 */
+	private entry(
+		object: ImageObject,
+		lookup: AssetLookup,
+		hard: boolean,
+		threads: readonly DesignerThread[] | null
+	):
+		| {
+				readonly pixels: ClipartPixels | null;
+				canvas?: HTMLCanvasElement | null;
+		  }
+		| undefined {
 		const asset = lookup( object.asset );
 		const art = artOf( asset );
 
@@ -388,15 +466,15 @@ export class ClipartPictures {
 		const atlas = this.atlases.get( object.asset ) ?? null;
 
 		if ( art === null || object.paints === undefined || atlas === null ) {
-			return null;
+			return { pixels: null, canvas: null };
 		}
 
-		const key = `${ object.asset }|${ hard ? 1 : 0 }|${ JSON.stringify(
-			object.paints
-		) }`;
+		const key = `${ object.asset }|${ hard ? 1 : 0 }|${ packKey(
+			threads
+		) }|${ JSON.stringify( object.paints ) }`;
+		const known = this.drawn.get( key );
 
-		if ( this.drawn.has( key ) ) {
-			const known = this.drawn.get( key ) ?? null;
+		if ( known !== undefined ) {
 			// Most recently used last.
 			this.drawn.delete( key );
 			this.drawn.set( key, known );
@@ -405,9 +483,23 @@ export class ClipartPictures {
 		}
 
 		const pixels = drawClipart( art, atlas, object.paints, hard );
-		const canvas = pixels === null ? null : this.toCanvas( pixels );
 
-		this.drawn.set( key, canvas );
+		if ( pixels !== null && threads !== null && threads.length > 0 ) {
+			const nearest = new Map< string, string >();
+
+			paintPixels( pixels.data, ( color ) => {
+				const hex =
+					nearest.get( color ) ?? nearestThread( color, threads ).hex;
+
+				nearest.set( color, hex );
+
+				return hex;
+			} );
+		}
+
+		const made = { pixels };
+
+		this.drawn.set( key, made );
 
 		if ( this.drawn.size > DRAWN_LIMIT ) {
 			const oldest = this.drawn.keys().next().value;
@@ -417,7 +509,7 @@ export class ClipartPictures {
 			}
 		}
 
-		return canvas;
+		return made;
 	}
 
 	/**

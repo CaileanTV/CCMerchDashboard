@@ -5,9 +5,15 @@
  * threads that fill the most are kept up to the pack's limit, the others move
  * to the nearest kept thread, and the creator can swap each kept thread for
  * another. A side without a pack never comes here.
+ *
+ * A clipart with parts (ADR-121) keeps its own threads: each part the thread
+ * chosen for it, its stroke and fixed pixels the nearest thread. They are
+ * always kept, cannot be swapped and never merge; a side whose cliparts alone
+ * need more threads than it may have cannot be sent.
  */
 import type { DesignerEmbroidery, DesignerThread } from '../../api/designer';
-import type { DesignObject } from './design-model';
+import type { ClipartPixels } from './clipart-paint';
+import type { DesignObject, ImageObject } from './design-model';
 
 /** The share of an image's visible pixels by colour (`#rrggbb`). */
 export type Histogram = ReadonlyMap< string, number >;
@@ -17,6 +23,8 @@ export interface ThreadRow {
 	readonly found: DesignerThread;
 	/** The thread used: `found`, or the creator's swap. */
 	readonly used: DesignerThread;
+	/** A clipart's thread (ADR-121): kept, and never swapped. */
+	readonly pinned: boolean;
 }
 
 export interface ThreadPlan {
@@ -26,6 +34,8 @@ export interface ThreadPlan {
 	readonly threads: readonly DesignerThread[];
 	/** How many threads moved to a kept one because of the limit. */
 	readonly merged: number;
+	/** Whether the cliparts alone need more threads than the side may have. */
+	readonly over: boolean;
 	/** Changes when the colours shown change. */
 	readonly signature: string;
 	/** The thread colour shown for a colour. */
@@ -182,44 +192,127 @@ function weights(
 }
 
 /**
+ * The exact colours of solid pixels: a clipart's picture is in its threads
+ * already, so no colour is rounded to another thread's.
+ *
+ * @param data RGBA pixels.
+ */
+function exactColors( data: ArrayLike< number > ): Histogram {
+	const counts = new Map< string, number >();
+
+	for ( let index = 0; index + 3 < data.length; index += 4 ) {
+		if ( ( data[ index + 3 ] as number ) >= SOLID ) {
+			const key = `#${ [ 0, 1, 2 ]
+				.map( ( channel ) =>
+					( data[ index + channel ] as number )
+						.toString( 16 )
+						.padStart( 2, '0' )
+				)
+				.join( '' ) }`;
+
+			counts.set( key, ( counts.get( key ) ?? 0 ) + 1 );
+		}
+	}
+
+	return counts;
+}
+
+/**
+ * The threads the cliparts of a side keep for themselves (ADR-121).
+ *
+ * @param objects The side's objects.
+ * @param picture A clipart's picture in its threads; undefined for any other image.
+ * @param pack    The side's pack.
+ */
+export function clipartThreads(
+	objects: readonly DesignObject[],
+	picture: ( object: ImageObject ) => ClipartPixels | null | undefined,
+	pack: DesignerEmbroidery
+): DesignerThread[] {
+	const own = new Set< string >();
+
+	for ( const object of objects ) {
+		const drawnPicture =
+			object.type === 'image' && ! object.hidden
+				? picture( object )
+				: undefined;
+
+		for ( const color of drawnPicture
+			? exactColors( drawnPicture.data ).keys()
+			: [] ) {
+			own.add( nearestThread( color, pack.threads ).code );
+		}
+	}
+
+	return pack.threads.filter( ( thread ) => own.has( thread.code ) );
+}
+
+/**
  * The threads of a side.
  *
  * @param objects The side's objects.
  * @param images  The images' colours by asset.
  * @param swaps   The creator's choice: thread code by found thread code.
  * @param pack    The side's pack.
+ * @param pinned  The colours of cliparts with parts by object id (ADR-121).
  */
 export function threadPlan(
 	objects: readonly DesignObject[],
 	images: ReadonlyMap< number, Histogram >,
 	swaps: Readonly< Record< string, string > >,
-	pack: DesignerEmbroidery
+	pack: DesignerEmbroidery,
+	pinned: ReadonlyMap< string, Histogram > = new Map()
 ): ThreadPlan {
 	const filled = new Map< string, number >();
+	const own = new Set< string >();
 
 	for ( const object of objects ) {
-		if ( ! object.hidden ) {
-			for ( const [ color, area ] of weights( object, images ) ) {
-				const { code } = nearestThread( color, pack.threads );
+		if ( object.hidden ) {
+			continue;
+		}
 
-				filled.set( code, ( filled.get( code ) ?? 0 ) + area );
+		const colors = pinned.get( object.id );
+
+		if ( colors !== undefined ) {
+			for ( const color of colors.keys() ) {
+				own.add( nearestThread( color, pack.threads ).code );
 			}
+
+			continue;
+		}
+
+		for ( const [ color, area ] of weights( object, images ) ) {
+			const { code } = nearestThread( color, pack.threads );
+
+			filled.set( code, ( filled.get( code ) ?? 0 ) + area );
 		}
 	}
 
+	const fixed = pack.threads.filter( ( thread ) => own.has( thread.code ) );
 	const present = pack.threads
-		.filter( ( thread ) => filled.has( thread.code ) )
+		.filter(
+			( thread ) => filled.has( thread.code ) && ! own.has( thread.code )
+		)
 		.sort(
 			( one, other ) =>
 				( filled.get( other.code ) ?? 0 ) -
 				( filled.get( one.code ) ?? 0 )
 		);
-	const kept = present.slice( 0, pack.max );
+	const kept = [
+		...fixed,
+		...present.slice( 0, Math.max( 0, pack.max - fixed.length ) ),
+	];
 	const chosen = ( thread: DesignerThread ): DesignerThread =>
-		pack.threads.find(
-			( candidate ) => candidate.code === swaps[ thread.code ]
-		) ?? thread;
-	const rows = kept.map( ( found ) => ( { found, used: chosen( found ) } ) );
+		own.has( thread.code )
+			? thread
+			: ( pack.threads.find(
+					( candidate ) => candidate.code === swaps[ thread.code ]
+				) ?? thread );
+	const rows = kept.map( ( found ) => ( {
+		found,
+		used: chosen( found ),
+		pinned: own.has( found.code ),
+	} ) );
 	const known = new Map< string, string >();
 
 	return {
@@ -229,7 +322,8 @@ export function threadPlan(
 				rows.map( ( row ) => [ row.used.code, row.used ] )
 			).values()
 		),
-		merged: present.length - kept.length,
+		merged: present.length - ( kept.length - fixed.length ),
+		over: fixed.length > pack.max,
 		signature: rows
 			.map( ( row ) => `${ row.found.code }:${ row.used.code }` )
 			.join( ',' ),
@@ -466,16 +560,40 @@ async function paintedImage(
  * @param images  `data:` URL by asset id.
  * @param swaps   The creator's choice of threads.
  * @param pack    The side's pack.
+ * @param picture A clipart's picture in its threads (ADR-121); undefined
+ *                for an image that is its file, null when not drawn.
  */
 export async function threadSide(
 	objects: readonly DesignObject[],
 	images: ReadonlyMap< number, string >,
 	swaps: Readonly< Record< string, string > >,
-	pack: DesignerEmbroidery
+	pack: DesignerEmbroidery,
+	picture: ( object: ImageObject ) => ClipartPixels | null | undefined = () =>
+		undefined
 ): Promise< ThreadedSide > {
+	const pinned = new Map< string, Histogram >();
+
+	for ( const object of objects ) {
+		const drawnPicture =
+			object.type === 'image' ? picture( object ) : undefined;
+
+		if ( drawnPicture !== undefined ) {
+			// Not drawn: no threads of its own, and the print file fails.
+			pinned.set(
+				object.id,
+				drawnPicture === null
+					? new Map()
+					: exactColors( drawnPicture.data )
+			);
+		}
+	}
+
+	// A clipart drawn from its parts is no file to paint.
 	const assets = new Set(
 		objects.flatMap( ( object ) =>
-			object.type === 'image' ? [ object.asset ] : []
+			object.type === 'image' && ! pinned.has( object.id )
+				? [ object.asset ]
+				: []
 		)
 	);
 	const colors = new Map< number, Histogram >();
@@ -490,7 +608,7 @@ export async function threadSide(
 		}
 	}
 
-	const plan = threadPlan( objects, colors, swaps, pack );
+	const plan = threadPlan( objects, colors, swaps, pack, pinned );
 	const shown = new Map( images );
 
 	for ( const asset of assets ) {

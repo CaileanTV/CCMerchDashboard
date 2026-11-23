@@ -22,6 +22,8 @@ export interface ClipartPaintsProps {
 	readonly paints: readonly ClipartPaint[];
 	/** Whether a gradient may be chosen (not on embroidery). */
 	readonly gradients: boolean;
+	/** A swatch's name (a thread's code and name); its colour without. */
+	readonly swatchName?: ( ( hex: string ) => string ) | undefined;
 	/** New paints; `live` while a change goes on (between onBegin and onEnd). */
 	readonly onChange: (
 		paints: readonly ClipartPaint[],
@@ -85,18 +87,20 @@ export function asGradient(
 /**
  * One colour: the palette's swatches, or a free colour field.
  *
- * @param props          Props.
- * @param props.label    What the colour is.
- * @param props.value    `#rrggbb`.
- * @param props.palette  The colours to choose between; null for any.
- * @param props.onChange A new colour; `live` while dragging.
- * @param props.onBegin  Dragging starts.
- * @param props.onEnd    It ends.
+ * @param props            Props.
+ * @param props.label      What the colour is.
+ * @param props.value      `#rrggbb`.
+ * @param props.palette    The colours to choose between; null for any.
+ * @param props.swatchName A swatch's name.
+ * @param props.onChange   A new colour; `live` while dragging.
+ * @param props.onBegin    Dragging starts.
+ * @param props.onEnd      It ends.
  */
 function ColorChoice( props: {
 	readonly label: string;
 	readonly value: string;
 	readonly palette: readonly string[] | null;
+	readonly swatchName?: ( ( hex: string ) => string ) | undefined;
 	readonly onChange: ( color: string, live?: boolean ) => void;
 	readonly onBegin: () => void;
 	readonly onEnd: () => void;
@@ -118,8 +122,8 @@ function ColorChoice( props: {
 							type="button"
 							className="merchboard-product-designer__thread"
 							style={ { backgroundColor: color } }
-							title={ color }
-							aria-label={ color }
+							title={ props.swatchName?.( color ) ?? color }
+							aria-label={ props.swatchName?.( color ) ?? color }
 							aria-pressed={ props.value === color }
 							onClick={ () => props.onChange( color ) }
 						/>
@@ -149,21 +153,23 @@ function ColorChoice( props: {
 /**
  * The paint of one part.
  *
- * @param props           Props.
- * @param props.part      The part.
- * @param props.index     Its index.
- * @param props.paint     Its paint.
- * @param props.palette   The colours to choose between; null for any.
- * @param props.gradients Whether a gradient may be chosen.
- * @param props.onChange  A new paint; `live` while a change goes on.
- * @param props.onBegin   A change that goes on starts.
- * @param props.onEnd     It ends.
+ * @param props            Props.
+ * @param props.part       The part.
+ * @param props.index      Its index.
+ * @param props.paint      Its paint.
+ * @param props.palette    The colours to choose between; null for any.
+ * @param props.swatchName A swatch's name.
+ * @param props.gradients  Whether a gradient may be chosen.
+ * @param props.onChange   A new paint; `live` while a change goes on.
+ * @param props.onBegin    A change that goes on starts.
+ * @param props.onEnd      It ends.
  */
 function PartPaint( props: {
 	readonly part: ClipartPart;
 	readonly index: number;
 	readonly paint: ClipartPaint;
 	readonly palette: readonly string[] | null;
+	readonly swatchName?: ( ( hex: string ) => string ) | undefined;
 	readonly gradients: boolean;
 	readonly onChange: ( paint: ClipartPaint, live?: boolean ) => void;
 	readonly onBegin: () => void;
@@ -208,6 +214,7 @@ function PartPaint( props: {
 					label={ __( 'Colour', 'merchboard' ) }
 					value={ shown.color }
 					palette={ palette }
+					swatchName={ props.swatchName }
 					onChange={ ( color, live ) =>
 						props.onChange( { type: 'solid', color }, live )
 					}
@@ -220,6 +227,7 @@ function PartPaint( props: {
 						label={ __( 'From', 'merchboard' ) }
 						value={ shown.from }
 						palette={ palette }
+						swatchName={ props.swatchName }
 						onChange={ ( from, live ) =>
 							props.onChange( { ...shown, from }, live )
 						}
@@ -230,6 +238,7 @@ function PartPaint( props: {
 						label={ __( 'To', 'merchboard' ) }
 						value={ shown.to }
 						palette={ palette }
+						swatchName={ props.swatchName }
 						onChange={ ( to, live ) =>
 							props.onChange( { ...shown, to }, live )
 						}
@@ -290,6 +299,7 @@ export function ClipartPaints( props: ClipartPaintsProps ) {
 					index={ index }
 					paint={ paints[ index ] ?? part.paint }
 					palette={ props.palette }
+					swatchName={ props.swatchName }
 					gradients={ props.gradients }
 					onChange={ ( paint, live ) =>
 						props.onChange(

@@ -799,7 +799,12 @@ function Editor( props: EditorProps ) {
 
 	// The pictures of the cliparts shown; a new key when an atlas arrives (ADR-121).
 	const clipartResolver = useMemo(
-		() => pictures.resolver( assetLookup, embroidery !== null ),
+		() =>
+			pictures.resolver(
+				assetLookup,
+				embroidery !== null,
+				embroidery?.threads ?? null
+			),
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- atlasTick marks the atlases loaded.
 		[ pictures, assetLookup, embroidery, atlasTick ]
 	);
@@ -836,7 +841,9 @@ function Editor( props: EditorProps ) {
 
 		let cancelled = false;
 
-		threadSide( objects, images, swaps ?? {}, embroidery )
+		threadSide( objects, images, swaps ?? {}, embroidery, ( object ) =>
+			pictures.pixels( object, assetLookup, true, embroidery.threads )
+		)
 			.then( ( result ) => {
 				if ( ! cancelled ) {
 					setThreaded( { ...result, side: view.key } );
@@ -852,7 +859,7 @@ function Editor( props: EditorProps ) {
 			cancelled = true;
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- objects and swaps are derived from design and side.
-	}, [ design, side, images, embroidery ] );
+	}, [ design, side, images, embroidery, clipartResolver ] );
 
 	useEffect( () => {
 		if (
@@ -2723,39 +2730,69 @@ function ThreadPanel( props: {
 					) }
 				</Alert>
 			) : null }
-			{ plan?.rows.map( ( row ) => (
-				<details key={ row.found.code }>
-					<summary>
+			{ plan?.over === true ? (
+				<Alert tone="danger">
+					{ sprintf(
+						/* translators: %d: most threads on the side. */ __(
+							'The cliparts on this side need more than %d threads, so the design cannot be sent. Remove a clipart, or choose the same thread for more of its parts.',
+							'merchboard'
+						),
+						props.max
+					) }
+				</Alert>
+			) : null }
+			{ plan?.rows.map( ( row ) =>
+				row.pinned ? (
+					<p
+						key={ row.found.code }
+						className="merchboard-product-designer__hint"
+					>
 						<span
 							className="merchboard-product-designer__thread"
 							style={ { backgroundColor: row.used.hex } }
 						/>{ ' ' }
-						{ `${ row.used.code } ${ row.used.name }` }
-					</summary>
-					<ThreadSwatches
-						threads={ props.threads }
-						selected={ row.used.hex }
-						onPick={ ( thread ) =>
-							props.onSwap( row.found.code, thread.code )
-						}
-					/>
-					{ row.used.code === row.found.code ? null : (
-						<Button
-							variant="secondary"
-							size="sm"
-							onClick={ () =>
-								props.onSwap( row.found.code, null )
+						{ sprintf(
+							/* translators: %s: a thread's code and name. */ __(
+								'%s (a clipart’s thread, cannot be swapped)',
+								'merchboard'
+							),
+							`${ row.used.code } ${ row.used.name }`
+						) }
+					</p>
+				) : (
+					<details key={ row.found.code }>
+						<summary>
+							<span
+								className="merchboard-product-designer__thread"
+								style={ { backgroundColor: row.used.hex } }
+							/>{ ' ' }
+							{ `${ row.used.code } ${ row.used.name }` }
+						</summary>
+						<ThreadSwatches
+							threads={ props.threads }
+							selected={ row.used.hex }
+							onPick={ ( thread ) =>
+								props.onSwap( row.found.code, thread.code )
 							}
-						>
-							{ sprintf(
-								/* translators: %s: the thread found. */
-								__( 'Back to %s', 'merchboard' ),
-								row.found.name
-							) }
-						</Button>
-					) }
-				</details>
-			) ) }
+						/>
+						{ row.used.code === row.found.code ? null : (
+							<Button
+								variant="secondary"
+								size="sm"
+								onClick={ () =>
+									props.onSwap( row.found.code, null )
+								}
+							>
+								{ sprintf(
+									/* translators: %s: the thread found. */
+									__( 'Back to %s', 'merchboard' ),
+									row.found.name
+								) }
+							</Button>
+						) }
+					</details>
+				)
+			) }
 		</section>
 	);
 }
@@ -2863,6 +2900,11 @@ function submitError( reason: string ): string {
 		case 'file_too_large':
 			return __(
 				'An image of your design is too large to send. Please contact us.',
+				'merchboard'
+			);
+		case 'clipart_threads':
+			return __(
+				'The cliparts on an embroidered side need more threads than the side can have. Remove a clipart, or choose the same thread for more of its parts.',
 				'merchboard'
 			);
 		case 'print_threads':
@@ -3784,8 +3826,17 @@ function Properties( props: {
 					palette={
 						threads === null
 							? ( props.asset?.clipart?.art?.palette ?? null )
-							: null
+							: threads.map( ( thread ) => thread.hex )
 					}
+					swatchName={ ( hex ) => {
+						const thread = threads?.find(
+							( candidate ) => candidate.hex === hex
+						);
+
+						return thread === undefined
+							? hex
+							: `${ thread.code } ${ thread.name }`;
+					} }
 					paints={ object.paints ?? [] }
 					gradients={ threads === null }
 					onChange={ ( paints, live ) =>

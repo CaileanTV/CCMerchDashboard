@@ -38,7 +38,7 @@ import {
 import type { AssetLookup, ClipartPictures } from './clipart-objects';
 import { ruledObjects } from './clipart-objects';
 import { withDpi } from './dpi';
-import { threadCanvas, threadSide } from './threads';
+import { clipartThreads, threadCanvas, threadSide } from './threads';
 
 export interface SubmissionInput {
 	readonly product: number;
@@ -250,14 +250,24 @@ async function printOf(
 		}
 	}
 
+	const pack = view.embroidery;
 	const threaded =
-		view.embroidery === null
+		pack === null
 			? null
 			: await threadSide(
 					objects,
 					images,
 					input.design.threads?.[ view.key ] ?? {},
-					view.embroidery
+					pack,
+					kit === undefined
+						? undefined
+						: ( object ) =>
+								kit.pictures.pixels(
+									object,
+									kit.lookup,
+									true,
+									pack.threads
+								)
 				);
 	const print = await renderPrintFile(
 		threaded?.objects ?? objects,
@@ -270,7 +280,11 @@ async function printOf(
 			: null,
 		kit === undefined
 			? null
-			: kit.pictures.resolver( kit.lookup, embroidered )
+			: kit.pictures.resolver(
+					kit.lookup,
+					embroidered,
+					pack?.threads ?? null
+				)
 	);
 
 	if ( print === null ) {
@@ -418,6 +432,67 @@ export async function sceneImages(
 }
 
 /**
+ * Whether the cliparts of an embroidered side alone need more threads than
+ * it may have (ADR-121): such a design cannot be sent.
+ *
+ * @param input The draft.
+ * @param parts Its designs.
+ */
+async function clipartsNeedTooMany(
+	input: SubmissionInput,
+	parts: ReturnType< typeof effectiveParts >
+): Promise< boolean > {
+	const kit = input.cliparts;
+
+	if ( kit === undefined ) {
+		return false;
+	}
+
+	for ( const part of parts ) {
+		const doc = partDoc( input.design, part.id );
+
+		for ( const key of usedSides( doc ) ) {
+			const view = input.base.views.find(
+				( candidate ) => candidate.key === key
+			);
+			const pack = view?.embroidery ?? null;
+
+			if ( view === undefined || pack === null ) {
+				continue;
+			}
+
+			const objects = ruledObjects(
+				objectsOf( doc, key ),
+				kit.lookup,
+				view.printWidth,
+				view.printHeight,
+				true
+			);
+
+			await kit.pictures.ready( objects, kit.lookup );
+
+			if (
+				clipartThreads(
+					objects,
+					( object ) =>
+						kit.pictures.pixels(
+							object,
+							kit.lookup,
+							true,
+							pack.threads
+						),
+					pack
+				).length > pack.max
+			) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/**
  * Renders and sends the files of the draft, for a submission or a preview.
  *
  * @param input    The draft.
@@ -446,6 +521,10 @@ export async function uploadFiles(
 		) {
 			return { ok: false, reason: 'design_sizes' };
 		}
+	}
+
+	if ( await clipartsNeedTooMany( input, parts ) ) {
+		return { ok: false, reason: 'clipart_threads' };
 	}
 
 	const total = submissionSize(
