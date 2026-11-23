@@ -18,6 +18,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
+use MerchBoard\Modules\ProductDesigner\Files\Clipart;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
@@ -281,7 +282,7 @@ final class BaseProductsPage {
 			'retire_unconfirmed'                    => array( __( 'Tick the confirmation to retire the base product.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_RETIRED         => array( __( 'The base product is retired and cannot be changed.', 'merchboard' ), 'error' ),
 			'clipart_added'                         => array( __( 'The clipart was added.', 'merchboard' ), 'success' ),
-			'clipart_deleted'                       => array( __( 'The clipart was deleted.', 'merchboard' ), 'success' ),
+			'clipart_retired'                       => array( __( 'The clipart was removed. Designs that use it keep it, and new designs cannot choose it.', 'merchboard' ), 'success' ),
 			DesignerException::BASE_NAME            => array( __( 'Enter a name of at most 191 characters.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_PRICE           => array( __( 'Enter a base price above 0 with at most the store\'s decimals.', 'merchboard' ), 'error' ),
 			DesignerException::BASE_EXTRA           => array( __( 'Enter a price for extra design areas of at least 0 with at most the store\'s decimals.', 'merchboard' ), 'error' ),
@@ -1743,7 +1744,7 @@ final class BaseProductsPage {
 		echo '<input type="file" name="clipart" accept="image/png,image/jpeg,image/webp" required> ';
 		echo '<button type="submit" class="button button-primary">' . esc_html__( 'Add clipart', 'merchboard' ) . '</button></p></form>';
 
-		$cliparts = $this->assets->shared( DesignerAssetRepository::CLIPART );
+		$cliparts = array_values( array_filter( $this->assets->cliparts(), static fn( Clipart $clipart ): bool => null === $clipart->retired_at ) );
 
 		if ( array() === $cliparts ) {
 			echo '<p>' . esc_html__( 'No cliparts yet.', 'merchboard' ) . '</p>';
@@ -1755,11 +1756,11 @@ final class BaseProductsPage {
 
 		foreach ( $cliparts as $clipart ) {
 			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" class="card" style="margin:0;width:10rem;text-align:center">';
-			echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="clipart_delete"><input type="hidden" name="asset_id" value="' . esc_attr( (string) $clipart['id'] ) . '">';
+			echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="clipart_retire"><input type="hidden" name="asset_id" value="' . esc_attr( (string) $clipart->id ) . '">';
 			wp_nonce_field( BaseProductActions::ACTION );
-			echo '<img src="' . esc_url( DesignerAssetDownload::url( $clipart['id'] ) ) . '" alt="" style="max-width:100%;max-height:8rem;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0 0/16px 16px">';
-			echo '<p>' . esc_html( $clipart['name'] ) . '<br><span class="description">' . esc_html( $clipart['width'] . ' × ' . $clipart['height'] . ' px' ) . '</span></p>';
-			echo '<p><button type="submit" class="button-link button-link-delete">' . esc_html__( 'Delete', 'merchboard' ) . '</button></p></form>';
+			echo '<img src="' . esc_url( DesignerAssetDownload::url( $clipart->id ) ) . '" alt="" style="max-width:100%;max-height:8rem;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0 0/16px 16px">';
+			echo '<p>' . esc_html( $clipart->name ) . '<br><span class="description">' . esc_html( $clipart->width . ' × ' . $clipart->height . ' px' ) . '</span></p>';
+			echo '<p><button type="submit" class="button-link button-link-delete">' . esc_html__( 'Remove', 'merchboard' ) . '</button></p></form>';
 		}
 
 		echo '</div>';

@@ -535,9 +535,18 @@ final class BaseProductsTest extends IntegrationTestCase {
 			'The nonce is bound to the asset.'
 		);
 
-		$library->delete( $id );
-		self::assertNull( $this->assets->find( $id ) );
-		self::assertSame( 404, $download->response( array( 'asset' => (string) $id, '_wpnonce' => $nonce ) )['status'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		// Removed, never deleted (ADR-121): the row and the file stay for the designs that use it.
+		$library->retire( $id );
+		self::assertNotNull( $this->assets->find_clipart( $id )?->retired_at );
+		self::assertSame( 200, $download->response( array( 'asset' => (string) $id, '_wpnonce' => $nonce ) )['status'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		self::assertSame( 'designer_clipart_retired', $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT action FROM %i ORDER BY id DESC LIMIT 1', $this->wpdb->prefix . Tables::AUDIT_LOG ) ) );
+
+		try {
+			$library->retire( $id );
+			self::fail( 'Removed once.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::CLIPART_UNKNOWN, $e->reason() );
+		}
 
 		wp_set_current_user( 0 );
 		self::assertSame( 403, $download->response( array( 'asset' => (string) $id, '_wpnonce' => $nonce ) )['status'] ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound

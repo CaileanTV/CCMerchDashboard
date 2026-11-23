@@ -217,10 +217,12 @@ final class BaseProductActions {
 					$this->cliparts->add( $text( 'clipart_name' ), is_array( $files['clipart'] ?? null ) ? $files['clipart'] : array() );
 
 					return BaseProductsPage::cliparts_url( 'clipart_added' );
+				// The old name: a page opened before 2.5.0 still sends it.
 				case 'clipart_delete':
-					$this->cliparts->delete( absint( $text( 'asset_id' ) ) );
+				case 'clipart_retire':
+					$this->cliparts->retire( absint( $text( 'asset_id' ) ) );
 
-					return BaseProductsPage::cliparts_url( 'clipart_deleted' );
+					return BaseProductsPage::cliparts_url( 'clipart_retired' );
 				default:
 					return BaseProductsPage::url( 'error' );
 			}

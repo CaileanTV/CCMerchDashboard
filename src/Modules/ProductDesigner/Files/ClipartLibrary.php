@@ -22,8 +22,10 @@ defined( 'ABSPATH' ) || exit;
  * Cliparts (ADR-080, step 30.6): images the administrator offers every
  * creator in the designer, stored like the other designer files (PNG, JPG
  * or WebP, private folder). For `merchboard_manage_designer`; each change
- * audited. A clipart used in a design is kept by its design's files (step
- * 30.9 renders the print files at submission).
+ * audited.
+ *
+ * A clipart is removed, never deleted (ADR-121 pkt. 7): its row and files
+ * stay for the designs that use it, and new designs cannot choose it.
  */
 class ClipartLibrary {
 
@@ -86,36 +88,38 @@ class ClipartLibrary {
 	}
 
 	/**
-	 * Deletes a clipart and its file.
+	 * Removes a clipart from new designs. Its row and files stay.
 	 *
 	 * @param int $id Asset id.
-	 * @throws DesignerException When the user may not, or it is not a clipart.
-	 * @throws DatabaseException When it cannot be deleted.
+	 * @throws DesignerException When the user may not, or it is not a clipart in the library.
+	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function delete( int $id ): void {
+	public function retire( int $id ): void {
 		self::authorize();
 
-		$asset = $this->assets->find( $id );
+		$clipart = $this->assets->find_clipart( $id );
 
-		if ( null === $asset || DesignerAssetRepository::CLIPART !== $asset['kind'] || null !== $asset['creator_id'] ) {
+		if ( null === $clipart || null !== $clipart->retired_at ) {
 			self::reject( DesignerException::CLIPART_UNKNOWN );
 		}
 
 		$this->transaction->run(
-			function () use ( $id, $asset ): void {
-				$this->assets->delete( $id );
+			function () use ( $clipart ): void {
+				// Two clicks at once: only the one that removed it is audited.
+				if ( ! $this->assets->retire( $clipart->id ) ) {
+					throw new DesignerException( DesignerException::CLIPART_UNKNOWN );
+				}
+
 				$this->audit->record(
-					AuditAction::DesignerClipartDeleted,
+					AuditAction::DesignerClipartRetired,
 					null,
 					array(
-						'asset_id'   => $id,
-						'asset_name' => $asset['name'],
+						'asset_id'   => $clipart->id,
+						'asset_name' => $clipart->name,
 					)
 				);
 			}
 		);
-
-		$this->files->delete( $asset['file'] );
 	}
 
 	/**
