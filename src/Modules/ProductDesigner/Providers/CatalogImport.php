@@ -126,6 +126,12 @@ class CatalogImport {
 	private const MIN_SHARE = 0.002;
 
 	/**
+	 * The share of a Printify side's print area a photo must show, or the
+	 * print goes around the product and is designed on a sheet (ADR-122).
+	 */
+	private const WRAPPED = 0.75;
+
+	/**
 	 * The width of a flat side without a pattern.
 	 */
 	private const FLAT_WIDTH = 1000;
@@ -1094,7 +1100,9 @@ class CatalogImport {
 			}
 
 			// ADR-122: a print around the product (a bottle, a mug) shows only in part on each of Printify's photos.
-			$wrapped = PrintifyCatalog::SOURCE === ( $data['source'] ?? '' ) && array( (int) $side['width_mm'], (int) $side['height_mm'] ) !== ImageProbe::print_size( $chosen['box'], (int) $side['width_mm'], (int) $side['height_mm'] );
+			// Only when much of it is hidden (a quarter or more): a collar or a sleeve cutting a marker's edge is no print around the product.
+			$shown   = ImageProbe::print_size( $chosen['box'], (int) $side['width_mm'], (int) $side['height_mm'] );
+			$wrapped = PrintifyCatalog::SOURCE === ( $data['source'] ?? '' ) && $shown[0] * $shown[1] < self::WRAPPED * (int) $side['width_mm'] * (int) $side['height_mm'];
 
 			// ADR-119: a poster (a format group's side) is designed on a flat sheet of its whole print area, as in Gelato's editor;
 			// so is a print around the product: Printify's mockups show it after the submission.

@@ -37,7 +37,8 @@ defined( 'ABSPATH' ) || exit;
  *    design's files (ADR-096); it is never published;
  * 2. looks at the product until Printify lists its photos, then downloads,
  *    a few colours per round, the views the administrator ticked on the base
- *    product (`printify_photos`, every view when none was ticked): a side's
+ *    product (`printify_photos`; every view before the administrator chose,
+ *    and no product at all when every view was unticked): a side's
  *    own view (`slots`, its camera name) replaces the browser's mockup of
  *    that side and colour, and the other views are added as environment
  *    photos (`_scene-<n>`);
@@ -115,7 +116,7 @@ class PrintifyMockups {
 			$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
 			$base     = null === $version ? null : $this->bases->find( (int) $version['base_id'] );
 
-			if ( null === $version || null === $provider || null === $base || PrintifyCatalog::SOURCE !== $provider['source'] || array() === self::printed( $version, $provider['placements'], $base ) ) {
+			if ( null === $version || null === $provider || null === $base || PrintifyCatalog::SOURCE !== $provider['source'] || array() === $provider['printify_photos'] || array() === self::printed( $version, $provider['placements'], $base ) ) {
 				return;
 			}
 
@@ -214,7 +215,7 @@ class PrintifyMockups {
 		if ( ProviderTaskRepository::QUEUED === $task['status'] ) {
 			$this->create( $id, $provider, $version, $base, $task );
 		} elseif ( ProviderTaskRepository::PENDING === $task['status'] ) {
-			$this->poll( $id, $provider, $version, $task );
+			$this->poll( $id, $provider, $version, $base, $task );
 		}
 
 		$task = $this->task( $id );
@@ -246,7 +247,9 @@ class PrintifyMockups {
 		$variants = self::variants( $version, $provider['variants'] );
 		$design   = self::design_of( $version );
 		$areas    = array();
-		$uploads  = array();
+		$earlier  = json_decode( (string) ( $task['result'] ?? '' ), true );
+		// Uploads of an earlier attempt (a 429 midway) are kept, so every one is archived.
+		$uploads = array_values( array_filter( is_array( $earlier ) && is_array( $earlier['uploads'] ?? null ) ? $earlier['uploads'] : array(), 'is_string' ) );
 
 		[ $blueprint, $producer ] = self::ref_of( (string) $provider['ref'] );
 
@@ -269,7 +272,9 @@ class PrintifyMockups {
 				foreach ( $sides as $side ) {
 					$upload    = $this->api->upload_url( 'print-' . $id . '-' . substr( (string) preg_replace( '/[^a-z0-9-]+/', '-', strtolower( $side ) ), 0, 40 ) . '.png', SignedPrintFiles::url( $id, $side, null, $part ) );
 					$uploads[] = $upload;
-					$places[]  = array(
+					// Stored at once: every upload is archived, even if the product is never made.
+					$this->tasks->update( (int) $task['id'], array( 'result' => (string) wp_json_encode( array( 'uploads' => $uploads ) ) ) );
+					$places[] = array(
 						'position' => $provider['placements'][ $side ],
 						'images'   => array(
 							array(
@@ -288,8 +293,6 @@ class PrintifyMockups {
 					'placeholders' => $places,
 				);
 
-				// Stored at once: the uploads are archived even if the product is never made.
-				$this->tasks->update( (int) $task['id'], array( 'result' => (string) wp_json_encode( array( 'uploads' => $uploads ) ) ) );
 			}
 
 			$areas[ $part ]['variant_ids'][] = (int) $variant;
@@ -324,6 +327,8 @@ class PrintifyMockups {
 		);
 		$key     = $shop . ':' . (string) $product['id'];
 
+		// The product's key first: whatever fails after it, forget() can delete the product.
+		$this->tasks->update( (int) $task['id'], array( 'task_key' => $key ) );
 		$this->products->set_provider_ref( $id, $key );
 		$this->tasks->update(
 			(int) $task['id'],
@@ -347,12 +352,13 @@ class PrintifyMockups {
 	 * @param int                  $id       Version.
 	 * @param array<string, mixed> $provider The base product's provider data.
 	 * @param array<string, mixed> $version  Version.
+	 * @param BaseProduct          $base     Base product.
 	 * @param array<string, mixed> $task     Task row.
 	 * @throws PrintifyException When Printify refuses or fails.
 	 * @throws DatabaseException When it cannot be stored.
 	 * @throws DesignerException When a photo is not a valid image.
 	 */
-	private function poll( int $id, array $provider, array $version, array $task ): void {
+	private function poll( int $id, array $provider, array $version, BaseProduct $base, array $task ): void {
 		$result = json_decode( (string) ( $task['result'] ?? '' ), true );
 		$result = is_array( $result ) ? $result : array();
 		$colors = array_map( 'strval', is_array( $result['colors'] ?? null ) ? $result['colors'] : array() );
@@ -377,7 +383,6 @@ class PrintifyMockups {
 		}
 
 		$chosen = is_array( $provider['printify_photos'] ?? null ) ? $provider['printify_photos'] : array_map( 'strval', array_keys( $photos ) );
-		$sides  = self::printed( $version, $provider['placements'] );
 		$design = self::design_of( $version );
 		$round  = 0;
 
@@ -391,7 +396,7 @@ class PrintifyMockups {
 			}
 
 			// Only the sides of the colour's own design (ADR-096).
-			$own   = self::printed( $version, $provider['placements'], null, ColorDesigns::part_of( $design, $color ) );
+			$own   = self::printed( $version, $provider['placements'], $base, ColorDesigns::part_of( $design, $color ) );
 			$views = array();
 
 			foreach ( $own as $side ) {
@@ -402,7 +407,8 @@ class PrintifyMockups {
 				}
 			}
 
-			$own_names = array_map( static fn( string $side ): string => (string) ( $provider['slots'][ $side ] ?? '' ), $sides );
+			// Every side's own view is a photo of that side, never an environment (as Gelato's slots).
+			$own_names = array_map( 'strval', array_values( $provider['slots'] ) );
 			$scenes    = array();
 
 			foreach ( $photos as $name => $by_color ) {
@@ -539,6 +545,18 @@ class PrintifyMockups {
 		$key    = is_string( $task['task_key'] ?? null ) ? $task['task_key'] : '';
 		$result = json_decode( (string) ( $task['result'] ?? '' ), true );
 
+		// Once only: a timeout or a missing variant ends the task, and failed() would come again.
+		if ( is_array( $result ) && true === ( $result['forgotten'] ?? false ) ) {
+			return;
+		}
+
+		try {
+			$this->tasks->update( (int) $task['id'], array( 'result' => (string) wp_json_encode( array_merge( is_array( $result ) ? $result : array(), array( 'forgotten' => true ) ) ) ) );
+		} catch ( Throwable ) {
+			// Deleting twice does no harm.
+			$this->logger->warning( 'A Printify task could not be marked as cleaned up.', array( 'task_id' => (int) $task['id'] ) );
+		}
+
 		if ( '' !== $key ) {
 			$this->catalog->forget( array( 'renders' => array( 'mockups' => array( 'key' => $key ) ) ) );
 		}
@@ -670,7 +688,7 @@ class PrintifyMockups {
 		}
 
 		$this->logger->warning(
-			'Printify could not make the mockups of a design; the creator\'s mockups stay.',
+			'Printify could not make (all) the mockups of a design; the creator\'s mockups stay where Printify\'s were not stored.',
 			array(
 				'version_id' => $id,
 				'reason'     => $reason,

@@ -523,7 +523,7 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertSame( array( 299, 246 ), array( $base->views[0]->width_mm, $base->views[0]->height_mm ), 'The whole print area, not the strip the photo shows.' );
 		self::assertSame( array( 'background' ), array_keys( $base->views[0]->layers ), 'A sheet, not a photo per colour.' );
 		self::assertSame( array( 'background', 'background:black' ), array_keys( $base->views[1]->layers ), 'The back shows in whole: designed on the photos.' );
-		self::assertSame( array( 'front', 'back' ), array_keys( $provider['printify_thumbs'] ), 'A view per camera name; no size chart.' );
+		self::assertSame( array( 'front', 'back', 'context-1' ), array_keys( $provider['printify_thumbs'] ), 'A view per camera name; no size chart.' );
 		self::assertSame( array( 'front', 'back' ), array_values( $provider['slots'] ) );
 		self::assertNull( $provider['printify_photos'], 'Every view until the administrator chooses.' );
 
@@ -568,7 +568,9 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertSame( 'ready', $this->products->version( $version )['mockup_state'] ?? null );
 		self::assertNotSame( $before['ash']['file'], $files['mockups']['front']['ash']['file'] ?? null, 'The side\'s own view replaces the browser\'s mockup.' );
 		self::assertNull( $this->files->path( $before['ash']['file'] ), 'The replaced mockup is deleted.' );
-		self::assertSame( array( 'ash', 'black' ), array_keys( $files['mockups'][ SubmissionFiles::SCENE . '0' ] ?? array() ), 'The back view is an environment photo in each colour.' );
+		self::assertSame( array( 'ash', 'black' ), array_keys( $files['mockups'][ SubmissionFiles::SCENE . '0' ] ?? array() ), 'The room view is an environment photo in each colour.' );
+		self::assertArrayNotHasKey( SubmissionFiles::SCENE . '1', $files['mockups'], 'The back is a side\'s own view, never an environment photo, even unused.' );
+		self::assertArrayNotHasKey( 'back', $files['mockups'], 'An unused side gets no photo.' );
 		self::assertNotNull( $this->first_call( 'DELETE', self::API . '/shops/' . self::SHOP . '/products/' . self::BLANK . '.json' ), 'The temporary product is deleted.' );
 		self::assertNotNull( $this->first_call( 'POST', self::API . '/uploads/6b04a1527e91123b90c950e1/archive.json' ), 'The print file is archived.' );
 
@@ -588,9 +590,19 @@ final class PrintifyTest extends IntegrationTestCase {
 
 		$files = SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null );
 
-		self::assertArrayNotHasKey( SubmissionFiles::SCENE . '0', $files['mockups'], 'The back was not ticked.' );
+		self::assertArrayNotHasKey( SubmissionFiles::SCENE . '0', $files['mockups'], 'The room was not ticked.' );
+
+		// Every view unticked: no product is made at all.
+		$this->base_service()->set_printify_photos( $base, array() );
+		$third       = $this->printify_submitted( 'Third tee' );
+		$this->calls = array();
+		$mockups->submitted( $third );
+
+		self::assertSame( array(), $this->queue->pending, 'Nothing to make.' );
+		self::assertNotSame( 'running', $this->products->version( $third )['mockup_state'] ?? null );
 
 		// A second design: Printify fails while it is looked at.
+		$this->base_service()->set_printify_photos( $base, array( 'front' ) );
 		$second = $this->printify_submitted( 'Second tee' );
 		$before = SubmissionFiles::decode( $this->products->version( $second )['files'] ?? null )['mockups'];
 
@@ -750,6 +762,18 @@ final class PrintifyTest extends IntegrationTestCase {
 		return null;
 	}
 
+	public function test_a_marker_cut_a_little_at_its_edge_keeps_the_side_on_its_photo(): void {
+		$this->printify_shop();
+		$this->account->set_shop( self::SHOP );
+		// A collar hides a tenth of the front's marker.
+		$this->answers[ self::photo( self::MARKER, 32870, 101, 'front' ) ] = self::shirt( array( 200, 200, 200 ), array( array( 50, 60, 77, 70, array( 250, 5, 250 ) ) ) );
+
+		$base = $this->bases->find( $this->import( shop: true ) );
+
+		self::assertNotNull( $base );
+		self::assertSame( array( 'background', 'background:black' ), array_keys( $base->views[0]->layers ), 'Still the photos, not a sheet.' );
+	}
+
 	public function test_a_failed_import_deletes_its_temporary_products_too(): void {
 		$this->printify_shop();
 		$this->account->set_shop( self::SHOP );
@@ -825,6 +849,11 @@ final class PrintifyTest extends IntegrationTestCase {
 								'variant_ids' => array( $variant ),
 								'position'    => 'other',
 							),
+							array(
+								'src'         => self::photo( $product, $variant, 104, 'context-1' ),
+								'variant_ids' => array( $variant ),
+								'position'    => 'other',
+							),
 						),
 						$variants
 					)
@@ -860,6 +889,11 @@ final class PrintifyTest extends IntegrationTestCase {
 		$this->answers[ self::photo( self::BLANK, 32870, 102, 'back' ) ]   = self::shirt( $ash );
 		$this->answers[ self::photo( self::BLANK, 32880, 101, 'front' ) ]  = self::shirt( $black );
 		$this->answers[ self::photo( self::BLANK, 32880, 102, 'back' ) ]   = self::shirt( $black );
+
+		// A photo of the product in a room: no side's marker shows on it.
+		foreach ( array( array( self::MARKER, 32870, $ash ), array( self::BLANK, 32870, $ash ), array( self::BLANK, 32880, $black ) ) as [ $product, $variant, $color ] ) {
+			$this->answers[ self::photo( $product, $variant, 104, 'context-1' ) ] = self::shirt( $color );
+		}
 	}
 
 	/**

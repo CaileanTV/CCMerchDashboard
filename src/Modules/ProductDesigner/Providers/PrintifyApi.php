@@ -46,6 +46,11 @@ class PrintifyApi {
 	private const TIMEOUT = 30;
 
 	/**
+	 * Printify fetches a print file of up to 25 MB from the site within the upload call.
+	 */
+	private const UPLOAD_TIMEOUT = 120;
+
+	/**
 	 * The largest answer read (the product list was 5.5 MB on 2026-11-01).
 	 */
 	private const MAX_ANSWER = 33554432;
@@ -230,7 +235,8 @@ class PrintifyApi {
 			array(
 				'file_name' => $name,
 				'url'       => $url,
-			)
+			),
+			self::UPLOAD_TIMEOUT
 		);
 
 		return self::id_of( $answer, 'POST /uploads/images.json' );
@@ -324,17 +330,18 @@ class PrintifyApi {
 	 *
 	 * @param string            $path   Path (one of the approved endpoints).
 	 * @param string            $method GET, POST or DELETE.
-	 * @param array<mixed>|null $body   JSON body.
+	 * @param array<mixed>|null $body    JSON body.
+	 * @param int               $timeout Seconds.
 	 * @return array<mixed>
 	 * @throws PrintifyException When the call fails.
 	 */
-	private function call( string $path, string $method = 'GET', ?array $body = null ): array {
+	private function call( string $path, string $method = 'GET', ?array $body = null, int $timeout = self::TIMEOUT ): array {
 		if ( ! $this->available() ) {
 			self::fail( PrintifyException::NOT_CONFIGURED );
 		}
 
 		$args = array(
-			'timeout'             => self::TIMEOUT,
+			'timeout'             => $timeout,
 			'redirection'         => 0,
 			'user-agent'          => self::USER_AGENT,
 			'limit_response_size' => self::MAX_ANSWER,
