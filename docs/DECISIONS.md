@@ -7372,6 +7372,17 @@ Katalogets billeder (`/catalog/blueprints/{id}.json`) er en liste med 1–428 UR
 - **Omgjort:** ADR-087's fravalg af mockups fra Printify. Printify modtager nu creatorernes printfiler, men kun på produkter, der aldrig udgives.
 - **Afprøvning 3:** et stribet ark på flasken viste, at hele arket ligger rundt om flasken, og at upload med URL fra stg virker. Butikken var tom bagefter.
 
+**Statusnote 2026-11-24 (projektejerens ønsker efter stg-testen):**
+- **Hjælpelinjer:** Printifys editor viser, hvor på et rundt print hver visning sidder; API'et gør ikke.
+  - Importen laver derfor ét midlertidigt produkt mere med et ark i 12 farver (`ImageProbe::stripes`) og måler hver produktvisnings midte (`ImageProbe::stripe_centre`).
+  - Afprøvning 4 på flasken: forside 49,7 %, venstre 24,9 %, højre 74,8 % og bagside 0,0 %, som i Printifys editor.
+  - Printifys `position` er "front" for alle fotos, også miljøfotos, så produktvisningerne kendes på kameranavnet (front, back, left-, right-).
+  - Siden gemmer visningerne som `guides` med et lille foto af hver som figur. Designeren tegner stiplede linjer midt imellem og figurerne under printfeltet.
+- **"Se det færdige produkt":** viser nu også Printifys mockups af en kladde, som hos de andre leverandører:
+  - et midlertidigt produkt i første farve, og billederne vises som data-URI'er;
+  - tæller i dagskvoten;
+  - produktet slettes efter 15 minutter eller ved en ny forhåndsvisning.
+
 ## Alternatives considered
 - **Kun katalogets billeder, valgt af admin:** kræver ingen skriveadgang, men printfeltet skal stadig tegnes i hånden. Fravalgt af projektejeren 2026-11-23.
 - **Egne fotos (ADR-087 punkt 5):** kræver manuelt arbejde pr. produkt. Afløst.

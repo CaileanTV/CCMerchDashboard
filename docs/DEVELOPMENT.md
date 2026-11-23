@@ -274,6 +274,10 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
    - godkendelsen venter ("mockups laves") i et par minutter. Bagefter viser den Printifys fotos af designet i de valgte visninger og farver;
    - efter godkendelse viser butikken dem;
    - Printify-butikken er tom igen, og printfilerne ligger ikke i Printifys bibliotek.
+10. **Hjælpelinjer:**
+    - importér flasken igen. Sidens formular viser "Hjælpelinjer for creators: Bagside 0 %, Venstre side 25 %, Forside 50 %, Højre side 75 %" (± et par procent);
+    - i designeren står der stiplede linjer ved cirka 12, 37, 62 og 87 %, og under printfeltet et lille billede af hver visning med navnet, som i Printifys editor.
+11. **Se det færdige produkt:** lav et design på flasken, tryk "Se det færdige produkt", og se Printifys mockups af kladden. Efter 15 minutter er produktet væk fra Printify-butikken.
 
 **Tilbagerulning:** installér 2.5.0-ZIP'en igen. Butiks-id'et bliver liggende uden at blive brugt, og grundprodukter importeret i 2.5.1 beholder deres fotos.
 

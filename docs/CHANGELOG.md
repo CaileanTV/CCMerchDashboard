@@ -16,6 +16,8 @@ Fase 57 (ADR-122). Ingen schemaændring. Reviewet; runtime-testen sker på stg.
 - **Rundt print:** en flaske eller et krus designes på et ark med hele printfeltet, ikke kun det, forsidefotoet viser.
 - **Mockups fra Printify:** admin vælger visninger (Front, Back, Context 1 …) på grundproduktet. Printify laver dem af hvert indsendt design i hver valgt farve, og godkendelsen venter imens.
 - **Rettet:** fotos fra Printify parres på kameraets navn, fordi kamera-id'et skifter pr. farve på nogle varer.
+- **Hjælpelinjer:** på et rundt print viser designeren stiplede linjer og et lille billede af hver visning (forside, sider, bagside) under printfeltet, målt ved importen som i Printifys editor.
+- **"Se det færdige produkt" for Printify:** creatoren ser Printifys mockups af kladden. Det tæller i dagskvoten.
 
 ## [2.5.0] - 2026-11-23
 

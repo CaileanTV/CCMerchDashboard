@@ -104,6 +104,10 @@ Efter importen viser grundproduktet "Mockups fra Printify" med et lille billede 
 
 Godkendelsen venter, til fotoene er hentet, typisk et par minutter. Det midlertidige produkt slettes bagefter.
 
+På et rundt print måler importen også, hvor hver visning sidder på arket. Creatoren ser det i designeren som stiplede hjælpelinjer med et lille billede og navnet på hver visning under printfeltet, ligesom i Printifys editor. Sidens formular viser linjerne som en tekst ("Hjælpelinjer for creators …").
+
+Creatoren kan trykke "Se det færdige produkt" og se Printifys mockups af kladden. Det tæller i dagskvoten på 100, og det midlertidige produkt slettes efter 15 minutter.
+
 **Farvefotos, fra 2026-11-01 (eksperimentel):** feltet "Farvefotos" på en side tager alle sidens PNG-fotos på én gang. Et foto, der hedder det samme som en farve, fx `Sort.png`, bliver farvens baggrund, og en ny farve kommer selv på farvelisten med en målt farvekode. En ny side får første foto som baggrund, så printfeltet kan tegnes med musen, før noget sendes. Miniaturerne viser præcis, hvad der uploades, når der gemmes: tjek dem, for mockup-filer indeholder ofte creators' designs. Fotos sendes i små portioner, og hver portion gemmes helt eller slet ikke. Stopper en portion, står årsagen på siden, og de portioner, der allerede er sendt, er gemt. Hver portion hæver grundproduktets version. **Fra 1.6.0:** et foto, der er op til 1 % fra sidens størrelse, tilpasses (centreret), og feltet skriver hvilke. Et foto længere fra udelades med navn, og resten uploades. Står sidens navn sidst i filnavnet (`Aske Forside.png` på siden "Forside", også "Højre Side" og "Venstre Side"), er farven navnet uden siden.
 
 **Sidernes rækkefølge, fra 2026-11-01:** op- og ned-pile på hver gemt side på grundproduktet. Rækkefølgen gemmes med formularen og giver ikke en ny version. Den styrer fanerne i designeren og billederne på designs, der godkendes herefter. En side beholder sine størrelser, når den flyttes.

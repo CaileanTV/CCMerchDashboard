@@ -132,6 +132,17 @@ Med en butik i `merchboard_designer_printify_shop` giver `PrintifyCatalog::choic
   - sidens visning er `slots[side]`;
   - til sidst `PrintifyCatalog::forget()` og `archive_upload()`.
 
+## Hjælpelinjer og forhåndsvisning fra Printify (ADR-122, statusnote 2026-11-24)
+- **Målingen:**
+  - `PrintifyCatalog::render_kinds` giver `stripes` efter markøren: et produkt i første farve med `ImageProbe::stripes()` (12 farver med 30° hue imellem) i hvert printfelts form og skala 1;
+  - `CatalogImport` sorterer fotoene i gruppen `stripes`. Runden `guides` (efter `download`) måler for hver rund side (`wrapped()`) og hver kameranavn i `GUIDE_VIEWS` midten med `ImageProbe::stripe_centre()` mod det tomme foto. Midten er produktets akse, interpoleret mellem stribekanterne.
+- **Data:**
+  - `BaseView::$guides` er en liste af `{x, label, figure}`; `figure` er visningens lille foto fra `printify_thumbs`, så importen laver de små billeder før siderne gemmes;
+  - creators må hente figurerne via `BaseProduct::guide_figures()`;
+  - `view_data` oversætter kendte navne (`MeDesignerController::view_name`).
+- **Designeren:** `guides.ts` lægger linjerne midt mellem visningerne, også hen over arkets ender. `DesignerEditor` tegner dem i `__area` og figurerne i `__views`.
+- **Forhåndsvisning:** `PrintifyMockups::can_preview/start_preview/preview/clean_preview` (job `merchboard_designer_printify_preview`, transient `merchboard_printify_preview_<version>`).
+
 ## Farvefotos i portioner (2026-11-01, eksperimentel)
 En side kan have en baggrund pr. farve, og en side med 23 farver er flere filer, end PHP normalt tager i én anmodning (`max_file_uploads`, 20 som standard). Overskydende filer forsvinder uden fejl. Derfor sender browseren først formularen med første foto som baggrund og derefter fotoene i portioner til `do=color_photos`, højst 10 filer og 80 % af `wp_max_upload_size()` pr. portion. Siden findes på nøgle eller navn, fordi en ny side ikke har en nøgle i browseren, og farven findes på navnet uanset store og små bogstaver. Alle fotos skal have samme størrelse som skabelonen. En portion gemmes helt eller slet ikke, og et erstattet foto slettes. Filer fra Affinity skal først eksporteres eller udtrækkes til PNG uden creators' designs: pluginet tager kun imod PNG og kan ikke kende et design på et foto, så administratoren tjekker miniaturerne.
 
