@@ -1749,7 +1749,15 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
 - **57.16 Linjerne i designeren** ✅ (70e4816): feltet `guides` på siden, stiplede linjer og under printfeltet en figur af hver visning (Printifys eget lille foto af visningen, projektejerens ønske 2026-11-23) med navnet.
   - Afprøvning 4: Printifys `position` er "front" for alle fotos, også miljøfotos, så linjerne bygger på kameranavnene front, back, left- og right-.
 - **57.17 "Se mockups" for Printify** ✅ (661db81): knappen "Se det færdige produkt" viser Printifys mockups af kladden (kvote 100 pr. dag), og produktet slettes bagefter.
-- **57.18 Tekster, docs, review, runtime-test på stg og ny testpakke 2.5.1.** Intet tag før projektejerens OK.
+- **57.18 Tekster, docs, review, runtime-test på stg og ny testpakke 2.5.1** 🔄. Intet tag før projektejerens OK.
+  - Tekster (9ea30c5) og docs (2b05235) ✅.
+  - Uafhængigt review uden sikkerhedsfund. Rettet i fe4eddb:
+    - målingen fortsætter forbi en stribe, der ikke ses;
+    - de små billeder laves igen efter, at siderne er gemt, så en fejlet import ikke ødelægger de gamle;
+    - striberne i en lys farve; linjer kun på én rund side;
+    - et ulæseligt foto stopper ikke importen;
+    - forhåndsvisningens oprydning sættes i kø først, og to start i træk venter.
+  - Visuelt eksempel på linjerne til projektejeren (artefakt "Hjælpelinjer på flasken").
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
