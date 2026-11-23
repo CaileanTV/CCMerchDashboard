@@ -23,19 +23,28 @@ defined( 'ABSPATH' ) || exit;
  * pictures, by our own groups of the product names, words and, if wanted,
  * only the products of producers in the EU, then picks a product and one of
  * its producers.
- * Only the catalog is used: the import brings in the name, colours, sizes and
- * print areas, and each side starts as a white sheet of the size of the
- * company's own photos. The administrator adds those and draws the print area
- * on them. Designs get the mockups drawn in the browser, as on an own product,
- * and print files with transparency: a side is not `flat`.
+ * The import brings in the name, colours, sizes and print areas.
+ *
+ * ADR-122: with a shop chosen, the import renders the product as Gelato's
+ * does: a temporary product in that shop with a marker colour per side in the
+ * first colour, and one with the transparent file in every colour. Their
+ * mockups are keyed by Printify's camera (the same id on both products and in
+ * every colour); ImageProbe measures each side's print area, and the colour
+ * codes are measured on the photos. forget() deletes the products when the
+ * import is done, has failed or starts over; they are never published.
+ *
+ * Without a shop, or for a product whose sizes have print areas of other
+ * shapes (one marker render shows one size), each side starts as a white
+ * sheet of the size of the company's own photos, as before (ADR-087): the
+ * administrator adds those and draws the print area on them. Either way,
+ * designs get the mockups drawn in the browser and print files with
+ * transparency: a side is not `flat`.
  *
  * Print sizes follow the size of the garment. A base product holds one print
  * size per side, so a side gets the smallest one, which fits every size.
- * Printify does not name a resolution: 300 dpi is assumed. The catalog has no
- * colour codes: colours start white, and the photos give them theirs. Nothing
- * is rendered on import: render() is never called.
+ * Printify does not name a resolution: 300 dpi is assumed.
  */
-class PrintifyCatalog implements CatalogRenderer {
+class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 
 	public const SOURCE = 'printify';
 
@@ -108,6 +117,27 @@ class PrintifyCatalog implements CatalogRenderer {
 	private const POLL_DELAY = 30;
 
 	/**
+	 * The side of the marker and transparent files uploaded (ADR-122).
+	 */
+	private const MARKER_SIDE = 1000;
+
+	/**
+	 * Most photos of a render compared (each needs two downloads): the ones
+	 * of a placement first, then the others in Printify's order.
+	 */
+	private const MAX_SLOTS = 16;
+
+	/**
+	 * The price of a temporary product's variants in cents: never sold.
+	 */
+	private const PRICE = 10000;
+
+	/**
+	 * Printify's camera of a size chart: no photo of the product.
+	 */
+	private const SIZE_CHART = 'size-chart';
+
+	/**
 	 * The cached product list and producers, which change rarely.
 	 */
 	public const BLUEPRINTS = 'merchboard_printify_blueprints';
@@ -122,12 +152,20 @@ class PrintifyCatalog implements CatalogRenderer {
 	/**
 	 * Constructor.
 	 *
-	 * @param PrintifyApi        $api    Printify.
-	 * @param DesignerFiles|null $files  Where small pictures are kept.
-	 * @param JobQueue|null      $queue  The background job of the producers.
-	 * @param float              $budget Seconds a page may spend reading producers it does not know yet.
+	 * @param PrintifyApi          $api     Printify.
+	 * @param DesignerFiles|null   $files   Where small pictures are kept.
+	 * @param JobQueue|null        $queue   The background job of the producers.
+	 * @param float                $budget  Seconds a page may spend reading producers it does not know yet.
+	 * @param PrintifyAccount|null $account The shop for the import's photos (ADR-122).
 	 */
-	public function __construct( private PrintifyApi $api, private ?DesignerFiles $files = null, private ?JobQueue $queue = null, private float $budget = 3.0 ) {
+	public function __construct( private PrintifyApi $api, private ?DesignerFiles $files = null, private ?JobQueue $queue = null, private float $budget = 3.0, private ?PrintifyAccount $account = null ) {
+	}
+
+	/**
+	 * The shop for the import's temporary products, or ''.
+	 */
+	private function shop(): string {
+		return null !== $this->account ? $this->account->shop() : '';
 	}
 
 	/**
@@ -369,6 +407,21 @@ class PrintifyCatalog implements CatalogRenderer {
 
 		$image = is_array( $blueprint['images'] ?? null ) ? reset( $blueprint['images'] ) : '';
 
+		// ADR-122: photos from a temporary product; one render shows one size, so one shape only.
+		if ( '' !== $this->shop() && 1 === count( $groups ) ) {
+			return array(
+				'name'        => mb_substr( trim( sanitize_text_field( (string) ( $blueprint['title'] ?? $ref ) ) ), 0, 191 ),
+				'description' => PrintfulCatalog::description( (string) ( $blueprint['description'] ?? '' ) ),
+				'image'       => is_string( $image ) ? $image : '',
+				'colors'      => $colors,
+				'sizes'       => $sizes,
+				'sides'       => $sides,
+				'variants'    => $variants,
+				'flat'        => false,
+				'printed'     => false,
+			);
+		}
+
 		return array(
 			'name'        => mb_substr( trim( sanitize_text_field( (string) ( $blueprint['title'] ?? $ref ) ) ), 0, 191 ),
 			'description' => PrintfulCatalog::description( (string) ( $blueprint['description'] ?? '' ) ),
@@ -383,68 +436,273 @@ class PrintifyCatalog implements CatalogRenderer {
 	}
 
 	/**
-	 * Nothing is rendered: the sides are white sheets.
+	 * The marker render, and once it is done the transparent one; nothing for
+	 * white sheets.
 	 *
 	 * @param array<string, mixed> $import Import data.
 	 * @return list<string>
 	 */
 	public function render_kinds( array $import ): array {
-		unset( $import );
+		if ( true === ( $import['printed'] ?? false ) || true === ( $import['flat'] ?? false ) ) {
+			return array();
+		}
 
-		return array();
+		return 'done' === ( $import['renders']['marker']['status'] ?? null ) ? array( 'marker', 'blank' ) : array( 'marker' );
 	}
 
 	/**
-	 * Never called: see render_kinds().
+	 * Creates a temporary product (ADR-122): `marker` in the first colour with
+	 * a marker colour per side, `blank` in every colour with the transparent
+	 * file. Each file is scaled to cover its print area.
 	 *
-	 * @param string               $kind   Render.
+	 * @param string               $kind   `marker` or `blank`.
 	 * @param array<string, mixed> $import Import data.
-	 * @throws PrintifyException Always.
+	 * @return string `<shop>:<product>`.
+	 * @throws PrintifyException When Printify refuses or fails, or no shop is chosen.
 	 */
 	public function render( string $kind, array $import ): string {
-		unset( $kind, $import );
+		$shop = $this->shop();
 
-		self::fail( PrintifyException::INVALID );
+		if ( '' === $shop ) {
+			self::fail( PrintifyException::NOT_CONFIGURED );
+		}
+
+		[ $blueprint, $producer ] = self::ref_of( is_string( $import['ref'] ?? null ) ? $import['ref'] : '' );
+
+		$variants = array_values( array_map( 'intval', array_filter( is_array( $import['colors'] ?? null ) ? $import['colors'] : array(), 'is_numeric' ) ) );
+		$variants = 'marker' === $kind ? array_slice( $variants, 0, 1 ) : $variants;
+		$sides    = array_values( array_filter( is_array( $import['sides'] ?? null ) ? $import['sides'] : array(), 'is_array' ) );
+		$places   = array();
+
+		if ( array() === $variants || array() === $sides ) {
+			self::fail( PrintifyException::INVALID );
+		}
+
+		foreach ( $sides as $index => $side ) {
+			$marker = 'marker' === $kind ? ( ImageProbe::MARKERS[ $index ] ?? null ) : null;
+
+			if ( 'marker' === $kind && null === $marker ) {
+				break;
+			}
+
+			$width  = max( 1, (int) ( $side['width'] ?? 1 ) );
+			$height = max( 1, (int) ( $side['height'] ?? 1 ) );
+			$upload = $this->api->upload( null === $marker ? 'merch-clear.png' : 'merch-marker-' . ( $index + 1 ) . '.png', self::solid( $marker ) );
+
+			$places[] = array(
+				'position' => (string) ( $side['placement'] ?? '' ),
+				'images'   => array(
+					array(
+						'id'    => $upload,
+						'x'     => 0.5,
+						'y'     => 0.5,
+						// A square file covers the area: scale is relative to its width.
+						'scale' => round( max( 1, $height / $width ), 4 ),
+						'angle' => 0,
+					),
+				),
+			);
+		}
+
+		$product = $this->api->create_product(
+			$shop,
+			array(
+				'title'             => 'Merch Dashboard import (temporary)',
+				'description'       => 'Made by an import and deleted when it is done. Never published.',
+				'blueprint_id'      => $blueprint,
+				'print_provider_id' => $producer,
+				'variants'          => array_map(
+					static fn( int $variant ): array => array(
+						'id'         => $variant,
+						'price'      => self::PRICE,
+						'is_enabled' => true,
+					),
+					$variants
+				),
+				'print_areas'       => array(
+					array(
+						'variant_ids'  => $variants,
+						'placeholders' => $places,
+					),
+				),
+			)
+		);
+
+		return $shop . ':' . (string) $product['id'];
 	}
 
 	/**
-	 * Never called: see render_kinds().
+	 * A render's photos by Printify's camera and colour key. The ones of a
+	 * placement come first, then the others, at most MAX_SLOTS; a size chart
+	 * is left out. Pending until Printify lists photos.
 	 *
-	 * @param string               $key    Render.
+	 * @param string               $key    `<shop>:<product>`.
 	 * @param array<string, mixed> $import Import data.
 	 * @return array{status: string, error?: string, note?: string, images?: array<int|string, array<string, string>>}
+	 * @throws PrintifyException When Printify refuses or fails.
 	 */
 	public function check( string $key, array $import ): array {
-		unset( $key, $import );
+		[ $shop, $id ] = self::key_of( $key );
+
+		$product = $this->api->product( $shop, $id );
+		$colors  = array();
+		$placed  = array();
+		$others  = array();
+
+		foreach ( is_array( $import['colors'] ?? null ) ? $import['colors'] : array() as $color => $variant ) {
+			$colors[ (string) $variant ] = (string) $color;
+		}
+
+		foreach ( is_array( $product['images'] ?? null ) ? $product['images'] : array() as $image ) {
+			$src = is_array( $image ) && is_string( $image['src'] ?? null ) ? $image['src'] : '';
+
+			if ( 1 !== preg_match( PrintifyApi::IMAGES, $src ) || 1 !== preg_match( '#/mockup/[0-9a-f]{24}/(\d{1,12})/(\d{1,12})/#', $src, $match ) || str_contains( $src, 'camera_label=' . self::SIZE_CHART ) ) {
+				continue;
+			}
+
+			$color = $colors[ $match[1] ] ?? null;
+
+			if ( null === $color ) {
+				continue;
+			}
+
+			if ( 'other' === ( $image['position'] ?? 'other' ) ) {
+				$others[ $match[2] ][ $color ] ??= $src;
+			} else {
+				$placed[ $match[2] ][ $color ] ??= $src;
+			}
+		}
+
+		$images = array_slice( $placed + $others, 0, self::MAX_SLOTS, true );
+
+		if ( array() === $images ) {
+			return array(
+				'status' => 'pending',
+				'note'   => 'no photos yet',
+			);
+		}
 
 		return array(
-			'status' => 'failed',
-			'error'  => 'no render',
+			'status' => 'done',
+			'images' => $images,
+			'note'   => count( $images ) . ' photos',
 		);
 	}
 
 	/**
-	 * Never called: see render_kinds().
+	 * Printify's answer about a render's product, without the photos' URLs.
 	 *
-	 * @param string $key Render.
+	 * @param string $key `<shop>:<product>`.
 	 * @return array<string, mixed>
+	 * @throws PrintifyException When Printify refuses or fails.
 	 */
 	public function render_answer( string $key ): array {
-		unset( $key );
+		[ $shop, $id ] = self::key_of( $key );
 
-		return array();
+		$product = $this->api->product( $shop, $id );
+
+		return array(
+			'id'      => $product['id'] ?? '',
+			'title'   => $product['title'] ?? '',
+			'visible' => $product['visible'] ?? null,
+			'images'  => is_array( $product['images'] ?? null ) ? count( $product['images'] ) : 0,
+		);
 	}
 
 	/**
-	 * Nothing is downloaded: Printify's images are not used.
+	 * A photo of a render, from Printify's image hosts only.
 	 *
 	 * @param string $url URL.
-	 * @throws PrintifyException Always.
+	 * @return string Bytes.
+	 * @throws PrintifyException When it cannot be fetched.
 	 */
 	public function download( string $url ): string {
-		unset( $url );
+		return $this->api->image( $url );
+	}
 
-		self::fail( PrintifyException::INVALID );
+	/**
+	 * Deletes the import's temporary products (ADR-122). The uploads are kept:
+	 * Printify gives the same few files the same id each time.
+	 *
+	 * @param array<string, mixed> $import Import data.
+	 * @return list<string> The renders' keys that could not be deleted.
+	 */
+	public function forget( array $import ): array {
+		$left = array();
+
+		foreach ( is_array( $import['renders'] ?? null ) ? $import['renders'] : array() as $render ) {
+			$key = is_array( $render ) && is_string( $render['key'] ?? null ) ? $render['key'] : '';
+
+			if ( '' === $key ) {
+				continue;
+			}
+
+			try {
+				[ $shop, $id ] = self::key_of( $key );
+
+				$this->api->delete_product( $shop, $id );
+			} catch ( PrintifyException ) {
+				$left[] = $key;
+			}
+		}
+
+		return $left;
+	}
+
+	/**
+	 * A square PNG of one marker colour, or transparent; the same bytes each
+	 * time, so Printify keeps one upload of each.
+	 *
+	 * @param array{0: int<0, 255>, 1: int<0, 255>, 2: int<0, 255>}|null $rgb Marker colour, or null.
+	 * @throws PrintifyException When GD cannot make it.
+	 */
+	private static function solid( ?array $rgb ): string {
+		$image = imagecreatetruecolor( self::MARKER_SIDE, self::MARKER_SIDE );
+
+		if ( false === $image ) {
+			self::fail( PrintifyException::FAILED );
+		}
+
+		imagealphablending( $image, false );
+		imagesavealpha( $image, true );
+
+		$color = null === $rgb ? imagecolorallocatealpha( $image, 0, 0, 0, 127 ) : imagecolorallocatealpha( $image, $rgb[0], $rgb[1], $rgb[2], 0 );
+
+		imagefilledrectangle( $image, 0, 0, self::MARKER_SIDE - 1, self::MARKER_SIDE - 1, false === $color ? 0 : $color );
+		ob_start();
+		imagepng( $image, null, 9 );
+
+		return (string) ob_get_clean();
+	}
+
+	/**
+	 * The catalog product and producer of a reference.
+	 *
+	 * @param string $ref `<product>-<producer>`.
+	 * @return array{0: int, 1: int}
+	 * @throws PrintifyException When it is not one.
+	 */
+	private static function ref_of( string $ref ): array {
+		if ( 1 !== preg_match( '/^(\d{1,9})-(\d{1,9})$/', $ref, $match ) ) {
+			self::fail( PrintifyException::INVALID );
+		}
+
+		return array( (int) $match[1], (int) $match[2] );
+	}
+
+	/**
+	 * The shop and product of a render's key.
+	 *
+	 * @param string $key `<shop>:<product>`.
+	 * @return array{0: string, 1: string}
+	 * @throws PrintifyException When it is not one.
+	 */
+	private static function key_of( string $key ): array {
+		if ( 1 !== preg_match( '/^(\d{1,12}):([0-9a-f]{24})$/', $key, $match ) ) {
+			self::fail( PrintifyException::INVALID );
+		}
+
+		return array( $match[1], $match[2] );
 	}
 
 	/**

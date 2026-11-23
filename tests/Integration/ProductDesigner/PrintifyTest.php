@@ -29,6 +29,7 @@ use MerchBoard\Modules\ProductDesigner\Providers\PrintifyException;
 use MerchBoard\Tests\Integration\Alerts\AlertImagesTest;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Unit\Support\FakeJobQueue;
+use MerchBoard\Tests\Unit\Support\Photo;
 use PHPUnit\Framework\Attributes\CoversClass;
 use WP_Error;
 
@@ -48,6 +49,12 @@ final class PrintifyTest extends IntegrationTestCase {
 
 	private const TOKEN = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.abc-def_123';
 
+	private const SHOP = '29877825';
+
+	private const MARKER = '6b04a155656f1ffc11096fea';
+
+	private const BLANK = '6b04a15673224287ac0ff35a';
+
 	/**
 	 * Calls made: [method, url, args].
 	 *
@@ -56,9 +63,9 @@ final class PrintifyTest extends IntegrationTestCase {
 	private array $calls = array();
 
 	/**
-	 * Answers by URL.
+	 * Answers by URL, or a function of the method and the arguments.
 	 *
-	 * @var array<string, array<string, mixed>>
+	 * @var array<string, array<string, mixed>|callable>
 	 */
 	private array $answers = array();
 
@@ -91,8 +98,10 @@ final class PrintifyTest extends IntegrationTestCase {
 			$this->account,
 			function ( string $method, string $url, array $args ): array|WP_Error {
 				$this->calls[] = array( $method, $url, $args );
+				$answer        = $this->answers[ $url ] ?? null;
+				$answer        = is_callable( $answer ) ? $answer( $method, $args ) : $answer;
 
-				return $this->answers[ $url ] ?? new WP_Error( 'http_request_failed', 'No route.' );
+				return is_array( $answer ) ? $answer : new WP_Error( 'http_request_failed', 'No route.' );
 			}
 		);
 		$this->files   = new DesignerFiles( static fn( string $from, string $to ): bool => rename( $from, $to ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Test files.
@@ -103,6 +112,7 @@ final class PrintifyTest extends IntegrationTestCase {
 
 	protected function tearDown(): void {
 		delete_option( PrintifyAccount::TOKEN_OPTION );
+		delete_option( PrintifyAccount::SHOP_OPTION );
 		delete_transient( PrintifyCatalog::BLUEPRINTS );
 		delete_transient( PrintifyCatalog::PRODUCERS );
 		delete_transient( PrintifyCatalog::PRODUCER_PRODUCTS . '26' );
@@ -417,6 +427,183 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertSame( array( 'black' ), array_keys( $this->bases->find( $id )?->views[0]->color_backgrounds() ?? array() ) );
 	}
 
+	public function test_a_shop_is_digits_audited_and_an_empty_field_removes_it(): void {
+		try {
+			$this->account->set_shop( 'store-1' );
+			self::fail( 'Not digits.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::PRINTIFY_SHOP, $e->reason() );
+		}
+
+		self::assertTrue( $this->account->set_shop( ' 29877825 ' ) );
+		self::assertFalse( $this->account->set_shop( '29877825' ), 'The same shop changes nothing.' );
+		self::assertSame( '29877825', $this->account->shop() );
+		self::assertStringContainsString( 'printify_shop', (string) wp_json_encode( $this->rows( Tables::AUDIT_LOG ) ) );
+		self::assertTrue( $this->account->set_shop( '' ) );
+		self::assertSame( '', $this->account->shop() );
+	}
+
+	public function test_with_a_shop_an_import_measures_printify_s_photos_and_deletes_its_temporary_products(): void {
+		$this->printify_shop();
+		$this->account->set_shop( self::SHOP );
+
+		$id   = $this->import( shop: true );
+		$base = $this->bases->find( $id );
+
+		self::assertNotNull( $base );
+		self::assertSame( 'ready', $this->bases->import( $id )['state'] ?? null, (string) wp_json_encode( $this->bases->import( $id ) ) );
+		self::assertSame( array( 'Front', 'Back' ), array_map( static fn( $view ): string => $view->name, $base->views ) );
+		self::assertSame( array( '#c8c8c8', '#1e1e1e' ), array_column( $base->colors, 'hex' ), 'Printify names no colour codes: they are measured on the photos.' );
+
+		foreach ( array( array( 50, 60, 85, 70 ), array( 60, 50, 80, 66 ) ) as $index => [ $x, $y, $width, $height ] ) {
+			$area = $base->views[ $index ]->area;
+
+			self::assertSame( array( 200, 200 ), array( $base->views[ $index ]->width, $base->views[ $index ]->height ) );
+			self::assertGreaterThanOrEqual( $x - 2, $area['x'], 'Inside the marker.' );
+			self::assertGreaterThanOrEqual( $y - 2, $area['y'] );
+			self::assertLessThanOrEqual( $x + $width + 2, $area['x'] + $area['width'] );
+			self::assertLessThanOrEqual( $y + $height + 2, $area['y'] + $area['height'] );
+		}
+
+		$creates = array_values( array_filter( $this->calls, static fn( array $call ): bool => 'POST' === $call[0] && str_ends_with( $call[1], '/products.json' ) ) );
+		$bodies  = array_map( static fn( array $call ): array => (array) json_decode( (string) $call[2]['body'], true ), $creates );
+
+		self::assertSame( array( array( 32870 ), array( 32870, 32880 ) ), array_map( static fn( array $body ): array => $body['print_areas'][0]['variant_ids'] ?? array(), $bodies ), 'The markers in the first colour, then every colour.' );
+		self::assertSame( array( 'front', 'back' ), array_column( $bodies[0]['print_areas'][0]['placeholders'] ?? array(), 'position' ) );
+		self::assertGreaterThanOrEqual( 1, $bodies[0]['print_areas'][0]['placeholders'][1]['images'][0]['scale'] ?? 0, 'The file covers the print area.' );
+
+		$deleted = array_values( array_filter( $this->calls, static fn( array $call ): bool => 'DELETE' === $call[0] ) );
+
+		self::assertSame( array( self::API . '/shops/' . self::SHOP . '/products/' . self::MARKER . '.json', self::API . '/shops/' . self::SHOP . '/products/' . self::BLANK . '.json' ), array_column( $deleted, 1 ), 'Both temporary products are deleted.' );
+		self::assertSame( array(), array_filter( $this->calls, static fn( array $call ): bool => str_contains( $call[1], 'publish' ) || str_contains( $call[1], 'orders' ) ), 'Nothing is published or ordered.' );
+
+		foreach ( $this->calls as $call ) {
+			if ( str_starts_with( $call[1], 'https://images-api.printify.com/' ) ) {
+				self::assertArrayNotHasKey( 'headers', $call[2], 'A photo is fetched without the token.' );
+			}
+		}
+
+		self::assertNotContains( 'https://images-api.printify.com/mockup/' . self::BLANK . '/32870/103/a.jpg?camera_label=size-chart', array_column( $this->calls, 1 ), 'A size chart is no photo.' );
+	}
+
+	public function test_a_failed_import_deletes_its_temporary_products_too(): void {
+		$this->printify_shop();
+		$this->account->set_shop( self::SHOP );
+		// No marker shows anywhere.
+		$this->answers[ self::photo( self::MARKER, 32870, 101, 'front' ) ] = $this->answers[ self::photo( self::BLANK, 32870, 101, 'front' ) ];
+		$this->answers[ self::photo( self::MARKER, 32870, 102, 'back' ) ]  = $this->answers[ self::photo( self::BLANK, 32870, 102, 'back' ) ];
+
+		$id = $this->import( shop: true );
+
+		self::assertSame( 'failed', $this->bases->import( $id )['state'] ?? null );
+		self::assertCount( 2, array_filter( $this->calls, static fn( array $call ): bool => 'DELETE' === $call[0] ), 'Nothing stays in the shop.' );
+	}
+
+	public function test_without_a_shop_or_with_sizes_of_other_shapes_an_import_gives_white_sheets(): void {
+		$catalog = new PrintifyCatalog( $this->api, null, null, 3.0, $this->account );
+
+		self::assertTrue( $catalog->choice( '77-26' )['printed'], 'No shop.' );
+
+		$this->account->set_shop( self::SHOP );
+
+		self::assertFalse( $catalog->choice( '77-26' )['printed'], 'A shop: photos.' );
+		self::assertSame( array(), $catalog->render_kinds( array( 'printed' => true ) ) );
+		self::assertSame( array( 'marker' ), $catalog->render_kinds( array() ) );
+	}
+
+	/**
+	 * Printify's answers to the temporary products, cut from the real ones of
+	 * 2026-11-23: an upload's id, the products, their photos by camera (101
+	 * front, 102 back, 103 a size chart) and the deletes.
+	 */
+	private function printify_shop(): void {
+		$products = self::API . '/shops/' . self::SHOP . '/products';
+		$images   = static fn( string $product, array $variants ): array => self::answer(
+			array(
+				'id'     => $product,
+				'title'  => 'Merch Dashboard import (temporary)',
+				'images' => array_merge(
+					...array_map(
+						static fn( int $variant ): array => array(
+							array(
+								'src'         => self::photo( $product, $variant, 101, 'front' ),
+								'variant_ids' => array( $variant ),
+								'position'    => 'front',
+							),
+							array(
+								'src'         => self::photo( $product, $variant, 102, 'back' ),
+								'variant_ids' => array( $variant ),
+								'position'    => 'back',
+							),
+							array(
+								'src'         => self::photo( $product, $variant, 103, 'size-chart' ),
+								'variant_ids' => array( $variant ),
+								'position'    => 'other',
+							),
+						),
+						$variants
+					)
+				),
+			)
+		);
+
+		$this->answers[ self::API . '/uploads/images.json' ] = self::answer( array( 'id' => '6b04a1527e91123b90c950e1' ) );
+		$this->answers[ $products . '.json' ]                = fn( string $method, array $args ): array => self::answer(
+			array(
+				'id'     => 2 === count( (array) ( json_decode( (string) ( $args['body'] ?? '' ), true )['variants'] ?? array() ) ) ? self::BLANK : self::MARKER,
+				'images' => array(),
+			)
+		);
+
+		foreach ( array(
+			self::MARKER => array( 32870 ),
+			self::BLANK  => array( 32870, 32880 ),
+		) as $product => $variants ) {
+			$this->answers[ $products . '/' . $product . '.json' ] = static fn( string $method ): array => 'DELETE' === $method ? array(
+				'response' => array( 'code' => 200 ),
+				'headers'  => array(),
+				'body'     => '',
+			) : $images( $product, $variants );
+		}
+
+		$ash   = array( 200, 200, 200 );
+		$black = array( 30, 30, 30 );
+
+		$this->answers[ self::photo( self::MARKER, 32870, 101, 'front' ) ] = self::shirt( $ash, array( array( 50, 60, 85, 70, array( 250, 5, 250 ) ) ) );
+		$this->answers[ self::photo( self::MARKER, 32870, 102, 'back' ) ]  = self::shirt( $ash, array( array( 60, 50, 80, 66, array( 5, 250, 250 ) ) ) );
+		$this->answers[ self::photo( self::BLANK, 32870, 101, 'front' ) ]  = self::shirt( $ash );
+		$this->answers[ self::photo( self::BLANK, 32870, 102, 'back' ) ]   = self::shirt( $ash );
+		$this->answers[ self::photo( self::BLANK, 32880, 101, 'front' ) ]  = self::shirt( $black );
+		$this->answers[ self::photo( self::BLANK, 32880, 102, 'back' ) ]   = self::shirt( $black );
+	}
+
+	/**
+	 * A photo of a shirt on a light ground, with marker rectangles.
+	 *
+	 * @param array{0: int, 1: int, 2: int}                                                 $color  The shirt.
+	 * @param list<array{0: int, 1: int, 2: int, 3: int, 4: array{0: int, 1: int, 2: int}}> $marker Rectangles: x, y, width, height and colour.
+	 * @return array<string, mixed>
+	 */
+	private static function shirt( array $color, array $marker = array() ): array {
+		return array(
+			'response' => array( 'code' => 200 ),
+			'headers'  => array(),
+			'body'     => Photo::png( 200, 200, array( 240, 240, 240 ), array_merge( array( array( 30, 30, 140, 150, $color ) ), $marker ) ),
+		);
+	}
+
+	/**
+	 * A mockup's URL as Printify gives it.
+	 *
+	 * @param string $product Product.
+	 * @param int    $variant Variant.
+	 * @param int    $camera  Camera.
+	 * @param string $label   Camera label.
+	 */
+	private static function photo( string $product, int $variant, int $camera, string $label ): string {
+		return 'https://images-api.printify.com/mockup/' . $product . '/' . $variant . '/' . $camera . '/a.jpg?camera_label=' . $label;
+	}
+
 	/**
 	 * The base product service as the import uses it.
 	 */
@@ -432,10 +619,11 @@ final class PrintifyTest extends IntegrationTestCase {
 	 * @param array<string> $sides  Placements.
 	 * @param string        $units  'in' for inches.
 	 * @param array<string> $colors Colours.
+	 * @param bool          $shop   With the account, so a chosen shop gives photos.
 	 * @return int The base product.
 	 */
-	private function import( string $ref = '77-26', array $sizes = array( 'S', 'M', 'L' ), array $sides = array( 'front', 'back' ), string $units = '', array $colors = array( 'Ash', 'Black' ) ): int {
-		$catalog = new CatalogImport( $this->wpdb, $this->bases, $this->base_service(), $this->files, $this->queue, $this->service( Logger::class ), 2, 'https://shop.example/assets/', null, null, null, new PrintifyCatalog( $this->api ) );
+	private function import( string $ref = '77-26', array $sizes = array( 'S', 'M', 'L' ), array $sides = array( 'front', 'back' ), string $units = '', array $colors = array( 'Ash', 'Black' ), bool $shop = false ): int {
+		$catalog = new CatalogImport( $this->wpdb, $this->bases, $this->base_service(), $this->files, $this->queue, $this->service( Logger::class ), 2, 'https://shop.example/assets/', null, null, null, new PrintifyCatalog( $this->api, null, null, 3.0, $shop ? $this->account : null ) );
 		$id      = $catalog->create(
 			PrintifyCatalog::SOURCE,
 			$ref,

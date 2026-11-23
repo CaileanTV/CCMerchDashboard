@@ -1521,6 +1521,11 @@ final class BaseProductsPage {
 			/* translators: %s: Printful or Gelato. */
 			echo '<div class="notice notice-success inline"><p>' . esc_html( sprintf( true === ( $data['printed'] ?? false ) ? __( 'Imported from %s: colours, sizes and print sizes. Add your own photos on each side, draw the print area on them, and check everything before you activate the base product.', 'merchboard' ) : ( true === ( $data['flat'] ?? false ) ? __( 'Imported from %s: the flat parts with their print areas. Check them before you activate the base product.', 'merchboard' ) : __( 'Imported from %s: one photo per colour and a measured print area per side. Check each print area before you activate the base product.', 'merchboard' ) ), $name ) ) . '</p>';
 
+			// ADR-122: white sheets from Printify because no shop is chosen (or the sizes have print areas of other shapes).
+			if ( true === ( $data['printed'] ?? false ) && PrintifyCatalog::SOURCE === $base->source ) {
+				echo '<p>' . esc_html__( 'Photos and print areas come from Printify by themselves when a Printify shop for photos is chosen under Settings → Product designer, and the print areas of the sizes have one shape. Delete this base product and import it again to get them.', 'merchboard' ) . '</p>';
+			}
+
 			if ( is_array( $data['skipped'] ?? null ) && array() !== $data['skipped'] ) {
 				/* translators: 1: names of sides, 2: Printful or Gelato. */
 				echo '<p>' . esc_html( sprintf( __( 'Left out because %2$s\'s photos do not show them: %1$s.', 'merchboard' ), implode( ', ', array_filter( $data['skipped'], 'is_string' ) ), $name ) ) . '</p>';

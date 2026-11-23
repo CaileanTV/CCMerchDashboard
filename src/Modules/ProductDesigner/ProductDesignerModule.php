@@ -164,7 +164,7 @@ final class ProductDesignerModule implements Module {
 		// Printify (ADR-087): the token, the API and the catalog.
 		$container->set( PrintifyAccount::class, static fn( Container $c ): PrintifyAccount => new PrintifyAccount( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 		$container->set( PrintifyApi::class, static fn( Container $c ): PrintifyApi => new PrintifyApi( $c->get( PrintifyAccount::class ) ) );
-		$container->set( PrintifyCatalog::class, static fn( Container $c ): PrintifyCatalog => new PrintifyCatalog( $c->get( PrintifyApi::class ), $c->get( DesignerFiles::class ), $c->get( JobQueue::class ) ) );
+		$container->set( PrintifyCatalog::class, static fn( Container $c ): PrintifyCatalog => new PrintifyCatalog( $c->get( PrintifyApi::class ), $c->get( DesignerFiles::class ), $c->get( JobQueue::class ), 3.0, $c->get( PrintifyAccount::class ) ) );
 		$container->set( PrintifyThumbnails::class, static fn( Container $c ): PrintifyThumbnails => new PrintifyThumbnails( $c->get( PrintifyCatalog::class ) ) );
 		// Prodigi (ADR-084): the key, the API, the catalogue and the mockups.
 		$container->set( ProdigiAccount::class, static fn( Container $c ): ProdigiAccount => new ProdigiAccount( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );

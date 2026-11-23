@@ -357,7 +357,8 @@ class CatalogImport {
 				'groups'      => $groups,
 				'uids'        => $uids,
 				// The values of a grouped first axis (Vertical …) are no colours to measure.
-				'measure_hex' => GelatoCatalog::SOURCE === $source && ! $grouped,
+				// Printify (ADR-122) names no colour codes either; its sheets have no photo to measure.
+				'measure_hex' => ( GelatoCatalog::SOURCE === $source || ( PrintifyCatalog::SOURCE === $source && ! $sheets ) ) && ! $grouped,
 				'flat'        => $flat,
 				'printed'     => $sheets,
 			)
@@ -409,6 +410,9 @@ class CatalogImport {
 		if ( self::FAILED !== $import['state'] && ! $stuck ) {
 			return;
 		}
+
+		// What the last attempt left at the provider (ADR-122) goes first.
+		$this->cleanup( $id, $import['data'] );
 
 		// What create() started with; the format groups and their products too (ADR-115),
 		// or a poster would render all its sides at once and fail.
@@ -583,6 +587,7 @@ class CatalogImport {
 
 		if ( 'save' === ( $data['phase'] ?? '' ) ) {
 			$this->finish( $id, $data );
+			$this->cleanup( $id, $data );
 
 			return;
 		}
@@ -1445,6 +1450,10 @@ class CatalogImport {
 				}
 			}
 
+			// The renders stored in this round too: the round's own copy can be older.
+			$stored = is_array( $import['data']['renders'] ?? null ) ? $import['data']['renders'] : array();
+			$this->cleanup( $id, array_merge( $data, array( 'renders' => array_merge( $stored, is_array( $data['renders'] ?? null ) ? $data['renders'] : array() ) ) ) );
+
 			// The renders' images and measurements stay for the diagnosis; "Try again" starts without them.
 			unset( $data['files'], $data['chosen'], $data['hex'], $data['thumbs'] );
 
@@ -1487,6 +1496,38 @@ class CatalogImport {
 			),
 			'designer_import:' . $id . ':' . (int) ( $data['started'] ?? 0 )
 		);
+	}
+
+	/**
+	 * Removes what the renders left at the provider (ADR-122: Printify's
+	 * temporary products); what cannot be removed is logged. Never throws.
+	 *
+	 * @param int                  $id   Base product.
+	 * @param array<string, mixed> $data Import data.
+	 */
+	private function cleanup( int $id, array $data ): void {
+		$renderer = $this->renderer( is_string( $data['source'] ?? null ) ? $data['source'] : '' );
+
+		if ( ! $renderer instanceof CatalogCleanup || ! is_array( $data['renders'] ?? null ) || array() === $data['renders'] ) {
+			return;
+		}
+
+		try {
+			$left = $renderer->forget( $data );
+		} catch ( Throwable $e ) {
+			$left = array( $e::class );
+		}
+
+		if ( array() !== $left ) {
+			$this->logger->warning(
+				'A catalog import could not remove its temporary products at the provider.',
+				array(
+					'base_id' => $id,
+					'source'  => $data['source'] ?? '',
+					'left'    => $left,
+				)
+			);
+		}
 	}
 
 	/**
