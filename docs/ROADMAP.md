@@ -1742,11 +1742,12 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - længere ventetid for upload fra URL; oprydning kun én gang; intet produkt, når ingen visninger er valgt (2ef31c4).
   - Accepteret: fejler Printify midt i hentningen, beholder de farver, der allerede er hentet, Printifys fotos.
   - Testpakke 2.5.1 fra 404e070 (sha256 `ec4d533c…`). Projektejeren ønskede to ting mere (57.14–57.17), og pakken bygges igen i 57.18.
-- **57.14 Hjælpelinjer: afprøvning 4 og statusnote på ADR-122** (projektejerens ønske og godkendte plan 2026-11-23):
+- **57.14 Hjælpelinjer: afprøvning 4 og statusnote på ADR-122** 🔄 (projektejerens ønske og godkendte plan 2026-11-23; afprøvning 4 ✅, butikken tom bagefter):
   - Printifys editor viser stiplede linjer under et rundt printfelt, der viser, hvor på flasken designet sidder. API'et har dem ikke, så vi måler dem;
   - afprøvning 3 gav midterne venstre 25 %, forside 50 %, højre 75 % og bagside 0 %, så linjerne ligger ved 12,5/37,5/62,5/87,5 % ligesom i Printifys editor.
 - **57.15 Målingen:** et ekstra midlertidigt produkt med et stribet ark ved importen. Hver produktvisnings midte måles, og linjerne lægges midt imellem.
-- **57.16 Linjerne i designeren:** feltet `guides` på siden, stiplede linjer og visningernes navne under printfeltet.
+- **57.16 Linjerne i designeren:** feltet `guides` på siden, stiplede linjer og under printfeltet en figur af hver visning (Printifys eget lille foto af visningen, projektejerens ønske 2026-11-23) med navnet.
+  - Afprøvning 4: Printifys `position` er "front" for alle fotos, også miljøfotos, så linjerne bygger på kameranavnene front, back, left- og right-.
 - **57.17 "Se mockups" for Printify:** knappen "Se det færdige produkt" viser Printifys mockups af kladden (kvote 100 pr. dag), og produktet slettes bagefter.
 - **57.18 Tekster, docs, review, runtime-test på stg og ny testpakke 2.5.1.** Intet tag før projektejerens OK.
 
