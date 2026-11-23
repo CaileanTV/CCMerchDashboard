@@ -1733,7 +1733,7 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
   - sidens egen visning erstatter browserens mockup, og de andre valgte visninger bliver miljøbilleder;
   - godkendelsen venter, til fotoene er hentet;
   - produktet slettes, og uploads arkiveres, også ved fejl.
-- **57.13 Tekster, docs, review, runtime-test på stg og ny testpakke 2.5.1** 🔄. Intet tag før projektejerens OK.
+- **57.13 Tekster, docs, review og testpakke 2.5.1** ✅ (stg-testen sker samlet i 57.18).
   - Tekster (acd0b0b) og docs (c11607b) ✅.
   - Uafhængigt review uden sikkerhedsfund. Rettet:
     - en ubrugt sides tomme foto blev vist som miljøbillede;
@@ -1741,6 +1741,14 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - et rundt print blev genkendt for let (nu først, når mindst en fjerdedel er skjult);
     - længere ventetid for upload fra URL; oprydning kun én gang; intet produkt, når ingen visninger er valgt (2ef31c4).
   - Accepteret: fejler Printify midt i hentningen, beholder de farver, der allerede er hentet, Printifys fotos.
+  - Testpakke 2.5.1 fra 404e070 (sha256 `ec4d533c…`). Projektejeren ønskede to ting mere (57.14–57.17), og pakken bygges igen i 57.18.
+- **57.14 Hjælpelinjer: afprøvning 4 og statusnote på ADR-122** (projektejerens ønske og godkendte plan 2026-11-23):
+  - Printifys editor viser stiplede linjer under et rundt printfelt, der viser, hvor på flasken designet sidder. API'et har dem ikke, så vi måler dem;
+  - afprøvning 3 gav midterne venstre 25 %, forside 50 %, højre 75 % og bagside 0 %, så linjerne ligger ved 12,5/37,5/62,5/87,5 % ligesom i Printifys editor.
+- **57.15 Målingen:** et ekstra midlertidigt produkt med et stribet ark ved importen. Hver produktvisnings midte måles, og linjerne lægges midt imellem.
+- **57.16 Linjerne i designeren:** feltet `guides` på siden, stiplede linjer og visningernes navne under printfeltet.
+- **57.17 "Se mockups" for Printify:** knappen "Se det færdige produkt" viser Printifys mockups af kladden (kvote 100 pr. dag), og produktet slettes bagefter.
+- **57.18 Tekster, docs, review, runtime-test på stg og ny testpakke 2.5.1.** Intet tag før projektejerens OK.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
