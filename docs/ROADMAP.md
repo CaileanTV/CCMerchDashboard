@@ -1688,7 +1688,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 - **56.12 Broderi** ✅ (57f0b70): med låste tråde. Delene får en tråd hver, stregen og de faste pixels den nærmeste. Trådene beholdes altid, kan ikke byttes og slås aldrig sammen. Kræver kliparts alene flere tråde, end siden kan have, sendes designet ikke.
 - **56.13 Admins upload** ✅ (c1a6061): produkter, palet, lås og advarsler. PSD'en bages i browseren og sammenlignes med dens eget billede. Admin advares om bredde, dpi og broderiets låste tråde. Kun produktlisten kan rettes bagefter. For store uploads stoppes i browseren og ved modtagelsen.
 - **56.14 Admins liste** ✅ (a003113): over kliparts på et indsendt design, med fjernet/ikke længere tilbudt, dele, lås og de valgte farver. Undervejs rettet: godkendelseskøen hentede ikke designet, så printfiler for farvedesigns fik id i stedet for farvenavne (6af2374).
-- **56.15 Afslutning:** tekster ✅ (c87e185) og docs ✅ (a895efc). Mangler: uafhængigt review, runtime-test på Local og testpakke 2.5.0 (afventer ejerens valg, som i fase 55).
+- **56.15 Afslutning** ✅: tekster (c87e185), docs (a895efc), uafhængigt review uden sikkerhedsfund (rettelser ffd5fbe), runtime-test på Local med to fund rettet i 3bdd5d9 (MerchBoard-r2-runtime/runs/2026-11-23-fase56-runtime) og version 2.5.0 med fase 55 (854ac7d). Testpakke `merchboard-mvp-2.5.0.zip`. Intet tag før projektejerens OK.
 
 **Fundet undervejs, ikke rettet (uden for fasen):**
 - `save_draft()` kræver én ændret række. At gemme en uændret kladde i samme sekund svarer derfor 500 (fundet af en integrationstest i 56.7).
