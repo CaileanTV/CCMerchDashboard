@@ -24,7 +24,8 @@ defined( 'ABSPATH' ) || exit;
  * - `GET /catalog/blueprints/{id}/print_providers.json`;
  * - `GET /catalog/blueprints/{id}/print_providers/{id}/variants.json`;
  * - `GET /catalog/print_providers.json` and `/catalog/print_providers/{id}.json`;
- * - `POST /uploads/images.json` (a marker or the transparent file);
+ * - `POST /uploads/images.json` (a marker, the transparent file, or a
+ *   creator's print file as a signed URL) and `POST /uploads/{id}/archive.json`;
  * - `POST /shops/{id}/products.json`, `GET` and `DELETE`
  *   `/shops/{id}/products/{id}.json`: a temporary product, never published;
  * - a picture or mockup on Printify's image hosts, without the token.
@@ -208,6 +209,41 @@ class PrintifyApi {
 		);
 
 		return self::id_of( $answer, 'POST /uploads/images.json' );
+	}
+
+	/**
+	 * Uploads a file Printify fetches from a URL (a signed print file, ADR-122).
+	 *
+	 * @param string $name File name.
+	 * @param string $url  A URL Printify can fetch (the site's own signed print file).
+	 * @return string The upload's id.
+	 * @throws PrintifyException When the call fails or the answer has no id.
+	 */
+	public function upload_url( string $name, string $url ): string {
+		if ( 1 !== preg_match( '/^[a-z0-9-]{1,60}\.png$/D', $name ) || ! in_array( wp_parse_url( $url, PHP_URL_SCHEME ), array( 'https', 'http' ), true ) || strlen( $url ) > 2000 ) {
+			self::fail( PrintifyException::INVALID );
+		}
+
+		$answer = $this->call(
+			'/uploads/images.json',
+			'POST',
+			array(
+				'file_name' => $name,
+				'url'       => $url,
+			)
+		);
+
+		return self::id_of( $answer, 'POST /uploads/images.json' );
+	}
+
+	/**
+	 * Archives an upload, so the account's library keeps no creator's print file.
+	 *
+	 * @param string $id Upload.
+	 * @throws PrintifyException When the call fails.
+	 */
+	public function archive_upload( string $id ): void {
+		$this->call( '/uploads/' . self::checked( $id ) . '/archive.json', 'POST', array() );
 	}
 
 	/**

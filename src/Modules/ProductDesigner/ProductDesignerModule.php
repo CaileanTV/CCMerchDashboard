@@ -79,6 +79,7 @@ use MerchBoard\Modules\ProductDesigner\Providers\PrintfulToken;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyApi;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyCatalog;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintifyMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiApi;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiCatalog;
@@ -208,6 +209,21 @@ final class ProductDesignerModule implements Module {
 				$c->get( DesignerProductRepository::class ),
 				$c->get( BaseProductRepository::class ),
 				$c->get( GelatoApi::class ),
+				$c->get( ProviderTaskRepository::class ),
+				self::downloads(),
+				$c->get( JobQueue::class ),
+				$c->get( Logger::class )
+			)
+		);
+		$container->set(
+			PrintifyMockups::class,
+			static fn( Container $c ): PrintifyMockups => new PrintifyMockups(
+				$c->get( wpdb::class ),
+				$c->get( DesignerProductRepository::class ),
+				$c->get( BaseProductRepository::class ),
+				$c->get( PrintifyApi::class ),
+				$c->get( PrintifyAccount::class ),
+				$c->get( PrintifyCatalog::class ),
 				$c->get( ProviderTaskRepository::class ),
 				self::downloads(),
 				$c->get( JobQueue::class ),
@@ -458,6 +474,13 @@ final class ProductDesignerModule implements Module {
 				$container->get( PrintfulMockups::class )->submitted( $version );
 				$container->get( GelatoMockups::class )->submitted( $version );
 				$container->get( ProdigiMockups::class )->submitted( $version );
+				$container->get( PrintifyMockups::class )->submitted( $version );
+			}
+		);
+		add_action(
+			PrintifyMockups::HOOK,
+			static function ( mixed $version ) use ( $container ): void {
+				$container->get( PrintifyMockups::class )->run( $version );
 			}
 		);
 		add_action(

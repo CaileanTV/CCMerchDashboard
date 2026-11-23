@@ -519,6 +519,7 @@ final class DesignerNotifications {
 			PrintifyException::INVALID              => __( 'Printify answered with something that cannot be used.', 'merchboard' ),
 			PrintifyException::FAILED               => __( 'Printify could not be reached or answered with an error.', 'merchboard' ),
 			'prodigi_task'                          => __( 'Prodigi could not make the mockups (or took too long).', 'merchboard' ),
+			'printify_task'                         => __( 'Printify could not make the mockups (or took too long).', 'merchboard' ),
 			DesignerException::IMPORT_RENDER        => __( 'The provider could not render the product; its own message is shown on the base product.', 'merchboard' ),
 			DesignerException::IMPORT_TIMEOUT       => __( 'The provider took too long to render the product.', 'merchboard' ),
 			DesignerException::IMPORT_NO_AREA       => __( 'The print areas could not be found on the provider\'s photos.', 'merchboard' ),

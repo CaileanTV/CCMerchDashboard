@@ -555,14 +555,40 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 	public function check( string $key, array $import ): array {
 		[ $shop, $id ] = self::key_of( $key );
 
-		$product = $this->api->product( $shop, $id );
-		$colors  = array();
-		$placed  = array();
-		$others  = array();
+		$colors = array();
 
 		foreach ( is_array( $import['colors'] ?? null ) ? $import['colors'] : array() as $color => $variant ) {
 			$colors[ (string) $variant ] = (string) $color;
 		}
+
+		$images = array_slice( self::photos( $this->api->product( $shop, $id ), $colors ), 0, self::MAX_SLOTS, true );
+
+		if ( array() === $images ) {
+			return array(
+				'status' => 'pending',
+				'note'   => 'no photos yet',
+			);
+		}
+
+		return array(
+			'status' => 'done',
+			'images' => $images,
+			'note'   => count( $images ) . ' photos',
+		);
+	}
+
+	/**
+	 * A product's photos by camera name (slot_of()) and colour key: the ones
+	 * of a placement first, then the others; a size chart is left out
+	 * (ADR-122). Only photos on Printify's image hosts.
+	 *
+	 * @param array<mixed>          $product Printify's product.
+	 * @param array<string, string> $colors  Colour key by variant id.
+	 * @return array<string, array<string, string>>
+	 */
+	public static function photos( array $product, array $colors ): array {
+		$placed = array();
+		$others = array();
 
 		foreach ( is_array( $product['images'] ?? null ) ? $product['images'] : array() as $image ) {
 			$src = is_array( $image ) && is_string( $image['src'] ?? null ) ? $image['src'] : '';
@@ -595,20 +621,7 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 			}
 		}
 
-		$images = array_slice( $placed + $others, 0, self::MAX_SLOTS, true );
-
-		if ( array() === $images ) {
-			return array(
-				'status' => 'pending',
-				'note'   => 'no photos yet',
-			);
-		}
-
-		return array(
-			'status' => 'done',
-			'images' => $images,
-			'note'   => count( $images ) . ' photos',
-		);
+		return $placed + $others;
 	}
 
 	/**

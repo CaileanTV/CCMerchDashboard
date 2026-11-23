@@ -42,6 +42,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\DesignerTagSync;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
 use MerchBoard\Modules\ProductDesigner\Providers\GelatoMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyCatalog;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintifyMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulMockups;
 use MerchBoard\Modules\WooCommerce\Payouts\BalanceReadyNotices;
@@ -538,7 +539,7 @@ final class UninstallerTest extends TestCase {
 
 		self::assertSame( array( AlertSounds::OWNER_META, AlertSoundLibrary::LIBRARY_META, GlobalOverlaySounds::OWNER_META, AlertImages::OWNER_META, AlertImageLibrary::LIBRARY_META, GlobalOverlayImages::OWNER_META ), Uninstaller::ALERT_MEDIA_META_KEYS );
 		self::assertSame( array(), array_diff( array_merge( Uninstaller::ALERT_MEDIA_META_KEYS, array( Uninstaller::ALERT_IMPORTED_META ) ), $keys ), 'The markers are removed from the files that stay.' );
-		self::assertSame( array( 'merchboard_sales_backfill', ChatSender::HOOK, WebhookDispatcher::HOOK, NotificationSender::HOOK, BalanceReadyNotices::HOOK, DesignerFees::HOOK, DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerTagSync::HOOK, DesignerNameSeparator::HOOK, MetaCatalogExclusion::HOOK, DesignerRetirement::HOOK, PrintfulMockups::HOOK, GelatoMockups::HOOK, ProdigiMockups::HOOK, ProdigiMockups::PREVIEW_HOOK, CatalogImport::HOOK, PrintifyCatalog::HOOK, 'merchboard_gift_draw', 'merchboard_gift_expire', 'merchboard_gift_confirm', 'merchboard_gift_remind', 'merchboard_giveaway_charge', 'merchboard_giveaway_expire' ), $hooks, 'Queued chat messages, webhook deliveries, notification e-mails, designer applies and gift draws are cancelled.' );
+		self::assertSame( array( 'merchboard_sales_backfill', ChatSender::HOOK, WebhookDispatcher::HOOK, NotificationSender::HOOK, BalanceReadyNotices::HOOK, DesignerFees::HOOK, DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerTagSync::HOOK, DesignerNameSeparator::HOOK, MetaCatalogExclusion::HOOK, DesignerRetirement::HOOK, PrintfulMockups::HOOK, GelatoMockups::HOOK, ProdigiMockups::HOOK, ProdigiMockups::PREVIEW_HOOK, CatalogImport::HOOK, PrintifyCatalog::HOOK, PrintifyMockups::HOOK, 'merchboard_gift_draw', 'merchboard_gift_expire', 'merchboard_gift_confirm', 'merchboard_gift_remind', 'merchboard_giveaway_charge', 'merchboard_giveaway_expire' ), $hooks, 'Queued chat messages, webhook deliveries, notification e-mails, designer applies and gift draws are cancelled.' );
 	}
 
 	private function uninstaller(): Uninstaller {

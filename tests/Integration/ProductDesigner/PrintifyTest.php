@@ -15,10 +15,18 @@ use MerchBoard\Core\Database\Tables;
 use MerchBoard\Core\Database\Transaction;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Settings\Settings;
+use MerchBoard\Modules\Creators\CreatorService;
+use MerchBoard\Modules\Creators\CreatorStatus;
 use MerchBoard\Modules\ProductDesigner\Admin\PrintifyThumbnails;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerReview;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerSubmissions;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignValidator;
+use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
@@ -26,6 +34,8 @@ use MerchBoard\Modules\ProductDesigner\Providers\PrintifyAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyApi;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyException;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintifyMockups;
+use MerchBoard\Modules\ProductDesigner\Providers\ProviderTaskRepository;
 use MerchBoard\Tests\Integration\Alerts\AlertImagesTest;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Unit\Support\FakeJobQueue;
@@ -42,6 +52,7 @@ use WP_Error;
 #[CoversClass( PrintifyAccount::class )]
 #[CoversClass( PrintifyApi::class )]
 #[CoversClass( PrintifyCatalog::class )]
+#[CoversClass( PrintifyMockups::class )]
 #[CoversClass( PrintifyThumbnails::class )]
 final class PrintifyTest extends IntegrationTestCase {
 
@@ -79,6 +90,15 @@ final class PrintifyTest extends IntegrationTestCase {
 
 	private FakeJobQueue $queue;
 
+	private DesignerProductRepository $products;
+
+	/**
+	 * The base product the mockup tests import once.
+	 *
+	 * @var int
+	 */
+	private int $printify_base = 0;
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->install();
@@ -94,7 +114,7 @@ final class PrintifyTest extends IntegrationTestCase {
 
 		$this->account->set( self::TOKEN );
 
-		$this->api     = new PrintifyApi(
+		$this->api      = new PrintifyApi(
 			$this->account,
 			function ( string $method, string $url, array $args ): array|WP_Error {
 				$this->calls[] = array( $method, $url, $args );
@@ -104,10 +124,11 @@ final class PrintifyTest extends IntegrationTestCase {
 				return is_array( $answer ) ? $answer : new WP_Error( 'http_request_failed', 'No route.' );
 			}
 		);
-		$this->files   = new DesignerFiles( static fn( string $from, string $to ): bool => rename( $from, $to ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Test files.
-		$this->bases   = new BaseProductRepository( $this->wpdb );
-		$this->queue   = new FakeJobQueue();
-		$this->answers = self::printify_answers();
+		$this->files    = new DesignerFiles( static fn( string $from, string $to ): bool => rename( $from, $to ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.rename_rename -- Test files.
+		$this->bases    = new BaseProductRepository( $this->wpdb );
+		$this->queue    = new FakeJobQueue();
+		$this->products = new DesignerProductRepository( $this->wpdb );
+		$this->answers  = self::printify_answers();
 	}
 
 	protected function tearDown(): void {
@@ -509,6 +530,224 @@ final class PrintifyTest extends IntegrationTestCase {
 		$this->base_service()->set_printify_photos( $id, array( 'back', 'nonsense' ) );
 
 		self::assertSame( array( 'back' ), $this->bases->provider( $id )['printify_photos'] ?? null );
+	}
+
+	public function test_printify_makes_the_chosen_views_of_a_submitted_design_and_deletes_its_product(): void {
+		$version = $this->printify_submitted();
+		$mockups = $this->printify_mockups();
+		$review  = new DesignerReview( $this->products, $this->bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->queue, 2, static function (): void {} );
+		$before  = SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null )['mockups']['front'];
+
+		$this->calls = array();
+		$mockups->submitted( $version );
+
+		self::assertSame( 'running', $this->products->version( $version )['mockup_state'] ?? null );
+
+		try {
+			$review->approve( $version );
+			self::fail( 'Not while Printify makes the mockups.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::MOCKUPS_PENDING, $e->reason() );
+		}
+
+		$this->drain_mockups( $mockups );
+
+		$upload = $this->first_call( 'POST', self::API . '/uploads/images.json' );
+		$body   = (array) json_decode( (string) ( $upload[2]['body'] ?? '' ), true );
+
+		self::assertStringContainsString( '/merchboard/v1/designer-print/' . $version . '/front', urldecode( (string) ( $body['url'] ?? '' ) ), 'The print file as a signed URL.' );
+
+		$create  = $this->first_call( 'POST', self::API . '/shops/' . self::SHOP . '/products.json' );
+		$product = (array) json_decode( (string) ( $create[2]['body'] ?? '' ), true );
+
+		self::assertSame( array( 32870, 32880 ), $product['print_areas'][0]['variant_ids'] ?? null, 'A variant per chosen colour, the first chosen size.' );
+		self::assertSame( array( 'front' ), array_column( $product['print_areas'][0]['placeholders'] ?? array(), 'position' ) );
+
+		$files = SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null );
+
+		self::assertSame( 'ready', $this->products->version( $version )['mockup_state'] ?? null );
+		self::assertNotSame( $before['ash']['file'], $files['mockups']['front']['ash']['file'] ?? null, 'The side\'s own view replaces the browser\'s mockup.' );
+		self::assertNull( $this->files->path( $before['ash']['file'] ), 'The replaced mockup is deleted.' );
+		self::assertSame( array( 'ash', 'black' ), array_keys( $files['mockups'][ SubmissionFiles::SCENE . '0' ] ?? array() ), 'The back view is an environment photo in each colour.' );
+		self::assertNotNull( $this->first_call( 'DELETE', self::API . '/shops/' . self::SHOP . '/products/' . self::BLANK . '.json' ), 'The temporary product is deleted.' );
+		self::assertNotNull( $this->first_call( 'POST', self::API . '/uploads/6b04a1527e91123b90c950e1/archive.json' ), 'The print file is archived.' );
+
+		$review->approve( $version );
+		self::assertSame( 'approved', $this->products->version( $version )['status'] ?? null );
+	}
+
+	public function test_only_the_ticked_views_are_made_and_a_failure_keeps_the_browser_s_mockups(): void {
+		$version = $this->printify_submitted();
+		$base    = (int) ( $this->products->version( $version )['base_id'] ?? 0 );
+
+		$this->base_service()->set_printify_photos( $base, array( 'front' ) );
+
+		$mockups = $this->printify_mockups();
+		$mockups->submitted( $version );
+		$this->drain_mockups( $mockups );
+
+		$files = SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null );
+
+		self::assertArrayNotHasKey( SubmissionFiles::SCENE . '0', $files['mockups'], 'The back was not ticked.' );
+
+		// A second design: Printify fails while it is looked at.
+		$second = $this->printify_submitted( 'Second tee' );
+		$before = SubmissionFiles::decode( $this->products->version( $second )['files'] ?? null )['mockups'];
+
+		$this->answers[ self::API . '/shops/' . self::SHOP . '/products/' . self::BLANK . '.json' ] = static fn( string $method ): array => 'DELETE' === $method ? self::answer( array() ) : self::answer( array( 'message' => 'Down' ), 500 );
+		$this->calls = array();
+		$mockups->submitted( $second );
+		$this->drain_mockups( $mockups );
+
+		self::assertSame( 'failed', $this->products->version( $second )['mockup_state'] ?? null );
+		self::assertSame( $before, SubmissionFiles::decode( $this->products->version( $second )['files'] ?? null )['mockups'] );
+		self::assertNotNull( $this->first_call( 'DELETE', self::API . '/shops/' . self::SHOP . '/products/' . self::BLANK . '.json' ), 'Nothing stays at Printify.' );
+	}
+
+	/**
+	 * A T-shirt imported with photos and a design on its front in both colours, sent in.
+	 *
+	 * @param string $title The design's title.
+	 * @return int The pending version.
+	 */
+	private function printify_submitted( string $title = 'Stream tee' ): int {
+		$this->printify_shop();
+		$this->account->set_shop( self::SHOP );
+		// Small print areas (30 × 40 mm) keep the print files small; the markers have their shape.
+		$this->answers[ self::API . '/catalog/blueprints/77/print_providers/26/variants.json' ] = self::answer(
+			array(
+				'id'       => 26,
+				'variants' => array_map(
+					static fn( array $row ): array => array(
+						'id'           => $row[0],
+						'title'        => $row[1] . ' / ' . $row[2],
+						'options'      => array(
+							'color' => $row[1],
+							'size'  => $row[2],
+						),
+						'placeholders' => array(
+							array(
+								'position' => 'front',
+								'width'    => 354,
+								'height'   => 472,
+							),
+							array(
+								'position' => 'back',
+								'width'    => 354,
+								'height'   => 472,
+							),
+						),
+					),
+					array( array( 32870, 'Ash', 'S' ), array( 32871, 'Ash', 'M' ), array( 32880, 'Black', 'S' ) )
+				),
+			)
+		);
+		$this->answers[ self::photo( self::MARKER, 32870, 101, 'front' ) ]                      = self::shirt( array( 200, 200, 200 ), array( array( 50, 50, 60, 80, array( 250, 5, 250 ) ) ) );
+		$this->answers[ self::photo( self::MARKER, 32870, 102, 'back' ) ]                       = self::shirt( array( 200, 200, 200 ), array( array( 60, 50, 60, 80, array( 5, 250, 250 ) ) ) );
+		$this->answers[ self::API . '/uploads/6b04a1527e91123b90c950e1/archive.json' ]          = self::answer( array() );
+
+		if ( 0 === $this->printify_base ) {
+			$this->printify_base = $this->import( sizes: array( 'S', 'M' ), shop: true );
+			$this->base_service()->set_active( $this->printify_base, true );
+		}
+
+		$base = $this->printify_base;
+
+		$view        = $this->bases->find( $base )?->views[0] ?? self::fail( 'No front.' );
+		$user        = $this->create_user( 'printify-creator-' . sanitize_key( $title ) );
+		$creator     = $this->service( CreatorService::class )->create( 'Nova ' . $title, CreatorStatus::Active, $user );
+		$drafts      = new DesignerDrafts( $this->products, $this->bases, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2, $this->files );
+		$submissions = new DesignerSubmissions( $this->products, $this->bases, $this->files, $this->service( AuditTrail::class ), $this->service( Transaction::class ), 2 );
+		$product     = $drafts->create( $creator, $base );
+
+		$drafts->save(
+			$creator,
+			$product,
+			array(
+				'title'        => $title,
+				'description'  => '',
+				'colors'       => array( 'ash', 'black' ),
+				'sizes'        => array( 'S', 'M' ),
+				'profit_kind'  => 'percent',
+				'profit_value' => '20',
+				'design'       => array(
+					'version' => 1,
+					'sides'   => array(
+						'front' => array(
+							array(
+								'type'        => 'rect',
+								'id'          => 'r1',
+								'x'           => $view->area['x'] + 5,
+								'y'           => $view->area['y'] + 5,
+								'width'       => 20,
+								'height'      => 20,
+								'angle'       => 0,
+								'scaleX'      => 1,
+								'scaleY'      => 1,
+								'opacity'     => 1,
+								'fill'        => '#00ff00',
+								'strokeWidth' => 0,
+								'radius'      => 0,
+							),
+						),
+					),
+				),
+			),
+			new DesignValidator( static fn(): bool => false, array() )
+		);
+
+		[ $print_w, $print_h ] = $view->print_pixels();
+		[ $mock_w, $mock_h ]   = $view->mockup_size();
+
+		$submissions->attach( $creator, $product, 'print:front', AlertImagesTest::upload( AlertImagesTest::png( $print_w, $print_h ), 'print.png' ) );
+
+		foreach ( array( 'ash', 'black' ) as $color ) {
+			$submissions->attach( $creator, $product, 'mockup:front:' . $color, AlertImagesTest::upload( AlertImagesTest::png( $mock_w, $mock_h ), 'mockup.png' ) );
+		}
+
+		$submissions->submit( $creator, $product );
+
+		return (int) ( $this->products->pending( $product )['id'] ?? 0 );
+	}
+
+	/**
+	 * The mockup service.
+	 */
+	private function printify_mockups(): PrintifyMockups {
+		return new PrintifyMockups( $this->wpdb, $this->products, $this->bases, $this->api, $this->account, new PrintifyCatalog( $this->api, null, null, 3.0, $this->account ), new ProviderTaskRepository( $this->wpdb ), $this->files, $this->queue, $this->service( Logger::class ) );
+	}
+
+	/**
+	 * Runs the queued mockup jobs.
+	 *
+	 * @param PrintifyMockups $mockups The service.
+	 */
+	private function drain_mockups( PrintifyMockups $mockups ): void {
+		$this->queue->drain(
+			static function ( string $hook, array $args ) use ( $mockups ): void {
+				if ( PrintifyMockups::HOOK === $hook ) {
+					$mockups->run( $args[0] ?? 0 );
+				}
+			},
+			20
+		);
+	}
+
+	/**
+	 * The first call of a method and URL.
+	 *
+	 * @param string $method Method.
+	 * @param string $url    URL.
+	 * @return array{0: string, 1: string, 2: array<string, mixed>}|null
+	 */
+	private function first_call( string $method, string $url ): ?array {
+		foreach ( $this->calls as $call ) {
+			if ( $method === $call[0] && $url === $call[1] ) {
+				return $call;
+			}
+		}
+
+		return null;
 	}
 
 	public function test_a_failed_import_deletes_its_temporary_products_too(): void {
