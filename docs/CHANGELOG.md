@@ -4,7 +4,11 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
-Fase 56 (ADR-121), bygget, ikke reviewet eller runtime-testet. Schema-version 55.
+## [2.5.0] - 2026-11-23
+
+Fase 55 og 56 (ADR-120, ADR-121). Schema-version 55 (migration 53–55). Fase 56 er reviewet og runtime-testet på Local; fase 55 er bygget og testet automatisk, men dens andet review og runtime-test er udsat efter projektejerens valg.
+
+### Fase 56: kliparts til udvalgte produkter med farvedele
 
 - **Kliparts med farvedele:** admin uploader en PSD på fanen Kliparts. Lag, hvis navn begynder med "farvet lag", bliver dele, som creatoren farver med én farve eller en gradient i to farver med vinkel. Stregen og de øvrige lag ændres aldrig. PSD'en bages i admins browser, sammenlignes med dens eget billede og uploades aldrig; der gemmes en forhåndsvisning og et atlas.
 - **Produkter, palet og lås:** et klipart gælder alle eller udvalgte grundprodukter, frie farver eller en palet. Et låst klipart fylder printområdet fra top til bund i midten, og creatoren flytter det kun til siderne. Kun produktlisten kan rettes senere (audit `designer_clipart_changed`).
@@ -16,8 +20,9 @@ Fase 56 (ADR-121), bygget, ikke reviewet eller runtime-testet. Schema-version 55
 - **Rettet:** godkendelseskøen hentede ikke designet, så printfiler til farvedesigns fik id i stedet for farvenavne.
 - **For store uploads:** stoppes i browseren og sendes ellers tilbage til fanen Kliparts med årsagen i stedet for "linket er udløbet".
 - **Database:** migration 55 med kolonnerne `definition` og `retired_at` på designerens filer.
+- **Fundet i runtime-testen og rettet:** et farvetræk blev ikke ét fortryd-trin i browsere, der ikke giver farvefeltet fokus, og et nyt låst klipart mistede sit valg, mens dets atlas blev hentet.
 
-Fase 55 (ADR-120), under opbygning. Schema-version 54.
+### Fase 55: samlinger af designs
 
 - **Samlinger af designs:** en samling fra CCMerch Design-samling er ikke creatorens produkt, får ingen ny creator-tilknytning og er aldrig selv en varelinje, gave eller giveaway. Eksisterende tilknytninger røres ikke.
 - **Twitch-panelet og merch-reklamen** viser hvert design, også når en samling skjuler det.

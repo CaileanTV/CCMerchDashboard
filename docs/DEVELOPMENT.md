@@ -249,6 +249,25 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 2.5.0: samlinger af designs og kliparts med farvedele (fase 55 og 56, ADR-120, ADR-121)
+
+**Versions-bump og CHANGELOG-sektion 2026-11-23** (projektejerens valg: review, runtime-test og testpakke nu, også med fase 55). Schema-version 55 (migration 53, 54 og 55). Fase 56 er reviewet og runtime-testet på Local. Fase 55's andet review og runtime-test er udsat, og den udgives ikke særskilt som 2.4.0. Intet tag før projektejerens OK og grøn CI.
+
+1. **Opdatér** med ZIP'en. Overview skal vise version 2.5.0 og schema-version 55.
+2. **Klipart med dele (admin, fase 56):**
+   - Produktdesigner → Kliparts → "Klipart med dele fra en PSD": vælg en PSD med et lag "farvet lag …". Siden viser delene og "Sammenlignet med PSD'en: …/255"; kun forhåndsvisning og atlas sendes;
+   - vælg et produkt, frie farver eller en palet, og prøv "Låst". Et låst klipart på en smal side giver advarslen om bredden;
+   - kortet viser produkter, dele, palet og lås. "Produkter for …" retter kun produktlisten.
+3. **Designeren (fase 56):**
+   - biblioteket viser kun produktets kliparts. Et klipart med dele har et panel pr. del med én farve eller en gradient og vinkel;
+   - et farvetræk fortrydes som ét trin. Et låst klipart fylder printområdet fra top til bund og kan kun flyttes til siderne;
+   - på en broderet side vælges tråde i stedet for farver, og panelet "Trådfarver" viser klipartets tråde som låste.
+4. **Indsendelse og godkendelse (fase 56):** printfilen viser de valgte farver. Admins godkendelse viser designets kliparts med dele, lås og farver.
+5. **Fjern (fase 56):** "Fjern" et klipart. Det forsvinder fra biblioteket, men design og kopier, der bruger det, beholder det.
+6. **Samlinger (fase 55):** se punkterne under 2.5.0 i [CHANGELOG.md](CHANGELOG.md): anmodning om samling, godkendelse på "Forslag", gave og giveaway med frit valg, Twitch-panelet og merch-reklamen.
+
+**Tilbagerulning:** installér 2.3.0-ZIP'en igen. Schemaet bliver 55; 2.3.0 bruger ikke de nye tabeller og kolonner. 2.3.0 viser ikke kliparts med dele (typen `artwork`), og et design med et sådant klipart kan ikke gemmes eller sendes i 2.3.0, før kliparten er fjernet fra designet. Kliparts fjernet i 2.5.0 vises igen i 2.3.0's bibliotek, da 2.3.0 ikke kender `retired_at`.
+
 ## Release 2.3.0: Gelato-plakater med formater, miljøbilleder og fælles design (fase 52–54, ADR-115, ADR-117, ADR-118)
 
 **Versions-bump og CHANGELOG-sektion 2026-11-21, fase 54 med 2026-11-22** (projektejerens valg: alt til og med fase 54 er 2.3.0). Ingen schemaændring. Testpakke på stg: `merchboard-mvp-2.3.0.zip` fra d93bf6a, sha256 `963536d9ce06e1728b43846e3c74005b83a03a83a3b64e100442dc89627fbd22`. Den erstatter alle tidligere 2.3.0- og 2.4.0-pakker. **Tagget 2026-11-22** på d93bf6a efter projektejerens OK (`v2.3.0`); draft-releasens ZIP er identisk med testpakken. Rettelser til 2.3.x laves fra tagget, da fase 55 ligger på `main`.
