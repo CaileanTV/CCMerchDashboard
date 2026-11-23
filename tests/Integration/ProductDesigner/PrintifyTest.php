@@ -633,13 +633,49 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertNotNull( $this->first_call( 'DELETE', self::API . '/shops/' . self::SHOP . '/products/' . self::BLANK . '.json' ), 'Nothing stays at Printify.' );
 	}
 
+	public function test_a_creator_sees_printify_s_mockups_of_a_draft_and_nothing_stays(): void {
+		$draft   = $this->printify_submitted( 'Preview tee', false );
+		$mockups = $this->printify_mockups();
+		$base    = $this->bases->find( (int) ( $this->products->version( $draft )['base_id'] ?? 0 ) );
+
+		self::assertNotNull( $base );
+		self::assertTrue( $mockups->can_preview( $base ) );
+		self::assertSame( 'none', $mockups->preview( $draft )['status'] );
+
+		$this->calls = array();
+		$mockups->start_preview( $draft );
+
+		$job = array_values( array_filter( $this->queue->pending, static fn( array $job ): bool => PrintifyMockups::PREVIEW_HOOK === $job['hook'] ) );
+
+		self::assertCount( 1, $job, 'Its product is removed later in any case.' );
+
+		$state = $mockups->preview( $draft );
+
+		self::assertSame( 'done', $state['status'] );
+		self::assertCount( 3, $state['images'], 'Front, back and the room; no size chart.' );
+		self::assertStringStartsWith( 'data:image/png;base64,', $state['images'][0]['url'], 'Never the address of the provider.' );
+		self::assertSame( 'ash', $state['images'][0]['color'] );
+
+		$create = $this->first_call( 'POST', self::API . '/shops/' . self::SHOP . '/products.json' );
+		$body   = (array) json_decode( (string) ( $create[2]['body'] ?? '' ), true );
+
+		self::assertSame( array( 32870 ), $body['print_areas'][0]['variant_ids'] ?? null, 'The first colour only.' );
+
+		$mockups->clean_preview( $draft, $job[0]['args'][1] ?? 0 );
+
+		self::assertNotNull( $this->first_call( 'DELETE', self::API . '/shops/' . self::SHOP . '/products/' . self::MARKER . '.json' ), 'The product of the preview is deleted.' );
+		self::assertNotNull( $this->first_call( 'POST', self::API . '/uploads/6b04a1527e91123b90c950e1/archive.json' ), 'Its print file is archived.' );
+		self::assertSame( 'none', $mockups->preview( $draft )['status'] );
+	}
+
 	/**
 	 * A T-shirt imported with photos and a design on its front in both colours, sent in.
 	 *
 	 * @param string $title The design's title.
-	 * @return int The pending version.
+	 * @param bool   $send  Whether it is sent in; else the draft version is returned.
+	 * @return int The pending version (or the draft's).
 	 */
-	private function printify_submitted( string $title = 'Stream tee' ): int {
+	private function printify_submitted( string $title = 'Stream tee', bool $send = true ): int {
 		$this->printify_shop();
 		$this->account->set_shop( self::SHOP );
 		// Small print areas (30 × 40 mm) keep the print files small; the markers have their shape.
@@ -732,6 +768,10 @@ final class PrintifyTest extends IntegrationTestCase {
 
 		foreach ( array( 'ash', 'black' ) as $color ) {
 			$submissions->attach( $creator, $product, 'mockup:front:' . $color, AlertImagesTest::upload( AlertImagesTest::png( $mock_w, $mock_h ), 'mockup.png' ) );
+		}
+
+		if ( ! $send ) {
+			return (int) ( $this->products->draft( $product )['id'] ?? 0 );
 		}
 
 		$submissions->submit( $creator, $product );

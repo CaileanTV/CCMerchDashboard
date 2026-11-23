@@ -54,11 +54,11 @@ final class ScheduledJobs {
 	 * DesignerApply::HOOK, DesignerRepricing::HOOK, DesignerTagSync::HOOK, DesignerNameSeparator::HOOK, Shop\MetaCatalogExclusion::HOOK, DesignerRetirement::HOOK and
 	 * Providers\PrintfulMockups::HOOK, Providers\GelatoMockups::HOOK,
 	 * Providers\ProdigiMockups::HOOK and ::PREVIEW_HOOK, Providers\CatalogImport::HOOK,
-	 * Providers\PrintifyCatalog::HOOK, Providers\PrintifyMockups::HOOK and Fees\DesignerFees::HOOK; a test
+	 * Providers\PrintifyCatalog::HOOK, Providers\PrintifyMockups::HOOK and ::PREVIEW_HOOK and Fees\DesignerFees::HOOK; a test
 	 * keeps them equal, ADR-080).
 	 * Cancelled on uninstall with the opt-in.
 	 */
-	public const DESIGNER_HOOKS = array( 'merchboard_designer_fee_charge', 'merchboard_designer_apply', 'merchboard_designer_reprice', 'merchboard_designer_tags', 'merchboard_designer_names', 'merchboard_designer_meta_catalog', 'merchboard_designer_retire', 'merchboard_designer_printful', 'merchboard_designer_gelato', 'merchboard_designer_prodigi', 'merchboard_designer_prodigi_preview', 'merchboard_designer_import', 'merchboard_designer_printify_producers', 'merchboard_designer_printify' );
+	public const DESIGNER_HOOKS = array( 'merchboard_designer_fee_charge', 'merchboard_designer_apply', 'merchboard_designer_reprice', 'merchboard_designer_tags', 'merchboard_designer_names', 'merchboard_designer_meta_catalog', 'merchboard_designer_retire', 'merchboard_designer_printful', 'merchboard_designer_gelato', 'merchboard_designer_prodigi', 'merchboard_designer_prodigi_preview', 'merchboard_designer_import', 'merchboard_designer_printify_producers', 'merchboard_designer_printify', 'merchboard_designer_printify_preview' );
 
 	/**
 	 * Action Scheduler hooks of Twitch gifting: closing a draw's window and a

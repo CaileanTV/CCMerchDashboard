@@ -306,7 +306,8 @@ final class ProductDesignerModule implements Module {
 				$c->get( PrintfulMockups::class ),
 				$c->get( ProdigiMockups::class ),
 				new PreviewQuota( new NamedLock( $c->get( wpdb::class ) ) ),
-				$c->get( GelatoMockups::class )
+				$c->get( GelatoMockups::class ),
+				$c->get( PrintifyMockups::class )
 			)
 		);
 		// The approval queue and the designer's notifications (step 30.9).
@@ -476,6 +477,14 @@ final class ProductDesignerModule implements Module {
 				$container->get( ProdigiMockups::class )->submitted( $version );
 				$container->get( PrintifyMockups::class )->submitted( $version );
 			}
+		);
+		add_action(
+			PrintifyMockups::PREVIEW_HOOK,
+			static function ( mixed $version = 0, mixed $started = 0 ) use ( $container ): void {
+				$container->get( PrintifyMockups::class )->clean_preview( $version, $started );
+			},
+			10,
+			2
 		);
 		add_action(
 			PrintifyMockups::HOOK,

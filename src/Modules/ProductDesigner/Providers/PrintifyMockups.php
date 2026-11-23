@@ -75,6 +75,29 @@ class PrintifyMockups {
 	private const COLORS_PER_RUN = 2;
 
 	/**
+	 * A draft's preview (step 57.17): the transient by version, and the job
+	 * that removes the preview's product.
+	 */
+	private const PREVIEW = 'merchboard_printify_preview_';
+
+	public const PREVIEW_HOOK = 'merchboard_designer_printify_preview';
+
+	/**
+	 * Seconds a preview's product is kept for the creator to look at.
+	 */
+	private const PREVIEW_KEEP = 900;
+
+	/**
+	 * Seconds a preview is waited for before it is given up.
+	 */
+	private const PREVIEW_WAIT = 600;
+
+	/**
+	 * Images a preview shows at most.
+	 */
+	private const PREVIEW_IMAGES = 6;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param wpdb                      $wpdb     Database (the named lock).
@@ -100,6 +123,206 @@ class PrintifyMockups {
 		private JobQueue $queue,
 		private Logger $logger
 	) {
+	}
+
+	/**
+	 * Whether a base product's drafts can be previewed with Printify's
+	 * mockups ("See the finished product", step 57.17): from Printify, with
+	 * a shop for photos.
+	 *
+	 * @param BaseProduct $base Base product.
+	 */
+	public function can_preview( BaseProduct $base ): bool {
+		return PrintifyCatalog::SOURCE === $base->source && $this->api->available() && '' !== $this->account->shop();
+	}
+
+	/**
+	 * Starts a preview of a draft: a temporary product in its first colour
+	 * with the draft's print files as signed URLs. An earlier preview of the
+	 * draft is removed first; this one is removed by the job PREVIEW_HOOK
+	 * after PREVIEW_KEEP seconds.
+	 *
+	 * @param int $id Draft version.
+	 * @throws PrintifyException When Printify refuses or fails.
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	public function start_preview( int $id ): void {
+		$version  = $this->products->version( $id );
+		$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
+		$base     = null === $version ? null : $this->bases->find( (int) $version['base_id'] );
+		$shop     = $this->account->shop();
+
+		if ( null === $version || null === $provider || null === $base || '' === $shop ) {
+			self::fail( PrintifyException::INVALID );
+		}
+
+		$this->forget_preview( $id );
+
+		$colors  = json_decode( (string) $version['colors'], true );
+		$color   = is_array( $colors ) && is_string( $colors[0] ?? null ) ? $colors[0] : '';
+		$variant = (string) ( array_search( $color, self::variants( $version, $provider['variants'] ), true ) ?: '' ); // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- false becomes ''.
+		$part    = ColorDesigns::part_of( self::design_of( $version ), $color );
+		$sides   = self::printed( $version, $provider['placements'], $base, $part );
+
+		if ( '' === $variant || array() === $sides ) {
+			self::fail( PrintifyException::INVALID );
+		}
+
+		[ $blueprint, $producer ] = self::ref_of( (string) $provider['ref'] );
+
+		$uploads = array();
+		$places  = array();
+		$state   = array(
+			'color'   => $color,
+			'variant' => $variant,
+			'started' => time(),
+			'uploads' => array(),
+		);
+
+		foreach ( $sides as $side ) {
+			$uploads[] = $this->api->upload_url( 'preview-' . $id . '-' . substr( (string) preg_replace( '/[^a-z0-9-]+/', '-', strtolower( $side ) ), 0, 40 ) . '.png', SignedPrintFiles::url( $id, $side, null, $part ) );
+			// Stored at once: every upload is archived, even if the product is never made.
+			set_transient( self::PREVIEW . $id, array_merge( $state, array( 'uploads' => $uploads ) ), HOUR_IN_SECONDS );
+			$places[] = array(
+				'position' => $provider['placements'][ $side ],
+				'images'   => array(
+					array(
+						'id'    => (string) end( $uploads ),
+						'x'     => 0.5,
+						'y'     => 0.5,
+						'scale' => 1,
+						'angle' => 0,
+					),
+				),
+			);
+		}
+
+		$this->queue->enqueue( self::PREVIEW_HOOK, array( $id, $state['started'] ), self::PREVIEW_KEEP );
+
+		$product = $this->api->create_product(
+			$shop,
+			array(
+				'title'             => 'Merch Dashboard preview (temporary)',
+				'description'       => 'Made for a preview of a draft and deleted soon after. Never published.',
+				'blueprint_id'      => $blueprint,
+				'print_provider_id' => $producer,
+				'variants'          => array(
+					array(
+						'id'         => (int) $variant,
+						'price'      => 10000,
+						'is_enabled' => true,
+					),
+				),
+				'print_areas'       => array(
+					array(
+						'variant_ids'  => array( (int) $variant ),
+						'placeholders' => $places,
+					),
+				),
+			)
+		);
+
+		set_transient( self::PREVIEW . $id, array_merge( $state, array( 'uploads' => $uploads, 'key' => $shop . ':' . (string) $product['id'] ) ), HOUR_IN_SECONDS ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+	}
+
+	/**
+	 * A preview's state and, once Printify lists them, the chosen views (all
+	 * without a choice) in the first colour, at most PREVIEW_IMAGES, as data
+	 * URLs: the dashboard's CSP takes no other host, and creators never see
+	 * Printify's address.
+	 *
+	 * @param int $id Draft version.
+	 * @return array{status: string, images: list<array{side: string, color: string, url: string}>}
+	 * @throws PrintifyException When Printify refuses or fails.
+	 * @throws DatabaseException When it cannot be read.
+	 */
+	public function preview( int $id ): array {
+		$state    = get_transient( self::PREVIEW . $id );
+		$version  = $this->products->version( $id );
+		$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
+
+		if ( ! is_array( $state ) || ! is_string( $state['key'] ?? null ) || null === $provider ) {
+			return array(
+				'status' => is_array( $state ) ? 'pending' : 'none',
+				'images' => array(),
+			);
+		}
+
+		[ $shop, $product ] = explode( ':', $state['key'], 2 ) + array( '', '' );
+
+		$color  = (string) ( $state['color'] ?? '' );
+		$photos = PrintifyCatalog::photos( $this->api->product( $shop, $product ), array( (string) ( $state['variant'] ?? '' ) => $color ) );
+		$chosen = is_array( $provider['printify_photos'] ?? null ) && array() !== $provider['printify_photos'] ? $provider['printify_photos'] : array_map( 'strval', array_keys( $photos ) );
+
+		if ( array() === $photos ) {
+			return array(
+				'status' => time() - (int) ( $state['started'] ?? 0 ) > self::PREVIEW_WAIT ? 'failed' : 'pending',
+				'images' => array(),
+			);
+		}
+
+		$images = array();
+
+		foreach ( $photos as $name => $by_color ) {
+			if ( count( $images ) >= self::PREVIEW_IMAGES || ! in_array( (string) $name, $chosen, true ) || ! is_string( $by_color[ $color ] ?? null ) ) {
+				continue;
+			}
+
+			$bytes = $this->api->image( $by_color[ $color ] );
+			$info  = getimagesizefromstring( $bytes );
+
+			if ( is_array( $info ) && in_array( $info['mime'], array( 'image/jpeg', 'image/png' ), true ) ) {
+				$images[] = array(
+					'side'  => self::TASK_SIDE,
+					'color' => $color,
+					'url'   => 'data:' . $info['mime'] . ';base64,' . base64_encode( $bytes ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- An image for the dashboard's CSP.
+				);
+			}
+		}
+
+		return array(
+			'status' => array() === $images ? 'failed' : 'done',
+			'images' => $images,
+		);
+	}
+
+	/**
+	 * The job: PREVIEW_KEEP seconds after a start, deletes that preview's
+	 * product and archives its uploads, leaving a newer preview of the draft
+	 * alone. Never throws.
+	 *
+	 * @param mixed $version_id Draft version.
+	 * @param mixed $started    When the preview started.
+	 */
+	public function clean_preview( mixed $version_id, mixed $started = 0 ): void {
+		$id    = is_numeric( $version_id ) ? (int) $version_id : 0;
+		$state = $id > 0 ? get_transient( self::PREVIEW . $id ) : false;
+
+		if ( is_array( $state ) && (int) ( $state['started'] ?? 0 ) === ( is_numeric( $started ) ? (int) $started : -1 ) ) {
+			$this->forget_preview( $id );
+		}
+	}
+
+	/**
+	 * Removes a draft's preview at Printify; never throws.
+	 *
+	 * @param int $id Draft version.
+	 */
+	private function forget_preview( int $id ): void {
+		$state = get_transient( self::PREVIEW . $id );
+
+		if ( ! is_array( $state ) ) {
+			return;
+		}
+
+		delete_transient( self::PREVIEW . $id );
+		$this->forget(
+			array(
+				'id'       => 0,
+				'task_key' => is_string( $state['key'] ?? null ) ? $state['key'] : '',
+				'result'   => (string) wp_json_encode( array( 'uploads' => is_array( $state['uploads'] ?? null ) ? $state['uploads'] : array() ) ),
+			)
+		);
 	}
 
 	/**
@@ -551,7 +774,10 @@ class PrintifyMockups {
 		}
 
 		try {
-			$this->tasks->update( (int) $task['id'], array( 'result' => (string) wp_json_encode( array_merge( is_array( $result ) ? $result : array(), array( 'forgotten' => true ) ) ) ) );
+			// A preview has no task row.
+			if ( (int) ( $task['id'] ?? 0 ) > 0 ) {
+				$this->tasks->update( (int) $task['id'], array( 'result' => (string) wp_json_encode( array_merge( is_array( $result ) ? $result : array(), array( 'forgotten' => true ) ) ) ) );
+			}
 		} catch ( Throwable ) {
 			// Deleting twice does no harm.
 			$this->logger->warning( 'A Printify task could not be marked as cleaned up.', array( 'task_id' => (int) $task['id'] ) );

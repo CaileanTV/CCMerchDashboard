@@ -41,6 +41,8 @@ use MerchBoard\Modules\ProductDesigner\Providers\GelatoMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintfulMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\PreviewQuota;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintifyException;
+use MerchBoard\Modules\ProductDesigner\Providers\PrintifyMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiException;
 use MerchBoard\Modules\ProductDesigner\Providers\ProdigiMockups;
 use MerchBoard\Modules\ProductDesigner\ThreadPacks;
@@ -103,6 +105,7 @@ final class MeDesignerController extends RestController {
 	 * @param ProdigiMockups|null       $prodigi     Prodigi's mockups (the preview, ADR-102).
 	 * @param PreviewQuota|null         $quota       Previews per creator a day (ADR-116); null for none.
 	 * @param GelatoMockups|null        $gelato      Gelato's preview of a draft (ADR-119); null for none.
+	 * @param PrintifyMockups|null      $printify    Printify's preview of a draft (ADR-122); null for none.
 	 */
 	public function __construct(
 		private CreatorContext $context,
@@ -119,7 +122,8 @@ final class MeDesignerController extends RestController {
 		private ?PrintfulMockups $mockups = null,
 		private ?ProdigiMockups $prodigi = null,
 		private ?PreviewQuota $quota = null,
-		private ?GelatoMockups $gelato = null
+		private ?GelatoMockups $gelato = null,
+		private ?PrintifyMockups $printify = null
 	) {
 		parent::__construct( $logger );
 	}
@@ -666,7 +670,7 @@ final class MeDesignerController extends RestController {
 					$previewer->start_preview( (int) $draft['id'] );
 				} catch ( DesignerException $e ) {
 					return self::refused( $e );
-				} catch ( PrintfulException | ProdigiException | GelatoException $e ) {
+				} catch ( PrintfulException | ProdigiException | GelatoException | PrintifyException $e ) {
 					return self::refused( new DesignerException( self::rate_limited( $e ) ? DesignerException::PREVIEW_BUSY : DesignerException::PREVIEW_FAILED ) );
 				}
 
@@ -690,7 +694,7 @@ final class MeDesignerController extends RestController {
 					$state                 = $previewer->preview( (int) $draft['id'] );
 				} catch ( DesignerException $e ) {
 					return self::refused( $e );
-				} catch ( PrintfulException | ProdigiException | GelatoException $e ) {
+				} catch ( PrintfulException | ProdigiException | GelatoException | PrintifyException $e ) {
 					if ( self::rate_limited( $e ) ) {
 						return new WP_REST_Response(
 							array(
@@ -712,10 +716,10 @@ final class MeDesignerController extends RestController {
 	/**
 	 * Whether a provider asked us to wait.
 	 *
-	 * @param PrintfulException|ProdigiException|GelatoException $e The refusal.
+	 * @param PrintfulException|ProdigiException|GelatoException|PrintifyException $e The refusal.
 	 */
-	private static function rate_limited( PrintfulException|ProdigiException|GelatoException $e ): bool {
-		return in_array( $e->reason(), array( PrintfulException::RATE_LIMITED, ProdigiException::RATE_LIMITED, GelatoException::RATE_LIMITED ), true );
+	private static function rate_limited( PrintfulException|ProdigiException|GelatoException|PrintifyException $e ): bool {
+		return in_array( $e->reason(), array( PrintfulException::RATE_LIMITED, ProdigiException::RATE_LIMITED, GelatoException::RATE_LIMITED, PrintifyException::RATE_LIMITED ), true );
 	}
 
 	/**
@@ -724,8 +728,8 @@ final class MeDesignerController extends RestController {
 	 *
 	 * @param BaseProduct $base Base product.
 	 */
-	private function previewer( BaseProduct $base ): PrintfulMockups|ProdigiMockups|GelatoMockups|null {
-		foreach ( array( $this->mockups, $this->prodigi, $this->gelato ) as $previewer ) {
+	private function previewer( BaseProduct $base ): PrintfulMockups|ProdigiMockups|GelatoMockups|PrintifyMockups|null {
+		foreach ( array( $this->mockups, $this->prodigi, $this->gelato, $this->printify ) as $previewer ) {
 			if ( null !== $previewer && $previewer->can_preview( $base ) ) {
 				return $previewer;
 			}
@@ -739,7 +743,7 @@ final class MeDesignerController extends RestController {
 	 *
 	 * @param Creator $creator The creator.
 	 * @param int     $id      Designer product.
-	 * @return array{0: array<string, mixed>, 1: PrintfulMockups|ProdigiMockups|GelatoMockups, 2: BaseProduct}
+	 * @return array{0: array<string, mixed>, 1: PrintfulMockups|ProdigiMockups|GelatoMockups|PrintifyMockups, 2: BaseProduct}
 	 * @throws DesignerException When there is none or it cannot be previewed.
 	 */
 	private function preview_draft( Creator $creator, int $id ): array {
