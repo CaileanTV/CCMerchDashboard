@@ -484,7 +484,7 @@ final class PrintifyTest extends IntegrationTestCase {
 			}
 		}
 
-		self::assertNotContains( 'https://images-api.printify.com/mockup/' . self::BLANK . '/32870/103/a.jpg?camera_label=size-chart', array_column( $this->calls, 1 ), 'A size chart is no photo.' );
+		self::assertNotContains( self::photo( self::BLANK, 32870, 103, 'size-chart' ), array_column( $this->calls, 1 ), 'A size chart is no photo.' );
 	}
 
 	public function test_a_failed_import_deletes_its_temporary_products_too(): void {
@@ -615,7 +615,9 @@ final class PrintifyTest extends IntegrationTestCase {
 	}
 
 	/**
-	 * A mockup's URL as Printify gives it.
+	 * A mockup's URL as Printify gives it. As on the Sky Water Bottle of
+	 * 2026-11-23, a camera has another id per colour and per product: only its
+	 * name is the same.
 	 *
 	 * @param string $product Product.
 	 * @param int    $variant Variant.
@@ -623,7 +625,9 @@ final class PrintifyTest extends IntegrationTestCase {
 	 * @param string $label   Camera label.
 	 */
 	private static function photo( string $product, int $variant, int $camera, string $label ): string {
-		return 'https://images-api.printify.com/mockup/' . $product . '/' . $variant . '/' . $camera . '/a.jpg?camera_label=' . $label;
+		$id = $camera * 100 + $variant % 100 + ( self::BLANK === $product ? 7 : 0 );
+
+		return 'https://images-api.printify.com/mockup/' . $product . '/' . $variant . '/' . $id . '/a.jpg?camera_label=' . $label;
 	}
 
 	/**

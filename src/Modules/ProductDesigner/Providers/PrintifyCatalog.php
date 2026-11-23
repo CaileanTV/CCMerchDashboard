@@ -28,8 +28,8 @@ defined( 'ABSPATH' ) || exit;
  * ADR-122: with a shop chosen, the import renders the product as Gelato's
  * does: a temporary product in that shop with a marker colour per side in the
  * first colour, and one with the transparent file in every colour. Their
- * mockups are keyed by Printify's camera (the same id on both products and in
- * every colour); ImageProbe measures each side's print area, and the colour
+ * mockups are keyed by Printify's camera name, which is the same on both
+ * products and in every colour (its id is not on every product); ImageProbe measures each side's print area, and the colour
  * codes are measured on the photos. forget() deletes the products when the
  * import is done, has failed or starts over; they are never published.
  *
@@ -543,9 +543,9 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 	}
 
 	/**
-	 * A render's photos by Printify's camera and colour key. The ones of a
-	 * placement come first, then the others, at most MAX_SLOTS; a size chart
-	 * is left out. Pending until Printify lists photos.
+	 * A render's photos by Printify's camera name (slot_of()) and colour key.
+	 * The ones of a placement come first, then the others, at most MAX_SLOTS
+	 * names; a size chart is left out. Pending until Printify lists photos.
 	 *
 	 * @param string               $key    `<shop>:<product>`.
 	 * @param array<string, mixed> $import Import data.
@@ -567,7 +567,13 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 		foreach ( is_array( $product['images'] ?? null ) ? $product['images'] : array() as $image ) {
 			$src = is_array( $image ) && is_string( $image['src'] ?? null ) ? $image['src'] : '';
 
-			if ( 1 !== preg_match( PrintifyApi::IMAGES, $src ) || 1 !== preg_match( '#/mockup/[0-9a-f]{24}/(\d{1,12})/(\d{1,12})/#', $src, $match ) || str_contains( $src, 'camera_label=' . self::SIZE_CHART ) ) {
+			if ( 1 !== preg_match( PrintifyApi::IMAGES, $src ) || 1 !== preg_match( '#/mockup/[0-9a-f]{24}/(\d{1,12})/(\d{1,12})/#', $src, $match ) ) {
+				continue;
+			}
+
+			$slot = self::slot_of( $src, $match[2] );
+
+			if ( self::SIZE_CHART === $slot ) {
 				continue;
 			}
 
@@ -583,9 +589,9 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 			}
 
 			if ( 'other' === ( $image['position'] ?? 'other' ) ) {
-				$others[ $match[2] ][ $color ] ??= $src;
+				$others[ $slot ][ $color ] ??= $src;
 			} else {
-				$placed[ $match[2] ][ $color ] ??= $src;
+				$placed[ $slot ][ $color ] ??= $src;
 			}
 		}
 
@@ -603,6 +609,25 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 			'images' => $images,
 			'note'   => count( $images ) . ' photos',
 		);
+	}
+
+	/**
+	 * A photo's slot: Printify's camera name (`camera_label`, e.g. `front`
+	 * or `context-1`), the same in every colour and on both products. The
+	 * camera's id is not: a water bottle has another id per colour. Without a
+	 * name, the id.
+	 *
+	 * @param string $src    The photo's URL.
+	 * @param string $camera The camera's id from its path.
+	 */
+	private static function slot_of( string $src, string $camera ): string {
+		$args = array();
+
+		parse_str( (string) wp_parse_url( $src, PHP_URL_QUERY ), $args );
+
+		$label = is_string( $args['camera_label'] ?? null ) ? substr( sanitize_key( $args['camera_label'] ), 0, 40 ) : '';
+
+		return '' !== $label ? $label : 'camera-' . $camera;
 	}
 
 	/**
