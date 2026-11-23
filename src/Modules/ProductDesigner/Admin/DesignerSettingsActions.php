@@ -178,6 +178,7 @@ final class DesignerSettingsActions {
 		$pdrop  = '1' === ( is_scalar( $input['prodigi_key_remove'] ?? null ) ? (string) $input['prodigi_key_remove'] : '' );
 		$ptoken = is_string( $input['printify_key'] ?? null ) ? $input['printify_key'] : '';
 		$pclear = '1' === ( is_scalar( $input['printify_key_remove'] ?? null ) ? (string) $input['printify_key_remove'] : '' );
+		$pshop  = is_string( $input['printify_shop'] ?? null ) ? $input['printify_shop'] : null;
 
 		// The keys first: a refused key changes nothing, not even the switches (review 30.15).
 		try {
@@ -205,6 +206,11 @@ final class DesignerSettingsActions {
 			} elseif ( null !== $this->printify && $pclear ) {
 				$this->printify->clear();
 				$changed[] = 'printify_key';
+			}
+
+			// A form without the field (an older page) keeps the shop.
+			if ( null !== $this->printify && null !== $pshop && $this->printify->set_shop( $pshop ) ) {
+				$changed[] = 'printify_shop';
 			}
 
 			if ( null !== $this->prodigi && $this->prodigi->set( $pkey ) ) {

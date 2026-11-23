@@ -56,6 +56,7 @@ final class DesignerSettingsSection {
 			DesignerException::GELATO_ACCOUNT => array( __( 'The Gelato settings were not saved: use the API key as Gelato shows it and the store id from the store\'s address (a UUID).', 'merchboard' ), 'error' ),
 			DesignerException::PRODIGI_KEY    => array( __( 'The Prodigi key was not saved: paste the API key as Prodigi\'s dashboard shows it (a sandbox key with sandbox_ before it).', 'merchboard' ), 'error' ),
 			DesignerException::PRINTIFY_KEY   => array( __( 'The Printify token was not saved: paste the whole access token as Printify shows it.', 'merchboard' ), 'error' ),
+			DesignerException::PRINTIFY_SHOP  => array( __( 'The Printify shop was not saved: use the digits of the shop\'s id from its address in Printify.', 'merchboard' ), 'error' ),
 			DesignerException::THREAD_PACK    => array( __( 'The embroidery pack was not saved: it needs a name and at least one thread, each thread a unique code, a name and a colour, and a limit between 1 and the number of threads.', 'merchboard' ), 'error' ),
 			DesignerException::THREAD_PACK_IN_USE => array( __( 'A base product uses this embroidery pack, so it cannot be deleted.', 'merchboard' ), 'error' ),
 			'pack_deleted'                    => array( __( 'The embroidery pack was deleted.', 'merchboard' ), 'success' ),
@@ -113,7 +114,7 @@ final class DesignerSettingsSection {
 			Settings::PRINTIFY_ENABLED => array(
 				__( 'Printify', 'merchboard' ),
 				__( 'Use Printify\'s catalog for base products', 'merchboard' ),
-				__( 'Off by default. Only the catalog is read: products with their colours, sizes and print areas. Nothing is sent to Printify, and it makes neither mockups nor orders.', 'merchboard' ),
+				__( 'Off by default. The catalog gives products with their colours, sizes and print areas. With a shop for photos, an import makes a temporary product there for the photos and deletes it again. Nothing is published and no orders are made.', 'merchboard' ),
 				Settings::printify_enabled(),
 			),
 		);
@@ -236,7 +237,12 @@ final class DesignerSettingsSection {
 			echo '<br><label><input type="checkbox" name="printify_key_remove" value="1"> ' . esc_html__( 'Remove the stored token', 'merchboard' ) . '</label>';
 		}
 
-		echo '<p class="description">' . esc_html__( 'A personal access token from Printify (My Profile → Connections) with the scopes catalog.read and print_providers.read. It is stored encrypted and never shown again; leave the field empty to keep the stored one. A token is valid for one year.', 'merchboard' ) . '</p></td></tr>';
+		echo '<p class="description">' . esc_html__( 'A personal access token from Printify (My Profile → Connections) with the scopes catalog.read and print_providers.read, and for photos also products.read, products.write, uploads.read and uploads.write. It is stored encrypted and never shown again; leave the field empty to keep the stored one. A token is valid for one year.', 'merchboard' ) . '</p></td></tr>';
+
+		// ADR-122: the shop for the import's temporary products.
+		echo '<tr><th scope="row"><label for="merchboard-printify-shop">' . esc_html__( 'Printify shop for photos', 'merchboard' ) . '</label></th><td>';
+		echo '<input type="text" id="merchboard-printify-shop" name="printify_shop" value="' . esc_attr( null !== $this->printify ? $this->printify->shop() : '' ) . '" class="regular-text" inputmode="numeric" pattern="\d{1,12}" autocomplete="off">';
+		echo '<p class="description">' . esc_html__( 'The id of an empty shop in Printify, from its address (printify.com/app/store/<id>/…). An import then makes a temporary product there, takes one photo per colour and side and measures the print areas, and deletes the product again; it is never published. Use a shop that is not connected to a store. Without a shop, an import gives white sheets for your own photos.', 'merchboard' ) . '</p></td></tr>';
 	}
 
 	/**

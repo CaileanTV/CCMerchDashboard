@@ -1,6 +1,6 @@
 <?php
 /**
- * The Printify API (the catalog only).
+ * The Printify API (the catalog, and temporary products for photos).
  *
  * @package MerchBoard
  */
@@ -17,17 +17,19 @@ use WP_Error;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * ADR-087: the only Printify calls Merch Dashboard makes, all `GET` on
+ * ADR-087 and ADR-122: the only Printify calls Merch Dashboard makes, on
  * `https://api.printify.com/v1` with the token as a bearer token:
  *
- * - `/catalog/blueprints.json` and `/catalog/blueprints/{id}.json`;
- * - `/catalog/blueprints/{id}/print_providers.json`;
- * - `/catalog/blueprints/{id}/print_providers/{id}/variants.json`;
- * - `/catalog/print_providers.json` and `/catalog/print_providers/{id}.json`;
- * - a product's picture on `https://images.printify.com`, without the token.
+ * - `GET /catalog/blueprints.json` and `/catalog/blueprints/{id}.json`;
+ * - `GET /catalog/blueprints/{id}/print_providers.json`;
+ * - `GET /catalog/blueprints/{id}/print_providers/{id}/variants.json`;
+ * - `GET /catalog/print_providers.json` and `/catalog/print_providers/{id}.json`;
+ * - `POST /uploads/images.json` (a marker or the transparent file);
+ * - `POST /shops/{id}/products.json`, `GET` and `DELETE`
+ *   `/shops/{id}/products/{id}.json`: a temporary product, never published;
+ * - a picture or mockup on Printify's image hosts, without the token.
  *
- * Never products, uploads, mockups, orders or webhooks: the token needs no
- * more than `catalog.read` and `print_providers.read`. Every call uses
+ * Never publishing, orders or webhooks. Every call uses
  * `wp_safe_remote_*` with no redirects; the HTTP function can be replaced in
  * tests. A 429 throws RATE_LIMITED; a refused call names the call and
  * Printify's own message. Nothing runs while Printify is switched off or has
@@ -55,7 +57,22 @@ class PrintifyApi {
 	/**
 	 * The address of a product's picture.
 	 */
-	public const IMAGES = '#^https://images\.printify\.com/[A-Za-z0-9/_.-]{1,200}$#';
+	public const IMAGES = '#^https://images(?:-api)?\.printify\.com/[A-Za-z0-9/_.-]{1,200}(?:\?[A-Za-z0-9=&_.%-]{1,200})?$#';
+
+	/**
+	 * A shop's id.
+	 */
+	public const SHOP = '/^\d{1,12}$/';
+
+	/**
+	 * A product's or an upload's id.
+	 */
+	private const ID = '/^[0-9a-f]{24}$/';
+
+	/**
+	 * The largest file uploaded (a marker is a few kB).
+	 */
+	private const MAX_UPLOAD = 1048576;
 
 	/**
 	 * The HTTP call: (method, url, args) → WordPress response or WP_Error.
@@ -169,6 +186,77 @@ class PrintifyApi {
 	}
 
 	/**
+	 * Uploads a PNG. Printify gives the same id for the same bytes.
+	 *
+	 * @param string $name File name.
+	 * @param string $png  Bytes.
+	 * @return string The upload's id.
+	 * @throws PrintifyException When the call fails or the answer has no id.
+	 */
+	public function upload( string $name, string $png ): string {
+		if ( '' === $png || strlen( $png ) > self::MAX_UPLOAD || 1 !== preg_match( '/^[a-z0-9-]{1,60}\.png$/', $name ) ) {
+			self::fail( PrintifyException::INVALID );
+		}
+
+		$answer = $this->call(
+			'/uploads/images.json',
+			'POST',
+			array(
+				'file_name' => $name,
+				'contents'  => base64_encode( $png ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Printify takes the file as base64.
+			)
+		);
+
+		return self::id_of( $answer, 'POST /uploads/images.json' );
+	}
+
+	/**
+	 * Creates a product in a shop. It is never published.
+	 *
+	 * @param string       $shop    Shop.
+	 * @param array<mixed> $product Title, description, blueprint, producer, variants and print areas.
+	 * @return array<mixed> The product with its `id` and `images`.
+	 * @throws PrintifyException When the call fails or the answer has no id.
+	 */
+	public function create_product( string $shop, array $product ): array {
+		$path   = '/shops/' . self::shop_of( $shop ) . '/products.json';
+		$answer = $this->call( $path, 'POST', $product );
+
+		self::id_of( $answer, 'POST ' . $path );
+
+		return $answer;
+	}
+
+	/**
+	 * A product of a shop.
+	 *
+	 * @param string $shop Shop.
+	 * @param string $id   Product.
+	 * @return array<mixed>
+	 * @throws PrintifyException When the call fails.
+	 */
+	public function product( string $shop, string $id ): array {
+		return $this->call( '/shops/' . self::shop_of( $shop ) . '/products/' . self::checked( $id ) . '.json' );
+	}
+
+	/**
+	 * Deletes a product of a shop; one already gone counts as deleted.
+	 *
+	 * @param string $shop Shop.
+	 * @param string $id   Product.
+	 * @throws PrintifyException When the call fails.
+	 */
+	public function delete_product( string $shop, string $id ): void {
+		try {
+			$this->call( '/shops/' . self::shop_of( $shop ) . '/products/' . self::checked( $id ) . '.json', 'DELETE' );
+		} catch ( PrintifyException $e ) {
+			if ( PrintifyException::NOT_FOUND !== $e->reason() ) {
+				throw $e;
+			}
+		}
+	}
+
+	/**
 	 * The producers of a product (`id`, `title`).
 	 *
 	 * @param int $blueprint Product.
@@ -195,39 +283,46 @@ class PrintifyApi {
 	}
 
 	/**
-	 * Reads from the API and returns its JSON.
+	 * Calls the API and returns its JSON (an empty answer to a DELETE as an
+	 * empty array).
 	 *
-	 * @param string $path Path (one of the approved endpoints).
+	 * @param string            $path   Path (one of the approved endpoints).
+	 * @param string            $method GET, POST or DELETE.
+	 * @param array<mixed>|null $body   JSON body.
 	 * @return array<mixed>
 	 * @throws PrintifyException When the call fails.
 	 */
-	private function call( string $path ): array {
+	private function call( string $path, string $method = 'GET', ?array $body = null ): array {
 		if ( ! $this->available() ) {
 			self::fail( PrintifyException::NOT_CONFIGURED );
 		}
 
-		$response = ( $this->http )(
-			'GET',
-			self::BASE . $path,
-			array(
-				'timeout'             => self::TIMEOUT,
-				'redirection'         => 0,
-				'user-agent'          => self::USER_AGENT,
-				'limit_response_size' => self::MAX_ANSWER,
-				'headers'             => array(
-					'Authorization' => 'Bearer ' . (string) $this->account->token(),
-					'Accept'        => 'application/json',
-				),
-			)
+		$args = array(
+			'timeout'             => self::TIMEOUT,
+			'redirection'         => 0,
+			'user-agent'          => self::USER_AGENT,
+			'limit_response_size' => self::MAX_ANSWER,
+			'headers'             => array(
+				'Authorization' => 'Bearer ' . (string) $this->account->token(),
+				'Accept'        => 'application/json',
+			),
 		);
-		$call     = 'GET ' . $path;
+
+		if ( null !== $body ) {
+			$args['headers']['Content-Type'] = 'application/json;charset=utf-8';
+			$args['body']                    = (string) wp_json_encode( $body );
+		}
+
+		$response = ( $this->http )( $method, self::BASE . $path, $args );
+		$call     = $method . ' ' . $path;
 
 		if ( $response instanceof WP_Error ) {
 			self::fail( PrintifyException::FAILED, $call );
 		}
 
 		$status  = (int) wp_remote_retrieve_response_code( $response );
-		$decoded = json_decode( wp_remote_retrieve_body( $response ), true );
+		$raw     = wp_remote_retrieve_body( $response );
+		$decoded = 'DELETE' === $method && '' === trim( $raw ) ? array() : json_decode( $raw, true );
 		$detail  = self::detail( $status, $decoded );
 
 		if ( 429 === $status ) {
@@ -249,6 +344,51 @@ class PrintifyApi {
 		}
 
 		return $decoded;
+	}
+
+	/**
+	 * The id of a created product or upload.
+	 *
+	 * @param array<mixed> $answer The answer.
+	 * @param string       $call   The call.
+	 * @throws PrintifyException When it has none.
+	 */
+	private static function id_of( array $answer, string $call ): string {
+		$id = is_string( $answer['id'] ?? null ) ? $answer['id'] : '';
+
+		if ( 1 !== preg_match( self::ID, $id ) ) {
+			self::fail( PrintifyException::FAILED, $call, 'no id' );
+		}
+
+		return $id;
+	}
+
+	/**
+	 * A product's id, checked.
+	 *
+	 * @param string $id Id.
+	 * @throws PrintifyException When it is not one.
+	 */
+	private static function checked( string $id ): string {
+		if ( 1 !== preg_match( self::ID, $id ) ) {
+			self::fail( PrintifyException::INVALID );
+		}
+
+		return $id;
+	}
+
+	/**
+	 * A shop's id, checked.
+	 *
+	 * @param string $shop Shop.
+	 * @throws PrintifyException When it is not one.
+	 */
+	private static function shop_of( string $shop ): string {
+		if ( 1 !== preg_match( self::SHOP, $shop ) ) {
+			self::fail( PrintifyException::NOT_CONFIGURED );
+		}
+
+		return $shop;
 	}
 
 	/**

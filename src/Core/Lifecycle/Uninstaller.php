@@ -313,6 +313,7 @@ final class Uninstaller {
 		delete_option( MetaCatalogExclusion::OPTION );
 		delete_option( BrandingDesign::OPTION );
 		delete_option( PrintifyAccount::TOKEN_OPTION );
+		delete_option( PrintifyAccount::SHOP_OPTION );
 		delete_transient( KickWebhookVerifier::KEY_TRANSIENT );
 		delete_transient( AlertFonts::CATALOG_KEY );
 		delete_transient( Installer::FAILURE_TRANSIENT );

@@ -29,6 +29,11 @@ class PrintifyAccount {
 	public const TOKEN_OPTION = 'merchboard_designer_printify_token';
 
 	/**
+	 * The shop for the import's temporary products (ADR-122), not secret.
+	 */
+	public const SHOP_OPTION = 'merchboard_designer_printify_shop';
+
+	/**
 	 * A token: letters, digits, `.`, `_` and `-`, up to Printify's 3,000 characters.
 	 */
 	private const TOKEN_PATTERN = '/^[A-Za-z0-9._-]{20,3000}$/';
@@ -124,6 +129,58 @@ class PrintifyAccount {
 				delete_option( self::TOKEN_OPTION );
 			}
 		);
+	}
+
+	/**
+	 * The shop for the import's temporary products, or '' (ADR-122): without
+	 * one, an import gives white sheets for the company's own photos.
+	 */
+	public function shop(): string {
+		$stored = get_option( self::SHOP_OPTION, '' );
+
+		return is_string( $stored ) && 1 === preg_match( PrintifyApi::SHOP, $stored ) ? $stored : '';
+	}
+
+	/**
+	 * Stores the shop ('' removes it), audited with its id.
+	 *
+	 * @param string $shop The shop's id from Printify.
+	 * @return bool Whether something changed.
+	 * @throws DesignerException When the user may not or the id is not one.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_shop( string $shop ): bool {
+		self::authorize();
+		$shop = trim( $shop );
+
+		if ( $shop === $this->shop() ) {
+			return false;
+		}
+
+		if ( '' !== $shop && 1 !== preg_match( PrintifyApi::SHOP, $shop ) ) {
+			self::refuse( DesignerException::PRINTIFY_SHOP );
+		}
+
+		$this->transaction->run(
+			function () use ( $shop ): void {
+				$this->audit->record(
+					AuditAction::SettingsUpdated,
+					null,
+					array(
+						'setting' => 'printify_shop',
+						'value'   => '' === $shop ? 'removed' : $shop,
+					)
+				);
+
+				if ( '' === $shop ) {
+					delete_option( self::SHOP_OPTION );
+				} else {
+					update_option( self::SHOP_OPTION, $shop, false );
+				}
+			}
+		);
+
+		return true;
 	}
 
 	/**
