@@ -109,6 +109,13 @@ export class FabricStage {
 
 	private resolverKey = '';
 
+	/**
+	 * While the objects are drawn again: clearing the selection then is no
+	 * choice of the user's, and an object whose picture is not loaded yet
+	 * (a clipart's atlas, ADR-121) keeps its selection until it is drawn.
+	 */
+	private redrawing = false;
+
 	private fonts = 0;
 
 	private generation = 0;
@@ -138,9 +145,11 @@ export class FabricStage {
 		this.canvas.on( 'text:changed', () => this.report() );
 		this.canvas.on( 'selection:created', () => this.selected() );
 		this.canvas.on( 'selection:updated', () => this.selected() );
-		this.canvas.on( 'selection:cleared', () =>
-			this.callbacks.onSelect( null )
-		);
+		this.canvas.on( 'selection:cleared', () => {
+			if ( ! this.redrawing ) {
+				this.callbacks.onSelect( null );
+			}
+		} );
 		this.canvas.on( 'object:scaling', ( event ) =>
 			this.measure( event.target )
 		);
@@ -261,7 +270,14 @@ export class FabricStage {
 			return;
 		}
 
-		this.canvas.discardActiveObject();
+		this.redrawing = true;
+
+		try {
+			this.canvas.discardActiveObject();
+		} finally {
+			this.redrawing = false;
+		}
+
 		this.canvas.remove( ...this.canvas.getObjects() );
 
 		if ( background !== null ) {

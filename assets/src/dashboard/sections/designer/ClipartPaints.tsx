@@ -4,7 +4,8 @@
  * when it has one. Its stroke never changes, so it is not offered. Dragging
  * in a colour field or changing the angle is one undo step.
  */
-import { useId } from '@wordpress/element';
+import { useEffect, useId, useRef } from '@wordpress/element';
+import type { RefObject } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 
 import type {
@@ -85,6 +86,56 @@ export function asGradient(
 }
 
 /**
+ * One undo step for a field that changes while it is used (a colour being
+ * dragged, an angle being typed): it starts at the first change, not at
+ * focus, which some browsers never give a clicked field, and ends when the
+ * field is left, its value is committed or it goes away.
+ *
+ * @param onBegin A change that goes on starts.
+ * @param onEnd   It ends.
+ * @return The field's ref and what to call on each live change.
+ */
+function useLiveStep< T extends HTMLInputElement >(
+	onBegin: () => void,
+	onEnd: () => void
+): { readonly ref: RefObject< T | null >; readonly changing: () => void } {
+	const ref = useRef< T | null >( null );
+	const open = useRef( false );
+	const calls = useRef( { onBegin, onEnd } );
+	calls.current = { onBegin, onEnd };
+
+	useEffect( () => {
+		const field = ref.current;
+		const end = (): void => {
+			if ( open.current ) {
+				open.current = false;
+				calls.current.onEnd();
+			}
+		};
+
+		// The native change event: the picker closed or the value was committed.
+		field?.addEventListener( 'change', end );
+		field?.addEventListener( 'blur', end );
+
+		return () => {
+			field?.removeEventListener( 'change', end );
+			field?.removeEventListener( 'blur', end );
+			end();
+		};
+	}, [] );
+
+	return {
+		ref,
+		changing: () => {
+			if ( ! open.current ) {
+				open.current = true;
+				calls.current.onBegin();
+			}
+		},
+	};
+}
+
+/**
  * One colour: the palette's swatches, or a free colour field.
  *
  * @param props            Props.
@@ -106,6 +157,7 @@ function ColorChoice( props: {
 	readonly onEnd: () => void;
 } ) {
 	const id = useId();
+	const step = useLiveStep< HTMLInputElement >( props.onBegin, props.onEnd );
 
 	if ( props.palette !== null ) {
 		return (
@@ -139,12 +191,12 @@ function ColorChoice( props: {
 			<input
 				id={ id }
 				type="color"
+				ref={ step.ref }
 				value={ props.value }
-				onFocus={ props.onBegin }
-				onBlur={ props.onEnd }
-				onChange={ ( event ) =>
-					props.onChange( event.target.value.toLowerCase(), true )
-				}
+				onChange={ ( event ) => {
+					step.changing();
+					props.onChange( event.target.value.toLowerCase(), true );
+				} }
 			/>
 		</div>
 	);
@@ -178,6 +230,10 @@ function PartPaint( props: {
 	const { part, paint, palette } = props;
 	const kindId = useId();
 	const angleId = useId();
+	const angleStep = useLiveStep< HTMLInputElement >(
+		props.onBegin,
+		props.onEnd
+	);
 	const name = partName( part, props.index );
 	const shown = props.gradients ? paint : asSolid( paint, part );
 
@@ -255,15 +311,15 @@ function PartPaint( props: {
 							min={ 0 }
 							max={ 359 }
 							step={ 1 }
+							ref={ angleStep.ref }
 							value={ shown.angle }
-							onFocus={ props.onBegin }
-							onBlur={ props.onEnd }
 							onChange={ ( event ) => {
 								const angle = Math.round(
 									Number( event.target.value )
 								);
 
 								if ( Number.isFinite( angle ) ) {
+									angleStep.changing();
 									props.onChange(
 										{
 											...shown,

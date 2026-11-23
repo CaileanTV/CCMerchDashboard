@@ -92,6 +92,24 @@ function type( field: HTMLInputElement | HTMLSelectElement, value: string ) {
 	} );
 }
 
+/**
+ * Moves a field's value as dragging in a picker does: input events only.
+ *
+ * @param field The field.
+ * @param value The value.
+ */
+function drag( field: HTMLInputElement, value: string ) {
+	const setter = Object.getOwnPropertyDescriptor(
+		HTMLInputElement.prototype,
+		'value'
+	)?.set;
+
+	act( () => {
+		setter?.call( field, value );
+		field.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+	} );
+}
+
 describe( 'the paints of a clipart', () => {
 	it( 'names each part by its layer, or by its number', () => {
 		const { container } = render();
@@ -131,6 +149,37 @@ describe( 'the paints of a clipart', () => {
 			true
 		);
 		expect( onEnd ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	it( 'starts the undo step at the first change, without focus', () => {
+		const { container, onChange, onBegin, onEnd, root } = render();
+		const field = container.querySelector< HTMLInputElement >(
+			'input[type="color"]'
+		)!;
+
+		// Dragging in the picker: input events only.
+		drag( field, '#111111' );
+		drag( field, '#222222' );
+
+		expect( onBegin ).toHaveBeenCalledTimes( 1 );
+		expect( onEnd ).not.toHaveBeenCalled();
+		expect( onChange ).toHaveBeenLastCalledWith(
+			[ { type: 'solid', color: '#222222' }, WHITE ],
+			true
+		);
+
+		// The picker closes: the native change event ends it.
+		act( () => {
+			field.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+		} );
+		expect( onEnd ).toHaveBeenCalledTimes( 1 );
+
+		type( field, '#333333' );
+		expect( onBegin ).toHaveBeenCalledTimes( 2 );
+
+		// A step still open ends when the field goes away.
+		act( () => root.unmount() );
+		expect( onEnd ).toHaveBeenCalledTimes( 2 );
 	} );
 
 	it( 'offers only the palette when the clipart has one', () => {
