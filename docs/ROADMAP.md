@@ -1720,6 +1720,20 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - første forsøg fejlede med "ingen fotos af samme side", fordi kamera-id'et skifter pr. farve, og grænsen på 16 fotos skar den første farve væk;
     - rettet: fotos parres på kameraets navn, og grænsen tæller navne;
     - de midlertidige produkter blev slettet, og butikken var tom.
+  - Testpakke 2.5.1 fra 8bb29d0 (sha256 `cd0eb27d…`) på stg. Projektejeren fandt to mangler mere, som 57.9–57.13 retter. Pakken bygges igen i 57.13.
+- **57.9 Rundt print og mockups: plan og afprøvning 3** ✅ (projektejerens svar og godkendte plan 2026-11-23):
+  - flaskens printfelt er ét ark hele vejen rundt, men importen gav kun den del, forsidefotoet viser;
+  - admin skal kunne vælge, hvilke visninger (Front, Back, Left Side, Context 1 …) butikken viser;
+  - svar: Printify laver mockups af indsendte designs på et midlertidigt produkt, og et rundt print designes på et fladt ark;
+  - afprøvning 3 med et stribet ark på flasken: hele arket ligger rundt om flasken, upload med URL fra stg virker, kameranavnene er ens i alle farver, og butikken var tom bagefter.
+- **57.10 Rundt print på et ark** ✅ (7536c02): viser markøren kun en del af printfeltet, designes siden på et ark med hele printfeltet (som ADR-119's plakater). Farvekoderne måles stadig på fotoene.
+- **57.11 Valget "Mockups fra Printify"** ✅ (7536c02): et lille billede pr. visning på grundproduktet med afkrydsning. Intet valg betyder alle visninger.
+- **57.12 Mockups fra Printify af indsendte designs** 🔄: `PrintifyMockups`:
+  - printfilerne sendes som signerede URL'er til et midlertidigt produkt i de valgte farver;
+  - sidens egen visning erstatter browserens mockup, og de andre valgte visninger bliver miljøbilleder;
+  - godkendelsen venter, til fotoene er hentet;
+  - produktet slettes, og uploads arkiveres, også ved fejl.
+- **57.13 Tekster, docs, review, runtime-test på stg og ny testpakke 2.5.1.** Intet tag før projektejerens OK.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
