@@ -7333,7 +7333,10 @@ ADR-080, ADR-085, ADR-086, ADR-096, ADR-118
 2026-11-23
 
 ## Status
-Accepteret af projektejeren 2026-11-23 (version 2.5.1). Ændrer ADR-087 punkt 2 og 5. **Eksperimentel, indtil trin 57.2 har afprøvet kaldene med en rigtig nøgle.**
+Accepteret af projektejeren 2026-11-23 (version 2.5.1). Ændrer ADR-087 punkt 2 og 5. **Statusnote 2026-11-23:** afprøvet i trin 57.2 med projektejerens nøgle og butik. 6 produkter blev oprettet, og alle blev slettet igen. Afprøvningen førte til tre rettelser i punkt 2–4 nedenfor:
+- fotoene ligger på `images-api.printify.com`;
+- uploads gemmes;
+- butikken skrives som id.
 
 ## Context
 En import fra Printify gav kun navn, farver, størrelser og printmål. Hver side var et hvidt ark, hvor admin selv lagde fotos og tegnede printfeltet. Projektejeren vil have opsætningen helt automatisk, som hos Gelato og Printful.
@@ -7346,17 +7349,17 @@ Katalogets billeder (`/catalog/blueprints/{id}.json`) er en liste med 1–428 UR
    - én gang med en markørfarve pr. side i den første farve.
    
    Printfeltet måles ud fra markørerne, og farvekoderne måles på fotoene. Produktet udgives aldrig.
-2. **Oprydning.** Produkt-id'erne gemmes i importdata. Når importen er færdig, fejler eller startes forfra, slettes produkterne og uploads arkiveres. Det sker også efter en fejl undervejs.
+2. **Oprydning.** Produkt-id'erne gemmes i importdata. Når importen er færdig, fejler eller startes forfra, slettes produkterne, også efter en fejl undervejs. Uploads gemmes: Printify giver de samme få filer (en markør pr. farve og den gennemsigtige) samme id hver gang.
 3. **Tilladte kald** ud over ADR-087:
-   - `GET /shops.json`;
-   - `POST /uploads/images.json` og `POST /uploads/{id}/archive.json`;
+   - `POST /uploads/images.json`;
    - `POST`, `GET` og `DELETE` på `/shops/{id}/products…`;
-   - mockup-fotos fra `https://images.printify.com`.
+   - mockup-fotos fra `https://images-api.printify.com`.
    
    Stadig ingen udgivelse, ordrer eller webhooks.
-4. **Nøgle og butik.** Nøglen skal også have `shops.read`, `products.read`, `products.write`, `uploads.read` og `uploads.write`. Butikken vælges på siden "Printify" og gemmes i `merchboard_designer_printify_shop` uden autoload. Uden valgt butik importeres som før med hvide ark.
+4. **Nøgle og butik.** Nøglen skal også have `shops.read`, `products.read`, `products.write`, `uploads.read` og `uploads.write`. Butikkens id skrives under Indstillinger → Produktdesigner ved siden af nøglen, som Gelatos butik, og gemmes i `merchboard_designer_printify_shop` uden autoload. Uden valgt butik importeres som før med hvide ark.
 5. **Sider uden foto.** En side, som Printifys fotos ikke viser (fx et ærme), springes over med den samme besked som hos de andre tjenester.
 6. **Navnet.** Fotoene bliver baggrunde, som creators og kunder ser. Filnavne og tekster nævner aldrig Printify for dem.
+7. **Én form.** Én tegning viser én størrelse. Har størrelsernes printfelter forskellig form (ADR-087, statusnote 2026-11-02), giver importen derfor hvide ark som før.
 
 ## Alternatives considered
 - **Kun katalogets billeder, valgt af admin:** kræver ingen skriveadgang, men printfeltet skal stadig tegnes i hånden. Fravalgt af projektejeren 2026-11-23.

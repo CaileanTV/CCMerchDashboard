@@ -4,6 +4,11 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+### Fase 57: fotos og printfelter fra Printify (ADR-122)
+
+- **Automatisk opsætning:** med en Printify-butik til fotos henter en import ét foto pr. farve og side og måler printfelter og farvekoder. Det sker via et midlertidigt produkt, som slettes igen og aldrig udgives.
+- **Indstilling:** feltet "Printify-butik til fotos" (audit `printify_shop`). Uden butik giver importen hvide ark som før.
+
 ## [2.5.0] - 2026-11-23
 
 Fase 55 og 56 (ADR-120, ADR-121). Schema-version 55 (migration 53–55). Fase 56 er reviewet og runtime-testet på Local; fase 55 er bygget og testet automatisk, men dens andet review og runtime-test er udsat efter projektejerens valg.

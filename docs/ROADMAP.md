@@ -1699,13 +1699,17 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
 
 **Projektejeren:** en ny nøgle med `shops.read`, `catalog.read`, `print_providers.read`, `products.read`, `products.write`, `uploads.read` og `uploads.write`, samt en butik til de midlertidige produkter.
 
-- **57.1 ADR-122 og ROADMAP** ✅.
-- **57.2 Afprøvning med den rigtige nøgle:** upload, gennemsigtig fil, én variant pr. farve, fotoenes form, sletning og oprydning. Venter på nøglen.
-- **57.3 API:** butikker, upload, opret, læs og slet produkt, arkivér upload.
-- **57.4 Butiksvalg** på siden "Printify".
-- **57.5 Printify som renderer** i importen, med målte printfelter og farvekoder.
-- **57.6 Oprydning:** midlertidige produkter slettes efter færdig, fejlet og ny import.
-- **57.7 Admin og tekster.**
+- **57.1 ADR-122 og ROADMAP** ✅ (a0df342).
+- **57.2 Afprøvning med den rigtige nøgle** ✅ (MerchBoard-r2-runtime/runs/2026-11-23-printify-fotos):
+  - projektejerens nye butik 29877825; 6 produkter oprettet og alle slettet igen;
+  - en gennemsigtig fil virker, men et produkt uden fil afvises;
+  - fotoene ligger på `images-api.printify.com`, og kamera-id'et er det samme på tværs af produkter og farver;
+  - markørerne dækker hele printfeltet.
+- **57.3 API** ✅ (8914520): upload, opret, læs og slet produkt. Uploads gemmes, fordi ens filer får samme id.
+- **57.4 Butiksvalg** ✅ (8914520): et felt til butikkens id under Indstillinger → Produktdesigner, som Gelatos butik, med audit.
+- **57.5 Printify som renderer** ✅ (3de0e46): i importen, med målte printfelter og farvekoder. Kun produkter med én form af printfelt.
+- **57.6 Oprydning** ✅ (3de0e46): midlertidige produkter slettes efter færdig, fejlet og ny import.
+- **57.7 Admin, tekster og docs** ✅ (ec2e84d og docs).
 - **57.8 Review, runtime-test på stg og testpakke 2.5.1.** Intet tag før projektejerens OK.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
