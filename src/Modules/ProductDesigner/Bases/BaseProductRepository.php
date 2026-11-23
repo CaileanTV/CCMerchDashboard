@@ -23,6 +23,11 @@ defined( 'ABSPATH' ) || exit;
  */
 class BaseProductRepository {
 
+	/**
+	 * A Printify camera's name, e.g. `front` or `context-1` (ADR-122).
+	 */
+	public const CAMERA = '/^[a-z0-9_-]{1,40}$/D';
+
 	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price, creator_note, size_prices, small_side_price, background_color, tag_ids';
 
 	/**
@@ -199,10 +204,12 @@ class BaseProductRepository {
 	 * the administrator turned it off), and from a Gelato template a thumbnail
 	 * of each of its images by position (`gelato_thumbs`, asset ids) and the
 	 * positions the administrator chose for mockups (`gelato_photos`; null
-	 * for all, ADR-119); null for an own base product.
+	 * for all, ADR-119), and from Printify a thumbnail of each camera by its
+	 * name (`printify_thumbs`) and the names chosen for mockups
+	 * (`printify_photos`; null for all, ADR-122); null for an own base product.
 	 *
 	 * @param int $id Id.
-	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, photos: list<string>, stitches: list<string>, techniques: array<string, string>, options: array<mixed>, axes: array<string, string>, uids: array<string, array<string, string>>, scenes: array<string, list<int>>, share_formats: bool, gelato_thumbs: array<string, int>, gelato_photos: list<int>|null}|null
+	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, photos: list<string>, stitches: list<string>, techniques: array<string, string>, options: array<mixed>, axes: array<string, string>, uids: array<string, array<string, string>>, scenes: array<string, list<int>>, share_formats: bool, gelato_thumbs: array<string, int>, gelato_photos: list<int>|null, printify_thumbs: array<string, int>, printify_photos: list<string>|null}|null
 	 * @throws DatabaseException When it cannot be read.
 	 */
 	public function provider( int $id ): ?array {
@@ -235,24 +242,44 @@ class BaseProductRepository {
 		$photos = $current && is_array( $decoded['photos'] ?? $decoded['styles'] ?? null ) ? ( $decoded['photos'] ?? $decoded['styles'] ) : array();
 
 		return array(
-			'source'        => (string) $row['source'],
-			'ref'           => $row['provider_ref'],
-			'placements'    => self::strings( $current ? $decoded['placements'] : $decoded ),
-			'variants'      => $variants,
-			'slots'         => self::strings( $current && is_array( $decoded['slots'] ?? null ) ? $decoded['slots'] : array() ),
-			'flat'          => $current && true === ( $decoded['flat'] ?? false ),
-			'photos'        => array_values( array_unique( array_diff( self::strings( $photos ), array( '0', '' ) ) ) ),
-			'stitches'      => array_values( self::strings( $current && is_array( $decoded['stitches'] ?? null ) ? $decoded['stitches'] : array() ) ),
-			'techniques'    => self::strings( $current && is_array( $decoded['techniques'] ?? null ) ? $decoded['techniques'] : array() ),
-			'options'       => $current && is_array( $decoded['options'] ?? null ) ? $decoded['options'] : array(),
+			'source'          => (string) $row['source'],
+			'ref'             => $row['provider_ref'],
+			'placements'      => self::strings( $current ? $decoded['placements'] : $decoded ),
+			'variants'        => $variants,
+			'slots'           => self::strings( $current && is_array( $decoded['slots'] ?? null ) ? $decoded['slots'] : array() ),
+			'flat'            => $current && true === ( $decoded['flat'] ?? false ),
+			'photos'          => array_values( array_unique( array_diff( self::strings( $photos ), array( '0', '' ) ) ) ),
+			'stitches'        => array_values( self::strings( $current && is_array( $decoded['stitches'] ?? null ) ? $decoded['stitches'] : array() ) ),
+			'techniques'      => self::strings( $current && is_array( $decoded['techniques'] ?? null ) ? $decoded['techniques'] : array() ),
+			'options'         => $current && is_array( $decoded['options'] ?? null ) ? $decoded['options'] : array(),
 			// The attribute names of a Gelato template's axes (ADR-115), e.g. "Orientation" and "Size".
-			'axes'          => array_filter( self::strings( $current && is_array( $decoded['axes'] ?? null ) ? $decoded['axes'] : array() ), static fn( string $name ): bool => '' !== $name ),
-			'uids'          => self::nested( $current && is_array( $decoded['uids'] ?? null ) ? $decoded['uids'] : array() ),
-			'scenes'        => self::positions( $current && is_array( $decoded['scenes'] ?? null ) ? $decoded['scenes'] : array() ),
-			'share_formats' => ! ( $current && false === ( $decoded['share_formats'] ?? true ) ),
-			'gelato_thumbs' => array_filter( array_map( static fn( mixed $id ): int => is_int( $id ) ? $id : 0, $current && is_array( $decoded['gelato_thumbs'] ?? null ) ? $decoded['gelato_thumbs'] : array() ) ),
-			'gelato_photos' => $current && is_array( $decoded['gelato_photos'] ?? null ) ? array_values( array_unique( array_filter( $decoded['gelato_photos'], static fn( mixed $n ): bool => is_int( $n ) && $n >= 0 && $n < 100 ) ) ) : null,
+			'axes'            => array_filter( self::strings( $current && is_array( $decoded['axes'] ?? null ) ? $decoded['axes'] : array() ), static fn( string $name ): bool => '' !== $name ),
+			'uids'            => self::nested( $current && is_array( $decoded['uids'] ?? null ) ? $decoded['uids'] : array() ),
+			'scenes'          => self::positions( $current && is_array( $decoded['scenes'] ?? null ) ? $decoded['scenes'] : array() ),
+			'share_formats'   => ! ( $current && false === ( $decoded['share_formats'] ?? true ) ),
+			'gelato_thumbs'   => array_filter( array_map( static fn( mixed $id ): int => is_int( $id ) ? $id : 0, $current && is_array( $decoded['gelato_thumbs'] ?? null ) ? $decoded['gelato_thumbs'] : array() ) ),
+			'gelato_photos'   => $current && is_array( $decoded['gelato_photos'] ?? null ) ? array_values( array_unique( array_filter( $decoded['gelato_photos'], static fn( mixed $n ): bool => is_int( $n ) && $n >= 0 && $n < 100 ) ) ) : null,
+			'printify_thumbs' => self::camera_thumbs( $current && is_array( $decoded['printify_thumbs'] ?? null ) ? $decoded['printify_thumbs'] : array() ),
+			'printify_photos' => $current && is_array( $decoded['printify_photos'] ?? null ) ? array_values( array_unique( array_filter( $decoded['printify_photos'], static fn( mixed $name ): bool => is_string( $name ) && 1 === preg_match( self::CAMERA, $name ) ) ) ) : null,
 		);
+	}
+
+	/**
+	 * Printify's thumbnails by camera name (ADR-122): asset id by name.
+	 *
+	 * @param array<mixed> $value Decoded JSON.
+	 * @return array<string, int>
+	 */
+	private static function camera_thumbs( array $value ): array {
+		$thumbs = array();
+
+		foreach ( $value as $name => $asset ) {
+			if ( is_int( $asset ) && $asset > 0 && 1 === preg_match( self::CAMERA, (string) $name ) ) {
+				$thumbs[ (string) $name ] = $asset;
+			}
+		}
+
+		return $thumbs;
 	}
 
 	/**
@@ -286,6 +313,19 @@ class BaseProductRepository {
 	 */
 	public function set_gelato_photos( int $id, array $positions ): void {
 		$this->set_template_field( $id, 'gelato_photos', $positions );
+	}
+
+	/**
+	 * Stores the names of Printify's cameras the administrator chose for mockups (ADR-122).
+	 *
+	 * @phpstan-param list<string> $names
+	 *
+	 * @param int      $id    Id.
+	 * @param string[] $names Camera names.
+	 * @throws DatabaseException When it cannot be read or stored.
+	 */
+	public function set_printify_photos( int $id, array $names ): void {
+		$this->set_template_field( $id, 'printify_photos', $names );
 	}
 
 	/**

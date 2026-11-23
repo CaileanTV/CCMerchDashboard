@@ -498,6 +498,19 @@ final class BaseProductsPage {
 			echo '</div><p class="description">' . esc_html__( 'Ticked photos are made with each design and shown in the shop. Unticked, the side keeps the image drawn by the designer and the environment is left out. Change the scenes in the Gelato template and import again to get others.', 'merchboard' ) . '</p></td></tr>';
 		}
 
+		// ADR-122: which of Printify's views make the mockups.
+		if ( null !== $gelato && PrintifyCatalog::SOURCE === $gelato['source'] && array() !== $gelato['printify_thumbs'] ) {
+			echo '<tr><th scope="row">' . esc_html__( 'Mockups from Printify', 'merchboard' ) . '</th><td><input type="hidden" name="printify_photos_shown" value="1"><div style="display:flex;flex-wrap:wrap;gap:12px">';
+
+			foreach ( $gelato['printify_thumbs'] as $camera => $asset ) {
+				$label = ucfirst( str_replace( array( '-', '_' ), ' ', (string) $camera ) );
+
+				echo '<label style="display:grid;gap:4px;justify-items:center;max-width:160px;text-align:center"><img src="' . esc_url( DesignerAssetDownload::url( $asset ) ) . '" alt="" style="width:140px;height:140px;object-fit:contain;border:1px solid #dcdcde;background:#fff"><span><input type="checkbox" name="printify_photos[]" value="' . esc_attr( (string) $camera ) . '"' . checked( null === $gelato['printify_photos'] || in_array( (string) $camera, $gelato['printify_photos'], true ), true, false ) . '> ' . esc_html( $label ) . '</span></label>';
+			}
+
+			echo '</div><p class="description">' . esc_html__( 'Printify makes the ticked views of each design that is sent in, in every chosen colour, and they are shown in the shop. The view of a side replaces the image drawn by the designer; the others are added after it. Applies to designs sent in from now on.', 'merchboard' ) . '</p></td></tr>';
+		}
+
 		echo '<tr><th scope="row">' . esc_html__( 'Price per size', 'merchboard' ) . '</th><td><label><input type="checkbox" id="merchboard-base-size-priced" name="size_priced" value="1"' . checked( array() !== ( $base->size_prices ?? array() ), true, false ) . '> ' . esc_html__( 'Different base prices per size', 'merchboard' ) . '</label>';
 		echo '<div id="merchboard-base-size-prices" data-currency="' . esc_attr( $this->currency ) . '" data-prices="' . esc_attr( (string) wp_json_encode( array_map( array( $this, 'money' ), $base->size_prices ?? array() ) ) ) . '"></div>';
 		echo '<p class="description">' . esc_html__( 'Without the tick, every size has the base price above. With it, a size left empty has that price too. A creator\'s percent is taken of each size\'s price; a fixed profit is the same for every size.', 'merchboard' ) . '</p></td></tr>';

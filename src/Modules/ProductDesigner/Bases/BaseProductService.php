@@ -324,18 +324,20 @@ class BaseProductService {
 	}
 
 	/**
-	 * A thumbnail of each of a Gelato template's images, by position, as
-	 * template assets (ADR-119); the import's earlier thumbnails go. Called
-	 * by the import as the administrator who started it.
+	 * A thumbnail of each of a Gelato template's images, by position, or of
+	 * each of Printify's cameras, by name (ADR-122), as template assets
+	 * (ADR-119); the import's earlier thumbnails go. Called by the import as
+	 * the administrator who started it.
 	 *
 	 * @param int                      $id     Base product.
-	 * @param array<int|string, mixed> $stored Stored file by position (DesignerFiles::store()).
-	 * @param array<string, int>       $old    The thumbnails before, by position.
+	 * @param array<int|string, mixed> $stored Stored file by position or camera name (DesignerFiles::store()).
+	 * @param array<string, int>       $old    The thumbnails before, by position or name.
+	 * @param string                   $label  The provider's name in the assets' names (admin only).
 	 * @return array<string, int> Asset id by position.
 	 * @throws DesignerException When the user may not or the base product is unknown.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
-	public function thumbnails( int $id, array $stored, array $old ): array {
+	public function thumbnails( int $id, array $stored, array $old, string $label = 'Gelato' ): array {
 		self::authorize();
 
 		$base = $this->existing( $id );
@@ -345,7 +347,7 @@ class BaseProductService {
 			if ( is_array( $file ) && is_string( $file['file'] ?? null ) ) {
 				$ids[ (string) $position ] = $this->assets->insert(
 					DesignerAssetRepository::LAYER,
-					$base->name . ' – Gelato ' . ( (int) $position + 1 ),
+					$base->name . ' – ' . $label . ' ' . ( is_int( $position ) ? (string) ( $position + 1 ) : (string) $position ),
 					array(
 						'file'   => $file['file'],
 						'mime'   => is_string( $file['mime'] ?? null ) ? $file['mime'] : 'image/png',
@@ -406,6 +408,56 @@ class BaseProductService {
 						'base_name'      => $base->name,
 						'version'        => $base->version,
 						'changed_fields' => array( 'gelato_photos' ),
+						'status'         => $base->status,
+					)
+				);
+			}
+		);
+	}
+
+	/**
+	 * Which of Printify's cameras make the mockups (ADR-122): the names the
+	 * administrator ticked, among the thumbnails there are.
+	 * Nothing a design was made on changes: no new version.
+	 *
+	 * @phpstan-param list<string> $names
+	 *
+	 * @param int      $id        Base product.
+	 * @param string[] $names     Ticked camera names.
+	 * @throws DesignerException When the user may not or the base product is unknown.
+	 * @throws DatabaseException When it cannot be stored.
+	 */
+	public function set_printify_photos( int $id, array $names ): void {
+		self::authorize();
+
+		$base     = $this->existing( $id );
+		$provider = $this->bases->provider( $id );
+
+		if ( null === $provider || array() === $provider['printify_thumbs'] ) {
+			return;
+		}
+
+		$chosen = array_values( array_intersect( array_map( 'strval', array_keys( $provider['printify_thumbs'] ) ), $names ) );
+		sort( $chosen );
+
+		$before = $provider['printify_photos'] ?? array_map( 'strval', array_keys( $provider['printify_thumbs'] ) );
+		sort( $before );
+
+		if ( $before === $chosen ) {
+			return;
+		}
+
+		$this->transaction->run(
+			function () use ( $id, $chosen, $base ): void {
+				$this->bases->set_printify_photos( $id, $chosen );
+				$this->audit->record(
+					AuditAction::DesignerBaseChanged,
+					null,
+					array(
+						'base_id'        => $id,
+						'base_name'      => $base->name,
+						'version'        => $base->version,
+						'changed_fields' => array( 'printify_photos' ),
 						'status'         => $base->status,
 					)
 				);

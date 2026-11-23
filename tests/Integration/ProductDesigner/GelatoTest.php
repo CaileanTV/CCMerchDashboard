@@ -264,10 +264,10 @@ final class GelatoTest extends IntegrationTestCase {
 
 		self::assertSame(
 			array(
-				'source'        => 'gelato',
-				'ref'           => 'tpl-1',
-				'placements'    => array( 'front' => 'ImageFront' ),
-				'variants'      => array(
+				'source'          => 'gelato',
+				'ref'             => 'tpl-1',
+				'placements'      => array( 'front' => 'ImageFront' ),
+				'variants'        => array(
 					'black' => array(
 						'S' => 'tv-b-s',
 						'M' => 'tv-b-m',
@@ -277,17 +277,17 @@ final class GelatoTest extends IntegrationTestCase {
 						'M' => 'tv-w-m',
 					),
 				),
-				'slots'         => array( 'front' => '0' ),
-				'flat'          => false,
-				'photos'        => array(),
-				'stitches'      => array(),
-				'techniques'    => array(),
-				'options'       => array(),
-				'axes'          => array(
+				'slots'           => array( 'front' => '0' ),
+				'flat'            => false,
+				'photos'          => array(),
+				'stitches'        => array(),
+				'techniques'      => array(),
+				'options'         => array(),
+				'axes'            => array(
 					'color' => 'Colour',
 					'size'  => 'Size',
 				),
-				'uids'          => array(
+				'uids'            => array(
 					'black' => array(
 						'S' => 'apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_classic_gsi_s_gco_black',
 						'M' => 'apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_classic_gsi_m_gco_black',
@@ -297,11 +297,13 @@ final class GelatoTest extends IntegrationTestCase {
 						'M' => 'apparel_product_gca_t-shirt_gsc_crewneck_gcu_unisex_gqa_classic_gsi_m_gco_white',
 					),
 				),
-				'scenes'        => array(),
-				'share_formats' => true,
+				'scenes'          => array(),
+				'share_formats'   => true,
 				// One thumbnail of the one image each render gives (ADR-119).
-				'gelato_thumbs' => array_slice( $this->bases->provider( $id )['gelato_thumbs'] ?? array(), 0, 1, true ),
-				'gelato_photos' => null,
+				'gelato_thumbs'   => array_slice( $this->bases->provider( $id )['gelato_thumbs'] ?? array(), 0, 1, true ),
+				'gelato_photos'   => null,
+				'printify_thumbs' => array(),
+				'printify_photos' => null,
 			),
 			$this->bases->provider( $id )
 		);

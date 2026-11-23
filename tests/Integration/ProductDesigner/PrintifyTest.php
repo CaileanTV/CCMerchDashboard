@@ -456,7 +456,7 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertSame( array( 'Front', 'Back' ), array_map( static fn( $view ): string => $view->name, $base->views ) );
 		self::assertSame( array( '#c8c8c8', '#1e1e1e' ), array_column( $base->colors, 'hex' ), 'Printify names no colour codes: they are measured on the photos.' );
 
-		foreach ( array( array( 50, 60, 85, 70 ), array( 60, 50, 80, 66 ) ) as $index => [ $x, $y, $width, $height ] ) {
+		foreach ( array( array( 50, 60, 85, 70 ), array( 60, 50, 62, 70 ) ) as $index => [ $x, $y, $width, $height ] ) {
 			$area = $base->views[ $index ]->area;
 
 			self::assertSame( array( 200, 200 ), array( $base->views[ $index ]->width, $base->views[ $index ]->height ) );
@@ -485,6 +485,30 @@ final class PrintifyTest extends IntegrationTestCase {
 		}
 
 		self::assertNotContains( self::photo( self::BLANK, 32870, 103, 'size-chart' ), array_column( $this->calls, 1 ), 'A size chart is no photo.' );
+	}
+
+	public function test_a_print_around_the_product_is_designed_on_a_sheet_and_the_views_are_offered(): void {
+		$this->printify_shop();
+		$this->account->set_shop( self::SHOP );
+		// Like the Sky Water Bottle: the front photo shows only a strip of the print area.
+		$this->answers[ self::photo( self::MARKER, 32870, 101, 'front' ) ] = self::shirt( array( 200, 200, 200 ), array( array( 80, 60, 30, 70, array( 250, 5, 250 ) ) ) );
+
+		$id       = $this->import( shop: true );
+		$base     = $this->bases->find( $id );
+		$provider = $this->bases->provider( $id );
+
+		self::assertNotNull( $base );
+		self::assertNotNull( $provider );
+		self::assertSame( array( 299, 246 ), array( $base->views[0]->width_mm, $base->views[0]->height_mm ), 'The whole print area, not the strip the photo shows.' );
+		self::assertSame( array( 'background' ), array_keys( $base->views[0]->layers ), 'A sheet, not a photo per colour.' );
+		self::assertSame( array( 'background', 'background:black' ), array_keys( $base->views[1]->layers ), 'The back shows in whole: designed on the photos.' );
+		self::assertSame( array( 'front', 'back' ), array_keys( $provider['printify_thumbs'] ), 'A view per camera name; no size chart.' );
+		self::assertSame( array( 'front', 'back' ), array_values( $provider['slots'] ) );
+		self::assertNull( $provider['printify_photos'], 'Every view until the administrator chooses.' );
+
+		$this->base_service()->set_printify_photos( $id, array( 'back', 'nonsense' ) );
+
+		self::assertSame( array( 'back' ), $this->bases->provider( $id )['printify_photos'] ?? null );
 	}
 
 	public function test_a_failed_import_deletes_its_temporary_products_too(): void {
@@ -592,7 +616,7 @@ final class PrintifyTest extends IntegrationTestCase {
 		$black = array( 30, 30, 30 );
 
 		$this->answers[ self::photo( self::MARKER, 32870, 101, 'front' ) ] = self::shirt( $ash, array( array( 50, 60, 85, 70, array( 250, 5, 250 ) ) ) );
-		$this->answers[ self::photo( self::MARKER, 32870, 102, 'back' ) ]  = self::shirt( $ash, array( array( 60, 50, 80, 66, array( 5, 250, 250 ) ) ) );
+		$this->answers[ self::photo( self::MARKER, 32870, 102, 'back' ) ]  = self::shirt( $ash, array( array( 60, 50, 62, 70, array( 5, 250, 250 ) ) ) );
 		$this->answers[ self::photo( self::BLANK, 32870, 101, 'front' ) ]  = self::shirt( $ash );
 		$this->answers[ self::photo( self::BLANK, 32870, 102, 'back' ) ]   = self::shirt( $ash );
 		$this->answers[ self::photo( self::BLANK, 32880, 101, 'front' ) ]  = self::shirt( $black );

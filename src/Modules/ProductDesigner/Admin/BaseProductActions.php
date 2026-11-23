@@ -13,6 +13,7 @@ use MerchBoard\Core\Database\DatabaseException;
 use MerchBoard\Core\Logging\Logger;
 use MerchBoard\Core\Security\Capabilities;
 use MerchBoard\Modules\ProductDesigner\Bases\BasePriceSchedule;
+use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseView;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
@@ -151,6 +152,11 @@ final class BaseProductActions {
 					// ADR-119: the Gelato images ticked for mockups.
 					if ( '1' === $text( 'gelato_photos_shown' ) ) {
 						$this->bases->set_gelato_photos( $saved, array_values( array_map( 'intval', array_filter( is_array( $input['gelato_photos'] ?? null ) ? $input['gelato_photos'] : array(), 'is_numeric' ) ) ) );
+					}
+
+					// ADR-122: the Printify views ticked for mockups.
+					if ( '1' === $text( 'printify_photos_shown' ) ) {
+						$this->bases->set_printify_photos( $saved, array_values( array_filter( is_array( $input['printify_photos'] ?? null ) ? $input['printify_photos'] : array(), static fn( mixed $name ): bool => is_string( $name ) && 1 === preg_match( BaseProductRepository::CAMERA, $name ) ) ) );
 					}
 					$after = BasePriceSchedule::scheduled( $saved );
 

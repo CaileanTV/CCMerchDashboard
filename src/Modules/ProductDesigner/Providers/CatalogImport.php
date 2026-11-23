@@ -935,15 +935,18 @@ class CatalogImport {
 			}
 		}
 
-		// ADR-119: a thumbnail of each of Gelato's images (a mockup or a room), of the first group or colour.
-		if ( GelatoCatalog::SOURCE === ( $data['source'] ?? '' ) ) {
+		// ADR-119: a thumbnail of each of Gelato's images (a mockup or a room), of the first group or colour;
+		// ADR-122: of each of Printify's cameras by name, of the first colour.
+		$gelato = GelatoCatalog::SOURCE === ( $data['source'] ?? '' );
+
+		if ( $gelato || PrintifyCatalog::SOURCE === ( $data['source'] ?? '' ) ) {
 			$groups = array_map( 'strval', array_keys( is_array( $data['groups'] ?? null ) ? $data['groups'] : array() ) );
 			$first  = $groups[0] ?? (string) ( $colors[0] ?? '' );
 
 			foreach ( $blank as $slot => $urls ) {
 				$url = is_array( $urls ) ? ( $urls[ $first ] ?? null ) : null;
 
-				if ( ! is_numeric( $slot ) || ! is_string( $url ) || isset( $data['thumbs'][ (string) $slot ] ) ) {
+				if ( ( $gelato && ! is_numeric( $slot ) ) || ! is_string( $url ) || isset( $data['thumbs'][ (string) $slot ] ) ) {
 					continue;
 				}
 
@@ -1090,11 +1093,22 @@ class CatalogImport {
 				continue;
 			}
 
-			// ADR-119: a poster (a format group's side) is designed on a flat sheet of its whole print area, as in Gelato's editor.
-			if ( isset( $side['formats'] ) ) {
+			// ADR-122: a print around the product (a bottle, a mug) shows only in part on each of Printify's photos.
+			$wrapped = PrintifyCatalog::SOURCE === ( $data['source'] ?? '' ) && array( (int) $side['width_mm'], (int) $side['height_mm'] ) !== ImageProbe::print_size( $chosen['box'], (int) $side['width_mm'], (int) $side['height_mm'] );
+
+			// ADR-119: a poster (a format group's side) is designed on a flat sheet of its whole print area, as in Gelato's editor;
+			// so is a print around the product: Printify's mockups show it after the submission.
+			if ( isset( $side['formats'] ) || $wrapped ) {
 				[ $width_mm, $height_mm ] = array( (int) $side['width_mm'], (int) $side['height_mm'] );
 				[ $sheet, $area ]         = ImageProbe::sheet( (float) $side['width_mm'], (float) $side['height_mm'] );
 				$uploads                  = array( 'background' => $this->sheet_upload( $sheet ) );
+
+				// The colour photos were only measured for the colour codes.
+				foreach ( is_array( $data['files'][ $side['key'] ] ?? null ) ? $data['files'][ $side['key'] ] : array() as $name ) {
+					if ( is_string( $name ) && '' !== $name ) {
+						$this->files->delete( $name );
+					}
+				}
 			} else {
 				$uploads = $this->uploads( $base, $data['files'][ $side['key'] ] ?? array() );
 
@@ -1165,9 +1179,11 @@ class CatalogImport {
 		}
 
 		$provider = $this->bases->provider( $id );
-		// ADR-119: the provider's images, one thumbnail each, for the administrator's choice of mockups.
-		$thumbs = $this->service->thumbnails( $id, is_array( $data['thumbs'] ?? null ) ? $data['thumbs'] : array(), $provider['gelato_thumbs'] ?? array() );
+		$printify = PrintifyCatalog::SOURCE === ( $data['source'] ?? '' );
+		// ADR-119: the provider's images, one thumbnail each, for the administrator's choice of mockups (ADR-122: Printify's by camera name).
+		$thumbs = $this->service->thumbnails( $id, is_array( $data['thumbs'] ?? null ) ? $data['thumbs'] : array(), $provider[ $printify ? 'printify_thumbs' : 'gelato_thumbs' ] ?? array(), $printify ? 'view' : 'Gelato' );
 		$photos = $provider['gelato_photos'] ?? null;
+		$names  = $provider['printify_photos'] ?? null;
 
 		$this->bases->set_provider(
 			$id,
@@ -1175,21 +1191,23 @@ class CatalogImport {
 			(string) ( $data['ref'] ?? '' ),
 			self::json(
 				array(
-					'placements'    => $kept,
-					'variants'      => $provider['variants'] ?? array(),
-					'slots'         => $slots,
-					'flat'          => $provider['flat'] ?? false,
-					'photos'        => $provider['photos'] ?? array(),
-					'stitches'      => $provider['stitches'] ?? array(),
-					'techniques'    => $provider['techniques'] ?? array(),
-					'options'       => $provider['options'] ?? array(),
-					'axes'          => $provider['axes'] ?? array(),
-					'uids'          => $provider['uids'] ?? array(),
-					'scenes'        => array_filter( $scenes ),
-					'share_formats' => $provider['share_formats'] ?? true,
-					'gelato_thumbs' => $thumbs,
+					'placements'      => $kept,
+					'variants'        => $provider['variants'] ?? array(),
+					'slots'           => $slots,
+					'flat'            => $provider['flat'] ?? false,
+					'photos'          => $provider['photos'] ?? array(),
+					'stitches'        => $provider['stitches'] ?? array(),
+					'techniques'      => $provider['techniques'] ?? array(),
+					'options'         => $provider['options'] ?? array(),
+					'axes'            => $provider['axes'] ?? array(),
+					'uids'            => $provider['uids'] ?? array(),
+					'scenes'          => array_filter( $scenes ),
+					'share_formats'   => $provider['share_formats'] ?? true,
+					'gelato_thumbs'   => $printify ? array() : $thumbs,
 					// A choice made before stays for the images there still are; none made is every image.
-					'gelato_photos' => null === $photos ? null : array_values( array_intersect( $photos, array_map( 'intval', array_keys( $thumbs ) ) ) ),
+					'gelato_photos'   => $printify || null === $photos ? null : array_values( array_intersect( $photos, array_map( 'intval', array_keys( $thumbs ) ) ) ),
+					'printify_thumbs' => $printify ? $thumbs : array(),
+					'printify_photos' => ! $printify || null === $names ? null : array_values( array_intersect( $names, array_map( 'strval', array_keys( $thumbs ) ) ) ),
 				)
 			)
 		);
