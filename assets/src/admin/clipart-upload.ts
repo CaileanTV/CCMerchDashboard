@@ -32,6 +32,9 @@ const FORM_SLACK = 65536;
 /** A mean difference per channel that is more than rounding. */
 const MEAN_LIMIT = 2;
 
+/** The most colours of a palette (ClipartDefinition::MAX_PALETTE). */
+export const MAX_PALETTE = 64;
+
 /** A share of pixels that differ at once that is more than an edge. */
 const SEEN_LIMIT = 0.002;
 
@@ -495,6 +498,7 @@ export function attachClipartUpload( form: HTMLFormElement ): void {
 	const confirmed = confirm?.querySelector( 'input' ) ?? null;
 	const bases = basesOf( form );
 	const postMax = Number( form.dataset.merchboardPostMax ?? '0' );
+	const fileMax = Number( form.dataset.merchboardFileMax ?? '0' );
 	let baked: {
 		art: ClipartArt;
 		atlas: Rgba;
@@ -522,6 +526,17 @@ export function attachClipartUpload( form: HTMLFormElement ): void {
 			return __(
 				'Write the palette as colours like #ff0000, separated by spaces.',
 				'merchboard'
+			);
+		}
+
+		if ( palette !== null && palette.length > MAX_PALETTE ) {
+			return sprintf(
+				/* translators: %d: most colours of a palette. */
+				__(
+					'A palette may have at most %d colours, the file’s own included.',
+					'merchboard'
+				),
+				MAX_PALETTE
 			);
 		}
 
@@ -707,6 +722,24 @@ export function attachClipartUpload( form: HTMLFormElement ): void {
 				__(
 					'The clipart differs from the PSD. Check the PSD, or tick that it may be saved anyway.',
 					'merchboard'
+				)
+			);
+
+			return;
+		}
+
+		const largest = Math.max( ...files.map( ( file ) => file?.size ?? 0 ) );
+
+		if ( fileMax > 0 && largest > fileMax ) {
+			refuse(
+				sprintf(
+					/* translators: 1: size of the largest file in MB, 2: the largest file the server takes in MB. */
+					__(
+						'A file of the clipart is %1$s MB, more than the server takes per file (%2$s MB). Make the PSD smaller, or ask your host to raise upload_max_filesize.',
+						'merchboard'
+					),
+					( largest / 1048576 ).toFixed( 1 ),
+					( fileMax / 1048576 ).toFixed( 1 )
 				)
 			);
 

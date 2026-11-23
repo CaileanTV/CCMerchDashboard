@@ -190,7 +190,7 @@ class ClipartLibrary {
 		$ids = null === $bases ? null : array_values( array_unique( array_filter( array_map( 'intval', $bases ), static fn( int $base ): bool => $base > 0 ) ) );
 
 		if ( array() === $ids ) {
-			self::reject( DesignerException::CLIPART_DEFINITION );
+			self::reject( DesignerException::CLIPART_BASES );
 		}
 
 		$this->transaction->run(

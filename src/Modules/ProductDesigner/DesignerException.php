@@ -83,6 +83,11 @@ final class DesignerException extends RuntimeException {
 	 */
 	public const CLIPART_DEFINITION = 'clipart_definition';
 
+	/**
+	 * A clipart's products: "only these" with none chosen (ADR-121).
+	 */
+	public const CLIPART_BASES = 'clipart_bases';
+
 	public const DESIGNER_DISABLED = 'designer_disabled';
 
 	public const DESIGN_INVALID = 'design_invalid';

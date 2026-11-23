@@ -299,6 +299,7 @@ final class BaseProductsPage {
 			DesignerException::BASE_IN_USE          => array( __( 'The base product has designs and cannot be deleted.', 'merchboard' ), 'error' ),
 			DesignerException::THREAD_PACK          => array( __( 'The embroidery pack does not exist.', 'merchboard' ), 'error' ),
 			DesignerException::CLIPART_NAME         => array( __( 'Enter a name of at most 100 characters for the clipart.', 'merchboard' ), 'error' ),
+			DesignerException::CLIPART_BASES        => array( __( 'Choose the base products, or all of them.', 'merchboard' ), 'error' ),
 			DesignerException::CLIPART_DEFINITION   => array( __( 'The clipart could not be read. Read the PSD again and save once more.', 'merchboard' ), 'error' ),
 			DesignerException::CLIPART_UNKNOWN      => array( __( 'The clipart no longer exists.', 'merchboard' ), 'error' ),
 			DesignerException::FILE_MISSING         => array( __( 'The file could not be uploaded. Please try again.', 'merchboard' ), 'error' ),
@@ -1888,7 +1889,7 @@ final class BaseProductsPage {
 
 		echo '<h2>' . esc_html__( 'Clipart with parts from a PSD', 'merchboard' ) . '</h2>';
 		echo '<p>' . esc_html__( 'Layers whose name begins with "farvet lag" become parts the creator colours; the rest of the name is the part\'s name. Their stroke and the other layers never change. The PSD stays on your computer: only the clipart is saved, and nothing of it can be changed later except its products.', 'merchboard' ) . '</p>';
-		echo '<form method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-merchboard-clipart-form="' . esc_attr( (string) wp_json_encode( $sides ) ) . '" data-merchboard-post-max="' . esc_attr( (string) BaseProductActions::post_limit() ) . '">';
+		echo '<form method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" data-merchboard-clipart-form="' . esc_attr( (string) wp_json_encode( $sides ) ) . '" data-merchboard-post-max="' . esc_attr( (string) BaseProductActions::post_limit() ) . '" data-merchboard-file-max="' . esc_attr( (string) DesignerFiles::max_bytes() ) . '">';
 		echo '<input type="hidden" name="action" value="' . esc_attr( BaseProductActions::ACTION ) . '"><input type="hidden" name="do" value="clipart_artwork">';
 		wp_nonce_field( BaseProductActions::ACTION );
 		echo '<input type="file" name="clipart_preview" accept="image/png" hidden><input type="file" name="clipart_atlas" accept="image/png" hidden><input type="hidden" name="clipart_definition" value="">';

@@ -628,7 +628,7 @@ final class BaseProductsTest extends IntegrationTestCase {
 			$library->set_bases( $id, array() );
 			self::fail( 'No products is not a choice.' );
 		} catch ( DesignerException $e ) {
-			self::assertSame( DesignerException::CLIPART_DEFINITION, $e->reason() );
+			self::assertSame( DesignerException::CLIPART_BASES, $e->reason() );
 		}
 
 		$plain = $library->add( 'Star', AlertImagesTest::upload( AlertImagesTest::png( 64, 64 ), 'star.png' ) );
