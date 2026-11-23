@@ -266,6 +266,14 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 5. **Designeren:** et design på det nye grundprodukt kan gemmes og sendes til godkendelse, og mockupperne viser Printifys fotos.
 6. **Plakat:** fx "Matte Vertical Posters" giver et foto med målt printfelt. Et produkt, hvis størrelser har printfelter med forskellig form, giver hvide ark og en forklaring.
 7. **Uden butik:** tøm feltet, og en ny import giver hvide ark som i 2.5.0, med en besked om, hvordan man får fotos.
+8. **Rundt print (Sky Water Bottle):**
+   - importér flasken igen. Forsiden er et ark med hele printfeltet (ca. 215 × 175 mm), ikke kun det, forsidefotoet viser;
+   - "Mockups fra Printify" på grundproduktet viser Front, Back, Left side, Right side, Context 1 og 2. Sæt flueben ved dem, butikken skal vise, og gem.
+9. **Mockups fra Printify:**
+   - lav et design hele vejen rundt på flasken i 2–3 farver, og send det ind;
+   - godkendelsen venter ("mockups laves") i et par minutter. Bagefter viser den Printifys fotos af designet i de valgte visninger og farver;
+   - efter godkendelse viser butikken dem;
+   - Printify-butikken er tom igen, og printfilerne ligger ikke i Printifys bibliotek.
 
 **Tilbagerulning:** installér 2.5.0-ZIP'en igen. Butiks-id'et bliver liggende uden at blive brugt, og grundprodukter importeret i 2.5.1 beholder deres fotos.
 
