@@ -1244,7 +1244,7 @@ class DesignerProductRepository {
 		$wpdb = $this->wpdb;
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				'SELECT v.id, v.design_product_id, v.creator_id, v.number, v.title, v.description, v.colors, v.sizes, v.files, v.mockup_state, v.profit_kind, v.profit_value, v.quoted_price, v.submitted_at, p.base_id, p.live_version_id
+				'SELECT v.id, v.design_product_id, v.creator_id, v.number, v.title, v.description, v.colors, v.sizes, v.files, v.design, v.mockup_state, v.profit_kind, v.profit_value, v.quoted_price, v.submitted_at, p.base_id, p.live_version_id
 				FROM %i v
 				JOIN %i p ON p.id = v.design_product_id
 				WHERE v.status = %s
