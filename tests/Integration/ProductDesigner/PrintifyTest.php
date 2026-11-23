@@ -36,6 +36,7 @@ use MerchBoard\Modules\ProductDesigner\Providers\PrintifyCatalog;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyException;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyMockups;
 use MerchBoard\Modules\ProductDesigner\Providers\ProviderTaskRepository;
+use MerchBoard\Modules\ProductDesigner\Rest\MeDesignerController;
 use MerchBoard\Tests\Integration\Alerts\AlertImagesTest;
 use MerchBoard\Tests\Integration\IntegrationTestCase;
 use MerchBoard\Tests\Unit\Support\FakeJobQueue;
@@ -539,7 +540,12 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertEqualsWithDelta( 0.5, $by_name['front']['x'] ?? -1, 0.03 );
 		// The back faces the sheet's ends: just after 0 or just before 1.
 		self::assertLessThan( 0.03, min( $by_name['back']['x'] ?? 0.5, 1 - ( $by_name['back']['x'] ?? 0.5 ) ) );
-		self::assertSame( array( $provider['printify_thumbs']['front'], $provider['printify_thumbs']['back'] ), array( $by_name['front']['figure'] ?? 0, $by_name['back']['figure'] ?? 0 ) );
+		self::assertSame( array( 0, 0 ), array( $by_name['front']['figure'] ?? -1, $by_name['back']['figure'] ?? -1 ), 'The photos are found when the side is sent.' );
+
+		$sent = array_column( MeDesignerController::view_data( $base, $base->views[0], $provider['printify_thumbs'] )['guides'], 'figure', 'label' );
+
+		self::assertSame( $provider['printify_thumbs']['front'], $sent['Front'] ?? null, 'The view\'s photo under its guide, its name for creators.' );
+		self::assertSame( $provider['printify_thumbs']['back'], $sent['Back'] ?? null );
 		self::assertSame( array(), $base->views[1]->guides, 'The back shows whole: no guides.' );
 		self::assertSame( array( 'front', 'back' ), array_values( $provider['slots'] ) );
 		self::assertNull( $provider['printify_photos'], 'Every view until the administrator chooses.' );

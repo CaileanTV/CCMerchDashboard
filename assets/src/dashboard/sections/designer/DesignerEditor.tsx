@@ -2255,7 +2255,7 @@ function Editor( props: EditorProps ) {
 								>
 									{ view.guides.map( ( guide ) => (
 										<li
-											key={ guide.label }
+											key={ `${ guide.label }-${ guide.x }` }
 											style={ {
 												left: `${ guide.x * 100 }%`,
 											} }

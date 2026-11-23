@@ -996,23 +996,26 @@ class CatalogImport {
 	 * @param CatalogRenderer      $renderer Provider.
 	 * @param array<string, mixed> $data     Import data.
 	 * @return int Seconds to the next round.
-	 * @throws PrintifyException When Printify refuses or fails.
-	 * @throws InvalidArgumentException When a photo cannot be read.
+	 * @throws PrintifyException When Printify asks to wait.
 	 */
 	private function guides( CatalogRenderer $renderer, array &$data ): int {
 		$stripes = is_array( $data['images']['stripes'] ?? null ) ? $data['images']['stripes'] : array();
 		$blank   = is_array( $data['images']['blank'] ?? null ) ? $data['images']['blank'] : array();
-		$first   = (string) array_key_first( is_array( $data['colors'] ?? null ) ? $data['colors'] : array() );
+		$first   = PrintifyCatalog::stripes_color( is_array( $data['colors'] ?? null ) ? $data['colors'] : array() );
 		$sides   = is_array( $data['sides'] ?? null ) ? array_values( $data['sides'] ) : array();
 		$done    = 0;
+		$around  = array();
 
 		foreach ( is_array( $data['chosen'] ?? null ) ? $data['chosen'] : array() as $index => $chosen ) {
 			$side = $sides[ $index ] ?? null;
 
-			if ( ! is_array( $side ) || ! is_array( $chosen ) || ! self::wrapped( $data, $side, $chosen ) ) {
-				continue;
+			if ( is_array( $side ) && is_array( $chosen ) && self::wrapped( $data, $side, $chosen ) ) {
+				$around[] = $side;
 			}
+		}
 
+		// Every side has stripes in the one render: with two sides around the product, a photo can show both.
+		foreach ( 1 === count( $around ) ? $around : array() as $side ) {
 			$key = (string) ( $side['key'] ?? '' );
 
 			foreach ( $stripes as $slot => $urls ) {
@@ -1026,7 +1029,18 @@ class CatalogImport {
 					return 0;
 				}
 
-				$centre = ImageProbe::stripe_centre( $renderer->download( $blank[ $slot ][ $first ] ), $renderer->download( $urls[ $first ] ) );
+				// The guides only help: a photo that cannot be read leaves its view out, but a 429 waits.
+				try {
+					$centre = ImageProbe::stripe_centre( $renderer->download( $blank[ $slot ][ $first ] ), $renderer->download( $urls[ $first ] ) );
+				} catch ( PrintifyException $e ) {
+					if ( PrintifyException::RATE_LIMITED === $e->reason() ) {
+						throw $e;
+					}
+
+					$centre = null;
+				} catch ( PrintfulException | GelatoException | ProdigiException | InvalidArgumentException ) {
+					$centre = null;
+				}
 
 				$data['centres'][ $key ][ $slot ] = $centre ?? -1;
 				++$done;
@@ -1071,13 +1085,14 @@ class CatalogImport {
 
 	/**
 	 * The guides of a side from its views' measured centres, in order along
-	 * the sheet (ADR-122); a view not found is left out.
+	 * the sheet (ADR-122); a view not found is left out. Their photos are
+	 * the provider's thumbnails of the same camera names, found when the
+	 * side is sent to the designer.
 	 *
-	 * @param array<mixed>       $centres Share of the sheet by camera name; -1 when not found.
-	 * @param array<string, int> $thumbs  Thumbnail asset by camera name.
+	 * @param array<mixed> $centres Share of the sheet by camera name; -1 when not found.
 	 * @return list<array{x: float, label: string, figure: int}>
 	 */
-	private static function guide_list( array $centres, array $thumbs ): array {
+	private static function guide_list( array $centres ): array {
 		$guides = array();
 
 		foreach ( $centres as $name => $centre ) {
@@ -1085,7 +1100,7 @@ class CatalogImport {
 				$guides[] = array(
 					'x'      => round( (float) $centre, 4 ),
 					'label'  => (string) $name,
-					'figure' => (int) ( $thumbs[ (string) $name ] ?? 0 ),
+					'figure' => 0,
 				);
 			}
 		}
@@ -1200,17 +1215,6 @@ class CatalogImport {
 		$printify = PrintifyCatalog::SOURCE === ( $data['source'] ?? '' );
 		$photos   = $provider['gelato_photos'] ?? null;
 		$names    = $provider['printify_photos'] ?? null;
-		$before   = get_current_user_id();
-
-		// ADR-119: the provider's images, one thumbnail each, for the administrator's choice of mockups
-		// (ADR-122: Printify's by camera name, also the figures under the guides of a print around the product).
-		wp_set_current_user( $user );
-
-		try {
-			$thumbs = $this->service->thumbnails( $id, is_array( $data['thumbs'] ?? null ) ? $data['thumbs'] : array(), $provider[ $printify ? 'printify_thumbs' : 'gelato_thumbs' ] ?? array(), $printify ? 'view' : 'Gelato' );
-		} finally {
-			wp_set_current_user( $before );
-		}
 
 		if ( true === ( $data['flat'] ?? false ) ) {
 			foreach ( $sides as $side ) {
@@ -1275,9 +1279,9 @@ class CatalogImport {
 				'uploads'     => $uploads,
 			);
 
-			// ADR-122: where the product's views face on a print around it, with their photos as figures.
+			// ADR-122: where the product's views face on a print around it; their photos are the thumbnails of the same names.
 			if ( $wrapped ) {
-				$view['guides'] = self::guide_list( is_array( $data['centres'][ $side['key'] ] ?? null ) ? $data['centres'][ $side['key'] ] : array(), $thumbs );
+				$view['guides'] = self::guide_list( is_array( $data['centres'][ $side['key'] ] ?? null ) ? $data['centres'][ $side['key'] ] : array() );
 			}
 
 			// A format group's side (ADR-115): its sizes and values, and each size's print size and bleed.
@@ -1319,6 +1323,10 @@ class CatalogImport {
 		} finally {
 			wp_set_current_user( $previous );
 		}
+
+		// ADR-119: the provider's images, one thumbnail each, for the administrator's choice of mockups
+		// (ADR-122: Printify's by camera name). Made once the sides are stored: the earlier ones go with them.
+		$thumbs = $this->service->thumbnails( $id, is_array( $data['thumbs'] ?? null ) ? $data['thumbs'] : array(), $provider[ $printify ? 'printify_thumbs' : 'gelato_thumbs' ] ?? array(), $printify ? 'view' : 'Gelato' );
 
 		$this->bases->set_provider(
 			$id,

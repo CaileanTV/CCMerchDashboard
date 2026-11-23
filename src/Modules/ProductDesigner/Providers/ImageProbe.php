@@ -259,6 +259,11 @@ final class ImageProbe {
 	public const STRIPES = 12;
 
 	/**
+	 * Most stripes in a row that may be missing between two that show.
+	 */
+	private const MAX_SKIP = 3;
+
+	/**
 	 * A PNG of the striped sheet in a print area's proportions.
 	 *
 	 * @param int $width  Width in pixels.
@@ -368,15 +373,17 @@ final class ImageProbe {
 			}
 
 			$step = ( ( $stripe - $shown ) % self::STRIPES + self::STRIPES ) % self::STRIPES;
-			$turn = 1 === $step ? 1 : ( self::STRIPES - 1 === $step ? -1 : 0 );
+			// Forwards or backwards by up to MAX_SKIP stripes: a stripe too close to the product's colour may not show.
+			$turn = $step <= self::MAX_SKIP ? $step : ( self::STRIPES - $step <= self::MAX_SKIP ? $step - self::STRIPES : 0 );
 
-			// Only the next stripe the same way round: anything else is a blend at an edge or noise.
-			if ( 0 === $turn || ( 0 !== $sign && $turn !== $sign ) ) {
+			// The first edge sets the way round; a turn the other way after it is a blend at an edge or noise.
+			if ( 0 === $turn || ( 0 !== $sign && ( $turn > 0 ? 1 : -1 ) !== $sign ) ) {
 				continue;
 			}
 
-			$sign        = $turn;
-			$edges[ $x ] = 1 === $turn ? $current + 1 : $current;
+			$sign = $turn > 0 ? 1 : -1;
+			// The edge seen is the near edge of the stripe now shown.
+			$edges[ $x ] = $turn > 0 ? $current + $turn : $current + $turn + 1;
 			$current    += $turn;
 			$shown       = $stripe;
 		}
@@ -386,26 +393,27 @@ final class ImageProbe {
 			return ( ( (int) reset( $row ) ) + 0.5 ) / self::STRIPES;
 		}
 
-		$left  = null;
-		$right = null;
+		$points = array();
 
 		foreach ( $edges as $x => $position ) {
-			if ( $x <= $axis ) {
-				$left = array( $x, $position );
-			} elseif ( null === $right ) {
-				$right = array( $x, $position );
-			}
+			$points[] = array( (int) $x, (float) $position );
 		}
 
-		if ( null !== $left && null !== $right ) {
-			$position = $left[1] + ( $axis - $left[0] ) / max( 1, $right[0] - $left[0] ) * ( $right[1] - $left[1] );
-		} elseif ( null !== $right ) {
-			// The axis lies outside the edges: half a stripe beyond the nearest one.
-			$position = $right[1] - 0.5 * $sign;
-		} elseif ( null !== $left ) {
-			$position = $left[1] + 0.5 * $sign;
+		if ( 1 === count( $points ) ) {
+			// One edge: half a stripe beyond it, towards the axis.
+			$position = $points[0][1] + ( $axis < $points[0][0] ? -0.5 : 0.5 ) * $sign;
 		} else {
-			return null;
+			// Between the edges on each side of the axis; outside them, on from the two nearest.
+			$at   = 0;
+			$last = count( $points ) - 2;
+
+			while ( $at < $last && $points[ $at + 1 ][0] <= $axis ) {
+				++$at;
+			}
+
+			[ $a, $b ] = array( $points[ $at ], $points[ $at + 1 ] );
+
+			$position = $a[1] + ( $axis - $a[0] ) / max( 1, $b[0] - $a[0] ) * ( $b[1] - $a[1] );
 		}
 
 		$share = fmod( $position / self::STRIPES, 1.0 );

@@ -177,27 +177,6 @@ final readonly class BaseProduct {
 	}
 
 	/**
-	 * The photos under the guides of its sides (ADR-122): creators may see
-	 * them like the sides' layers, but they belong to the provider's
-	 * thumbnails, so they are no layers to forget with a side.
-	 *
-	 * @return list<int>
-	 */
-	public function guide_figures(): array {
-		$ids = array();
-
-		foreach ( $this->views as $view ) {
-			foreach ( $view->guides as $guide ) {
-				if ( $guide['figure'] > 0 ) {
-					$ids[] = $guide['figure'];
-				}
-			}
-		}
-
-		return $ids;
-	}
-
-	/**
 	 * The base price of a size; without one, the base product's.
 	 *
 	 * @param string|null $size The size.

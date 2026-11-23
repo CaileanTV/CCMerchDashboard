@@ -468,6 +468,22 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 	}
 
 	/**
+	 * The colour the striped sheet is rendered in (ADR-122): a white or other
+	 * light one when the product has it, else the first.
+	 *
+	 * @param array<int|string, mixed> $colors Variant by colour key.
+	 */
+	public static function stripes_color( array $colors ): string {
+		foreach ( array_keys( $colors ) as $key ) {
+			if ( 1 === preg_match( '/white|natural|clear|frost|cream|ivory|silver/', (string) $key ) ) {
+				return (string) $key;
+			}
+		}
+
+		return (string) array_key_first( $colors );
+	}
+
+	/**
 	 * Creates a temporary product (ADR-122): `marker` in the first colour with
 	 * a marker colour per side, `blank` in every colour with the transparent
 	 * file, `stripes` in the first colour with the striped sheet of each side
@@ -489,7 +505,13 @@ class PrintifyCatalog implements CatalogRenderer, CatalogCleanup {
 		[ $blueprint, $producer ] = self::ref_of( is_string( $import['ref'] ?? null ) ? $import['ref'] : '' );
 
 		$variants = array_values( array_map( 'intval', array_filter( is_array( $import['colors'] ?? null ) ? $import['colors'] : array(), 'is_numeric' ) ) );
-		$variants = 'blank' !== $kind ? array_slice( $variants, 0, 1 ) : $variants;
+		// The stripes in a light colour: on a dark one they hardly show, and a stripe of the product's own colour not at all.
+		$variants = match ( $kind ) {
+			'blank'   => $variants,
+			'stripes' => array( (int) ( ( is_array( $import['colors'] ?? null ) ? $import['colors'] : array() )[ self::stripes_color( is_array( $import['colors'] ?? null ) ? $import['colors'] : array() ) ] ?? 0 ) ),
+			default   => array_slice( $variants, 0, 1 ),
+		};
+		$variants = array_values( array_filter( $variants ) );
 		$sides    = array_values( array_filter( is_array( $import['sides'] ?? null ) ? $import['sides'] : array(), 'is_array' ) );
 		$places   = array();
 

@@ -371,7 +371,7 @@ final class MeDesignerController extends RestController {
 		$own = array_flip( array_map( static fn( array $row ): int => (int) $row['base_id'], $this->products->for_creator( $creator->id ) ) );
 
 		foreach ( $this->bases->all() as $base ) {
-			if ( ( BaseProduct::ACTIVE === $base->status || isset( $own[ (int) $base->id ] ) ) && in_array( $asset['id'], array_merge( $base->layer_assets(), $base->guide_figures() ), true ) ) {
+			if ( ( BaseProduct::ACTIVE === $base->status || isset( $own[ (int) $base->id ] ) ) && in_array( $asset['id'], array_merge( $base->layer_assets(), array_values( $this->guide_figures( $base ) ) ), true ) ) {
 				return true;
 			}
 		}
@@ -1247,6 +1247,8 @@ final class MeDesignerController extends RestController {
 	 * @return array<string, mixed>
 	 */
 	private function base_data( BaseProduct $base ): array {
+		$figures = $this->guide_figures( $base );
+
 		return array(
 			'id'               => (int) $base->id,
 			'preview'          => null !== $this->previewer( $base ),
@@ -1267,7 +1269,7 @@ final class MeDesignerController extends RestController {
 			'colors'           => $base->colors,
 			'sizes'            => $base->sizes,
 			'version'          => $base->version,
-			'views'            => array_map( static fn( BaseView $view ): array => self::view_data( $base, $view ), $base->views ),
+			'views'            => array_map( static fn( BaseView $view ): array => self::view_data( $base, $view, $figures ), $base->views ),
 		);
 	}
 
@@ -1275,11 +1277,12 @@ final class MeDesignerController extends RestController {
 	 * A side of a base product as the designer draws it (also the admin's
 	 * images without background, ADR-114).
 	 *
-	 * @param BaseProduct $base Base product.
-	 * @param BaseView    $view The side.
+	 * @param BaseProduct        $base    Base product.
+	 * @param BaseView           $view    The side.
+	 * @param array<string, int> $figures The photos under the guides by camera name (ADR-122).
 	 * @return array<string, mixed>
 	 */
-	public static function view_data( BaseProduct $base, BaseView $view ): array {
+	public static function view_data( BaseProduct $base, BaseView $view, array $figures = array() ): array {
 		[ $print_width, $print_height ] = $view->print_pixels();
 
 		$pack = '' === $view->thread_pack ? null : ThreadPacks::find( $view->thread_pack );
@@ -1308,7 +1311,7 @@ final class MeDesignerController extends RestController {
 				static fn( array $guide ): array => array(
 					'x'      => $guide['x'],
 					'label'  => self::view_name( $guide['label'] ),
-					'figure' => $guide['figure'],
+					'figure' => $guide['figure'] > 0 ? $guide['figure'] : ( $figures[ $guide['label'] ] ?? 0 ),
 				),
 				$view->guides
 			),
@@ -1318,6 +1321,33 @@ final class MeDesignerController extends RestController {
 				'stitched' => $base->stitched( $view ),
 			),
 		);
+	}
+
+	/**
+	 * The photos under the guides of a base product's sides (ADR-122): the
+	 * provider's thumbnails of the guides' camera names. Creators may see
+	 * them like the sides' layers.
+	 *
+	 * @param BaseProduct $base Base product.
+	 * @return array<string, int> Asset id by camera name.
+	 * @throws DatabaseException When the provider cannot be read.
+	 */
+	private function guide_figures( BaseProduct $base ): array {
+		$names = array();
+
+		foreach ( $base->views as $view ) {
+			foreach ( $view->guides as $guide ) {
+				$names[ $guide['label'] ] = true;
+			}
+		}
+
+		if ( array() === $names || null === $base->id ) {
+			return array();
+		}
+
+		$thumbs = $this->bases->provider( (int) $base->id )['printify_thumbs'] ?? array();
+
+		return array_intersect_key( $thumbs, $names );
 	}
 
 	/**

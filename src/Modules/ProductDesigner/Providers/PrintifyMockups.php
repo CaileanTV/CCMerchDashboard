@@ -88,6 +88,17 @@ class PrintifyMockups {
 	private const PREVIEW_KEEP = 900;
 
 	/**
+	 * Seconds a preview's state is kept: long after its clean-up job, so a
+	 * late job still finds what to remove.
+	 */
+	private const PREVIEW_TTL = DAY_IN_SECONDS;
+
+	/**
+	 * Seconds a start without a product yet blocks another start.
+	 */
+	private const PREVIEW_STARTING = 60;
+
+	/**
 	 * Seconds a preview is waited for before it is given up.
 	 */
 	private const PREVIEW_WAIT = 600;
@@ -156,6 +167,13 @@ class PrintifyMockups {
 			self::fail( PrintifyException::INVALID );
 		}
 
+		// A start a moment ago that has no product yet (a double click, a second tab) is still running.
+		$running = get_transient( self::PREVIEW . $id );
+
+		if ( is_array( $running ) && ! isset( $running['key'] ) && time() - (int) ( $running['started'] ?? 0 ) < self::PREVIEW_STARTING ) {
+			self::fail( PrintifyException::RATE_LIMITED );
+		}
+
 		$this->forget_preview( $id );
 
 		$colors  = json_decode( (string) $version['colors'], true );
@@ -179,10 +197,14 @@ class PrintifyMockups {
 			'uploads' => array(),
 		);
 
+		// The clean-up first: whatever this start leaves at Printify is removed in any case.
+		set_transient( self::PREVIEW . $id, $state, self::PREVIEW_TTL );
+		$this->queue->enqueue( self::PREVIEW_HOOK, array( $id, $state['started'] ), self::PREVIEW_KEEP );
+
 		foreach ( $sides as $side ) {
 			$uploads[] = $this->api->upload_url( 'preview-' . $id . '-' . substr( (string) preg_replace( '/[^a-z0-9-]+/', '-', strtolower( $side ) ), 0, 40 ) . '.png', SignedPrintFiles::url( $id, $side, null, $part ) );
 			// Stored at once: every upload is archived, even if the product is never made.
-			set_transient( self::PREVIEW . $id, array_merge( $state, array( 'uploads' => $uploads ) ), HOUR_IN_SECONDS );
+			set_transient( self::PREVIEW . $id, array_merge( $state, array( 'uploads' => $uploads ) ), self::PREVIEW_TTL );
 			$places[] = array(
 				'position' => $provider['placements'][ $side ],
 				'images'   => array(
@@ -196,8 +218,6 @@ class PrintifyMockups {
 				),
 			);
 		}
-
-		$this->queue->enqueue( self::PREVIEW_HOOK, array( $id, $state['started'] ), self::PREVIEW_KEEP );
 
 		$product = $this->api->create_product(
 			$shop,
@@ -222,7 +242,7 @@ class PrintifyMockups {
 			)
 		);
 
-		set_transient( self::PREVIEW . $id, array_merge( $state, array( 'uploads' => $uploads, 'key' => $shop . ':' . (string) $product['id'] ) ), HOUR_IN_SECONDS ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
+		set_transient( self::PREVIEW . $id, array_merge( $state, array( 'uploads' => $uploads, 'key' => $shop . ':' . (string) $product['id'] ) ), self::PREVIEW_TTL ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound
 	}
 
 	/**
