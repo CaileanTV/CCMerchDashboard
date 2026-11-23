@@ -133,6 +133,7 @@ WordPress' egen login og sessions. Intet eget auth-system (ADR-006). Application
 - Filer serveres fra uploads-mappen og eksekveres aldrig. Filnavne saniteres af WordPress.
 - Creators får **ikke** `upload_files`. Uploads går gennem vores eget endpoint, som sætter ejerskab.
 - **Produktdesignerens filer (fase 30, ADR-080 pkt. 5):** skabelonlag, kliparts og senere creatorens uploads og printfiler ligger i `uploads/merchboard-designer/` under tilfældige navne med `index.php` og `.htaccess` (deny), aldrig i mediebiblioteket. Typen tjekkes med `wp_check_filetype_and_ext()` og `wp_getimagesize()` (PNG, JPG eller WebP, aldrig SVG; skabelonlag kun PNG), højst 25 MB og 8000 × 8000 px. Admin henter dem via `admin-post.php?action=merchboard_designer_asset` med capability og en nonce bundet til filen; de sendes med `nosniff` og `no-store`. På nginx: `location ^~ /wp-content/uploads/merchboard-designer/ { deny all; }`.
+- **Kliparts med farvedele (ADR-121):** definitionen kontrolleres hel på serveren (`ClipartDefinition`), atlasset skal være en PNG i den angivne størrelse, og serveren navngiver det. Ved gem, kopi og indsendelse håndhæves type, produkt, dele, palet og lås, og "beholder det" læses af de gemte versioner, aldrig af forespørgslen. Serveren kan ikke se, om printfilens pixels passer til designet; godkendelsen viser derfor designets kliparts og valgte farver.
 
 ### Security headers (dashboard-shell)
 

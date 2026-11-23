@@ -124,9 +124,10 @@ Merch Dashboard → **Grundprodukter** (`BaseProductsPage`/`BaseProductActions`,
   - sider: navn, fire PNG-lag (baggrund, farvemaske, skygge, highlight) og eventuelt en udskæring (fx hoodiesnore, der skal ligge foran designet; ADR-099) i samme størrelse og printområdet i skabelonens px samt printstørrelsen i mm ved en dpi (72–600). Siden viser printfilens størrelse i px.
 - **Status:** et nyt grundprodukt er en kladde. "Aktivér" kræver mindst én farve, størrelse og side; "Tilbage til kladde" stopper nye designs, men rører ikke produkter i butikken. Et grundprodukt med designs kan ikke slettes (pensionering kommer i 30.11).
 - **Version:** ny grundpris eller ny skabelon/printområde hæver `version` (genprisning i 30.11).
-- **Fanen "Kliparts":** upload (PNG, JPG eller WebP) med navn og sletning.
+- **Fanen "Kliparts":** upload (PNG, JPG eller WebP) med navn til alle produkter, og "Fjern" i stedet for sletning (ADR-121): rækken og filen bliver for de design, der bruger klipartet.
+- **Klipart med dele fra en PSD (fase 56, ADR-121):** PSD'en læses og bages i browseren og uploades aldrig. Lag med navn "farvet lag…" bliver farvedele. Admin vælger produkter (alle eller udvalgte), frie farver eller en palet og lås og ser advarsler om bredde, dpi og broderiets låste tråde. Afviger bagningen fra PSD'ens eget billede, skal det bekræftes. Kun produktlisten kan rettes bagefter ("Produkter for …"). Uploaden må ikke overstige `post_max_size`.
 - Filer vises via `DesignerAssetDownload` (nonce pr. fil). Afviste filer slettes straks, og et erstattet lag slettes, når ændringen er gemt.
-- Audit: `designer_base_created`, `designer_base_changed` (med `changed_fields` og `version`), `designer_base_deleted`, `designer_clipart_added` og `designer_clipart_deleted`.
+- Audit: `designer_base_created`, `designer_base_changed` (med `changed_fields` og `version`), `designer_base_deleted`, `designer_clipart_added`, `designer_clipart_deleted` (ældre), `designer_clipart_retired` og `designer_clipart_changed`.
 - **"Importér fra PSD" (trin 30.7)** pr. side: PSD'en læses i browseren (ag-psd, `build/base-products-admin.js`) og uploades aldrig. Lagene `mb_background`, `mb_color`, `mb_shading` og `mb_highlight` lægges som PNG i sidens lagfelter, printområdet udfyldes fra `mb_print_area`, og et tomt sidenavn får PSD'ens filnavn. Administratoren angiver printstørrelsen i mm og dpi og gemmer. Uden en build vises feltet ikke, og formularen virker som før.
 - Import fra Printful (30.12) og Gelato (30.13): se afsnittene ovenfor.
 

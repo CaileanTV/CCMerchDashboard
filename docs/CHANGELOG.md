@@ -4,9 +4,18 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
-Fase 56 (ADR-121), under opbygning. Schema-version 55.
+Fase 56 (ADR-121), bygget, ikke reviewet eller runtime-testet. Schema-version 55.
 
-- **Database:** migration 55 med kolonnerne `definition` og `retired_at` på designerens filer (kliparts til udvalgte produkter med farvedele, endnu ikke i brug).
+- **Kliparts med farvedele:** admin uploader en PSD på fanen Kliparts. Lag, hvis navn begynder med "farvet lag", bliver dele, som creatoren farver med én farve eller en gradient i to farver med vinkel. Stregen og de øvrige lag ændres aldrig. PSD'en bages i admins browser, sammenlignes med dens eget billede og uploades aldrig; der gemmes en forhåndsvisning og et atlas.
+- **Produkter, palet og lås:** et klipart gælder alle eller udvalgte grundprodukter, frie farver eller en palet. Et låst klipart fylder printområdet fra top til bund i midten, og creatoren flytter det kun til siderne. Kun produktlisten kan rettes senere (audit `designer_clipart_changed`).
+- **Advarsler ved upload:** hvor et låst klipart kun når bredden, hvor det printes under sidens dpi, og hvilke tråde broderi låser.
+- **Designeren:** biblioteket viser kun produktets kliparts, et farvepanel pr. del, laget får klipartets navn, og et farvetræk er ét fortryd-trin. Lærred og printfil bruger serverens regler, så printfilen altid er det gemte design.
+- **Broderi:** delene får én tråd hver, stregen og de faste dele den nærmeste. Trådene beholdes altid, kan ikke byttes og slås aldrig sammen. Kræver kliparts alene flere tråde, end siden kan have, kan designet ikke sendes.
+- **Fjern i stedet for slet:** et fjernet klipart bliver i de design og kopier, der bruger det. Nye design kan ikke vælge det (audit `designer_clipart_retired`).
+- **Godkendelse:** et ventende design viser sine kliparts med status, dele, lås og de valgte farver.
+- **Rettet:** godkendelseskøen hentede ikke designet, så printfiler til farvedesigns fik id i stedet for farvenavne.
+- **For store uploads:** stoppes i browseren og sendes ellers tilbage til fanen Kliparts med årsagen i stedet for "linket er udløbet".
+- **Database:** migration 55 med kolonnerne `definition` og `retired_at` på designerens filer.
 
 Fase 55 (ADR-120), under opbygning. Schema-version 54.
 

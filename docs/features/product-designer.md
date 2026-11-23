@@ -70,6 +70,7 @@ Planlagt (fase 30, version 1.5.0; plan godkendt 2026-10-28). 30.1 (ADR'er og pla
   - sider med mockup-skabelon og printområde i mm og dpi.
   - Skabelonen kan importeres fra en PSD med lagene `mb_background`, `mb_color`, `mb_shading`, `mb_highlight` og `mb_print_area`. AI-filer eksporteres først til PSD.
 - **Kliparts og startdesigns**, som creatorne kan bruge.
+- **Kliparts med farvedele (fase 56, ADR-121):** et klipart kan gælde udvalgte grundprodukter og have dele, creatoren farver med én farve eller en gradient (palet eller frie farver). Et låst klipart fylder printområdet fra top til bund, og creatoren flytter det kun til siderne. Et klipart med dele skaleres kun proportionalt og er altid helt dækkende. Lærred, printfil og mockups tegnes af samme kode fra atlasset.
 - **Implementeret (trin 30.6):** Merch Dashboard → Produktdesigner → Grundprodukter med fanen Kliparts. Skabelonen udfyldes i formularen med PNG-lag og printområde.
 - **Udskæring (fase 37, ADR-099):** hver side kan få laget "Udskæring", en PNG i skabelonens størrelse (fx en mask.png med snorene på en hoodie). Hvor den er uigennemsigtig, vises produktfotoet foran designet, på lærredet og i alle mockups, browseren tegner. Printfilen er uændret, og laget gør ingen ventende designs forældede.
 - **PSD-import (trin 30.7):** "Importér fra PSD" pr. side. Sådan laves PSD'en (projektejeren):
@@ -143,6 +144,7 @@ Fontmenuen i designeren og i alert-overlayets indstillinger viser hver font i si
 ## Broderi (2026-10-31, eksperimentel)
 - **Broderipakker:** under Produktdesigner → Broderipakker har hver pakke et navn, et maksimum pr. side og sine tråde (kode, navn, farve). Standardpakken "Gelato" har 15 tråde og højst 6. En ændring gælder fra næste gang et design gemmes. En pakke i brug kan ikke slettes.
 - **Valg af pakke:** en side vælger "Broderipakke" på grundproduktet eller ved katalogimport. Ved import fra Gelato er første pakke forudvalgt, når sidens navn indeholder "embroider". Uden pakke er siden print med frie farver. En ændret pakke på en side giver en ny version af grundproduktet, så kladder skal gemmes igen.
+- **Kliparts med farvedele (ADR-121):** hver del får én tråd fra pakken, stregen og de faste dele den nærmeste. Disse tråde beholdes altid, kan ikke byttes og slås ikke sammen. Kræver kliparts alene flere tråde end sidens maksimum, kan designet ikke sendes.
 - **I designeren:** hver farve bliver til nærmeste tråd, også i billeder og kliparts, og det ses med det samme. Har designet flere tråde end pakken tillader, beholdes dem, der fylder mest, og resten flyttes til den nærmeste af dem. Panelet "Trådfarver" viser trådene, og creatoren kan vælge en anden for hver. Farvevælgeren viser kun trådene, og gennemsigtighed er væk på siden.
 - **Designet og filen:** designet beholder sine egne farver og gemmer kun creatorens skift (`threads`). Printfil og mockups renderes i browseren med trådfarver alene, uden halv gennemsigtighed.
 - **Kontrol:** serveren tager en stikprøve af printfilen på en broderet side og afviser farver uden for pakken, flere tråde end maksimum og halv gennemsigtighed.
