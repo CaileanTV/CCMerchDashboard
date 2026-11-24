@@ -1833,6 +1833,23 @@ Et nyt designerprodukt får forudvalgt farve og størrelse i butikken, så kunde
   - Skal eksisterende designerprodukter opdateres én gang, eller gælder det kun nye og ændrede?
   - Hvordan håndteres et produkt med flere egenskaber end farve og størrelse, fx Gelatos formater eller Printfuls valg?
 
+## Fase 60 – Placering og vinkel i designeren 📝 (projektejerens ønske 2026-11-24; kun noteret, ikke planlagt)
+
+Creatoren skal kunne placere og dreje et element præcist uden at trække:
+
+- **Placering:** knapper til at placere det valgte element, fx centrere vandret, lodret eller begge dele, og lægge det op mod kanterne af printfeltet.
+- **Snap til vinkel:** når man drejer, falder elementet på plads ved faste vinkler, fx hver 90°. Fabric kan det selv med `snapAngle` og `snapThreshold`.
+- **Vinkel som tal:** et felt i egenskabspanelet, hvor man skriver vinklen, fx 45, i stedet for at trække i drejehåndtaget.
+- **I dag:**
+  - Egenskabspanelet har justering af tekst og "Fyld/Tilpas" for billeder, men ingen felter til placering eller vinkel.
+  - Tegnefladen har intet snap.
+  - Vinklen gemmes mellem −180° og 180° (2.5.2).
+- **Åbne spørgsmål til planen:**
+  - Hvilke vinkler skal der snappes til: 90°, eller også 45° og 15°?
+  - Skal snap kunne slås fra, fx med Shift som i mange programmer?
+  - Skal der være felter til placering med tal (x og y i cm), eller er knapper nok?
+  - Skal placeringen være i forhold til hele printfeltet eller til den del af en rund vare, man ser forfra?
+
 ## Version 2.5.2 – kritisk rettelse: drejede elementer 🔄 (projektejerens fejlrapport fra produktion 2026-11-24)
 
 - **Fejlen:** "Designet indeholder noget, der ikke kan bruges …", når en tekst ændrede størrelse på flasken.
@@ -1843,7 +1860,7 @@ Et nyt designerprodukt får forudvalgt farve og størrelse i butikken, så kunde
   - `uprightAngle()` i `design-model.ts` giver altid en vinkel mellem −180° og 180°, og `readBack` bruger den;
   - Jest-test af vinklerne;
   - en afprøvning med den rigtige tegneflade i Chrome og serverens validering (runtime-mappen `2026-11-24-text-resize`).
-- **Udestår:** projektejerens ønske om felter til placering og vinkel og snap til fx 90° kommer efter rettelsen, med en plan.
+- Projektejerens ønske om placering, snap til vinkel og vinkel som tal er noteret som fase 60.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 

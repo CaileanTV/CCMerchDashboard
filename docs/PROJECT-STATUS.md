@@ -493,6 +493,10 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 - [ ] Kun noteret. Den planlægges sammen med det nye plugin til følgesedler, som projektejeren er ved at lave. Se ROADMAP for de åbne spørgsmål.
 
+### Fase 60 – Placering og vinkel i designeren (noteret 2026-11-24)
+
+- [ ] Kun noteret: knapper til placering, snap til vinkel (fx 90°) og vinkel som tal. Se ROADMAP for de åbne spørgsmål.
+
 ### Fase 59 – Standardvariant ud fra hovedbilledet (noteret 2026-11-24)
 
 - [ ] Kun noteret: et nyt designerprodukt skal have farven fra det valgte hovedbillede forudvalgt, og størrelsen forudvalgt, når der kun er én. Admin kan sætte et fast forvalg på grundproduktet, fx størrelse M. Se ROADMAP for de åbne spørgsmål.
