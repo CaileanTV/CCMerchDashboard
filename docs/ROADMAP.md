@@ -1833,6 +1833,18 @@ Et nyt designerprodukt får forudvalgt farve og størrelse i butikken, så kunde
   - Skal eksisterende designerprodukter opdateres én gang, eller gælder det kun nye og ændrede?
   - Hvordan håndteres et produkt med flere egenskaber end farve og størrelse, fx Gelatos formater eller Printfuls valg?
 
+## Version 2.5.2 – kritisk rettelse: drejede elementer 🔄 (projektejerens fejlrapport fra produktion 2026-11-24)
+
+- **Fejlen:** "Designet indeholder noget, der ikke kan bruges …", når en tekst ændrede størrelse på flasken.
+- **Årsag**, fundet ud fra projektejerens data fra browseren:
+  - et billede gemt med vinklen −24° blev læst tilbage fra tegnefladen som −384°, fordi formlen i `readBack` trak 360 fra en gang for meget ved negative vinkler;
+  - hver ændring læser alle elementer tilbage, så et vilkårligt drejet element gjorde designet ugyldigt (serveren tager −360° til 360°).
+- **Rettet:**
+  - `uprightAngle()` i `design-model.ts` giver altid en vinkel mellem −180° og 180°, og `readBack` bruger den;
+  - Jest-test af vinklerne;
+  - en afprøvning med den rigtige tegneflade i Chrome og serverens validering (runtime-mappen `2026-11-24-text-resize`).
+- **Udestår:** projektejerens ønske om felter til placering og vinkel og snap til fx 90° kommer efter rettelsen, med en plan.
+
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
 - **M1** long-poll-pladser og grænse pr. besøgsadresse på overlay-feedene. ✅

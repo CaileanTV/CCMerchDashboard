@@ -4,6 +4,14 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [2.5.2] - 2026-11-24
+
+Kritisk rettelse. Ingen schemaændring.
+
+- **Rettet:** et design kunne ikke gemmes ("Designet indeholder noget, der ikke kan bruges …"), når et element var drejet mod uret og noget andet blev ændret bagefter, fx en tekst, der blev gjort større.
+  - Tegnefladen omregnede en vinkel som −24° til −384°, og serveren tager kun −360° til 360°. Hver ændring læser alle elementer tilbage, så det drejede element fik den forkerte vinkel.
+  - Vinklen gemmes nu altid mellem −180° og 180°. Fejlen fandtes også før 2.5.x.
+
 ## [2.5.1] - 2026-11-23
 
 Fase 57 (ADR-122). Ingen schemaændring. Reviewet; runtime-testen sker på stg.

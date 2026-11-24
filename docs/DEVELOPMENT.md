@@ -249,6 +249,19 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 2.5.2: drejede elementer kan gemmes igen (kritisk rettelse)
+
+**2026-11-24**, projektejerens fejlrapport fra produktion: "Fejl: Designet indeholder noget, der ikke kan bruges …", så snart en tekst ændrer størrelse.
+- Årsag: et billede i designet var drejet −24°. Når teksten blev ændret, omregnede tegnefladen billedets vinkel til −384°, og serveren afviste designet.
+- Ingen schemaændring. Projektejeren installerer selv. Intet tag uden projektejerens OK og grøn CI.
+
+1. **Opdatér** med ZIP'en. Overview skal vise version 2.5.2.
+2. **Genskab fejlen:** åbn flasken eller et andet produkt. Drej et billede eller en tekst lidt mod uret, og gem. Gør derefter en anden tekst større, og gem igen. Det skal lykkes uden fejl.
+3. **Vinkler:** drej et element til ca. 90°, 180° og −90°, og gem. Genindlæs siden: elementerne står, som de blev gemt.
+4. **Kladden fra fejlrapporten** (flasken med drejet billede og tekst) kan nu gemmes.
+
+**Tilbagerulning:** installér 2.5.1-ZIP'en igen. Gemte designs er de samme.
+
 ## Release 2.5.1: fotos og printfelter fra Printify (fase 57, ADR-122)
 
 **Versions-bump og CHANGELOG-sektion 2026-11-23** (projektejerens ønske: Printify-importen skal sættes op automatisk, som 2.5.1). Ingen schemaændring; bygger oven på 2.5.0. Projektejeren installerer testpakken på stg selv. Intet tag før projektejerens OK og grøn CI.
