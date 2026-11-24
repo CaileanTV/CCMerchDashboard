@@ -138,6 +138,12 @@ class CatalogImport {
 	private const GUIDE_VIEWS = '/^(front|back|left|right)(-|$)/D';
 
 	/**
+	 * Room under a sheet with guides for the views' drawings, in pixels of
+	 * ImageProbe::SHEET_SIZE (step 57.19).
+	 */
+	private const GUIDE_ROOM = 200;
+
+	/**
 	 * The width of a flat side without a pattern.
 	 */
 	private const FLAT_WIDTH = 1000;
@@ -608,7 +614,7 @@ class CatalogImport {
 			'flat'     => $this->flatten( $id, $renderer, $data ),
 			'measure'  => $this->measure( $renderer, $data ),
 			'download' => $this->collect( $id, $renderer, $data ),
-			'guides'   => $this->guides( $renderer, $data ),
+			'guides'   => $this->guides( $id, $renderer, $data ),
 			'bleed'    => $this->trims( $renderer, $data ),
 			default    => $this->render( $id, $renderer, $data ),
 		};
@@ -991,14 +997,17 @@ class CatalogImport {
 	 * Measures where each product view of a print around the product faces
 	 * on its sheet (ADR-122): per view named in GUIDE_VIEWS, the blank and
 	 * the striped photo of the first colour (ImageProbe::stripe_centre()),
-	 * a few per round. A view whose stripes do not show is left out.
+	 * a few per round. A view whose stripes do not show is left out. Each
+	 * view found is drawn too (step 57.19), with the part of the print it
+	 * shows.
 	 *
+	 * @param int                  $id       Base product.
 	 * @param CatalogRenderer      $renderer Provider.
 	 * @param array<string, mixed> $data     Import data.
 	 * @return int Seconds to the next round.
 	 * @throws PrintifyException When Printify asks to wait.
 	 */
-	private function guides( CatalogRenderer $renderer, array &$data ): int {
+	private function guides( int $id, CatalogRenderer $renderer, array &$data ): int {
 		$stripes = is_array( $data['images']['stripes'] ?? null ) ? $data['images']['stripes'] : array();
 		$blank   = is_array( $data['images']['blank'] ?? null ) ? $data['images']['blank'] : array();
 		$first   = PrintifyCatalog::stripes_color( is_array( $data['colors'] ?? null ) ? $data['colors'] : array() );
@@ -1030,8 +1039,13 @@ class CatalogImport {
 				}
 
 				// The guides only help: a photo that cannot be read leaves its view out, but a 429 waits.
+				$photo   = '';
+				$striped = '';
+
 				try {
-					$centre = ImageProbe::stripe_centre( $renderer->download( $blank[ $slot ][ $first ] ), $renderer->download( $urls[ $first ] ) );
+					$photo   = $renderer->download( $blank[ $slot ][ $first ] );
+					$striped = $renderer->download( $urls[ $first ] );
+					$centre  = ImageProbe::stripe_centre( $photo, $striped );
 				} catch ( PrintifyException $e ) {
 					if ( PrintifyException::RATE_LIMITED === $e->reason() ) {
 						throw $e;
@@ -1044,6 +1058,23 @@ class CatalogImport {
 
 				$data['centres'][ $key ][ $slot ] = $centre ?? -1;
 				++$done;
+
+				// Step 57.19: the view drawn as in Printify's editor; without it, its photo stays under the guide.
+				try {
+					$drawing = null === $centre ? null : ImageProbe::drawing( $photo, $striped );
+				} catch ( InvalidArgumentException ) {
+					$drawing = null;
+				}
+
+				if ( null !== $drawing ) {
+					$data['drawings'][ $slot ]     = $this->stored( $drawing['png'] );
+					$data['seen'][ $key ][ $slot ] = array(
+						'box'  => $drawing['box'],
+						'seam' => $drawing['seam'],
+					);
+				}
+
+				$this->persist( $id, $data );
 			}
 		}
 
@@ -1085,29 +1116,44 @@ class CatalogImport {
 
 	/**
 	 * The guides of a side from its views' measured centres, in order along
-	 * the sheet (ADR-122); a view not found is left out. Their photos are
-	 * the provider's thumbnails of the same camera names, found when the
-	 * side is sent to the designer.
+	 * the sheet (ADR-122); a view not found is left out. Their drawings (step
+	 * 57.19), or else photos, are the provider's images of the same camera
+	 * names, found when the side is sent to the designer; with a drawing,
+	 * the part of the print the view shows. Only the view nearest the
+	 * sheet's ends keeps where the sheet starts in it.
 	 *
 	 * @param array<mixed> $centres Share of the sheet by camera name; -1 when not found.
-	 * @return list<array{x: float, label: string, figure: int}>
+	 * @param array<mixed> $seen    The part of the print each view shows, by camera name.
+	 * @return list<array{x: float, label: string, figure: int, box: array{x: float, y: float, width: float, height: float}|null, seam: float|null}>
 	 */
-	private static function guide_list( array $centres ): array {
+	private static function guide_list( array $centres, array $seen ): array {
 		$guides = array();
 
 		foreach ( $centres as $name => $centre ) {
 			if ( is_numeric( $centre ) && (float) $centre >= 0 && (float) $centre <= 1 ) {
+				$shown    = is_array( $seen[ $name ] ?? null ) ? $seen[ $name ] : array();
 				$guides[] = array(
 					'x'      => round( (float) $centre, 4 ),
 					'label'  => (string) $name,
 					'figure' => 0,
+					'box'    => BaseView::guide_box( $shown['box'] ?? null ),
+					'seam'   => is_numeric( $shown['seam'] ?? null ) ? (float) $shown['seam'] : null,
 				);
 			}
 		}
 
 		usort( $guides, static fn( array $a, array $b ): int => $a['x'] <=> $b['x'] );
+		$guides = array_slice( $guides, 0, BaseView::MAX_GUIDES );
+		$ends   = array_map( static fn( array $guide ): float => min( $guide['x'], 1 - $guide['x'] ), $guides );
+		$end    = array() === $ends ? 0.0 : min( $ends );
 
-		return array_slice( $guides, 0, BaseView::MAX_GUIDES );
+		foreach ( $guides as $index => $guide ) {
+			if ( null !== $guide['seam'] && ( null === $guide['box'] || $ends[ $index ] > $end ) ) {
+				$guides[ $index ]['seam'] = null;
+			}
+		}
+
+		return $guides;
 	}
 
 	/**
@@ -1236,13 +1282,15 @@ class CatalogImport {
 
 			// ADR-122: a print around the product (a bottle, a mug) shows only in part on each of Printify's photos.
 			$wrapped = self::wrapped( $data, $side, $chosen );
+			$guides  = $wrapped ? self::guide_list( is_array( $data['centres'][ $side['key'] ] ?? null ) ? $data['centres'][ $side['key'] ] : array(), is_array( $data['seen'][ $side['key'] ] ?? null ) ? $data['seen'][ $side['key'] ] : array() ) : array();
 
 			// ADR-119: a poster (a format group's side) is designed on a flat sheet of its whole print area, as in Gelato's editor;
 			// so is a print around the product: Printify's mockups show it after the submission.
 			if ( isset( $side['formats'] ) || $wrapped ) {
 				[ $width_mm, $height_mm ] = array( (int) $side['width_mm'], (int) $side['height_mm'] );
-				[ $sheet, $area ]         = ImageProbe::sheet( (float) $side['width_mm'], (float) $side['height_mm'] );
-				$uploads                  = array( 'background' => $this->sheet_upload( $sheet ) );
+				// Step 57.19: with guides, room under the sheet for the views' drawings.
+				[ $sheet, $area ] = ImageProbe::sheet( (float) $side['width_mm'], (float) $side['height_mm'], array() === $guides ? 0 : self::GUIDE_ROOM );
+				$uploads          = array( 'background' => $this->sheet_upload( $sheet ) );
 
 				// The colour photos were only measured for the colour codes.
 				foreach ( is_array( $data['files'][ $side['key'] ] ?? null ) ? $data['files'][ $side['key'] ] : array() as $name ) {
@@ -1281,7 +1329,7 @@ class CatalogImport {
 
 			// ADR-122: where the product's views face on a print around it; their photos are the thumbnails of the same names.
 			if ( $wrapped ) {
-				$view['guides'] = self::guide_list( is_array( $data['centres'][ $side['key'] ] ?? null ) ? $data['centres'][ $side['key'] ] : array() );
+				$view['guides'] = $guides;
 			}
 
 			// A format group's side (ADR-115): its sizes and values, and each size's print size and bleed.
@@ -1327,6 +1375,8 @@ class CatalogImport {
 		// ADR-119: the provider's images, one thumbnail each, for the administrator's choice of mockups
 		// (ADR-122: Printify's by camera name). Made once the sides are stored: the earlier ones go with them.
 		$thumbs = $this->service->thumbnails( $id, is_array( $data['thumbs'] ?? null ) ? $data['thumbs'] : array(), $provider[ $printify ? 'printify_thumbs' : 'gelato_thumbs' ] ?? array(), $printify ? 'view' : 'Gelato' );
+		// Step 57.19: the drawings under the guides, by camera name.
+		$drawings = $printify ? $this->service->thumbnails( $id, is_array( $data['drawings'] ?? null ) ? $data['drawings'] : array(), $provider['printify_drawings'] ?? array(), 'drawing' ) : array();
 
 		$this->bases->set_provider(
 			$id,
@@ -1334,23 +1384,24 @@ class CatalogImport {
 			(string) ( $data['ref'] ?? '' ),
 			self::json(
 				array(
-					'placements'      => $kept,
-					'variants'        => $provider['variants'] ?? array(),
-					'slots'           => $slots,
-					'flat'            => $provider['flat'] ?? false,
-					'photos'          => $provider['photos'] ?? array(),
-					'stitches'        => $provider['stitches'] ?? array(),
-					'techniques'      => $provider['techniques'] ?? array(),
-					'options'         => $provider['options'] ?? array(),
-					'axes'            => $provider['axes'] ?? array(),
-					'uids'            => $provider['uids'] ?? array(),
-					'scenes'          => array_filter( $scenes ),
-					'share_formats'   => $provider['share_formats'] ?? true,
-					'gelato_thumbs'   => $printify ? array() : $thumbs,
+					'placements'        => $kept,
+					'variants'          => $provider['variants'] ?? array(),
+					'slots'             => $slots,
+					'flat'              => $provider['flat'] ?? false,
+					'photos'            => $provider['photos'] ?? array(),
+					'stitches'          => $provider['stitches'] ?? array(),
+					'techniques'        => $provider['techniques'] ?? array(),
+					'options'           => $provider['options'] ?? array(),
+					'axes'              => $provider['axes'] ?? array(),
+					'uids'              => $provider['uids'] ?? array(),
+					'scenes'            => array_filter( $scenes ),
+					'share_formats'     => $provider['share_formats'] ?? true,
+					'gelato_thumbs'     => $printify ? array() : $thumbs,
 					// A choice made before stays for the images there still are; none made is every image.
-					'gelato_photos'   => $printify || null === $photos ? null : array_values( array_intersect( $photos, array_map( 'intval', array_keys( $thumbs ) ) ) ),
-					'printify_thumbs' => $printify ? $thumbs : array(),
-					'printify_photos' => ! $printify || null === $names ? null : array_values( array_intersect( $names, array_map( 'strval', array_keys( $thumbs ) ) ) ),
+					'gelato_photos'     => $printify || null === $photos ? null : array_values( array_intersect( $photos, array_map( 'intval', array_keys( $thumbs ) ) ) ),
+					'printify_thumbs'   => $printify ? $thumbs : array(),
+					'printify_photos'   => ! $printify || null === $names ? null : array_values( array_intersect( $names, array_map( 'strval', array_keys( $thumbs ) ) ) ),
+					'printify_drawings' => $drawings,
 				)
 			)
 		);
@@ -1605,7 +1656,7 @@ class CatalogImport {
 				}
 			}
 
-			foreach ( is_array( $data['thumbs'] ?? null ) ? $data['thumbs'] : array() as $thumb ) {
+			foreach ( array_merge( is_array( $data['thumbs'] ?? null ) ? array_values( $data['thumbs'] ) : array(), is_array( $data['drawings'] ?? null ) ? array_values( $data['drawings'] ) : array() ) as $thumb ) {
 				if ( is_array( $thumb ) && is_string( $thumb['file'] ?? null ) ) {
 					$this->files->delete( $thumb['file'] );
 				}
@@ -1616,7 +1667,7 @@ class CatalogImport {
 			$this->cleanup( $id, array_merge( $data, array( 'renders' => array_merge( $stored, is_array( $data['renders'] ?? null ) ? $data['renders'] : array() ) ) ) );
 
 			// The renders' images and measurements stay for the diagnosis; "Try again" starts without them.
-			unset( $data['files'], $data['chosen'], $data['hex'], $data['thumbs'] );
+			unset( $data['files'], $data['chosen'], $data['hex'], $data['thumbs'], $data['drawings'] );
 
 			$data['error']  = $reason;
 			$data['call']   = $call;

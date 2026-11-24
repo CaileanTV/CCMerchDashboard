@@ -104,13 +104,23 @@ export interface DesignerView {
 	readonly guides: readonly DesignerGuide[];
 }
 
-/** A view of a print around the product: where it faces and its photo. */
+/** A view of a print around the product: where it faces and its image. */
 export interface DesignerGuide {
 	/** A share of the print area's width, 0 to 1. */
 	readonly x: number;
 	readonly label: string;
-	/** The view's photo (an asset), 0 for none. */
+	/** The view's drawing or photo (an asset), 0 for none. */
 	readonly figure: number;
+	/**
+	 * On a drawing (step 57.19), the part of the print the view shows, as
+	 * shares of the drawing; null on a photo.
+	 */
+	readonly box: DesignerTrim | null;
+	/**
+	 * Where the sheet starts on the drawing, as a share of its width: the
+	 * view is shown at both ends of the print area. Null for other views.
+	 */
+	readonly seam: number | null;
 }
 
 /** A share of a print area: x, y, width and height between 0 and 1. */
@@ -530,12 +540,58 @@ function parseGuides( value: unknown ): DesignerGuide[] {
 				isString( guide.label ) &&
 				guide.label !== ''
 		)
-		.map( ( guide ) => ( {
-			x: guide.x as number,
-			label: guide.label as string,
-			figure: isInt( guide.figure, 1 ) ? ( guide.figure as number ) : 0,
-		} ) )
+		.map( ( guide ) => {
+			const box = parseBox( guide.box );
+
+			return {
+				x: guide.x as number,
+				label: guide.label as string,
+				figure: isInt( guide.figure, 1 )
+					? ( guide.figure as number )
+					: 0,
+				box,
+				seam:
+					box !== null &&
+					typeof guide.seam === 'number' &&
+					guide.seam >= 0 &&
+					guide.seam <= 1
+						? guide.seam
+						: null,
+			};
+		} )
 		.sort( ( a, b ) => a.x - b.x );
+}
+
+/**
+ * A part of a drawing: x, y, width and height as shares, inside it; null
+ * for anything else.
+ *
+ * @param value Value.
+ */
+function parseBox( value: unknown ): DesignerTrim | null {
+	const share = ( number: unknown ): number is number =>
+		typeof number === 'number' && number >= 0 && number <= 1;
+
+	if (
+		! isRecord( value ) ||
+		! share( value.x ) ||
+		! share( value.y ) ||
+		! share( value.width ) ||
+		! share( value.height ) ||
+		value.width === 0 ||
+		value.height === 0 ||
+		value.x + value.width > 1.0001 ||
+		value.y + value.height > 1.0001
+	) {
+		return null;
+	}
+
+	return {
+		x: value.x,
+		y: value.y,
+		width: value.width,
+		height: value.height,
+	};
 }
 
 /**

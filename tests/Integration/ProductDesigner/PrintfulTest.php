@@ -271,10 +271,10 @@ final class PrintfulTest extends IntegrationTestCase {
 		self::assertSame( array( 76, 102, 100 ), array( $view->width_mm, $view->height_mm, $view->dpi ) );
 		self::assertSame(
 			array(
-				'source'          => 'printful',
-				'ref'             => '71',
-				'placements'      => array( 'front-print' => 'front' ),
-				'variants'        => array(
+				'source'            => 'printful',
+				'ref'               => '71',
+				'placements'        => array( 'front-print' => 'front' ),
+				'variants'          => array(
 					'black' => array(
 						'S' => '101',
 						'M' => '102',
@@ -284,20 +284,21 @@ final class PrintfulTest extends IntegrationTestCase {
 						'M' => '202',
 					),
 				),
-				'slots'           => array( 'front-print' => 'front' ),
-				'flat'            => false,
-				'photos'          => array(),
-				'stitches'        => array(),
-				'techniques'      => array(),
-				'options'         => array(),
-				'axes'            => array(),
-				'uids'            => array(),
-				'scenes'          => array(),
-				'share_formats'   => true,
-				'gelato_thumbs'   => array(),
-				'gelato_photos'   => null,
-				'printify_thumbs' => array(),
-				'printify_photos' => null,
+				'slots'             => array( 'front-print' => 'front' ),
+				'flat'              => false,
+				'photos'            => array(),
+				'stitches'          => array(),
+				'techniques'        => array(),
+				'options'           => array(),
+				'axes'              => array(),
+				'uids'              => array(),
+				'scenes'            => array(),
+				'share_formats'     => true,
+				'gelato_thumbs'     => array(),
+				'gelato_photos'     => null,
+				'printify_thumbs'   => array(),
+				'printify_photos'   => null,
+				'printify_drawings' => array(),
 			),
 			$this->bases->provider( (int) $base->id )
 		);

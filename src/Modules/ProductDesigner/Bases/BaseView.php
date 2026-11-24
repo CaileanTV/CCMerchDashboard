@@ -164,23 +164,23 @@ final readonly class BaseView {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                                                                                     $key         Stable key (a-z, 0-9, -), unique per base product.
-	 * @param string                                                                                     $name        Name shown to creators.
-	 * @param int                                                                                        $width       Template width in px.
-	 * @param int                                                                                        $height      Template height in px.
-	 * @param array<string, int>                                                                         $layers      Asset id by layer (LAYERS and colour backgrounds); missing layers are left out.
-	 * @param array{x: int, y: int, width: int, height: int}                                             $area        Print area in template px.
-	 * @param int                                                                                        $width_mm    Print width in mm.
-	 * @param int                                                                                        $height_mm   Print height in mm.
-	 * @param int                                                                                        $dpi         Print resolution.
-	 * @param string                                                                                     $thread_pack The embroidery pack; empty when the side is printed.
-	 * @param bool                                                                                       $flat        Whether the side is a flat part of an all-over product.
-	 * @param array<string, mixed>|null                                                                  $scene       The side's PSD scene; it comes with the layer `scene`.
-	 * @param string[]                                                                                   $sizes       The sizes the side belongs to; empty for every size.
-	 * @param bool                                                                                       $small       Whether the side is a small design area, with the price of small extra areas.
-	 * @param string[]                                                                                   $colors      The colour keys the side belongs to; empty for every colour.
-	 * @param array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}> $formats Print size and bleed by size.
-	 * @param list<array{x: float, label: string, figure: int}>                                          $guides  Where the views of a print around the product face (ADR-122): a share of the print area's width, the view's name and its photo (an asset, 0 for none).
+	 * @param string                                                                                                                                $key         Stable key (a-z, 0-9, -), unique per base product.
+	 * @param string                                                                                                                                $name        Name shown to creators.
+	 * @param int                                                                                                                                   $width       Template width in px.
+	 * @param int                                                                                                                                   $height      Template height in px.
+	 * @param array<string, int>                                                                                                                    $layers      Asset id by layer (LAYERS and colour backgrounds); missing layers are left out.
+	 * @param array{x: int, y: int, width: int, height: int}                                                                                        $area        Print area in template px.
+	 * @param int                                                                                                                                   $width_mm    Print width in mm.
+	 * @param int                                                                                                                                   $height_mm   Print height in mm.
+	 * @param int                                                                                                                                   $dpi         Print resolution.
+	 * @param string                                                                                                                                $thread_pack The embroidery pack; empty when the side is printed.
+	 * @param bool                                                                                                                                  $flat        Whether the side is a flat part of an all-over product.
+	 * @param array<string, mixed>|null                                                                                                             $scene       The side's PSD scene; it comes with the layer `scene`.
+	 * @param string[]                                                                                                                              $sizes       The sizes the side belongs to; empty for every size.
+	 * @param bool                                                                                                                                  $small       Whether the side is a small design area, with the price of small extra areas.
+	 * @param string[]                                                                                                                              $colors      The colour keys the side belongs to; empty for every colour.
+	 * @param array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>                                            $formats Print size and bleed by size.
+	 * @param list<array{x: float, label: string, figure: int, box: array{x: float, y: float, width: float, height: float}|null, seam: float|null}> $guides  Where the views of a print around the product face (ADR-122): a share of the print area's width, the view's name, its photo (an asset, 0 for none), and with a drawing the part of the print it shows and where the sheet starts in it, as shares of the drawing (step 57.19).
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -259,7 +259,9 @@ final readonly class BaseView {
 		}
 
 		foreach ( $guides as $guide ) {
-			if ( $guide['x'] < 0 || $guide['x'] > 1 || '' === $guide['label'] || mb_strlen( $guide['label'] ) > 40 || $guide['figure'] < 0 ) {
+			$seam = $guide['seam'];
+
+			if ( $guide['x'] < 0 || $guide['x'] > 1 || '' === $guide['label'] || mb_strlen( $guide['label'] ) > 40 || $guide['figure'] < 0 || ( null !== $guide['box'] && self::guide_box( $guide['box'] ) !== $guide['box'] ) || ( null !== $seam && ( $seam < 0 || $seam > 1 ) ) ) {
 				throw new InvalidArgumentException( 'Invalid guide of a side.' );
 			}
 		}
@@ -537,7 +539,7 @@ final readonly class BaseView {
 	 * Guides from their stored or entered form (ADR-122); an invalid entry is left out.
 	 *
 	 * @param mixed $data Decoded guides.
-	 * @return list<array{x: float, label: string, figure: int}>
+	 * @return list<array{x: float, label: string, figure: int, box: array{x: float, y: float, width: float, height: float}|null, seam: float|null}>
 	 */
 	public static function guides_of( mixed $data ): array {
 		$guides = array();
@@ -547,15 +549,45 @@ final readonly class BaseView {
 			$label = is_array( $guide ) && is_string( $guide['label'] ?? null ) ? mb_substr( trim( sanitize_text_field( $guide['label'] ) ), 0, 40 ) : '';
 
 			if ( $x >= 0 && $x <= 1 && '' !== $label && count( $guides ) < self::MAX_GUIDES ) {
+				$seam     = is_numeric( $guide['seam'] ?? null ) ? (float) $guide['seam'] : -1.0;
 				$guides[] = array(
 					'x'      => round( $x, 4 ),
 					'label'  => $label,
 					'figure' => is_int( $guide['figure'] ?? null ) && $guide['figure'] > 0 ? $guide['figure'] : 0,
+					'box'    => self::guide_box( $guide['box'] ?? null ),
+					'seam'   => $seam >= 0 && $seam <= 1 ? round( $seam, 4 ) : null,
 				);
 			}
 		}
 
 		return $guides;
+	}
+
+	/**
+	 * The part of the print a view's drawing shows (step 57.19): shares of
+	 * the drawing, rounded; null when it is not one.
+	 *
+	 * @param mixed $data Decoded box.
+	 * @return array{x: float, y: float, width: float, height: float}|null
+	 */
+	public static function guide_box( mixed $data ): ?array {
+		if ( ! is_array( $data ) ) {
+			return null;
+		}
+
+		$box = array();
+
+		foreach ( array( 'x', 'y', 'width', 'height' ) as $name ) {
+			$value = $data[ $name ] ?? null;
+
+			if ( ! is_numeric( $value ) || (float) $value < 0 || (float) $value > 1 ) {
+				return null;
+			}
+
+			$box[ $name ] = round( (float) $value, 4 );
+		}
+
+		return $box['x'] + $box['width'] <= 1.0001 && $box['y'] + $box['height'] <= 1.0001 && $box['width'] > 0 && $box['height'] > 0 ? $box : null;
 	}
 
 	/**

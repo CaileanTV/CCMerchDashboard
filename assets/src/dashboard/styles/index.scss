@@ -2283,10 +2283,28 @@ input:disabled + .merchboard-sounds__upload {
 	}
 
 	img {
+		display: block;
 		width: 44px;
 		height: 44px;
 		object-fit: contain;
 	}
+
+	// Step 57.19: a view drawn as in a print editor; the room under the
+	// area sets its height.
+	li.is-drawing img {
+		width: auto;
+	}
+}
+
+.merchboard-product-designer__figure {
+	position: relative;
+	display: block;
+}
+
+.merchboard-product-designer__seen {
+	position: absolute;
+	box-sizing: border-box;
+	border: 1px solid var(--merchboard-guide-seen);
 }
 
 .merchboard-product-designer__trim-note {

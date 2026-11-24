@@ -307,19 +307,9 @@ final class ImageProbe {
 	 */
 	public static function stripe_centre( string $blank, string $stripes ): ?float {
 		$a      = self::image( $blank );
-		$b      = self::image( $stripes );
 		$width  = imagesx( $a );
 		$height = imagesy( $a );
-
-		if ( imagesx( $b ) !== $width || imagesy( $b ) !== $height ) {
-			$scaled = imagescale( $b, $width, $height );
-
-			if ( false === $scaled ) {
-				throw new InvalidArgumentException( 'The stripes render cannot be scaled.' );
-			}
-
-			$b = $scaled;
-		}
+		$b      = self::sized( self::image( $stripes ), $width, $height );
 
 		// The row where most of the print shows.
 		$best = array( -1, 0 );
@@ -419,6 +409,273 @@ final class ImageProbe {
 		$share = fmod( $position / self::STRIPES, 1.0 );
 
 		return $share < 0 ? $share + 1 : $share;
+	}
+
+	/**
+	 * Height of a drawing of a product view in pixels: twice what the
+	 * designer shows (ADR-122).
+	 */
+	public const DRAWING_HEIGHT = 176;
+
+	/**
+	 * Most a pixel of a plain background differs from the photo's corner,
+	 * per channel.
+	 */
+	private const BACKGROUND = 8;
+
+	/**
+	 * Where a line of a drawing starts to show and where it is solid: the
+	 * strength of a change in brightness (Sobel).
+	 */
+	private const LINE_FROM = 18;
+
+	/**
+	 * See LINE_FROM.
+	 */
+	private const LINE_SOLID = 58;
+
+	/**
+	 * A line drawing of a product view for the guides of a print around it
+	 * (ADR-122), as Printify's editor shows them: grey on transparent, the
+	 * product's outline on the blank photo's plain background and the lines
+	 * inside it where the brightness changes, none inside the print. With
+	 * the part of the print the view shows (from the striped photo) and
+	 * where the sheet starts in it, both as shares of the drawing. Null when
+	 * the background is not plain or the print does not show.
+	 *
+	 * @param string $blank   The blank photo (bytes).
+	 * @param string $stripes The photo with the striped sheet (bytes).
+	 * @return array{png: string, box: array{x: float, y: float, width: float, height: float}, seam: float|null}|null
+	 * @throws InvalidArgumentException When a photo cannot be read or the drawing made.
+	 */
+	public static function drawing( string $blank, string $stripes ): ?array {
+		$a      = self::image( $blank );
+		$width  = imagesx( $a );
+		$height = imagesy( $a );
+		$b      = self::sized( self::image( $stripes ), $width, $height );
+		$corner = self::pixel( $a, 0, 0 );
+
+		// A plain background: the corners alike.
+		foreach ( array( array( $width - 1, 0 ), array( 0, $height - 1 ), array( $width - 1, $height - 1 ) ) as [ $x, $y ] ) {
+			if ( self::differs( self::pixel( $a, $x, $y ), $corner ) ) {
+				return null;
+			}
+		}
+
+		// The product and the print on a grid.
+		$x_step  = max( 1, intdiv( max( $width, $height ), 400 ) );
+		$y_step  = $x_step;
+		$product = array( $width, $height, -1, -1 );
+		$columns = array();
+		$rows    = array();
+
+		for ( $y = 0; $y < $height; $y += $y_step ) {
+			for ( $x = 0; $x < $width; $x += $x_step ) {
+				if ( self::differs( self::pixel( $a, $x, $y ), $corner ) ) {
+					$product = array( min( $product[0], $x ), min( $product[1], $y ), max( $product[2], $x ), max( $product[3], $y ) );
+				}
+
+				if ( null !== self::stripe_at( $a, $b, $x, $y ) ) {
+					$columns[ $x ] = ( $columns[ $x ] ?? 0 ) + 1;
+					$rows[ $y ]    = ( $rows[ $y ] ?? 0 ) + 1;
+				}
+			}
+		}
+
+		if ( $product[2] < 0 || array() === $columns || array() === $rows ) {
+			return null;
+		}
+
+		// The print: columns and rows where it shows at least a tenth as much as where it shows most.
+		$most_c  = max( $columns );
+		$most_r  = max( $rows );
+		$columns = array_keys( array_filter( $columns, static fn( int $count ): bool => $count * 10 >= $most_c ) );
+		$rows    = array_keys( array_filter( $rows, static fn( int $count ): bool => $count * 10 >= $most_r ) );
+
+		if ( array() === $columns || array() === $rows ) {
+			return null;
+		}
+
+		$print = array( min( $columns ), min( $rows ), max( $columns ), max( $rows ) );
+		$seam  = self::seam( $a, $b, $print );
+
+		// The product with a small margin, DRAWING_HEIGHT high.
+		$margin = max( 2, intdiv( $product[3] - $product[1], 50 ) );
+		$left   = max( 0, $product[0] - $margin );
+		$top    = max( 0, $product[1] - $margin );
+		$crop_w = min( $width - 1, $product[2] + $margin ) - $left + 1;
+		$crop_h = min( $height - 1, $product[3] + $margin ) - $top + 1;
+		$scale  = self::DRAWING_HEIGHT / $crop_h;
+		$w      = max( 1, (int) round( $crop_w * $scale ) );
+		$h      = self::DRAWING_HEIGHT;
+		$small  = imagecreatetruecolor( $w, $h );
+		$lines  = imagecreatetruecolor( $w, $h );
+
+		if ( false === $small || false === $lines ) {
+			throw new InvalidArgumentException( 'The drawing cannot be made.' );
+		}
+
+		imagecopyresampled( $small, $a, 0, 0, $left, $top, $w, $h, $crop_w, $crop_h );
+
+		$box = array(
+			(int) floor( ( $print[0] - $left ) * $scale ),
+			(int) floor( ( $print[1] - $top ) * $scale ),
+			(int) ceil( ( $print[2] - $left ) * $scale ),
+			(int) ceil( ( $print[3] - $top ) * $scale ),
+		);
+
+		self::draw( $small, $lines, $corner, $box );
+
+		ob_start();
+		$written = imagepng( $lines, null, 9 );
+		$png     = (string) ob_get_clean();
+
+		if ( ! $written || '' === $png ) {
+			throw new InvalidArgumentException( 'The drawing cannot be written.' );
+		}
+
+		$share = static fn( float $value, int $of ): float => round( max( 0.0, min( 1.0, $value / $of ) ), 4 );
+
+		return array(
+			'png'  => $png,
+			'box'  => array(
+				'x'      => $share( $box[0], $w ),
+				'y'      => $share( $box[1], $h ),
+				'width'  => $share( $box[2] - $box[0], $w ),
+				'height' => $share( $box[3] - $box[1], $h ),
+			),
+			'seam' => null === $seam ? null : $share( ( $seam - $left ) * $scale, $w ),
+		);
+	}
+
+	/**
+	 * Where the striped sheet starts on a photo: the column where its last
+	 * stripe meets its first, left to right, along the middle of the print;
+	 * null when the photo does not show it well inside the print.
+	 *
+	 * @param GdImage                               $a     Blank photo.
+	 * @param GdImage                               $b     Striped photo.
+	 * @param array{0: int, 1: int, 2: int, 3: int} $inside The print: left, top, right, bottom.
+	 */
+	private static function seam( GdImage $a, GdImage $b, array $inside ): ?int {
+		$y      = intdiv( $inside[1] + $inside[3], 2 );
+		$inset  = intdiv( $inside[2] - $inside[0], 10 );
+		$before = null;
+
+		for ( $x = $inside[0]; $x <= $inside[2]; $x++ ) {
+			$stripe = self::stripe_at( $a, $b, $x, $y );
+
+			if ( null === $stripe ) {
+				continue;
+			}
+
+			if ( self::STRIPES - 1 === $before && 0 === $stripe ) {
+				// Not a blend: the last stripe a little before, the first a little after.
+				$sure = self::STRIPES - 1 === self::stripe_at( $a, $b, max( $inside[0], $x - 3 ), $y ) && 0 === self::stripe_at( $a, $b, min( $inside[2], $x + 3 ), $y );
+
+				return $sure && $x > $inside[0] + $inset && $x < $inside[2] - $inset ? $x : null;
+			}
+
+			$before = $stripe;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Draws a product's lines on a transparent image: its outline, where the
+	 * background reached from the edges ends, and outside the print the
+	 * changes in brightness inside it.
+	 *
+	 * @param GdImage                               $photo  The product, scaled.
+	 * @param GdImage                               $lines  The drawing, as large.
+	 * @param int                                   $corner The background colour.
+	 * @param array{0: int, 1: int, 2: int, 3: int} $inside  The print: left, top, right, bottom.
+	 */
+	private static function draw( GdImage $photo, GdImage $lines, int $corner, array $inside ): void {
+		$w          = imagesx( $photo );
+		$h          = imagesy( $photo );
+		$brightness = array();
+		$outside    = array();
+		$queue      = array();
+
+		imagealphablending( $lines, false );
+		imagesavealpha( $lines, true );
+		imagefill( $lines, 0, 0, (int) imagecolorallocatealpha( $lines, 0, 0, 0, 127 ) );
+
+		for ( $y = 0; $y < $h; $y++ ) {
+			for ( $x = 0; $x < $w; $x++ ) {
+				$c                          = self::pixel( $photo, $x, $y );
+				$brightness[ $y * $w + $x ] = 0.299 * ( ( $c >> 16 ) & 255 ) + 0.587 * ( ( $c >> 8 ) & 255 ) + 0.114 * ( $c & 255 );
+
+				if ( 0 === $x || 0 === $y || $w - 1 === $x || $h - 1 === $y ) {
+					$queue[] = array( $x, $y );
+				}
+			}
+		}
+
+		// The background: what is reached from the edges without crossing the product.
+		while ( array() !== $queue ) {
+			[ $x, $y ] = (array) array_pop( $queue );
+			$key       = $y * $w + $x;
+
+			if ( $x < 0 || $y < 0 || $x >= $w || $y >= $h || isset( $outside[ $key ] ) || self::differs( self::pixel( $photo, $x, $y ), $corner ) ) {
+				continue;
+			}
+
+			$outside[ $key ] = true;
+			array_push( $queue, array( $x + 1, $y ), array( $x - 1, $y ), array( $x, $y + 1 ), array( $x, $y - 1 ) );
+		}
+
+		$at = static fn( int $x, int $y ): float => $brightness[ $y * $w + $x ];
+
+		for ( $y = 0; $y < $h; $y++ ) {
+			for ( $x = 0; $x < $w; $x++ ) {
+				if ( isset( $outside[ $y * $w + $x ] ) ) {
+					continue;
+				}
+
+				$strength = 0.0;
+
+				// The outline: next to the background or the image's edge.
+				if ( 0 === $x || 0 === $y || $w - 1 === $x || $h - 1 === $y || isset( $outside[ $y * $w + $x + 1 ] ) || isset( $outside[ $y * $w + $x - 1 ] ) || isset( $outside[ ( $y + 1 ) * $w + $x ] ) || isset( $outside[ ( $y - 1 ) * $w + $x ] ) ) {
+					$strength = 1.0;
+				} elseif ( $x < $inside[0] - 1 || $x > $inside[2] + 1 || $y < $inside[1] - 1 || $y > $inside[3] + 1 ) {
+					$gx       = $at( $x + 1, $y - 1 ) + 2 * $at( $x + 1, $y ) + $at( $x + 1, $y + 1 ) - $at( $x - 1, $y - 1 ) - 2 * $at( $x - 1, $y ) - $at( $x - 1, $y + 1 );
+					$gy       = $at( $x - 1, $y + 1 ) + 2 * $at( $x, $y + 1 ) + $at( $x + 1, $y + 1 ) - $at( $x - 1, $y - 1 ) - 2 * $at( $x, $y - 1 ) - $at( $x + 1, $y - 1 );
+					$strength = max( 0.0, min( 1.0, ( sqrt( $gx * $gx + $gy * $gy ) - self::LINE_FROM ) / ( self::LINE_SOLID - self::LINE_FROM ) ) );
+				}
+
+				if ( $strength > 0 ) {
+					imagesetpixel( $lines, $x, $y, (int) imagecolorallocatealpha( $lines, 150, 155, 162, max( 0, min( 127, (int) round( 127 * ( 1 - $strength ) ) ) ) ) );
+				}
+			}
+		}
+	}
+
+	/**
+	 * A pixel's colour; black where GD cannot read it.
+	 *
+	 * @param GdImage $image Image.
+	 * @param int     $x     Column.
+	 * @param int     $y     Row.
+	 */
+	private static function pixel( GdImage $image, int $x, int $y ): int {
+		$color = imagecolorat( $image, $x, $y );
+
+		return false === $color ? 0 : $color;
+	}
+
+	/**
+	 * Whether two colours differ by more than BACKGROUND in a channel.
+	 *
+	 * @param int $a Colour.
+	 * @param int $b Colour.
+	 */
+	private static function differs( int $a, int $b ): bool {
+		return abs( ( ( $a >> 16 ) & 255 ) - ( ( $b >> 16 ) & 255 ) ) > self::BACKGROUND
+			|| abs( ( ( $a >> 8 ) & 255 ) - ( ( $b >> 8 ) & 255 ) ) > self::BACKGROUND
+			|| abs( ( $a & 255 ) - ( $b & 255 ) ) > self::BACKGROUND;
 	}
 
 	/**
@@ -590,24 +847,26 @@ final class ImageProbe {
 	 * shape of the print area with its bleed, its long side SHEET_SIZE less
 	 * twice SHEET_MARGIN, in the middle of a transparent square with a soft
 	 * shadow a little below. The design area is the whole sheet; the cut and
-	 * the bleed are drawn by the designer (trims).
+	 * the bleed are drawn by the designer (trims). With room below, the sheet
+	 * fits in the square above it (ADR-122: the drawings under the guides).
 	 *
 	 * @param float $width_mm  Print width with bleed.
 	 * @param float $height_mm Print height with bleed.
+	 * @param int   $room      Pixels kept free under the sheet, below SHEET_SIZE / 2.
 	 * @return array{0: string, 1: array{x: int, y: int, width: int, height: int}} PNG bytes and the sheet.
 	 * @throws InvalidArgumentException When it cannot be made.
 	 */
-	public static function sheet( float $width_mm, float $height_mm ): array {
-		if ( ! self::available() || $width_mm <= 0 || $height_mm <= 0 ) {
+	public static function sheet( float $width_mm, float $height_mm, int $room = 0 ): array {
+		if ( ! self::available() || $width_mm <= 0 || $height_mm <= 0 || $room < 0 || $room >= self::SHEET_SIZE / 2 ) {
 			throw new InvalidArgumentException( 'The sheet cannot be made.' );
 		}
 
-		$long   = self::SHEET_SIZE - 2 * self::SHEET_MARGIN;
-		$width  = $width_mm >= $height_mm ? $long : max( 1, (int) round( $long * $width_mm / $height_mm ) );
-		$height = $width_mm >= $height_mm ? max( 1, (int) round( $long * $height_mm / $width_mm ) ) : $long;
+		$scale  = min( ( self::SHEET_SIZE - 2 * self::SHEET_MARGIN ) / $width_mm, ( self::SHEET_SIZE - 2 * self::SHEET_MARGIN - $room ) / $height_mm );
+		$width  = max( 1, (int) round( $width_mm * $scale ) );
+		$height = max( 1, (int) round( $height_mm * $scale ) );
 		$box    = array(
 			'x'      => intdiv( self::SHEET_SIZE - $width, 2 ),
-			'y'      => intdiv( self::SHEET_SIZE - $height, 2 ),
+			'y'      => intdiv( self::SHEET_SIZE - $room - $height, 2 ),
 			'width'  => $width,
 			'height' => $height,
 		);
@@ -876,6 +1135,28 @@ final class ImageProbe {
 		imagepalettetotruecolor( $image );
 
 		return $image;
+	}
+
+	/**
+	 * An image at a size: a render of the same view can come back larger or smaller.
+	 *
+	 * @param GdImage $image  Image.
+	 * @param int     $width  Width.
+	 * @param int     $height Height.
+	 * @throws InvalidArgumentException When it cannot be scaled.
+	 */
+	private static function sized( GdImage $image, int $width, int $height ): GdImage {
+		if ( imagesx( $image ) === $width && imagesy( $image ) === $height ) {
+			return $image;
+		}
+
+		$scaled = imagescale( $image, $width, $height );
+
+		if ( false === $scaled ) {
+			throw new InvalidArgumentException( 'The stripes render cannot be scaled.' );
+		}
+
+		return $scaled;
 	}
 
 	/**

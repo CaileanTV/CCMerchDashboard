@@ -206,10 +206,12 @@ class BaseProductRepository {
 	 * positions the administrator chose for mockups (`gelato_photos`; null
 	 * for all, ADR-119), and from Printify a thumbnail of each camera by its
 	 * name (`printify_thumbs`) and the names chosen for mockups
-	 * (`printify_photos`; null for all, ADR-122); null for an own base product.
+	 * (`printify_photos`; null for all, ADR-122) and a drawing of each view
+	 * of a print around the product (`printify_drawings`, step 57.19); null
+	 * for an own base product.
 	 *
 	 * @param int $id Id.
-	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, photos: list<string>, stitches: list<string>, techniques: array<string, string>, options: array<mixed>, axes: array<string, string>, uids: array<string, array<string, string>>, scenes: array<string, list<int>>, share_formats: bool, gelato_thumbs: array<string, int>, gelato_photos: list<int>|null, printify_thumbs: array<string, int>, printify_photos: list<string>|null}|null
+	 * @return array{source: string, ref: string, placements: array<string, string>, variants: array<string, array<string, string>>, slots: array<string, string>, flat: bool, photos: list<string>, stitches: list<string>, techniques: array<string, string>, options: array<mixed>, axes: array<string, string>, uids: array<string, array<string, string>>, scenes: array<string, list<int>>, share_formats: bool, gelato_thumbs: array<string, int>, gelato_photos: list<int>|null, printify_thumbs: array<string, int>, printify_photos: list<string>|null, printify_drawings: array<string, int>}|null
 	 * @throws DatabaseException When it cannot be read.
 	 */
 	public function provider( int $id ): ?array {
@@ -242,25 +244,26 @@ class BaseProductRepository {
 		$photos = $current && is_array( $decoded['photos'] ?? $decoded['styles'] ?? null ) ? ( $decoded['photos'] ?? $decoded['styles'] ) : array();
 
 		return array(
-			'source'          => (string) $row['source'],
-			'ref'             => $row['provider_ref'],
-			'placements'      => self::strings( $current ? $decoded['placements'] : $decoded ),
-			'variants'        => $variants,
-			'slots'           => self::strings( $current && is_array( $decoded['slots'] ?? null ) ? $decoded['slots'] : array() ),
-			'flat'            => $current && true === ( $decoded['flat'] ?? false ),
-			'photos'          => array_values( array_unique( array_diff( self::strings( $photos ), array( '0', '' ) ) ) ),
-			'stitches'        => array_values( self::strings( $current && is_array( $decoded['stitches'] ?? null ) ? $decoded['stitches'] : array() ) ),
-			'techniques'      => self::strings( $current && is_array( $decoded['techniques'] ?? null ) ? $decoded['techniques'] : array() ),
-			'options'         => $current && is_array( $decoded['options'] ?? null ) ? $decoded['options'] : array(),
+			'source'            => (string) $row['source'],
+			'ref'               => $row['provider_ref'],
+			'placements'        => self::strings( $current ? $decoded['placements'] : $decoded ),
+			'variants'          => $variants,
+			'slots'             => self::strings( $current && is_array( $decoded['slots'] ?? null ) ? $decoded['slots'] : array() ),
+			'flat'              => $current && true === ( $decoded['flat'] ?? false ),
+			'photos'            => array_values( array_unique( array_diff( self::strings( $photos ), array( '0', '' ) ) ) ),
+			'stitches'          => array_values( self::strings( $current && is_array( $decoded['stitches'] ?? null ) ? $decoded['stitches'] : array() ) ),
+			'techniques'        => self::strings( $current && is_array( $decoded['techniques'] ?? null ) ? $decoded['techniques'] : array() ),
+			'options'           => $current && is_array( $decoded['options'] ?? null ) ? $decoded['options'] : array(),
 			// The attribute names of a Gelato template's axes (ADR-115), e.g. "Orientation" and "Size".
-			'axes'            => array_filter( self::strings( $current && is_array( $decoded['axes'] ?? null ) ? $decoded['axes'] : array() ), static fn( string $name ): bool => '' !== $name ),
-			'uids'            => self::nested( $current && is_array( $decoded['uids'] ?? null ) ? $decoded['uids'] : array() ),
-			'scenes'          => self::positions( $current && is_array( $decoded['scenes'] ?? null ) ? $decoded['scenes'] : array() ),
-			'share_formats'   => ! ( $current && false === ( $decoded['share_formats'] ?? true ) ),
-			'gelato_thumbs'   => array_filter( array_map( static fn( mixed $id ): int => is_int( $id ) ? $id : 0, $current && is_array( $decoded['gelato_thumbs'] ?? null ) ? $decoded['gelato_thumbs'] : array() ) ),
-			'gelato_photos'   => $current && is_array( $decoded['gelato_photos'] ?? null ) ? array_values( array_unique( array_filter( $decoded['gelato_photos'], static fn( mixed $n ): bool => is_int( $n ) && $n >= 0 && $n < 100 ) ) ) : null,
-			'printify_thumbs' => self::camera_thumbs( $current && is_array( $decoded['printify_thumbs'] ?? null ) ? $decoded['printify_thumbs'] : array() ),
-			'printify_photos' => $current && is_array( $decoded['printify_photos'] ?? null ) ? array_values( array_unique( array_filter( $decoded['printify_photos'], static fn( mixed $name ): bool => is_string( $name ) && 1 === preg_match( self::CAMERA, $name ) ) ) ) : null,
+			'axes'              => array_filter( self::strings( $current && is_array( $decoded['axes'] ?? null ) ? $decoded['axes'] : array() ), static fn( string $name ): bool => '' !== $name ),
+			'uids'              => self::nested( $current && is_array( $decoded['uids'] ?? null ) ? $decoded['uids'] : array() ),
+			'scenes'            => self::positions( $current && is_array( $decoded['scenes'] ?? null ) ? $decoded['scenes'] : array() ),
+			'share_formats'     => ! ( $current && false === ( $decoded['share_formats'] ?? true ) ),
+			'gelato_thumbs'     => array_filter( array_map( static fn( mixed $id ): int => is_int( $id ) ? $id : 0, $current && is_array( $decoded['gelato_thumbs'] ?? null ) ? $decoded['gelato_thumbs'] : array() ) ),
+			'gelato_photos'     => $current && is_array( $decoded['gelato_photos'] ?? null ) ? array_values( array_unique( array_filter( $decoded['gelato_photos'], static fn( mixed $n ): bool => is_int( $n ) && $n >= 0 && $n < 100 ) ) ) : null,
+			'printify_thumbs'   => self::camera_thumbs( $current && is_array( $decoded['printify_thumbs'] ?? null ) ? $decoded['printify_thumbs'] : array() ),
+			'printify_photos'   => $current && is_array( $decoded['printify_photos'] ?? null ) ? array_values( array_unique( array_filter( $decoded['printify_photos'], static fn( mixed $name ): bool => is_string( $name ) && 1 === preg_match( self::CAMERA, $name ) ) ) ) : null,
+			'printify_drawings' => self::camera_thumbs( $current && is_array( $decoded['printify_drawings'] ?? null ) ? $decoded['printify_drawings'] : array() ),
 		);
 	}
 

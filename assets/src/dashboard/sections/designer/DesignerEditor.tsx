@@ -135,6 +135,7 @@ import {
 } from './clipart-objects';
 import type { AssetLookup } from './clipart-objects';
 import { guideLines } from './guides';
+import { GuideViews } from './GuideViews';
 import { TemplateLayers } from './TemplateLayers';
 import { threadObject, threadSide } from './threads';
 import type { ThreadedSide, ThreadPlan } from './threads';
@@ -2230,12 +2231,17 @@ function Editor( props: EditorProps ) {
 								) }
 							</div>
 							{ view.guides.length === 0 ? null : (
-								<ul
-									className="merchboard-product-designer__views"
-									aria-label={ __(
-										'Where the design sits on the product',
-										'merchboard'
-									) }
+								<GuideViews
+									view={ view }
+									images={ images }
+									room={
+										( ( view.height -
+											view.area.y -
+											view.area.height ) /
+											view.height ) *
+										displayHeight *
+										zoom
+									}
 									style={ {
 										left:
 											( view.area.x / view.width ) *
@@ -2252,26 +2258,7 @@ function Editor( props: EditorProps ) {
 											displayWidth *
 											zoom,
 									} }
-								>
-									{ view.guides.map( ( guide ) => (
-										<li
-											key={ `${ guide.label }-${ guide.x }` }
-											style={ {
-												left: `${ guide.x * 100 }%`,
-											} }
-										>
-											{ images.has( guide.figure ) ? (
-												<img
-													src={ images.get(
-														guide.figure
-													) }
-													alt=""
-												/>
-											) : null }
-											<span>{ guide.label }</span>
-										</li>
-									) ) }
-								</ul>
+								/>
 							) }
 							{ measure === null ? null : (
 								<span

@@ -30,6 +30,7 @@ use MerchBoard\Modules\ProductDesigner\Designs\SubmissionFiles;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerAssetRepository;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
 use MerchBoard\Modules\ProductDesigner\Providers\CatalogImport;
+use MerchBoard\Modules\ProductDesigner\Providers\ImageProbe;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyAccount;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyApi;
 use MerchBoard\Modules\ProductDesigner\Providers\PrintifyCatalog;
@@ -542,10 +543,37 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertLessThan( 0.03, min( $by_name['back']['x'] ?? 0.5, 1 - ( $by_name['back']['x'] ?? 0.5 ) ) );
 		self::assertSame( array( 0, 0 ), array( $by_name['front']['figure'] ?? -1, $by_name['back']['figure'] ?? -1 ), 'The photos are found when the side is sent.' );
 
-		$sent = array_column( MeDesignerController::view_data( $base, $base->views[0], $provider['printify_thumbs'] )['guides'], 'figure', 'label' );
+		// Step 57.19: each view drawn as in Printify's editor, with the part of the print it shows.
+		self::assertEqualsCanonicalizing( array( 'front', 'back' ), array_keys( $provider['printify_drawings'] ), 'A drawing of each view with a guide.' );
 
-		self::assertSame( $provider['printify_thumbs']['front'], $sent['Front'] ?? null, 'The view\'s photo under its guide, its name for creators.' );
-		self::assertSame( $provider['printify_thumbs']['back'], $sent['Back'] ?? null );
+		$assets  = new DesignerAssetRepository( $this->wpdb );
+		$drawing = $assets->find( $provider['printify_drawings']['back'] );
+
+		self::assertNotNull( $drawing );
+		self::assertSame( ImageProbe::DRAWING_HEIGHT, (int) ( getimagesize( (string) $this->files->path( (string) $drawing['file'] ) )[1] ?? 0 ), 'Drawn at twice the height shown.' );
+
+		// The shirt is drawn from x 28 to 171 (a margin of 2 px); its print from 60 to 139.
+		foreach ( array( 'front', 'back' ) as $name ) {
+			$box = $by_name[ $name ]['box'] ?? null;
+
+			self::assertNotNull( $box, $name );
+			self::assertEqualsWithDelta( 32 / 144, $box['x'], 0.02, $name );
+			self::assertEqualsWithDelta( 80 / 144, $box['width'], 0.02, $name );
+		}
+
+		self::assertArrayHasKey( 'front', $by_name );
+		self::assertNull( $by_name['front']['seam'], 'The sheet does not start on the front.' );
+		// The sheet's last stripe meets its first at x 100 on the back.
+		self::assertEqualsWithDelta( 72 / 144, $by_name['back']['seam'] ?? -1, 0.02, 'Where the sheet starts on the back.' );
+		// Room under the sheet for the drawings.
+		self::assertLessThanOrEqual( 800, $base->views[0]->area['y'] + $base->views[0]->area['height'] );
+
+		$sent = array_column( MeDesignerController::view_data( $base, $base->views[0], $provider['printify_drawings'] + $provider['printify_thumbs'] )['guides'], null, 'label' );
+
+		self::assertSame( $provider['printify_drawings']['front'], $sent['Front']['figure'] ?? null, 'The view\'s drawing under its guide, its name for creators.' );
+		self::assertSame( $provider['printify_drawings']['back'], $sent['Back']['figure'] ?? null );
+		self::assertSame( $by_name['back']['box'] ?? 'missing', $sent['Back']['box'] ?? null );
+		self::assertSame( $by_name['back']['seam'] ?? 'missing', $sent['Back']['seam'] ?? null );
 		self::assertSame( array(), $base->views[1]->guides, 'The back shows whole: no guides.' );
 		self::assertSame( array( 'front', 'back' ), array_values( $provider['slots'] ) );
 		self::assertNull( $provider['printify_photos'], 'Every view until the administrator chooses.' );
@@ -553,6 +581,13 @@ final class PrintifyTest extends IntegrationTestCase {
 		$this->base_service()->set_printify_photos( $id, array( 'back', 'nonsense' ) );
 
 		self::assertSame( array( 'back' ), $this->bases->provider( $id )['printify_photos'] ?? null );
+
+		// The provider's thumbnails and drawings go with the base product.
+		$this->base_service()->delete( $id );
+
+		foreach ( array_merge( array_values( $provider['printify_drawings'] ), array_values( $provider['printify_thumbs'] ) ) as $asset ) {
+			self::assertNull( $assets->find( $asset ), 'No asset is left behind.' );
+		}
 	}
 
 	public function test_printify_makes_the_chosen_views_of_a_submitted_design_and_deletes_its_product(): void {

@@ -771,8 +771,9 @@ class BaseProductService {
 		self::authorize();
 
 		$base = $this->existing( $id );
-		// ADR-119: the thumbnails of a Gelato template's images go with it.
-		$thumbs = array_values( $this->bases->provider( $id )['gelato_thumbs'] ?? array() );
+		// ADR-119: the thumbnails of a Gelato template's images go with it; ADR-122: Printify's thumbnails and drawings too.
+		$provider = $this->bases->provider( $id );
+		$thumbs   = array_merge( array_values( $provider['gelato_thumbs'] ?? array() ), array_values( $provider['printify_thumbs'] ?? array() ), array_values( $provider['printify_drawings'] ?? array() ) );
 
 		$this->transaction->run(
 			function () use ( $id, $base ): void {
@@ -873,7 +874,7 @@ class BaseProductService {
 	 * @param string[]                                                                     $colors   Colour keys of the base product (a colour's own background).
 	 * @param string[]                                                                     $sizes   The base product's sizes (a side keeps to them).
 	 * @param-out list<array{file: string, mime: string, width: int, height: int, bytes: int}> $stored
-	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool, colors: list<string>, formats: array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>, guides: list<array{x: float, label: string, figure: int}>}>
+	 * @return list<array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, array{file: string, mime: string, width: int, height: int, bytes: int}>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool, colors: list<string>, formats: array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>, guides: list<array{x: float, label: string, figure: int, box: array{x: float, y: float, width: float, height: float}|null, seam: float|null}>}>
 	 * @throws DesignerException When a side or file is refused.
 	 */
 	private function plan_views( ?BaseProduct $existing, array $views, array &$stored, array $colors = array(), array $sizes = array() ): array {
@@ -1034,8 +1035,8 @@ class BaseProductService {
 	/**
 	 * A side from its plan.
 	 *
-	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool, colors: list<string>, formats: array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>, guides: list<array{x: float, label: string, figure: int}>} $plan   Plan.
-	 * @param array<string, int>                                                                                                                                                                                                                                                                                                                                                                                                                $layers Asset id by layer.
+	 * @param array{key: string, name: string, width: int, height: int, layers: array<string, int>, new: array<string, mixed>, input: array<string, mixed>, pack: string, sizes: list<string>, flat: bool, scene: array<string, mixed>|null, small: bool, colors: list<string>, formats: array<string, array{width_mm: float, height_mm: float, bleed?: array{0: float, 1: float}}>, guides: list<array{x: float, label: string, figure: int, box: array{x: float, y: float, width: float, height: float}|null, seam: float|null}>} $plan   Plan.
+	 * @param array<string, int>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    $layers Asset id by layer.
 	 * @throws DesignerException When the side is invalid.
 	 */
 	private function view( array $plan, array $layers ): BaseView {

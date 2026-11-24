@@ -263,6 +263,86 @@ final class ImageProbeTest extends TestCase {
 		self::assertSame( 3, $refused );
 	}
 
+	public function test_a_view_is_drawn_as_its_outline_with_the_part_of_the_print_it_shows(): void {
+		// The product is drawn from x 96 to 303 (a margin of 4 px), 208 px of the photo; its print from 140 to 219.
+		$drawing = ImageProbe::drawing( $this->blank(), $this->striped( array( 4, 5, 6, 7 ) ) );
+
+		self::assertNotNull( $drawing );
+		self::assertEqualsWithDelta( 44 / 208, $drawing['box']['x'], 0.01 );
+		self::assertEqualsWithDelta( 80 / 208, $drawing['box']['width'], 0.01 );
+		self::assertEqualsWithDelta( 54 / 228, $drawing['box']['y'], 0.01 );
+		self::assertEqualsWithDelta( 100 / 228, $drawing['box']['height'], 0.01 );
+		self::assertNull( $drawing['seam'], 'The sheet does not start on this view.' );
+
+		$image = imagecreatefromstring( $drawing['png'] );
+
+		self::assertNotFalse( $image );
+		self::assertSame( ImageProbe::DRAWING_HEIGHT, imagesy( $image ) );
+		self::assertEqualsWithDelta( (int) round( 208 * ImageProbe::DRAWING_HEIGHT / 228 ), imagesx( $image ), 1 );
+
+		$alpha = static fn( int $x, int $y ): int => ( (int) imagecolorat( $image, $x, $y ) >> 24 ) & 127;
+		$row   = intdiv( imagesy( $image ), 2 );
+		$edge  = (int) round( 4 * ImageProbe::DRAWING_HEIGHT / 228 );
+
+		self::assertSame( 127, $alpha( 0, 0 ), 'The background is transparent.' );
+		self::assertSame( 127, $alpha( intdiv( imagesx( $image ), 2 ), $row ), 'Nothing inside a plain product.' );
+		self::assertLessThan( 64, min( $alpha( $edge - 1, $row ), $alpha( $edge, $row ), $alpha( $edge + 1, $row ) ), 'Its outline is drawn.' );
+	}
+
+	public function test_where_the_sheet_s_ends_meet_on_a_view_is_found(): void {
+		// The last stripe meets the first at x 180.
+		$drawing = ImageProbe::drawing( $this->blank(), $this->striped( array( 10, 11, 0, 1 ) ) );
+
+		self::assertNotNull( $drawing );
+		self::assertEqualsWithDelta( 84 / 208, $drawing['seam'] ?? -1, 0.01 );
+
+		// The other way round it is no start; a meeting of stripes too narrow to be sure of is none.
+		foreach ( array( $this->striped( array( 1, 0, 11, 10 ) ), $this->striped( array( 11, 0, 1, 2 ), 2 ) ) as $striped ) {
+			$other = ImageProbe::drawing( $this->blank(), $striped );
+
+			self::assertNotNull( $other );
+			self::assertNull( $other['seam'] );
+		}
+	}
+
+	public function test_a_view_is_not_drawn_on_a_busy_background_or_without_the_print(): void {
+		$busy = Photo::png( 400, 300, self::STUDIO, array( array( 100, 50, 200, 220, self::SHIRT ), array( 380, 280, 20, 20, array( 120, 90, 60 ) ) ) );
+
+		self::assertNull( ImageProbe::drawing( $busy, $this->striped( array( 4, 5, 6, 7 ) ) ) );
+		self::assertNull( ImageProbe::drawing( $this->blank(), $this->blank() ) );
+	}
+
+	/**
+	 * A sheet around the product with a striped sheet's stripes (ImageProbe::stripes()).
+	 *
+	 * @param int[] $stripes Stripes from the left, 0–11.
+	 * @param int   $width   Width of a stripe, from x 140.
+	 */
+	private function striped( array $stripes, int $width = 20 ): string {
+		$rects = array( array( 100, 50, 200, 220, self::SHIRT ) );
+
+		foreach ( $stripes as $index => $stripe ) {
+			$h       = $stripe * 30 / 60;
+			$x       = (int) round( 255 * ( 1 - abs( fmod( $h, 2 ) - 1 ) ) );
+			$rects[] = array(
+				140 + $width * $index,
+				100,
+				$width,
+				100,
+				match ( (int) floor( $h ) ) {
+					0       => array( 255, $x, 0 ),
+					1       => array( $x, 255, 0 ),
+					2       => array( 0, 255, $x ),
+					3       => array( 0, $x, 255 ),
+					4       => array( $x, 0, 255 ),
+					default => array( 255, 0, $x ),
+				},
+			);
+		}
+
+		return Photo::png( 400, 300, self::STUDIO, $rects );
+	}
+
 	/**
 	 * The blank render: a black shirt in a light studio.
 	 */

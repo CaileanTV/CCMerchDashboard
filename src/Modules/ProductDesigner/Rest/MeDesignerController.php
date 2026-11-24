@@ -1312,6 +1312,9 @@ final class MeDesignerController extends RestController {
 					'x'      => $guide['x'],
 					'label'  => self::view_name( $guide['label'] ),
 					'figure' => $guide['figure'] > 0 ? $guide['figure'] : ( $figures[ $guide['label'] ] ?? 0 ),
+					// Step 57.19: on the drawing, the part of the print the view shows and where the sheet starts.
+					'box'    => $guide['box'],
+					'seam'   => $guide['seam'],
 				),
 				$view->guides
 			),
@@ -1324,9 +1327,9 @@ final class MeDesignerController extends RestController {
 	}
 
 	/**
-	 * The photos under the guides of a base product's sides (ADR-122): the
-	 * provider's thumbnails of the guides' camera names. Creators may see
-	 * them like the sides' layers.
+	 * The images under the guides of a base product's sides (ADR-122): the
+	 * provider's drawings of the guides' camera names (step 57.19), else
+	 * their thumbnails. Creators may see them like the sides' layers.
 	 *
 	 * @param BaseProduct $base Base product.
 	 * @return array<string, int> Asset id by camera name.
@@ -1345,9 +1348,9 @@ final class MeDesignerController extends RestController {
 			return array();
 		}
 
-		$thumbs = $this->bases->provider( (int) $base->id )['printify_thumbs'] ?? array();
+		$provider = $this->bases->provider( (int) $base->id );
 
-		return array_intersect_key( $thumbs, $names );
+		return array_intersect_key( ( $provider['printify_drawings'] ?? array() ) + ( $provider['printify_thumbs'] ?? array() ), $names );
 	}
 
 	/**
