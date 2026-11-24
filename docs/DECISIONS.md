@@ -7405,12 +7405,20 @@ Katalogets billeder (`/catalog/blueprints/{id}.json`) er en liste med 1–428 UR
   - Grænse, accepteret: baggrund, som varen omslutter, fx hullet i flaskens hank, bliver stående som i browseren.
   - Importens fotos og creatorens forhåndsvisning er uændrede.
 - **Hovedbilledet vælges blandt leverandørens mockups (trin 57.22):** projektejeren sendte 2026-11-24 et skærmbillede af "Primært produktbillede i shoppen" for flasken. Dialogen viste kun det flade ark, og projektejeren valgte "rigtige mockups".
-  - **I dialogen:** for et grundprodukt med leverandørens forhåndsvisning (Printful eller Printify, uden scener tegnet i browseren) henter dialogen leverandørens mockups af kladden, én farve ad gangen, som "Se det færdige produkt" gør. Hver farve tæller én i dagskvoten. Creatoren vælger farve og visning.
+  - **I dialogen:** for et grundprodukt fra Printful, eller fra Printify med visninger til butikken, henter dialogen leverandørens mockups af kladden. Flaget hedder `preview_choice`, og grundprodukter med scener tegnet i browseren er undtaget. Gelato og Prodigi bruger de tegnede billeder som før.
+    - Billederne hentes én farve ad gangen, som "Se det færdige produkt" gør.
+    - Hver farve tæller én i dagskvoten, hver gang dialogen åbnes. Inden for samme åbning hentes en farve kun igen, når creatoren trykker "Prøv igen".
+    - Lukkes dialogen, mens filerne sendes, startes intet.
+    - Creatoren vælger farve og visning.
   - **Gemte nøgler:**
     - Et Printify-valg gemmes som `_view-<kamera>:<farve>`, kamera højst 24 tegn. Når alle fotos er hentet og skåret, slår mockup-jobbet kameraet op i opgavens `shots` og skriver valget om til fotoets egen nøgle: siden eller `_scene-N`.
     - Et Printful-valg er allerede den gemte nøgle (`_photo-<stil>` eller siden).
   - **Når noget mangler:** findes visningen ikke, viser butikken farvens første billede som før. `_view-` kan ikke vælges på et produkt, der allerede er i butikken.
-  - **Navne:** creatoren ser kameraets navn (Forside, Bagside, Venstre side, Højre side) eller "Produktfoto n", aldrig leverandørens.
+  - **Navne:** creatoren ser aldrig leverandørens navn, kun kameraets navn eller "Produktfoto n":
+    - Forside, Bagside, Venstre side, Højre side;
+    - "Miljø n" for `context-n` og "Model n" for `person-n`;
+    - andre kameraer med deres eget navn.
+  - **Hovedbillede, der beholdes:** et miljøfoto (`_scene-N`), der er valgt på et produkt i butikken, følger med til kladden og bevares, når kladden gemmes. Dialogen ændrer kun et valg i den farve, den har hentet billeder af.
   - **Kun visninger, butikken får:** de afkrydsede, og ikke en sides egen visning, når designet ikke bruger siden. Et tomt valg betyder nu "ingen" både her og ved indsendelse.
   - **Fejl og kvote:** fejler hentningen, eller er kvoten brugt, vises de tegnede billeder som før. Indsendelsen blokeres aldrig.
 

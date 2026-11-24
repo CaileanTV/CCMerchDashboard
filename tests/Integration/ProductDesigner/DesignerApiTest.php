@@ -550,6 +550,7 @@ final class DesignerApiTest extends IntegrationTestCase {
 		self::assertSame( array( 400, 'preview_unavailable' ), $this->refusal( $this->call( 'POST', '/merchboard/v1/me/designer/products/' . $product . '/preview' ) ) );
 		self::assertSame( array( 400, 'preview_unavailable' ), $this->refusal( $this->call( 'GET', '/merchboard/v1/me/designer/products/' . $product . '/preview' ) ) );
 		self::assertFalse( $this->call( 'GET', '/merchboard/v1/me/designer' )->get_data()['bases'][0]['preview'] );
+		self::assertFalse( $this->call( 'GET', '/merchboard/v1/me/designer' )->get_data()['bases'][0]['preview_choice'], 'Step 57.22: no main image among photos without them.' );
 	}
 
 	public function test_a_draft_on_a_changed_base_product_must_be_saved_again(): void {

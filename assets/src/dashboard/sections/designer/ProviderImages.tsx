@@ -36,6 +36,22 @@ export function providerColor( value: string | null ): string | null {
 		: ( PROVIDER_CHOICE.exec( value )?.[ 2 ] ?? null );
 }
 
+/** A main image of a stored photo: also an environment photo (a live product's, copied to its draft). */
+const STORED_CHOICE =
+	/^(_view-[a-z0-9_-]{1,24}|_photo-[0-9]{1,18}|_scene-[0-9]{1,3}):(.+)$/;
+
+/**
+ * The colour of a main image that is a provider's photo or an environment
+ * photo, or null: kept when the draft is saved, as the server checks it.
+ *
+ * @param value The choice.
+ */
+export function storedChoiceColor( value: string | null ): string | null {
+	return value === null
+		? null
+		: ( STORED_CHOICE.exec( value )?.[ 2 ] ?? null );
+}
+
 export interface ProviderImagesProps {
 	readonly product: number;
 	/** The chosen colours with their names, in the shop's order. */
@@ -70,7 +86,7 @@ function failure( reason: string | undefined ): string {
 			);
 		case 'preview_busy':
 			return __(
-				'We can only make a limited number of photos a minute, so the drawn images are shown instead. Choose the colour again in a minute.',
+				'We can only make a limited number of photos a minute, so the drawn images are shown instead. Try again in a minute.',
 				'merchboard'
 			);
 		default:
@@ -100,6 +116,8 @@ export function ProviderImages( props: ProviderImagesProps ) {
 	const [ loaded, setLoaded ] = useState<
 		Readonly< Record< string, Loaded > >
 	>( {} );
+	// Counts the tries again: the colour's photos are made anew.
+	const [ attempt, setAttempt ] = useState( 0 );
 	const prepared = useRef< Promise< string | null > | null >( null );
 	const alive = useRef( true );
 	const calls = useRef( { prepare, onSelect, selected } );
@@ -140,6 +158,11 @@ export function ProviderImages( props: ProviderImagesProps ) {
 
 			const refused = await prepared.current;
 
+			// Closed meanwhile (sent or cancelled): no photos are made.
+			if ( ! alive.current ) {
+				return;
+			}
+
 			if ( refused !== null ) {
 				// The next colour tries to send the files again.
 				prepared.current = null;
@@ -149,6 +172,10 @@ export function ProviderImages( props: ProviderImagesProps ) {
 			}
 
 			const started = await startPreview( product, color );
+
+			if ( ! alive.current ) {
+				return;
+			}
 
 			if ( ! started.ok ) {
 				set( { status: 'failed', reason: started.error.reason } );
@@ -195,13 +222,12 @@ export function ProviderImages( props: ProviderImagesProps ) {
 
 				set( { status: 'done', choices } );
 
-				// What the shop shows is what is chosen here: a choice not among this colour's photos becomes its first.
+				// What the shop shows is what is chosen here: nothing chosen, or a choice of this colour not among its photos, becomes its first; another colour's stays.
 				const current = calls.current.selected;
 				const ownColor = current?.split( ':' ).pop();
 
 				if (
-					( ownColor === color ||
-						providerColor( current ) === null ) &&
+					( current === null || ownColor === color ) &&
 					! choices.some( ( choice ) => choice.value === current )
 				) {
 					calls.current.onSelect( choices[ 0 ]!.value );
@@ -216,8 +242,21 @@ export function ProviderImages( props: ProviderImagesProps ) {
 		void run();
 		// The other values are read from refs.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [ color, busy ] );
+	}, [ color, busy, attempt ] );
 
+	/**
+	 * Forgets a colour's failed photos, so they are made again.
+	 *
+	 * @param key The colour.
+	 */
+	const retry = ( key: string ) => {
+		setLoaded( ( current ) => {
+			const { [ key ]: _failed, ...rest } = current;
+
+			return rest;
+		} );
+		setAttempt( ( count ) => count + 1 );
+	};
 	const shown = loaded[ color ];
 	const choices = Object.values( loaded ).flatMap( ( state ) =>
 		state.status === 'done' ? state.choices : []
@@ -240,7 +279,14 @@ export function ProviderImages( props: ProviderImagesProps ) {
 							}
 							aria-pressed={ color === item.key }
 							disabled={ busy && color !== item.key }
-							onClick={ () => setColor( item.key ) }
+							onClick={ () => {
+								// A colour whose photos failed is tried again.
+								if ( loaded[ item.key ]?.status === 'failed' ) {
+									retry( item.key );
+								}
+
+								setColor( item.key );
+							} }
 						>
 							{ item.name }
 						</Button>
@@ -268,6 +314,15 @@ export function ProviderImages( props: ProviderImagesProps ) {
 			{ shown?.status === 'failed' ? (
 				<>
 					<Alert tone="info">{ failure( shown.reason ) }</Alert>
+					<div>
+						<Button
+							size="sm"
+							variant="secondary"
+							onClick={ () => retry( color ) }
+						>
+							{ __( 'Try again', 'merchboard' ) }
+						</Button>
+					</div>
 					{ props.fallback }
 				</>
 			) : null }

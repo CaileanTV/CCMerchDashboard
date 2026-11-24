@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-24T18:54:13+00:00\n"
+"PO-Revision-Date: 2026-11-24T19:29:59+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -5514,6 +5514,7 @@ msgstr "Afvis"
 #: build/alerts-global-admin.js:1
 #: build/alerts-presets-admin.js:1
 #: build/dashboard.js:2
+#: build/dashboard.js:98
 msgid "Try again"
 msgstr "Prøv igen"
 
@@ -11282,7 +11283,7 @@ msgstr "%1$s – format %2$d"
 
 #. translators: %d: the number of a print area, 2 or more.
 #: src/Modules/ProductDesigner/Providers/GelatoCatalog.php:926
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1413
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1426
 msgid "Front"
 msgstr "Forside"
 
@@ -11318,27 +11319,34 @@ msgstr "Produktfoto %d"
 
 #. translators: %d: number of the environment photo, e.g. a poster on a wall.
 #: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1265
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1420
 #, php-format
 msgid "Environment %d"
 msgstr "Miljø %d"
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1414
+#. translators: %d: number of a photo of the product worn by a model.
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1422
+#, php-format
+msgid "Model %d"
+msgstr "Model %d"
+
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1427
 msgid "Back"
 msgstr "Bagside"
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1415
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1428
 msgid "Left side"
 msgstr "Venstre side"
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1416
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1429
 msgid "Right side"
 msgstr "Højre side"
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1449
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1462
 msgid "The product designer is not available."
 msgstr "Produktdesigneren er ikke tilgængelig."
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1472
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1485
 msgid "The product designer refused the change."
 msgstr "Produktdesigneren afviste ændringen."
 
@@ -20574,8 +20582,8 @@ msgid "You have made the most photos for today, so the drawn images are shown in
 msgstr "Du har lavet dagens maksimale antal fotos, så de tegnede billeder vises i stedet. Du kan stadig sende dit design."
 
 #: build/dashboard.js:98
-msgid "We can only make a limited number of photos a minute, so the drawn images are shown instead. Choose the colour again in a minute."
-msgstr "Vi kan kun lave et begrænset antal fotos i minuttet, så de tegnede billeder vises i stedet. Vælg farven igen om et minut."
+msgid "We can only make a limited number of photos a minute, so the drawn images are shown instead. Try again in a minute."
+msgstr "Vi kan kun lave et begrænset antal fotos i minuttet, så de tegnede billeder vises i stedet. Prøv igen om et minut."
 
 #: build/dashboard.js:98
 msgid "The photos could not be made, so the drawn images are shown instead. You can still send your design."

@@ -123,7 +123,7 @@ import {
 } from './ColorDesigns';
 import { ImagePicker } from './ImagePicker';
 import { SubmitDialog } from './SubmitDialog';
-import { providerColor } from './ProviderImages';
+import { storedChoiceColor } from './ProviderImages';
 import { LayerList } from './LayerList';
 import { ClipartPaints } from './ClipartPaints';
 import {
@@ -588,7 +588,7 @@ function Editor( props: EditorProps ) {
 			candidate.scene?.preview === true || hasStitches( candidate )
 	);
 	// The main image is chosen among the finished product's real photos (step 57.22).
-	const providerMain = base.preview && ! scenePreview;
+	const providerMain = base.previewChoice && ! scenePreview;
 	// The mockups the product's image can be: each chosen colour on the used sides of its design.
 	// A side of some colours only has images of those (ADR-115).
 	const imageChoices = colors.flatMap( ( color ) =>
@@ -1280,13 +1280,11 @@ function Editor( props: EditorProps ) {
 			sizes,
 			profitKind,
 			profitValue,
-			// A drawn image, or one of the finished product's photos in a chosen colour (step 57.22).
+			// A drawn image, or a provider's or environment photo in a chosen colour (step 57.22; a live product's copied to its draft too).
 			primaryImage:
 				imageChoices.some(
 					( choice ) => choice.value === primaryImage
-				) ||
-				( providerMain &&
-					colors.includes( providerColor( primaryImage ) ?? '' ) )
+				) || colors.includes( storedChoiceColor( primaryImage ) ?? '' )
 					? primaryImage
 					: null,
 			design: {

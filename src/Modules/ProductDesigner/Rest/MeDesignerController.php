@@ -1296,11 +1296,15 @@ final class MeDesignerController extends RestController {
 	 * @return array<string, mixed>
 	 */
 	private function base_data( BaseProduct $base ): array {
-		$figures = $this->guide_figures( $base );
+		$figures   = $this->guide_figures( $base );
+		$previewer = $this->previewer( $base );
+		$provider  = $previewer instanceof PrintifyMockups ? $this->bases->provider( (int) $base->id ) : null;
 
 		return array(
 			'id'               => (int) $base->id,
-			'preview'          => null !== $this->previewer( $base ),
+			'preview'          => null !== $previewer,
+			// Step 57.22: the main image among the provider's photos; Printify only with views for the shop.
+			'preview_choice'   => $previewer instanceof PrintfulMockups || ( $previewer instanceof PrintifyMockups && array() !== ( $provider['printify_photos'] ?? null ) ),
 			'stitches'         => null === $this->mockups ? array() : $this->mockups->stitches( $base ),
 			'name'             => $base->name,
 			'description'      => $base->description,
@@ -1409,6 +1413,15 @@ final class MeDesignerController extends RestController {
 	 * @param string $camera Camera name, e.g. `left-side`.
 	 */
 	public static function view_name( string $camera ): string {
+		// A room or a model, numbered (step 57.22): context-1, person-2 and so on.
+		if ( 1 === preg_match( '/^(context|person)-([0-9]{1,3})$/', $camera, $match ) ) {
+			return 'context' === $match[1]
+				/* translators: %d: number of the environment photo, e.g. a poster on a wall. */
+				? sprintf( __( 'Environment %d', 'merchboard' ), (int) $match[2] )
+				/* translators: %d: number of a photo of the product worn by a model. */
+				: sprintf( __( 'Model %d', 'merchboard' ), (int) $match[2] );
+		}
+
 		return match ( $camera ) {
 			'front'      => __( 'Front', 'merchboard' ),
 			'back'       => __( 'Back', 'merchboard' ),

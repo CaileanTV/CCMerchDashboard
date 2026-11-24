@@ -1794,6 +1794,13 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
 - **57.22 Hovedbilledet vælges blandt leverandørens mockups** ✅ bygget (runtime-test på stg med næste testpakke; projektejerens ønske 2026-11-24 med skærmbillede af "Primært produktbillede i shoppen" for flasken; godkendt plan):
   - Dialogen henter Printifys eller Printfuls rigtige mockups af designet i den valgte farve, som "Se det færdige produkt" gør. Creatoren vælger farve og visning: forside, venstre, højre, bagside eller miljø.
   - Et Printify-valg gemmes som `_view-<kamera>:<farve>` og kobles til det gemte foto, når mockups'ene er hentet. Et Printful-valg er allerede den gemte nøgle (`_photo-<stil>`).
+  - Bygget i 6136c38. Uafhængigt review uden sikkerhedsfund. Rettet:
+    - dialogen startede også en betalt forhåndsvisning hos Gelato og Prodigi;
+    - en forhåndsvisning startede efter, at dialogen var lukket;
+    - et miljøfoto valgt som hovedbillede gik tabt ved næste kladde;
+    - "Prøv igen" mangler ikke længere;
+    - kameranavnene Miljø n og Model n står på dansk;
+    - Printful bruger aldrig en anden farve end den valgte.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 

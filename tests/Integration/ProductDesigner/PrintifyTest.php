@@ -813,6 +813,11 @@ final class PrintifyTest extends IntegrationTestCase {
 		// Step 57.22: the views the shop gets, each a main image to choose; the back has no design, so not its own view.
 		self::assertSame( array( '_view-front', '_view-context-1' ), array_column( $state['images'], 'choice' ), 'Front and the room; no size chart, no empty back.' );
 		self::assertSame( array( 'front', 'context-1' ), array_column( $state['images'], 'name' ) );
+		self::assertSame(
+			array( 'Front', 'Environment 1', 'Model 2', 'Left side', 'Folded' ),
+			array_map( array( MeDesignerController::class, 'view_name' ), array( 'front', 'context-1', 'person-2', 'left-side', 'folded' ) ),
+			'What creators read for each camera; never the provider.'
+		);
 		self::assertStringStartsWith( 'data:image/png;base64,', $state['images'][0]['url'], 'Never the address of the provider.' );
 		self::assertSame( 'ash', $state['images'][0]['color'] );
 

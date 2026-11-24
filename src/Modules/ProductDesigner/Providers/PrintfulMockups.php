@@ -369,16 +369,19 @@ class PrintfulMockups {
 
 		$provider['options'] = self::with_stitch( $provider, $version );
 
-		$product  = (int) $provider['ref'];
-		$side     = self::lead( $base, $version );
-		$colors   = json_decode( (string) $version['colors'], true );
-		$colors   = is_array( $colors ) ? array_values( array_filter( $colors, 'is_string' ) ) : array();
-		$color    = null !== $color && in_array( $color, $colors, true ) ? $color : ( $colors[0] ?? '' );
-		$design   = json_decode( (string) $version['design'], true );
-		$part     = ColorDesigns::part_of( is_array( $design ) ? $design : array(), $color );
-		$all      = $this->variants( $product, $version, $base, $provider['variants'], self::task_sizes( $base, $side ), self::colors_of( $version, $part ) );
-		$own      = array_filter( $all, static fn( string $key ): bool => $key === $color );
-		$variants = array_slice( array() === $own ? $all : $own, 0, 1, true );
+		$product = (int) $provider['ref'];
+		$side    = self::lead( $base, $version );
+		$colors  = json_decode( (string) $version['colors'], true );
+		$colors  = is_array( $colors ) ? array_values( array_filter( $colors, 'is_string' ) ) : array();
+		$asked   = null !== $color && in_array( $color, $colors, true );
+		$color   = $asked ? (string) $color : ( $colors[0] ?? '' );
+		$design  = json_decode( (string) $version['design'], true );
+		$part    = ColorDesigns::part_of( is_array( $design ) ? $design : array(), $color );
+		$all     = $this->variants( $product, $version, $base, $provider['variants'], self::task_sizes( $base, $side ), self::colors_of( $version, $part ) );
+		// A colour asked for gets only its own variant: another colour's photos would be shown as its.
+		$own = array_filter( $all, static fn( string $variant_color ): bool => $variant_color === $color );
+		// Without a colour asked for, the first that has a variant (as before step 57.22).
+		$variants = array_slice( array() === $own && ! $asked ? $all : $own, 0, 1, true );
 		$sides    = $this->task_sides( $id, $side, $version, $base, $provider, $part );
 
 		if ( array() === $variants || array() === $sides ) {

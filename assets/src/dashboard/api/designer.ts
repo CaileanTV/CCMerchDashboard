@@ -136,6 +136,11 @@ export interface DesignerBase {
 	readonly name: string;
 	/** Whether the finished product can be shown before a design is sent. */
 	readonly preview: boolean;
+	/**
+	 * Whether the main image is chosen among the provider's photos of the
+	 * draft (step 57.22): only where those photos are the shop's.
+	 */
+	readonly previewChoice: boolean;
 	/** The stitch colours the creator can choose; empty without a choice. */
 	readonly stitches: readonly string[];
 	readonly description: string;
@@ -684,6 +689,7 @@ function parseBase( value: unknown ): DesignerBase | null {
 				shareFormats: value.share_formats === true,
 				currency: value.currency,
 				preview: value.preview === true,
+				previewChoice: value.preview_choice === true,
 				stitches: strings( value.stitches ) ?? [],
 				colors,
 				sizes,

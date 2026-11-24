@@ -241,6 +241,103 @@ describe( 'the main image among the finished product’s photos', () => {
 		expect( onSelect ).not.toHaveBeenCalled();
 	} );
 
+	it( 'keeps a choice of another colour, also an environment photo', async () => {
+		jest.useFakeTimers();
+		const requests = mockApi( {
+			[ `POST ${ PATH }` ]: () => response( 200, { status: 'pending' } ),
+			[ `GET ${ PATH }` ]: () => photos( requests ),
+		} );
+		const { onSelect } = await show( '_scene-1:magenta' );
+
+		// Magenta is shown first, as the choice is of magenta, and its photos lack the environment key.
+		expect(
+			requests.find( ( request ) => request.method === 'POST' )?.data
+		).toEqual( { color: 'magenta' } );
+		expect( onSelect ).toHaveBeenLastCalledWith( '_view-front:magenta' );
+
+		document.body.replaceChildren();
+		const second = await show( '_scene-1:magenta' );
+
+		// Shown in lime only, a magenta choice would stay.
+		expect( second.onSelect ).toHaveBeenCalledTimes( 1 );
+	} );
+
+	it( 'makes no photos once the dialog is closed', async () => {
+		jest.useFakeTimers();
+		const requests = mockApi( {
+			[ `POST ${ PATH }` ]: () => response( 200, { status: 'pending' } ),
+		} );
+		let release: ( value: string | null ) => void = () => undefined;
+		const prepare = () =>
+			new Promise< string | null >( ( resolve ) => {
+				release = resolve;
+			} );
+		const container = document.createElement( 'div' );
+
+		document.body.append( container );
+		const root = createRoot( container );
+
+		await act( async () => {
+			root.render(
+				<ProviderImages
+					product={ 7 }
+					colors={ COLORS }
+					prepare={ prepare }
+					selected={ null }
+					onSelect={ () => undefined }
+					pollMs={ 10 }
+					fallback={ null }
+				/>
+			);
+			await Promise.resolve();
+		} );
+
+		// Sent or cancelled while the files go up.
+		act( () => root.unmount() );
+		await act( async () => {
+			release( null );
+			await jest.advanceTimersByTimeAsync( 50 );
+		} );
+
+		expect( requests ).toHaveLength( 0 );
+	} );
+
+	it( 'tries a colour again', async () => {
+		jest.useFakeTimers();
+		let refuse = true;
+		const requests = mockApi( {
+			[ `POST ${ PATH }` ]: () =>
+				refuse
+					? response( 429, {
+							code: 'preview_busy',
+							data: { reason: 'preview_busy' },
+						} )
+					: response( 200, { status: 'pending' } ),
+			[ `GET ${ PATH }` ]: () => photos( requests ),
+		} );
+		const { container } = await show( null );
+
+		expect( container.textContent ).toContain( 'Try again in a minute' );
+
+		refuse = false;
+
+		const again = Array.from(
+			container.querySelectorAll< HTMLButtonElement >( 'button' )
+		).find( ( button ) => button.textContent === 'Try again' );
+
+		await act( async () => {
+			again?.click();
+			await jest.advanceTimersByTimeAsync( 50 );
+		} );
+
+		expect(
+			requests.filter( ( request ) => request.method === 'POST' )
+		).toHaveLength( 2 );
+		expect(
+			container.querySelector( 'img[alt="Lime – Left side"]' )
+		).not.toBeNull();
+	} );
+
 	it( 'offers the drawn images when the files cannot be sent', async () => {
 		jest.useFakeTimers();
 		const requests = mockApi( {} );

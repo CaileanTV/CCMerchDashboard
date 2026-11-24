@@ -169,7 +169,9 @@ Med en butik i `merchboard_designer_printify_shop` giver `PrintifyCatalog::choic
   - Mislykkes en udskæring, bevares fotoet. En 429 venter på `Retry-After` og prøver det samme foto igen.
   - `cutout()` springer fotos over 2048 × 2048 pixels over, og ligeså fotos, der ville kræve mere hukommelse, end PHP har tilbage (cirka 24 byte pr. pixel).
 - **Hovedbilledet blandt leverandørens fotos (trin 57.22):**
-  - **Hvornår:** `DesignerEditor` giver `SubmitDialog` et `provider`, når `base.preview` er sand og der ikke er scener tegnet i browseren.
+  - **Hvornår:** `DesignerEditor` giver `SubmitDialog` et `provider`, når `base.previewChoice` er sand og der ikke er scener tegnet i browseren. Flaget `preview_choice` er sandt for Printful og for Printify, når `printify_photos` ikke er tom.
+  - **Gentagelser og lukning:** "Prøv igen" og et tryk på en farve, der fejlede, henter farven igen. Lukkes dialogen, startes intet.
+  - **Valg, der bevares:** `persist()` bevarer `_view-`, `_photo-` og `_scene-` i en valgt farve.
   - **Dialogen:** `ProviderImages.tsx` kalder `prepare()` (`showFinished`, gem og send filer) én gang. Derefter kalder den `startPreview(id, farve)` og `fetchPreview` for én farve ad gangen. Billederne vises i `ImagePicker` (`showAll`) som `<choice>:<farve>`.
   - **Når valget ikke findes:** findes det valgte ikke i en hentet farve, bliver farvens første foto valgt. Fejler hentningen, vises de tegnede billeder (`fallback`).
   - **Serveren:**

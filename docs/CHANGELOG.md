@@ -34,7 +34,9 @@ Fase 57 (ADR-122). Ingen schemaændring. Reviewet; runtime-testen sker på stg.
   - Godkendelsen venter, til alle fotos er skåret ud.
 - **Hovedbilledet blandt de rigtige fotos (fase 57):** når et design sendes til godkendelse, viser "Primært produktbillede i shoppen" nu de rigtige fotos af designet fra Printify eller Printful, ikke kun de tegnede billeder (for flasken det flade ark).
   - Creatoren vælger farve og visning: forside, bagside, venstre side, højre side eller miljø. Det valgte foto bliver butikkens hovedbillede.
-  - Hver farve tæller i dagskvoten. Kan fotoene ikke laves, vises de tegnede billeder som før.
+  - Hver farve tæller i dagskvoten, hver gang dialogen åbnes. Kan fotoene ikke laves, vises de tegnede billeder med en "Prøv igen"-knap.
+  - Gælder grundprodukter fra Printful og fra Printify med visninger til butikken. Gelato og Prodigi bruger de tegnede billeder som før.
+- **Rettet:** et miljøfoto valgt som hovedbillede på et produkt i butikken gik tabt, når produktet blev ændret og kladden gemt.
 - **Se det færdige produkt:** billederne har nu visningens navn.
 - **Tests:** unit-testene får 512 MB lokalt, fordi billedtestene en gang imellem løb tør for PHP's standard på 128 MB. CI havde ingen grænse.
 
