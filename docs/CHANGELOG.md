@@ -21,13 +21,17 @@ Fase 57 (ADR-122). Ingen schemaændring. Reviewet; runtime-testen sker på stg.
 - **Stregtegninger under linjerne:** som i Printifys editor viser designeren en stregtegning af hver visning med en grøn ramme om den del af printet, man ser derfra. Bagsiden står i begge ender med hver sin halvdel. Importen tegner dem selv ud fra Printifys fotos.
 - **Rettet:** Printifys små fotos slettes nu med grundproduktet.
 
-### Rettet efter stg-testen (fase 56)
+### Efter stg-testen 2026-11-24
 
-- **Clipartens farver uden forsinkelse:** før blev hele clipartet tegnet i fuld størrelse (op til 16 mio. pixels) ved hver musebevægelse i farvefeltet, så designeren hakkede og først indhentede ændringerne, når man slap. Nu gælder:
+- **Clipartens farver uden forsinkelse (fase 56):** før blev hele clipartet tegnet i fuld størrelse (op til 16 mio. pixels) ved hver musebevægelse i farvefeltet, så designeren hakkede og først indhentede ændringerne, når man slap. Nu gælder:
   - der tegnes højst én ændring pr. skærmbillede;
   - mens man trækker, tegnes clipartet i skærmstørrelse (22 ms mod 245 ms før);
   - når man slipper, tegnes det én gang i fuld størrelse;
   - de tegnede billeder fylder højst 256 MB.
+- **Printifys butiksbilleder uden baggrund (fase 57):** Printifys studiefotos af et indsendt design gemmes nu som PNG uden den hvide baggrund. Miljøfotos er uændrede.
+  - Printify kan ikke selv levere dem uden baggrund, så serveren skærer dem ud med samme regel som browseren.
+  - En lys vare sammenlignes med samme foto i en mørk farve, så en hvid trøje ikke forsvinder. Om nødvendigt laver Printify en mørk farve, kun til sammenligning.
+  - Godkendelsen venter, til alle fotos er skåret ud.
 
 ## [2.5.0] - 2026-11-23
 

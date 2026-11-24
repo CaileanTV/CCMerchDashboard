@@ -1778,9 +1778,11 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
   - Hver ændring i farvefeltet tegnede hele clipartet i fuld opløsning (op til 16 mio. pixels), og ændringerne hobede sig op.
   - Nu tegnes højst én ændring pr. skærmbillede, og live-tegningen laves i skærmstørrelse. Fuld opløsning tegnes, når man slipper.
   - Cachen begrænses efter bytes.
-- **57.21 Printifys butiksbilleder uden baggrund** 🔄 (projektejerens ønske 2026-11-24: "hvid baggrund vil være et problem"; kun butiksbillederne; godkendt plan):
-  - Afprøvning 5 afgør, om Printify selv kan levere PNG med gennemsigtig baggrund.
-  - Ellers skærer serveren baggrunden fra, når Printifys mockups hentes, men kun på studiefotos. Lyse varer beskyttes af den samme visning i en anden farve.
+- **57.21 Printifys butiksbilleder uden baggrund** ✅ bygget (96d7ef9; projektejerens ønske 2026-11-24: "hvid baggrund vil være et problem"; kun butiksbillederne; godkendt plan). Runtime-testen sker på stg med den nye testpakke:
+  - Afprøvning 5 (runtime-mappen `2026-11-24-printify-png`): `.png`-URL'en giver samme foto, helt uigennemsigtigt. Printify kan altså ikke selv, og butikken var tom bagefter.
+  - Serveren skærer studiefotoene ud (`ImageProbe::cutout`, browserens regel), når alle farver er hentet. Det sker en runde ad gangen med højst 15 s pr. runde.
+  - En lys vare sammenlignes med samme foto i en farve langt væk. Mangler den, laver det midlertidige produkt en ekstra mørk farve, kun til sammenligning.
+  - På rigtige fotos: flasken er ren, og en hvid trøje alene ville forsvinde. Derfor skæres en lys farve aldrig alene.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 

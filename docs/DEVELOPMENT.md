@@ -1,4 +1,4 @@
-# Udviklingsmiljø
+Jeg har # Udviklingsmiljø
 
 ## Forudsætninger
 
@@ -281,6 +281,13 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
     - bagsiden står i begge ender: venstre ende har rammen på sin højre halvdel, højre ende på sin venstre halvdel;
     - navnet vises, når man holder musen over en tegning. Arket står højere end før, så tegningerne har plads.
 11. **Se det færdige produkt:** lav et design på flasken, tryk "Se det færdige produkt", og se Printifys mockups af kladden. Efter 15 minutter er produktet væk fra Printify-butikken.
+12. **Clipartens farver (trin 57.20):** vælg en clipart med frie farver, og træk rundt i farvefeltet. Clipartet skifter farve uden hak, og siden er tilbage med det samme, når man slipper. Bagefter er det skarpt i fuld størrelse.
+13. **Butiksbilleder uden baggrund (trin 57.21):**
+    - send et design på T-shirten ind i hvid og en mørk farve, og et på flasken, med "Mockups fra Printify" slået til. Godkendelsen venter lidt længere end før, mens fotoene skæres ud;
+    - i godkendelsen og i butikken er studiefotoene (forside, bagside, sider) PNG uden baggrund, og den hvide trøje er hel. Miljøfotos (en person, et rum) er uændrede;
+    - send et design ind i kun hvid: Printify laver også en mørk farve til sammenligning, men den kommer ikke i butikken;
+    - reklamen og panelet viser produktet uden firkant;
+    - Printify-butikken er tom bagefter.
 
 **Tilbagerulning:** installér 2.5.0-ZIP'en igen. Butiks-id'et bliver liggende uden at blive brugt, og grundprodukter importeret i 2.5.1 beholder deres fotos.
 

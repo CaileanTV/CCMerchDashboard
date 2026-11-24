@@ -149,6 +149,23 @@ Med en butik i `merchboard_designer_printify_shop` giver `PrintifyCatalog::choic
   - `ImageProbe::sheet(…, room)` lader 200 px stå fri under et ark med linjer.
 - **Forhåndsvisning:** `PrintifyMockups::can_preview/start_preview/preview/clean_preview` (job `merchboard_designer_printify_preview`, transient `merchboard_printify_preview_<version>`).
 
+## Butiksbilleder uden baggrund fra Printify (trin 57.21, ADR-122, statusnote 2026-11-24)
+- **Hvorfor serveren skærer selv:** Printifys mockups er JPEG'er på hvid baggrund. Hentes de som `.png`, er de stadig helt uigennemsigtige (afprøvning 5).
+- **Hvordan der skæres:** `ImageProbe::cutout(foto, samme visning i en anden farve)` bruger reglen fra `removeBackground()` i browseren:
+  - baggrunden er medianen af kanten;
+  - en pixel er baggrund, hvis den ligger højst 40 fra den;
+  - der fyldes fra kanten med 4 naboer, og kanten blødes op til alfa 160;
+  - mindst 4 % af billedet skal blive tilbage;
+  - kun `studio()`-fotos skæres.
+
+  En pixel fjernes kun, hvis den også er baggrund i den anden farve.
+- **I mockup-jobbet:** `PrintifyMockups::store()` gemmer hvert fotos kameranavn i opgavens `shots`.
+  - Når alle farver er hentet, skærer `cut()` dem ét ad gangen, højst 15 s pr. runde (`cut` tæller). Først derefter er opgaven færdig.
+  - `cut_one()` sammenligner med den gemte farve, der ligger længst væk, mindst 100 i RGB-afstand.
+  - En lys farve (højst 80 fra hvid, eller ukendt) skæres aldrig alene. Har den ingen valgt farve langt væk, får det midlertidige produkt grundproduktets fjerneste farve som ekstra variant (`refs`). Den bruges kun til sammenligning, og dens fotos gemmes aldrig.
+  - Mislykkes en udskæring, bevares fotoet. En 429 venter på `Retry-After`.
+- **Gennemsigtig PNG:** resultatet gemmes som `mockup.png`. `DesignerMedia` sætter `_merchboard_transparent`, når designet godkendes, og reklamen og panelet bruger billedet uden flere ændringer.
+
 ## Farvefotos i portioner (2026-11-01, eksperimentel)
 En side kan have en baggrund pr. farve, og en side med 23 farver er flere filer, end PHP normalt tager i én anmodning (`max_file_uploads`, 20 som standard). Overskydende filer forsvinder uden fejl. Derfor sender browseren først formularen med første foto som baggrund og derefter fotoene i portioner til `do=color_photos`, højst 10 filer og 80 % af `wp_max_upload_size()` pr. portion. Siden findes på nøgle eller navn, fordi en ny side ikke har en nøgle i browseren, og farven findes på navnet uanset store og små bogstaver. Alle fotos skal have samme størrelse som skabelonen. En portion gemmes helt eller slet ikke, og et erstattet foto slettes. Filer fra Affinity skal først eksporteres eller udtrækkes til PNG uden creators' designs: pluginet tager kun imod PNG og kan ikke kende et design på et foto, så administratoren tjekker miniaturerne.
 
