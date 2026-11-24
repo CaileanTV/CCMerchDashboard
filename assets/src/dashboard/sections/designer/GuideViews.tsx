@@ -58,7 +58,12 @@ export function GuideViews( props: GuideViewsProps ) {
 		>
 			{ guideFigures( view.guides ).map( ( guide ) => {
 				const image = images.get( guide.figure );
-				const drawn = guide.box !== null && image !== undefined;
+				// A drawing of the view where the sheet meets keeps its look without a frame.
+				const drawn =
+					image !== undefined &&
+					view.guides.some(
+						( own ) => own.label === guide.label && own.box !== null
+					);
 
 				return (
 					<li
@@ -69,6 +74,7 @@ export function GuideViews( props: GuideViewsProps ) {
 							transform: `translateX(-${ percent( guide.anchor ) })`,
 						} }
 						title={ guide.label }
+						aria-hidden={ guide.repeat ? true : undefined }
 					>
 						{ image === undefined ? null : (
 							<span className="merchboard-product-designer__figure">

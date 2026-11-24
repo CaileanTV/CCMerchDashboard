@@ -181,8 +181,22 @@ describe( 'the guides of a print around the product', () => {
 				x: 0.5,
 				anchor: 0.5,
 				box: null,
+				repeat: false,
 			},
 		] );
+	} );
+
+	it( 'reads the seam view out once and frames no half without width', () => {
+		const figures = guideFigures( [ guide( 0, 'Back', 42, BOX, 0.06 ) ] );
+
+		expect(
+			figures.map( ( figure ) => [ figure.key, figure.repeat ] )
+		).toEqual( [
+			[ 'Back-start', false ],
+			[ 'Back-end', true ],
+		] );
+		expect( figures[ 0 ]?.box?.width ).toBeCloseTo( 0.88 );
+		expect( figures[ 1 ]?.box ).toBeNull();
 	} );
 
 	it( 'gives a side without guides none', () => {

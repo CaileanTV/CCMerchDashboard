@@ -429,8 +429,12 @@ class CatalogImport {
 			return;
 		}
 
-		// What the last attempt left at the provider (ADR-122) goes first.
+		// What the last attempt left at the provider (ADR-122) goes first, and a stuck one's own files.
 		$this->cleanup( $id, $import['data'] );
+
+		if ( $stuck ) {
+			$this->delete_files( $import['data'] );
+		}
 
 		// What create() started with; the format groups and their products too (ADR-115),
 		// or a poster would render all its sides at once and fail.
@@ -1062,16 +1066,16 @@ class CatalogImport {
 				// Step 57.19: the view drawn as in Printify's editor; without it, its photo stays under the guide.
 				try {
 					$drawing = null === $centre ? null : ImageProbe::drawing( $photo, $striped );
-				} catch ( InvalidArgumentException ) {
-					$drawing = null;
-				}
 
-				if ( null !== $drawing ) {
-					$data['drawings'][ $slot ]     = $this->stored( $drawing['png'] );
-					$data['seen'][ $key ][ $slot ] = array(
-						'box'  => $drawing['box'],
-						'seam' => $drawing['seam'],
-					);
+					if ( null !== $drawing ) {
+						$data['drawings'][ $slot ]     = $this->stored( $drawing['png'] );
+						$data['seen'][ $key ][ $slot ] = array(
+							'box'  => $drawing['box'],
+							'seam' => $drawing['seam'],
+						);
+					}
+				} catch ( InvalidArgumentException | DesignerException ) {
+					unset( $data['seen'][ $key ][ $slot ] );
 				}
 
 				$this->persist( $id, $data );
@@ -1374,9 +1378,14 @@ class CatalogImport {
 
 		// ADR-119: the provider's images, one thumbnail each, for the administrator's choice of mockups
 		// (ADR-122: Printify's by camera name). Made once the sides are stored: the earlier ones go with them.
+		// Files that became assets are no longer the import's: a later failure must not delete them.
 		$thumbs = $this->service->thumbnails( $id, is_array( $data['thumbs'] ?? null ) ? $data['thumbs'] : array(), $provider[ $printify ? 'printify_thumbs' : 'gelato_thumbs' ] ?? array(), $printify ? 'view' : 'Gelato' );
+		unset( $data['thumbs'] );
+		$this->persist( $id, $data );
 		// Step 57.19: the drawings under the guides, by camera name.
 		$drawings = $printify ? $this->service->thumbnails( $id, is_array( $data['drawings'] ?? null ) ? $data['drawings'] : array(), $provider['printify_drawings'] ?? array(), 'drawing' ) : array();
+		unset( $data['drawings'] );
+		$this->persist( $id, $data );
 
 		$this->bases->set_provider(
 			$id,
@@ -1589,6 +1598,28 @@ class CatalogImport {
 	}
 
 	/**
+	 * Deletes the files an import stored and has not handed over: the
+	 * photos of its sides, its thumbnails and its drawings.
+	 *
+	 * @param array<mixed> $data Import data.
+	 */
+	private function delete_files( array $data ): void {
+		foreach ( is_array( $data['files'] ?? null ) ? $data['files'] : array() as $side ) {
+			foreach ( is_array( $side ) ? $side : array() as $name ) {
+				if ( is_string( $name ) && '' !== $name ) {
+					$this->files->delete( $name );
+				}
+			}
+		}
+
+		foreach ( array_merge( is_array( $data['thumbs'] ?? null ) ? array_values( $data['thumbs'] ) : array(), is_array( $data['drawings'] ?? null ) ? array_values( $data['drawings'] ) : array() ) as $thumb ) {
+			if ( is_array( $thumb ) && is_string( $thumb['file'] ?? null ) ) {
+				$this->files->delete( $thumb['file'] );
+			}
+		}
+	}
+
+	/**
 	 * Stores a PNG among the designer's files.
 	 *
 	 * @param string $png Bytes.
@@ -1648,19 +1679,7 @@ class CatalogImport {
 
 			$data = $this->current ?? $import['data'];
 
-			foreach ( is_array( $data['files'] ?? null ) ? $data['files'] : array() as $side ) {
-				foreach ( is_array( $side ) ? $side : array() as $name ) {
-					if ( is_string( $name ) && '' !== $name ) {
-						$this->files->delete( $name );
-					}
-				}
-			}
-
-			foreach ( array_merge( is_array( $data['thumbs'] ?? null ) ? array_values( $data['thumbs'] ) : array(), is_array( $data['drawings'] ?? null ) ? array_values( $data['drawings'] ) : array() ) as $thumb ) {
-				if ( is_array( $thumb ) && is_string( $thumb['file'] ?? null ) ) {
-					$this->files->delete( $thumb['file'] );
-				}
-			}
+			$this->delete_files( $data );
 
 			// The renders stored in this round too: the round's own copy can be older.
 			$stored = is_array( $import['data']['renders'] ?? null ) ? $import['data']['renders'] : array();

@@ -2291,8 +2291,13 @@ input:disabled + .merchboard-sounds__upload {
 
 	// Step 57.19: a view drawn as in a print editor; the room under the
 	// area sets its height.
-	li.is-drawing img {
-		width: auto;
+	li.is-drawing {
+		// Its name shows on hover.
+		pointer-events: auto;
+
+		img {
+			width: auto;
+		}
 	}
 }
 

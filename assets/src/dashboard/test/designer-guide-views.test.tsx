@@ -90,6 +90,10 @@ describe( 'the views under a print around the product', () => {
 			'100%',
 		] );
 		expect( items[ 0 ]?.style.transform ).toBe( 'translateX(-49.4%)' );
+		// The back is read out once.
+		expect(
+			items.map( ( item ) => item.getAttribute( 'aria-hidden' ) )
+		).toEqual( [ null, null, 'true' ] );
 		expect(
 			items.every( ( item ) => item.className === 'is-drawing' )
 		).toBe( true );

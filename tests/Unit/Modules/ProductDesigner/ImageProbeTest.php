@@ -312,14 +312,51 @@ final class ImageProbeTest extends TestCase {
 		self::assertNull( ImageProbe::drawing( $this->blank(), $this->blank() ) );
 	}
 
+	public function test_a_product_as_light_as_its_background_is_drawn_around_its_print(): void {
+		// Only the print differs from the background: the drawing still holds it, framed inside.
+		$white   = Photo::png( 400, 300, self::STUDIO, array( array( 100, 50, 200, 220, array( 233, 233, 233 ) ) ) );
+		$drawing = ImageProbe::drawing( $white, $this->striped( array( 4, 5, 6, 7 ), 20, array( 233, 233, 233 ) ) );
+
+		self::assertNotNull( $drawing );
+		self::assertLessThanOrEqual( 1.0, $drawing['box']['x'] + $drawing['box']['width'] );
+		self::assertLessThanOrEqual( 1.0, $drawing['box']['y'] + $drawing['box']['height'] );
+		self::assertGreaterThan( 0.8, $drawing['box']['width'], 'The print fills the drawing.' );
+	}
+
+	public function test_a_line_across_the_photo_or_a_print_of_a_line_is_not_drawn(): void {
+		$shelf   = Photo::png( 1200, 300, self::STUDIO, array( array( 10, 140, 1180, 6, self::SHIRT ) ) );
+		$striped = Photo::png( 1200, 300, self::STUDIO, array( array( 10, 140, 1180, 6, self::SHIRT ), array( 300, 141, 200, 4, array( 255, 0, 0 ) ) ) );
+
+		self::assertNull( ImageProbe::drawing( $shelf, $striped ) );
+	}
+
+	public function test_a_photo_on_a_transparent_background_is_drawn_on_white(): void {
+		$image = imagecreatetruecolor( 400, 300 );
+
+		self::assertNotFalse( $image );
+		imagealphablending( $image, false );
+		imagesavealpha( $image, true );
+		imagefill( $image, 0, 0, (int) imagecolorallocatealpha( $image, 0, 0, 0, 127 ) );
+		imagefilledrectangle( $image, 100, 50, 299, 269, (int) imagecolorallocatealpha( $image, 30, 30, 30, 0 ) );
+		ob_start();
+		imagepng( $image );
+		$blank = (string) ob_get_clean();
+
+		$drawing = ImageProbe::drawing( $blank, $this->striped( array( 4, 5, 6, 7 ) ) );
+
+		self::assertNotNull( $drawing );
+		self::assertEqualsWithDelta( 44 / 208, $drawing['box']['x'], 0.01, 'The product found, not the whole photo.' );
+	}
+
 	/**
 	 * A sheet around the product with a striped sheet's stripes (ImageProbe::stripes()).
 	 *
-	 * @param int[] $stripes Stripes from the left, 0–11.
-	 * @param int   $width   Width of a stripe, from x 140.
+	 * @param int[]                         $stripes Stripes from the left, 0–11.
+	 * @param int                           $width   Width of a stripe, from x 140.
+	 * @param array{0: int, 1: int, 2: int} $product The product's colour.
 	 */
-	private function striped( array $stripes, int $width = 20 ): string {
-		$rects = array( array( 100, 50, 200, 220, self::SHIRT ) );
+	private function striped( array $stripes, int $width = 20, array $product = self::SHIRT ): string {
+		$rects = array( array( 100, 50, 200, 220, $product ) );
 
 		foreach ( $stripes as $index => $stripe ) {
 			$h       = $stripe * 30 / 60;

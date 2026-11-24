@@ -45,6 +45,8 @@ export interface GuideFigure {
 	readonly anchor: number;
 	/** The part of the print it shows, as shares of the image; null on a photo. */
 	readonly box: DesignerTrim | null;
+	/** The second of a view shown at both ends: not read out again. */
+	readonly repeat: boolean;
 }
 
 /**
@@ -72,6 +74,7 @@ export function guideFigures(
 						x: guide.x,
 						anchor: 0.5,
 						box,
+						repeat: false,
 					},
 				];
 			}
@@ -79,6 +82,9 @@ export function guideFigures(
 			const right = box.x + box.width;
 			const after = Math.min( right, Math.max( box.x, seam ) );
 			const before = Math.max( box.x, Math.min( right, seam ) );
+			// A half without width frames nothing.
+			const part = ( x: number, width: number ): DesignerTrim | null =>
+				width > 0 ? { ...box, x, width } : null;
 
 			return [
 				{
@@ -87,7 +93,8 @@ export function guideFigures(
 					figure: guide.figure,
 					x: 0,
 					anchor: seam,
-					box: { ...box, x: after, width: right - after },
+					box: part( after, right - after ),
+					repeat: false,
 				},
 				{
 					key: `${ guide.label }-end`,
@@ -95,7 +102,8 @@ export function guideFigures(
 					figure: guide.figure,
 					x: 1,
 					anchor: seam,
-					box: { ...box, width: before - box.x },
+					box: part( box.x, before - box.x ),
+					repeat: true,
 				},
 			];
 		} )

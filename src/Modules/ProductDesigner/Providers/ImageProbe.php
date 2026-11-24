@@ -418,6 +418,11 @@ final class ImageProbe {
 	public const DRAWING_HEIGHT = 176;
 
 	/**
+	 * Widest a drawn product is, as times its height.
+	 */
+	private const DRAWING_WIDEST = 4;
+
+	/**
 	 * Most a pixel of a plain background differs from the photo's corner,
 	 * per channel.
 	 */
@@ -449,10 +454,10 @@ final class ImageProbe {
 	 * @throws InvalidArgumentException When a photo cannot be read or the drawing made.
 	 */
 	public static function drawing( string $blank, string $stripes ): ?array {
-		$a      = self::image( $blank );
+		$a      = self::flat( self::image( $blank ) );
 		$width  = imagesx( $a );
 		$height = imagesy( $a );
-		$b      = self::sized( self::image( $stripes ), $width, $height );
+		$b      = self::sized( self::flat( self::image( $stripes ) ), $width, $height );
 		$corner = self::pixel( $a, 0, 0 );
 
 		// A plain background: the corners alike.
@@ -482,7 +487,8 @@ final class ImageProbe {
 			}
 		}
 
-		if ( $product[2] < 0 || array() === $columns || array() === $rows ) {
+		// A product as light as its background is found by its print alone.
+		if ( array() === $columns || array() === $rows ) {
 			return null;
 		}
 
@@ -499,17 +505,24 @@ final class ImageProbe {
 		$print = array( min( $columns ), min( $rows ), max( $columns ), max( $rows ) );
 		$seam  = self::seam( $a, $b, $print );
 
-		// The product with a small margin, DRAWING_HEIGHT high.
-		$margin = max( 2, intdiv( $product[3] - $product[1], 50 ) );
-		$left   = max( 0, $product[0] - $margin );
-		$top    = max( 0, $product[1] - $margin );
-		$crop_w = min( $width - 1, $product[2] + $margin ) - $left + 1;
-		$crop_h = min( $height - 1, $product[3] + $margin ) - $top + 1;
-		$scale  = self::DRAWING_HEIGHT / $crop_h;
-		$w      = max( 1, (int) round( $crop_w * $scale ) );
-		$h      = self::DRAWING_HEIGHT;
-		$small  = imagecreatetruecolor( $w, $h );
-		$lines  = imagecreatetruecolor( $w, $h );
+		// The product and its print with a small margin, DRAWING_HEIGHT high: a near-white product can hide in its background.
+		$product = array( min( $product[0], $print[0] ), min( $product[1], $print[1] ), max( $product[2], $print[2] ), max( $product[3], $print[3] ) );
+		$margin  = max( 2, intdiv( $product[3] - $product[1], 50 ) );
+		$left    = max( 0, $product[0] - $margin );
+		$top     = max( 0, $product[1] - $margin );
+		$crop_w  = min( $width - 1, $product[2] + $margin ) - $left + 1;
+		$crop_h  = min( $height - 1, $product[3] + $margin ) - $top + 1;
+
+		// Not a product but a line across the photo (a shelf, a shadow).
+		if ( $crop_w > self::DRAWING_WIDEST * $crop_h ) {
+			return null;
+		}
+
+		$scale = self::DRAWING_HEIGHT / $crop_h;
+		$w     = max( 1, (int) round( $crop_w * $scale ) );
+		$h     = self::DRAWING_HEIGHT;
+		$small = imagecreatetruecolor( $w, $h );
+		$lines = imagecreatetruecolor( $w, $h );
 
 		if ( false === $small || false === $lines ) {
 			throw new InvalidArgumentException( 'The drawing cannot be made.' );
@@ -518,11 +531,16 @@ final class ImageProbe {
 		imagecopyresampled( $small, $a, 0, 0, $left, $top, $w, $h, $crop_w, $crop_h );
 
 		$box = array(
-			(int) floor( ( $print[0] - $left ) * $scale ),
-			(int) floor( ( $print[1] - $top ) * $scale ),
-			(int) ceil( ( $print[2] - $left ) * $scale ),
-			(int) ceil( ( $print[3] - $top ) * $scale ),
+			max( 0, (int) floor( ( $print[0] - $left ) * $scale ) ),
+			max( 0, (int) floor( ( $print[1] - $top ) * $scale ) ),
+			min( $w, (int) ceil( ( $print[2] - $left ) * $scale ) ),
+			min( $h, (int) ceil( ( $print[3] - $top ) * $scale ) ),
 		);
+
+		// A print of a line only frames nothing.
+		if ( $box[2] - $box[0] < 2 || $box[3] - $box[1] < 2 ) {
+			return null;
+		}
 
 		self::draw( $small, $lines, $corner, $box );
 
@@ -1135,6 +1153,26 @@ final class ImageProbe {
 		imagepalettetotruecolor( $image );
 
 		return $image;
+	}
+
+	/**
+	 * An image on white: a transparent background becomes plain.
+	 *
+	 * @param GdImage $image Image.
+	 * @throws InvalidArgumentException When it cannot be made.
+	 */
+	private static function flat( GdImage $image ): GdImage {
+		$flat = imagecreatetruecolor( imagesx( $image ), imagesy( $image ) );
+
+		if ( false === $flat ) {
+			throw new InvalidArgumentException( 'The image cannot be flattened.' );
+		}
+
+		imagefill( $flat, 0, 0, (int) imagecolorallocate( $flat, 255, 255, 255 ) );
+		imagealphablending( $flat, true );
+		imagecopy( $flat, $image, 0, 0, 0, 0, imagesx( $image ), imagesy( $image ) );
+
+		return $flat;
 	}
 
 	/**
