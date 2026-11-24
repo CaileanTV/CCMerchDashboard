@@ -21,6 +21,14 @@ Fase 57 (ADR-122). Ingen schemaændring. Reviewet; runtime-testen sker på stg.
 - **Stregtegninger under linjerne:** som i Printifys editor viser designeren en stregtegning af hver visning med en grøn ramme om den del af printet, man ser derfra. Bagsiden står i begge ender med hver sin halvdel. Importen tegner dem selv ud fra Printifys fotos.
 - **Rettet:** Printifys små fotos slettes nu med grundproduktet.
 
+### Rettet efter stg-testen (fase 56)
+
+- **Clipartens farver uden forsinkelse:** før blev hele clipartet tegnet i fuld størrelse (op til 16 mio. pixels) ved hver musebevægelse i farvefeltet, så designeren hakkede og først indhentede ændringerne, når man slap. Nu gælder:
+  - der tegnes højst én ændring pr. skærmbillede;
+  - mens man trækker, tegnes clipartet i skærmstørrelse (22 ms mod 245 ms før);
+  - når man slipper, tegnes det én gang i fuld størrelse;
+  - de tegnede billeder fylder højst 256 MB.
+
 ## [2.5.0] - 2026-11-23
 
 Fase 55 og 56 (ADR-120, ADR-121). Schema-version 55 (migration 53–55). Fase 56 er reviewet og runtime-testet på Local; fase 55 er bygget og testet automatisk, men dens andet review og runtime-test er udsat efter projektejerens valg.

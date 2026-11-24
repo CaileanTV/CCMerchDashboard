@@ -1774,7 +1774,7 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - filer overdrages, før næste skridt kan fejle;
     - navnet vises ved mouse-over, og bagsiden læses kun op én gang.
   - Projektejerens stg-test 2026-11-24 ✅.
-- **57.20 Clipartens farver uden forsinkelse** 🔄 (projektejerens fund på stg 2026-11-24; godkendt plan):
+- **57.20 Clipartens farver uden forsinkelse** ✅ (a224994; projektejerens fund på stg 2026-11-24; godkendt plan; måling i runtime-mappen `2026-11-24-clipart-farver`: 245 → 22 ms pr. ændring under træk, fuld tegning uændret og byte-identisk):
   - Hver ændring i farvefeltet tegnede hele clipartet i fuld opløsning (op til 16 mio. pixels), og ændringerne hobede sig op.
   - Nu tegnes højst én ændring pr. skærmbillede, og live-tegningen laves i skærmstørrelse. Fuld opløsning tegnes, når man slipper.
   - Cachen begrænses efter bytes.
