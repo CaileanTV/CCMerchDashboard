@@ -483,7 +483,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 - [x] Trin 57.12: mockups fra Printify af indsendte designs (c81fc26).
 - [x] Trin 57.13: tekster, docs, review og testpakke; stg-testen sker samlet i 57.18.
 - [x] Trin 57.14–57.17: hjælpelinjer på et rundt print (70e4816) og "Se det færdige produkt" for Printify (661db81).
-- [ ] Trin 57.18: tekster og docs ✅, review (fe4eddb) ✅, stg-test af testpakken fra d7d3834 ✅ (projektejeren 2026-11-24); ny testpakke fra 7956c5f (sha256 `22004877…`, CI grøn) venter på stg-testen af 57.20–57.21.
+- [ ] Trin 57.18: tekster og docs ✅, review (fe4eddb) ✅, stg-test af testpakken fra d7d3834 ✅ (projektejeren 2026-11-24); ny testpakke fra 7e0f7ad (sha256 `a7f16ac5…`, CI grøn) venter på stg-testen af 57.20–57.22.
 - [x] Trin 57.19: stregtegninger under linjerne som i Printifys editor, bagsiden i begge ender (66742be, 6919860).
 - [x] Trin 57.20: clipartens farver uden forsinkelse (projektejerens fund på stg 2026-11-24; a224994). Projektejeren mærker efter på stg med næste testpakke.
 - [x] Trin 57.21: Printifys butiksbilleder som PNG uden baggrund (projektejerens ønske 2026-11-24; 96d7ef9). Afprøvning 5 viste, at Printify ikke selv kan; serveren skærer ud. Runtime-test på stg med næste testpakke.
