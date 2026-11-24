@@ -1749,7 +1749,7 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
 - **57.16 Linjerne i designeren** ✅ (70e4816): feltet `guides` på siden, stiplede linjer og under printfeltet en figur af hver visning (Printifys eget lille foto af visningen, projektejerens ønske 2026-11-23) med navnet.
   - Afprøvning 4: Printifys `position` er "front" for alle fotos, også miljøfotos, så linjerne bygger på kameranavnene front, back, left- og right-.
 - **57.17 "Se mockups" for Printify** ✅ (661db81): knappen "Se det færdige produkt" viser Printifys mockups af kladden (kvote 100 pr. dag), og produktet slettes bagefter.
-- **57.18 Tekster, docs, review, runtime-test på stg og ny testpakke 2.5.1** 🔄. Intet tag før projektejerens OK.
+- **57.18 Tekster, docs, review, runtime-test på stg og ny testpakke 2.5.1** ✅ (projektejerens stg-test af pakken fra 7e0f7ad 2026-11-24: "det virker"). Intet tag før projektejerens OK.
   - Tekster (9ea30c5) og docs (2b05235) ✅.
   - Uafhængigt review uden sikkerhedsfund. Rettet i fe4eddb:
     - målingen fortsætter forbi en stribe, der ikke ses;
@@ -1760,7 +1760,7 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
   - Visuelt eksempel på linjerne til projektejeren (artefakt "Hjælpelinjer på flasken").
   - Runtime-testen på stg og den nye testpakke venter på 57.19.
   - Testpakke 2.5.1 fra d7d3834 (sha256 `71e83154…`). Projektejeren testede den på stg 2026-11-24: "det ser fint ud" ✅. Bagefter fandt projektejeren to ting mere, som blev til 57.20 og 57.21.
-  - Ny testpakke 2.5.1 fra 7e0f7ad (sha256 `a7f16ac5…`), CI grøn 2026-11-24. Den skal testes på stg efter DEVELOPMENT punkt 12–14 (57.20–57.22). Den afløser pakken fra 7956c5f.
+  - Ny testpakke 2.5.1 fra 7e0f7ad (sha256 `a7f16ac5…`), CI grøn 2026-11-24. Testet på stg efter DEVELOPMENT punkt 12–14 (57.20–57.22) af projektejeren 2026-11-24: "det virker" ✅. Den afløser pakken fra 7956c5f.
 - **57.19 Stregtegninger under hjælpelinjerne** ✅ (projektejerens ønske 2026-11-24 efter det visuelle eksempel: "præcis som på printify"):
   - Importen tegner hver visning som streger ud fra Printifys foto af den tomme vare (omrids og linjer i låg og hank). Det kræver ingen ekstra kald, for fotoene hentes allerede til målingen.
   - En grøn ramme viser den del af printet, man ser fra den side. Den findes på fotoet med prøvearket.
@@ -1779,7 +1779,7 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
   - Hver ændring i farvefeltet tegnede hele clipartet i fuld opløsning (op til 16 mio. pixels), og ændringerne hobede sig op.
   - Nu tegnes højst én ændring pr. skærmbillede, og live-tegningen laves i skærmstørrelse. Fuld opløsning tegnes, når man slipper.
   - Cachen begrænses efter bytes.
-- **57.21 Printifys butiksbilleder uden baggrund** ✅ bygget (96d7ef9; projektejerens ønske 2026-11-24: "hvid baggrund vil være et problem"; kun butiksbillederne; godkendt plan). Runtime-testen sker på stg med den nye testpakke:
+- **57.21 Printifys butiksbilleder uden baggrund** ✅ (96d7ef9; stg-test ✅ 2026-11-24; projektejerens ønske 2026-11-24: "hvid baggrund vil være et problem"; kun butiksbillederne; godkendt plan):
   - Afprøvning 5 (runtime-mappen `2026-11-24-printify-png`): `.png`-URL'en giver samme foto, helt uigennemsigtigt. Printify kan altså ikke selv, og butikken var tom bagefter.
   - Serveren skærer studiefotoene ud (`ImageProbe::cutout`, browserens regel), når alle farver er hentet. Det sker en runde ad gangen med højst 15 s pr. runde.
   - En lys vare sammenlignes med samme foto i en farve langt væk. Mangler den, laver det midlertidige produkt en ekstra mørk farve, kun til sammenligning.
@@ -1791,7 +1791,7 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - en lys farve skæres ikke mod en reference, der ikke kan bruges;
     - under træk beholder de andre cliparts deres fulde billede;
     - tynde cliparts holder formen under træk.
-- **57.22 Hovedbilledet vælges blandt leverandørens mockups** ✅ bygget (runtime-test på stg med næste testpakke; projektejerens ønske 2026-11-24 med skærmbillede af "Primært produktbillede i shoppen" for flasken; godkendt plan):
+- **57.22 Hovedbilledet vælges blandt leverandørens mockups** ✅ (6136c38, 7e0f7ad; stg-test ✅ 2026-11-24; projektejerens ønske 2026-11-24 med skærmbillede af "Primært produktbillede i shoppen" for flasken; godkendt plan):
   - Dialogen henter Printifys eller Printfuls rigtige mockups af designet i den valgte farve, som "Se det færdige produkt" gør. Creatoren vælger farve og visning: forside, venstre, højre, bagside eller miljø.
   - Et Printify-valg gemmes som `_view-<kamera>:<farve>` og kobles til det gemte foto, når mockups'ene er hentet. Et Printful-valg er allerede den gemte nøgle (`_photo-<stil>`).
   - Bygget i 6136c38. Uafhængigt review uden sikkerhedsfund. Rettet:
