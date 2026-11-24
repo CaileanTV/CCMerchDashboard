@@ -231,6 +231,54 @@ final class ImageProbeTest extends TestCase {
 		self::assertFalse( ImageProbe::studio( 'not an image' ) );
 	}
 
+	public function test_a_studio_photo_loses_its_backdrop_and_keeps_the_product(): void {
+		// A dark shirt with a hole of backdrop inside it (a handle): only what joins the edge goes.
+		$photo = Photo::png( 400, 300, self::STUDIO, array( array( 100, 50, 200, 220, self::SHIRT ), array( 180, 120, 40, 40, self::STUDIO ) ) );
+		$png   = ImageProbe::cutout( $photo );
+
+		self::assertNotNull( $png );
+		self::assertSame( IMAGETYPE_PNG, ( (array) getimagesizefromstring( $png ) )[2] ?? null );
+		self::assertTrue( ImageProbe::transparent( $png ) );
+
+		$image = imagecreatefromstring( $png );
+		self::assertNotFalse( $image );
+		$alpha = static fn( int $x, int $y ): int => ( (int) imagecolorat( $image, $x, $y ) >> 24 ) & 127;
+
+		self::assertSame( 127, $alpha( 0, 0 ), 'The backdrop is clear.' );
+		self::assertSame( 127, $alpha( 50, 150 ) );
+		self::assertSame( 0, $alpha( 200, 100 ), 'The product stays.' );
+		self::assertSame( 0, $alpha( 200, 140 ), 'Backdrop inside the product stays.' );
+		self::assertSame( 47, $alpha( 100, 150 ), 'Its edge is softened as in the browser.' );
+		// The colour of a removed pixel is kept.
+		self::assertSame( 0xE6E6E6, (int) imagecolorat( $image, 0, 0 ) & 0xFFFFFF );
+	}
+
+	public function test_a_light_product_is_only_cut_where_another_colour_shows_backdrop(): void {
+		$white = Photo::png( 400, 300, self::STUDIO, array( array( 60, 40, 280, 240, array( 238, 238, 238 ) ), array( 150, 100, 60, 60, array( 200, 30, 40 ) ) ) );
+		$black = Photo::png( 400, 300, self::STUDIO, array( array( 60, 40, 280, 240, self::SHIRT ), array( 150, 100, 60, 60, array( 200, 30, 40 ) ) ) );
+
+		// Alone, the white shirt would vanish but for its print: refused.
+		self::assertNull( ImageProbe::cutout( $white ) );
+
+		$png = ImageProbe::cutout( $white, $black );
+		self::assertNotNull( $png );
+		$image = imagecreatefromstring( $png );
+		self::assertNotFalse( $image );
+		self::assertSame( 127, ( (int) imagecolorat( $image, 10, 10 ) >> 24 ) & 127, 'The backdrop goes.' );
+		self::assertSame( 0, ( (int) imagecolorat( $image, 100, 200 ) >> 24 ) & 127, 'The white shirt stays.' );
+
+		// Another colour of another size is ignored: as alone.
+		self::assertNull( ImageProbe::cutout( $white, Photo::png( 200, 150, self::STUDIO, array( array( 30, 20, 140, 120, self::SHIRT ) ) ) ) );
+	}
+
+	public function test_only_studio_photos_are_cut(): void {
+		$dark = Photo::png( 400, 300, array( 30, 40, 50 ), array( array( 100, 50, 200, 220, array( 200, 200, 200 ) ) ) );
+
+		self::assertNull( ImageProbe::cutout( $dark ), 'A dark backdrop: no studio photo.' );
+		self::assertNull( ImageProbe::cutout( Photo::png( 400, 300, self::STUDIO ) ), 'Nothing would be left.' );
+		self::assertNull( ImageProbe::cutout( 'not an image' ) );
+	}
+
 	public function test_a_flat_side_lies_on_a_white_sheet(): void {
 		$image = imagecreatefromstring( ImageProbe::blank( 30, 20 ) );
 

@@ -632,8 +632,102 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertNotNull( $this->first_call( 'DELETE', self::API . '/shops/' . self::SHOP . '/products/' . self::BLANK . '.json' ), 'The temporary product is deleted.' );
 		self::assertNotNull( $this->first_call( 'POST', self::API . '/uploads/6b04a1527e91123b90c950e1/archive.json' ), 'The print file is archived.' );
 
+		// Step 57.21: the studio photos lose their white backdrop; the shirt stays.
+		foreach ( array( 'front', SubmissionFiles::SCENE . '0' ) as $key ) {
+			foreach ( array( 'ash', 'black' ) as $color ) {
+				$this->assertCutOut( (string) ( $files['mockups'][ $key ][ $color ]['file'] ?? '' ), $key . ' ' . $color );
+			}
+		}
+
 		$review->approve( $version );
 		self::assertSame( 'approved', $this->products->version( $version )['status'] ?? null );
+	}
+
+	public function test_a_light_colour_is_cut_against_a_dark_one_printify_makes_only_for_that(): void {
+		$version = $this->printify_submitted( 'Light tee', true, array( 'ash' ) );
+		// Ash is a light colour here; black is far from it.
+		$this->set_hex( (int) ( $this->products->version( $version )['base_id'] ?? 0 ), array( 'ash' => '#f0f0f0' ) );
+
+		$mockups     = $this->printify_mockups();
+		$this->calls = array();
+		$mockups->submitted( $version );
+		$this->drain_mockups( $mockups );
+
+		$create  = $this->first_call( 'POST', self::API . '/shops/' . self::SHOP . '/products.json' );
+		$product = (array) json_decode( (string) ( $create[2]['body'] ?? '' ), true );
+
+		self::assertSame( array( 32870, 32880 ), array_column( $product['variants'] ?? array(), 'id' ), 'Black is made too, only to compare.' );
+		self::assertSame( array( 32870, 32880 ), $product['print_areas'][0]['variant_ids'] ?? null );
+
+		$files = SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null );
+
+		self::assertSame( 'ready', $this->products->version( $version )['mockup_state'] ?? null );
+		self::assertSame( array( 'ash' ), array_keys( $files['mockups']['front'] ?? array() ), 'Black\'s photos are never stored.' );
+		$this->assertCutOut( (string) ( $files['mockups']['front']['ash']['file'] ?? '' ), 'front ash' );
+		self::assertNotNull( $this->first_call( 'GET', self::photo( self::BLANK, 32880, 101, 'front' ) ), 'Black\'s front is fetched to compare.' );
+		self::assertNotNull( $this->first_call( 'DELETE', self::API . '/shops/' . self::SHOP . '/products/' . self::BLANK . '.json' ) );
+	}
+
+	public function test_a_light_colour_without_a_far_colour_keeps_its_photos(): void {
+		$version = $this->printify_submitted( 'Pale tee', true, array( 'ash' ) );
+		// Every colour light: nothing to compare against, and a light shirt alone could vanish.
+		$this->set_hex(
+			(int) ( $this->products->version( $version )['base_id'] ?? 0 ),
+			array(
+				'ash'   => '#f0f0f0',
+				'black' => '#e8e8e8',
+			)
+		);
+
+		$mockups = $this->printify_mockups();
+		$mockups->submitted( $version );
+		$this->drain_mockups( $mockups );
+
+		$files = SubmissionFiles::decode( $this->products->version( $version )['files'] ?? null );
+		$path  = $this->files->path( (string) ( $files['mockups']['front']['ash']['file'] ?? '' ) );
+
+		self::assertSame( 'ready', $this->products->version( $version )['mockup_state'] ?? null );
+		self::assertNotNull( $path );
+		self::assertFalse( ImageProbe::transparent( (string) file_get_contents( $path ) ), 'Printify\'s photo as it is.' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A stored designer file.
+	}
+
+	/**
+	 * Asserts that a stored mockup is a PNG whose corner is clear and whose
+	 * shirt (30, 30 to 170, 180 in shirt()) stays.
+	 *
+	 * @param string $file    Stored name.
+	 * @param string $message What it is.
+	 */
+	private function assertCutOut( string $file, string $message ): void {
+		$path = $this->files->path( $file );
+
+		self::assertNotNull( $path, $message );
+
+		$image = imagecreatefromstring( (string) file_get_contents( $path ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- A stored designer file.
+
+		self::assertNotFalse( $image, $message );
+		self::assertSame( 127, ( (int) imagecolorat( $image, 2, 2 ) >> 24 ) & 127, $message . ': the backdrop is clear.' );
+		self::assertSame( 0, ( (int) imagecolorat( $image, 100, 100 ) >> 24 ) & 127, $message . ': the shirt stays.' );
+	}
+
+	/**
+	 * Sets colour codes of a base product.
+	 *
+	 * @param int                   $base Base product.
+	 * @param array<string, string> $hex  `#rrggbb` by colour key.
+	 */
+	private function set_hex( int $base, array $hex ): void {
+		$table  = Tables::name( $this->wpdb, Tables::DESIGNER_BASES );
+		$colors = (array) json_decode( (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT colors FROM %i WHERE id = %d', $table, $base ) ), true );
+
+		foreach ( $colors as $at => $color ) {
+			if ( is_array( $color ) && isset( $hex[ $color['key'] ?? '' ] ) ) {
+				$colors[ $at ]['hex'] = $hex[ $color['key'] ];
+			}
+		}
+
+		$this->wpdb->update( $table, array( 'colors' => (string) wp_json_encode( $colors ) ), array( 'id' => $base ) );
+		self::assertSame( $hex, array_intersect_key( array_column( $this->bases->find( $base )->colors ?? array(), 'hex', 'key' ), $hex ) );
 	}
 
 	public function test_only_the_ticked_views_are_made_and_a_failure_keeps_the_browser_s_mockups(): void {
@@ -712,11 +806,12 @@ final class PrintifyTest extends IntegrationTestCase {
 	/**
 	 * A T-shirt imported with photos and a design on its front in both colours, sent in.
 	 *
-	 * @param string $title The design's title.
-	 * @param bool   $send  Whether it is sent in; else the draft version is returned.
+	 * @param string        $title  The design's title.
+	 * @param bool          $send   Whether it is sent in; else the draft version is returned.
+	 * @param array<string> $colors The colours chosen.
 	 * @return int The pending version (or the draft's).
 	 */
-	private function printify_submitted( string $title = 'Stream tee', bool $send = true ): int {
+	private function printify_submitted( string $title = 'Stream tee', bool $send = true, array $colors = array( 'ash', 'black' ) ): int {
 		$this->printify_shop();
 		$this->account->set_shop( self::SHOP );
 		// Small print areas (30 × 40 mm) keep the print files small; the markers have their shape.
@@ -772,7 +867,7 @@ final class PrintifyTest extends IntegrationTestCase {
 			array(
 				'title'        => $title,
 				'description'  => '',
-				'colors'       => array( 'ash', 'black' ),
+				'colors'       => $colors,
 				'sizes'        => array( 'S', 'M' ),
 				'profit_kind'  => 'percent',
 				'profit_value' => '20',
@@ -807,7 +902,7 @@ final class PrintifyTest extends IntegrationTestCase {
 
 		$submissions->attach( $creator, $product, 'print:front', AlertImagesTest::upload( AlertImagesTest::png( $print_w, $print_h ), 'print.png' ) );
 
-		foreach ( array( 'ash', 'black' ) as $color ) {
+		foreach ( $colors as $color ) {
 			$submissions->attach( $creator, $product, 'mockup:front:' . $color, AlertImagesTest::upload( AlertImagesTest::png( $mock_w, $mock_h ), 'mockup.png' ) );
 		}
 

@@ -80,6 +80,18 @@ final class ImageProbe {
 	private const SAMPLES = 500;
 
 	/**
+	 * A cut-out (step 57.21, as `cutout.ts` in the browser): the largest
+	 * distance from the backdrop that is still backdrop, the alpha (GD: 0
+	 * opaque, 127 clear) of a kept pixel next to a removed one (160 of 255),
+	 * and the smallest share of the photo kept.
+	 */
+	private const CUTOUT_TOLERANCE = 40;
+
+	private const CUTOUT_EDGE = 47;
+
+	private const CUTOUT_KEPT = 0.04;
+
+	/**
 	 * Whether an image is a PNG with transparent pixels: a product photo
 	 * without background (ADR-114). Judged on a grid of 32 × 32 points; a
 	 * PNG with an alpha channel counts when GD cannot measure.
@@ -167,6 +179,212 @@ final class ImageProbe {
 		$plain = array_filter( $colors, static fn( array $c ): bool => $c[3] < 127 && sqrt( ( $c[0] - $median[0] ) ** 2 + ( $c[1] - $median[1] ) ** 2 + ( $c[2] - $median[2] ) ** 2 ) <= 40 );
 
 		return count( $plain ) >= 0.9 * count( $colors );
+	}
+
+	/**
+	 * A studio photo without its backdrop, as a PNG (step 57.21): the same
+	 * rule as `removeBackground()` in the browser (ADR-114). The backdrop is
+	 * the median of the edge; from the edge, every pixel within
+	 * CUTOUT_TOLERANCE of it, joined to the edge by its four neighbours,
+	 * becomes transparent (its colour kept), and a kept pixel next to one
+	 * removed is softened to CUTOUT_EDGE.
+	 *
+	 * `$other` is the same view in another colour of the product: a pixel is
+	 * only removed when it is backdrop there too, so a white garment on a
+	 * white backdrop keeps its body where the other colour shows the product.
+	 * A photo of another size is ignored.
+	 *
+	 * Null for a photo that is no studio photo (ImageProbe::studio()), cannot
+	 * be read, loses nothing, or would keep less than CUTOUT_KEPT: the photo
+	 * then stays as it is.
+	 *
+	 * @param string      $bytes The photo.
+	 * @param string|null $other The same view in another colour, or null.
+	 */
+	public static function cutout( string $bytes, ?string $other = null ): ?string {
+		if ( ! self::studio( $bytes ) ) {
+			return null;
+		}
+
+		try {
+			$im = self::image( $bytes );
+		} catch ( InvalidArgumentException ) {
+			return null;
+		}
+
+		$width  = imagesx( $im );
+		$height = imagesy( $im );
+		$ref    = null;
+
+		if ( null !== $other ) {
+			try {
+				$candidate = self::image( $other );
+				$ref       = imagesx( $candidate ) === $width && imagesy( $candidate ) === $height ? $candidate : null;
+			} catch ( InvalidArgumentException ) {
+				$ref = null;
+			}
+		}
+
+		$count = $width * $height;
+		$back  = self::backdrop( $im );
+		$alike = self::alike( $im, $back );
+
+		if ( null !== $ref ) {
+			$there = self::alike( $ref, self::backdrop( $ref ) );
+			// Backdrop only where both photos show it.
+			$alike = $alike & $there;
+		}
+
+		$gone    = self::flood( $alike, $width, $height );
+		$removed = substr_count( $gone, "\1" );
+
+		if ( 0 === $removed || $count - $removed < self::CUTOUT_KEPT * $count ) {
+			return null;
+		}
+
+		imagealphablending( $im, false );
+		imagesavealpha( $im, true );
+
+		for ( $y = 0; $y < $height; $y++ ) {
+			$row = $y * $width;
+
+			for ( $x = 0; $x < $width; $x++ ) {
+				$at = $row + $x;
+
+				if ( "\1" === $gone[ $at ] ) {
+					imagesetpixel( $im, $x, $y, ( self::pixel( $im, $x, $y ) & 0xFFFFFF ) | ( 127 << 24 ) );
+					continue;
+				}
+
+				$edge = ( $x > 0 && "\1" === $gone[ $at - 1 ] )
+					|| ( $x < $width - 1 && "\1" === $gone[ $at + 1 ] )
+					|| ( $y > 0 && "\1" === $gone[ $at - $width ] )
+					|| ( $y < $height - 1 && "\1" === $gone[ $at + $width ] );
+
+				if ( $edge ) {
+					$color = self::pixel( $im, $x, $y );
+					$alpha = max( ( $color >> 24 ) & 127, self::CUTOUT_EDGE );
+					imagesetpixel( $im, $x, $y, ( $color & 0xFFFFFF ) | ( $alpha << 24 ) );
+				}
+			}
+		}
+
+		ob_start();
+		$written = imagepng( $im );
+		$png     = (string) ob_get_clean();
+
+		return $written && '' !== $png ? $png : null;
+	}
+
+	/**
+	 * A photo's backdrop: the median of each channel along its edge.
+	 *
+	 * @param GdImage $image Photo.
+	 * @return array{0: int, 1: int, 2: int}
+	 */
+	private static function backdrop( GdImage $image ): array {
+		$width   = imagesx( $image );
+		$height  = imagesy( $image );
+		$channel = array( array(), array(), array() );
+		$add     = static function ( int $color ) use ( &$channel ): void {
+			$channel[0][] = ( $color >> 16 ) & 255;
+			$channel[1][] = ( $color >> 8 ) & 255;
+			$channel[2][] = $color & 255;
+		};
+
+		for ( $x = 0; $x < $width; $x++ ) {
+			$add( self::pixel( $image, $x, 0 ) );
+			$add( self::pixel( $image, $x, $height - 1 ) );
+		}
+
+		for ( $y = 1; $y < $height - 1; $y++ ) {
+			$add( self::pixel( $image, 0, $y ) );
+			$add( self::pixel( $image, $width - 1, $y ) );
+		}
+
+		$median = array();
+
+		foreach ( $channel as $values ) {
+			sort( $values );
+			$median[] = (int) ( $values[ intdiv( count( $values ), 2 ) ] ?? 255 );
+		}
+
+		return array( $median[0], $median[1], $median[2] );
+	}
+
+	/**
+	 * One byte per pixel, row by row: "\1" where it looks like the backdrop
+	 * (within CUTOUT_TOLERANCE, or mostly transparent), "\0" elsewhere.
+	 *
+	 * @param GdImage                       $image Photo.
+	 * @param array{0: int, 1: int, 2: int} $back  Its backdrop.
+	 */
+	private static function alike( GdImage $image, array $back ): string {
+		$width  = imagesx( $image );
+		$height = imagesy( $image );
+		$limit  = self::CUTOUT_TOLERANCE ** 2;
+		$alike  = str_repeat( "\0", $width * $height );
+
+		for ( $y = 0; $y < $height; $y++ ) {
+			$row = $y * $width;
+
+			for ( $x = 0; $x < $width; $x++ ) {
+				$color = self::pixel( $image, $x, $y );
+				$red   = ( ( $color >> 16 ) & 255 ) - $back[0];
+				$green = ( ( $color >> 8 ) & 255 ) - $back[1];
+				$blue  = ( $color & 255 ) - $back[2];
+
+				if ( ( ( $color >> 24 ) & 127 ) > 63 || $red * $red + $green * $green + $blue * $blue <= $limit ) {
+					$alike[ $row + $x ] = "\1";
+				}
+			}
+		}
+
+		return $alike;
+	}
+
+	/**
+	 * The backdrop pixels joined to the edge by their four neighbours: "\1"
+	 * where removed.
+	 *
+	 * @param string $alike  Backdrop-like pixels ("\1"), row by row.
+	 * @param int    $width  Width.
+	 * @param int    $height Height.
+	 */
+	private static function flood( string $alike, int $width, int $height ): string {
+		$count = $width * $height;
+		$gone  = str_repeat( "\0", $count );
+		$stack = array();
+		$seed  = static function ( int $at ) use ( $alike, &$gone, &$stack ): void {
+			if ( "\1" === $alike[ $at ] && "\0" === $gone[ $at ] ) {
+				$gone[ $at ] = "\1";
+				$stack[]     = $at;
+			}
+		};
+
+		for ( $x = 0; $x < $width; $x++ ) {
+			$seed( $x );
+			$seed( ( $height - 1 ) * $width + $x );
+		}
+
+		for ( $y = 0; $y < $height; $y++ ) {
+			$seed( $y * $width );
+			$seed( $y * $width + $width - 1 );
+		}
+
+		while ( array() !== $stack ) {
+			$at = (int) array_pop( $stack );
+			$x  = $at % $width;
+
+			foreach ( array( $x > 0 ? $at - 1 : -1, $x < $width - 1 ? $at + 1 : -1, $at - $width, $at + $width ) as $next ) {
+				if ( $next >= 0 && $next < $count && "\1" === $alike[ $next ] && "\0" === $gone[ $next ] ) {
+					$gone[ $next ] = "\1";
+					$stack[]       = $next;
+				}
+			}
+		}
+
+		return $gone;
 	}
 
 	/**
