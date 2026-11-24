@@ -1791,6 +1791,9 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - en lys farve skæres ikke mod en reference, der ikke kan bruges;
     - under træk beholder de andre cliparts deres fulde billede;
     - tynde cliparts holder formen under træk.
+- **57.22 Hovedbilledet vælges blandt leverandørens mockups** 🔄 (projektejerens ønske 2026-11-24 med skærmbillede af "Primært produktbillede i shoppen" for flasken; godkendt plan):
+  - Dialogen henter Printifys eller Printfuls rigtige mockups af designet i den valgte farve, som "Se det færdige produkt" gør. Creatoren vælger farve og visning: forside, venstre, højre, bagside eller miljø.
+  - Et Printify-valg gemmes som `_view-<kamera>:<farve>` og kobles til det gemte foto, når mockups'ene er hentet. Et Printful-valg er allerede den gemte nøgle (`_photo-<stil>`).
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
