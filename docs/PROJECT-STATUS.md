@@ -495,7 +495,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 ### Fase 60 – Placering og vinkel i designeren (noteret 2026-11-24)
 
-- [ ] Kun noteret: knapper til placering, snap til vinkel (fx 90°) og vinkel som tal. Se ROADMAP for de åbne spørgsmål.
+- [ ] Kun noteret: knapper til placering, snap til vinkel (fx 90°), vinkel som tal og kant på tekst. Se ROADMAP for de åbne spørgsmål.
 
 ### Fase 59 – Standardvariant ud fra hovedbilledet (noteret 2026-11-24)
 

@@ -1840,8 +1840,10 @@ Creatoren skal kunne placere og dreje et element præcist uden at trække:
 - **Placering:** knapper til at placere det valgte element, fx centrere vandret, lodret eller begge dele, og lægge det op mod kanterne af printfeltet.
 - **Snap til vinkel:** når man drejer, falder elementet på plads ved faste vinkler, fx hver 90°. Fabric kan det selv med `snapAngle` og `snapThreshold`.
 - **Vinkel som tal:** et felt i egenskabspanelet, hvor man skriver vinklen, fx 45, i stedet for at trække i drejehåndtaget.
+- **Kant på tekst** (projektejerens ønske 2026-11-24): en kant (outline) rundt om bogstaverne med egen farve og tykkelse.
 - **I dag:**
   - Egenskabspanelet har justering af tekst og "Fyld/Tilpas" for billeder, men ingen felter til placering eller vinkel.
+  - Tekster har allerede `stroke` og `strokeWidth` i designet, og serveren godkender 0–100. Tegnefladen og printfilen tegner kanten. Der mangler kun valget i panelet, som figurer har ("Kant").
   - Tegnefladen har intet snap.
   - Vinklen gemmes mellem −180° og 180° (2.5.2).
 - **Åbne spørgsmål til planen:**
@@ -1849,6 +1851,8 @@ Creatoren skal kunne placere og dreje et element præcist uden at trække:
   - Skal snap kunne slås fra, fx med Shift som i mange programmer?
   - Skal der være felter til placering med tal (x og y i cm), eller er knapper nok?
   - Skal placeringen være i forhold til hele printfeltet eller til den del af en rund vare, man ser forfra?
+  - Skal kanten ligge uden om bogstaverne, så de ikke bliver tyndere, eller midt på stregen, som Fabric gør i dag?
+  - Hvordan virker kanten på broderi? Den skal i så fald være én af pakkens tråde.
 
 ## Version 2.5.2 – kritisk rettelse: drejede elementer 🔄 (projektejerens fejlrapport fra produktion 2026-11-24)
 
