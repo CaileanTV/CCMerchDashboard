@@ -1759,7 +1759,8 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - forhåndsvisningens oprydning sættes i kø først, og to start i træk venter.
   - Visuelt eksempel på linjerne til projektejeren (artefakt "Hjælpelinjer på flasken").
   - Runtime-testen på stg og den nye testpakke venter på 57.19.
-  - Testpakke 2.5.1 fra d7d3834 (sha256 `71e83154…`). Projektejeren testede den på stg 2026-11-24: "det ser fint ud" ✅. Bagefter ønskede projektejeren gennemsigtige studiefotos fra Printify (57.20).
+  - Testpakke 2.5.1 fra d7d3834 (sha256 `71e83154…`). Projektejeren testede den på stg 2026-11-24: "det ser fint ud" ✅. Bagefter fandt projektejeren to ting mere, som blev til 57.20 og 57.21.
+  - Ny testpakke 2.5.1 fra 7956c5f (sha256 `22004877…`), CI grøn 2026-11-24. Den skal testes på stg efter DEVELOPMENT punkt 12–13.
 - **57.19 Stregtegninger under hjælpelinjerne** ✅ (projektejerens ønske 2026-11-24 efter det visuelle eksempel: "præcis som på printify"):
   - Importen tegner hver visning som streger ud fra Printifys foto af den tomme vare (omrids og linjer i låg og hank). Det kræver ingen ekstra kald, for fotoene hentes allerede til målingen.
   - En grøn ramme viser den del af printet, man ser fra den side. Den findes på fotoet med prøvearket.
