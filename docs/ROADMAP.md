@@ -1802,6 +1802,20 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - kameranavnene Miljø n og Model n står på dansk;
     - Printful bruger aldrig en anden farve end den valgte.
 
+## Fase 58 – Creatorens takkebesked på følgesedlen 📝 (projektejerens ønske 2026-11-24; kun noteret, ikke planlagt)
+
+Creatoren skriver selv en takkebesked til sine kunder i dashboardet, og beskeden kommer med på følgesedlen til ordren.
+
+- **Afhænger af det nye plugin til følgesedler**, som projektejeren er ved at lave. Integrationen planlægges først, når vi starter fasen.
+- Ingen plan, ADR eller kode endnu.
+- **Åbne spørgsmål til planen:**
+  - Gælder beskeden for alle creatorens produkter, eller kan den være forskellig fra produkt til produkt?
+  - Hvor lang må den være, og hvilke tegn er tilladt (ingen links eller HTML)?
+  - Skal admin godkende beskeden, før den bruges, som andre forslag på "Forslag"?
+  - Hvad står der, når en ordre har produkter fra flere creators? Én besked pr. creator?
+  - Skal creatoren kunne slå beskeden fra?
+  - Hvordan henter følgeseddel-pluginet teksten? Fx et filter, en hook eller et REST-endpoint, så Merch Dashboard aldrig skriver i det andet plugin.
+
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
 - **M1** long-poll-pladser og grænse pr. besøgsadresse på overlay-feedene. ✅
