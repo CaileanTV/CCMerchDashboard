@@ -1774,7 +1774,13 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - filer overdrages, før næste skridt kan fejle;
     - navnet vises ved mouse-over, og bagsiden læses kun op én gang.
   - Projektejerens stg-test 2026-11-24 ✅.
-- **57.20 Gennemsigtige studiefotos fra Printify** 🔄 (projektejerens ønske 2026-11-24 efter stg-testen: "hvid baggrund vil være et problem"). Planen kommer først.
+- **57.20 Clipartens farver uden forsinkelse** 🔄 (projektejerens fund på stg 2026-11-24; godkendt plan):
+  - Hver ændring i farvefeltet tegnede hele clipartet i fuld opløsning (op til 16 mio. pixels), og ændringerne hobede sig op.
+  - Nu tegnes højst én ændring pr. skærmbillede, og live-tegningen laves i skærmstørrelse. Fuld opløsning tegnes, når man slipper.
+  - Cachen begrænses efter bytes.
+- **57.21 Printifys butiksbilleder uden baggrund** 🔄 (projektejerens ønske 2026-11-24: "hvid baggrund vil være et problem"; kun butiksbillederne; godkendt plan):
+  - Afprøvning 5 afgør, om Printify selv kan levere PNG med gennemsigtig baggrund.
+  - Ellers skærer serveren baggrunden fra, når Printifys mockups hentes, men kun på studiefotos. Lyse varer beskyttes af den samme visning i en anden farve.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
