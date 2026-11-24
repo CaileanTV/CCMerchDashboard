@@ -470,7 +470,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 - [x] Trin 56.14: kliparts på indsendte design i godkendelsen (a003113).
 - [x] Trin 56.15: review, runtime-test og version 2.5.0 (854ac7d); tag afventer projektejerens OK.
 
-### Fase 57 – Fotos og printfelter fra Printify (ADR-122, version 2.5.1)
+### Fase 57 – Fotos og printfelter fra Printify (ADR-122, version 2.5.1, tagget 2026-11-24)
 
 - [x] Trin 57.1: ADR-122 og ROADMAP (a0df342).
 - [x] Trin 57.2: afprøvning med projektejerens nøgle og butik; alle midlertidige produkter slettet.
@@ -483,7 +483,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 - [x] Trin 57.12: mockups fra Printify af indsendte designs (c81fc26).
 - [x] Trin 57.13: tekster, docs, review og testpakke; stg-testen sker samlet i 57.18.
 - [x] Trin 57.14–57.17: hjælpelinjer på et rundt print (70e4816) og "Se det færdige produkt" for Printify (661db81).
-- [x] Trin 57.18: tekster og docs ✅, review ✅, stg-test af testpakken fra 7e0f7ad (sha256 `a7f16ac5…`) ✅ (projektejeren 2026-11-24: "det virker"). Tag `v2.5.1` venter på projektejerens OK.
+- [x] Trin 57.18: tekster og docs ✅, review ✅, stg-test af testpakken fra 7e0f7ad (sha256 `a7f16ac5…`) ✅ (projektejeren 2026-11-24: "det virker"). Tagget `v2.5.1` på 7e0f7ad 2026-11-24 efter projektejerens OK. Draft-releasens ZIP er byte-identisk med testpakken. Projektejeren udgiver.
 - [x] Trin 57.19: stregtegninger under linjerne som i Printifys editor, bagsiden i begge ender (66742be, 6919860).
 - [x] Trin 57.20: clipartens farver uden forsinkelse (projektejerens fund på stg 2026-11-24; a224994). stg ✅ 2026-11-24.
 - [x] Trin 57.21: Printifys butiksbilleder som PNG uden baggrund (projektejerens ønske 2026-11-24; 96d7ef9). Afprøvning 5 viste, at Printify ikke selv kan; serveren skærer ud. stg ✅ 2026-11-24.

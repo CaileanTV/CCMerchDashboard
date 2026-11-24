@@ -1693,7 +1693,7 @@ Siderne kræver Twitch-login og kunne ikke læses udefra. Valgt frem for statisk
 **Fundet undervejs, ikke rettet (uden for fasen):**
 - `save_draft()` kræver én ændret række. At gemme en uændret kladde i samme sekund svarer derfor 500 (fundet af en integrationstest i 56.7).
 
-## Fase 57 – Fotos og printfelter fra Printify 🔄 (projektejerens ønske og godkendte plan 2026-11-23; version 2.5.1; ADR-122)
+## Fase 57 – Fotos og printfelter fra Printify ✅ (projektejerens ønske og godkendte plan 2026-11-23; version 2.5.1, tagget 2026-11-24 på 7e0f7ad, draft-ZIP byte-identisk med testpakken, sha256 `a7f16ac5…`; ADR-122)
 
 En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede printfeltet. Nu opretter importen et midlertidigt produkt i en valgt Printify-butik, som hos Gelato. Det tegnes med og uden markører, printfeltet og farvekoderne måles, og produktet slettes bagefter.
 
