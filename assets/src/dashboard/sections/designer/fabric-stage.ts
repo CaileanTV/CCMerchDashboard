@@ -83,6 +83,11 @@ export interface ImageResolver {
 		object: ImageObject
 	) => HTMLCanvasElement | null | undefined;
 	/**
+	 * The picture's width against the full size: below 1 for a smaller one
+	 * drawn while a colour is dragged (step 57.20); 1 without.
+	 */
+	readonly ratio?: ( object: ImageObject ) => number;
+	/**
 	 * How an image may be changed on the canvas: only sideways (a locked
 	 * clipart) or only evenly (one with parts); null for any way.
 	 */
@@ -91,7 +96,8 @@ export interface ImageResolver {
 	) => 'sideways' | 'uniform' | null;
 }
 
-type Tagged = FabricObject & { mbId?: string };
+/** A Fabric object with its design object's id and, for a smaller picture, its ratio. */
+type Tagged = FabricObject & { mbId?: string; mbRatio?: number };
 
 /**
  * The editor's Fabric canvas.
@@ -548,7 +554,16 @@ async function build(
 			}
 
 			if ( drawn !== undefined ) {
-				shown = new FabricImage( drawn, common( object ) );
+				// A smaller picture is scaled up to the same size (step 57.20).
+				const ratio = resolver?.ratio?.( object ) ?? 1;
+				const tagged: Tagged = new FabricImage( drawn, {
+					...common( object ),
+					scaleX: object.scaleX / ratio,
+					scaleY: object.scaleY / ratio,
+				} );
+
+				tagged.mbRatio = ratio;
+				shown = tagged;
 				break;
 			}
 
@@ -624,6 +639,8 @@ function paint( object: {
 function readBack( object: DesignObject, shown: Tagged ): DesignObject {
 	const round = ( value: number, digits = 2 ): number =>
 		Number( value.toFixed( digits ) );
+	// A smaller picture's scale is its full size's (step 57.20).
+	const ratio = shown.mbRatio ?? 1;
 	const geometry = {
 		x: round( shown.left ),
 		y: round( shown.top ),
@@ -632,8 +649,14 @@ function readBack( object: DesignObject, shown: Tagged ): DesignObject {
 				? ( shown.angle % 360 ) - 360
 				: shown.angle % 360
 		),
-		scaleX: Math.min( 100, Math.max( 0.01, round( shown.scaleX, 4 ) ) ),
-		scaleY: Math.min( 100, Math.max( 0.01, round( shown.scaleY, 4 ) ) ),
+		scaleX: Math.min(
+			100,
+			Math.max( 0.01, round( shown.scaleX * ratio, 4 ) )
+		),
+		scaleY: Math.min(
+			100,
+			Math.max( 0.01, round( shown.scaleY * ratio, 4 ) )
+		),
 		flipX: shown.flipX,
 		flipY: shown.flipY,
 	};

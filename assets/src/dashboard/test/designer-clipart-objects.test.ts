@@ -372,4 +372,92 @@ describe( 'the pictures of cliparts', () => {
 
 		expect( made.resolver( lookup ).image( objects[ 0 ]! ) ).toBeNull();
 	} );
+
+	it( 'draws a dragged colour small in one place, then the full picture (step 57.20)', async () => {
+		const { made, drawn } = pictures( () => Promise.resolve( ATLAS ) );
+		const lookup = () => withParts();
+		const red: ClipartPaint = { type: 'solid', color: '#ff0000' };
+
+		await made.ready( [ image( { paints: [ BLUE ] } ) ], lookup );
+
+		// The longest side 2 of 4: half the size, scaled up as large on the canvas.
+		const live = made.resolver( lookup, false, null, 2 );
+
+		expect( live.key ).not.toBe( made.resolver( lookup ).key );
+		live.image( image( { paints: [ BLUE ] } ) );
+		expect( drawn.at( -1 )?.width ).toBe( 2 );
+		expect( drawn.at( -1 )?.height ).toBe( 1 );
+		expect( live.ratio?.( image( { paints: [ BLUE ] } ) ) ).toBe( 0.5 );
+
+		// The next colour takes its place; the same colour is not drawn again.
+		live.image( image( { paints: [ red ] } ) );
+		live.image( image( { paints: [ red ] } ) );
+		expect( drawn ).toHaveLength( 2 );
+
+		// Embroidery is never drawn small.
+		expect(
+			made
+				.resolver( lookup, true, null, 2 )
+				.ratio?.( image( { paints: [ red ] } ) )
+		).toBe( 1 );
+
+		// At the end the full picture, once; the small ones were never kept.
+		const full = made.resolver( lookup );
+
+		full.image( image( { paints: [ red ] } ) );
+		full.image( image( { paints: [ red ] } ) );
+		expect( drawn.at( -1 )?.width ).toBe( 4 );
+		expect( full.ratio?.( image( { paints: [ red ] } ) ) ).toBe( 1 );
+		// Two small canvases and one full; the ratios made no canvas.
+		expect( drawn ).toHaveLength( 3 );
+	} );
+
+	it( 'keeps drawn pictures up to a number of bytes, the newest always (step 57.20)', async () => {
+		const drawn: ClipartPixels[] = [];
+		// A 4 × 2 picture and its canvas are 64 bytes: room for two.
+		const made = new ClipartPictures(
+			() => Promise.resolve( ATLAS ),
+			( pixels ) => {
+				drawn.push( pixels );
+
+				return pixels as unknown as HTMLCanvasElement;
+			},
+			128
+		);
+		const lookup = () => withParts();
+		const paint = ( color: string ): ImageObject =>
+			image( { paints: [ { type: 'solid', color } ] } );
+
+		await made.ready( [ paint( '#000001' ) ], lookup );
+
+		const resolver = made.resolver( lookup );
+
+		resolver.image( paint( '#000001' ) );
+		resolver.image( paint( '#000002' ) );
+		resolver.image( paint( '#000001' ) );
+		expect( drawn ).toHaveLength( 2 );
+
+		// A third goes over: the oldest used (#000002) goes, #000001 stays.
+		resolver.image( paint( '#000003' ) );
+		resolver.image( paint( '#000001' ) );
+		expect( drawn ).toHaveLength( 3 );
+		resolver.image( paint( '#000002' ) );
+		expect( drawn ).toHaveLength( 4 );
+
+		// Too small a room still keeps the picture just drawn.
+		const tight = new ClipartPictures(
+			() => Promise.resolve( ATLAS ),
+			( pixels ) => {
+				drawn.push( pixels );
+
+				return pixels as unknown as HTMLCanvasElement;
+			},
+			1
+		);
+
+		await tight.ready( [ paint( '#000001' ) ], lookup );
+		tight.resolver( lookup ).image( paint( '#000001' ) );
+		tight.resolver( lookup ).image( paint( '#000001' ) );
+		expect( drawn ).toHaveLength( 5 );
+	} );
 } );

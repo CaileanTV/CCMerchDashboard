@@ -4,7 +4,7 @@
  * when it has one. Its stroke never changes, so it is not offered. Dragging
  * in a colour field or changing the angle is one undo step.
  */
-import { useEffect, useId, useRef } from '@wordpress/element';
+import { useEffect, useId, useRef, useState } from '@wordpress/element';
 import type { RefObject } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 
@@ -86,29 +86,92 @@ export function asGradient(
 }
 
 /**
- * One undo step for a field that changes while it is used (a colour being
- * dragged, an angle being typed): it starts at the first change, not at
- * focus, which some browsers never give a clicked field, and ends when the
- * field is left, its value is committed or it goes away.
+ * Waits for the next frame; a timer where the browser has no frames.
+ *
+ * @param run What to run.
+ * @return Cancels it.
+ */
+function nextFrame( run: () => void ): () => void {
+	if ( typeof window.requestAnimationFrame === 'function' ) {
+		const frame = window.requestAnimationFrame( run );
+
+		return () => window.cancelAnimationFrame( frame );
+	}
+
+	const timer = window.setTimeout( run, 16 );
+
+	return () => window.clearTimeout( timer );
+}
+
+/**
+ * A field that changes while it is used (a colour being dragged, an angle
+ * being typed).
+ *
+ * - One undo step: it starts at the first change, not at focus, which some
+ *   browsers never give a clicked field, and ends when the field is left,
+ *   its value is committed or it goes away.
+ * - At most one change per frame (step 57.20): the first goes at once, and
+ *   the newest of those that follow within a frame at the next one. A
+ *   picture that takes longer to draw than the changes come never falls
+ *   behind; the last value always goes, before the step ends.
+ *
+ * The field shows `draft`, its newest value, until the step ends, so a value
+ * waiting for its frame never jumps back.
  *
  * @param onBegin A change that goes on starts.
  * @param onEnd   It ends.
- * @return The field's ref and what to call on each live change.
+ * @param send    A live change's value.
+ * @return The field's ref, its draft (null outside a step) and what to call
+ *         with each live change's value.
  */
-function useLiveStep< T extends HTMLInputElement >(
+export function useLiveField< T extends HTMLInputElement, V >(
 	onBegin: () => void,
-	onEnd: () => void
-): { readonly ref: RefObject< T | null >; readonly changing: () => void } {
+	onEnd: () => void,
+	send: ( value: V ) => void
+): {
+	readonly ref: RefObject< T | null >;
+	readonly draft: V | null;
+	readonly change: ( value: V ) => void;
+} {
 	const ref = useRef< T | null >( null );
+	const [ draft, setDraft ] = useState< V | null >( null );
 	const open = useRef( false );
-	const calls = useRef( { onBegin, onEnd } );
-	calls.current = { onBegin, onEnd };
+	const calls = useRef( { onBegin, onEnd, send } );
+	calls.current = { onBegin, onEnd, send };
+	// The value waiting for the next frame, and the frame's cancel.
+	const waiting = useRef< { readonly value: V } | null >( null );
+	const frame = useRef< ( () => void ) | null >( null );
+
+	/** Sends what waits; the next frame then waits for what comes. */
+	const tick = (): void => {
+		const next = waiting.current;
+
+		waiting.current = null;
+		frame.current = null;
+
+		if ( next !== null ) {
+			frame.current = nextFrame( tick );
+			calls.current.send( next.value );
+		}
+	};
 
 	useEffect( () => {
 		const field = ref.current;
 		const end = (): void => {
+			frame.current?.();
+			frame.current = null;
+
+			const last = waiting.current;
+
+			waiting.current = null;
+
+			if ( last !== null ) {
+				calls.current.send( last.value );
+			}
+
 			if ( open.current ) {
 				open.current = false;
+				setDraft( null );
 				calls.current.onEnd();
 			}
 		};
@@ -126,11 +189,23 @@ function useLiveStep< T extends HTMLInputElement >(
 
 	return {
 		ref,
-		changing: () => {
+		draft,
+		change: ( value ) => {
 			if ( ! open.current ) {
 				open.current = true;
 				calls.current.onBegin();
 			}
+
+			setDraft( value );
+
+			if ( frame.current !== null ) {
+				waiting.current = { value };
+
+				return;
+			}
+
+			frame.current = nextFrame( tick );
+			calls.current.send( value );
 		},
 	};
 }
@@ -157,7 +232,11 @@ function ColorChoice( props: {
 	readonly onEnd: () => void;
 } ) {
 	const id = useId();
-	const step = useLiveStep< HTMLInputElement >( props.onBegin, props.onEnd );
+	const field = useLiveField< HTMLInputElement, string >(
+		props.onBegin,
+		props.onEnd,
+		( color ) => props.onChange( color, true )
+	);
 
 	if ( props.palette !== null ) {
 		return (
@@ -191,12 +270,11 @@ function ColorChoice( props: {
 			<input
 				id={ id }
 				type="color"
-				ref={ step.ref }
-				value={ props.value }
-				onChange={ ( event ) => {
-					step.changing();
-					props.onChange( event.target.value.toLowerCase(), true );
-				} }
+				ref={ field.ref }
+				value={ field.draft ?? props.value }
+				onChange={ ( event ) =>
+					field.change( event.target.value.toLowerCase() )
+				}
 			/>
 		</div>
 	);
@@ -230,12 +308,17 @@ function PartPaint( props: {
 	const { part, paint, palette } = props;
 	const kindId = useId();
 	const angleId = useId();
-	const angleStep = useLiveStep< HTMLInputElement >(
-		props.onBegin,
-		props.onEnd
-	);
 	const name = partName( part, props.index );
 	const shown = props.gradients ? paint : asSolid( paint, part );
+	const angleField = useLiveField< HTMLInputElement, number >(
+		props.onBegin,
+		props.onEnd,
+		( angle ) => {
+			if ( shown.type === 'gradient' ) {
+				props.onChange( { ...shown, angle }, true );
+			}
+		}
+	);
 
 	return (
 		<fieldset className="merchboard-product-designer__part">
@@ -311,22 +394,16 @@ function PartPaint( props: {
 							min={ 0 }
 							max={ 359 }
 							step={ 1 }
-							ref={ angleStep.ref }
-							value={ shown.angle }
+							ref={ angleField.ref }
+							value={ angleField.draft ?? shown.angle }
 							onChange={ ( event ) => {
 								const angle = Math.round(
 									Number( event.target.value )
 								);
 
 								if ( Number.isFinite( angle ) ) {
-									angleStep.changing();
-									props.onChange(
-										{
-											...shown,
-											angle:
-												( ( angle % 360 ) + 360 ) % 360,
-										},
-										true
+									angleField.change(
+										( ( angle % 360 ) + 360 ) % 360
 									);
 								}
 							} }

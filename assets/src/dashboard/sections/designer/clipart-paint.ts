@@ -205,6 +205,8 @@ function colorAt( paint: ClipartPaint, part: ClipartPart ): ColorAt {
  * @param atlas  Its atlas' pixels.
  * @param paints A paint per part, in the parts' order.
  * @param hard   Embroidery: every pixel is wholly one colour or empty.
+ * @param scale  Below 1: a smaller picture while a colour is dragged (step
+ *               57.20), each pixel the full picture's nearest one.
  * @return The picture, or null when a paint or the atlas does not fit: it is
  *         never drawn with something left out.
  */
@@ -212,7 +214,8 @@ export function drawClipart(
 	art: ClipartArt,
 	atlas: ClipartPixels,
 	paints: readonly ClipartPaint[],
-	hard = false
+	hard = false,
+	scale = 1
 ): ClipartPixels | null {
 	const { width, height, parts, steps } = art;
 	const fits = ( rect: ClipartRect, place: AtlasPlace ): boolean =>
@@ -236,7 +239,8 @@ export function drawClipart(
 		return null;
 	}
 
-	const data = new Uint8ClampedArray( width * height * 4 );
+	const shown = sampled( width, height, scale );
+	const data = new Uint8ClampedArray( shown.width * shown.height * 4 );
 	const from = atlas.data;
 	const covered = ( at: number ): number => {
 		const alpha = ( from[ at + 3 ] as number ) / 255;
@@ -280,13 +284,21 @@ export function drawClipart(
 		const place = step.type === 'image' ? step.image : step.fill;
 		const grownAt = step.type === 'part' ? step.grown : null;
 
-		for ( let row = 0; row < rect.height; row++ ) {
-			for ( let column = 0; column < rect.width; column++ ) {
-				const read =
-					( ( place.y + row ) * atlas.width + place.x + column ) * 4;
-				const x = rect.x + column;
-				const y = rect.y + row;
-				const write = ( y * width + x ) * 4;
+		const columns = within( shown.xs, rect.x, rect.width );
+		const rows = within( shown.ys, rect.y, rect.height );
+
+		for ( let oy = rows.from; oy < rows.to; oy++ ) {
+			const y = shown.full ? oy : ( shown.ys[ oy ] as number );
+			const row = y - rect.y;
+			const readRow = ( place.y + row ) * atlas.width + place.x - rect.x;
+			const writeRow = oy * shown.width;
+
+			for ( let ox = columns.from; ox < columns.to; ox++ ) {
+				// The full size reads its own pixel: no look-up (step 57.20).
+				const x = shown.full ? ox : ( shown.xs[ ox ] as number );
+				const column = x - rect.x;
+				const read = ( readRow + x ) * 4;
+				const write = ( writeRow + ox ) * 4;
 				const body = covered( read );
 
 				if ( fill === null ) {
@@ -336,7 +348,78 @@ export function drawClipart(
 		}
 	}
 
-	return { width, height, data };
+	return { width: shown.width, height: shown.height, data };
+}
+
+/**
+ * The picture's size at a scale and, per pixel of it, the full picture's
+ * column and row it shows (the nearest: each pixel's middle).
+ *
+ * @param width  Full width.
+ * @param height Full height.
+ * @param scale  Scale; 1 or more is the full size.
+ */
+function sampled(
+	width: number,
+	height: number,
+	scale: number
+): {
+	readonly width: number;
+	readonly height: number;
+	readonly full: boolean;
+	readonly xs: Int32Array;
+	readonly ys: Int32Array;
+} {
+	const small = Number.isFinite( scale ) && scale > 0 && scale < 1;
+	const shownWidth = small
+		? Math.max( 1, Math.round( width * scale ) )
+		: width;
+	const shownHeight = small
+		? Math.max( 1, Math.round( height * scale ) )
+		: height;
+	const along = ( full: number, shownSize: number ): Int32Array =>
+		Int32Array.from( { length: shownSize }, ( _, at ) =>
+			Math.min(
+				full - 1,
+				Math.floor( ( ( at + 0.5 ) * full ) / shownSize )
+			)
+		);
+
+	return {
+		width: shownWidth,
+		height: shownHeight,
+		full: ! small,
+		xs: along( width, shownWidth ),
+		ys: along( height, shownHeight ),
+	};
+}
+
+/**
+ * The shown pixels whose full column (or row) lies in a rectangle's span:
+ * the map only grows, so they are one run.
+ *
+ * @param map   Full column (or row) per shown pixel.
+ * @param start The span's start.
+ * @param size  Its size.
+ */
+function within(
+	map: Int32Array,
+	start: number,
+	size: number
+): { readonly from: number; readonly to: number } {
+	let from = 0;
+
+	while ( from < map.length && ( map[ from ] as number ) < start ) {
+		from++;
+	}
+
+	let to = from;
+
+	while ( to < map.length && ( map[ to ] as number ) < start + size ) {
+		to++;
+	}
+
+	return { from, to };
 }
 
 /** Where a clipart with locked placement is. */

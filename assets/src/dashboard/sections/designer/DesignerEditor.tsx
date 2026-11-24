@@ -131,6 +131,7 @@ import {
 	handlingOf,
 	newAssetImage,
 	pixelsOfUrl,
+	PREVIEW_LONGEST,
 	ruledObjects,
 } from './clipart-objects';
 import type { AssetLookup } from './clipart-objects';
@@ -478,6 +479,8 @@ function Editor( props: EditorProps ) {
 			} )
 	);
 	const [ atlasTick, setAtlasTick ] = useState( 0 );
+	// A clipart's colour is dragged: the canvas shows it smaller till it ends (step 57.20).
+	const [ painting, setPainting ] = useState( false );
 	const clipartKit = { lookup: assetLookup, pictures };
 	// As the server stores them: a clipart's rules hold whatever edit made them (ADR-121).
 	const objects =
@@ -809,10 +812,11 @@ function Editor( props: EditorProps ) {
 			pictures.resolver(
 				assetLookup,
 				embroidery !== null,
-				embroidery?.threads ?? null
+				embroidery?.threads ?? null,
+				painting ? PREVIEW_LONGEST : null
 			),
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- atlasTick marks the atlases loaded.
-		[ pictures, assetLookup, embroidery, atlasTick ]
+		[ pictures, assetLookup, embroidery, atlasTick, painting ]
 	);
 
 	// The atlases of every clipart in the design.
@@ -2356,6 +2360,7 @@ function Editor( props: EditorProps ) {
 								}
 								onBegin={ history.checkpoint }
 								onEnd={ history.settle }
+								onPainting={ setPainting }
 								fonts={ fonts }
 								threads={ embroidery?.threads ?? null }
 								plan={ plan }
@@ -3630,25 +3635,27 @@ function AssetGrid( props: {
 /**
  * The selected object's settings.
  *
- * @param props          Props.
- * @param props.object   The object.
- * @param props.fonts    Approved fonts.
- * @param props.threads  The pack's threads on an embroidered side, otherwise null.
- * @param props.plan     The side's threads.
- * @param props.onThread Called with the thread picked as the colour.
- * @param props.onChange Changes it.
- * @param props.onFit    Sizes an image to the print area (ADR-102).
- * @param props.onRemove Removes it.
- * @param props.onMove   Moves it.
- * @param props.asset    An image's asset.
- * @param props.onBegin  A change that goes on starts (one undo step).
- * @param props.onEnd    It ends.
+ * @param props            Props.
+ * @param props.object     The object.
+ * @param props.fonts      Approved fonts.
+ * @param props.threads    The pack's threads on an embroidered side, otherwise null.
+ * @param props.plan       The side's threads.
+ * @param props.onThread   Called with the thread picked as the colour.
+ * @param props.onChange   Changes it.
+ * @param props.onFit      Sizes an image to the print area (ADR-102).
+ * @param props.onRemove   Removes it.
+ * @param props.onMove     Moves it.
+ * @param props.asset      An image's asset.
+ * @param props.onBegin    A change that goes on starts (one undo step).
+ * @param props.onEnd      It ends.
+ * @param props.onPainting A clipart's colour is dragged, or no longer (step 57.20).
  */
 function Properties( props: {
 	readonly object: DesignObject;
 	readonly asset: DesignerAsset | undefined;
 	readonly onBegin: () => void;
 	readonly onEnd: () => void;
+	readonly onPainting?: ( painting: boolean ) => void;
 	readonly fonts: DesignerOverview[ 'fonts' ];
 	readonly threads: readonly DesignerThread[] | null;
 	readonly plan: ThreadPlan | null;
@@ -3886,8 +3893,14 @@ function Properties( props: {
 					onChange={ ( paints, live ) =>
 						onChange( { paints } as Partial< DesignObject >, live )
 					}
-					onBegin={ props.onBegin }
-					onEnd={ props.onEnd }
+					onBegin={ () => {
+						props.onBegin();
+						props.onPainting?.( true );
+					} }
+					onEnd={ () => {
+						props.onEnd();
+						props.onPainting?.( false );
+					} }
 				/>
 			) : null }
 			{ object.type === 'image' && handling === 'sideways' ? (

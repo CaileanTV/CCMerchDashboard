@@ -176,6 +176,110 @@ describe( 'drawClipart', () => {
 		);
 	} );
 
+	it.each( [ 0.37, 0.5, 0.9 ] )(
+		'draws a smaller picture as the full one sampled at %d (step 57.20)',
+		( scale ) => {
+			// 10 × 6: a gradient part with a stroke, and an image step on it.
+			const width = 10;
+			const height = 6;
+			const alpha = ( x: number, y: number, seed: number ): number =>
+				( ( x * 37 + y * 91 + seed * 53 ) % 7 ) * 40;
+			const data = new Uint8ClampedArray( width * height * 3 * 4 );
+
+			for ( let y = 0; y < height * 3; y++ ) {
+				for ( let x = 0; x < width; x++ ) {
+					const at = ( y * width + x ) * 4;
+
+					data.set(
+						[
+							( x * 25 ) % 256,
+							( y * 13 ) % 256,
+							90,
+							alpha( x, y, 1 ),
+						],
+						at
+					);
+				}
+			}
+
+			const box = { x: 0, y: 0, width, height };
+			const art: ClipartArt = {
+				width,
+				height,
+				parts: [
+					{
+						label: '',
+						box,
+						stroke: '#0a0b0c',
+						scale: 1,
+						paint: RED,
+						gradient: {
+							type: 'gradient',
+							from: '#ffffff',
+							to: '#000000',
+							angle: 30,
+						},
+					},
+				],
+				steps: [
+					{
+						type: 'part',
+						part: 0,
+						rect: box,
+						fill: { x: 0, y: 0 },
+						grown: { x: 0, y: height },
+					},
+					{
+						type: 'image',
+						rect: { x: 3, y: 2, width: 4, height: 3 },
+						image: { x: 1, y: height * 2 },
+					},
+				],
+			};
+			const paints: ClipartPaint[] = [
+				{ type: 'gradient', from: '#ff0000', to: '#00ffff', angle: 30 },
+			];
+			const atlas = { width, height: height * 3, data };
+			const full = drawClipart( art, atlas, paints );
+			const small = drawClipart( art, atlas, paints, false, scale );
+
+			expect( small?.width ).toBe( Math.round( width * scale ) );
+			expect( small?.height ).toBe( Math.round( height * scale ) );
+
+			const shownWidth = small?.width ?? 0;
+			const shownHeight = small?.height ?? 0;
+
+			for ( let oy = 0; oy < shownHeight; oy++ ) {
+				for ( let ox = 0; ox < shownWidth; ox++ ) {
+					const x = Math.floor(
+						( ( ox + 0.5 ) * width ) / shownWidth
+					);
+					const y = Math.floor(
+						( ( oy + 0.5 ) * height ) / shownHeight
+					);
+					const at = ( oy * shownWidth + ox ) * 4;
+					const from = ( y * width + x ) * 4;
+
+					expect(
+						Array.from( small?.data.subarray( at, at + 4 ) ?? [] )
+					).toEqual(
+						Array.from(
+							full?.data.subarray( from, from + 4 ) ?? []
+						)
+					);
+				}
+			}
+
+			// 1 or more is the full size.
+			expect( drawClipart( art, atlas, paints, false, 1 ) ).toEqual(
+				full
+			);
+			expect( drawClipart( art, atlas, paints, false, 2 ) ).toEqual(
+				full
+			);
+		}
+	);
+
 	it( 'draws nothing at all rather than leave something out', () => {
 		const { art, atlas } = row( [ 255, 255 ], [ 255, 255 ] );
 

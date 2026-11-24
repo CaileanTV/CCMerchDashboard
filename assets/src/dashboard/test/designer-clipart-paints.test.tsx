@@ -152,6 +152,7 @@ describe( 'the paints of a clipart', () => {
 	} );
 
 	it( 'starts the undo step at the first change, without focus', () => {
+		jest.useFakeTimers();
 		const { container, onChange, onBegin, onEnd, root } = render();
 		const field = container.querySelector< HTMLInputElement >(
 			'input[type="color"]'
@@ -160,6 +161,9 @@ describe( 'the paints of a clipart', () => {
 		// Dragging in the picker: input events only.
 		drag( field, '#111111' );
 		drag( field, '#222222' );
+		act( () => {
+			jest.advanceTimersByTime( 20 );
+		} );
 
 		expect( onBegin ).toHaveBeenCalledTimes( 1 );
 		expect( onEnd ).not.toHaveBeenCalled();
@@ -180,6 +184,61 @@ describe( 'the paints of a clipart', () => {
 		// A step still open ends when the field goes away.
 		act( () => root.unmount() );
 		expect( onEnd ).toHaveBeenCalledTimes( 2 );
+		jest.useRealTimers();
+	} );
+
+	it( 'sends at most one colour per frame and never falls behind (step 57.20)', () => {
+		jest.useFakeTimers();
+		const { container, onChange, onEnd } = render();
+		const field = container.querySelector< HTMLInputElement >(
+			'input[type="color"]'
+		)!;
+		const sent = () =>
+			onChange.mock.calls.map(
+				( [ paints ] ) =>
+					( paints[ 0 ] as { readonly color: string } ).color
+			);
+
+		// The first goes at once; those within the frame wait, the newest wins.
+		drag( field, '#000001' );
+		drag( field, '#000002' );
+		drag( field, '#000003' );
+		drag( field, '#000004' );
+
+		expect( sent() ).toEqual( [ '#000001' ] );
+		// The field shows the newest, not the one sent.
+		expect( field.value ).toBe( '#000004' );
+
+		act( () => {
+			jest.advanceTimersByTime( 20 );
+		} );
+		expect( sent() ).toEqual( [ '#000001', '#000004' ] );
+
+		// Nothing waits: a frame sends nothing more.
+		act( () => {
+			jest.advanceTimersByTime( 100 );
+		} );
+		expect( sent() ).toEqual( [ '#000001', '#000004' ] );
+
+		// A value waiting when the picker closes goes before the step ends.
+		drag( field, '#000005' );
+		drag( field, '#000006' );
+		expect( sent() ).toEqual( [ '#000001', '#000004', '#000005' ] );
+
+		act( () => {
+			field.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+		} );
+		expect( sent() ).toEqual( [
+			'#000001',
+			'#000004',
+			'#000005',
+			'#000006',
+		] );
+		expect( onEnd ).toHaveBeenCalledTimes( 1 );
+		expect( onEnd.mock.invocationCallOrder[ 0 ] ).toBeGreaterThan(
+			onChange.mock.invocationCallOrder.at( -1 ) ?? 0
+		);
+		jest.useRealTimers();
 	} );
 
 	it( 'offers only the palette when the clipart has one', () => {

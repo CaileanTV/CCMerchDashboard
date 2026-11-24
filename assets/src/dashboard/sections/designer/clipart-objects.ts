@@ -22,8 +22,32 @@ export type AssetLookup = ( asset: number ) => DesignerAsset | undefined;
 /** How the canvas lets a clipart be changed. */
 export type ClipartHandling = 'sideways' | 'uniform';
 
-/** Most drawn pictures kept. */
-const DRAWN_LIMIT = 48;
+/**
+ * Most bytes of drawn pictures kept, their canvases counted (step 57.20: a
+ * clipart can be 16 million pixels, so a count of pictures could hold GBs).
+ */
+const DRAWN_BYTES = 256 * 1024 * 1024;
+
+/**
+ * The longest side a clipart is drawn at while a colour is dragged (step
+ * 57.20): about the canvas on a screen; the full picture follows at the end.
+ */
+export const PREVIEW_LONGEST = 1024;
+
+/** A drawn picture: its pixels and, once shown, its canvas. */
+interface Drawn {
+	readonly pixels: ClipartPixels | null;
+	canvas?: HTMLCanvasElement | null;
+}
+
+/**
+ * The bytes a drawn picture holds: its pixels and its canvas of the same size.
+ *
+ * @param drawn The picture.
+ */
+function bytesOf( drawn: Drawn ): number {
+	return ( drawn.pixels?.data.length ?? 0 ) * 2;
+}
 
 /**
  * How a clipart with parts is drawn; null for any other asset.
@@ -323,19 +347,20 @@ export class ClipartPictures {
 		Promise< ClipartPixels | null >
 	>();
 
-	private readonly drawn = new Map<
-		string,
-		{
-			readonly pixels: ClipartPixels | null;
-			canvas?: HTMLCanvasElement | null;
-		}
-	>();
+	private readonly drawn = new Map< string, Drawn >();
+
+	/** The bytes the drawn pictures hold. */
+	private bytes = 0;
+
+	/** The one picture drawn small while a colour is dragged (step 57.20). */
+	private live: { readonly key: string; readonly made: Drawn } | null = null;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param load     The atlas of an asset, or null.
 	 * @param toCanvas Pixels as a canvas.
+	 * @param limit    Most bytes of drawn pictures kept.
 	 */
 	public constructor(
 		private readonly load: (
@@ -343,7 +368,8 @@ export class ClipartPictures {
 		) => Promise< ClipartPixels | null >,
 		private readonly toCanvas: (
 			pixels: ClipartPixels
-		) => HTMLCanvasElement | null = canvasOf
+		) => HTMLCanvasElement | null = canvasOf,
+		private readonly limit = DRAWN_BYTES
 	) {}
 
 	/**
@@ -370,11 +396,14 @@ export class ClipartPictures {
 	 * @param lookup  Assets by id.
 	 * @param hard    Embroidery: every pixel wholly one colour or empty.
 	 * @param threads Embroidery: the pack's threads, each pixel in its nearest.
+	 * @param preview While a colour is dragged: the longest side drawn (never
+	 *                for embroidery or a print file); null for the full size.
 	 */
 	public resolver(
 		lookup: AssetLookup,
 		hard = false,
-		threads: readonly DesignerThread[] | null = null
+		threads: readonly DesignerThread[] | null = null,
+		preview: number | null = null
 	): ImageResolver {
 		const loaded = Array.from( this.atlases.entries() )
 			.filter( ( [ , pixels ] ) => pixels !== null )
@@ -382,10 +411,16 @@ export class ClipartPictures {
 			.sort( ( one, other ) => one - other )
 			.join( ',' );
 		const pack = packKey( threads );
+		const longest = hard || preview === null ? null : preview;
 
 		return {
-			key: `${ hard ? 'hard' : 'soft' }:${ pack }:${ loaded }`,
-			image: ( object ) => this.picture( object, lookup, hard, threads ),
+			key: `${ hard ? 'hard' : 'soft' }:${ pack }:${ loaded }${
+				longest === null ? '' : `:preview${ longest }`
+			}`,
+			image: ( object ) =>
+				this.picture( object, lookup, hard, threads, longest ),
+			ratio: ( object ) =>
+				this.ratio( object, lookup, hard, threads, longest ),
 			handling: ( object ) => handlingOf( lookup( object.asset ) ),
 		};
 	}
@@ -420,9 +455,10 @@ export class ClipartPictures {
 		object: ImageObject,
 		lookup: AssetLookup,
 		hard: boolean,
-		threads: readonly DesignerThread[] | null
+		threads: readonly DesignerThread[] | null,
+		longest: number | null = null
 	): HTMLCanvasElement | null | undefined {
-		const entry = this.entry( object, lookup, hard, threads );
+		const entry = this.entry( object, lookup, hard, threads, longest );
 
 		if ( entry === undefined ) {
 			return undefined;
@@ -437,24 +473,53 @@ export class ClipartPictures {
 	}
 
 	/**
-	 * An image's drawing, made once per paint.
+	 * How wide an image's picture is against its full size: below 1 while a
+	 * colour is dragged, so the canvas shows it as large (step 57.20).
 	 *
 	 * @param object  The image.
 	 * @param lookup  Assets by id.
 	 * @param hard    Embroidery.
 	 * @param threads The pack's threads, or null.
+	 * @param longest The longest side drawn, or null for the full size.
+	 */
+	private ratio(
+		object: ImageObject,
+		lookup: AssetLookup,
+		hard: boolean,
+		threads: readonly DesignerThread[] | null,
+		longest: number | null
+	): number {
+		const art = artOf( lookup( object.asset ) );
+		const pixels = this.entry(
+			object,
+			lookup,
+			hard,
+			threads,
+			longest
+		)?.pixels;
+
+		return art === null || pixels === null || pixels === undefined
+			? 1
+			: pixels.width / art.width;
+	}
+
+	/**
+	 * An image's drawing, made once per paint; while a colour is dragged a
+	 * small one in a single place, so passing colours fill no memory.
+	 *
+	 * @param object  The image.
+	 * @param lookup  Assets by id.
+	 * @param hard    Embroidery.
+	 * @param threads The pack's threads, or null.
+	 * @param longest The longest side drawn, or null for the full size.
 	 */
 	private entry(
 		object: ImageObject,
 		lookup: AssetLookup,
 		hard: boolean,
-		threads: readonly DesignerThread[] | null
-	):
-		| {
-				readonly pixels: ClipartPixels | null;
-				canvas?: HTMLCanvasElement | null;
-		  }
-		| undefined {
+		threads: readonly DesignerThread[] | null,
+		longest: number | null = null
+	): Drawn | undefined {
 		const asset = lookup( object.asset );
 		const art = artOf( asset );
 
@@ -472,6 +537,32 @@ export class ClipartPictures {
 		const key = `${ object.asset }|${ hard ? 1 : 0 }|${ packKey(
 			threads
 		) }|${ JSON.stringify( object.paints ) }`;
+		const scale =
+			longest === null
+				? 1
+				: Math.min( 1, longest / Math.max( art.width, art.height ) );
+
+		if ( scale < 1 ) {
+			const liveKey = `${ key }|${ longest }`;
+
+			if ( this.live?.key !== liveKey ) {
+				this.live = {
+					key: liveKey,
+					made: {
+						pixels: drawClipart(
+							art,
+							atlas,
+							object.paints,
+							hard,
+							scale
+						),
+					},
+				};
+			}
+
+			return this.live.made;
+		}
+
 		const known = this.drawn.get( key );
 
 		if ( known !== undefined ) {
@@ -500,13 +591,16 @@ export class ClipartPictures {
 		const made = { pixels };
 
 		this.drawn.set( key, made );
+		this.bytes += bytesOf( made );
 
-		if ( this.drawn.size > DRAWN_LIMIT ) {
-			const oldest = this.drawn.keys().next().value;
-
-			if ( oldest !== undefined ) {
-				this.drawn.delete( oldest );
+		// The oldest go first; the picture just drawn always stays.
+		for ( const [ oldest, old ] of this.drawn ) {
+			if ( this.bytes <= this.limit || oldest === key ) {
+				break;
 			}
+
+			this.drawn.delete( oldest );
+			this.bytes -= bytesOf( old );
 		}
 
 		return made;
