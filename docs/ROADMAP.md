@@ -1765,6 +1765,13 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
   - Visningen, hvor arket mødes (flaskens bagside), står i begge ender: venstre ende med den halvdel, arket begynder med, og højre ende med den halvdel, det slutter med.
   - Navnene står ikke under tegningerne, ligesom hos Printify. De vises, når man holder musen over.
   - Grundprodukter importeret før beholder fotoet med navnet, indtil de importeres igen.
+  - Bygget i 66742be. Uafhængigt review uden sikkerhedsfund; rettet i 6919860:
+    - tegningen omfatter printet, så en lys vare beholder sin ramme;
+    - ingen tegning af en streg hen over fotoet;
+    - gennemsigtige fotos tegnes på hvidt;
+    - en tegning, der ikke kan gemmes, stopper ikke importen;
+    - filer overdrages, før næste skridt kan fejle;
+    - navnet vises ved mouse-over, og bagsiden læses kun op én gang.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
