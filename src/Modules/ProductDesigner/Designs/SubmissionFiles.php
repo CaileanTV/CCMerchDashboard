@@ -61,6 +61,13 @@ final class SubmissionFiles {
 	public const SCENE = '_scene-';
 
 	/**
+	 * What starts a main image chosen among a provider's views before they
+	 * are stored (step 57.22): `_view-<camera>`, with its colour. Never a
+	 * stored key: the provider's job turns it into the photo's own key.
+	 */
+	public const VIEW = '_view-';
+
+	/**
 	 * Width and height of a close-up.
 	 */
 	public const CLOSE_SIZE = 1200;

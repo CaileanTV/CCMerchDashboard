@@ -149,9 +149,11 @@ export function FinishedProduct( props: FinishedProductProps ) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [] );
 
-	// A photo the administrator chose belongs to the product, not to a side.
-	const name = ( side: string ) =>
-		views.find( ( view ) => view.key === side )?.name ?? null;
+	// A photo the administrator chose belongs to the product, not to a side; a view is named (step 57.22).
+	const name = ( image: DesignerPreview[ 'images' ][ number ] ) =>
+		image.label ??
+		views.find( ( view ) => view.key === image.side )?.name ??
+		null;
 
 	return (
 		<Dialog
@@ -184,22 +186,22 @@ export function FinishedProduct( props: FinishedProductProps ) {
 						) }
 					</p>
 					<div className="merchboard-product-designer__finished">
-						{ images.map( ( image ) => (
-							<figure key={ `${ image.side }-${ image.color }` }>
+						{ images.map( ( image, index ) => (
+							<figure
+								key={ `${ image.side }-${ image.color }-${ index }` }
+							>
 								<img
 									src={ image.url }
 									alt={
-										name( image.side ) ??
+										name( image ) ??
 										__(
 											'Your finished product',
 											'merchboard'
 										)
 									}
 								/>
-								{ name( image.side ) === null ? null : (
-									<figcaption>
-										{ name( image.side ) }
-									</figcaption>
+								{ name( image ) === null ? null : (
+									<figcaption>{ name( image ) }</figcaption>
 								) }
 							</figure>
 						) ) }

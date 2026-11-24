@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-23T23:33:06+00:00\n"
+"PO-Revision-Date: 2026-11-24T18:54:13+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -4653,7 +4653,7 @@ msgstr "Nogle felter i !merch-kommandoen mangler eller er ugyldige."
 #: src/Modules/Dashboard/Rest/MeController.php:311
 #: src/Modules/ProductDesigner/Rest/MeDesignerController.php:303
 #: src/Modules/ProductDesigner/Rest/MeDesignerController.php:519
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1038
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1087
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:147
 #: src/Modules/WooCommerce/Rest/MeDiscountCodeController.php:182
 #: src/Modules/WooCommerce/Rest/MeProductsController.php:187
@@ -11282,7 +11282,7 @@ msgstr "%1$s – format %2$d"
 
 #. translators: %d: the number of a print area, 2 or more.
 #: src/Modules/ProductDesigner/Providers/GelatoCatalog.php:926
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1331
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1413
 msgid "Front"
 msgstr "Forside"
 
@@ -11309,35 +11309,36 @@ msgstr "Sort"
 msgid "Clear"
 msgstr "Klar"
 
-#. translators: %d: number of the environment photo, e.g. a poster on a wall.
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1216
-#, php-format
-msgid "Environment %d"
-msgstr "Miljø %d"
-
 #. translators: %d: number of the product photo.
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1219
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:752
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1268
 #, php-format
 msgid "Product photo %d"
 msgstr "Produktfoto %d"
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1332
+#. translators: %d: number of the environment photo, e.g. a poster on a wall.
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1265
+#, php-format
+msgid "Environment %d"
+msgstr "Miljø %d"
+
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1414
 msgid "Back"
 msgstr "Bagside"
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1333
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1415
 msgid "Left side"
 msgstr "Venstre side"
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1334
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1416
 msgid "Right side"
 msgstr "Højre side"
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1367
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1449
 msgid "The product designer is not available."
 msgstr "Produktdesigneren er ikke tilgængelig."
 
-#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1390
+#: src/Modules/ProductDesigner/Rest/MeDesignerController.php:1472
 msgid "The product designer refused the change."
 msgstr "Produktdesigneren afviste ændringen."
 
@@ -20569,6 +20570,24 @@ msgid "Product images"
 msgstr "Produktbilleder"
 
 #: build/dashboard.js:98
+msgid "You have made the most photos for today, so the drawn images are shown instead. You can still send your design."
+msgstr "Du har lavet dagens maksimale antal fotos, så de tegnede billeder vises i stedet. Du kan stadig sende dit design."
+
+#: build/dashboard.js:98
+msgid "We can only make a limited number of photos a minute, so the drawn images are shown instead. Choose the colour again in a minute."
+msgstr "Vi kan kun lave et begrænset antal fotos i minuttet, så de tegnede billeder vises i stedet. Vælg farven igen om et minut."
+
+#: build/dashboard.js:98
+msgid "The photos could not be made, so the drawn images are shown instead. You can still send your design."
+msgstr "Fotoene kunne ikke laves, så de tegnede billeder vises i stedet. Du kan stadig sende dit design."
+
+#. translators: %s: a colour, e.g. "Lime".
+#: build/dashboard.js:98
+#, js-format
+msgid "We are making photos of your design in %s. It usually takes less than a minute…"
+msgstr "Vi laver billeder af dit design i %s. Det tager som regel under et minut …"
+
+#: build/dashboard.js:98
 msgid "Rectangle"
 msgstr "Rektangel"
 
@@ -20654,6 +20673,10 @@ msgid "Tap an image to make it the product’s main image in the shop."
 msgstr "Tryk på et billede for at gøre det til produktets hovedbillede i shoppen."
 
 #: build/dashboard.js:98
+msgid "These are photos of your design as the shop will show them. Choose a colour, then tap the view to make it the product’s main image in the shop."
+msgstr "Sådan viser butikken dit design. Vælg en farve, og tryk derefter på den visning, der skal være produktets hovedbillede i shoppen."
+
+#: build/dashboard.js:98
 msgid "Paint"
 msgstr "Farvning"
 
@@ -20668,6 +20691,10 @@ msgstr "Gradient"
 #: build/dashboard.js:98
 msgid "Angle (°)"
 msgstr "Vinkel (°)"
+
+#: build/dashboard.js:98
+msgid "Where the design sits on the product"
+msgstr "Hvor designet sidder på varen"
 
 #: build/dashboard.js:98
 msgid "The base product of this design is no longer available."
@@ -20859,10 +20886,6 @@ msgstr "Forhåndsvisningsfarve"
 #, js-format
 msgid "Design of the side %s"
 msgstr "Design af siden %s"
-
-#: build/dashboard.js:101
-msgid "Where the design sits on the product"
-msgstr "Hvor designet sidder på varen"
 
 #: build/dashboard.js:101
 msgid "The designer could not be loaded. Please reload the page."

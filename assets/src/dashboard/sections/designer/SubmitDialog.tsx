@@ -15,6 +15,8 @@ import { designsOf, partOf, shifted } from './design-model';
 import type { DesignDocument } from './design-model';
 import { ImagePicker } from './ImagePicker';
 import type { ImageChoice } from './ImagePicker';
+import { ProviderImages } from './ProviderImages';
+import type { ProviderImagesProps } from './ProviderImages';
 import { IconButton } from './LayerList';
 
 export interface ColorOrderProps {
@@ -122,6 +124,14 @@ export interface SubmitDialogProps {
 	readonly imageDrawDelay?: number;
 	/** Files, price and notes shown above the buttons. */
 	readonly summary: ReactNode;
+	/**
+	 * The finished product's real photos to choose the main image among
+	 * (step 57.22); without it, the drawn images.
+	 */
+	readonly provider?: Pick<
+		ProviderImagesProps,
+		'product' | 'colors' | 'prepare' | 'pollMs'
+	>;
 	/** Whether the creator's profit is 0: "Send" asks first. */
 	readonly zeroProfit: boolean;
 	/** The profit 0 as money, e.g. "0,00 kr.". */
@@ -139,6 +149,21 @@ export interface SubmitDialogProps {
  */
 export function SubmitDialog( props: SubmitDialogProps ) {
 	const [ step, setStep ] = useState< 'choose' | 'zero-profit' >( 'choose' );
+	const drawn =
+		props.images.length > 1 ? (
+			<ImagePicker
+				choices={ props.images }
+				selected={ props.image }
+				onSelect={ props.onImage }
+				{ ...( props.imageDraw === undefined
+					? {}
+					: { draw: props.imageDraw } ) }
+				drawKey={ props.imageDrawKey }
+				{ ...( props.imageDrawDelay === undefined
+					? {}
+					: { delay: props.imageDrawDelay } ) }
+			/>
+		) : null;
 
 	if ( step === 'zero-profit' ) {
 		return (
@@ -196,7 +221,7 @@ export function SubmitDialog( props: SubmitDialogProps ) {
 							: { design: props.design } ) }
 					/>
 				) : null }
-				{ props.images.length > 1 ? (
+				{ props.images.length > 1 || props.provider !== undefined ? (
 					<section className="merchboard-product-designer__main-image">
 						<h3 className="merchboard-field__label">
 							{ __(
@@ -205,23 +230,26 @@ export function SubmitDialog( props: SubmitDialogProps ) {
 							) }
 						</h3>
 						<p className="merchboard-product-designer__hint">
-							{ __(
-								'Tap an image to make it the product’s main image in the shop.',
-								'merchboard'
-							) }
+							{ props.provider === undefined
+								? __(
+										'Tap an image to make it the product’s main image in the shop.',
+										'merchboard'
+									)
+								: __(
+										'These are photos of your design as the shop will show them. Choose a colour, then tap the view to make it the product’s main image in the shop.',
+										'merchboard'
+									) }
 						</p>
-						<ImagePicker
-							choices={ props.images }
-							selected={ props.image }
-							onSelect={ props.onImage }
-							{ ...( props.imageDraw === undefined
-								? {}
-								: { draw: props.imageDraw } ) }
-							drawKey={ props.imageDrawKey }
-							{ ...( props.imageDrawDelay === undefined
-								? {}
-								: { delay: props.imageDrawDelay } ) }
-						/>
+						{ props.provider === undefined ? (
+							drawn
+						) : (
+							<ProviderImages
+								{ ...props.provider }
+								selected={ props.image }
+								onSelect={ props.onImage }
+								fallback={ drawn }
+							/>
+						) }
 					</section>
 				) : null }
 				<div>{ props.summary }</div>

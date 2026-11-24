@@ -86,6 +86,13 @@ final class EnvironmentPhotosTest extends TestCase {
 
 		self::assertTrue( DesignerImages::valid( '_scene-0:lodret', $design, array( 'lodret' ) ) );
 		self::assertFalse( DesignerImages::valid( '_scene-0:vandret', $design, array( 'lodret' ) ), 'Only a chosen colour.' );
+
+		// Step 57.22: a provider's view, chosen before its photo is stored.
+		self::assertTrue( DesignerImages::valid( '_view-left-side:lodret', $design, array( 'lodret' ) ) );
+		self::assertFalse( DesignerImages::valid( '_view-left-side:vandret', $design, array( 'lodret' ) ), 'Only a chosen colour.' );
+		self::assertFalse( DesignerImages::valid( '_view-' . str_repeat( 'a', 25 ) . ':lodret', $design, array( 'lodret' ) ), 'A camera of at most 24 characters.' );
+		self::assertFalse( DesignerImages::valid( '_view-:lodret', $design, array( 'lodret' ) ) );
+		self::assertFalse( DesignerImages::valid( '_view-Front:lodret', $design, array( 'lodret' ) ) );
 	}
 
 	/**

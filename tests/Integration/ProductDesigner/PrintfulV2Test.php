@@ -643,7 +643,11 @@ final class PrintfulV2Test extends IntegrationTestCase {
 
 		$mockups->start_preview( $version );
 
-		self::assertSame( array( '_photo-15711', '_photo-15710' ), array_column( $mockups->preview( $version )['images'], 'side' ) );
+		$images = $mockups->preview( $version )['images'];
+
+		self::assertSame( array( '_photo-15711', '_photo-15710' ), array_column( $images, 'side' ) );
+		// Step 57.22: each photo is the main image it would be, its stored key.
+		self::assertSame( array( '_photo-15711', '_photo-15710' ), array_column( $images, 'choice' ) );
 
 		delete_transient( PrintfulMockups::PREVIEW . $version );
 	}

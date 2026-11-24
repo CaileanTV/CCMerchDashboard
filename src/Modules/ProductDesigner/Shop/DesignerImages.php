@@ -73,8 +73,9 @@ final class DesignerImages {
 
 	/**
 	 * Whether a choice names a mockup of the version: `<key>:<colour>` with a
-	 * chosen colour, the key a used side of that colour's design, a photo or
-	 * an environment photo (ADR-117).
+	 * chosen colour, the key a used side of that colour's design, a photo, an
+	 * environment photo (ADR-117), or a provider's view chosen before its
+	 * photo is stored (`_view-<camera>`, step 57.22).
 	 *
 	 * @param mixed         $primary The choice.
 	 * @param array<mixed>  $design  The version's design.
@@ -82,11 +83,11 @@ final class DesignerImages {
 	 */
 	public static function valid( mixed $primary, array $design, array $colors ): bool {
 		// The column holds 64 characters (migration 47).
-		if ( ! is_string( $primary ) || strlen( $primary ) > 64 || 1 !== preg_match( '/^([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}|_scene-[0-9]{1,3}):([a-z0-9%_-]{1,32})$/', $primary, $match ) ) {
+		if ( ! is_string( $primary ) || strlen( $primary ) > 64 || 1 !== preg_match( '/^([a-z0-9][a-z0-9-]{0,31}|_photo-[0-9]{1,18}|_scene-[0-9]{1,3}|_view-[a-z0-9_-]{1,24}):([a-z0-9%_-]{1,32})$/', $primary, $match ) ) {
 			return false;
 		}
 
-		return in_array( $match[2], $colors, true ) && ( str_starts_with( $match[1], SubmissionFiles::PHOTO ) || SubmissionFiles::is_scene( $match[1] ) || in_array( $match[1], SubmissionFiles::used_sides_of( $design, $match[2] ), true ) );
+		return in_array( $match[2], $colors, true ) && ( str_starts_with( $match[1], SubmissionFiles::PHOTO ) || str_starts_with( $match[1], SubmissionFiles::VIEW ) || SubmissionFiles::is_scene( $match[1] ) || in_array( $match[1], SubmissionFiles::used_sides_of( $design, $match[2] ), true ) );
 	}
 
 	/**

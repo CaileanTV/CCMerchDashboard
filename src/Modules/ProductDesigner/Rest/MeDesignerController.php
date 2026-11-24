@@ -667,7 +667,15 @@ final class MeDesignerController extends RestController {
 						throw new DesignerException( DesignerException::PREVIEW_QUOTA );
 					}
 
-					$previewer->start_preview( (int) $draft['id'] );
+					// A colour of the draft's, to choose the main image among its views (step 57.22).
+					$color = $request->get_param( 'color' );
+					$color = is_string( $color ) && 1 === preg_match( '/^[a-z0-9%_-]{1,32}$/', $color ) ? $color : null;
+
+					if ( $previewer instanceof PrintfulMockups || $previewer instanceof PrintifyMockups ) {
+						$previewer->start_preview( (int) $draft['id'], $color );
+					} else {
+						$previewer->start_preview( (int) $draft['id'] );
+					}
 				} catch ( DesignerException $e ) {
 					return self::refused( $e );
 				} catch ( PrintfulException | ProdigiException | GelatoException | PrintifyException $e ) {
@@ -690,8 +698,9 @@ final class MeDesignerController extends RestController {
 			self::ROUTE . '/products/{id}/preview',
 			function ( Creator $creator ) use ( $request ): WP_REST_Response|WP_Error {
 				try {
-					[ $draft, $previewer ] = $this->preview_draft( $creator, (int) $request->get_param( 'id' ) );
-					$state                 = $previewer->preview( (int) $draft['id'] );
+					[ $draft, $previewer, $base ] = $this->preview_draft( $creator, (int) $request->get_param( 'id' ) );
+					$state                        = $previewer->preview( (int) $draft['id'] );
+					$state['images']              = self::named_images( $state['images'], $base );
 				} catch ( DesignerException $e ) {
 					return self::refused( $e );
 				} catch ( PrintfulException | ProdigiException | GelatoException | PrintifyException $e ) {
@@ -711,6 +720,46 @@ final class MeDesignerController extends RestController {
 				return new WP_REST_Response( $state, 200 );
 			}
 		);
+	}
+
+	/**
+	 * A preview's images with what a creator reads for each (step 57.22):
+	 * a camera's name (Front, Left side …), a side's name, or "Product
+	 * photo n" for a photo the administrator chose; the provider is never
+	 * named. Only an image that is a main image (`choice`) gets one.
+	 *
+	 * @param array<mixed> $images The provider's images.
+	 * @param BaseProduct  $base   Base product.
+	 * @return list<array<string, mixed>>
+	 */
+	private static function named_images( array $images, BaseProduct $base ): array {
+		$sides = array_column( array_map( static fn( BaseView $view ): array => array( $view->key, $view->name ), $base->views ), 1, 0 );
+		$named = array();
+		$photo = 0;
+
+		foreach ( $images as $image ) {
+			if ( ! is_array( $image ) ) {
+				continue;
+			}
+
+			$choice = is_string( $image['choice'] ?? null ) ? $image['choice'] : '';
+
+			if ( '' !== $choice ) {
+				if ( is_string( $image['name'] ?? null ) && '' !== $image['name'] ) {
+					$image['label'] = self::view_name( $image['name'] );
+				} elseif ( str_starts_with( $choice, SubmissionFiles::PHOTO ) ) {
+					/* translators: %d: number of the product photo. */
+					$image['label'] = sprintf( __( 'Product photo %d', 'merchboard' ), ++$photo );
+				} else {
+					$image['label'] = (string) ( $sides[ $choice ] ?? $choice );
+				}
+			}
+
+			unset( $image['name'] );
+			$named[] = $image;
+		}
+
+		return $named;
 	}
 
 	/**

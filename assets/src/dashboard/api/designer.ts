@@ -1263,6 +1263,10 @@ export interface DesignerPreview {
 		readonly side: string;
 		readonly color: string;
 		readonly url: string;
+		/** The main image it would be, `<key>` of `<key>:<colour>` (step 57.22). */
+		readonly choice?: string;
+		/** What it shows, e.g. "Left side"; only with a choice. */
+		readonly label?: string;
 	}[];
 }
 
@@ -1277,13 +1281,31 @@ export function parsePreview( body: unknown ): DesignerPreview | null {
 	}
 
 	const { status } = body;
-	const images = body.images.filter(
-		( image ): image is DesignerPreview[ 'images' ][ number ] =>
-			isRecord( image ) &&
-			isString( image.side ) &&
-			isString( image.color ) &&
-			isString( image.url ) &&
-			image.url.startsWith( 'data:image/' )
+	const images = body.images.flatMap(
+		( image ): DesignerPreview[ 'images' ][ number ][] => {
+			if (
+				! isRecord( image ) ||
+				! isString( image.side ) ||
+				! isString( image.color ) ||
+				! isString( image.url ) ||
+				! image.url.startsWith( 'data:image/' )
+			) {
+				return [];
+			}
+
+			const parsed = {
+				side: image.side,
+				color: image.color,
+				url: image.url,
+			};
+
+			// A choice only with its name, and only of a main image's form.
+			return isString( image.choice ) &&
+				isString( image.label ) &&
+				/^[a-z0-9_-]{1,40}$/.test( image.choice )
+				? [ { ...parsed, choice: image.choice, label: image.label } ]
+				: [ parsed ];
+		}
 	);
 
 	return status === 'none' ||
@@ -1297,11 +1319,19 @@ export function parsePreview( body: unknown ): DesignerPreview | null {
 /**
  * Starts the finished product's photos of the saved draft.
  *
- * @param id Designer product.
+ * @param id    Designer product.
+ * @param color One of the draft's colours (step 57.22); its first without.
  */
-export function startPreview( id: number ): Promise< ApiResult< true > > {
+export function startPreview(
+	id: number,
+	color?: string
+): Promise< ApiResult< true > > {
 	return request(
-		{ path: `${ PATH }/products/${ id }/preview`, method: 'POST' },
+		{
+			path: `${ PATH }/products/${ id }/preview`,
+			method: 'POST',
+			...( color === undefined ? {} : { data: { color } } ),
+		},
 		() => true
 	);
 }

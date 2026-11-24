@@ -282,9 +282,15 @@ final class ImageProbeTest extends TestCase {
 		self::assertSame( '#e6e6e6', ImageProbe::backdrop_of( $this->blank() ) );
 		self::assertNull( ImageProbe::backdrop_of( 'not an image' ) );
 
-		// Above 2048 × 2048 pixels a cut could stop PHP: the photo stays.
-		$large = Photo::png( 2100, 2100, self::STUDIO, array( array( 500, 500, 1000, 1000, self::SHIRT ) ) );
-		self::assertTrue( ImageProbe::studio( $large ) );
+		// Above 2048 × 2048 pixels a cut could stop PHP: the photo stays, refused on its size before it is decoded.
+		$image = imagecreate( 2100, 2100 );
+		self::assertNotFalse( $image );
+		imagecolorallocate( $image, 230, 230, 230 );
+		imagefilledrectangle( $image, 500, 500, 1500, 1500, (int) imagecolorallocate( $image, 30, 30, 30 ) );
+		ob_start();
+		imagepng( $image );
+		$large = (string) ob_get_clean();
+
 		self::assertNull( ImageProbe::cutout( $large ) );
 	}
 

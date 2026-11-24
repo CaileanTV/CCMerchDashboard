@@ -348,15 +348,17 @@ class PrintfulMockups {
 	}
 
 	/**
-	 * Starts a task of a draft's used sides in its first colour, so the
-	 * creator sees the finished product before sending the design. Only v2:
-	 * a preview may fail, and the creator can still send the design.
+	 * Starts a task of a draft's used sides in one of its colours (the first,
+	 * or the one asked for, step 57.22), so the creator sees the finished
+	 * product before sending the design. Only v2: a preview may fail, and the
+	 * creator can still send the design.
 	 *
-	 * @param int $id Draft version.
+	 * @param int         $id    Draft version.
+	 * @param string|null $color A chosen colour; null or another for the first.
 	 * @throws PrintfulException When Printful refuses or fails.
 	 * @throws DatabaseException When it cannot be read.
 	 */
-	public function start_preview( int $id ): void {
+	public function start_preview( int $id, ?string $color = null ): void {
 		$version  = $this->products->version( $id );
 		$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
 		$base     = null === $version ? null : $this->bases->find( (int) $version['base_id'] );
@@ -370,9 +372,13 @@ class PrintfulMockups {
 		$product  = (int) $provider['ref'];
 		$side     = self::lead( $base, $version );
 		$colors   = json_decode( (string) $version['colors'], true );
+		$colors   = is_array( $colors ) ? array_values( array_filter( $colors, 'is_string' ) ) : array();
+		$color    = null !== $color && in_array( $color, $colors, true ) ? $color : ( $colors[0] ?? '' );
 		$design   = json_decode( (string) $version['design'], true );
-		$part     = ColorDesigns::part_of( is_array( $design ) ? $design : array(), is_array( $colors ) && is_string( $colors[0] ?? null ) ? $colors[0] : '' );
-		$variants = array_slice( $this->variants( $product, $version, $base, $provider['variants'], self::task_sizes( $base, $side ), self::colors_of( $version, $part ) ), 0, 1, true );
+		$part     = ColorDesigns::part_of( is_array( $design ) ? $design : array(), $color );
+		$all      = $this->variants( $product, $version, $base, $provider['variants'], self::task_sizes( $base, $side ), self::colors_of( $version, $part ) );
+		$own      = array_filter( $all, static fn( string $key ): bool => $key === $color );
+		$variants = array_slice( array() === $own ? $all : $own, 0, 1, true );
 		$sides    = $this->task_sides( $id, $side, $version, $base, $provider, $part );
 
 		if ( array() === $variants || array() === $sides ) {
@@ -393,10 +399,12 @@ class PrintfulMockups {
 
 	/**
 	 * A preview's state and, when it is done, its images as data URLs: the
-	 * dashboard's CSP takes no other host.
+	 * dashboard's CSP takes no other host. Each image is also the main image
+	 * it would be (`choice`, step 57.22): a chosen photo's key is the stored
+	 * one (`_photo-<style>`), else the side's.
 	 *
 	 * @param int $id Draft version.
-	 * @return array{status: string, images: list<array{side: string, color: string, url: string}>}
+	 * @return array{status: string, images: list<array{side: string, color: string, url: string, choice: string}>}
 	 * @throws PrintfulException When Printful refuses or fails.
 	 */
 	public function preview( int $id ): array {
@@ -428,9 +436,10 @@ class PrintfulMockups {
 
 				if ( is_array( $info ) && in_array( $info['mime'], array( 'image/jpeg', 'image/png' ), true ) ) {
 					$images[] = array(
-						'side'  => $side,
-						'color' => $color,
-						'url'   => 'data:' . $info['mime'] . ';base64,' . base64_encode( $bytes ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- An image for the dashboard's CSP.
+						'side'   => (string) $side,
+						'color'  => (string) $color,
+						'url'    => 'data:' . $info['mime'] . ';base64,' . base64_encode( $bytes ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- An image for the dashboard's CSP.
+						'choice' => (string) $side,
 					);
 				}
 			}

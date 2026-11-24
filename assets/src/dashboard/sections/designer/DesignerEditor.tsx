@@ -123,6 +123,7 @@ import {
 } from './ColorDesigns';
 import { ImagePicker } from './ImagePicker';
 import { SubmitDialog } from './SubmitDialog';
+import { providerColor } from './ProviderImages';
 import { LayerList } from './LayerList';
 import { ClipartPaints } from './ClipartPaints';
 import {
@@ -586,6 +587,8 @@ function Editor( props: EditorProps ) {
 		( candidate ) =>
 			candidate.scene?.preview === true || hasStitches( candidate )
 	);
+	// The main image is chosen among the finished product's real photos (step 57.22).
+	const providerMain = base.preview && ! scenePreview;
 	// The mockups the product's image can be: each chosen colour on the used sides of its design.
 	// A side of some colours only has images of those (ADR-115).
 	const imageChoices = colors.flatMap( ( color ) =>
@@ -1277,11 +1280,15 @@ function Editor( props: EditorProps ) {
 			sizes,
 			profitKind,
 			profitValue,
-			primaryImage: imageChoices.some(
-				( choice ) => choice.value === primaryImage
-			)
-				? primaryImage
-				: null,
+			// A drawn image, or one of the finished product's photos in a chosen colour (step 57.22).
+			primaryImage:
+				imageChoices.some(
+					( choice ) => choice.value === primaryImage
+				) ||
+				( providerMain &&
+					colors.includes( providerColor( primaryImage ) ?? '' ) )
+					? primaryImage
+					: null,
 			design: {
 				...mapParts(
 					base.shareFormats
@@ -1682,6 +1689,21 @@ function Editor( props: EditorProps ) {
 					onImage={ setPrimaryImage }
 					imageDraw={ drawImage }
 					imageDrawKey={ drawKey }
+					{ ...( providerMain
+						? {
+								provider: {
+									product: product.id,
+									colors: colors.map( ( key ) => ( {
+										key,
+										name:
+											base.colors.find(
+												( item ) => item.key === key
+											)?.name ?? key,
+									} ) ),
+									prepare: showFinished,
+								},
+							}
+						: {} ) }
 					zeroProfit={ zeroProfit }
 					zeroText={ moneyText(
 						( 0 ).toFixed( overview.priceDecimals ),

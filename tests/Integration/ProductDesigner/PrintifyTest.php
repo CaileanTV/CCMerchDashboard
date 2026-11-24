@@ -668,6 +668,29 @@ final class PrintifyTest extends IntegrationTestCase {
 		self::assertNotNull( $this->first_call( 'DELETE', self::API . '/shops/' . self::SHOP . '/products/' . self::BLANK . '.json' ) );
 	}
 
+	public function test_a_main_image_chosen_among_the_views_becomes_the_stored_photo(): void {
+		$version = $this->printify_submitted( 'View tee' );
+
+		// Step 57.22: chosen in the dialog before Printify's photos exist.
+		$this->products->set_primary_image( $version, '_view-context-1:black' );
+
+		$mockups = $this->printify_mockups();
+		$mockups->submitted( $version );
+		$this->drain_mockups( $mockups );
+
+		self::assertSame( 'ready', $this->products->version( $version )['mockup_state'] ?? null );
+		self::assertSame( SubmissionFiles::SCENE . '0:black', $this->products->version( $version )['primary_image'] ?? null, 'The room in black is stored as its environment photo.' );
+
+		// A view that is not stored (the back has no design) stays: the shop shows the colour's first image.
+		$second = $this->printify_submitted( 'Back tee' );
+
+		$this->products->set_primary_image( $second, '_view-back:ash' );
+		$mockups->submitted( $second );
+		$this->drain_mockups( $mockups );
+
+		self::assertSame( '_view-back:ash', $this->products->version( $second )['primary_image'] ?? null );
+	}
+
 	public function test_a_light_colour_without_a_far_colour_keeps_its_photos(): void {
 		$version = $this->printify_submitted( 'Pale tee', true, array( 'ash' ) );
 		// Every colour light: nothing to compare against, and a light shirt alone could vanish.
@@ -787,7 +810,9 @@ final class PrintifyTest extends IntegrationTestCase {
 		$state = $mockups->preview( $draft );
 
 		self::assertSame( 'done', $state['status'] );
-		self::assertCount( 3, $state['images'], 'Front, back and the room; no size chart.' );
+		// Step 57.22: the views the shop gets, each a main image to choose; the back has no design, so not its own view.
+		self::assertSame( array( '_view-front', '_view-context-1' ), array_column( $state['images'], 'choice' ), 'Front and the room; no size chart, no empty back.' );
+		self::assertSame( array( 'front', 'context-1' ), array_column( $state['images'], 'name' ) );
 		self::assertStringStartsWith( 'data:image/png;base64,', $state['images'][0]['url'], 'Never the address of the provider.' );
 		self::assertSame( 'ash', $state['images'][0]['color'] );
 
@@ -795,6 +820,25 @@ final class PrintifyTest extends IntegrationTestCase {
 		$body   = (array) json_decode( (string) ( $create[2]['body'] ?? '' ), true );
 
 		self::assertSame( array( 32870 ), $body['print_areas'][0]['variant_ids'] ?? null, 'The first colour only.' );
+
+		// Another chosen colour when asked for; one not chosen gives the first.
+		foreach ( array(
+			'black' => 32880,
+			'red'   => 32870,
+		) as $color => $variant ) {
+			$this->calls = array();
+			$mockups->start_preview( $draft, $color );
+
+			$create = $this->first_call( 'POST', self::API . '/shops/' . self::SHOP . '/products.json' );
+			$body   = (array) json_decode( (string) ( $create[2]['body'] ?? '' ), true );
+
+			self::assertSame( array( $variant ), $body['print_areas'][0]['variant_ids'] ?? null, $color );
+		}
+
+		// Every view unticked: none is shown, as none comes in the shop.
+		$this->base_service()->set_printify_photos( (int) $base->id, array() );
+		$mockups->start_preview( $draft );
+		self::assertSame( array(), $mockups->preview( $draft )['images'] );
 
 		$mockups->clean_preview( $draft, $job[0]['args'][1] ?? 0 );
 

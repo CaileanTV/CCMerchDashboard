@@ -39,6 +39,8 @@ export interface ImagePickerProps {
 	readonly drawKey?: unknown;
 	/** How long the design must be still before anything is drawn (ms). */
 	readonly delay?: number;
+	/** Whether every side is shown first, not the chosen one's (views to compare, step 57.22). */
+	readonly showAll?: boolean;
 }
 
 /** "All sides" in the filter. */
@@ -79,7 +81,9 @@ export function ImagePicker( props: ImagePickerProps ) {
 		return Array.from( found, ( [ key, name ] ) => ( { key, name } ) );
 	}, [ choices ] );
 	const [ filter, setFilter ] = useState< string >(
-		chosen === undefined ? ALL : sideOf( chosen ).key
+		chosen === undefined || props.showAll === true
+			? ALL
+			: sideOf( chosen ).key
 	);
 	const [ large, setLarge ] = useState( false );
 	const [ drawn, setDrawn ] = useState<

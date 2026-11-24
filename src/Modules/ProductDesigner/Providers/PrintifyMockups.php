@@ -164,16 +164,17 @@ class PrintifyMockups {
 	}
 
 	/**
-	 * Starts a preview of a draft: a temporary product in its first colour
-	 * with the draft's print files as signed URLs. An earlier preview of the
-	 * draft is removed first; this one is removed by the job PREVIEW_HOOK
-	 * after PREVIEW_KEEP seconds.
+	 * Starts a preview of a draft: a temporary product in one of its colours
+	 * (the first, or the one asked for, step 57.22) with that colour's print
+	 * files as signed URLs. An earlier preview of the draft is removed first;
+	 * this one is removed by the job PREVIEW_HOOK after PREVIEW_KEEP seconds.
 	 *
-	 * @param int $id Draft version.
+	 * @param int         $id    Draft version.
+	 * @param string|null $color A chosen colour; null or another for the first.
 	 * @throws PrintifyException When Printify refuses or fails.
 	 * @throws DatabaseException When it cannot be read.
 	 */
-	public function start_preview( int $id ): void {
+	public function start_preview( int $id, ?string $color = null ): void {
 		$version  = $this->products->version( $id );
 		$provider = null === $version ? null : $this->bases->provider( (int) $version['base_id'] );
 		$base     = null === $version ? null : $this->bases->find( (int) $version['base_id'] );
@@ -193,7 +194,8 @@ class PrintifyMockups {
 		$this->forget_preview( $id );
 
 		$colors  = json_decode( (string) $version['colors'], true );
-		$color   = is_array( $colors ) && is_string( $colors[0] ?? null ) ? $colors[0] : '';
+		$colors  = is_array( $colors ) ? array_values( array_filter( $colors, 'is_string' ) ) : array();
+		$color   = null !== $color && in_array( $color, $colors, true ) ? $color : ( $colors[0] ?? '' );
 		$variant = (string) ( array_search( $color, self::variants( $version, $provider['variants'] ), true ) ?: '' ); // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- false becomes ''.
 		$part    = ColorDesigns::part_of( self::design_of( $version ), $color );
 		$sides   = self::printed( $version, $provider['placements'], $base, $part );
@@ -262,13 +264,18 @@ class PrintifyMockups {
 	}
 
 	/**
-	 * A preview's state and, once Printify lists them, the chosen views (all
-	 * without a choice) in the first colour, at most PREVIEW_IMAGES, as data
-	 * URLs: the dashboard's CSP takes no other host, and creators never see
+	 * A preview's state and, once Printify lists them, the views the shop
+	 * will get in the preview's colour, at most PREVIEW_IMAGES, as data URLs:
+	 * the dashboard's CSP takes no other host, and creators never see
 	 * Printify's address.
 	 *
+	 * The views are the ticked ones (all before the administrator chose,
+	 * none when every one was unticked, as poll()), without a side's own view
+	 * when the design leaves that side empty. Each has its camera (`name`)
+	 * and the main image it is (`choice`, `_view-<camera>`, step 57.22).
+	 *
 	 * @param int $id Draft version.
-	 * @return array{status: string, images: list<array{side: string, color: string, url: string}>}
+	 * @return array{status: string, images: list<array{side: string, color: string, url: string, choice: string, name: string}>}
 	 * @throws PrintifyException When Printify refuses or fails.
 	 * @throws DatabaseException When it cannot be read.
 	 */
@@ -288,7 +295,12 @@ class PrintifyMockups {
 
 		$color  = (string) ( $state['color'] ?? '' );
 		$photos = PrintifyCatalog::photos( $this->api->product( $shop, $product ), array( (string) ( $state['variant'] ?? '' ) => $color ) );
-		$chosen = is_array( $provider['printify_photos'] ?? null ) && array() !== $provider['printify_photos'] ? $provider['printify_photos'] : array_map( 'strval', array_keys( $photos ) );
+		$chosen = is_array( $provider['printify_photos'] ?? null ) ? array_map( 'strval', $provider['printify_photos'] ) : array_map( 'strval', array_keys( $photos ) );
+		$base   = $this->bases->find( (int) $version['base_id'] );
+		$slots  = $provider['slots'];
+		$used   = self::printed( $version, $provider['placements'], $base, ColorDesigns::part_of( self::design_of( $version ), $color ) );
+		// A side's own view comes only with a design on that side (poll()).
+		$empty = array_values( array_diff_key( $slots, array_flip( $used ) ) );
 
 		if ( array() === $photos ) {
 			return array(
@@ -300,7 +312,9 @@ class PrintifyMockups {
 		$images = array();
 
 		foreach ( $photos as $name => $by_color ) {
-			if ( count( $images ) >= self::PREVIEW_IMAGES || ! in_array( (string) $name, $chosen, true ) || ! is_string( $by_color[ $color ] ?? null ) ) {
+			$name = (string) $name;
+
+			if ( count( $images ) >= self::PREVIEW_IMAGES || ! in_array( $name, $chosen, true ) || in_array( $name, $empty, true ) || ! is_string( $by_color[ $color ] ?? null ) ) {
 				continue;
 			}
 
@@ -309,9 +323,11 @@ class PrintifyMockups {
 
 			if ( is_array( $info ) && in_array( $info['mime'], array( 'image/jpeg', 'image/png' ), true ) ) {
 				$images[] = array(
-					'side'  => self::TASK_SIDE,
-					'color' => $color,
-					'url'   => 'data:' . $info['mime'] . ';base64,' . base64_encode( $bytes ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- An image for the dashboard's CSP.
+					'side'   => self::TASK_SIDE,
+					'color'  => $color,
+					'url'    => 'data:' . $info['mime'] . ';base64,' . base64_encode( $bytes ), // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- An image for the dashboard's CSP.
+					'choice' => SubmissionFiles::VIEW . substr( $name, 0, 24 ),
+					'name'   => $name,
 				);
 			}
 		}
@@ -651,6 +667,7 @@ class PrintifyMockups {
 
 		if ( $stored ) {
 			if ( $this->cut( $id, $base, $photos, $task, $result ) ) {
+				$this->resolve_view( $id, $result );
 				$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::DONE ) );
 				$this->forget( $this->task( $id ) ?? $task );
 			}
@@ -984,6 +1001,36 @@ class PrintifyMockups {
 		}
 
 		$this->files->delete( $kept ? $file : (string) $cut['file'] );
+	}
+
+	/**
+	 * Turns a main image chosen among the views (`_view-<camera>:<colour>`,
+	 * step 57.22) into the stored photo's key, now that every photo is
+	 * stored: the side it replaced, or its environment photo. A view that
+	 * was not stored stays as it is, and the shop then shows the colour's
+	 * first image (DesignerImages::main()).
+	 *
+	 * @phpstan-param array<string, mixed> $result
+	 *
+	 * @param int   $id     Version.
+	 * @param array $result The task's result (`shots`).
+	 * @throws DatabaseException When it cannot be read or stored.
+	 */
+	private function resolve_view( int $id, array $result ): void {
+		$version = $this->products->version( $id );
+		$primary = is_string( $version['primary_image'] ?? null ) ? $version['primary_image'] : '';
+
+		if ( 1 !== preg_match( '/^' . preg_quote( SubmissionFiles::VIEW, '/' ) . '([a-z0-9_-]{1,24}):([a-z0-9%_-]{1,32})$/', $primary, $match ) ) {
+			return;
+		}
+
+		foreach ( is_array( $result['shots'] ?? null ) ? $result['shots'] : array() as $shot ) {
+			if ( is_array( $shot ) && ( $shot['color'] ?? null ) === $match[2] && substr( (string) ( $shot['name'] ?? '' ), 0, 24 ) === $match[1] && is_string( $shot['key'] ?? null ) ) {
+				$this->products->set_primary_image( $id, $shot['key'] . ':' . $match[2] );
+
+				return;
+			}
+		}
 	}
 
 	/**
