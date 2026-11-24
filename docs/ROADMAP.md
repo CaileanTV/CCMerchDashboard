@@ -1822,9 +1822,13 @@ Et nyt designerprodukt får forudvalgt farve og størrelse i butikken, så kunde
 
 - **Farve:** den farve, creatorens valgte hovedbillede har. Fx giver "Magenta – Venstre side" magenta som forvalgt farve.
 - **Størrelse:** har produktet kun én størrelse, fx vandflasker, er den forudvalgt.
+- **Fast forvalg på grundproduktet** (projektejerens forslag 2026-11-24): admin kan vælge en fast forudvalgt værdi på grundproduktet, fx størrelse M på en T-shirt.
+  - Alle nye produkter på grundproduktet får den værdi.
+  - Farven kommer stadig fra hovedbilledet, medmindre admin har sat en fast farve.
 - **I dag:** pluginet sætter ingen standardvariant på produkterne. Der er intet i koden.
 - **Åbne spørgsmål til planen:**
-  - Hvilken størrelse forudvælges, når der er flere: ingen, den første, eller en midterstørrelse som M?
+  - Hvilken størrelse forudvælges, når der er flere, og admin ikke har valgt en fast: ingen eller den første?
+  - Hvad sker der med et fast forvalg, som et produkt ikke har, fx når creatoren har fravalgt størrelse M? Mit bud er, at så forudvælges ingenting.
   - Skal standardvarianten følge med, når creatoren senere skifter hovedbillede på et produkt, der allerede er i butikken?
   - Skal eksisterende designerprodukter opdateres én gang, eller gælder det kun nye og ændrede?
   - Hvordan håndteres et produkt med flere egenskaber end farve og størrelse, fx Gelatos formater eller Printfuls valg?
