@@ -140,7 +140,13 @@ Med en butik i `merchboard_designer_printify_shop` giver `PrintifyCatalog::choic
   - `BaseView::$guides` er en liste af `{x, label, figure}`; `figure` er visningens lille foto fra `printify_thumbs`, så importen laver de små billeder før siderne gemmes;
   - creators må hente figurerne via `BaseProduct::guide_figures()`;
   - `view_data` oversætter kendte navne (`MeDesignerController::view_name`).
-- **Designeren:** `guides.ts` lægger linjerne midt mellem visningerne, også hen over arkets ender. `DesignerEditor` tegner dem i `__area` og figurerne i `__views`.
+- **Designeren:** `guides.ts` lægger linjerne midt mellem visningerne, også hen over arkets ender. `DesignerEditor` tegner dem i `__area` og figurerne i `__views` (`GuideViews.tsx`).
+- **Stregtegninger (trin 57.19):**
+  - Runden `guides` kalder `ImageProbe::drawing(tomt foto, stribefoto)` for hver målt visning. Tegningen er grå på gennemsigtig baggrund og `DRAWING_HEIGHT` (176) px høj. Den gemmes i `data['drawings']` og bliver aktiver i `printify_drawings` efter gem. Rammen og sømmen gemmes i `data['seen']`.
+  - `guides` er nu `{x, label, figure, box, seam}`. `box` er printet på tegningen og `seam` arkets start, begge som andele. Ældre sider får `null`.
+  - `MeDesignerController::guide_figures()` foretrækker tegningen frem for fotoet.
+  - `guideFigures()` placerer figurerne: visningen med `seam` ved 0 og 1, med sømmen på kanten og rammen delt. `GuideViews` sætter højden efter pladsen under feltet (24–88 px).
+  - `ImageProbe::sheet(…, room)` lader 200 px stå fri under et ark med linjer.
 - **Forhåndsvisning:** `PrintifyMockups::can_preview/start_preview/preview/clean_preview` (job `merchboard_designer_printify_preview`, transient `merchboard_printify_preview_<version>`).
 
 ## Farvefotos i portioner (2026-11-01, eksperimentel)

@@ -7382,6 +7382,14 @@ Katalogets billeder (`/catalog/blueprints/{id}.json`) er en liste med 1–428 UR
   - et midlertidigt produkt i første farve, og billederne vises som data-URI'er;
   - tæller i dagskvoten;
   - produktet slettes efter 15 minutter eller ved en ny forhåndsvisning.
+- **Stregtegninger (trin 57.19, projektejerens ønske efter det visuelle eksempel: "præcis som på printify"):**
+  - Figurerne under linjerne er stregtegninger som i Printifys editor, ikke fotos. Printify giver dem ikke ud, så importen tegner dem selv (`ImageProbe::drawing`) af de fotos, målingen alligevel henter. Det koster ingen ekstra kald.
+  - Fotoet af den tomme vare giver tegningen: omridset, hvor baggrunden slutter, og grå streger, hvor lysheden skifter uden for printet.
+  - Fotoet med prøvearket giver to ting som andele af tegningen: den del af printet, visningen viser (`box`), og hvor arkets sidste stribe møder den første (`seam`). Det sidste gemmes kun på visningen nærmest arkets ender.
+  - Designeren tegner `box` som en grøn ramme. Visningen med `seam` (flaskens bagside) står i begge ender: venstre ende med halvdelen efter sømmen, hvor arket begynder, og højre ende med halvdelen før den. Navnene skjules som hos Printify og vises ved mouse-over.
+  - Tegningerne gemmes som `printify_drawings` ved siden af `printify_thumbs` og slettes med grundproduktet. Det gør Printifys små fotos nu også; før blev de liggende.
+  - Et ark med linjer får 200 px (af 1000) fri plads under sig til tegningerne. Uden plads (mobil) bliver tegningerne mindre, ned til 24 px.
+  - En tegning kræver en ensfarvet baggrund. Ellers, og for grundprodukter importeret før, vises fotoet med navnet.
 
 ## Alternatives considered
 - **Kun katalogets billeder, valgt af admin:** kræver ingen skriveadgang, men printfeltet skal stadig tegnes i hånden. Fravalgt af projektejeren 2026-11-23.

@@ -1758,6 +1758,13 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - et ulæseligt foto stopper ikke importen;
     - forhåndsvisningens oprydning sættes i kø først, og to start i træk venter.
   - Visuelt eksempel på linjerne til projektejeren (artefakt "Hjælpelinjer på flasken").
+  - Runtime-testen på stg og den nye testpakke venter på 57.19.
+- **57.19 Stregtegninger under hjælpelinjerne** 🔄 (projektejerens ønske 2026-11-24 efter det visuelle eksempel: "præcis som på printify"):
+  - Importen tegner hver visning som streger ud fra Printifys foto af den tomme vare (omrids og linjer i låg og hank). Det kræver ingen ekstra kald, for fotoene hentes allerede til målingen.
+  - En grøn ramme viser den del af printet, man ser fra den side. Den findes på fotoet med prøvearket.
+  - Visningen, hvor arket mødes (flaskens bagside), står i begge ender: venstre ende med den halvdel, arket begynder med, og højre ende med den halvdel, det slutter med.
+  - Navnene står ikke under tegningerne, ligesom hos Printify. De vises, når man holder musen over.
+  - Grundprodukter importeret før beholder fotoet med navnet, indtil de importeres igen.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 

@@ -18,6 +18,8 @@ Fase 57 (ADR-122). Ingen schemaændring. Reviewet; runtime-testen sker på stg.
 - **Rettet:** fotos fra Printify parres på kameraets navn, fordi kamera-id'et skifter pr. farve på nogle varer.
 - **Hjælpelinjer:** på et rundt print viser designeren stiplede linjer og et lille billede af hver visning (forside, sider, bagside) under printfeltet, målt ved importen som i Printifys editor.
 - **"Se det færdige produkt" for Printify:** creatoren ser Printifys mockups af kladden. Det tæller i dagskvoten.
+- **Stregtegninger under linjerne:** som i Printifys editor viser designeren en stregtegning af hver visning med en grøn ramme om den del af printet, man ser derfra. Bagsiden står i begge ender med hver sin halvdel. Importen tegner dem selv ud fra Printifys fotos.
+- **Rettet:** Printifys små fotos slettes nu med grundproduktet.
 
 ## [2.5.0] - 2026-11-23
 
