@@ -1783,6 +1783,13 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
   - Serveren skærer studiefotoene ud (`ImageProbe::cutout`, browserens regel), når alle farver er hentet. Det sker en runde ad gangen med højst 15 s pr. runde.
   - En lys vare sammenlignes med samme foto i en farve langt væk. Mangler den, laver det midlertidige produkt en ekstra mørk farve, kun til sammenligning.
   - På rigtige fotos: flasken er ren, og en hvid trøje alene ville forsvinde. Derfor skæres en lys farve aldrig alene.
+  - Uafhængigt review uden sikkerhedsfund. Rettet:
+    - vinkelfeltets fortryd-trin sluttede aldrig, når en del blev til en gradient, og designeren forblev i "træk"-tilstand;
+    - et foto, der får PHP til at stoppe, prøves ikke igen, og store fotos skæres ikke;
+    - en fejl hos Printify under udskæringen fejler ikke længere godkendelsen;
+    - en lys farve skæres ikke mod en reference, der ikke kan bruges;
+    - under træk beholder de andre cliparts deres fulde billede;
+    - tynde cliparts holder formen under træk.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 

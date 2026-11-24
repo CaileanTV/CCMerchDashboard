@@ -5,7 +5,6 @@
  * in a colour field or changing the angle is one undo step.
  */
 import { useEffect, useId, useRef, useState } from '@wordpress/element';
-import type { RefObject } from 'react';
 import { __, sprintf } from '@wordpress/i18n';
 
 import type {
@@ -118,6 +117,10 @@ function nextFrame( run: () => void ): () => void {
  * The field shows `draft`, its newest value, until the step ends, so a value
  * waiting for its frame never jumps back.
  *
+ * The ref is a callback: a field that comes later (the angle, once a part
+ * becomes a gradient) gets its listeners too, and one that goes ends its
+ * step.
+ *
  * @param onBegin A change that goes on starts.
  * @param onEnd   It ends.
  * @param send    A live change's value.
@@ -129,11 +132,11 @@ export function useLiveField< T extends HTMLInputElement, V >(
 	onEnd: () => void,
 	send: ( value: V ) => void
 ): {
-	readonly ref: RefObject< T | null >;
+	readonly ref: ( field: T | null ) => void;
 	readonly draft: V | null;
 	readonly change: ( value: V ) => void;
 } {
-	const ref = useRef< T | null >( null );
+	const [ field, setField ] = useState< T | null >( null );
 	const [ draft, setDraft ] = useState< V | null >( null );
 	const open = useRef( false );
 	const calls = useRef( { onBegin, onEnd, send } );
@@ -156,7 +159,6 @@ export function useLiveField< T extends HTMLInputElement, V >(
 	};
 
 	useEffect( () => {
-		const field = ref.current;
 		const end = (): void => {
 			frame.current?.();
 			frame.current = null;
@@ -185,10 +187,10 @@ export function useLiveField< T extends HTMLInputElement, V >(
 			field?.removeEventListener( 'blur', end );
 			end();
 		};
-	}, [] );
+	}, [ field ] );
 
 	return {
-		ref,
+		ref: setField,
 		draft,
 		change: ( value ) => {
 			if ( ! open.current ) {

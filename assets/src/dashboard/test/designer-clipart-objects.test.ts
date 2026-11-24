@@ -387,7 +387,10 @@ describe( 'the pictures of cliparts', () => {
 		live.image( image( { paints: [ BLUE ] } ) );
 		expect( drawn.at( -1 )?.width ).toBe( 2 );
 		expect( drawn.at( -1 )?.height ).toBe( 1 );
-		expect( live.ratio?.( image( { paints: [ BLUE ] } ) ) ).toBe( 0.5 );
+		expect( live.ratio?.( image( { paints: [ BLUE ] } ) ) ).toEqual( {
+			x: 0.5,
+			y: 0.5,
+		} );
 
 		// The next colour takes its place; the same colour is not drawn again.
 		live.image( image( { paints: [ red ] } ) );
@@ -399,7 +402,7 @@ describe( 'the pictures of cliparts', () => {
 			made
 				.resolver( lookup, true, null, 2 )
 				.ratio?.( image( { paints: [ red ] } ) )
-		).toBe( 1 );
+		).toEqual( { x: 1, y: 1 } );
 
 		// At the end the full picture, once; the small ones were never kept.
 		const full = made.resolver( lookup );
@@ -407,9 +410,36 @@ describe( 'the pictures of cliparts', () => {
 		full.image( image( { paints: [ red ] } ) );
 		full.image( image( { paints: [ red ] } ) );
 		expect( drawn.at( -1 )?.width ).toBe( 4 );
-		expect( full.ratio?.( image( { paints: [ red ] } ) ) ).toBe( 1 );
+		expect( full.ratio?.( image( { paints: [ red ] } ) ) ).toEqual( {
+			x: 1,
+			y: 1,
+		} );
 		// Two small canvases and one full; the ratios made no canvas.
 		expect( drawn ).toHaveLength( 3 );
+
+		// While another clipart's colour is dragged, one drawn in full keeps its picture.
+		expect( live.image( image( { paints: [ red ] } ) ) ).toBe(
+			drawn.at( -1 )
+		);
+		expect( live.ratio?.( image( { paints: [ red ] } ) ) ).toEqual( {
+			x: 1,
+			y: 1,
+		} );
+		expect( drawn ).toHaveLength( 3 );
+	} );
+
+	it( 'keeps a thin clipart’s proportions while it is drawn small (step 57.20)', async () => {
+		const { made } = pictures( () => Promise.resolve( ATLAS ) );
+		const lookup = () => withParts();
+
+		await made.ready( [ image( { paints: [ BLUE ] } ) ], lookup );
+
+		// 4 × 2 at a longest side of 3: 3 × 2 (rounded), so across and down differ.
+		const ratio = made
+			.resolver( lookup, false, null, 3 )
+			.ratio?.( image( { paints: [ BLUE ] } ) );
+
+		expect( ratio ).toEqual( { x: 0.75, y: 1 } );
 	} );
 
 	it( 'keeps drawn pictures up to a number of bytes, the newest always (step 57.20)', async () => {

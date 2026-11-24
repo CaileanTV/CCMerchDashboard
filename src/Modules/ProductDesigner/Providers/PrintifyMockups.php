@@ -615,6 +615,9 @@ class PrintifyMockups {
 
 	/**
 	 * Looks at the product and stores the chosen views of a few colours.
+	 * Once every colour is stored, its rounds cut the photos out (step 57.21).
+	 * A DatabaseException (it cannot be stored) or a DesignerException (a
+	 * photo is no valid image) goes on to run().
 	 *
 	 * @param int                  $id       Version.
 	 * @param array<string, mixed> $provider The base product's provider data.
@@ -622,8 +625,6 @@ class PrintifyMockups {
 	 * @param BaseProduct          $base     Base product.
 	 * @param array<string, mixed> $task     Task row.
 	 * @throws PrintifyException When Printify refuses or fails.
-	 * @throws DatabaseException When it cannot be stored.
-	 * @throws DesignerException When a photo is not a valid image.
 	 */
 	private function poll( int $id, array $provider, array $version, BaseProduct $base, array $task ): void {
 		$result = json_decode( (string) ( $task['result'] ?? '' ), true );
@@ -634,8 +635,29 @@ class PrintifyMockups {
 
 		[ $shop, $product ] = explode( ':', (string) $task['task_key'], 2 ) + array( '', '' );
 
-		// A reference colour's photos are only cut against (step 57.21), never stored.
-		$photos   = PrintifyCatalog::photos( $this->api->product( $shop, $product ), $colors + $refs );
+		$stored = array() === array_diff( array_unique( $colors ), $done );
+
+		try {
+			// A reference colour's photos are only cut against (step 57.21), never stored.
+			$photos = PrintifyCatalog::photos( $this->api->product( $shop, $product ), $colors + $refs );
+		} catch ( PrintifyException $e ) {
+			// Every photo is stored and only being cut: an error now only leaves the references out.
+			if ( ! $stored || PrintifyException::RATE_LIMITED === $e->reason() ) {
+				throw $e;
+			}
+
+			$photos = array();
+		}
+
+		if ( $stored ) {
+			if ( $this->cut( $id, $base, $photos, $task, $result ) ) {
+				$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::DONE ) );
+				$this->forget( $this->task( $id ) ?? $task );
+			}
+
+			return;
+		}
+
 		$attempts = (int) $task['attempts'] + 1;
 
 		if ( array() === $photos ) {
@@ -707,17 +729,7 @@ class PrintifyMockups {
 			$this->tasks->update( (int) $task['id'], array( 'result' => (string) wp_json_encode( $result ) ) );
 		}
 
-		if ( array() !== array_diff( array_unique( $colors ), $done ) ) {
-			return;
-		}
-
-		// Every colour is stored: the studio photos are cut out, a few each round (step 57.21).
-		if ( ! $this->cut( $id, $base, $photos, $task, $result ) ) {
-			return;
-		}
-
-		$this->tasks->update( (int) $task['id'], array( 'status' => ProviderTaskRepository::DONE ) );
-		$this->forget( $this->task( $id ) ?? $task );
+		// Once every colour is stored, the next rounds cut the studio photos out (step 57.21).
 	}
 
 	/**
@@ -835,12 +847,21 @@ class PrintifyMockups {
 			}
 
 			$failed = null;
+			$shot   = $shots[ $at ];
+
+			// Counted first: a photo that stops PHP (memory, time) is never tried again.
+			++$at;
+			$result['cut'] = $at;
+			$this->tasks->update( (int) $task['id'], array( 'result' => (string) wp_json_encode( $result ) ) );
 
 			try {
-				$this->cut_one( $id, $shots[ $at ], $shots, $photos, $refs, $hex, $fetched );
+				$this->cut_one( $id, $shot, $shots, $photos, $refs, $hex, $fetched );
 			} catch ( PrintifyException $e ) {
 				if ( PrintifyException::RATE_LIMITED === $e->reason() ) {
 					// The same photo again after Retry-After (run()).
+					$result['cut'] = $at - 1;
+					$this->tasks->update( (int) $task['id'], array( 'result' => (string) wp_json_encode( $result ) ) );
+
 					throw $e;
 				}
 
@@ -859,10 +880,6 @@ class PrintifyMockups {
 					)
 				);
 			}
-
-			++$at;
-			$result['cut'] = $at;
-			$this->tasks->update( (int) $task['id'], array( 'result' => (string) wp_json_encode( $result ) ) );
 		}
 
 		return true;
@@ -903,7 +920,7 @@ class PrintifyMockups {
 			return;
 		}
 
-		// The farthest colour with the same view: a stored photo, else a reference colour's.
+		// The farthest colour with the same view whose photo is there: a stored one, else a reference colour's.
 		$reference = null;
 		$far       = self::CONTRAST - 1;
 
@@ -915,10 +932,11 @@ class PrintifyMockups {
 			}
 
 			$distance = self::distance( $hex[ $color ] ?? null, $hex[ $other_color ] ?? null );
+			$found    = $distance > $far ? $this->stored_file( $id, (string) ( $other['key'] ?? '' ), $other_color ) : null;
 
-			if ( $distance > $far ) {
+			if ( null !== $found ) {
 				$far       = $distance;
-				$reference = array( 'file' => $this->stored_file( $id, (string) ( $other['key'] ?? '' ), $other_color ) );
+				$reference = array( 'file' => $found );
 			}
 		}
 
@@ -941,11 +959,14 @@ class PrintifyMockups {
 			$other                          = $fetched[ $reference['url'] ];
 		}
 
-		if ( null === $other && self::light( $hex[ $color ] ?? null ) ) {
+		// A light colour is only cut against a reference cutout() can use.
+		$light = self::light( $hex[ $color ] ?? null, ImageProbe::backdrop_of( $bytes ) );
+
+		if ( $light && null === $other ) {
 			return;
 		}
 
-		$png = ImageProbe::cutout( $bytes, $other );
+		$png = ImageProbe::cutout( $bytes, $other, $light );
 
 		if ( null === $png ) {
 			return;
@@ -1030,12 +1051,17 @@ class PrintifyMockups {
 	}
 
 	/**
-	 * Whether a colour is light (LIGHT from white); an unknown one is.
+	 * Whether a colour is light: LIGHT from white or from the photo's
+	 * backdrop (any light grey); an unknown one is.
 	 *
-	 * @param string|null $hex `#rrggbb`.
+	 * @param string|null $hex      `#rrggbb`.
+	 * @param string|null $backdrop The photo's backdrop `#rrggbb`, when known.
 	 */
-	private static function light( ?string $hex ): bool {
-		return null === $hex || 1 !== preg_match( '/^#[0-9a-f]{6}$/i', $hex ) || self::distance( $hex, '#ffffff' ) <= self::LIGHT;
+	private static function light( ?string $hex, ?string $backdrop = null ): bool {
+		return null === $hex
+			|| 1 !== preg_match( '/^#[0-9a-f]{6}$/i', $hex )
+			|| self::distance( $hex, '#ffffff' ) <= self::LIGHT
+			|| ( null !== $backdrop && self::distance( $hex, $backdrop ) <= self::LIGHT );
 	}
 
 	/**

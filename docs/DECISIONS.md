@@ -7391,10 +7391,17 @@ Katalogets billeder (`/catalog/blueprints/{id}.json`) er en liste med 1–428 UR
   - Et ark med linjer får 200 px (af 1000) fri plads under sig til tegningerne. Uden plads (mobil) bliver tegningerne mindre, ned til 24 px.
   - En tegning kræver en ensfarvet baggrund. Ellers, og for grundprodukter importeret før, vises fotoet med navnet.
 - **Butiksbilleder uden baggrund (trin 57.21, projektejerens ønske 2026-11-24: "hvid baggrund vil være et problem"; kun butiksbillederne):**
-  - Afprøvning 5 viste, at Printify ikke kan levere gennemsigtige mockups: en `.png`-URL giver det samme foto, helt uigennemsigtigt. Derfor skærer serveren selv studiefotoene ud med browserens regel fra ADR-114 (`ImageProbe::cutout`), når alle farver er hentet. Det sker en runde ad gangen med højst 15 s pr. runde.
-  - Miljøfotos skæres aldrig.
-  - En pixel fjernes kun, hvor samme visning i en farve langt væk (mindst 100 i RGB-afstand) også viser baggrund. Ellers forsvinder en hvid trøje på hvid baggrund; på det rigtige foto blev den næsten helt gennemsigtig alene.
-  - En lys farve skæres aldrig alene. Mangler den en fjern farve blandt de valgte, får det midlertidige produkt grundproduktets fjerneste farve, kun til sammenligning. Findes der ingen, beholdes Printifys foto.
+  - Afprøvning 5 viste, at Printify ikke kan levere gennemsigtige mockups: en `.png`-URL giver det samme foto, helt uigennemsigtigt. Derfor skærer serveren selv studiefotoene ud med browserens regel fra ADR-114 (`ImageProbe::cutout`), når alle farver er hentet.
+  - Der skæres et foto ad gangen, så længe en runde har tid. Det første foto i en runde skæres altid, og efter 15 s fortsætter næste runde. Tælleren gemmes, før et foto skæres, så et foto, der får PHP til at stoppe, ikke prøves igen. Fotos over 2048 × 2048 eller over hukommelsesgrænsen bliver ikke skåret.
+  - Kun fotos på en lys, ensfarvet baggrund (`studio()`) skæres. Det gælder både sidens visning og de ekstra visninger, også en model på hvid baggrund. Fotos i et rum eller på farvet baggrund er uændrede.
+  - Reference:
+    - En pixel fjernes kun, hvor samme visning i den farve, der ligger længst væk (mindst 100 i RGB-afstand), også viser baggrund.
+    - Ellers forsvinder en hvid trøje på hvid baggrund; på det rigtige foto blev den næsten helt gennemsigtig alene.
+    - En mørk farve uden en fjern farve skæres alene.
+  - En lys farve skæres aldrig alene. Lys betyder højst 80 fra hvid eller fra fotoets baggrund, eller en ukendt farve.
+    - Mangler den en fjern farve blandt de valgte, får det midlertidige produkt grundproduktets fjerneste farve, kun til sammenligning.
+    - Findes der ingen, eller kan referencen ikke bruges, fx fordi den har en anden størrelse, beholdes Printifys foto.
+  - Fejler Printify, mens der skæres, bruges kun de gemte farver som reference. Godkendelsen fejler ikke af den grund.
   - Grænse, accepteret: baggrund, som varen omslutter, fx hullet i flaskens hank, bliver stående som i browseren.
   - Importens fotos og creatorens forhåndsvisning er uændrede.
 

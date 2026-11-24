@@ -473,8 +473,8 @@ export class ClipartPictures {
 	}
 
 	/**
-	 * How wide an image's picture is against its full size: below 1 while a
-	 * colour is dragged, so the canvas shows it as large (step 57.20).
+	 * An image's picture against its full size, across and down: below 1
+	 * while a colour is dragged, so the canvas shows it as large (step 57.20).
 	 *
 	 * @param object  The image.
 	 * @param lookup  Assets by id.
@@ -488,7 +488,7 @@ export class ClipartPictures {
 		hard: boolean,
 		threads: readonly DesignerThread[] | null,
 		longest: number | null
-	): number {
+	): { readonly x: number; readonly y: number } {
 		const art = artOf( lookup( object.asset ) );
 		const pixels = this.entry(
 			object,
@@ -499,8 +499,8 @@ export class ClipartPictures {
 		)?.pixels;
 
 		return art === null || pixels === null || pixels === undefined
-			? 1
-			: pixels.width / art.width;
+			? { x: 1, y: 1 }
+			: { x: pixels.width / art.width, y: pixels.height / art.height };
 	}
 
 	/**
@@ -541,8 +541,10 @@ export class ClipartPictures {
 			longest === null
 				? 1
 				: Math.min( 1, longest / Math.max( art.width, art.height ) );
+		const known = this.drawn.get( key );
 
-		if ( scale < 1 ) {
+		// Only the clipart whose colour changes is drawn small; the others keep their full pictures.
+		if ( scale < 1 && known === undefined ) {
 			const liveKey = `${ key }|${ longest }`;
 
 			if ( this.live?.key !== liveKey ) {
@@ -562,8 +564,6 @@ export class ClipartPictures {
 
 			return this.live.made;
 		}
-
-		const known = this.drawn.get( key );
 
 		if ( known !== undefined ) {
 			// Most recently used last.

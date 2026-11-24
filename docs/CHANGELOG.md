@@ -28,7 +28,7 @@ Fase 57 (ADR-122). Ingen schemaændring. Reviewet; runtime-testen sker på stg.
   - mens man trækker, tegnes clipartet i skærmstørrelse (22 ms mod 245 ms før);
   - når man slipper, tegnes det én gang i fuld størrelse;
   - de tegnede billeder fylder højst 256 MB.
-- **Printifys butiksbilleder uden baggrund (fase 57):** Printifys studiefotos af et indsendt design gemmes nu som PNG uden den hvide baggrund. Miljøfotos er uændrede.
+- **Printifys butiksbilleder uden baggrund (fase 57):** Printifys studiefotos af et indsendt design, altså fotos på en lys, ensfarvet baggrund, gemmes nu som PNG uden baggrunden. Fotos i et rum eller på farvet baggrund er uændrede.
   - Printify kan ikke selv levere dem uden baggrund, så serveren skærer dem ud med samme regel som browseren.
   - En lys vare sammenlignes med samme foto i en mørk farve, så en hvid trøje ikke forsvinder. Om nødvendigt laver Printify en mørk farve, kun til sammenligning.
   - Godkendelsen venter, til alle fotos er skåret ud.

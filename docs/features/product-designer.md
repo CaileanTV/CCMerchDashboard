@@ -160,10 +160,14 @@ Med en butik i `merchboard_designer_printify_shop` giver `PrintifyCatalog::choic
 
   En pixel fjernes kun, hvis den også er baggrund i den anden farve.
 - **I mockup-jobbet:** `PrintifyMockups::store()` gemmer hvert fotos kameranavn i opgavens `shots`.
-  - Når alle farver er hentet, skærer `cut()` dem ét ad gangen, højst 15 s pr. runde (`cut` tæller). Først derefter er opgaven færdig.
-  - `cut_one()` sammenligner med den gemte farve, der ligger længst væk, mindst 100 i RGB-afstand.
-  - En lys farve (højst 80 fra hvid, eller ukendt) skæres aldrig alene. Har den ingen valgt farve langt væk, får det midlertidige produkt grundproduktets fjerneste farve som ekstra variant (`refs`). Den bruges kun til sammenligning, og dens fotos gemmes aldrig.
-  - Mislykkes en udskæring, bevares fotoet. En 429 venter på `Retry-After`.
+  - Runden efter den sidste farve skærer `cut()` dem ét ad gangen, så længe der er tid. Efter 15 s går resten videre til næste runde.
+  - Tælleren `cut` gemmes, før et foto skæres. Først når alle fotos er skåret, er opgaven færdig.
+  - Fejler Printify i en udskæringsrunde (ikke 429), springes kun referencerne over.
+  - `cut_one()` sammenligner med den farve, der ligger længst væk (mindst 100 i RGB-afstand), og hvis foto findes: en gemt farve eller en reference.
+  - En lys farve (højst 80 fra hvid eller fra fotoets baggrund, eller ukendt) skæres aldrig alene. `cutout( …, $require )` afviser også en reference, der ikke kan bruges.
+  - Har en lys farve ingen valgt farve langt væk, får det midlertidige produkt grundproduktets fjerneste farve som ekstra variant (`refs`). Den bruges kun til sammenligning, og dens fotos gemmes aldrig.
+  - Mislykkes en udskæring, bevares fotoet. En 429 venter på `Retry-After` og prøver det samme foto igen.
+  - `cutout()` springer fotos over 2048 × 2048 pixels over, og ligeså fotos, der ville kræve mere hukommelse, end PHP har tilbage (cirka 24 byte pr. pixel).
 - **Gennemsigtig PNG:** resultatet gemmes som `mockup.png`. `DesignerMedia` sætter `_merchboard_transparent`, når designet godkendes, og reklamen og panelet bruger billedet uden flere ændringer.
 
 ## Farvefotos i portioner (2026-11-01, eksperimentel)

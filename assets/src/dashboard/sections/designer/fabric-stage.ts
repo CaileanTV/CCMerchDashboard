@@ -83,10 +83,13 @@ export interface ImageResolver {
 		object: ImageObject
 	) => HTMLCanvasElement | null | undefined;
 	/**
-	 * The picture's width against the full size: below 1 for a smaller one
-	 * drawn while a colour is dragged (step 57.20); 1 without.
+	 * The picture against the full size, across and down: below 1 for a
+	 * smaller one drawn while a colour is dragged (step 57.20); 1 without.
 	 */
-	readonly ratio?: ( object: ImageObject ) => number;
+	readonly ratio?: ( object: ImageObject ) => {
+		readonly x: number;
+		readonly y: number;
+	};
 	/**
 	 * How an image may be changed on the canvas: only sideways (a locked
 	 * clipart) or only evenly (one with parts); null for any way.
@@ -97,7 +100,10 @@ export interface ImageResolver {
 }
 
 /** A Fabric object with its design object's id and, for a smaller picture, its ratio. */
-type Tagged = FabricObject & { mbId?: string; mbRatio?: number };
+type Tagged = FabricObject & {
+	mbId?: string;
+	mbRatio?: { readonly x: number; readonly y: number };
+};
 
 /**
  * The editor's Fabric canvas.
@@ -555,11 +561,11 @@ async function build(
 
 			if ( drawn !== undefined ) {
 				// A smaller picture is scaled up to the same size (step 57.20).
-				const ratio = resolver?.ratio?.( object ) ?? 1;
+				const ratio = resolver?.ratio?.( object ) ?? { x: 1, y: 1 };
 				const tagged: Tagged = new FabricImage( drawn, {
 					...common( object ),
-					scaleX: object.scaleX / ratio,
-					scaleY: object.scaleY / ratio,
+					scaleX: object.scaleX / ratio.x,
+					scaleY: object.scaleY / ratio.y,
 				} );
 
 				tagged.mbRatio = ratio;
@@ -640,7 +646,7 @@ function readBack( object: DesignObject, shown: Tagged ): DesignObject {
 	const round = ( value: number, digits = 2 ): number =>
 		Number( value.toFixed( digits ) );
 	// A smaller picture's scale is its full size's (step 57.20).
-	const ratio = shown.mbRatio ?? 1;
+	const ratio = shown.mbRatio ?? { x: 1, y: 1 };
 	const geometry = {
 		x: round( shown.left ),
 		y: round( shown.top ),
@@ -651,11 +657,11 @@ function readBack( object: DesignObject, shown: Tagged ): DesignObject {
 		),
 		scaleX: Math.min(
 			100,
-			Math.max( 0.01, round( shown.scaleX * ratio, 4 ) )
+			Math.max( 0.01, round( shown.scaleX * ratio.x, 4 ) )
 		),
 		scaleY: Math.min(
 			100,
-			Math.max( 0.01, round( shown.scaleY * ratio, 4 ) )
+			Math.max( 0.01, round( shown.scaleY * ratio.y, 4 ) )
 		),
 		flipX: shown.flipX,
 		flipY: shown.flipY,

@@ -269,6 +269,23 @@ final class ImageProbeTest extends TestCase {
 
 		// Another colour of another size is ignored: as alone.
 		self::assertNull( ImageProbe::cutout( $white, Photo::png( 200, 150, self::STUDIO, array( array( 30, 20, 140, 120, self::SHIRT ) ) ) ) );
+
+		// A dark shirt is cut alone when its other colour is of no use, unless one is required.
+		$small = Photo::png( 200, 150, self::STUDIO );
+		self::assertNotNull( ImageProbe::cutout( $black, $small ) );
+		self::assertNull( ImageProbe::cutout( $black, $small, true ), 'Required, but of another size.' );
+		self::assertNull( ImageProbe::cutout( $black, 'not an image', true ), 'Required, but unreadable.' );
+		self::assertNotNull( ImageProbe::cutout( $black, $white, true ) );
+	}
+
+	public function test_a_photo_s_backdrop_is_read_and_a_too_large_one_is_not_cut(): void {
+		self::assertSame( '#e6e6e6', ImageProbe::backdrop_of( $this->blank() ) );
+		self::assertNull( ImageProbe::backdrop_of( 'not an image' ) );
+
+		// Above 2048 × 2048 pixels a cut could stop PHP: the photo stays.
+		$large = Photo::png( 2100, 2100, self::STUDIO, array( array( 500, 500, 1000, 1000, self::SHIRT ) ) );
+		self::assertTrue( ImageProbe::studio( $large ) );
+		self::assertNull( ImageProbe::cutout( $large ) );
 	}
 
 	public function test_only_studio_photos_are_cut(): void {

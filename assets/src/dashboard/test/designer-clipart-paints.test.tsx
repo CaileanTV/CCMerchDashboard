@@ -272,6 +272,44 @@ describe( 'the paints of a clipart', () => {
 		).toBe( '#ffffff' );
 	} );
 
+	it( 'ends the angle’s step when a part became a gradient after it was shown (step 57.20)', () => {
+		const { container, root, onBegin, onEnd } = render();
+
+		// The part starts solid, so its angle field comes later.
+		expect( container.querySelector( 'input[type="number"]' ) ).toBeNull();
+
+		act( () => {
+			root.render(
+				<ClipartPaints
+					art={ ART }
+					palette={ null }
+					paints={ [ FILE_GRADIENT, WHITE ] }
+					gradients
+					onChange={ () => undefined }
+					onBegin={ onBegin }
+					onEnd={ onEnd }
+				/>
+			);
+		} );
+
+		const angle = container.querySelector< HTMLInputElement >(
+			'input[type="number"]'
+		)!;
+
+		drag( angle, '45' );
+		expect( onBegin ).toHaveBeenCalledTimes( 1 );
+		expect( angle.value ).toBe( '45' );
+
+		act( () => angle.blur() );
+		act( () => {
+			angle.dispatchEvent( new Event( 'blur' ) );
+		} );
+
+		expect( onEnd ).toHaveBeenCalledTimes( 1 );
+		// Back to what the design holds.
+		expect( angle.value ).toBe( '90' );
+	} );
+
 	it( 'keeps the angle between 0 and 359', () => {
 		const { container, onChange } = render( {
 			paints: [ FILE_GRADIENT, WHITE ],

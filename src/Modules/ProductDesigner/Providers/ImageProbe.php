@@ -92,6 +92,15 @@ final class ImageProbe {
 	private const CUTOUT_KEPT = 0.04;
 
 	/**
+	 * The largest photo cut (2048 × 2048; Printify's are 1200 × 1200 and take
+	 * about a second, 2400 × 2400 took 4 s and 108 MB), and the memory a
+	 * pixel takes while it is cut (measured 15–19 bytes, with room to spare).
+	 */
+	private const CUTOUT_MAX_PIXELS = 4194304;
+
+	private const CUTOUT_BYTES_PER_PIXEL = 24;
+
+	/**
 	 * Whether an image is a PNG with transparent pixels: a product photo
 	 * without background (ADR-114). Judged on a grid of 32 × 32 points; a
 	 * PNG with an alpha channel counts when GD cannot measure.
@@ -192,17 +201,23 @@ final class ImageProbe {
 	 * `$other` is the same view in another colour of the product: a pixel is
 	 * only removed when it is backdrop there too, so a white garment on a
 	 * white backdrop keeps its body where the other colour shows the product.
-	 * A photo of another size is ignored.
+	 * A photo of another size, or one that cannot be read, is ignored, unless
+	 * `$required` (a light product): then nothing is cut.
 	 *
 	 * Null for a photo that is no studio photo (ImageProbe::studio()), cannot
-	 * be read, loses nothing, or would keep less than CUTOUT_KEPT: the photo
-	 * then stays as it is.
+	 * be read, is larger than CUTOUT_MAX_PIXELS or than memory allows, loses
+	 * nothing, or would keep less than CUTOUT_KEPT: the photo then stays as
+	 * it is.
 	 *
-	 * @param string      $bytes The photo.
-	 * @param string|null $other The same view in another colour, or null.
+	 * @param string      $bytes   The photo.
+	 * @param string|null $other   The same view in another colour, or null.
+	 * @param bool        $required Whether nothing is cut without a usable `$other`.
 	 */
-	public static function cutout( string $bytes, ?string $other = null ): ?string {
-		if ( ! self::studio( $bytes ) ) {
+	public static function cutout( string $bytes, ?string $other = null, bool $required = false ): ?string {
+		$size = '' === $bytes ? false : getimagesizefromstring( $bytes );
+
+		// A cut of a large photo could stop PHP (memory or time): such a photo stays as it is.
+		if ( ! is_array( $size ) || $size[0] * $size[1] > self::CUTOUT_MAX_PIXELS || ! self::room_for( $size[0] * $size[1] ) || ! self::studio( $bytes ) ) {
 			return null;
 		}
 
@@ -223,6 +238,10 @@ final class ImageProbe {
 			} catch ( InvalidArgumentException ) {
 				$ref = null;
 			}
+		}
+
+		if ( $required && null === $ref ) {
+			return null;
 		}
 
 		$count = $width * $height;
@@ -274,6 +293,45 @@ final class ImageProbe {
 		$png     = (string) ob_get_clean();
 
 		return $written && '' !== $png ? $png : null;
+	}
+
+	/**
+	 * A photo's backdrop as `#rrggbb` (the median of its edge), or null when
+	 * it cannot be read.
+	 *
+	 * @param string $bytes The photo.
+	 */
+	public static function backdrop_of( string $bytes ): ?string {
+		try {
+			$back = self::backdrop( self::image( $bytes ) );
+		} catch ( InvalidArgumentException ) {
+			return null;
+		}
+
+		return sprintf( '#%02x%02x%02x', $back[0], $back[1], $back[2] );
+	}
+
+	/**
+	 * Whether a cut-out of this many pixels fits in PHP's memory: about
+	 * CUTOUT_BYTES_PER_PIXEL (two decoded photos, the masks and the stack).
+	 *
+	 * @param int $pixels Pixels.
+	 */
+	private static function room_for( int $pixels ): bool {
+		$limit = trim( (string) ini_get( 'memory_limit' ) );
+
+		if ( '' === $limit || '-1' === $limit ) {
+			return true;
+		}
+
+		$unit  = strtolower( substr( $limit, -1 ) );
+		$bytes = (int) $limit * ( array(
+			'g' => 1073741824,
+			'm' => 1048576,
+			'k' => 1024,
+		)[ $unit ] ?? 1 );
+
+		return $bytes <= 0 || memory_get_usage() + $pixels * self::CUTOUT_BYTES_PER_PIXEL <= $bytes;
 	}
 
 	/**
