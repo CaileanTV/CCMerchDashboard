@@ -20,6 +20,7 @@ import {
 import type { FabricObject } from 'fabric';
 
 import type { DesignObject, ImageObject, TextObject } from './design-model';
+import { uprightAngle } from './design-model';
 
 export interface StageView {
 	/** Displayed template width and height in CSS pixels at zoom 1. */
@@ -650,11 +651,7 @@ function readBack( object: DesignObject, shown: Tagged ): DesignObject {
 	const geometry = {
 		x: round( shown.left ),
 		y: round( shown.top ),
-		angle: round(
-			( ( shown.angle % 360 ) + 360 ) % 360 > 180
-				? ( shown.angle % 360 ) - 360
-				: shown.angle % 360
-		),
+		angle: round( uprightAngle( shown.angle ) ),
 		scaleX: Math.min(
 			100,
 			Math.max( 0.01, round( shown.scaleX * ratio.x, 4 ) )

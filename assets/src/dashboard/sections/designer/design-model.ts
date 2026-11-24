@@ -581,6 +581,19 @@ function placed(
 }
 
 /**
+ * An angle as stored: within -180 to 180 degrees, as the server takes it
+ * (-360 to 360). Fabric's angle can be any number: -24° before gave -384°
+ * and the design could not be saved (2.5.2).
+ *
+ * @param angle Degrees.
+ */
+export function uprightAngle( angle: number ): number {
+	const turned = ( ( angle % 360 ) + 360 ) % 360;
+
+	return turned > 180 ? turned - 360 : turned;
+}
+
+/**
  * A new text in the middle.
  *
  * @param printWidth  Print file width.
