@@ -1816,6 +1816,19 @@ Creatoren skriver selv en takkebesked til sine kunder i dashboardet, og beskeden
   - Skal creatoren kunne slå beskeden fra?
   - Hvordan henter følgeseddel-pluginet teksten? Fx et filter, en hook eller et REST-endpoint, så Merch Dashboard aldrig skriver i det andet plugin.
 
+## Fase 59 – Standardvariant ud fra hovedbilledet 📝 (projektejerens ønske 2026-11-24; kun noteret, ikke planlagt)
+
+Et nyt designerprodukt får forudvalgt farve og størrelse i butikken, så kunden ser den variant, hovedbilledet viser.
+
+- **Farve:** den farve, creatorens valgte hovedbillede har. Fx giver "Magenta – Venstre side" magenta som forvalgt farve.
+- **Størrelse:** har produktet kun én størrelse, fx vandflasker, er den forudvalgt.
+- **I dag:** pluginet sætter ingen standardvariant på produkterne. Der er intet i koden.
+- **Åbne spørgsmål til planen:**
+  - Hvilken størrelse forudvælges, når der er flere: ingen, den første, eller en midterstørrelse som M?
+  - Skal standardvarianten følge med, når creatoren senere skifter hovedbillede på et produkt, der allerede er i butikken?
+  - Skal eksisterende designerprodukter opdateres én gang, eller gælder det kun nye og ændrede?
+  - Hvordan håndteres et produkt med flere egenskaber end farve og størrelse, fx Gelatos formater eller Printfuls valg?
+
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
 - **M1** long-poll-pladser og grænse pr. besøgsadresse på overlay-feedene. ✅
