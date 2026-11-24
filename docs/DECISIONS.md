@@ -7404,6 +7404,15 @@ Katalogets billeder (`/catalog/blueprints/{id}.json`) er en liste med 1–428 UR
   - Fejler Printify, mens der skæres, bruges kun de gemte farver som reference. Godkendelsen fejler ikke af den grund.
   - Grænse, accepteret: baggrund, som varen omslutter, fx hullet i flaskens hank, bliver stående som i browseren.
   - Importens fotos og creatorens forhåndsvisning er uændrede.
+- **Hovedbilledet vælges blandt leverandørens mockups (trin 57.22):** projektejeren sendte 2026-11-24 et skærmbillede af "Primært produktbillede i shoppen" for flasken. Dialogen viste kun det flade ark, og projektejeren valgte "rigtige mockups".
+  - **I dialogen:** for et grundprodukt med leverandørens forhåndsvisning (Printful eller Printify, uden scener tegnet i browseren) henter dialogen leverandørens mockups af kladden, én farve ad gangen, som "Se det færdige produkt" gør. Hver farve tæller én i dagskvoten. Creatoren vælger farve og visning.
+  - **Gemte nøgler:**
+    - Et Printify-valg gemmes som `_view-<kamera>:<farve>`, kamera højst 24 tegn. Når alle fotos er hentet og skåret, slår mockup-jobbet kameraet op i opgavens `shots` og skriver valget om til fotoets egen nøgle: siden eller `_scene-N`.
+    - Et Printful-valg er allerede den gemte nøgle (`_photo-<stil>` eller siden).
+  - **Når noget mangler:** findes visningen ikke, viser butikken farvens første billede som før. `_view-` kan ikke vælges på et produkt, der allerede er i butikken.
+  - **Navne:** creatoren ser kameraets navn (Forside, Bagside, Venstre side, Højre side) eller "Produktfoto n", aldrig leverandørens.
+  - **Kun visninger, butikken får:** de afkrydsede, og ikke en sides egen visning, når designet ikke bruger siden. Et tomt valg betyder nu "ingen" både her og ved indsendelse.
+  - **Fejl og kvote:** fejler hentningen, eller er kvoten brugt, vises de tegnede billeder som før. Indsendelsen blokeres aldrig.
 
 ## Alternatives considered
 - **Kun katalogets billeder, valgt af admin:** kræver ingen skriveadgang, men printfeltet skal stadig tegnes i hånden. Fravalgt af projektejeren 2026-11-23.

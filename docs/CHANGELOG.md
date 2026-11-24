@@ -32,6 +32,11 @@ Fase 57 (ADR-122). Ingen schemaændring. Reviewet; runtime-testen sker på stg.
   - Printify kan ikke selv levere dem uden baggrund, så serveren skærer dem ud med samme regel som browseren.
   - En lys vare sammenlignes med samme foto i en mørk farve, så en hvid trøje ikke forsvinder. Om nødvendigt laver Printify en mørk farve, kun til sammenligning.
   - Godkendelsen venter, til alle fotos er skåret ud.
+- **Hovedbilledet blandt de rigtige fotos (fase 57):** når et design sendes til godkendelse, viser "Primært produktbillede i shoppen" nu de rigtige fotos af designet fra Printify eller Printful, ikke kun de tegnede billeder (for flasken det flade ark).
+  - Creatoren vælger farve og visning: forside, bagside, venstre side, højre side eller miljø. Det valgte foto bliver butikkens hovedbillede.
+  - Hver farve tæller i dagskvoten. Kan fotoene ikke laves, vises de tegnede billeder som før.
+- **Se det færdige produkt:** billederne har nu visningens navn.
+- **Tests:** unit-testene får 512 MB lokalt, fordi billedtestene en gang imellem løb tør for PHP's standard på 128 MB. CI havde ingen grænse.
 
 ## [2.5.0] - 2026-11-23
 

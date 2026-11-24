@@ -288,6 +288,14 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
     - send et design ind i kun hvid: Printify laver også en mørk farve til sammenligning, men den kommer ikke i butikken;
     - reklamen og panelet viser produktet uden firkant;
     - Printify-butikken er tom bagefter.
+14. **Hovedbilledet blandt de rigtige fotos (trin 57.22):**
+    - lav et design på flasken i to farver, og tryk "Send til godkendelse";
+    - under "Primært produktbillede i shoppen" står "Vi laver billeder af dit design i …". Efter under et minut viser dialogen flaskens fotos med navnene Forside, Venstre side, Højre side, Bagside og eventuelt miljø;
+    - tryk på den anden farve: dens fotos hentes én gang;
+    - vælg fx "Magenta – Venstre side", og send;
+    - efter godkendelsen er netop det foto butikkens hovedbillede, uden baggrund;
+    - det samme med et Printful-produkt med valgte fotos;
+    - Printify-butikken er tom bagefter.
 
 **Tilbagerulning:** installér 2.5.0-ZIP'en igen. Butiks-id'et bliver liggende uden at blive brugt, og grundprodukter importeret i 2.5.1 beholder deres fotos.
 
