@@ -495,7 +495,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 ### Fase 58 – Creatorens takkebesked på følgesedlen (plan godkendt 2026-11-25; version 2.6.0)
 
-- [ ] Trin 58.1–58.4: takkebesked i Profil og filteret `merchboard_packing_slip_notes` til følgeseddel-pluginet.
+- [x] Trin 58.1–58.4: takkebesked i Profil og filteret `merchboard_packing_slip_notes` til følgeseddel-pluginet (428ba83, ADR-123).
 
 ### Fase 60 – Placering og vinkel i designeren (plan godkendt 2026-11-25; version 2.6.0)
 

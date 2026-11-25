@@ -1802,7 +1802,7 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - kameranavnene Miljø n og Model n står på dansk;
     - Printful bruger aldrig en anden farve end den valgte.
 
-## Fase 58 – Creatorens takkebesked på følgesedlen 🔄 (projektejerens ønske 2026-11-24; plan godkendt 2026-11-25; version 2.6.0 sammen med fase 59 og 60)
+## Fase 58 – Creatorens takkebesked på følgesedlen ✅ (projektejerens ønske 2026-11-24; plan godkendt 2026-11-25; version 2.6.0 sammen med fase 59 og 60)
 
 Creatoren skriver selv en takkebesked til sine kunder i dashboardet, og beskeden kommer med på følgesedlen til ordren.
 
@@ -1811,13 +1811,13 @@ Projektejerens valg 2026-11-25:
 - ingen godkendelse;
 - Merch Dashboard giver et offentligt filter, som projektejerens nye følgeseddel-plugin kalder.
 
-- **58.1 Data og API:**
-  - Creator-meta `thank_you_note` med `{enabled, text}`. Teksten er højst 300 tegn, ren tekst med linjeskift.
+- **58.1 Data og API** ✅ (428ba83):
+  - Creator-meta `thank_you_note` med `{enabled, text}`. Teksten er højst 300 tegn og 6 linjer, ren tekst med linjeskift. Links afvises, fordi beskeden trykkes på papir.
   - `GET/POST /me/thank-you-note`.
   - Audit `thank_you_note_changed`, som kun registrerer de felter, der er ændret.
-- **58.2 Dashboardet:** kortet "Takkebesked på følgesedlen" i Profil med til/fra og tegntæller.
-- **58.3 Filteret:** `apply_filters( 'merchboard_packing_slip_notes', array(), $order )` giver `{ creator_id, name, text }` for hver aktiv creator i ordren, der har beskeden slået til. Samlingsprodukter springes over.
-- **58.4 Tests og docs**, inklusive et kodeeksempel til følgeseddel-pluginet.
+- **58.2 Dashboardet** ✅ (428ba83): kortet "Takkebesked på følgesedlen" i Profil med til/fra og tegntæller.
+- **58.3 Filteret** ✅ (428ba83, ADR-123): `apply_filters( 'merchboard_packing_slip_notes', array(), $order )` giver `{ creator_id, name, text }` for hver aktiv creator i ordren, der har beskeden slået til. Samlingsprodukter springes over, og en fejl giver ingen beskeder i stedet for en fejl på følgesedlen.
+- **58.4 Tests og docs** ✅ (428ba83): unit-tests af filteret, integration af REST og audit, Jest af kortet og [features/thank-you-note.md](features/thank-you-note.md) med et kodeeksempel til følgeseddel-pluginet.
 
 ## Fase 59 – Standardvariant ud fra hovedbilledet ✅ (projektejerens ønske 2026-11-24; plan godkendt 2026-11-25; version 2.6.0)
 
@@ -1839,7 +1839,7 @@ Projektejerens valg 2026-11-25:
 - **59.3 Når creatoren skifter hovedbillede** ✅ (3f81e18) på et produkt i butikken, følger den forudvalgte farve med. Eksisterende produkter opdateres ved næste godkendelse eller næste skift af hovedbillede.
 - **59.4 Tests** ✅ (3f81e18): writeren og valget af variant (unit), migration 56, grundproduktets felter og godkendelsen (integration i CI).
 
-## Fase 60 – Placering og vinkel i designeren 🔄 (projektejerens ønske 2026-11-24; plan godkendt 2026-11-25; version 2.6.0)
+## Fase 60 – Placering og vinkel i designeren ✅ (projektejerens ønske 2026-11-24; plan godkendt 2026-11-25; version 2.6.0)
 
 Creatoren skal kunne placere og dreje et element præcist uden at trække.
 
