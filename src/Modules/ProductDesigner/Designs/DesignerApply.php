@@ -24,6 +24,7 @@ use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerContent;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerDefaults;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerImages;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
 use MerchBoard\Modules\ProductDesigner\Shop\GuardedProduct;
@@ -294,6 +295,9 @@ class DesignerApply {
 
 		$category = array_map( static fn( $category ): int => $category->term_id, $this->categories->for_creator( $creator_id ) );
 		$category = array() !== $category ? array( min( $category ) ) : ( null === $base->category_id ? array() : array( $base->category_id ) );
+		$in_order = self::in_base_order( is_array( $sizes ) ? array_values( array_filter( $sizes, 'is_string' ) ) : array(), $base );
+		// Phase 59: what the shop shows first.
+		$defaults = DesignerDefaults::of( $base, $chosen, $in_order, is_string( $version['primary_image'] ?? null ) ? $version['primary_image'] : null );
 
 		return new DesignerContent(
 			(string) $version['title'],
@@ -306,7 +310,7 @@ class DesignerApply {
 				),
 				$colors
 			),
-			self::in_base_order( is_array( $sizes ) ? array_values( array_filter( $sizes, 'is_string' ) ) : array(), $base ),
+			$in_order,
 			$images,
 			$first,
 			$price,
@@ -320,7 +324,9 @@ class DesignerApply {
 			// The base product's product tags; tags set by hand stay (ADR-100).
 			$base->tag_ids,
 			// A Gelato template's first axis, e.g. "Orientation" (ADR-115).
-			null === $base->id ? '' : ( $this->bases->provider( $base->id )['axes']['color'] ?? '' )
+			null === $base->id ? '' : ( $this->bases->provider( $base->id )['axes']['color'] ?? '' ),
+			$defaults['color'],
+			$defaults['size']
 		);
 	}
 

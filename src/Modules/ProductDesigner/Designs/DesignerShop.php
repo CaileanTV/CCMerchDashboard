@@ -18,6 +18,7 @@ use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\ProductDesigner\Bases\BaseProductRepository;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\Files\DesignerFiles;
+use MerchBoard\Modules\ProductDesigner\Shop\DesignerDefaults;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerImages;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerMedia;
 use MerchBoard\Modules\ProductDesigner\Shop\DesignerProductGuard;
@@ -203,6 +204,9 @@ class DesignerShop {
 				}
 			);
 			$this->writer->set_images( $proof, DesignerImages::order( $base, $colors, array_keys( $files['mockups'] ), $media, $image )['images'] );
+			// Phase 59: the colour shown first follows the main image, unless the base product fixes one.
+			$shown = DesignerDefaults::color( $base, $colors, $image );
+			$this->writer->set_default_color( $proof, '' === $shown ? '' : (string) ( array_column( $base->colors, 'name', 'key' )[ $shown ] ?? '' ) );
 		} finally {
 			$this->products->unlock_product( $product );
 		}

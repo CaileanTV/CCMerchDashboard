@@ -28,7 +28,7 @@ class BaseProductRepository {
 	 */
 	public const CAMERA = '/^[a-z0-9_-]{1,40}$/D';
 
-	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price, creator_note, size_prices, small_side_price, background_color, tag_ids';
+	private const COLUMNS = 'id, status, source, name, description, base_price, currency, category_id, colors, sizes, views, version, extra_side_price, creator_note, size_prices, small_side_price, background_color, tag_ids, default_color, default_size';
 
 	/**
 	 * The integer columns; every other column is a string or NULL.
@@ -540,6 +540,8 @@ class BaseProductRepository {
 			'small_side_price' => SalesAmount::format( $base->small_side_units ),
 			'background_color' => $base->background_color ? 1 : 0,
 			'tag_ids'          => array() === $base->tag_ids ? null : (string) wp_json_encode( $base->tag_ids ),
+			'default_color'    => $base->default_color,
+			'default_size'     => $base->default_size,
 		);
 	}
 
@@ -630,7 +632,9 @@ class BaseProductRepository {
 				self::size_prices( $row['size_prices'] ?? null ),
 				SalesAmount::parse( (string) ( $row['small_side_price'] ?? '0' ) ),
 				1 === (int) ( $row['background_color'] ?? 0 ),
-				self::tag_ids( $row['tag_ids'] ?? null )
+				self::tag_ids( $row['tag_ids'] ?? null ),
+				(string) ( $row['default_color'] ?? '' ),
+				(string) ( $row['default_size'] ?? '' )
 			);
 		} catch ( InvalidArgumentException ) {
 			throw new DatabaseException( 'Invalid base product row.' );

@@ -43,6 +43,8 @@ final readonly class DesignerContent {
 	 * @param array<string, array<string, int>>       $color_prices Customer's price by colour key and size; empty unless colours have designs of their own (ADR-096).
 	 * @param int[]|null                              $tag_ids      The base product's product tags (ADR-100); null leaves the tags alone.
 	 * @param string                                  $color_label  The first axis's attribute name, e.g. "Orientation" (ADR-115); '' for "Colour".
+	 * @param string                                  $default_color The colour key the product shows first (phase 59); '' for none.
+	 * @param string                                  $default_size  The size it shows first; '' for none.
 	 */
 	public function __construct(
 		public string $name,
@@ -59,7 +61,9 @@ final readonly class DesignerContent {
 		public array $size_images = array(),
 		public array $color_prices = array(),
 		public ?array $tag_ids = null,
-		public string $color_label = ''
+		public string $color_label = '',
+		public string $default_color = '',
+		public string $default_size = ''
 	) {
 	}
 }

@@ -527,7 +527,7 @@ class BaseProductService {
 				}
 			}
 
-			$changed = new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color, $base->tag_ids );
+			$changed = new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color, $base->tag_ids, $base->default_color, $base->default_size );
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_VIEW );
 		}
@@ -1143,11 +1143,25 @@ class BaseProductService {
 				$small,
 				// Left out keeps it (e.g. a save without the admin form's tick).
 				isset( $fields['background_color'] ) ? '1' === (string) $fields['background_color'] : ( $existing->background_color ?? false ),
-				$tags
+				$tags,
+				// Phase 59: a fixed default colour and size, kept when left out; one the product no longer has is none.
+				self::default_of( $fields['default_color'] ?? $existing->default_color ?? '', array_column( $colors, 'key' ) ),
+				self::default_of( $fields['default_size'] ?? $existing->default_size ?? '', $sizes )
 			);
 		} catch ( InvalidArgumentException ) {
 			self::reject( BaseProduct::ACTIVE === ( $existing->status ?? '' ) ? DesignerException::BASE_INCOMPLETE : DesignerException::BASE_VIEW );
 		}
+	}
+
+	/**
+	 * A fixed default (phase 59): one of the base product's colour keys or
+	 * sizes, else '' (none).
+	 *
+	 * @param mixed    $value   The value given or kept.
+	 * @param string[] $offered The colour keys or sizes.
+	 */
+	private static function default_of( mixed $value, array $offered ): string {
+		return is_string( $value ) && in_array( $value, $offered, true ) ? $value : '';
 	}
 
 	/**
@@ -1159,7 +1173,7 @@ class BaseProductService {
 	 */
 	private function with_status( BaseProduct $base, string $status ): BaseProduct {
 		try {
-			return new BaseProduct( $base->id, $status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $base->views, $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color, $base->tag_ids );
+			return new BaseProduct( $base->id, $status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $base->views, $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color, $base->tag_ids, $base->default_color, $base->default_size );
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_INCOMPLETE );
 		}
@@ -1181,7 +1195,7 @@ class BaseProductService {
 			$side  = $view->with_layers( $layers );
 			$views = array_map( static fn( BaseView $other ): BaseView => $other->key === $side->key ? $side : $other, $base->views );
 
-			return new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $new_version ? $base->version + 1 : $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color, $base->tag_ids );
+			return new BaseProduct( $base->id, $base->status, $base->source, $base->name, $base->description, $base->base_units, $base->currency, $base->category_id, $base->colors, $base->sizes, $views, $new_version ? $base->version + 1 : $base->version, $base->extra_side_units, $base->note, $base->size_prices, $base->small_side_units, $base->background_color, $base->tag_ids, $base->default_color, $base->default_size );
 		} catch ( InvalidArgumentException ) {
 			self::reject( DesignerException::BASE_VIEW );
 		}
@@ -1396,6 +1410,9 @@ class BaseProductService {
 			'small_sides'      => array( self::small_sides( $before->views ), self::small_sides( $after->views ) ),
 			'category_id'      => array( $before->category_id, $after->category_id ),
 			'tag_ids'          => array( $before->tag_ids, $after->tag_ids ),
+			// Phase 59: what the shop shows first; no new version.
+			'default_color'    => array( $before->default_color, $after->default_color ),
+			'default_size'     => array( $before->default_size, $after->default_size ),
 			'colors'           => array( $before->colors, $after->colors ),
 			'sizes'            => array( $before->sizes, $after->sizes ),
 			'views'            => array( self::templates( $before->views ), self::templates( $after->views ) ),

@@ -472,6 +472,24 @@ final class BaseProductsPage {
 		/* translators: %s: currency code, e.g. "DKK". */
 		echo '<tr><th scope="row"><label for="merchboard-base-price">' . esc_html( sprintf( __( 'Base price incl. VAT (%s)', 'merchboard' ), $this->currency ) ) . '</label></th><td><input type="text" inputmode="decimal" id="merchboard-base-price" name="base_price" required value="' . esc_attr( null === $base ? '' : $this->money( $base->base_units ) ) . '"><p class="description">' . esc_html__( 'What the company keeps per unit outside its own campaigns, with one design area included. Creators add their profit on top.', 'merchboard' ) . '</p></td></tr>';
 		echo '<tr><th scope="row">' . esc_html__( 'Background colour (AOP)', 'merchboard' ) . '</th><td><label><input type="checkbox" name="background_color" value="1"' . checked( $base->background_color ?? false, true, false ) . '> ' . esc_html__( 'Creators can give the design a background colour', 'merchboard' ) . '</label><p class="description">' . esc_html__( 'For all-over products such as jerseys: the colour fills the whole print area of each side under the design, also in the print file. A side with only a colour is printed but costs nothing extra. Embroidered sides have no background.', 'merchboard' ) . '</p></td></tr>';
+		// Phase 59: what a designer product shows first in the shop; only once the base product has colours and sizes.
+		if ( null !== $base && null !== $base->id && array() !== $base->colors && array() !== $base->sizes ) {
+			echo '<tr><th scope="row">' . esc_html__( 'Preselected in the shop', 'merchboard' ) . '</th><td><input type="hidden" name="defaults_shown" value="1">';
+			echo '<label for="merchboard-base-default-color">' . esc_html__( 'Colour', 'merchboard' ) . '</label> <select id="merchboard-base-default-color" name="default_color"><option value="">' . esc_html__( 'The colour of the main image', 'merchboard' ) . '</option>';
+
+			foreach ( $base->colors as $color ) {
+				echo '<option value="' . esc_attr( $color['key'] ) . '"' . selected( $base->default_color, $color['key'], false ) . '>' . esc_html( $color['name'] ) . '</option>';
+			}
+
+			echo '</select> <label for="merchboard-base-default-size">' . esc_html__( 'Size', 'merchboard' ) . '</label> <select id="merchboard-base-default-size" name="default_size"><option value="">' . esc_html__( 'None (the customer chooses)', 'merchboard' ) . '</option>';
+
+			foreach ( $base->sizes as $size ) {
+				echo '<option value="' . esc_attr( $size ) . '"' . selected( $base->default_size, $size, false ) . '>' . esc_html( $size ) . '</option>';
+			}
+
+			echo '</select><p class="description">' . esc_html__( 'The variant a creator\'s product shows first. Without a fixed colour it is the colour of the creator\'s main image; a product with one size always shows it. A colour or size the creator did not choose is not preselected.', 'merchboard' ) . '</p></td></tr>';
+		}
+
 		// ADR-118: on a base product with formats (a poster), whether they can share one design.
 		if ( null !== $base && null !== $base->id && array() !== array_filter( $base->views, static fn( BaseView $view ): bool => array() !== $view->formats ) ) {
 			$share = $this->bases->provider( (int) $base->id )['share_formats'] ?? true;

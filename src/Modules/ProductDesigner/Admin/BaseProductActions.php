@@ -137,6 +137,12 @@ final class BaseProductActions {
 					}
 
 					$fields['background_color'] = '1' === $text( 'background_color' ) ? '1' : '0';
+
+					// Phase 59: only a form that shows the defaults changes them; left out keeps them.
+					if ( '1' === $text( 'defaults_shown' ) ) {
+						$fields['default_color'] = $text( 'default_color' );
+						$fields['default_size']  = $text( 'default_size' );
+					}
 					// The ticked product tags (ADR-100); none ticked removes them all.
 					$fields['tag_ids']     = (string) wp_json_encode( array_values( array_map( 'absint', is_array( $input['tag_ids'] ?? null ) ? $input['tag_ids'] : array() ) ) );
 					$fields['size_prices'] = (string) wp_json_encode( '1' === $text( 'size_priced' ) ? self::entered_size_prices( $input ) : array() );

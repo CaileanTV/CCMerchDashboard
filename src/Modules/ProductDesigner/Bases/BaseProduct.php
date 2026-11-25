@@ -76,6 +76,8 @@ final readonly class BaseProduct {
 	 * @param int                $small_side_units Price incl. VAT of each further used small side.
 	 * @param bool               $background_color Whether the designer offers a background colour (ADR-095).
 	 * @param int[]              $tag_ids          The `product_tag` terms its designer products get (ADR-100).
+	 * @param string             $default_color    The colour key its designer products show first in the shop; '' to follow the main image (phase 59).
+	 * @param string             $default_size     The size they show first; '' for none unless there is one (phase 59).
 	 * @throws InvalidArgumentException When a value is invalid.
 	 */
 	public function __construct(
@@ -96,7 +98,9 @@ final readonly class BaseProduct {
 		public array $size_prices = array(),
 		public int $small_side_units = 0,
 		public bool $background_color = false,
-		public array $tag_ids = array()
+		public array $tag_ids = array(),
+		public string $default_color = '',
+		public string $default_size = ''
 	) {
 		if ( ( null !== $id && $id < 1 ) || ! in_array( $status, array( self::DRAFT, self::ACTIVE, self::RETIRED ), true ) || ! in_array( $source, self::SOURCES, true ) || $version < 1 || $extra_side_units < 0 || $small_side_units < 0 ) {
 			throw new InvalidArgumentException( 'Invalid base product.' );

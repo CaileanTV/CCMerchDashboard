@@ -385,12 +385,42 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		[ , $content ] = $this->writer->contents[0];
 
 		self::assertSame( $content->color_images['sand'], $content->images[0], 'Sand\'s front first, though black is the first colour.' );
+		self::assertSame( array( 'sand', '' ), array( $content->default_color, $content->default_size ), 'The shop opens on sand; of two sizes the customer chooses.' );
 		self::assertContains( $content->color_images['black'], $content->images );
 		self::assertCount( 2, $content->images, 'Each image once.' );
 
 		// "Copy design" takes the choice along.
 		$copy = $this->drafts->duplicate( $this->creator, $product, new DesignValidator( static fn(): bool => false, array() ) );
 		self::assertSame( 'front:sand', $this->products->draft( $copy )['primary_image'] ?? null );
+	}
+
+	public function test_the_base_product_s_fixed_variant_wins_over_the_main_image(): void {
+		$this->bases->save(
+			$this->base,
+			array_merge(
+				$this->base_fields( '149,95' ),
+				array(
+					'default_color' => 'black',
+					'default_size'  => 'M',
+				)
+			),
+			$this->base_views()
+		);
+		$product = $this->drafts->create( $this->creator, $this->base );
+
+		$this->save( $product, '20', array( 'front' ), array( 'black', 'sand' ), 'front:sand' );
+		$this->send_files( $product );
+		$this->submissions->submit( $this->creator, $product );
+		$this->review->approve( $this->pending_id( $product ) );
+		$this->drain();
+
+		[ , $content ] = $this->writer->contents[0];
+
+		self::assertSame( array( 'black', 'M' ), array( $content->default_color, $content->default_size ) );
+
+		// A new main image keeps the fixed colour.
+		$this->shop()->set_primary_image( $this->creator, $product, 'front:sand' );
+		self::assertSame( 'Black', $this->writer->default_colors[0][1] ?? null );
 	}
 
 	public function test_a_creator_changes_the_image_of_a_live_product_without_a_new_approval(): void {
@@ -417,6 +447,7 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		[ $wc, $images ] = $this->writer->images[0] ?? array( 0, array() );
 		self::assertSame( (int) ( $this->products->product( $product )['wc_product_id'] ?? -1 ), $wc );
 		self::assertSame( $content->color_images['sand'], $images[0], 'Sand\'s front is the product image now.' );
+		self::assertSame( array( array( $wc, 'Sand' ) ), $this->writer->default_colors, 'The shop now opens on sand.' );
 		self::assertEqualsCanonicalizing( $content->images, $images, 'Only the approved images, in a new order.' );
 		self::assertSame( 'front:sand', $this->products->version( (int) $live['id'] )['primary_image'] ?? null );
 		self::assertSame( 'live', $this->products->product( $product )['status'] ?? null, 'No new version.' );

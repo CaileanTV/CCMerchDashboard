@@ -899,6 +899,22 @@ class WC_Product extends WC_Data {
 	public function get_attributes( $context = 'view' ) {}
 
 	/**
+	 * Sets the default attributes: values by attribute slug.
+	 *
+	 * @param array<string, string> $default_attributes Defaults.
+	 * @return void
+	 */
+	public function set_default_attributes( $default_attributes ) {}
+
+	/**
+	 * The default attributes: values by attribute slug.
+	 *
+	 * @param string $context Context.
+	 * @return array<string, string>
+	 */
+	public function get_default_attributes( $context = 'view' ) {}
+
+	/**
 	 * Sets the parent (a variation).
 	 *
 	 * @param int $parent_id Parent id.
@@ -943,12 +959,33 @@ class WC_Product_Attribute {
 	public function set_name( $value ) {}
 
 	/**
+	 * The name.
+	 *
+	 * @return string
+	 */
+	public function get_name() {}
+
+	/**
 	 * Sets the options.
 	 *
 	 * @param array<int|string> $value Options.
 	 * @return void
 	 */
 	public function set_options( $value ) {}
+
+	/**
+	 * The options.
+	 *
+	 * @return array<int|string>
+	 */
+	public function get_options() {}
+
+	/**
+	 * Whether it is a choice in the shop (used for variations).
+	 *
+	 * @return bool
+	 */
+	public function get_variation() {}
 
 	/**
 	 * Sets the position.

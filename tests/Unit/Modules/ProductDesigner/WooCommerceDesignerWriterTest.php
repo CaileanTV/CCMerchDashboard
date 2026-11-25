@@ -375,18 +375,103 @@ final class WooCommerceDesignerWriterTest extends TestCase {
 		self::assertSame( array( 7, 20 ), WcProductStorage::$products[10]['tags'], 'Content without tags leaves them alone.' );
 	}
 
+	public function test_the_colour_of_the_main_image_is_shown_first_and_no_size_when_there_are_several(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Draft', '', 'draft' );
+		$this->attribute_stubs();
+
+		$this->writer()->set_content( new GuardedProduct( 3, 10, 7 ), self::content( true, default_color: 'sand' ) );
+
+		self::assertSame( array( 'colour' => 'Sand' ), self::defaults(), 'The customer chooses the size.' );
+	}
+
+	public function test_a_fixed_size_is_shown_first_with_the_colour(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Draft', '', 'draft' );
+		$this->attribute_stubs();
+
+		$this->writer()->set_content( new GuardedProduct( 3, 10, 7 ), self::content( true, default_color: 'black', default_size: 'M' ) );
+
+		self::assertSame(
+			array(
+				'colour' => 'Black',
+				'size'   => 'M',
+			),
+			self::defaults()
+		);
+	}
+
+	public function test_only_an_attribute_that_varies_gets_a_default(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Draft', '', 'draft' );
+		$this->attribute_stubs();
+
+		$this->writer()->set_content( new GuardedProduct( 3, 10, 7 ), self::content( true, array( 'black', 'sand' ), array( 'One size' ), default_color: 'sand', default_size: 'One size' ) );
+
+		self::assertSame( array( 'colour' => 'Sand' ), self::defaults(), 'The only size is no choice in the shop.' );
+	}
+
+	public function test_a_colour_or_size_not_offered_is_never_a_default_and_an_empty_default_clears_it(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Draft', '', 'draft' );
+		WcProductStorage::set( 10, array( 'default_attributes' => array( 'colour' => 'Sand' ) ) );
+		$this->attribute_stubs();
+
+		$this->writer()->set_content( new GuardedProduct( 3, 10, 7 ), self::content( true, default_color: 'pink', default_size: 'XL' ) );
+
+		self::assertSame( array(), self::defaults() );
+	}
+
+	public function test_a_simple_product_gets_no_default(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Draft', '', 'draft' );
+		$this->attribute_stubs();
+
+		$this->writer()->set_content( new GuardedProduct( 3, 10, 7 ), self::content( true, array( 'black' ), array( 'One size' ), default_color: 'black', default_size: 'One size' ) );
+
+		self::assertArrayNotHasKey( 'default_attributes', WcProductStorage::$products[10] );
+	}
+
+	public function test_a_new_main_image_changes_only_the_default_colour(): void {
+		WcProductStorage::add( 10, array(), 'variable', 0, 'Draft', '', 'draft' );
+		$this->attribute_stubs();
+		$this->writer()->set_content( new GuardedProduct( 3, 10, 7 ), self::content( true, default_color: 'black', default_size: 'M' ) );
+
+		$this->writer()->set_default_color( new GuardedProduct( 3, 10, 7 ), 'Sand' );
+
+		self::assertSame(
+			array(
+				'size'   => 'M',
+				'colour' => 'Sand',
+			),
+			self::defaults(),
+			'The size stays.'
+		);
+
+		$this->writer()->set_default_color( new GuardedProduct( 3, 10, 7 ), 'Pink' );
+
+		self::assertSame( array( 'size' => 'M' ), self::defaults(), 'A colour not offered clears the colour.' );
+	}
+
+	public function test_a_new_main_image_on_a_simple_product_changes_nothing(): void {
+		WcProductStorage::add( 10, array(), 'simple', 0, 'Tee', '', 'publish' );
+		WcProductStorage::$saved = array();
+
+		$this->writer()->set_default_color( new GuardedProduct( 3, 10, 7 ), 'Sand' );
+
+		self::assertArrayNotHasKey( 'default_attributes', WcProductStorage::$products[10] );
+		self::assertSame( array(), WcProductStorage::$saved );
+	}
+
 	/**
 	 * The content of an approved version.
 	 *
 	 * @phpstan-param list<string> $colors
 	 * @phpstan-param list<string> $sizes
 	 *
-	 * @param bool               $publish Whether it is the first approval.
-	 * @param array<int, string> $colors  Colour keys.
-	 * @param array<int, string> $sizes   Sizes.
-	 * @param int[]|null         $tags    Product tags; null leaves them alone.
+	 * @param bool               $publish       Whether it is the first approval.
+	 * @param array<int, string> $colors        Colour keys.
+	 * @param array<int, string> $sizes         Sizes.
+	 * @param int[]|null         $tags          Product tags; null leaves them alone.
+	 * @param string             $default_color The colour key shown first.
+	 * @param string             $default_size  The size shown first.
 	 */
-	private static function content( bool $publish, array $colors = array( 'black', 'sand' ), array $sizes = array( 'S', 'M' ), ?array $tags = null ): DesignerContent {
+	private static function content( bool $publish, array $colors = array( 'black', 'sand' ), array $sizes = array( 'S', 'M' ), ?array $tags = null, string $default_color = '', string $default_size = '' ): DesignerContent {
 		$names = array(
 			'black' => 'Black',
 			'sand'  => 'Sand',
@@ -415,7 +500,10 @@ final class WooCommerceDesignerWriterTest extends TestCase {
 			array(),
 			array(),
 			array(),
-			$tags
+			$tags,
+			'',
+			$default_color,
+			$default_size
 		);
 	}
 
@@ -450,6 +538,13 @@ final class WooCommerceDesignerWriterTest extends TestCase {
 		self::assertInstanceOf( WC_Product::class, $product );
 
 		return $product;
+	}
+
+	/**
+	 * The variant product 10 shows first, as stored; null when never set.
+	 */
+	private static function defaults(): mixed {
+		return WcProductStorage::$products[10]['default_attributes'] ?? null;
 	}
 
 	/**

@@ -444,6 +444,26 @@ class WC_Product extends WC_Data {
 	}
 
 	/**
+	 * Sets the default attributes (phase 59).
+	 *
+	 * @param array<string, string> $defaults Value by attribute slug.
+	 * @return void
+	 */
+	public function set_default_attributes( $defaults ) {
+		$this->change( 'default_attributes', $defaults );
+	}
+
+	/**
+	 * The default attributes.
+	 *
+	 * @param string $context Context.
+	 * @return array<string, string>
+	 */
+	public function get_default_attributes( $context = 'view' ) {
+		return $this->changes['default_attributes'] ?? ( WcProductStorage::$products[ $this->id ]['default_attributes'] ?? array() );
+	}
+
+	/**
 	 * Sets the status.
 	 *
 	 * @param string $status Status.
@@ -541,7 +561,7 @@ class WC_Product extends WC_Data {
 			$product['type'] = $this instanceof WC_Product_Simple ? 'simple' : 'variable';
 		}
 
-		foreach ( array( 'name', 'description', 'categories', 'tags', 'image_id', 'gallery', 'attributes', 'status', 'parent_id' ) as $property ) {
+		foreach ( array( 'name', 'description', 'categories', 'tags', 'image_id', 'gallery', 'attributes', 'default_attributes', 'status', 'parent_id' ) as $property ) {
 			if ( array_key_exists( $property, $this->changes ) ) {
 				$product[ $property ] = $this->changes[ $property ];
 			}
@@ -583,16 +603,19 @@ class WC_Product_Attribute {
 	public $data = array();
 
 	/**
-	 * Records any setter (set_id, set_name, set_options, …).
+	 * Records any setter (set_id, set_name, set_options, …) and answers its
+	 * getter (get_options, get_variation, …; phase 59).
 	 *
 	 * @param string       $name      Method.
 	 * @param array<mixed> $arguments Arguments.
-	 * @return void
+	 * @return mixed
 	 */
 	public function __call( $name, $arguments ) {
 		if ( str_starts_with( $name, 'set_' ) ) {
 			$this->data[ substr( $name, 4 ) ] = $arguments[0] ?? null;
 		}
+
+		return str_starts_with( $name, 'get_' ) ? ( $this->data[ substr( $name, 4 ) ] ?? null ) : null;
 	}
 }
 

@@ -787,6 +787,46 @@ final class BaseProductsTest extends IntegrationTestCase {
 		self::assertSame( 1499500, SalesAmount::parse( '149.95' ) );
 	}
 
+	public function test_a_fixed_default_variant_is_kept_audited_and_only_one_offered(): void {
+		$id = $this->service->save( null, self::fields(), array( self::side( 'Front', array( 'background' => 1000 ) ) ) );
+		$this->service->save(
+			$id,
+			array_merge(
+				self::fields(),
+				array(
+					'default_color' => 'sand',
+					'default_size'  => 'M',
+				)
+			),
+			array( self::existing( 'front' ) )
+		);
+		$base = $this->bases->find( $id );
+
+		self::assertNotNull( $base );
+		self::assertSame( array( 'sand', 'M', 1 ), array( $base->default_color, $base->default_size, $base->version ), 'No design is stale.' );
+		$context = json_decode( (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT context FROM %i WHERE action = %s ORDER BY id DESC LIMIT 1', $this->table( Tables::AUDIT_LOG ), 'designer_base_changed' ) ), true );
+		self::assertIsArray( $context );
+		self::assertSame( array( 'default_color', 'default_size' ), $context['changed_fields'] ?? null );
+
+		// Left out, the fixed default is kept.
+		$this->service->save( $id, self::fields(), array( self::existing( 'front' ) ) );
+		self::assertSame( array( 'sand', 'M' ), array( $this->bases->find( $id )?->default_color, $this->bases->find( $id )?->default_size ) );
+
+		// A colour or size the base product does not offer is no default.
+		$this->service->save(
+			$id,
+			array_merge(
+				self::fields(),
+				array(
+					'default_color' => 'pink',
+					'default_size'  => 'XL',
+				)
+			),
+			array( self::existing( 'front' ) )
+		);
+		self::assertSame( array( '', '' ), array( $this->bases->find( $id )?->default_color, $this->bases->find( $id )?->default_size ) );
+	}
+
 	/**
 	 * General fields.
 	 *

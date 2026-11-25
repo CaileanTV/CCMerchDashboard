@@ -66,6 +66,13 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	public array $images = array();
 
 	/**
+	 * The colour of each set_default_color() (phase 59).
+	 *
+	 * @var list<array{0: int, 1: string}>
+	 */
+	public array $default_colors = array();
+
+	/**
 	 * The swaps of each swap_images() (ADR-114).
 	 *
 	 * @var list<array{0: int, 1: array<int, int>}>
@@ -188,6 +195,16 @@ final class RecordingDesignerWriter extends WooCommerceDesignerWriter {
 	 */
 	public function set_images( GuardedProduct $product, array $images ): void {
 		$this->images[] = array( $product->wc_product_id, $images );
+	}
+
+	/**
+	 * Records the colour shown first (phase 59).
+	 *
+	 * @param GuardedProduct $product    Proof.
+	 * @param string         $color_name The colour's name; '' for none.
+	 */
+	public function set_default_color( GuardedProduct $product, string $color_name ): void {
+		$this->default_colors[] = array( $product->wc_product_id, $color_name );
 	}
 
 	/**

@@ -222,6 +222,13 @@ class WooCommerceDesignerWriter {
 				self::attribute( $size_name, $content->sizes, 1, $vary_size ),
 			)
 		);
+		// Phase 59: the variant shown first, only of an attribute that varies; none clears it.
+		$parent->set_default_attributes(
+			array_merge(
+				$vary_color && isset( $color_names[ $content->default_color ] ) ? array( $color_slug => $color_names[ $content->default_color ] ) : array(),
+				$vary_size && in_array( $content->default_size, $content->sizes, true ) ? array( $size_slug => $content->default_size ) : array()
+			)
+		);
 		self::save( $parent );
 
 		$key      = static fn( string $color, string $size ): string => ( $vary_color ? $color : '' ) . "\0" . ( $vary_size ? $size : '' );
@@ -406,6 +413,48 @@ class WooCommerceDesignerWriter {
 
 		$parent->set_image_id( $images[0] ?? 0 );
 		$parent->set_gallery_image_ids( array_slice( $images, 1 ) );
+		self::save( $parent );
+	}
+
+	/**
+	 * Sets the colour a variable designer product shows first (phase 59),
+	 * nothing else: when the creator chooses another main image. The size
+	 * shown first is kept. A colour that is not a choice of the product is
+	 * none.
+	 *
+	 * @param GuardedProduct $product    The guard's proof.
+	 * @param string         $color_name The colour's name as the product offers it; '' for none.
+	 * @throws DatabaseException When it cannot be saved.
+	 */
+	public function set_default_color( GuardedProduct $product, string $color_name ): void {
+		$parent = wc_get_product( $product->wc_product_id );
+
+		if ( ! $parent instanceof WC_Product_Variable ) {
+			return;
+		}
+
+		[ $color_attribute ] = self::attribute_names( $parent );
+		$slug                = sanitize_title( $color_attribute );
+		$defaults            = $parent->get_default_attributes( 'edit' );
+		$attribute           = null;
+
+		foreach ( $parent->get_attributes( 'edit' ) as $candidate ) {
+			if ( $candidate instanceof WC_Product_Attribute && sanitize_title( (string) $candidate->get_name() ) === $slug ) {
+				$attribute = $candidate;
+			}
+		}
+
+		unset( $defaults[ $slug ] );
+
+		if ( $attribute instanceof WC_Product_Attribute && $attribute->get_variation() && in_array( $color_name, $attribute->get_options(), true ) ) {
+			$defaults[ $slug ] = $color_name;
+		}
+
+		if ( $defaults === $parent->get_default_attributes( 'edit' ) ) {
+			return;
+		}
+
+		$parent->set_default_attributes( $defaults );
 		self::save( $parent );
 	}
 
