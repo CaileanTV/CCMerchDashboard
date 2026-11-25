@@ -1819,7 +1819,7 @@ Projektejerens valg 2026-11-25:
 - **58.3 Filteret:** `apply_filters( 'merchboard_packing_slip_notes', array(), $order )` giver `{ creator_id, name, text }` for hver aktiv creator i ordren, der har beskeden slået til. Samlingsprodukter springes over.
 - **58.4 Tests og docs**, inklusive et kodeeksempel til følgeseddel-pluginet.
 
-## Fase 59 – Standardvariant ud fra hovedbilledet 🔄 (projektejerens ønske 2026-11-24; plan godkendt 2026-11-25; version 2.6.0)
+## Fase 59 – Standardvariant ud fra hovedbilledet ✅ (projektejerens ønske 2026-11-24; plan godkendt 2026-11-25; version 2.6.0)
 
 Et nyt designerprodukt får forudvalgt farve og størrelse i butikken, så kunden ser den variant, hovedbilledet viser.
 
@@ -1828,16 +1828,16 @@ Projektejerens valg 2026-11-25:
 - er der kun én størrelse, er den altid valgt;
 - admin kan sætte en fast farve og størrelse på grundproduktet.
 
-- **59.1 Grundproduktet:**
+- **59.1 Grundproduktet** ✅ (3f81e18):
   - Migration 56 giver kolonnerne `default_color` og `default_size`.
   - Admin-formularen får valglisterne "Forudvalgt farve" og "Forudvalgt størrelse".
   - En ændring auditeres i `designer_base_changed` og giver ingen ny version af grundproduktet.
-- **59.2 Til butikken:** ved godkendelsen gælder:
+- **59.2 Til butikken** ✅ (3f81e18). Ved godkendelsen gælder:
   - **farve:** den faste farve, ellers hovedbilledets farve;
   - **størrelse:** den eneste størrelse, ellers den faste størrelse, ellers ingen.
   - Kun egenskaber, der varierer, sættes (`set_default_attributes`).
-- **59.3 Når creatoren skifter hovedbillede** på et produkt i butikken, følger den forudvalgte farve med. Eksisterende produkter opdateres ved næste godkendelse eller næste skift af hovedbillede.
-- **59.4 Tests.**
+- **59.3 Når creatoren skifter hovedbillede** ✅ (3f81e18) på et produkt i butikken, følger den forudvalgte farve med. Eksisterende produkter opdateres ved næste godkendelse eller næste skift af hovedbillede.
+- **59.4 Tests** ✅ (3f81e18): writeren og valget af variant (unit), migration 56, grundproduktets felter og godkendelsen (integration i CI).
 
 ## Fase 60 – Placering og vinkel i designeren 🔄 (projektejerens ønske 2026-11-24; plan godkendt 2026-11-25; version 2.6.0)
 
@@ -1856,7 +1856,7 @@ Projektejerens valg 2026-11-25: snap ved hver 45° (inden for ca. 5°).
   - Valget vises ikke på broderede sider.
 - **60.5 Tests og tekster** ✅ (cb9e096). Afprøvet med den rigtige tegneflade i Chrome: et træk til ca. 47° gemmes som 45°, og kanten ligger uden om bogstaverne (runtime-mappen `2026-11-25-phase-60`).
 
-## Version 2.5.2 – kritisk rettelse: drejede elementer 🔄 (projektejerens fejlrapport fra produktion 2026-11-24)
+## Version 2.5.2 – kritisk rettelse: drejede elementer ✅ (projektejerens fejlrapport fra produktion 2026-11-24; tagget på 00c9398)
 
 - **Fejlen:** "Designet indeholder noget, der ikke kan bruges …", når en tekst ændrede størrelse på flasken.
 - **Årsag**, fundet ud fra projektejerens data fra browseren:
@@ -1867,7 +1867,7 @@ Projektejerens valg 2026-11-25: snap ved hver 45° (inden for ca. 5°).
   - Jest-test af vinklerne;
   - en afprøvning med den rigtige tegneflade i Chrome og serverens validering (runtime-mappen `2026-11-24-text-resize`).
 - Projektejerens ønske om placering, snap til vinkel og vinkel som tal er noteret som fase 60.
-- Testpakke 2.5.2 fra 00c9398 (sha256 `e38f09db…`), CI grøn på alle fire jobs 2026-11-25. Den venter på projektejerens test og OK til tagget.
+- Testpakke 2.5.2 fra 00c9398 (sha256 `e38f09db…`), CI grøn på alle fire jobs 2026-11-25. Tagget `v2.5.2` på 00c9398 efter projektejerens OK. Release-workflowet er grønt (2026-11-25), og draft-releasens ZIP er byte-identisk med testpakken (sha256 `e38f09db…`). Projektejeren udgiver.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
