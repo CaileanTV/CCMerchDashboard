@@ -1865,6 +1865,7 @@ Creatoren skal kunne placere og dreje et element præcist uden at trække:
   - Jest-test af vinklerne;
   - en afprøvning med den rigtige tegneflade i Chrome og serverens validering (runtime-mappen `2026-11-24-text-resize`).
 - Projektejerens ønske om placering, snap til vinkel og vinkel som tal er noteret som fase 60.
+- Testpakke 2.5.2 fra 00c9398 (sha256 `e38f09db…`), CI grøn på alle fire jobs 2026-11-25. Den venter på projektejerens test og OK til tagget.
 
 ## Version 2.2.1 – sikkerhedsrettelser ✅ (tagget 2026-11-21 på 35011e4; sikkerhedstjek af ccmerch.dk 2026-11-21; ADR-116)
 
