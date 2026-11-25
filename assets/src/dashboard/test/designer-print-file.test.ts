@@ -104,6 +104,9 @@ const common = {
 	evented: true,
 	lockScalingFlip: true,
 	objectCaching: false,
+	// Turning falls into place every 45° (step 60.1).
+	snapAngle: 45,
+	snapThreshold: 5,
 };
 
 const objects: DesignObject[] = [
@@ -198,6 +201,8 @@ describe( 'the print file of a design without coloured parts', () => {
 					charSpacing: 20,
 					stroke: null,
 					strokeWidth: 0,
+					// A text's outline behind its letters (step 60.4).
+					paintFirst: 'stroke',
 					splitByGrapheme: false,
 				},
 			],

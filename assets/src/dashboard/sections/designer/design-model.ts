@@ -726,6 +726,75 @@ export function fitted(
 	};
 }
 
+/**
+ * The size of an element's upright bounding box: turned and scaled, as it
+ * shows on the print file.
+ *
+ * @param object The element.
+ */
+export function objectBounds( object: DesignObject ): {
+	readonly width: number;
+	readonly height: number;
+} {
+	const width = object.width * Math.abs( object.scaleX );
+	const height = object.height * Math.abs( object.scaleY );
+	const angle = ( object.angle * Math.PI ) / 180;
+	const cos = Math.abs( Math.cos( angle ) );
+	const sin = Math.abs( Math.sin( angle ) );
+
+	return {
+		width: width * cos + height * sin,
+		height: width * sin + height * cos,
+	};
+}
+
+/** Where an element is placed on the print file (step 60.3). */
+export type Placement =
+	'centre-x' | 'centre-y' | 'left' | 'right' | 'top' | 'bottom';
+
+/**
+ * An element moved to the middle or an edge of the print file by its
+ * bounding box, its size and angle kept (step 60.3); the other direction
+ * stays where it was.
+ *
+ * @param object      The element.
+ * @param printWidth  Print file width.
+ * @param printHeight Print file height.
+ * @param where       Where.
+ */
+export function aligned(
+	object: DesignObject,
+	printWidth: number,
+	printHeight: number,
+	where: Placement
+): Pick< BaseObject, 'x' | 'y' > {
+	const round = ( value: number ): number => Math.round( value * 100 ) / 100;
+	const { width, height } = objectBounds( object );
+	const across: Record< Placement, number | null > = {
+		'centre-x': printWidth / 2,
+		left: width / 2,
+		right: printWidth - width / 2,
+		'centre-y': null,
+		top: null,
+		bottom: null,
+	};
+	const down: Record< Placement, number | null > = {
+		'centre-x': null,
+		left: null,
+		right: null,
+		'centre-y': printHeight / 2,
+		top: height / 2,
+		bottom: printHeight - height / 2,
+	};
+	const x = across[ where ];
+	const y = down[ where ];
+
+	return {
+		x: x === null ? object.x : round( x ),
+		y: y === null ? object.y : round( y ),
+	};
+}
+
 /** What the sides per size need of a side. */
 export interface SizedSide {
 	readonly key: string;

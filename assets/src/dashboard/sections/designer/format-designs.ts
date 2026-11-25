@@ -10,6 +10,7 @@ import {
 	DESIGN_VERSION,
 	SHARED,
 	designsOf,
+	objectBounds,
 	partDoc,
 	partOf,
 	withBackground,
@@ -50,23 +51,8 @@ interface Move {
 /** The share of an edge an object may leave bare and still cover the area. */
 const BARE = 0.02;
 
-/**
- * The size of an object's upright bounding box.
- *
- * @param object The object.
- */
-function bounds( object: DesignObject ): Box {
-	const width = object.width * Math.abs( object.scaleX );
-	const height = object.height * Math.abs( object.scaleY );
-	const angle = ( object.angle * Math.PI ) / 180;
-	const cos = Math.abs( Math.cos( angle ) );
-	const sin = Math.abs( Math.sin( angle ) );
-
-	return {
-		width: width * cos + height * sin,
-		height: width * sin + height * cos,
-	};
-}
+/** The size of an object's upright bounding box (moved to design-model.ts, step 60.3). */
+const bounds = objectBounds;
 
 /**
  * Whether an object covers a print file (within BARE of each edge), e.g. a

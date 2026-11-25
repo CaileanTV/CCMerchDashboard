@@ -518,6 +518,9 @@ function common( object: DesignObject ): Record< string, unknown > {
 		evented: ! object.locked,
 		lockScalingFlip: true,
 		objectCaching: false,
+		// Turning on the canvas falls into place every 45° within 5° (step 60.2); the angle field takes any.
+		snapAngle: 45,
+		snapThreshold: 5,
 	};
 }
 
@@ -550,6 +553,8 @@ async function build(
 				charSpacing: object.charSpacing,
 				stroke: object.stroke,
 				strokeWidth: object.stroke === null ? 0 : object.strokeWidth,
+				// The outline behind the letters, so they keep their weight (step 60.4).
+				paintFirst: 'stroke',
 				splitByGrapheme: false,
 			} );
 			break;

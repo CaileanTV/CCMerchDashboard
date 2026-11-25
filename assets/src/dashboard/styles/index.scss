@@ -3107,6 +3107,19 @@ input:disabled + .merchboard-sounds__upload {
 	}
 }
 
+/* Placing the selected element without dragging (step 60.3). */
+.merchboard-product-designer__placement {
+	display: flex;
+	flex: 1 1 100%;
+	flex-wrap: wrap;
+	gap: var(--merchboard-space-1);
+}
+
+/* A number field: an angle or an outline width (steps 60.2, 60.4). */
+.merchboard-product-designer__number {
+	width: 6em;
+}
+
 .merchboard-product-designer__products,
 .merchboard-product-designer__bases {
 	display: grid;

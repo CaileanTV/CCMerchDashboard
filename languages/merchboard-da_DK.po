@@ -8,7 +8,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2026-09-25T18:47:58+00:00\n"
-"PO-Revision-Date: 2026-11-24T21:58:21+00:00\n"
+"PO-Revision-Date: 2026-11-25T15:54:57+00:00\n"
 "Language: da_DK\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: WP-CLI 2.12.0\n"
@@ -16908,6 +16908,7 @@ msgstr "Fyldets bevægelse"
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
+#: build/dashboard.js:98
 msgid "Placement"
 msgstr "Placering"
 
@@ -17343,6 +17344,7 @@ msgstr "Justering"
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
+#: build/dashboard.js:98
 #: build/dashboard.js:105
 msgid "Left"
 msgstr "Venstre"
@@ -17356,6 +17358,7 @@ msgstr "Midten"
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
+#: build/dashboard.js:98
 #: build/dashboard.js:105
 msgid "Right"
 msgstr "Højre"
@@ -17466,12 +17469,14 @@ msgstr "Margen"
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
+#: build/dashboard.js:98
 msgid "Top"
 msgstr "Top"
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
+#: build/dashboard.js:98
 msgid "Bottom"
 msgstr "Bund"
 
@@ -20697,8 +20702,17 @@ msgid "Gradient"
 msgstr "Gradient"
 
 #: build/dashboard.js:98
+#: build/dashboard.js:105
 msgid "Angle (°)"
 msgstr "Vinkel (°)"
+
+#: build/dashboard.js:98
+msgid "Centre horizontally"
+msgstr "Centrér vandret"
+
+#: build/dashboard.js:98
+msgid "Centre vertically"
+msgstr "Centrér lodret"
 
 #: build/dashboard.js:98
 msgid "Where the design sits on the product"
@@ -21202,12 +21216,20 @@ msgid "Centre"
 msgstr "Centreret"
 
 #: build/dashboard.js:105
-msgid "Fill"
-msgstr "Fyld"
-
-#: build/dashboard.js:105
 msgid "Outline"
 msgstr "Kant"
+
+#: build/dashboard.js:105
+msgid "Outline colour"
+msgstr "Kantfarve"
+
+#: build/dashboard.js:105
+msgid "Outline width"
+msgstr "Kantens tykkelse"
+
+#: build/dashboard.js:105
+msgid "Fill"
+msgstr "Fyld"
 
 #: build/dashboard.js:105
 msgid "This clipart is placed for you: its size cannot change. You can move it sideways."

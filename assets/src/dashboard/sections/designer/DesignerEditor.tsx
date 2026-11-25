@@ -79,6 +79,8 @@ import {
 	withPart,
 	MAX_DESIGNS,
 	effectiveParts,
+	aligned,
+	uprightAngle,
 } from './design-model';
 import type {
 	AdaptMode,
@@ -86,6 +88,7 @@ import type {
 	DesignObject,
 	ExtraArea,
 	FitMode,
+	Placement,
 	ShapeType,
 	TextObject,
 } from './design-model';
@@ -126,6 +129,7 @@ import { SubmitDialog } from './SubmitDialog';
 import { storedChoiceColor } from './ProviderImages';
 import { LayerList } from './LayerList';
 import { ClipartPaints } from './ClipartPaints';
+import { NumberField, PlacementButtons } from './ObjectPlacement';
 import {
 	artOf,
 	ClipartPictures,
@@ -2396,6 +2400,16 @@ function Editor( props: EditorProps ) {
 										)
 									)
 								}
+								onPlace={ ( where ) =>
+									change(
+										aligned(
+											selectedObject,
+											view.printWidth,
+											view.printHeight,
+											where
+										)
+									)
+								}
 								onRemove={ () => remove( selectedObject.id ) }
 								onMove={ ( direction ) =>
 									setObjects(
@@ -3663,6 +3677,7 @@ function AssetGrid( props: {
  * @param props.onThread   Called with the thread picked as the colour.
  * @param props.onChange   Changes it.
  * @param props.onFit      Sizes an image to the print area (ADR-102).
+ * @param props.onPlace    Moves it to the middle or an edge (step 60.3).
  * @param props.onRemove   Removes it.
  * @param props.onMove     Moves it.
  * @param props.asset      An image's asset.
@@ -3686,6 +3701,8 @@ function Properties( props: {
 	) => void;
 	/** Sizes an image to the print area (ADR-102). */
 	readonly onFit: ( mode: FitMode ) => void;
+	/** Moves it to the middle or an edge of the print file (step 60.3). */
+	readonly onPlace: ( where: Placement ) => void;
 	readonly onRemove: () => void;
 	readonly onMove: ( direction: 1 | -1 ) => void;
 } ) {
@@ -3829,6 +3846,95 @@ function Properties( props: {
 							)
 						}
 					</Labelled>
+					{ /* An outline around the letters (step 60.4); not on embroidery, whose colours are threads. */ }
+					{ threads !== null ? null : (
+						<>
+							<Labelled
+								className="merchboard-product-designer__option"
+								label={ <>{ __( 'Outline', 'merchboard' ) }</> }
+							>
+								{ ( id ) => (
+									<input
+										id={ id }
+										type="checkbox"
+										checked={ text.stroke !== null }
+										onChange={ () =>
+											onChange( {
+												stroke:
+													text.stroke === null
+														? '#ffffff'
+														: null,
+												strokeWidth:
+													text.stroke === null
+														? Math.min(
+																100,
+																Math.max(
+																	1,
+																	Math.round(
+																		text.size *
+																			0.08
+																	)
+																)
+															)
+														: 0,
+											} as Partial< TextObject > )
+										}
+									/>
+								) }
+							</Labelled>
+							{ text.stroke === null ? null : (
+								<>
+									<Labelled
+										className="merchboard-product-designer__option"
+										before
+										label={
+											<>
+												{ __(
+													'Outline colour',
+													'merchboard'
+												) }
+											</>
+										}
+									>
+										{ ( id ) => (
+											<input
+												id={ id }
+												type="color"
+												value={
+													text.stroke ?? '#ffffff'
+												}
+												onChange={ ( event ) =>
+													onChange( {
+														stroke: event.target
+															.value,
+													} as Partial< TextObject > )
+												}
+											/>
+										) }
+									</Labelled>
+									<NumberField
+										label={ __(
+											'Outline width',
+											'merchboard'
+										) }
+										value={ text.strokeWidth }
+										min={ 1 }
+										max={ 100 }
+										onBegin={ props.onBegin }
+										onEnd={ props.onEnd }
+										onChange={ ( strokeWidth, live ) =>
+											onChange(
+												{
+													strokeWidth,
+												} as Partial< TextObject >,
+												live
+											)
+										}
+									/>
+								</>
+							) }
+						</>
+					) }
 				</>
 			) }
 			{ shape === null ? null : (
@@ -3931,6 +4037,24 @@ function Properties( props: {
 					) }
 				</p>
 			) : null }
+			{ /* Placed and turned without dragging (steps 60.2–60.3); a locked clipart only moves sideways. */ }
+			<NumberField
+				label={ __( 'Angle (°)', 'merchboard' ) }
+				value={ object.angle }
+				min={ -360 }
+				max={ 360 }
+				disabled={ object.locked || handling === 'sideways' }
+				onBegin={ props.onBegin }
+				onEnd={ props.onEnd }
+				onChange={ ( angle, live ) =>
+					onChange( { angle: uprightAngle( angle ) }, live )
+				}
+			/>
+			<PlacementButtons
+				disabled={ object.locked }
+				sideways={ handling === 'sideways' }
+				onPlace={ props.onPlace }
+			/>
 			{ threads !== null || handling !== null ? null : (
 				<Labelled
 					className="merchboard-product-designer__option"

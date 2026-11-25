@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-24T21:58:13+00:00\n"
+"POT-Creation-Date: 2026-11-25T15:54:47+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -16908,6 +16908,7 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
+#: build/dashboard.js:98
 msgid "Placement"
 msgstr ""
 
@@ -17343,6 +17344,7 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
+#: build/dashboard.js:98
 #: build/dashboard.js:105
 msgid "Left"
 msgstr ""
@@ -17356,6 +17358,7 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
+#: build/dashboard.js:98
 #: build/dashboard.js:105
 msgid "Right"
 msgstr ""
@@ -17466,12 +17469,14 @@ msgstr ""
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
+#: build/dashboard.js:98
 msgid "Top"
 msgstr ""
 
 #: build/alerts-global-admin.js:16
 #: build/alerts-presets-admin.js:16
 #: build/dashboard.js:45
+#: build/dashboard.js:98
 msgid "Bottom"
 msgstr ""
 
@@ -20697,7 +20702,16 @@ msgid "Gradient"
 msgstr ""
 
 #: build/dashboard.js:98
+#: build/dashboard.js:105
 msgid "Angle (°)"
+msgstr ""
+
+#: build/dashboard.js:98
+msgid "Centre horizontally"
+msgstr ""
+
+#: build/dashboard.js:98
+msgid "Centre vertically"
 msgstr ""
 
 #: build/dashboard.js:98
@@ -21202,11 +21216,19 @@ msgid "Centre"
 msgstr ""
 
 #: build/dashboard.js:105
-msgid "Fill"
+msgid "Outline"
 msgstr ""
 
 #: build/dashboard.js:105
-msgid "Outline"
+msgid "Outline colour"
+msgstr ""
+
+#: build/dashboard.js:105
+msgid "Outline width"
+msgstr ""
+
+#: build/dashboard.js:105
+msgid "Fill"
 msgstr ""
 
 #: build/dashboard.js:105
