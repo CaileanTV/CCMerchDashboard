@@ -2403,7 +2403,13 @@ function Editor( props: EditorProps ) {
 								onPlace={ ( where ) =>
 									change(
 										aligned(
-											selectedObject,
+											{
+												...selectedObject,
+												// A text's height as laid out now, also right after a new size or font.
+												...( stage.current?.measured(
+													selectedObject.id
+												) ?? {} ),
+											},
 											view.printWidth,
 											view.printHeight,
 											where

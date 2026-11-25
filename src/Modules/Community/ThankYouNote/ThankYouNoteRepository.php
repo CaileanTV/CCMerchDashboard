@@ -100,13 +100,18 @@ final class ThankYouNoteRepository {
 	}
 
 	/**
-	 * Plain text with `\n` line breaks, without tags, trailing spaces or
-	 * empty lines at the ends.
+	 * Plain text with `\n` line breaks, without tags, control characters,
+	 * trailing spaces or empty lines at the ends. Not HTML-encoded: "<3"
+	 * stays "<3", and whoever prints it escapes it (ADR-123).
 	 *
 	 * @param string $text The creator's text.
 	 */
 	private static function clean( string $text ): string {
-		$lines = explode( "\n", sanitize_textarea_field( str_replace( array( "\r\n", "\r" ), "\n", $text ) ) );
+		$text = wp_check_invalid_utf8( str_replace( array( "\r\n", "\r", "\t" ), array( "\n", "\n", ' ' ), $text ) );
+		// Tags and comments only; a lone "<" or ">" is text.
+		$text  = (string) preg_replace( array( '~<!--.*?(?:-->|$)~s', '~</?[a-z][^<>]*>~i' ), '', $text );
+		$text  = (string) preg_replace( '~[^\P{Cc}\n]~u', '', $text );
+		$lines = explode( "\n", $text );
 
 		return trim( implode( "\n", array_map( 'rtrim', $lines ) ) );
 	}

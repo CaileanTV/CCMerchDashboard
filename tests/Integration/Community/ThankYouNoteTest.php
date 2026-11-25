@@ -110,6 +110,10 @@ final class ThankYouNoteTest extends IntegrationTestCase {
 		self::assertSame( array( false, '' ), array( $off->enabled, $off->printed() ) );
 		self::assertSame( "Tak fordi du støtter mig! ❤\nKh. Nova", $this->notes->find( $this->nova )->text );
 		self::assertSame( 2, $this->audits() );
+
+		// Plain text, not HTML: a heart stays a heart.
+		self::assertSame( 'Tak <3 & > alt', $this->notes->save( $this->nova, array( 'enabled' => true, 'text' => "Tak <3 & > alt\x07" ) )->text ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
+		self::assertSame( 300, mb_strlen( $this->notes->save( $this->nova, array( 'enabled' => true, 'text' => str_repeat( '<3', 150 ) ) )->text ), 'Not longer on the server than in the form.' ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- Compact fixture.
 	}
 
 	public function test_invalid_notes_are_refused(): void {

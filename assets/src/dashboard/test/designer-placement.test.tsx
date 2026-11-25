@@ -111,6 +111,49 @@ describe( 'placing an element (step 60.3)', () => {
 		} );
 	} );
 
+	it( 'counts the outline and stays within what the server takes', () => {
+		// A shape's outline is not scaled: 400 × 200 plus 10.
+		expect(
+			aligned(
+				{
+					...rect(),
+					stroke: '#000000',
+					strokeWidth: 10,
+				} as DesignObject,
+				1000,
+				800,
+				'left'
+			)
+		).toEqual( { x: 205, y: 400 } );
+
+		// A text's outline is scaled with it: (100 + 8) × 2.
+		const text = {
+			...rect(),
+			type: 'text',
+			width: 100,
+			height: 40,
+			stroke: '#ffffff',
+			strokeWidth: 8,
+		} as unknown as DesignObject;
+
+		expect( aligned( text, 1000, 800, 'top' ) ).toEqual( {
+			x: 500,
+			y: 48,
+		} );
+
+		expect(
+			aligned( { ...rect(), scaleX: 100 }, 1000, 800, 'right' ).x
+		).toBe( -9000 );
+		expect(
+			aligned(
+				{ ...rect(), width: 1000, scaleX: 100 },
+				1000,
+				800,
+				'left'
+			).x
+		).toBe( 20000 );
+	} );
+
 	it( 'offers no placement for a locked element, only sideways for a locked clipart', () => {
 		const onPlace = jest.fn();
 		const { container } = render(

@@ -768,8 +768,29 @@ export function aligned(
 	printHeight: number,
 	where: Placement
 ): Pick< BaseObject, 'x' | 'y' > {
-	const round = ( value: number ): number => Math.round( value * 100 ) / 100;
-	const { width, height } = objectBounds( object );
+	// Within what the server takes (±20000), also for a huge element.
+	const round = ( value: number ): number =>
+		Math.min( 20000, Math.max( -20000, Math.round( value * 100 ) / 100 ) );
+	// The outline counts: a text's is scaled with it, a shape's is not.
+	const stroke =
+		'stroke' in object && object.stroke !== null ? object.strokeWidth : 0;
+	const { width, height } = objectBounds(
+		object.type === 'text'
+			? {
+					...object,
+					width: object.width + stroke,
+					height: object.height + stroke,
+				}
+			: {
+					...object,
+					width:
+						object.width +
+						stroke / Math.max( 0.01, Math.abs( object.scaleX ) ),
+					height:
+						object.height +
+						stroke / Math.max( 0.01, Math.abs( object.scaleY ) ),
+				}
+	);
 	const across: Record< Placement, number | null > = {
 		'centre-x': printWidth / 2,
 		left: width / 2,

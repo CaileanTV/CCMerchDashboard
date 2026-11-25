@@ -344,6 +344,25 @@ export class FabricStage {
 	}
 
 	/**
+	 * An object's size as the canvas lays it out, before scaling; null when it
+	 * is not shown. A text's height follows its font, size and lines at once,
+	 * while the document only learns it at the next change on the canvas.
+	 *
+	 * @param id Object id.
+	 */
+	public measured(
+		id: string
+	): { readonly width: number; readonly height: number } | null {
+		const shown = this.canvas
+			.getObjects()
+			.find( ( object ) => ( object as Tagged ).mbId === id );
+
+		return shown === undefined
+			? null
+			: { width: shown.width, height: shown.height };
+	}
+
+	/**
 	 * Releases the canvas.
 	 */
 	public dispose(): void {
