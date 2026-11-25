@@ -493,6 +493,10 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 - [x] `uprightAngle()` i `readBack`. Tagget `v2.5.2` efter projektejerens OK; draft-releasens ZIP er byte-identisk med testpakken (sha256 `e38f09db…`). Projektejeren udgiver.
 
+### Version 2.6.0 – fase 58, 59 og 60 (tagget 2026-11-25 på 7c8546f)
+
+- [x] Review (rettelser ed70391), versions-bump 7c8546f, CI grøn, testpakke sha256 `969e055e…`, stg-test ✅ (projektejeren 2026-11-25: "det virker"). Tagget `v2.6.0` efter projektejerens OK. Projektejeren udgiver draft-releasen.
+
 ### Fase 58 – Creatorens takkebesked på følgesedlen (plan godkendt 2026-11-25; version 2.6.0)
 
 - [x] Trin 58.1–58.4: takkebesked i Profil og filteret `merchboard_packing_slip_notes` til følgeseddel-pluginet (428ba83, ADR-123).

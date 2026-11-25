@@ -251,7 +251,7 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 
 ## Release 2.6.0: placering og vinkel, standardvariant og takkebesked (fase 58–60, ADR-123)
 
-**2026-11-25.** Schema-version 56 (migration 56 tilføjer to tomme kolonner til grundprodukterne). Projektejeren installerer selv. Intet tag uden projektejerens OK og grøn CI.
+**2026-11-25.** Schema-version 56 (migration 56 tilføjer to tomme kolonner til grundprodukterne). Projektejeren installerer selv. Testpakke fra 7c8546f (sha256 `969e055e…`); stg-test ✅ 2026-11-25; **tagget `v2.6.0`** på 7c8546f efter projektejerens OK.
 
 1. **Opdatér** med ZIP'en. Overview skal vise version 2.6.0 og "Up to date (version 56)".
 2. **Fase 60, designeren:**
