@@ -4,6 +4,30 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+Version 2.6.0: fase 58, 59 og 60. Schema-version 56.
+
+### Fase 60: placering og vinkel i designeren
+
+- **Snap:** et element, der drejes på tegnefladen, falder på plads ved hver 45° (inden for ca. 5°).
+- **Vinkelfelt:** "Vinkel (°)" i egenskabspanelet. Ét træk eller én indtastning er ét fortryd-trin. Feltet er låst for låste elementer og kliparts, der kun kan flyttes sidelæns.
+- **Placering:** knapperne "Centrér vandret", "Centrér lodret", "Venstre", "Højre", "Top" og "Bund" bruger det drejede elements kasse og bevarer vinklen.
+- **Kant på tekst:** afkrydsning, farve og tykkelse. Kanten tegnes bag bogstaverne, både på tegnefladen og i printfilen, og vises ikke på broderede sider.
+
+### Fase 59: standardvariant ud fra hovedbilledet
+
+- **I butikken** åbner et nyt designerprodukt på en valgt variant:
+  - farve: grundproduktets faste farve, ellers farven på creatorens hovedbillede;
+  - størrelse: den eneste størrelse, ellers grundproduktets faste størrelse, ellers ingen, så kunden vælger.
+- **Skift af hovedbillede:** skifter creatoren hovedbillede på et produkt i butikken, følger den forudvalgte farve med uden en ny godkendelse.
+- **Admin:** "Forudvalgt i butikken" på grundproduktet med en fast farve og størrelse. En ændring auditeres i `designer_base_changed` og giver ingen ny version.
+- **Database:** migration 56 (`AddDesignerBaseDefaults`) giver `merchboard_designer_bases.default_color` og `default_size`. Eksisterende produkter får standarden ved næste godkendelse eller skift af hovedbillede.
+
+### Fase 58: creatorens takkebesked på følgesedlen (ADR-123)
+
+- **Profil:** kortet "Takkebesked på følgesedlen" med til/fra og en tekst på højst 300 tegn i 6 linjer, uden links. Én besked pr. creator, uden godkendelse.
+- **Filter:** `apply_filters( 'merchboard_packing_slip_notes', array(), $order )` giver et følgeseddel-plugin én besked pr. aktiv creator i ordren: `{creator_id, name, text}`. Se [features/thank-you-note.md](features/thank-you-note.md).
+- **Data:** creator-meta `thank_you_note`. Audit `thank_you_note_changed` logger kun de ændrede felter, aldrig teksten.
+
 ## [2.5.2] - 2026-11-24
 
 Kritisk rettelse. Ingen schemaændring.

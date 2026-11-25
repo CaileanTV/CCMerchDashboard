@@ -249,6 +249,28 @@ Staging er `https://devpage.ccmerch.dk` (projektejerens site). Deploy sker manue
 6. **Hosting:** `/creator-dashboard/*` og indloggede brugere må ikke caches af en side-cache/CDN. Notér WordPress-versionen, fordi den afgør React-versionen.
 7. **Resultat:** Notér version, dato og fund i PROJECT-STATUS.md. Er noget galt: installér den tidligere ZIP igen, eller gendan backuppen.
 
+## Release 2.6.0: placering og vinkel, standardvariant og takkebesked (fase 58–60, ADR-123)
+
+**2026-11-25.** Schema-version 56 (migration 56 tilføjer to tomme kolonner til grundprodukterne). Projektejeren installerer selv. Intet tag uden projektejerens OK og grøn CI.
+
+1. **Opdatér** med ZIP'en. Overview skal vise version 2.6.0 og "Up to date (version 56)".
+2. **Fase 60, designeren:**
+   - drej et element med musen tæt på 45°, 90° og 180°: det falder på plads;
+   - skriv en vinkel i "Vinkel (°)". Fortryd skal gå tilbage i ét trin;
+   - prøv de seks placeringsknapper på et drejet element: det lægger sig ind til kanten og bevarer vinklen;
+   - giv en tekst kant (farve og tykkelse), og indsend. Printfilen og mockuppen skal vise kanten uden om bogstaverne.
+3. **Fase 59, standardvariant:**
+   - sæt "Forudvalgt i butikken" (fx størrelse M) på et grundprodukt;
+   - godkend et design med hovedbillede i en anden farve end den første, fx Magenta. Produktsiden skal åbne på Magenta og M;
+   - et produkt med én størrelse (vandflasken) skal have størrelsen valgt;
+   - skift hovedbillede på et produkt i butikken: farven skal følge med.
+4. **Fase 58, takkebesked:**
+   - skriv en takkebesked i Profil med et linjeskift, og gem. Et link skal afvises;
+   - læg en ordre med creatorens produkt, og kør `wp eval 'print_r( apply_filters( "merchboard_packing_slip_notes", array(), <ordre-id> ) );'`, eller prøv følgeseddel-pluginet. Beskeden skal komme med navn og linjeskift;
+   - slå beskeden fra: listen skal være tom.
+
+**Tilbagerulning:** installér 2.5.2-ZIP'en igen. Schemaet bliver 56; 2.5.2 bruger ikke de to nye kolonner eller creator-meta `thank_you_note`. Produkter, der har fået en forudvalgt variant, beholder den i WooCommerce.
+
 ## Release 2.5.2: drejede elementer kan gemmes igen (kritisk rettelse)
 
 **2026-11-24**, projektejerens fejlrapport fra produktion: "Fejl: Designet indeholder noget, der ikke kan bruges …", så snart en tekst ændrer størrelse.
