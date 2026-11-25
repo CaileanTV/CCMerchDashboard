@@ -1845,16 +1845,16 @@ Creatoren skal kunne placere og dreje et element præcist uden at trække.
 
 Projektejerens valg 2026-11-25: snap ved hver 45° (inden for ca. 5°).
 
-- **60.1 Snap:** træk på tegnefladen falder på plads ved 0°, 45°, 90° osv.
-- **60.2 Vinkelfelt** i egenskabspanelet. Ét træk eller én indtastning er ét fortryd-trin. Feltet er låst for låste elementer og for kliparts, der kun kan flyttes sidelæns.
-- **60.3 Placering:**
+- **60.1 Snap** ✅ (cb9e096): træk på tegnefladen falder på plads ved 0°, 45°, 90° osv.
+- **60.2 Vinkelfelt** ✅ (cb9e096) i egenskabspanelet. Ét træk eller én indtastning er ét fortryd-trin. Feltet er låst for låste elementer og for kliparts, der kun kan flyttes sidelæns.
+- **60.3 Placering** ✅ (cb9e096):
   - Knapperne "Centrér vandret", "Centrér lodret", "Venstre", "Højre", "Top" og "Bund" bruger det drejede elements kasse og bevarer vinklen.
   - En klipart, der kun kan flyttes sidelæns, får kun de vandrette knapper.
-- **60.4 Kant på tekst:**
+- **60.4 Kant på tekst** ✅ (cb9e096):
   - Afkrydsning, farve og tykkelse.
   - Kanten tegnes bag bogstaverne, så de ikke bliver tyndere, både på tegnefladen og i printfilen.
   - Valget vises ikke på broderede sider.
-- **60.5 Tests og tekster.**
+- **60.5 Tests og tekster** ✅ (cb9e096). Afprøvet med den rigtige tegneflade i Chrome: et træk til ca. 47° gemmes som 45°, og kanten ligger uden om bogstaverne (runtime-mappen `2026-11-25-phase-60`).
 
 ## Version 2.5.2 – kritisk rettelse: drejede elementer 🔄 (projektejerens fejlrapport fra produktion 2026-11-24)
 

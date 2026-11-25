@@ -495,7 +495,7 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 ### Fase 60 – Placering og vinkel i designeren (plan godkendt 2026-11-25; version 2.6.0)
 
-- [ ] Trin 60.1–60.5: snap ved 45°, vinkelfelt, knapper til placering og kant på tekst.
+- [x] Trin 60.1–60.5: snap ved 45°, vinkelfelt, knapper til placering og kant på tekst (cb9e096).
 
 ### Fase 59 – Standardvariant ud fra hovedbilledet (plan godkendt 2026-11-25; version 2.6.0)
 
