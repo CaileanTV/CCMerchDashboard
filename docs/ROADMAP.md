@@ -1802,6 +1802,17 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - kameranavnene Miljø n og Model n står på dansk;
     - Printful bruger aldrig en anden farve end den valgte.
 
+## Version 2.6.0 – fase 58, 59 og 60 🔄 (projektejerens beslutning 2026-11-25)
+
+- Uafhængigt review 2026-11-25: ingen sikkerhedsfund. Tre fejl rettet i ed70391:
+  - placeringen bruger tekstens aktuelle højde;
+  - kanten tæller med i elementets kasse;
+  - takkebeskeden gemmes som ren tekst, så "<3" bliver stående.
+- Versions-bump 7c8546f. Testpakke `merchboard-mvp-2.6.0.zip` fra 7c8546f (sha256 `969e055e…`). Den venter på projektejerens stg-test (DEVELOPMENT "Release 2.6.0") og OK til tagget.
+- Kendte begrænsninger, som projektejeren tager stilling til:
+  - en godkendelse sætter produktets forudvalgte variant forfra, så en standard sat i hånden i WooCommerce overskrives;
+  - et nyt fast forvalg på et grundprodukt når først eksisterende produkter ved næste godkendelse eller næste skift af hovedbillede.
+
 ## Fase 58 – Creatorens takkebesked på følgesedlen ✅ (projektejerens ønske 2026-11-24; plan godkendt 2026-11-25; version 2.6.0 sammen med fase 59 og 60)
 
 Creatoren skriver selv en takkebesked til sine kunder i dashboardet, og beskeden kommer med på følgesedlen til ordren.
