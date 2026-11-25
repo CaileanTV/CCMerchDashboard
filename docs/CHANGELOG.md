@@ -4,7 +4,9 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
-Version 2.6.0: fase 58, 59 og 60. Schema-version 56.
+## [2.6.0] - 2026-11-25
+
+Fase 58, 59 og 60 (ADR-123). Schema-version 56. Reviewet (rettelser ed70391); stg-testen følger DEVELOPMENT "Release 2.6.0".
 
 ### Fase 60: placering og vinkel i designeren
 
