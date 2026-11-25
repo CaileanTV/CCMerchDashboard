@@ -7439,3 +7439,42 @@ Nøglen kan nu oprette og slette produkter og uploads i kontoens butikker, men s
 
 ## Related
 ADR-080, ADR-082, ADR-087
+
+# ADR-123: Creatorens takkebesked på følgesedlen via et offentligt filter
+
+## Date
+2026-11-25
+
+## Status
+Accepteret af projektejeren 2026-11-25 (fase 58, version 2.6.0).
+
+## Context
+Creatorerne vil gerne sige tak til deres kunder. Følgesedlen i pakken er det eneste, kunden får fra butikken i papirform. Projektejeren er ved at lave et nyt følgeseddel-plugin, som ligger uden for Merch Dashboard.
+
+## Decision
+1. **Én besked pr. creator**, uden godkendelse:
+   - til/fra og højst 300 tegn ren tekst i 6 linjer;
+   - HTML fjernes, og links afvises, fordi beskeden trykkes på papir.
+   
+   Den gemmes i creator-meta `thank_you_note`. Audit `thank_you_note_changed` logger kun de ændrede felter, aldrig teksten.
+2. **Offentligt filter.** Merch Dashboard laver ikke følgesedler og skriver aldrig i det andet plugin. Det andet plugin kalder:
+
+   ```php
+   apply_filters( 'merchboard_packing_slip_notes', array(), $order );
+   ```
+
+   - `$order` er en `WC_Order` eller et ordre-id;
+   - svaret er en liste med `{creator_id, name, text}`: én pr. aktiv creator med produkter i ordren, i linjernes rækkefølge og uden dubletter;
+   - samlingsprodukter, slukkede og tomme beskeder springes over;
+   - Merch Dashboard lægger sine beskeder efter dem, andre plugins har givet;
+   - uden Merch Dashboard er svaret det tomme array.
+3. **Ingen fejl på følgesedlen.** En fejl i opslaget giver ingen beskeder, aldrig en undtagelse.
+4. **Creatoren i dag.** Produktets nuværende creator bruges (`ProductCreatorLink`), ikke et øjebliksbillede fra købet.
+
+## Consequences
+- Følgeseddel-pluginet afgør selv layout og escaping. Teksten er ren tekst med `\n`.
+- Navnet og teksten er data, som creatoren selv har valgt at vise kunderne.
+- Filteret er en offentlig kontrakt. Feltnavnene ændres kun med en ny ADR.
+
+## Related
+ADR-007, ADR-068

@@ -271,6 +271,7 @@ Egne actions og filters prefixes med `merchboard_` og dokumenteres i det modul, 
 | `merchboard_creator_created` / `_updated` / `_status_changed` | action | Domæne-events |
 | `merchboard_dashboard_sections` | filter | Sektioner/navigation i creator dashboard |
 | `merchboard_settings_sections` | action | Ekstra sektioner på Merch Dashboard → Settings (kaldes efter capability-tjekket; sektionerne har egne formularer, nonces og capability-tjek). ✅ Fase 18, trin 6 ("Sales ledger" fra WooCommerce-modulet); runtime-verificeret i Merch Dashboard Local med HPOS og legacy, ADR-038 statusnote "trin 6 afsluttet". |
+| `merchboard_packing_slip_notes` | filter | ✅ Fase 58 (ADR-123): `apply_filters( 'merchboard_packing_slip_notes', array(), $order )` giver creatorernes takkebeskeder til et følgeseddel-plugin, én pr. aktiv creator i ordren: `{creator_id, name, text}`. Se [features/thank-you-note.md](features/thank-you-note.md). |
 | `merchboard_sale_recorded` | action | Ny linje i sales ledger. **Udskudt:** ikke en del af fase 18; timing og den offentlige kontrakt vurderes i et senere API-/event-design (ADR-038). |
 
 Hooks bruges som event-mekanisme. Der bygges ingen separat event-bus.

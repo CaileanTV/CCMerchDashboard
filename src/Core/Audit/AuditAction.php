@@ -959,6 +959,12 @@ enum AuditAction: string {
 	case MerchCommandChanged = 'merch_command_changed';
 
 	/**
+	 * A creator changed the thank-you note on the packing slip (phase 58).
+	 * Context: changed_fields (never the text).
+	 */
+	case ThankYouNoteChanged = 'thank_you_note_changed';
+
+	/**
 	 * An administrator approved a designer product's images without
 	 * background; they replaced its shop images (ADR-114). Context:
 	 * design_product_id, version_id, images.

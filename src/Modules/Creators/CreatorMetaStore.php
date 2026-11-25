@@ -125,9 +125,15 @@ final class CreatorMetaStore {
 	public const MERCH_COMMAND = 'merch_command';
 
 	/**
+	 * The creator's thank-you note on the packing slip (phase 58): on/off and
+	 * the text. Written by the creator through `/me`.
+	 */
+	public const THANK_YOU_NOTE = 'thank_you_note';
+
+	/**
 	 * Whitelisted meta keys.
 	 */
-	private const KEYS = array( self::BILLING_DETAILS, self::BILLING_SUBMISSION, self::BILLING_CONFIRMED, self::BILLING_CPR, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP, self::TWITCH_SUB_DISCOUNT, self::TWITCH_GIFTING, self::TWITCH_EXTENSION, self::MERCH_AD, self::MERCH_COMMAND );
+	private const KEYS = array( self::BILLING_DETAILS, self::BILLING_SUBMISSION, self::BILLING_CONFIRMED, self::BILLING_CPR, self::BALANCE_NOTIFIED, self::ALERT_SOUND_LIMITS, self::ALERT_DESIGNS, self::ALERT_API_ACCESS, self::FRONT_GROUP, self::TWITCH_SUB_DISCOUNT, self::TWITCH_GIFTING, self::TWITCH_EXTENSION, self::MERCH_AD, self::MERCH_COMMAND, self::THANK_YOU_NOTE );
 
 	/**
 	 * Constructor.

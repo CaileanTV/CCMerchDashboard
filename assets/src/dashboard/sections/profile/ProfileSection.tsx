@@ -29,6 +29,7 @@ import type {
 } from '../../types/creator';
 import { DiscountCodeCard } from './DiscountCodeCard';
 import { EmailNotificationsCard } from './EmailNotificationsCard';
+import { ThankYouNoteCard } from './ThankYouNoteCard';
 import { ImageProposal } from './ImageProposal';
 import { platformLabel } from './platforms';
 import { ProposalNote } from './ProposalNote';
@@ -546,7 +547,8 @@ function ProfileContent() {
  * Profile section: the creator's name and product category (phase 28,
  * ADR-077) — description, logo, banner, mobile banner, link and social
  * links — proposed for an administrator's approval; the creator's own
- * discount code, hidden until shown (ADR-068); and (phase 21) the personal
+ * discount code, hidden until shown (ADR-068); the thank-you note on the
+ * packing slip (phase 58); and (phase 21) the personal
  * dashboard theme. The code and the theme are on their own, outside the
  * profile form, and do not wait for the profile to load.
  */
@@ -555,6 +557,7 @@ export function ProfileSection() {
 		<>
 			<ProfileContent />
 			<DiscountCodeCard />
+			<ThankYouNoteCard />
 			<EmailNotificationsCard />
 			<ThemeSettings />
 		</>

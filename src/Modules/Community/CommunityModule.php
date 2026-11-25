@@ -61,6 +61,10 @@ use MerchBoard\Modules\Community\MerchCommand\MerchCommand;
 use MerchBoard\Modules\Community\MerchCommand\MerchCommandRepository;
 use MerchBoard\Modules\Community\Rest\MeMerchAdController;
 use MerchBoard\Modules\Community\Rest\MeMerchCommandController;
+use MerchBoard\Modules\Community\Rest\MeThankYouNoteController;
+use MerchBoard\Modules\Community\ThankYouNote\PackingSlipNotes;
+use MerchBoard\Modules\Community\ThankYouNote\ThankYouNoteRepository;
+use MerchBoard\Modules\Community\ThankYouNote\ThankYouNoteSettings;
 use MerchBoard\Modules\Community\Rest\MerchAdStatusController;
 use MerchBoard\Modules\Alerts\Overlay\OverlayRateLimiter;
 use MerchBoard\Modules\WooCommerce\CreatorCategoryService;
@@ -79,6 +83,7 @@ use MerchBoard\Modules\Community\TwitchSubs\TwitchSubPrivacy;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubProductNote;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubOrderInfo;
 use MerchBoard\Modules\Community\TwitchSubs\TwitchSubShopCard;
+use MerchBoard\Modules\Creators\Creator;
 use MerchBoard\Modules\Creators\CreatorRepository;
 use MerchBoard\Modules\Alerts\Chatbot\TwitchCustomerSession;
 use MerchBoard\Modules\Creators\CreatorMetaStore;
@@ -161,6 +166,7 @@ final class CommunityModule implements Module {
 		self::register_giveaways( $container );
 		self::register_extension( $container );
 		self::register_merch_ad( $container );
+		self::register_thank_you_note( $container );
 
 		$container->set( CommunitySettings::class, static fn( Container $c ): CommunitySettings => new CommunitySettings( $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
 
@@ -215,6 +221,8 @@ final class CommunityModule implements Module {
 			1
 		);
 		$container->get( MerchCommand::class )->register();
+		// The creators' thank-you notes for a packing-slip plugin (phase 58).
+		$container->get( PackingSlipNotes::class )->register();
 		// Gifts (ADR-107): who hears about them, the order page, privacy and creator deletion.
 		( new GiftNotices(
 			static fn( int $creator_id ): string => $container->get( CreatorRepository::class )->find( $creator_id )->display_name ?? '',
@@ -264,7 +272,31 @@ final class CommunityModule implements Module {
 				$container->get( MeMerchAdController::class )->register_routes();
 				$container->get( MerchAdStatusController::class )->register_routes();
 				$container->get( MeMerchCommandController::class )->register_routes();
+				$container->get( MeThankYouNoteController::class )->register_routes();
 			}
+		);
+	}
+
+	/**
+	 * Registers the creators' thank-you note on the packing slip (phase 58):
+	 * the creator's setting and the public filter a packing-slip plugin calls.
+	 *
+	 * @param Container $container Shared service container.
+	 */
+	private static function register_thank_you_note( Container $container ): void {
+		$container->set( ThankYouNoteRepository::class, static fn( Container $c ): ThankYouNoteRepository => new ThankYouNoteRepository( $c->get( CreatorMetaStore::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ) ) );
+		$container->set(
+			PackingSlipNotes::class,
+			static fn( Container $c ): PackingSlipNotes => new PackingSlipNotes(
+				static fn( int $product_id ): ?int => $c->get( ProductCreatorLink::class )->creator_id( $product_id ),
+				static fn( int $creator_id ): ?Creator => $c->get( CreatorRepository::class )->find( $creator_id ),
+				static fn( int $product_id ): bool => $c->get( DesignCollections::class )->is_collection( $product_id ),
+				static fn( int $creator_id ): ThankYouNoteSettings => $c->get( ThankYouNoteRepository::class )->find( $creator_id )
+			)
+		);
+		$container->set(
+			MeThankYouNoteController::class,
+			static fn( Container $c ): MeThankYouNoteController => new MeThankYouNoteController( $c->get( CreatorContext::class ), $c->get( ThankYouNoteRepository::class ), $c->get( Logger::class ) )
 		);
 	}
 

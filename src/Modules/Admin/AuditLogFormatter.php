@@ -223,6 +223,7 @@ final class AuditLogFormatter {
 			AuditAction::TwitchExtensionChanged => __( 'Twitch Extension panel changed', 'merchboard' ),
 			AuditAction::MerchAdChanged => __( 'Merch ad overlay changed', 'merchboard' ),
 			AuditAction::MerchCommandChanged => __( '!merch command changed', 'merchboard' ),
+			AuditAction::ThankYouNoteChanged => __( 'Thank-you note changed', 'merchboard' ),
 			AuditAction::DesignerProductCreated => __( 'Creator started a designer product', 'merchboard' ),
 			AuditAction::DesignerProductDeleted => __( 'Creator deleted a designer draft', 'merchboard' ),
 			AuditAction::DesignerVersionSubmitted => __( 'Creator submitted a design for approval', 'merchboard' ),
