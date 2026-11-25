@@ -1802,57 +1802,59 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - kameranavnene Miljø n og Model n står på dansk;
     - Printful bruger aldrig en anden farve end den valgte.
 
-## Fase 58 – Creatorens takkebesked på følgesedlen 📝 (projektejerens ønske 2026-11-24; kun noteret, ikke planlagt)
+## Fase 58 – Creatorens takkebesked på følgesedlen 🔄 (projektejerens ønske 2026-11-24; plan godkendt 2026-11-25; version 2.6.0 sammen med fase 59 og 60)
 
 Creatoren skriver selv en takkebesked til sine kunder i dashboardet, og beskeden kommer med på følgesedlen til ordren.
 
-- **Afhænger af det nye plugin til følgesedler**, som projektejeren er ved at lave. Integrationen planlægges først, når vi starter fasen.
-- Ingen plan, ADR eller kode endnu.
-- **Åbne spørgsmål til planen:**
-  - Gælder beskeden for alle creatorens produkter, eller kan den være forskellig fra produkt til produkt?
-  - Hvor lang må den være, og hvilke tegn er tilladt (ingen links eller HTML)?
-  - Skal admin godkende beskeden, før den bruges, som andre forslag på "Forslag"?
-  - Hvad står der, når en ordre har produkter fra flere creators? Én besked pr. creator?
-  - Skal creatoren kunne slå beskeden fra?
-  - Hvordan henter følgeseddel-pluginet teksten? Fx et filter, en hook eller et REST-endpoint, så Merch Dashboard aldrig skriver i det andet plugin.
+Projektejerens valg 2026-11-25:
+- én besked pr. creator;
+- ingen godkendelse;
+- Merch Dashboard giver et offentligt filter, som projektejerens nye følgeseddel-plugin kalder.
 
-## Fase 59 – Standardvariant ud fra hovedbilledet 📝 (projektejerens ønske 2026-11-24; kun noteret, ikke planlagt)
+- **58.1 Data og API:**
+  - Creator-meta `thank_you_note` med `{enabled, text}`. Teksten er højst 300 tegn, ren tekst med linjeskift.
+  - `GET/POST /me/thank-you-note`.
+  - Audit `thank_you_note_changed`, som kun registrerer de felter, der er ændret.
+- **58.2 Dashboardet:** kortet "Takkebesked på følgesedlen" i Profil med til/fra og tegntæller.
+- **58.3 Filteret:** `apply_filters( 'merchboard_packing_slip_notes', array(), $order )` giver `{ creator_id, name, text }` for hver aktiv creator i ordren, der har beskeden slået til. Samlingsprodukter springes over.
+- **58.4 Tests og docs**, inklusive et kodeeksempel til følgeseddel-pluginet.
+
+## Fase 59 – Standardvariant ud fra hovedbilledet 🔄 (projektejerens ønske 2026-11-24; plan godkendt 2026-11-25; version 2.6.0)
 
 Et nyt designerprodukt får forudvalgt farve og størrelse i butikken, så kunden ser den variant, hovedbilledet viser.
 
-- **Farve:** den farve, creatorens valgte hovedbillede har. Fx giver "Magenta – Venstre side" magenta som forvalgt farve.
-- **Størrelse:** har produktet kun én størrelse, fx vandflasker, er den forudvalgt.
-- **Fast forvalg på grundproduktet** (projektejerens forslag 2026-11-24): admin kan vælge en fast forudvalgt værdi på grundproduktet, fx størrelse M på en T-shirt.
-  - Alle nye produkter på grundproduktet får den værdi.
-  - Farven kommer stadig fra hovedbilledet, medmindre admin har sat en fast farve.
-- **I dag:** pluginet sætter ingen standardvariant på produkterne. Der er intet i koden.
-- **Åbne spørgsmål til planen:**
-  - Hvilken størrelse forudvælges, når der er flere, og admin ikke har valgt en fast: ingen eller den første?
-  - Hvad sker der med et fast forvalg, som et produkt ikke har, fx når creatoren har fravalgt størrelse M? Mit bud er, at så forudvælges ingenting.
-  - Skal standardvarianten følge med, når creatoren senere skifter hovedbillede på et produkt, der allerede er i butikken?
-  - Skal eksisterende designerprodukter opdateres én gang, eller gælder det kun nye og ændrede?
-  - Hvordan håndteres et produkt med flere egenskaber end farve og størrelse, fx Gelatos formater eller Printfuls valg?
+Projektejerens valg 2026-11-25:
+- uden fast forvalg vælges ingen størrelse, når der er flere;
+- er der kun én størrelse, er den altid valgt;
+- admin kan sætte en fast farve og størrelse på grundproduktet.
 
-## Fase 60 – Placering og vinkel i designeren 📝 (projektejerens ønske 2026-11-24; kun noteret, ikke planlagt)
+- **59.1 Grundproduktet:**
+  - Migration 56 giver kolonnerne `default_color` og `default_size`.
+  - Admin-formularen får valglisterne "Forudvalgt farve" og "Forudvalgt størrelse".
+  - En ændring auditeres i `designer_base_changed` og giver ingen ny version af grundproduktet.
+- **59.2 Til butikken:** ved godkendelsen gælder:
+  - **farve:** den faste farve, ellers hovedbilledets farve;
+  - **størrelse:** den eneste størrelse, ellers den faste størrelse, ellers ingen.
+  - Kun egenskaber, der varierer, sættes (`set_default_attributes`).
+- **59.3 Når creatoren skifter hovedbillede** på et produkt i butikken, følger den forudvalgte farve med. Eksisterende produkter opdateres ved næste godkendelse eller næste skift af hovedbillede.
+- **59.4 Tests.**
 
-Creatoren skal kunne placere og dreje et element præcist uden at trække:
+## Fase 60 – Placering og vinkel i designeren 🔄 (projektejerens ønske 2026-11-24; plan godkendt 2026-11-25; version 2.6.0)
 
-- **Placering:** knapper til at placere det valgte element, fx centrere vandret, lodret eller begge dele, og lægge det op mod kanterne af printfeltet.
-- **Snap til vinkel:** når man drejer, falder elementet på plads ved faste vinkler, fx hver 90°. Fabric kan det selv med `snapAngle` og `snapThreshold`.
-- **Vinkel som tal:** et felt i egenskabspanelet, hvor man skriver vinklen, fx 45, i stedet for at trække i drejehåndtaget.
-- **Kant på tekst** (projektejerens ønske 2026-11-24): en kant (outline) rundt om bogstaverne med egen farve og tykkelse.
-- **I dag:**
-  - Egenskabspanelet har justering af tekst og "Fyld/Tilpas" for billeder, men ingen felter til placering eller vinkel.
-  - Tekster har allerede `stroke` og `strokeWidth` i designet, og serveren godkender 0–100. Tegnefladen og printfilen tegner kanten. Der mangler kun valget i panelet, som figurer har ("Kant").
-  - Tegnefladen har intet snap.
-  - Vinklen gemmes mellem −180° og 180° (2.5.2).
-- **Åbne spørgsmål til planen:**
-  - Hvilke vinkler skal der snappes til: 90°, eller også 45° og 15°?
-  - Skal snap kunne slås fra, fx med Shift som i mange programmer?
-  - Skal der være felter til placering med tal (x og y i cm), eller er knapper nok?
-  - Skal placeringen være i forhold til hele printfeltet eller til den del af en rund vare, man ser forfra?
-  - Skal kanten ligge uden om bogstaverne, så de ikke bliver tyndere, eller midt på stregen, som Fabric gør i dag?
-  - Hvordan virker kanten på broderi? Den skal i så fald være én af pakkens tråde.
+Creatoren skal kunne placere og dreje et element præcist uden at trække.
+
+Projektejerens valg 2026-11-25: snap ved hver 45° (inden for ca. 5°).
+
+- **60.1 Snap:** træk på tegnefladen falder på plads ved 0°, 45°, 90° osv.
+- **60.2 Vinkelfelt** i egenskabspanelet. Ét træk eller én indtastning er ét fortryd-trin. Feltet er låst for låste elementer og for kliparts, der kun kan flyttes sidelæns.
+- **60.3 Placering:**
+  - Knapperne "Centrér vandret", "Centrér lodret", "Venstre", "Højre", "Top" og "Bund" bruger det drejede elements kasse og bevarer vinklen.
+  - En klipart, der kun kan flyttes sidelæns, får kun de vandrette knapper.
+- **60.4 Kant på tekst:**
+  - Afkrydsning, farve og tykkelse.
+  - Kanten tegnes bag bogstaverne, så de ikke bliver tyndere, både på tegnefladen og i printfilen.
+  - Valget vises ikke på broderede sider.
+- **60.5 Tests og tekster.**
 
 ## Version 2.5.2 – kritisk rettelse: drejede elementer 🔄 (projektejerens fejlrapport fra produktion 2026-11-24)
 
