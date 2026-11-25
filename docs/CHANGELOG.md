@@ -4,6 +4,12 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [2.6.1] - 2026-11-25
+
+Rettelse i designeren. Ingen schemaændring.
+
+- **Rettet:** fontvælgeren i designerens egenskabspanel krympede til knappens bredde, så fontlisten var for smal til at læse. Den fylder nu hele rækken, og listen er mindst lige så bred som knappen og så bred som det længste fontnavn (højst 320 px).
+
 ## [2.6.0] - 2026-11-25
 
 Fase 58, 59 og 60 (ADR-123). Schema-version 56. Reviewet (rettelser ed70391); stg-testen følger DEVELOPMENT "Release 2.6.0".
