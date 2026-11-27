@@ -497,6 +497,14 @@ Afinstallation med eksplicit opt-in ("Delete all Merch Dashboard data when the p
 
 - [x] Review (rettelser ed70391), versions-bump 7c8546f, CI grøn, testpakke sha256 `969e055e…`, stg-test ✅ (projektejeren 2026-11-25: "det virker"). Tagget `v2.6.0` efter projektejerens OK. Projektejeren udgiver draft-releasen.
 
+### Version 2.6.1 – fontvælgerens bredde (tagget 2026-11-27 på 8e121d5)
+
+- [x] Fontvælgeren fylder hele rækken i egenskabspanelet (5ba18b6). Tagget `v2.6.1` efter projektejerens OK; draft-releasens ZIP er byte-identisk med testpakken (sha256 `2e9b0eab…`).
+
+### Version 2.6.2 – fase 61: admin retter creatorens designerprodukter, og samme navn kan bekræftes (tagget 2026-11-27 på 8e4ebec)
+
+- [x] 61.1–61.3 (3cef108, ADR-124), versions-bump 8e4ebec, CI grøn, testpakke sha256 `8468752d…`, test ✅ (projektejeren 2026-11-27: "det virker"). Tagget `v2.6.2` efter projektejerens OK; draft-releasens ZIP er byte-identisk med testpakken. Projektejeren udgiver draft-releasen.
+
 ### Fase 58 – Creatorens takkebesked på følgesedlen (plan godkendt 2026-11-25; version 2.6.0)
 
 - [x] Trin 58.1–58.4: takkebesked i Profil og filteret `merchboard_packing_slip_notes` til følgeseddel-pluginet (428ba83, ADR-123).
