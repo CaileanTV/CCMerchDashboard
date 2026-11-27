@@ -4,6 +4,10 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+## [2.6.2] - 2026-11-27
+
+Fase 61 (ADR-124). Ingen schemaændring. Reviewet (to fund rettet før commit).
+
 ### Fase 61: admin retter creatorens designerprodukter (ADR-124)
 
 - **Admin:** afsnittet "Designerprodukter" på creatorens redigeringsside (`merchboard_manage_designer`):
