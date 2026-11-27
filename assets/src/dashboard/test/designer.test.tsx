@@ -584,6 +584,93 @@ describe( 'DesignerSection', () => {
 		);
 	} );
 
+	it( 'saves a name another product has once the creator confirms it (ADR-124)', async () => {
+		const draft = {
+			number: 1,
+			title: 'Organic tee',
+			description: '',
+			colors: [ 'black' ],
+			sizes: [ 'S', 'M' ],
+			design: { version: 1, sides: [] },
+			profit_kind: 'fixed',
+			profit_value: '0.0000',
+			price: '149.9500',
+			base_version: 2,
+			updated_at: '2026-10-29T10:00:00+00:00',
+		};
+		const requests = mockApi( {
+			'GET /merchboard/v1/me/designer': () => response( 200, OVERVIEW ),
+			'POST /merchboard/v1/me/designer/products': () =>
+				response( 201, { id: 6, base_id: 3, in_shop: false, draft } ),
+			'PATCH /merchboard/v1/me/designer/products/6': ( request ) =>
+				( request.data as { same_name: boolean } ).same_name
+					? response( 200, {
+							id: 6,
+							base_id: 3,
+							in_shop: false,
+							draft,
+						} )
+					: response( 400, {
+							code: 'merchboard_designer_refused',
+							data: { reason: 'design_name_taken' },
+						} ),
+		} );
+
+		rendered = render(
+			<ConfigContext.Provider value={ CONFIG }>
+				<DesignerSection />
+			</ConfigContext.Provider>
+		);
+		await flush();
+		const labelled = ( label: string ) =>
+			Array.from(
+				rendered?.container.querySelectorAll( 'button' ) ?? []
+			).find( ( element ) => element.textContent === label ) ?? null;
+
+		click( labelled( 'Design' ) );
+		await flush();
+
+		const title = rendered.container.querySelector< HTMLInputElement >(
+			'input[maxlength="60"]'
+		);
+		await act( async () => {
+			Object.getOwnPropertyDescriptor(
+				HTMLInputElement.prototype,
+				'value'
+			)?.set?.call( title, 'Stream tee' );
+			title?.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+		} );
+		click( labelled( 'Save draft' ) );
+		await flush();
+
+		expect( rendered.container.textContent ).toContain(
+			'A product with this name already exists.'
+		);
+		expect( requests.filter( ( r ) => r.method === 'PATCH' ) ).toHaveLength(
+			1
+		);
+
+		click( labelled( 'Use the same name' ) );
+		await flush();
+
+		const patches = requests.filter( ( r ) => r.method === 'PATCH' );
+		expect(
+			patches.map(
+				( r ) => ( r.data as { same_name: boolean } ).same_name
+			)
+		).toEqual( [ false, true ] );
+		expect( rendered.container.textContent ).toContain(
+			'Your design is saved with the same name as another product.'
+		);
+
+		// The confirmed name stays confirmed for the next save.
+		click( labelled( 'Save draft' ) );
+		await flush();
+		expect(
+			requests.filter( ( r ) => r.method === 'PATCH' ).at( -1 )?.data
+		).toMatchObject( { same_name: true } );
+	} );
+
 	it( 'loads a clipart the draft kept after it left the library, by its own type', async () => {
 		const requests = mockApi( {
 			'GET /merchboard/v1/me/designer': () => response( 200, OVERVIEW ),

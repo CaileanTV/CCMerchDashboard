@@ -336,7 +336,11 @@ function Editor( props: EditorProps ) {
 	const [ message, setMessage ] = useState< {
 		tone: 'success' | 'danger' | 'info';
 		text: string;
+		/** The name is taken: offer to use it anyway (ADR-124). */
+		sameName?: boolean;
 	} | null >( null );
+	// The name addition the creator confirmed although another product has the name.
+	const [ sameName, setSameName ] = useState< string | null >( null );
 	const [ saving, setSaving ] = useState( false );
 	const [ discarding, setDiscarding ] = useState( false );
 	const [ copying, setCopying ] = useState( false );
@@ -1274,11 +1278,15 @@ function Editor( props: EditorProps ) {
 	};
 
 	/** Saves the draft; the saved product, or null after a message. */
-	const persist = async (): Promise< DesignerProduct | null > => {
+	const persist = async (
+		confirmed = false
+	): Promise< DesignerProduct | null > => {
 		setSaving( true );
 		setMessage( null );
 		const result = await saveDesignerDraft( product.id, {
 			title,
+			titleBase: draft.postfix,
+			sameName: confirmed || sameName === title,
 			description: draft.description,
 			colors,
 			sizes,
@@ -1321,6 +1329,7 @@ function Editor( props: EditorProps ) {
 			setMessage( {
 				tone: 'danger',
 				text: saveError( result.error.reason ),
+				sameName: result.error.reason === 'design_name_taken',
 			} );
 
 			return null;
@@ -1334,6 +1343,20 @@ function Editor( props: EditorProps ) {
 		} );
 
 		return result.data;
+	};
+
+	/** Saves with a name another product has, once the creator confirmed it. */
+	const saveSameName = async () => {
+		if ( ( await persist( true ) ) !== null ) {
+			setSameName( title );
+			setMessage( {
+				tone: 'success',
+				text: __(
+					'Your design is saved with the same name as another product.',
+					'merchboard'
+				),
+			} );
+		}
 	};
 
 	const save = async () => {
@@ -1760,7 +1783,22 @@ function Editor( props: EditorProps ) {
 			) : null }
 
 			{ message === null ? null : (
-				<Alert tone={ message.tone }>{ message.text }</Alert>
+				<Alert tone={ message.tone }>
+					{ message.text }
+					{ message.sameName === true ? (
+						<>
+							{ ' ' }
+							<Button
+								variant="secondary"
+								size="sm"
+								disabled={ saving }
+								onClick={ () => void saveSameName() }
+							>
+								{ __( 'Use the same name', 'merchboard' ) }
+							</Button>
+						</>
+					) : null }
+				</Alert>
 			) }
 
 			{ base.note === '' ? null : (
@@ -2937,7 +2975,7 @@ function saveError( reason: string | undefined ): string {
 			);
 		case 'design_name_taken':
 			return __(
-				'A product with this name already exists. Add something to the name to tell them apart.',
+				'A product with this name already exists. Add something to the name to tell them apart, or use the same name anyway.',
 				'merchboard'
 			);
 		case 'design_clipart':

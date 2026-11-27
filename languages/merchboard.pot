@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-25T16:43:16+00:00\n"
+"POT-Creation-Date: 2026-11-27T15:26:41+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: merchboard\n"
@@ -159,6 +159,7 @@ msgstr ""
 #: src/Modules/Notifications/Admin/NotificationsAdminActions.php:74
 #: src/Modules/ProductDesigner/Admin/BaseProductActions.php:122
 #: src/Modules/ProductDesigner/Admin/CampaignActions.php:77
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsActions.php:89
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:109
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:529
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:585
@@ -913,6 +914,7 @@ msgid "Creator started a change of a designer product"
 msgstr ""
 
 #: src/Modules/Admin/AuditLogFormatter.php:241
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:87
 msgid "Base product retired"
 msgstr ""
 
@@ -925,383 +927,395 @@ msgstr ""
 msgid "Designer product taken out of the shop"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:334
-msgid "WordPress user: none"
+#: src/Modules/Admin/AuditLogFormatter.php:244
+msgid "Administrator renamed a designer product"
 msgstr ""
 
-#. translators: %s: user label or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:336
-#, php-format
-msgid "WordPress user: %s"
+#: src/Modules/Admin/AuditLogFormatter.php:245
+msgid "Administrator deleted a designer draft"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:246
+msgid "Administrator discarded a change of a designer product"
+msgstr ""
+
+#: src/Modules/Admin/AuditLogFormatter.php:337
+msgid "WordPress user: none"
 msgstr ""
 
 #. translators: %s: user label or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:339
 #, php-format
-msgid "Triggered by: %s"
+msgid "WordPress user: %s"
 msgstr ""
 
-#. translators: %s: creator status.
+#. translators: %s: user label or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:342
 #, php-format
-msgid "Status: %s"
+msgid "Triggered by: %s"
 msgstr ""
 
 #. translators: %s: creator status.
 #: src/Modules/Admin/AuditLogFormatter.php:345
 #, php-format
+msgid "Status: %s"
+msgstr ""
+
+#. translators: %s: creator status.
+#: src/Modules/Admin/AuditLogFormatter.php:348
+#, php-format
 msgid "Previous status: %s"
 msgstr ""
 
 #. translators: %s: comma-separated field names.
-#: src/Modules/Admin/AuditLogFormatter.php:348
+#: src/Modules/Admin/AuditLogFormatter.php:351
 #, php-format
 msgid "Changed: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:351
+#: src/Modules/Admin/AuditLogFormatter.php:354
 msgid "Reason: the WordPress user was deleted"
 msgstr ""
 
 #. translators: %s: reason.
-#: src/Modules/Admin/AuditLogFormatter.php:353
+#: src/Modules/Admin/AuditLogFormatter.php:356
 #, php-format
 msgid "Reason: %s"
 msgstr ""
 
 #. translators: %s: what started the reconciliation.
-#: src/Modules/Admin/AuditLogFormatter.php:356
+#: src/Modules/Admin/AuditLogFormatter.php:359
 #, php-format
 msgid "Trigger: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:359
+#: src/Modules/Admin/AuditLogFormatter.php:362
 msgid "Setting: delete all data when the plugin is deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:360
+#: src/Modules/Admin/AuditLogFormatter.php:363
 msgid "Setting: creator dashboard URL slug"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:361
+#: src/Modules/Admin/AuditLogFormatter.php:364
 msgid "Setting: counted order statuses"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:362
+#: src/Modules/Admin/AuditLogFormatter.php:365
 msgid "Setting: logo (Media Library attachment ID, 0 = default logo)"
 msgstr ""
 
 #. translators: %s: setting name.
-#: src/Modules/Admin/AuditLogFormatter.php:364
+#: src/Modules/Admin/AuditLogFormatter.php:367
 #, php-format
 msgid "Setting: %s"
 msgstr ""
 
 #. translators: %s: previous setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:368
+#: src/Modules/Admin/AuditLogFormatter.php:371
 #, php-format
 msgid "Previous value: %s"
 msgstr ""
 
 #. translators: %s: new setting value.
-#: src/Modules/Admin/AuditLogFormatter.php:371
+#: src/Modules/Admin/AuditLogFormatter.php:374
 #, php-format
 msgid "New value: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:373
+#: src/Modules/Admin/AuditLogFormatter.php:376
 msgid "New value: enabled"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:373
+#: src/Modules/Admin/AuditLogFormatter.php:376
 msgid "New value: disabled"
 msgstr ""
 
 #. translators: %s: product name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:376
+#: src/Modules/Admin/AuditLogFormatter.php:379
 #, php-format
 msgid "Product: %s"
 msgstr ""
 
 #. translators: %s: product category name and id, or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:379
+#: src/Modules/Admin/AuditLogFormatter.php:382
 #, php-format
 msgid "Product category: %s"
 msgstr ""
 
 #. translators: %s: comma-separated product categories.
-#: src/Modules/Admin/AuditLogFormatter.php:382
+#: src/Modules/Admin/AuditLogFormatter.php:385
 #, php-format
 msgid "Product categories: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:385
+#: src/Modules/Admin/AuditLogFormatter.php:388
 msgid "Previous creator: none"
-msgstr ""
-
-#. translators: %s: creator name or "#id".
-#: src/Modules/Admin/AuditLogFormatter.php:387
-#, php-format
-msgid "Previous creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:390
 #, php-format
-msgid "Creator: %s"
+msgid "Previous creator: %s"
 msgstr ""
 
 #. translators: %s: creator name or "#id".
 #: src/Modules/Admin/AuditLogFormatter.php:393
 #, php-format
+msgid "Creator: %s"
+msgstr ""
+
+#. translators: %s: creator name or "#id".
+#: src/Modules/Admin/AuditLogFormatter.php:396
+#, php-format
 msgid "Done by an administrator viewing as %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:396
+#: src/Modules/Admin/AuditLogFormatter.php:399
 msgid "Kept anonymized for its sales, payouts and settlement documents"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:397
+#: src/Modules/Admin/AuditLogFormatter.php:400
 msgid "Deleted completely (no sales, payouts or settlement documents)"
 msgstr ""
 
 #. translators: %s: the creator's former name.
-#: src/Modules/Admin/AuditLogFormatter.php:400
+#: src/Modules/Admin/AuditLogFormatter.php:403
 #, php-format
 msgid "Former name: %s"
 msgstr ""
 
 #. translators: %s: removal request id.
-#: src/Modules/Admin/AuditLogFormatter.php:403
+#: src/Modules/Admin/AuditLogFormatter.php:406
 #, php-format
 msgid "Removal request: #%s"
 msgstr ""
 
 #. translators: %s: collection request id.
-#: src/Modules/Admin/AuditLogFormatter.php:406
+#: src/Modules/Admin/AuditLogFormatter.php:409
 #, php-format
 msgid "Collection request: #%s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:409
+#: src/Modules/Admin/AuditLogFormatter.php:412
 #: build/dashboard.js:123
 msgid "A new collection"
 msgstr ""
 
 #. translators: %s: collection product id.
-#: src/Modules/Admin/AuditLogFormatter.php:413
+#: src/Modules/Admin/AuditLogFormatter.php:416
 #, php-format
 msgid "Collection: #%s"
 msgstr ""
 
 #. translators: %s: product ids, comma-separated.
-#: src/Modules/Admin/AuditLogFormatter.php:416
+#: src/Modules/Admin/AuditLogFormatter.php:419
 #, php-format
 msgid "Products: %s"
 msgstr ""
 
 #. translators: %s: proposal id.
-#: src/Modules/Admin/AuditLogFormatter.php:419
+#: src/Modules/Admin/AuditLogFormatter.php:422
 #, php-format
 msgid "Proposal: #%s"
 msgstr ""
 
 #. translators: %s: what the proposal changes, e.g. "banner".
-#: src/Modules/Admin/AuditLogFormatter.php:422
+#: src/Modules/Admin/AuditLogFormatter.php:425
 #, php-format
 msgid "Proposed change: %s"
 msgstr ""
 
 #. translators: %s: the administrator's note.
-#: src/Modules/Admin/AuditLogFormatter.php:425
+#: src/Modules/Admin/AuditLogFormatter.php:428
 #, php-format
 msgid "Note to the creator: %s"
 msgstr ""
 
 #. translators: %s: campaign id.
-#: src/Modules/Admin/AuditLogFormatter.php:428
+#: src/Modules/Admin/AuditLogFormatter.php:431
 #, php-format
 msgid "Campaign: #%s"
 msgstr ""
 
 #. translators: %s: campaign name.
-#: src/Modules/Admin/AuditLogFormatter.php:431
+#: src/Modules/Admin/AuditLogFormatter.php:434
 #, php-format
 msgid "Campaign name: %s"
 msgstr ""
 
 #. translators: %s: start and end in UTC.
-#: src/Modules/Admin/AuditLogFormatter.php:434
+#: src/Modules/Admin/AuditLogFormatter.php:437
 #, php-format
 msgid "Period (UTC): %s"
 msgstr ""
 
 #. translators: %s: comma-separated coupon codes.
-#: src/Modules/Admin/AuditLogFormatter.php:437
+#: src/Modules/Admin/AuditLogFormatter.php:440
 #, php-format
 msgid "Coupon codes: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:439
+#: src/Modules/Admin/AuditLogFormatter.php:442
 msgid "Covers sale prices: yes"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:439
+#: src/Modules/Admin/AuditLogFormatter.php:442
 msgid "Covers sale prices: no"
 msgstr ""
 
 #. translators: %d: minutes.
-#: src/Modules/Admin/AuditLogFormatter.php:442
+#: src/Modules/Admin/AuditLogFormatter.php:445
 #, php-format
 msgid "Session length: %d minutes"
 msgstr ""
 
 #. translators: %s: origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:445
+#: src/Modules/Admin/AuditLogFormatter.php:448
 #, php-format
 msgid "Origin: %s"
 msgstr ""
 
 #. translators: %s: previous origin of the product link.
-#: src/Modules/Admin/AuditLogFormatter.php:448
+#: src/Modules/Admin/AuditLogFormatter.php:451
 #, php-format
 msgid "Previous origin: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:451
+#: src/Modules/Admin/AuditLogFormatter.php:454
 msgid "Previous link: invalid"
 msgstr ""
 
 #. translators: %s: previous link state.
-#: src/Modules/Admin/AuditLogFormatter.php:453
+#: src/Modules/Admin/AuditLogFormatter.php:456
 #, php-format
 msgid "Previous link: %s"
 msgstr ""
 
 #. translators: %s: what happens to the category-managed links.
-#: src/Modules/Admin/AuditLogFormatter.php:456
+#: src/Modules/Admin/AuditLogFormatter.php:459
 #, php-format
 msgid "Choice: %s"
 msgstr ""
 
 #. translators: %s: shortened run id.
-#: src/Modules/Admin/AuditLogFormatter.php:459
+#: src/Modules/Admin/AuditLogFormatter.php:462
 #, php-format
 msgid "Run: %s"
 msgstr ""
 
 #. translators: %s: which products the reconciliation covered.
-#: src/Modules/Admin/AuditLogFormatter.php:462
+#: src/Modules/Admin/AuditLogFormatter.php:465
 #, php-format
 msgid "Scope: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:464
+#: src/Modules/Admin/AuditLogFormatter.php:467
 msgid "Dry run: yes"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:464
+#: src/Modules/Admin/AuditLogFormatter.php:467
 msgid "Dry run: no"
 msgstr ""
 
 #. translators: %s: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:467
+#: src/Modules/Admin/AuditLogFormatter.php:470
 #, php-format
 msgid "Products evaluated: %s"
 msgstr ""
 
 #. translators: %s: WooCommerce order id.
-#: src/Modules/Admin/AuditLogFormatter.php:470
+#: src/Modules/Admin/AuditLogFormatter.php:473
 #, php-format
 msgid "Order: #%s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:473
+#: src/Modules/Admin/AuditLogFormatter.php:476
 msgid "WooCommerce order: in the trash"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:474
-msgid "WooCommerce order: deleted"
-msgstr ""
-
-#. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:477
-#, php-format
-msgid "Ledger rows deleted: %s"
+msgid "WooCommerce order: deleted"
 msgstr ""
 
 #. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:480
 #, php-format
-msgid "Cycle events deleted: %s"
+msgid "Ledger rows deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:483
 #, php-format
-msgid "Stored tax rows deleted: %s"
+msgid "Cycle events deleted: %s"
 msgstr ""
 
 #. translators: %s: number of rows.
 #: src/Modules/Admin/AuditLogFormatter.php:486
 #, php-format
+msgid "Stored tax rows deleted: %s"
+msgstr ""
+
+#. translators: %s: number of rows.
+#: src/Modules/Admin/AuditLogFormatter.php:489
+#, php-format
 msgid "Profit snapshots deleted: %s"
 msgstr ""
 
 #. translators: %s: comma-separated creators.
-#: src/Modules/Admin/AuditLogFormatter.php:489
+#: src/Modules/Admin/AuditLogFormatter.php:492
 #, php-format
 msgid "Creators: %s"
 msgstr ""
 
 #. translators: %s: number of orders.
-#: src/Modules/Admin/AuditLogFormatter.php:530
+#: src/Modules/Admin/AuditLogFormatter.php:533
 #, php-format
 msgid "Orders scanned: %s"
 msgstr ""
 
 #. translators: %s: ledger rows per type, e.g. "Sale: 2 · Refund: 1".
 #. translators: %s: ledger rows per type, e.g. "sale: 2, refund: 1".
-#: src/Modules/Admin/AuditLogFormatter.php:532
+#: src/Modules/Admin/AuditLogFormatter.php:535
 #: src/Modules/WooCommerce/Cli/SalesBackfillCommand.php:279
 #, php-format
 msgid "Rows written: %s"
 msgstr ""
 
 #. translators: %s: failed orders per error code, or "none".
-#: src/Modules/Admin/AuditLogFormatter.php:534
+#: src/Modules/Admin/AuditLogFormatter.php:537
 #, php-format
 msgid "Failures by code: %s"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:547
+#: src/Modules/Admin/AuditLogFormatter.php:550
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:355
 msgid "Registered"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:548
+#: src/Modules/Admin/AuditLogFormatter.php:551
 msgid "Already in the ledger"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:549
+#: src/Modules/Admin/AuditLogFormatter.php:552
 #: build/dashboard.js:106
 msgid "Not counted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:550
+#: src/Modules/Admin/AuditLogFormatter.php:553
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:216
 msgid "No creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:551
+#: src/Modules/Admin/AuditLogFormatter.php:554
 msgid "Not found"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:552
+#: src/Modules/Admin/AuditLogFormatter.php:555
 msgid "Busy"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:553
+#: src/Modules/Admin/AuditLogFormatter.php:556
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:262
 msgid "Failed"
 msgstr ""
@@ -1309,90 +1323,90 @@ msgstr ""
 #. translators: 1: outcome, 2: number of orders.
 #. translators: 1: ledger row type, 2: number of rows.
 #. translators: 1: outcome, 2: number of products.
-#: src/Modules/Admin/AuditLogFormatter.php:563
-#: src/Modules/Admin/AuditLogFormatter.php:589
-#: src/Modules/Admin/AuditLogFormatter.php:648
+#: src/Modules/Admin/AuditLogFormatter.php:566
+#: src/Modules/Admin/AuditLogFormatter.php:592
+#: src/Modules/Admin/AuditLogFormatter.php:651
 #, php-format
 msgid "%1$s: %2$d"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:576
+#: src/Modules/Admin/AuditLogFormatter.php:579
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1257
 #: build/dashboard.js:112
 msgid "Sale"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:577
+#: src/Modules/Admin/AuditLogFormatter.php:580
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1258
 #: build/dashboard.js:112
 msgid "Refund"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:578
+#: src/Modules/Admin/AuditLogFormatter.php:581
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1259
 #: build/dashboard.js:112
 msgid "Reversal"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:579
+#: src/Modules/Admin/AuditLogFormatter.php:582
 #: src/Modules/Notifications/Catalog/CreatorTypes.php:496
 #: src/Modules/WooCommerce/Payouts/Settlements/SettlementPdf.php:1260
 #: build/dashboard.js:112
 msgid "Correction"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:607
+#: src/Modules/Admin/AuditLogFormatter.php:610
 msgid "none"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:631
+#: src/Modules/Admin/AuditLogFormatter.php:634
 msgid "Linked"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:632
+#: src/Modules/Admin/AuditLogFormatter.php:635
 msgid "Moved"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:633
+#: src/Modules/Admin/AuditLogFormatter.php:636
 msgid "Removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:634
+#: src/Modules/Admin/AuditLogFormatter.php:637
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:110
 msgid "Unchanged"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:635
-#: src/Modules/Admin/AuditLogFormatter.php:787
+#: src/Modules/Admin/AuditLogFormatter.php:638
+#: src/Modules/Admin/AuditLogFormatter.php:790
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:355
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:246
 msgid "Manual"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:636
+#: src/Modules/Admin/AuditLogFormatter.php:639
 msgid "Ambiguous"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:637
-#: src/Modules/Admin/AuditLogFormatter.php:847
+#: src/Modules/Admin/AuditLogFormatter.php:640
+#: src/Modules/Admin/AuditLogFormatter.php:850
 #: src/Modules/Admin/OverviewPage.php:137
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
 #: build/dashboard.js:108
 msgid "Inactive"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:638
+#: src/Modules/Admin/AuditLogFormatter.php:641
 msgid "Errors"
 msgstr ""
 
 #. translators: %d: user id.
-#: src/Modules/Admin/AuditLogFormatter.php:667
+#: src/Modules/Admin/AuditLogFormatter.php:670
 #, php-format
 msgid "#%d (no longer exists)"
 msgstr ""
 
 #. translators: %d: creator id.
-#: src/Modules/Admin/AuditLogFormatter.php:682
+#: src/Modules/Admin/AuditLogFormatter.php:685
 #: src/Modules/Admin/AuditLogListTable.php:277
 #: src/Modules/WooCommerce/Admin/ProductListCreators.php:229
 #, php-format
@@ -1401,7 +1415,7 @@ msgstr ""
 
 #. translators: 1: name, 2: id.
 #. translators: 1: product name, 2: product id.
-#: src/Modules/Admin/AuditLogFormatter.php:751
+#: src/Modules/Admin/AuditLogFormatter.php:754
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:331
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:589
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:427
@@ -1410,103 +1424,103 @@ msgid "%1$s (#%2$d)"
 msgstr ""
 
 #. translators: 1: name, 2: id.
-#: src/Modules/Admin/AuditLogFormatter.php:751
+#: src/Modules/Admin/AuditLogFormatter.php:754
 #: src/Modules/WooCommerce/Admin/CategorySyncScreen.php:329
 #: src/Modules/WooCommerce/Admin/CreatorPricingSection.php:586
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:424
 msgid "(no name)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:761
+#: src/Modules/Admin/AuditLogFormatter.php:764
 msgid "the product was added to a mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:762
+#: src/Modules/Admin/AuditLogFormatter.php:765
 msgid "the product left its mapped category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:763
+#: src/Modules/Admin/AuditLogFormatter.php:766
 msgid "the product moved to another creator's category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:764
+#: src/Modules/Admin/AuditLogFormatter.php:767
 msgid "product categories changed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:765
+#: src/Modules/Admin/AuditLogFormatter.php:768
 msgid "a category mapping was created"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:766
+#: src/Modules/Admin/AuditLogFormatter.php:769
 msgid "a category mapping was removed"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:767
+#: src/Modules/Admin/AuditLogFormatter.php:770
 msgid "the creator was activated"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:768
+#: src/Modules/Admin/AuditLogFormatter.php:771
 msgid "the product category was deleted"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:769
+#: src/Modules/Admin/AuditLogFormatter.php:772
 msgid "categories of several creators (ambiguous)"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:770
+#: src/Modules/Admin/AuditLogFormatter.php:773
 msgid "full reconciliation"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:771
+#: src/Modules/Admin/AuditLogFormatter.php:774
 msgid "an administrator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:772
+#: src/Modules/Admin/AuditLogFormatter.php:775
 msgid "the administrator stopped viewing as the creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:773
+#: src/Modules/Admin/AuditLogFormatter.php:776
 msgid "the session expired"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:774
+#: src/Modules/Admin/AuditLogFormatter.php:777
 msgid "the administrator logged out"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:775
+#: src/Modules/Admin/AuditLogFormatter.php:778
 msgid "the administrator viewed another creator"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:788
+#: src/Modules/Admin/AuditLogFormatter.php:791
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:128
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:312
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:249
 msgid "Product category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:800
+#: src/Modules/Admin/AuditLogFormatter.php:803
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:383
 msgid "Remove category-managed links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:801
+#: src/Modules/Admin/AuditLogFormatter.php:804
 #: src/Modules/WooCommerce/Admin/CreatorCategoriesSection.php:384
 msgid "Keep as manual links"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:813
+#: src/Modules/Admin/AuditLogFormatter.php:816
 msgid "all relevant products"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:814
+#: src/Modules/Admin/AuditLogFormatter.php:817
 msgid "the products of one category"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:815
+#: src/Modules/Admin/AuditLogFormatter.php:818
 msgid "the products of one mapping"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:847
+#: src/Modules/Admin/AuditLogFormatter.php:850
 #: src/Modules/Admin/OverviewPage.php:136
 #: src/Modules/Alerts/Admin/OrderLogTab.php:206
 #: src/Modules/Creators/Admin/CreatorsAdminPage.php:466
@@ -1517,15 +1531,15 @@ msgstr ""
 msgid "Active"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:866
+#: src/Modules/Admin/AuditLogFormatter.php:869
 msgid "display name"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:867
+#: src/Modules/Admin/AuditLogFormatter.php:870
 msgid "bio"
 msgstr ""
 
-#: src/Modules/Admin/AuditLogFormatter.php:868
+#: src/Modules/Admin/AuditLogFormatter.php:871
 msgid "social links"
 msgstr ""
 
@@ -2295,6 +2309,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1941
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:161
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:199
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:130
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:204
 #: src/Modules/ProductDesigner/Admin/DesignerSettingsSection.php:206
 #: build/dashboard.js:60
@@ -4443,6 +4458,7 @@ msgstr ""
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:375
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:1670
 #: src/Modules/ProductDesigner/Admin/CampaignsPage.php:161
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:132
 #: src/Modules/ProductDesigner/Admin/DesignerFeesSection.php:122
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:191
 #: src/Modules/WooCommerce/Admin/CreatorProductsSection.php:186
@@ -6156,6 +6172,7 @@ msgid "Publish"
 msgstr ""
 
 #: src/Modules/News/Admin/NewsAdminPage.php:297
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:152
 msgid "Delete draft"
 msgstr ""
 
@@ -6200,6 +6217,8 @@ msgstr ""
 
 #: src/Modules/News/Admin/NewsAdminPage.php:417
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:2041
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:88
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:133
 #: build/dashboard.js:105
 #: build/dashboard.js:131
 msgid "Draft"
@@ -6253,6 +6272,7 @@ msgid "You are not allowed to change the notifications."
 msgstr ""
 
 #: src/Modules/Notifications/Admin/NotificationsAdminPage.php:115
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:70
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:155
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:116
 msgid "A technical error occurred. Nothing was changed; try again or check the log."
@@ -8435,6 +8455,7 @@ msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductActions.php:113
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:321
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsActions.php:80
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:101
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:165
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:522
@@ -8760,6 +8781,7 @@ msgid "Use PNG, JPG or WebP images; template layers must be PNG."
 msgstr ""
 
 #: src/Modules/ProductDesigner/Admin/BaseProductsPage.php:310
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:69
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:154
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:110
 msgid "You are not allowed to manage the product designer."
@@ -10057,6 +10079,121 @@ msgstr ""
 msgid "Ended"
 msgstr ""
 
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:58
+msgid "The product was renamed, in the shop too if it is there."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:59
+msgid "The product already has that name. Nothing was changed."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:60
+msgid "The draft was deleted for good."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:61
+msgid "The change was discarded. The shop keeps the product as it is."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:62
+msgid "The name may be at most 120 characters. Nothing was changed."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:63
+msgid "Another product already has that name. Nothing was changed; tick \"Allow the same name as another product\" to use it anyway."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:64
+msgid "The product is being updated in the shop right now. Try again in a minute."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:65
+msgid "The product has no draft that can be changed here (it may have been sent for approval). Nothing was changed."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:66
+msgid "The product in the shop could not be found. Nothing was changed."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:67
+msgid "The product does not exist or belongs to another creator."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:68
+msgid "The product's base product no longer exists. Nothing was changed."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:82
+#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:363
+#: build/dashboard.js:105
+#: build/dashboard.js:126
+#: build/dashboard.js:130
+msgid "In the shop"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:83
+msgid "In the shop, with a change in draft"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:84
+msgid "In the shop, with a change waiting for approval"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:85
+#: build/dashboard.js:105
+msgid "Waiting for approval"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:86
+#: src/Modules/ProductDesigner/Admin/DesignsPage.php:188
+msgid "On the way to the shop"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:106
+msgid "Designer products"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:116
+msgid "The creator's designer products could not be read. Details are in the log."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:122
+msgid "The creator has no designer products."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:127
+msgid "The creator's products and drafts from the product designer. You change only the part of the name after the creator's and the base product's name; a product in the shop gets the new name there at once. A draft the creator has open keeps the new name unless they change the name themselves. Designs waiting for approval are decided under Approvals."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:131
+#: src/Modules/ProductDesigner/DesignerNotifications.php:462
+msgid "Base product"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:144
+msgid "Open the product in WooCommerce"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:152
+msgid "Delete this draft for good? The creator cannot get it back."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:154
+msgid "Discard change"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:154
+msgid "Discard the creator's change of this product? The shop keeps the product as it is."
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:180
+msgid "Save name"
+msgstr ""
+
+#: src/Modules/ProductDesigner/Admin/CreatorDesignsSection.php:181
+msgid "Allow the same name as another product"
+msgstr ""
+
 #: src/Modules/ProductDesigner/Admin/DesignerAssetDownload.php:122
 #: src/Modules/ProductDesigner/Admin/DesignerCutoutsPage.php:595
 #: src/Modules/ProductDesigner/Admin/DesignerVersionFiles.php:205
@@ -10606,10 +10743,6 @@ msgstr ""
 msgid "No designs are waiting for approval."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Admin/DesignsPage.php:188
-msgid "On the way to the shop"
-msgstr ""
-
 #. translators: %d: version number.
 #: src/Modules/ProductDesigner/Admin/DesignsPage.php:204
 #, php-format
@@ -11059,10 +11192,6 @@ msgstr ""
 msgid "The base product stays a draft without photos. Open it under Base products to see the reason and the provider's answer, and choose \"Try again\"."
 msgstr ""
 
-#: src/Modules/ProductDesigner/DesignerNotifications.php:462
-msgid "Base product"
-msgstr ""
-
 #: src/Modules/ProductDesigner/DesignerNotifications.php:467
 msgid "Open Base products"
 msgstr ""
@@ -11255,12 +11384,12 @@ msgstr ""
 msgid "A creator changed a designer product in the shop. The shop keeps the approved version until you approve the change."
 msgstr ""
 
-#: src/Modules/ProductDesigner/Designs/DesignerDrafts.php:317
+#: src/Modules/ProductDesigner/Designs/DesignerDrafts.php:324
 msgid "(copy)"
 msgstr ""
 
 #. translators: %d: the number of the copy (2 or more).
-#: src/Modules/ProductDesigner/Designs/DesignerDrafts.php:321
+#: src/Modules/ProductDesigner/Designs/DesignerDrafts.php:328
 #, php-format
 msgid "(copy %d)"
 msgstr ""
@@ -11992,13 +12121,6 @@ msgstr ""
 #: src/Modules/WooCommerce/Admin/ProductRemovalsPage.php:199
 #, php-format
 msgid "Declined: %s"
-msgstr ""
-
-#: src/Modules/WooCommerce/Admin/CollectionRequestsPage.php:363
-#: build/dashboard.js:105
-#: build/dashboard.js:126
-#: build/dashboard.js:130
-msgid "In the shop"
 msgstr ""
 
 #. translators: %s: design names.
@@ -20841,6 +20963,14 @@ msgid "Your design is saved and sent with %1$d images (a print file per side and
 msgstr ""
 
 #: build/dashboard.js:98
+msgid "Your design is saved with the same name as another product."
+msgstr ""
+
+#: build/dashboard.js:98
+msgid "Use the same name"
+msgstr ""
+
+#: build/dashboard.js:98
 msgid "Designer tools"
 msgstr ""
 
@@ -21101,7 +21231,7 @@ msgid "Choose at least one colour and one size."
 msgstr ""
 
 #: build/dashboard.js:104
-msgid "A product with this name already exists. Add something to the name to tell them apart."
+msgid "A product with this name already exists. Add something to the name to tell them apart, or use the same name anyway."
 msgstr ""
 
 #: build/dashboard.js:104
@@ -21281,10 +21411,6 @@ msgstr ""
 #: build/dashboard.js:105
 #: build/dashboard.js:130
 msgid "Not in the shop"
-msgstr ""
-
-#: build/dashboard.js:105
-msgid "Waiting for approval"
 msgstr ""
 
 #: build/dashboard.js:105

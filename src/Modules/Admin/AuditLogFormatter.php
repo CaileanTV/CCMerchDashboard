@@ -241,6 +241,9 @@ final class AuditLogFormatter {
 			AuditAction::DesignerBaseRetired => __( 'Base product retired', 'merchboard' ),
 			AuditAction::DesignerProductRepriced => __( 'Designer product repriced', 'merchboard' ),
 			AuditAction::DesignerProductUnpublished => __( 'Designer product taken out of the shop', 'merchboard' ),
+			AuditAction::DesignerProductRenamed => __( 'Administrator renamed a designer product', 'merchboard' ),
+			AuditAction::DesignerDraftDeletedByAdmin => __( 'Administrator deleted a designer draft', 'merchboard' ),
+			AuditAction::DesignerChangeDiscardedByAdmin => __( 'Administrator discarded a change of a designer product', 'merchboard' ),
 		};
 	}
 

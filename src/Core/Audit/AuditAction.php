@@ -1006,4 +1006,22 @@ enum AuditAction: string {
 	 * Context: product_id.
 	 */
 	case CollectionReleased = 'collection_released';
+
+	/**
+	 * An administrator renamed a creator's designer product from the creator's
+	 * edit page (ADR-124). Context: design_product_id, title.
+	 */
+	case DesignerProductRenamed = 'designer_product_renamed';
+
+	/**
+	 * An administrator deleted a creator's designer draft that never reached
+	 * the shop (ADR-124). Context: design_product_id.
+	 */
+	case DesignerDraftDeletedByAdmin = 'designer_draft_deleted_by_admin';
+
+	/**
+	 * An administrator discarded the change (draft) of a creator's product in
+	 * the shop (ADR-124). Context: design_product_id.
+	 */
+	case DesignerChangeDiscardedByAdmin = 'designer_change_discarded_by_admin';
 }

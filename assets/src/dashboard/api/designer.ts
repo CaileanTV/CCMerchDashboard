@@ -1208,6 +1208,10 @@ export interface DraftChanges {
 	readonly design: DesignDocument;
 	/** The product's image, `<side>:<colour>`; null for the first colour's first side. */
 	readonly primaryImage?: string | null;
+	/** The creator confirmed a name another product has (ADR-124). */
+	readonly sameName?: boolean;
+	/** The name addition the editor opened with: unchanged, the stored name stays (ADR-124). */
+	readonly titleBase?: string;
 }
 
 /**
@@ -1233,6 +1237,10 @@ export function saveDesignerDraft(
 				profit_value: changes.profitValue,
 				design: changes.design,
 				primary_image: changes.primaryImage ?? null,
+				same_name: changes.sameName === true,
+				...( changes.titleBase === undefined
+					? {}
+					: { title_base: changes.titleBase } ),
 			},
 		},
 		parseProduct

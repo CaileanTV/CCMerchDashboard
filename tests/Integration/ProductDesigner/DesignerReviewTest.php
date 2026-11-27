@@ -35,6 +35,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\DesignerException;
 use MerchBoard\Modules\ProductDesigner\DesignerNotifications;
 use MerchBoard\Modules\ProductDesigner\DesignerPrices;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerAdminProducts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerApply;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerCutouts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
@@ -93,6 +94,7 @@ use wpdb;
 #[CoversClass( DesignerPrices::class )]
 #[CoversClass( MeDesignerController::class )]
 #[CoversClass( DesignerCutouts::class )]
+#[CoversClass( DesignerAdminProducts::class )]
 final class DesignerReviewTest extends IntegrationTestCase {
 
 	private DesignerFiles $files;
@@ -1644,6 +1646,12 @@ final class DesignerReviewTest extends IntegrationTestCase {
 			self::assertSame( DesignerException::DESIGN_NAME_TAKEN, $e->reason() );
 		}
 
+		// Confirmed by the creator, a second product may have the name (ADR-124).
+		$this->drafts->save( $this->creator, $second, array_merge( $input, array( 'same_name' => true ) ), $valid );
+		self::assertSame( 'Nova Organic tee - Winter', $this->products->draft( $second )['title'] ?? null );
+		$this->drafts->save( $this->creator, $second, array_merge( $input, array( 'profit_value' => '12' ) ), $valid );
+		self::assertSame( 'Nova Organic tee - Winter', $this->products->draft( $second )['title'] ?? null, 'Once confirmed, the draft keeps its name without asking again.' );
+
 		$this->drafts->save( $this->creator, $second, array_merge( $input, array( 'title' => 'Summer' ) ), $valid );
 		$this->drafts->save( $this->creator, $first, array_merge( $input, array( 'profit_value' => '11' ) ), $valid );
 		self::assertSame( 'Nova Organic tee - Summer', $this->products->draft( $second )['title'] ?? null, 'A product can keep its own name.' );
@@ -1651,6 +1659,89 @@ final class DesignerReviewTest extends IntegrationTestCase {
 		$this->shop()->remove( $this->creator, $first );
 		$this->drafts->save( $this->creator, $second, $input, $valid );
 		self::assertSame( 'Nova Organic tee - Winter', $this->products->draft( $second )['title'] ?? null, 'A deleted design frees its name.' );
+	}
+
+	public function test_an_administrator_renames_a_creator_s_products_and_deletes_their_drafts(): void {
+		$live  = $this->live_product();
+		$shop  = (int) ( $this->products->product( $live )['wc_product_id'] ?? 0 );
+		$draft = $this->drafts->create( $this->creator, $this->base );
+		$admin = $this->admin();
+		wp_set_current_user( 1 );
+
+		$list = array_column( $admin->for_creator( $this->creator ), null, 'id' );
+		self::assertSame( array( 'in_shop', 'Nova Organic tee', 'Stream tee', false, false ), array( $list[ $live ]['state'], $list[ $live ]['prefix'], $list[ $live ]['postfix'], $list[ $live ]['deletable'], $list[ $live ]['discardable'] ) );
+		self::assertSame( array( 'draft', true ), array( $list[ $draft ]['state'], $list[ $draft ]['deletable'] ) );
+
+		// Only the addition; in the shop at once.
+		self::assertTrue( $admin->rename( $this->creator, $live, ' - Gamer tee ' ) );
+		self::assertSame( 'Nova Organic tee - Gamer tee', $this->products->live( $live )['title'] ?? null );
+		self::assertSame( array( array( $shop, 'Nova Organic tee - Gamer tee' ) ), $this->writer->names );
+		self::assertFalse( $admin->rename( $this->creator, $live, 'Gamer tee' ), 'The same name changes nothing.' );
+
+		try {
+			$admin->rename( $this->creator, $draft, 'Gamer tee' );
+			self::fail( 'The name is taken.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_NAME_TAKEN, $e->reason() );
+		}
+
+		self::assertTrue( $admin->rename( $this->creator, $draft, 'Gamer tee', true ), 'Confirmed: the same name.' );
+		self::assertSame( 'Nova Organic tee - Gamer tee', $this->products->draft( $draft )['title'] ?? null );
+
+		// The creator's editor, opened before the rename, keeps the administrator's name unless the creator changes it.
+		$input = array(
+			'title'        => 'Old',
+			'title_base'   => 'Old',
+			'colors'       => array( 'black' ),
+			'sizes'        => array( 'S' ),
+			'profit_kind'  => 'fixed',
+			'profit_value' => '10',
+			'design'       => array(
+				'version' => 1,
+				'sides'   => array(),
+			),
+		);
+		$valid = new DesignValidator( static fn(): bool => false, array() );
+		$named = fn(): mixed => $this->products->draft( $draft )['title'] ?? null;
+		$this->drafts->save( $this->creator, $draft, $input, $valid );
+		self::assertSame( 'Nova Organic tee - Gamer tee', $named() );
+		$this->drafts->save( $this->creator, $draft, array_merge( $input, array( 'title' => 'New' ) ), $valid );
+		self::assertSame( 'Nova Organic tee - New', $named() );
+		wp_set_current_user( 1 );
+		self::assertSame( array( 'designer_product_renamed', 'designer_product_renamed' ), $this->audit( 'designer_product_renamed' ) );
+
+		$other = $this->service( CreatorService::class )->create( 'Other', CreatorStatus::Active, null );
+
+		try {
+			$admin->rename( $other, $live, 'Mine' );
+			self::fail( 'Not the other creator\'s.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_UNKNOWN, $e->reason() );
+		}
+
+		// A change of a product in the shop is discarded; the shop keeps its version.
+		$this->submissions->change( $this->creator, $live );
+		self::assertTrue( array_column( $admin->for_creator( $this->creator ), null, 'id' )[ $live ]['discardable'] );
+		self::assertSame( 'discarded', $admin->delete_draft( $this->creator, $live ) );
+		self::assertNull( $this->products->draft( $live ) );
+		self::assertNotNull( $this->products->live( $live ) );
+
+		// A draft that never reached the shop is gone for good.
+		self::assertSame( 'deleted', $admin->delete_draft( $this->creator, $draft ) );
+		self::assertNull( $this->products->product( $draft ) );
+		self::assertSame( array( 'designer_change_discarded_by_admin', 'designer_draft_deleted_by_admin' ), $this->audit( 'designer_change_discarded_by_admin', 'designer_draft_deleted_by_admin', 'designer_product_deleted', 'designer_change_discarded' ) );
+
+		// A design waiting for approval is decided in the queue, not deleted here.
+		$waiting = $this->submitted();
+
+		try {
+			$admin->delete_draft( $this->creator, $waiting );
+			self::fail( 'It waits for approval.' );
+		} catch ( DesignerException $e ) {
+			self::assertSame( DesignerException::DESIGN_NOT_DRAFT, $e->reason() );
+		}
+
+		self::assertNotNull( $this->products->pending( $waiting ) );
 	}
 
 	public function test_a_background_colour_is_kept_only_where_the_base_product_offers_it(): void {
@@ -2284,6 +2375,13 @@ final class DesignerReviewTest extends IntegrationTestCase {
 	/**
 	 * The base products.
 	 */
+	/**
+	 * The administrator's side of the creator's products (ADR-124).
+	 */
+	private function admin(): DesignerAdminProducts {
+		return new DesignerAdminProducts( $this->products, new BaseProductRepository( $this->wpdb ), $this->drafts, $this->guard, $this->writer, $this->service( AuditTrail::class ), $this->service( Transaction::class ), $this->files );
+	}
+
 	private function bases_repository(): BaseProductRepository {
 		return new BaseProductRepository( $this->wpdb );
 	}

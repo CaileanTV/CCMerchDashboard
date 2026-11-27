@@ -174,25 +174,31 @@ class DesignerDrafts {
 	 *
 	 * @param Creator              $creator   The creator.
 	 * @param int                  $product   Designer product.
-	 * @param array<string, mixed> $input     `title` (the creator's addition to the name), `colors`, `sizes`, `profit_kind`, `profit_value` (decimal string), `design`.
+	 * @param array<string, mixed> $input     `title` (the creator's addition to the name), `colors`, `sizes`, `profit_kind`, `profit_value` (decimal string), `design`, `primary_image`, `same_name` (true: the creator confirmed a name another product has), `title_base` (the addition the editor opened with: an unchanged `title` keeps the stored name).
 	 * @param DesignValidator      $validator The design check for this creator.
 	 * @throws DesignerException When the product or its draft is unknown, or a value is refused.
 	 * @throws DatabaseException When it cannot be stored.
 	 */
 	public function save( Creator $creator, int $product, array $input, DesignValidator $validator ): void {
-		$row   = $this->products->find( $creator->id, $product ) ?? self::refuse( DesignerException::DESIGN_UNKNOWN );
-		$draft = $this->products->draft( $product ) ?? self::refuse( DesignerException::DESIGN_NOT_DRAFT );
-		$base  = $this->bases->find( (int) $row['base_id'] ) ?? self::refuse( DesignerException::BASE_UNKNOWN );
-		$title = DesignerNames::full(
-			DesignerNames::prefix( $creator->display_name, $base->name ),
-			sanitize_text_field( is_string( $input['title'] ?? null ) ? $input['title'] : '' )
-		);
+		$row    = $this->products->find( $creator->id, $product ) ?? self::refuse( DesignerException::DESIGN_UNKNOWN );
+		$draft  = $this->products->draft( $product ) ?? self::refuse( DesignerException::DESIGN_NOT_DRAFT );
+		$base   = $this->bases->find( (int) $row['base_id'] ) ?? self::refuse( DesignerException::BASE_UNKNOWN );
+		$prefix = DesignerNames::prefix( $creator->display_name, $base->name );
+		$stored = (string) $draft['title'];
+		$typed  = is_string( $input['title'] ?? null ) ? $input['title'] : '';
+		// An editor that did not touch the name it opened with keeps the stored one (an administrator may have renamed it, ADR-124).
+		$title = is_string( $input['title_base'] ?? null ) && $typed === $input['title_base'] && str_starts_with( $stored, $prefix )
+			? $stored
+			: DesignerNames::full( $prefix, sanitize_text_field( $typed ) );
 
 		if ( mb_strlen( $title ) > 120 ) {
 			self::refuse( DesignerException::DESIGN_TITLE );
 		}
 
-		if ( $this->products->name_taken( $title, $product ) ) {
+		// Another product's name only once confirmed (`same_name`), or the draft already has it (ADR-124).
+		$kept = $title === $stored && $title !== $prefix;
+
+		if ( ! $kept && true !== ( $input['same_name'] ?? null ) && $this->products->name_taken( $title, $product ) ) {
 			self::refuse( DesignerException::DESIGN_NAME_TAKEN );
 		}
 
@@ -226,12 +232,13 @@ class DesignerDrafts {
 	/**
 	 * Deletes a designer product that never reached the shop, for good.
 	 *
-	 * @param Creator $creator The creator.
-	 * @param int     $product Designer product.
+	 * @param Creator     $creator The creator.
+	 * @param int         $product Designer product.
+	 * @param AuditAction $action  What the audit trail records (an administrator's own, ADR-124).
 	 * @throws DesignerException When it is unknown or has been submitted.
 	 * @throws DatabaseException When it cannot be deleted.
 	 */
-	public function delete( Creator $creator, int $product ): void {
+	public function delete( Creator $creator, int $product, AuditAction $action = AuditAction::DesignerProductDeleted ): void {
 		$row = $this->products->product( $product );
 
 		if ( null === $row || $creator->id !== (int) $row['creator_id'] ) {
@@ -239,7 +246,7 @@ class DesignerDrafts {
 		}
 
 		$files = $this->transaction->run(
-			function () use ( $creator, $product ): array {
+			function () use ( $creator, $product, $action ): array {
 				// Locked first, so a submission or an attached file cannot slip in between (review 30.15).
 				$this->products->lock_versions( $product );
 				$files = $this->products->files_of( $product );
@@ -248,7 +255,7 @@ class DesignerDrafts {
 					throw new DesignerException( DesignerException::DESIGN_NOT_DRAFT );
 				}
 
-				$this->audit->record( AuditAction::DesignerProductDeleted, $creator->id, array( 'design_product_id' => $product ) );
+				$this->audit->record( $action, $creator->id, array( 'design_product_id' => $product ) );
 
 				return $files;
 			}

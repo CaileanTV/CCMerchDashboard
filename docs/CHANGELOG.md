@@ -4,6 +4,16 @@ Større ændringer: features, databaseændringer, arkitekturændringer, breaking
 
 ## [Unreleased]
 
+### Fase 61: admin retter creatorens designerprodukter (ADR-124)
+
+- **Admin:** afsnittet "Designerprodukter" på creatorens redigeringsside (`merchboard_manage_designer`):
+  - omdøb tilføjelsen i produktets navn, også i butikken med det samme;
+  - slet en kladde, der aldrig har været i butikken;
+  - kassér en ændring af et produkt i butikken.
+
+  Audit `designer_product_renamed`, `designer_draft_deleted_by_admin` og `designer_change_discarded_by_admin`.
+- **Samme navn:** en creator kan gemme og indsende et produkt med et navn, som et andet produkt har, efter at have bekræftet det med "Brug samme navn" (`same_name` i `PATCH /me/designer/products/{id}`).
+
 ## [2.6.1] - 2026-11-25
 
 Rettelse i designeren. Ingen schemaændring.

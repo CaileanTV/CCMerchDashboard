@@ -34,6 +34,8 @@ use MerchBoard\Modules\ProductDesigner\Admin\CampaignsPage;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerAssetDownload;
 use MerchBoard\Modules\ProductDesigner\Admin\PrintifyThumbnails;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerNotificationActions;
+use MerchBoard\Modules\ProductDesigner\Admin\CreatorDesignsActions;
+use MerchBoard\Modules\ProductDesigner\Admin\CreatorDesignsSection;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerReviewActions;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerVersionFiles;
 use MerchBoard\Modules\ProductDesigner\Admin\DesignerCutoutsPage;
@@ -47,6 +49,7 @@ use MerchBoard\Modules\ProductDesigner\Bases\BaseProductService;
 use MerchBoard\Modules\ProductDesigner\Campaigns\CampaignRepository;
 use MerchBoard\Modules\ProductDesigner\Campaigns\CampaignService;
 use MerchBoard\Modules\ProductDesigner\Campaigns\DesignerCampaigns;
+use MerchBoard\Modules\ProductDesigner\Designs\DesignerAdminProducts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerDrafts;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerProductRepository;
 use MerchBoard\Modules\ProductDesigner\Designs\DesignerShop;
@@ -433,6 +436,9 @@ final class ProductDesignerModule implements Module {
 				$c->get( DesignerFees::class )
 			)
 		);
+		$container->set( DesignerAdminProducts::class, static fn( Container $c ): DesignerAdminProducts => new DesignerAdminProducts( $c->get( DesignerProductRepository::class ), $c->get( BaseProductRepository::class ), $c->get( DesignerDrafts::class ), $c->get( DesignerProductGuard::class ), $c->get( WooCommerceDesignerWriter::class ), $c->get( AuditTrail::class ), $c->get( Transaction::class ), $c->get( DesignerFiles::class ) ) );
+		$container->set( CreatorDesignsSection::class, static fn( Container $c ): CreatorDesignsSection => new CreatorDesignsSection( $c->get( DesignerAdminProducts::class ), $c->get( Logger::class ) ) );
+		$container->set( CreatorDesignsActions::class, static fn( Container $c ): CreatorDesignsActions => new CreatorDesignsActions( $c->get( DesignerAdminProducts::class ), $c->get( CreatorRepository::class ), $c->get( Logger::class ) ) );
 		$container->set( DesignerReviewActions::class, static fn( Container $c ): DesignerReviewActions => new DesignerReviewActions( $c->get( DesignerReview::class ), $c->get( Logger::class ) ) );
 		// A creator who signed up went live (ADR-091): their approved designs that waited go to the shop.
 		add_action(
@@ -675,6 +681,8 @@ final class ProductDesignerModule implements Module {
 				$container->get( PrintifyThumbnails::class )->register();
 				$container->get( DesignerNotificationActions::class )->register();
 				$container->get( DesignerReviewActions::class )->register();
+				$container->get( CreatorDesignsActions::class )->register();
+				$container->get( CreatorDesignsSection::class )->register();
 				$container->get( DesignerVersionFiles::class )->register();
 				$container->get( DesignerCutoutsPage::class )->register();
 

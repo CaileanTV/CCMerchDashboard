@@ -7478,3 +7478,41 @@ Creatorerne vil gerne sige tak til deres kunder. Følgesedlen i pakken er det en
 
 ## Related
 ADR-007, ADR-068
+
+---
+
+# ADR-124: Admin ser og retter creatorens designerprodukter, og samme navn kan bekræftes
+
+## Date
+2026-11-27
+
+## Status
+Accepteret af projektejeren 2026-11-27 (hasteændring, fase 61). Projektejerens valg: kun designerprodukter, omdøbning slår igennem i butikken med det samme, kun tilføjelsen efter den faste del af navnet, og listen ligger på creatorens side.
+
+## Context
+Projektejeren skal kunne hjælpe creators med deres produkter uden at bruge "Se som creator" (ADR-075). Her kan admin hverken omdøbe et produkt i butikken uden en ny godkendelse eller slette creatorens kladder. Samtidig vil creators kunne have to produkter med samme navn, fx samme motiv på to grundprodukter med samme navn. Indtil nu afviste designeren det (`design_name_taken`).
+
+## Decision
+1. **Afsnittet "Designerprodukter"** på creatorens redigeringsside (`merchboard_creators_edit_sections`) for brugere med `merchboard_manage_designer`. Det viser creatorens designerprodukter og kladder (ikke de slettede) med navn, grundprodukt og status.
+2. **Omdøb:** admin ændrer kun tilføjelsen efter "Creator Grundprodukt - " (ADR-102), så navnereglen og den automatiske omdøbning ved nyt creatornavn virker som før.
+   - Navnet skrives i produktets kladde, ventende og godkendte versioner.
+   - Er produktet i butikken, ændres navnet dér med det samme, fordi admin er den, der godkender.
+   - Det sker under produktets lås (som godkendelse, prisændring og valg af hovedbillede) og i butikken først, så en fejl dér efterlader versionerne uændret.
+   - Audit `designer_product_renamed` (`design_product_id`, `title`).
+3. **Slet:**
+   - En kladde, der aldrig har været i butikken, slettes for altid med sine filer (`designer_draft_deleted_by_admin`).
+   - En ændring (kladde) af et produkt i butikken kasseres, og butikken beholder sin version (`designer_change_discarded_by_admin`).
+   - Ventende designs afgøres under Forslag, ikke her.
+4. **Samme navn med bekræftelse:**
+   - Er navnet optaget, får creatoren beskeden og knappen "Brug samme navn".
+   - Kladden gemmes så med `same_name: true`, og bekræftelsen gælder, så længe navnet ikke ændres.
+   - Admins omdøbning har tilsvarende afkrydsningen "Tillad samme navn som et andet produkt".
+   - WooCommerce giver selv hvert produkt sin egen URL-slug.
+5. Creatoren får ingen besked om admins ændringer. De står i audit-loggen med administratoren som aktør.
+
+## Consequences
+- Har creatoren en kladde åben, mens admin omdøber den, kan creatorens næste gem skrive det gamle navn tilbage. Creatoren får det nye navn, næste gang kladden åbnes.
+- To produkter med samme navn kan forveksles i lister. Grundproduktet og billederne skelner dem.
+
+## Related
+ADR-075, ADR-080, ADR-102

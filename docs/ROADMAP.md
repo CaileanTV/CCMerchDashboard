@@ -1802,6 +1802,21 @@ En import fra Printify gav kun hvide ark, hvor admin selv lagde fotos og tegnede
     - kameranavnene Miljø n og Model n står på dansk;
     - Printful bruger aldrig en anden farve end den valgte.
 
+## Fase 61 – Admin ser og retter creatorens designerprodukter, og samme navn kan bekræftes 🔄 (projektejerens hasteønske og valg 2026-11-27; ADR-124)
+
+- **61.1 Admin på creatorens side** 🔄: afsnittet "Designerprodukter" på creatorens redigeringsside. Det viser produkter og kladder med navn, grundprodukt og status. Admin kan:
+  - omdøbe tilføjelsen efter "Creator Grundprodukt - ", også i butikken med det samme;
+  - slette en kladde, der aldrig har været i butikken;
+  - kassere en ændring af et produkt i butikken.
+
+  Alt auditeres.
+- **61.2 Samme navn med bekræftelse** 🔄: er navnet optaget, kan creatoren gemme og indsende alligevel med "Brug samme navn". Admins omdøbning har en tilsvarende afkrydsning.
+- **61.3 Tests og docs** 🔄: integrationstest af omdøbning, sletning, kassering og samme navn, Jest af creatorens bekræftelse, ADR-124 og danske tekster.
+
+## Version 2.6.1 – rettelse af fontvælgerens bredde ✅ (projektejerens ønske 2026-11-25; tagget på 8e121d5)
+
+- Fontvælgeren i designerens egenskabspanel fylder hele rækken, og listen er bred nok til fontnavnene (5ba18b6). Tagget `v2.6.1` på 8e121d5 efter grøn CI, med projektejerens OK ("lav 2.6.1 nu, jeg tester på live").
+
 ## Version 2.6.0 – fase 58, 59 og 60 ✅ (projektejerens beslutning 2026-11-25; tagget på 7c8546f)
 
 - Uafhængigt review 2026-11-25: ingen sikkerhedsfund. Tre fejl rettet i ed70391:
